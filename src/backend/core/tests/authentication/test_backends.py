@@ -17,6 +17,7 @@ from core.authentication.backends import (
     create_or_update_contact,
 )
 from core.factories import UserFactory
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -502,12 +503,21 @@ def test_authentication_post_get_or_create_user_new_user_to_marketing_email(sett
     settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = True
 
     klass = OIDCAuthenticationBackend()
-    with mock.patch.object(
-        create_or_update_contact, "delay"
-    ) as mock_create_or_update_contact:
+    with (
+        mock.patch.object(
+            create_or_update_contact, "delay"
+        ) as mock_create_or_update_contact,
+        mock.patch(
+            "core.authentication.backends.posthog_capture"
+        ) as mock_posthog_capture,
+    ):
         klass.post_get_or_create_user(user, {}, True)
         mock_create_or_update_contact.assert_called_once_with(
             email=user.email, attributes={"DOCS_SOURCE": ["SIGNIN"]}
+        )
+        mock_posthog_capture.assert_called_once_with(
+            PosthogEventName.USER_LOGIN,
+            user,
         )
 
 
@@ -523,11 +533,20 @@ def test_authentication_post_get_or_create_user_new_user_to_marketing_email_disa
     settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = False
 
     klass = OIDCAuthenticationBackend()
-    with mock.patch.object(
-        create_or_update_contact, "delay"
-    ) as mock_create_or_update_contact:
+    with (
+        mock.patch.object(
+            create_or_update_contact, "delay"
+        ) as mock_create_or_update_contact,
+        mock.patch(
+            "core.authentication.backends.posthog_capture"
+        ) as mock_posthog_capture,
+    ):
         klass.post_get_or_create_user(user, {}, True)
         mock_create_or_update_contact.assert_not_called()
+        mock_posthog_capture.assert_called_once_with(
+            PosthogEventName.USER_LOGIN,
+            user,
+        )
 
 
 def test_authentication_post_get_or_create_user_existing_user_to_marketing_email(
@@ -542,11 +561,20 @@ def test_authentication_post_get_or_create_user_existing_user_to_marketing_email
     settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = True
 
     klass = OIDCAuthenticationBackend()
-    with mock.patch.object(
-        create_or_update_contact, "delay"
-    ) as mock_create_or_update_contact:
+    with (
+        mock.patch.object(
+            create_or_update_contact, "delay"
+        ) as mock_create_or_update_contact,
+        mock.patch(
+            "core.authentication.backends.posthog_capture"
+        ) as mock_posthog_capture,
+    ):
         klass.post_get_or_create_user(user, {}, False)
         mock_create_or_update_contact.assert_not_called()
+        mock_posthog_capture.assert_called_once_with(
+            PosthogEventName.USER_LOGIN,
+            user,
+        )
 
 
 def test_authentication_post_get_or_create_user_existing_user_to_marketing_email_disabled(
@@ -561,8 +589,17 @@ def test_authentication_post_get_or_create_user_existing_user_to_marketing_email
     settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = False
 
     klass = OIDCAuthenticationBackend()
-    with mock.patch.object(
-        create_or_update_contact, "delay"
-    ) as mock_create_or_update_contact:
+    with (
+        mock.patch.object(
+            create_or_update_contact, "delay"
+        ) as mock_create_or_update_contact,
+        mock.patch(
+            "core.authentication.backends.posthog_capture"
+        ) as mock_posthog_capture,
+    ):
         klass.post_get_or_create_user(user, {}, False)
         mock_create_or_update_contact.assert_not_called()
+        mock_posthog_capture.assert_called_once_with(
+            PosthogEventName.USER_LOGIN,
+            user,
+        )

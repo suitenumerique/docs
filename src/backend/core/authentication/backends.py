@@ -12,6 +12,7 @@ from lasuite.oidc_login.backends import (
 )
 
 from core.models import DuplicateEmailError
+from core.utils.analytics import PosthogEventName, posthog_capture
 
 logger = logging.getLogger(__name__)
 
@@ -77,3 +78,6 @@ class OIDCAuthenticationBackend(LaSuiteOIDCAuthenticationBackend):
             create_or_update_contact.delay(
                 email=user.email, attributes={"DOCS_SOURCE": ["SIGNIN"]}
             )
+
+        if user:
+            posthog_capture(PosthogEventName.USER_LOGIN, user)

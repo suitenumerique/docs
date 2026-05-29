@@ -16,6 +16,7 @@ class PosthogEventName(StrEnum):
 
     DOC_CREATED = "doc_created"
     DOC_DELETED = "doc_deleted"
+    USER_LOGIN = "user_login"
 
 
 def posthog_capture(
