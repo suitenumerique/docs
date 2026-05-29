@@ -13,6 +13,7 @@ and this project adheres to
 - ✨(buildpack) add PaaS deployment support, tested with Scalingo #2293
 - 🔧(backend) allow configuring settings OIDC_OP_USER_ENDPOINT_FORMAT
 - ⚡️(helm) create a dedicated svc and deployment for yprovider converter #2368
+- ✨(backend) allow to leave a document #2365
 
 ### Changed
 

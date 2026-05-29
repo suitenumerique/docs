@@ -19,7 +19,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import URLValidator
-from django.db import connection, transaction
+from django.db import DatabaseError, connection, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Greatest, Left, Length
@@ -598,6 +598,8 @@ class DocumentViewSet(
         user = self.request.user
         queryset = queryset.annotate_is_favorite(user)
         queryset = queryset.annotate_user_roles(user)
+        queryset = queryset.annotate_user_has_link_trace(user)
+
         return queryset
 
     def get_response_for_queryset(self, queryset, context=None):
@@ -638,6 +640,7 @@ class DocumentViewSet(
             for parent in (
                 models.Document.objects.annotate_user_roles(self.request.user)
                 .annotate_is_favorite(self.request.user)
+                .annotate_user_has_link_trace(self.request.user)
                 .filter(path__in=missing_parent_paths)
                 .iterator()
             ):
@@ -675,7 +678,7 @@ class DocumentViewSet(
         for field in ["is_creator_me", "title", "q"]:
             queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
-        queryset = queryset.annotate_user_roles(user)
+        queryset = queryset.annotate_user_roles(user).annotate_user_has_link_trace(user)
 
         # Among the results, we may have documents that are ancestors/descendants
         # of each other. In this case we want to keep only the highest ancestors.
@@ -706,7 +709,6 @@ class DocumentViewSet(
         """
         user = self.request.user
         instance = self.get_object()
-        serializer = self.get_serializer(instance)
 
         # The `create` query generates 5 db queries which are much less efficient than an
         # `exists` query. The user will visit the document many times after the first visit
@@ -717,6 +719,11 @@ class DocumentViewSet(
         ):
             models.LinkTrace.objects.create(document=instance, user=request.user)
 
+        # To avoid N+1 query, we force the `user_has_link_trace` normally set by the
+        # queryset.annotate_user_has_link_trace method. If the user is connected, it must be True.
+        instance.user_has_link_trace = user.is_authenticated
+
+        serializer = self.get_serializer(instance)
         return drf.response.Response(serializer.data)
 
     def _apply_uploaded_file_conversion(self, serializer):
@@ -880,7 +887,7 @@ class DocumentViewSet(
         queryset = queryset.filter(id__in=favorite_documents_ids)
         queryset = queryset.filter(ancestors_deleted_at__isnull=True)
         queryset = queryset.order_by("-updated_at")
-        queryset = queryset.annotate_user_roles(user)
+        queryset = queryset.annotate_user_roles(user).annotate_user_has_link_trace(user)
         queryset = queryset.annotate(
             is_favorite=db.Value(True, output_field=db.BooleanField())
         )
@@ -922,7 +929,9 @@ class DocumentViewSet(
             deleted_at__isnull=False,
             deleted_at__gte=models.get_trashbin_cutoff(),
         )
-        queryset = queryset.annotate_user_roles(self.request.user)
+        queryset = queryset.annotate_user_roles(
+            self.request.user
+        ).annotate_user_has_link_trace(self.request.user)
 
         return self.get_response_for_queryset(queryset)
 
@@ -1174,7 +1183,7 @@ class DocumentViewSet(
         for field in ["is_creator_me", "title", "q"]:
             queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
-        queryset = queryset.annotate_user_roles(user)
+        queryset = queryset.annotate_user_roles(user).annotate_user_has_link_trace(user)
 
         # Annotate favorite status and filter if applicable as late as possible
         queryset = queryset.annotate_is_favorite(user)
@@ -1273,6 +1282,7 @@ class DocumentViewSet(
         queryset = queryset.order_by("path")
         queryset = queryset.annotate_user_roles(user)
         queryset = queryset.annotate_is_favorite(user)
+        queryset = queryset.annotate_user_has_link_trace(user)
 
         # Pass ancestors' links paths mapping to the serializer as a context variable
         # in order to allow saving time while computing abilities on the instance
@@ -1590,6 +1600,7 @@ class DocumentViewSet(
             .filter(ancestors_deleted_at__isnull=True)
             .annotate_user_roles(user)
             .annotate_is_favorite(user)
+            .annotate_user_has_link_trace(user)
         )
 
         queryset = filterset.filter_queryset(queryset)
@@ -2498,6 +2509,36 @@ class DocumentViewSet(
                 "updated_at": document.updated_at,
             }
         )
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
+    )
+    def leave(self, request, *args, **kwargs):
+        """
+        Remove document_accesses if exists and the link_trace related to the current document
+        for the connected user.
+        """
+        # Check for permissions.
+        document = self.get_object()
+
+        try:
+            with transaction.atomic():
+                models.DocumentAccess.objects.filter(
+                    document__path__startswith=document.path, user=request.user
+                ).delete()
+                models.LinkTrace.objects.filter(
+                    document__path__startswith=document.path, user=request.user
+                ).delete()
+        except DatabaseError:
+            logger.error(
+                "Impossible to leave document %s for user %s",
+                str(document.id),
+                str(request.user.id),
+            )
+            raise
+
+        return drf.response.Response(status=drf.status.HTTP_204_NO_CONTENT)
 
 
 class DocumentAccessViewSet(

@@ -173,6 +173,7 @@ def test_models_documents_get_abilities_forbidden(
         "invite_owner": False,
         "content_patch": False,
         "content_retrieve": False,
+        "leave": False,
         "media_auth": False,
         "media_check": False,
         "move": False,
@@ -192,7 +193,7 @@ def test_models_documents_get_abilities_forbidden(
         "versions_retrieve": False,
         "search": False,
     }
-    nb_queries = 1 if is_authenticated else 0
+    nb_queries = 2 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
         assert document.get_abilities(user) == expected_abilities
     document.soft_delete()
@@ -247,6 +248,7 @@ def test_models_documents_get_abilities_reader(
         },
         "content_patch": False,
         "content_retrieve": True,
+        "leave": False,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -260,7 +262,7 @@ def test_models_documents_get_abilities_reader(
         "versions_retrieve": False,
         "search": True,
     }
-    nb_queries = 1 if is_authenticated else 0
+    nb_queries = 2 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
         assert document.get_abilities(user) == expected_abilities
 
@@ -320,6 +322,7 @@ def test_models_documents_get_abilities_commenter(
         },
         "content_patch": False,
         "content_retrieve": True,
+        "leave": False,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -333,7 +336,7 @@ def test_models_documents_get_abilities_commenter(
         "versions_retrieve": False,
         "search": True,
     }
-    nb_queries = 1 if is_authenticated else 0
+    nb_queries = 2 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
         assert document.get_abilities(user) == expected_abilities
 
@@ -390,6 +393,7 @@ def test_models_documents_get_abilities_editor(
         },
         "content_patch": True,
         "content_retrieve": True,
+        "leave": False,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -403,7 +407,7 @@ def test_models_documents_get_abilities_editor(
         "versions_retrieve": False,
         "search": True,
     }
-    nb_queries = 1 if is_authenticated else 0
+    nb_queries = 2 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
         assert document.get_abilities(user) == expected_abilities
     document.soft_delete()
@@ -449,6 +453,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         },
         "content_patch": True,
         "content_retrieve": True,
+        "leave": False,
         "media_auth": True,
         "media_check": True,
         "move": True,
@@ -494,6 +499,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         },
         "content_patch": False,
         "content_retrieve": True,
+        "leave": False,
         "media_auth": False,
         "media_check": False,
         "move": False,
@@ -543,6 +549,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         },
         "content_patch": True,
         "content_retrieve": True,
+        "leave": False,
         "media_auth": True,
         "media_check": True,
         "move": True,
@@ -602,6 +609,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         },
         "content_patch": True,
         "content_retrieve": True,
+        "leave": True,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -669,6 +677,7 @@ def test_models_documents_get_abilities_reader_user(
         },
         "content_patch": access_from_link,
         "content_retrieve": True,
+        "leave": True,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -737,6 +746,7 @@ def test_models_documents_get_abilities_commenter_user(
         },
         "content_patch": access_from_link,
         "content_retrieve": True,
+        "leave": True,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -801,6 +811,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         },
         "content_patch": False,
         "content_retrieve": True,
+        "leave": True,
         "media_auth": True,
         "media_check": True,
         "move": False,

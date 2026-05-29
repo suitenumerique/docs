@@ -852,6 +852,22 @@ class DocumentQuerySet(MP_NodeQuerySet):
             user_roles=models.Value([], output_field=output_field),
         )
 
+    def annotate_user_has_link_trace(self, user):
+        """
+        Annotate document queryset with a boolean to know if the current user
+        has a link_trace on the current document.
+        """
+
+        if user.is_authenticated:
+            link_trace_exists_subquery = LinkTrace.objects.filter(
+                document_id=models.OuterRef("pk"), user=user
+            )
+            return self.annotate(
+                user_has_link_trace=models.Exists(link_trace_exists_subquery)
+            )
+
+        return self.annotate(user_has_link_trace=models.Value(False))
+
 
 class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
     """
@@ -1150,6 +1166,17 @@ class Document(MP_Node, BaseModel):
 
         return RoleChoices.max(*roles)
 
+    def has_link_trace(self, user):
+        """Return if the user has a link trace on this document."""
+
+        if not user.is_authenticated:
+            return False
+
+        try:
+            return self.user_has_link_trace
+        except AttributeError:
+            return LinkTrace.objects.filter(document=self, user=user).exists()
+
     def compute_ancestors_links_paths_mapping(self):
         """
         Compute the ancestors links for the current document up to the highest readable ancestor.
@@ -1227,7 +1254,7 @@ class Document(MP_Node, BaseModel):
         """Actual link role on the document."""
         return self.computed_link_definition["link_role"]
 
-    def get_abilities(self, user):
+    def get_abilities(self, user):  # pylint: disable=too-many-locals
         """
         Compute and return abilities for a given user on the document.
         """
@@ -1247,6 +1274,14 @@ class Document(MP_Node, BaseModel):
         can_update_from_access = (
             is_owner_or_admin or role == RoleChoices.EDITOR
         ) and not is_deleted
+
+        # compute can_leave
+        # A user can leave a document if it has non privileged role on the document or it has
+        # access to it with a link_trace
+        can_leave = user.is_authenticated and (
+            (has_access_role and not is_owner_or_admin)
+            or (not has_access_role and self.has_link_trace(user))
+        )
 
         link_select_options = LinkReachChoices.get_select_options(
             **self.ancestors_link_definition
@@ -1312,6 +1347,7 @@ class Document(MP_Node, BaseModel):
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
             "invite_owner": is_owner and not is_deleted,
+            "leave": can_leave,
             "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
             "restore": is_owner,
