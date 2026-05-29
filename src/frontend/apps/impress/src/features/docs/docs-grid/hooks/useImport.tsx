@@ -3,7 +3,7 @@ import {
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
 import { t } from 'i18next';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 import { useConfig } from '@/core';
@@ -61,12 +61,37 @@ export const useImport = ({ onDragOver }: UseImportProps) => {
     );
   }, [config?.CONVERSION_FILE_EXTENSIONS_ALLOWED]);
 
+  const toastInvalidFileType = useCallback(
+    (fileName: string) => {
+      const allowedExtensions = Object.values(ACCEPT).flat().join(', ');
+      toast(
+        t(
+          allowedExtensions
+            ? `The document "{{documentName}}" import has failed (only {{allowedExtensions}} files are allowed)`
+            : `The document "{{documentName}}" import has failed`,
+          {
+            documentName: fileName,
+            allowedExtensions,
+          },
+        ),
+        VariantType.ERROR,
+      );
+    },
+    [ACCEPT, toast],
+  );
+
   const { getRootProps, getInputProps, open } = useDropzone({
     accept: ACCEPT,
     maxSize: MAX_FILE_SIZE.bytes,
     onDrop(acceptedFiles) {
       onDragOver(false);
+      const allowedExtensions = Object.values(ACCEPT).flat();
       for (const file of acceptedFiles) {
+        const ext = `.${file.name.split('.').pop()?.toLowerCase()}`;
+        if (!allowedExtensions.includes(ext)) {
+          toastInvalidFileType(file.name);
+          continue;
+        }
         importDoc([file, file.type]);
       }
     },
@@ -94,20 +119,7 @@ export const useImport = ({ onDragOver }: UseImportProps) => {
             VariantType.ERROR,
           );
         } else {
-          const allowedExtensions = Object.values(ACCEPT).flat().join(', ');
-
-          toast(
-            t(
-              allowedExtensions
-                ? `The document "{{documentName}}" import has failed (only {{allowedExtensions}} files are allowed)`
-                : `The document "{{documentName}}" import has failed`,
-              {
-                documentName: rejection.file.name,
-                allowedExtensions,
-              },
-            ),
-            VariantType.ERROR,
-          );
+          toastInvalidFileType(rejection.file.name);
         }
       });
     },

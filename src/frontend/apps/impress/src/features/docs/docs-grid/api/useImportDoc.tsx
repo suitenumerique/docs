@@ -33,7 +33,7 @@ export const ContentTypes: {
   },
   Markdown: {
     mime: 'text/markdown',
-    extensions: ['.md', '.markdown'],
+    extensions: ['.md'],
   },
   OctetStream: {
     mime: 'application/octet-stream',
