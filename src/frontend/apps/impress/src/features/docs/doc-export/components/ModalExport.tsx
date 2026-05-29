@@ -14,7 +14,13 @@ import { DocumentProps, pdf } from '@react-pdf/renderer';
 import jsonemoji from 'emoji-datasource-apple' with { type: 'json' };
 import i18next from 'i18next';
 import JSZip from 'jszip';
-import { cloneElement, isValidElement, useState } from 'react';
+import {
+  cloneElement,
+  isValidElement,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -59,6 +65,16 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   );
   const { untitledDocument } = useTrans();
   const mediaUrl = useMediaUrl();
+  const formatSelectRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const toggleButton = formatSelectRef.current?.querySelector<HTMLElement>(
+      '.c__select__inner__actions__open',
+    );
+
+    toggleButton?.setAttribute('aria-hidden', 'true');
+    toggleButton?.setAttribute('tabindex', '-1');
+  });
 
   const formatOptions = [
     { label: t('PDF'), value: DocDownloadFormat.PDF },
@@ -271,16 +287,18 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             'Export your document to print or download in .docx, .odt, .pdf or .html(zip) format.',
           )}
         </Text>
-        <Select
-          clearable={false}
-          fullWidth
-          label={t('Format')}
-          options={formatOptions}
-          value={format}
-          onChange={(options) =>
-            setFormat(options.target.value as DocDownloadFormat)
-          }
-        />
+        <Box ref={formatSelectRef}>
+          <Select
+            clearable={false}
+            fullWidth
+            label={t('Format')}
+            options={formatOptions}
+            value={format}
+            onChange={(options) =>
+              setFormat(options.target.value as DocDownloadFormat)
+            }
+          />
+        </Box>
 
         {isExporting && (
           <Box
