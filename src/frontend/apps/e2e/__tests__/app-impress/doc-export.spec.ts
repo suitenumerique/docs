@@ -37,6 +37,11 @@ test.describe('Doc Export', () => {
       ),
     ).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Format' })).toBeVisible();
+    const formatSelectToggle = page.locator(
+      '.--docs--modal-export-content .c__select__inner__actions__open',
+    );
+    await expect(formatSelectToggle).toHaveAttribute('aria-hidden', 'true');
+    await expect(formatSelectToggle).toHaveAttribute('tabindex', '-1');
     await expect(
       page.getByRole('button', {
         name: 'Close the download modal',
