@@ -17,11 +17,29 @@ import {
 } from '@/api';
 import { Doc, DocsResponse, KEY_LIST_DOC } from '@/docs/doc-management';
 
-export enum ContentTypes {
-  Docx = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  Markdown = 'text/markdown',
-  OctetStream = 'application/octet-stream',
+interface ContentType {
+  mime: string;
+  extensions: string[];
 }
+
+export const ContentTypes: {
+  Docx: ContentType;
+  Markdown: ContentType;
+  OctetStream: ContentType;
+} = {
+  Docx: {
+    mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    extensions: ['.docx'],
+  },
+  Markdown: {
+    mime: 'text/markdown',
+    extensions: ['.md'],
+  },
+  OctetStream: {
+    mime: 'application/octet-stream',
+    extensions: [],
+  },
+};
 
 export const importDoc = async ([file, mimeType]: [
   File,

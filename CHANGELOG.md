@@ -23,6 +23,7 @@ and this project adheres to
 
 - 🐛(docs) run migration 0027 without superuser role
 - 🐛(backend) prevent admins/owners from overwriting other users comments
+- 🐛(y-provider) return empty output when converting empty Yjs document
 - 🐛(backend) use computed_link_reach in handle_onboarding_document #2305
 
 ### Changed
@@ -94,6 +95,10 @@ and this project adheres to
 
 - 🔥(backend) remove deprecated descendants endpoint #2243
 - 🔥(backend) remove content in document responses #2171
+
+### Changed
+
+- ♻️(frontend) centralize allowed conversion formats in ContentTypes #2215
 
 ## [v4.8.6] - 2026-04-08
 
