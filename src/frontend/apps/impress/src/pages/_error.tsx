@@ -42,7 +42,11 @@ Error.getInitialProps = async (contextData: NextPageContext) => {
 };
 
 Error.getLayout = function getLayout(page: ReactElement) {
-  return <PageLayout withFooter={false}>{page}</PageLayout>;
+  return (
+    <PageLayout withFooter={false} withLeftPanel={false}>
+      {page}
+    </PageLayout>
+  );
 };
 
 export default Error;
