@@ -3206,7 +3206,14 @@ class CommentViewSet(
     def perform_create(self, serializer):
         """Attach the request user as the comment author."""
         user = self.request.user if self.request.user.is_authenticated else None
-        serializer.save(user=user)
+        comment = serializer.save(user=user)
+
+        posthog_capture(
+            PosthogEventName.COMMENT_CREATED,
+            user,
+            {"comment_id": str(comment.id), "thread_id": str(comment.thread_id)},
+            document=self.get_document_or_404(),
+        )
 
     @drf.decorators.action(
         detail=True,

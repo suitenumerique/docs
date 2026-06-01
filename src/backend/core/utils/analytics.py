@@ -29,6 +29,9 @@ class PosthogEventName(StrEnum):
     # Thread
     THREAD_CREATED = "thread_created"
 
+    # Comment
+    COMMENT_CREATED = "comment_created"
+
     # User
     USER_LOGIN = "user_login"
 

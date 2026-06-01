@@ -1,6 +1,7 @@
 """Test API for comments on documents."""
 
 import random
+from unittest import mock
 
 from django.contrib.auth.models import AnonymousUser
 
@@ -8,6 +9,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -184,11 +186,20 @@ def test_create_comment_anonymous_user_public_document():
     )
     thread = factories.ThreadFactory(document=document)
     client = APIClient()
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/",
-        {"body": "test"},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/",
+            {"body": "test"},
+        )
     assert response.status_code == 201
+
+    # The comment creation should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.COMMENT_CREATED,
+        None,
+        {"comment_id": response.json()["id"], "thread_id": str(thread.id)},
+        document=document,
+    )
 
     assert response.json() == {
         "id": str(response.json()["id"]),
@@ -231,11 +242,20 @@ def test_create_comment_authenticated_user_accessible_document():
     thread = factories.ThreadFactory(document=document)
     client = APIClient()
     client.force_login(user)
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/",
-        {"body": "test"},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/",
+            {"body": "test"},
+        )
     assert response.status_code == 201
+
+    # The comment creation should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.COMMENT_CREATED,
+        user,
+        {"comment_id": response.json()["id"], "thread_id": str(thread.id)},
+        document=document,
+    )
 
     assert response.json() == {
         "id": str(response.json()["id"]),
