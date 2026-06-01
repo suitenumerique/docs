@@ -22,6 +22,7 @@ class PosthogEventName(StrEnum):
     DOC_FAVORITED = "doc_favorited"
     DOC_AI_ACTION = "doc_ai_action"
     DOC_MOVED = "doc_moved"
+    DOC_LEFT = "doc_left"
 
     # DocumentAccess
     DOC_ACCESS_CREATED = "doc_access_created"

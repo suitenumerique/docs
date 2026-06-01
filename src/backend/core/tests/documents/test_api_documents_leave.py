@@ -1,10 +1,13 @@
 """Test for the leave document API"""
 
+from unittest import mock
+
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -83,9 +86,18 @@ def test_api_documents_leave_connected_user_with_link_trace(link_reach):
 
     client = APIClient()
     client.force_login(user)
-    response = client.post(f"/api/v1.0/documents/{document.id!s}/leave/")
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(f"/api/v1.0/documents/{document.id!s}/leave/")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    # Leaving the document should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_LEFT,
+        user,
+        {},
+        document=document,
+    )
 
     assert not models.LinkTrace.objects.filter(document=document, user=user).exists()
     assert models.LinkTrace.objects.count() == 3
@@ -116,9 +128,18 @@ def test_api_documents_leave_connected_user_with_access(role, link_reach):
 
     client = APIClient()
     client.force_login(user)
-    response = client.post(f"/api/v1.0/documents/{document.id!s}/leave/")
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(f"/api/v1.0/documents/{document.id!s}/leave/")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    # Leaving the document should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_LEFT,
+        user,
+        {},
+        document=document,
+    )
 
     assert not models.DocumentAccess.objects.filter(
         document=document, user=user
@@ -189,9 +210,18 @@ def test_api_documents_leave_connected_user_with_access_and_link_trace(
 
     client = APIClient()
     client.force_login(user)
-    response = client.post(f"/api/v1.0/documents/{document.id!s}/leave/")
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(f"/api/v1.0/documents/{document.id!s}/leave/")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    # Leaving the document should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_LEFT,
+        user,
+        {},
+        document=document,
+    )
 
     assert not models.DocumentAccess.objects.filter(
         document=document, user=user
@@ -231,9 +261,18 @@ def test_api_documents_leave_connected_accessing_multiple_documents_leave_only_o
 
     client = APIClient()
     client.force_login(user)
-    response = client.post(f"/api/v1.0/documents/{document.id!s}/leave/")
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(f"/api/v1.0/documents/{document.id!s}/leave/")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    # Leaving the document should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_LEFT,
+        user,
+        {},
+        document=document,
+    )
 
     assert not models.DocumentAccess.objects.filter(
         document=document, user=user
@@ -281,9 +320,18 @@ def test_api_documents_leave_connected_leave_also_sub_documents(role, link_reach
 
     client = APIClient()
     client.force_login(user)
-    response = client.post(f"/api/v1.0/documents/{document.id!s}/leave/")
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(f"/api/v1.0/documents/{document.id!s}/leave/")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    # Leaving the document should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_LEFT,
+        user,
+        {},
+        document=document,
+    )
 
     assert not models.DocumentAccess.objects.filter(
         document=document, user=user

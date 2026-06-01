@@ -2602,6 +2602,8 @@ class DocumentViewSet(
             )
             raise
 
+        posthog_capture(PosthogEventName.DOC_LEFT, request.user, {}, document=document)
+
         return drf.response.Response(status=drf.status.HTTP_204_NO_CONTENT)
 
 
