@@ -2217,7 +2217,7 @@ class DocumentViewSet(
         This endpoint forwards requests to the AI provider and returns the complete response.
         """
         # Check permissions first
-        self.get_object()
+        document = self.get_object()
 
         if not settings.AI_FEATURE_ENABLED or not settings.AI_FEATURE_BLOCKNOTE_ENABLED:
             raise ValidationError("AI feature is not enabled.")
@@ -2232,6 +2232,13 @@ class DocumentViewSet(
                 {"detail": "Invalid submitted payload"},
                 status=drf.status.HTTP_400_BAD_REQUEST,
             )
+
+        posthog_capture(
+            PosthogEventName.DOC_AI_ACTION,
+            request.user,
+            {"method": "ai_proxy"},
+            document=document,
+        )
 
         return StreamingHttpResponse(
             stream,
@@ -2258,7 +2265,7 @@ class DocumentViewSet(
         Return JSON response with the processed text.
         """
         # Check permissions first
-        self.get_object()
+        document = self.get_object()
 
         if not settings.AI_FEATURE_ENABLED or not settings.AI_FEATURE_LEGACY_ENABLED:
             raise ValidationError("AI feature is not enabled.")
@@ -2270,6 +2277,13 @@ class DocumentViewSet(
         action = serializer.validated_data["action"]
 
         response = get_legacy_ai_service().transform(text, action)
+
+        posthog_capture(
+            PosthogEventName.DOC_AI_ACTION,
+            request.user,
+            {"method": "ai_transform", "action": action},
+            document=document,
+        )
 
         return drf.response.Response(response, status=drf.status.HTTP_200_OK)
 
@@ -2289,7 +2303,7 @@ class DocumentViewSet(
         Return JSON response with the translated text.
         """
         # Check permissions first
-        self.get_object()
+        document = self.get_object()
 
         if not settings.AI_FEATURE_ENABLED or not settings.AI_FEATURE_LEGACY_ENABLED:
             raise ValidationError("AI feature is not enabled.")
@@ -2301,6 +2315,13 @@ class DocumentViewSet(
         language = serializer.validated_data["language"]
 
         response = get_legacy_ai_service().translate(text, language)
+
+        posthog_capture(
+            PosthogEventName.DOC_AI_ACTION,
+            request.user,
+            {"method": "ai_translate", "language": language},
+            document=document,
+        )
 
         return drf.response.Response(response, status=drf.status.HTTP_200_OK)
 

@@ -3,8 +3,10 @@ Test AI proxy API endpoint for users in impress's core app.
 """
 
 import random
+from unittest import mock
 from unittest.mock import patch
 
+from django.contrib.auth.models import AnonymousUser
 from django.test import override_settings
 
 import pytest
@@ -13,6 +15,7 @@ from rest_framework.test import APIClient
 from core import factories
 from core.services.ai_services.blocknote import configure_pydantic_model_provider
 from core.tests.conftest import TEAM, USER, VIA
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -78,11 +81,12 @@ def test_api_documents_ai_proxy_anonymous_success(mock_stream):
     mock_stream.return_value = iter(["data: chunk1\n", "data: chunk2\n"])
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-proxy/"
-    response = APIClient().post(
-        url,
-        b"{}",
-        content_type="application/json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = APIClient().post(
+            url,
+            b"{}",
+            content_type="application/json",
+        )
 
     assert response.status_code == 200
     assert response["Content-Type"] == "text/event-stream"
@@ -93,6 +97,14 @@ def test_api_documents_ai_proxy_anonymous_success(mock_stream):
     assert "chunk1" in content
     assert "chunk2" in content
     mock_stream.assert_called_once()
+
+    # The AI action should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_AI_ACTION,
+        AnonymousUser(),
+        {"method": "ai_proxy"},
+        document=document,
+    )
 
 
 @override_settings(AI_ALLOW_REACH_FROM=random.choice(["authenticated", "restricted"]))
@@ -167,15 +179,24 @@ def test_api_documents_ai_proxy_authenticated_success(mock_stream, reach, role):
     mock_stream.return_value = iter(["data: response\n"])
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-proxy/"
-    response = client.post(
-        url,
-        b"{}",
-        content_type="application/json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            url,
+            b"{}",
+            content_type="application/json",
+        )
 
     assert response.status_code == 200
     assert response["Content-Type"] == "text/event-stream"
     mock_stream.assert_called_once()
+
+    # The AI action should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_AI_ACTION,
+        user,
+        {"method": "ai_proxy"},
+        document=document,
+    )
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -227,11 +248,12 @@ def test_api_documents_ai_proxy_success(mock_stream, via, role, mock_user_teams)
     mock_stream.return_value = iter(["data: success\n"])
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-proxy/"
-    response = client.post(
-        url,
-        b"{}",
-        content_type="application/json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            url,
+            b"{}",
+            content_type="application/json",
+        )
 
     assert response.status_code == 200
     assert response["Content-Type"] == "text/event-stream"
@@ -241,6 +263,14 @@ def test_api_documents_ai_proxy_success(mock_stream, via, role, mock_user_teams)
     content = b"".join(response.streaming_content).decode()
     assert "success" in content
     mock_stream.assert_called_once()
+
+    # The AI action should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_AI_ACTION,
+        user,
+        {"method": "ai_proxy"},
+        document=document,
+    )
 
 
 @pytest.mark.parametrize(

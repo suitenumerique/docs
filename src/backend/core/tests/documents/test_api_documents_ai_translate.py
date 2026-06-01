@@ -2,7 +2,10 @@
 Test AI translate API endpoint for users in impress's core app.
 """
 
+from unittest import mock
 from unittest.mock import MagicMock, patch
+
+from django.contrib.auth.models import AnonymousUser
 
 import pytest
 from rest_framework.test import APIClient
@@ -10,6 +13,7 @@ from rest_framework.test import APIClient
 from core import factories
 from core.services.ai_services.legacy import get_legacy_ai_service
 from core.tests.conftest import TEAM, USER, VIA
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -104,7 +108,8 @@ def test_api_documents_ai_translate_anonymous_success(mock_create, settings):
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
-    response = APIClient().post(url, {"text": "Hello", "language": "es"})
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = APIClient().post(url, {"text": "Hello", "language": "es"})
 
     assert response.status_code == 200
     assert response.json() == {"answer": "Ola"}
@@ -124,6 +129,14 @@ def test_api_documents_ai_translate_anonymous_success(mock_create, settings):
             },
             {"role": "user", "content": "Hello"},
         ],
+    )
+
+    # The AI action should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_AI_ACTION,
+        AnonymousUser(),
+        {"method": "ai_translate", "language": "es"},
+        document=document,
     )
 
 
@@ -207,7 +220,8 @@ def test_api_documents_ai_translate_authenticated_success(mock_create, reach, ro
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
-    response = client.post(url, {"text": "Hello", "language": "es-co"})
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(url, {"text": "Hello", "language": "es-co"})
 
     assert response.status_code == 200
     assert response.json() == {"answer": "Salut"}
@@ -228,6 +242,14 @@ def test_api_documents_ai_translate_authenticated_success(mock_create, reach, ro
             },
             {"role": "user", "content": "Hello"},
         ],
+    )
+
+    # The AI action should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_AI_ACTION,
+        user,
+        {"method": "ai_translate", "language": "es-co"},
+        document=document,
     )
 
 
@@ -286,7 +308,8 @@ def test_api_documents_ai_translate_success(mock_create, via, role, mock_user_te
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
-    response = client.post(url, {"text": "Hello", "language": "es-co"})
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(url, {"text": "Hello", "language": "es-co"})
 
     assert response.status_code == 200
     assert response.json() == {"answer": "Salut"}
@@ -307,6 +330,14 @@ def test_api_documents_ai_translate_success(mock_create, via, role, mock_user_te
             },
             {"role": "user", "content": "Hello"},
         ],
+    )
+
+    # The AI action should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_AI_ACTION,
+        user,
+        {"method": "ai_translate", "language": "es-co"},
+        document=document,
     )
 
 
