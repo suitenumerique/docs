@@ -8,6 +8,7 @@ import { SkeletonLine } from './SkeletionUI';
 export const DocEditorSkeleton = () => {
   return (
     <>
+      <SkeletonEditorFloatingBar />
       {/* Main Editor Container */}
       <Box
         $maxWidth="868px"
@@ -15,7 +16,6 @@ export const DocEditorSkeleton = () => {
         $height="100%"
         className="--docs--doc-editor-skeleton"
       >
-        <SkeletonEditorFloatingBar />
         <SkeletonEditorHeader />
         <SkeletonEditorCore />
       </Box>
