@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 
 import { useCunninghamTheme } from '@/cunningham';
 import { User, avatarUrlFromName } from '@/features/auth';
-import { useEditorStore } from '@/features/docs/doc-editor/stores';
 import { Doc, useProviderStore } from '@/features/docs/doc-management';
 
-import { DocsThreadStore } from './DocsThreadStore';
-import { DocsThreadStoreAuth } from './DocsThreadStoreAuth';
+import { DocsThreadStore } from '../api/DocsThreadStore';
+import { DocsThreadStoreAuth } from '../api/DocsThreadStoreAuth';
+import { useThreadStore } from '../stores/useThreadStore';
 
 export function useComments(
   docId: Doc['id'],
@@ -17,7 +17,7 @@ export function useComments(
   const { provider } = useProviderStore();
   const { t } = useTranslation();
   const { themeTokens } = useCunninghamTheme();
-  const { setThreadStore } = useEditorStore();
+  const { setThreadStore } = useThreadStore();
 
   const threadStore = useMemo(() => {
     return new DocsThreadStore(

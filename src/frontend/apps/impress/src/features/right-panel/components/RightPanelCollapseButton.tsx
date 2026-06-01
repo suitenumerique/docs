@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 
-import { CommentSideBarButton } from '@/features/docs/doc-editor/components/comments/CommentSideBar';
-import { useEditorStore } from '@/features/docs/doc-editor/stores/useEditorStore';
-import { useHeadingStore } from '@/features/docs/doc-editor/stores/useHeadingStore';
-import { TableContentSideBarButton } from '@/features/docs/doc-table-content/components/TableContentSideBar';
+import { CommentSideBarButton } from '@/docs/doc-comments/components/CommentSideBar';
+import { useThreadStore } from '@/docs/doc-comments/stores/useThreadStore';
+import { useHeadingStore } from '@/docs/doc-editor/stores/useHeadingStore';
+import { TableContentSideBarButton } from '@/docs/doc-table-content/components/TableContentSideBar';
 
 export const RightPanelCollapseButton = () => {
-  const { threadStore } = useEditorStore();
+  const { threadStore } = useThreadStore();
   const [hasThreads, setHasThreads] = useState(
     !!threadStore?.getThreads().size,
   );

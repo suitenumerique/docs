@@ -2,10 +2,10 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
 
-import { COMMENT_UPDATE_ORIGIN } from '@/docs/doc-editor/components/comments/DocsThreadStore';
 import { useDocContentUpdate } from '@/docs/doc-management/api/useDocContentUpdate';
 import { useProviderStore } from '@/docs/doc-management/stores/useProviderStore';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning/api/useDocVersions';
+import { COMMENT_UPDATE_ORIGIN } from '@/features/docs/doc-comments/api/DocsThreadStore';
 import { useIsOffline } from '@/features/service-worker';
 import { toBase64 } from '@/utils/string';
 import { isFirefox } from '@/utils/userAgent';

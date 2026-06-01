@@ -5,16 +5,16 @@ import * as Y from 'yjs';
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Doc } from '@/features/docs/doc-management';
 
-import { useEditorStore } from '../../stores';
-
-import { DocsThreadStoreAuth } from './DocsThreadStoreAuth';
+import { useEditorStore } from '../../doc-editor/stores';
 import {
   ClientCommentData,
   ClientThreadData,
   ServerComment,
   ServerReaction,
   ServerThread,
-} from './types';
+} from '../types';
+
+import { DocsThreadStoreAuth } from './DocsThreadStoreAuth';
 
 type ServerThreadListResponse = ServerThread[];
 

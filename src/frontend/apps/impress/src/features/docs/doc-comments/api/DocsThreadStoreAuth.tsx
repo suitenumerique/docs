@@ -1,6 +1,6 @@
 import { ThreadStoreAuth } from '@blocknote/core/comments';
 
-import { ClientCommentData, ClientThreadData } from './types';
+import { ClientCommentData, ClientThreadData } from '../types';
 
 export class DocsThreadStoreAuth extends ThreadStoreAuth {
   constructor(

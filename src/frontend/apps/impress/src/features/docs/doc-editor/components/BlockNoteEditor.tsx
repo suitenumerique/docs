@@ -27,6 +27,11 @@ import * as Y from 'yjs';
 import { Box, TextErrors } from '@/components';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
+import {
+  DocsCommentsStyle,
+  useCommentSidebarStore,
+  useComments,
+} from '@/docs/doc-comments';
 import { Doc } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
@@ -48,11 +53,6 @@ import { randomColor, sanitizeColor } from '../utils';
 import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import {
-  DocsCommentsStyle,
-  useCommentSidebarStore,
-  useComments,
-} from './comments/';
 import { CalloutBlock, PdfBlock, UploadLoaderBlock } from './custom-blocks';
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;

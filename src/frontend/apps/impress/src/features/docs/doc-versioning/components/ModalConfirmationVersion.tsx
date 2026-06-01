@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
 import { Box, Text } from '@/components';
-import { useEditorStore } from '@/docs/doc-editor/stores';
+import { useThreadStore } from '@/docs/doc-comments/stores/useThreadStore';
 import { Doc, base64ToYDoc, useProviderStore } from '@/docs/doc-management/';
 import { useDocContentUpdate } from '@/docs/doc-management/api/useDocContentUpdate';
 
@@ -44,7 +44,7 @@ export const ModalConfirmationVersion = ({
   const { t } = useTranslation();
   const { toast } = useToastProvider();
   const { provider } = useProviderStore();
-  const { threadStore } = useEditorStore();
+  const { threadStore } = useThreadStore();
   const { mutate: updateDocContent } = useDocContentUpdate({
     listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
     onSuccess: () => {

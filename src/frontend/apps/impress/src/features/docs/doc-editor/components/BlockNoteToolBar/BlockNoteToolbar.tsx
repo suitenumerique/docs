@@ -10,10 +10,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
+import { CommentToolbarButton } from '@/docs/doc-comments/components/CommentToolbarButton';
 
 import BlockNoteAI from '../AI/';
 import { AIGroupButton } from '../AI/AIButtonMIT';
-import { CommentToolbarButton } from '../comments/CommentToolbarButton';
 import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
 import { FileDownloadButton } from './FileDownloadButton';

@@ -15,7 +15,7 @@ import { Box, ButtonCloseModal, Text } from '@/components/';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 import { useFocusStore } from '@/stores';
 
-import { useCommentSidebarStore } from './useCommentSidebarStore';
+import { useCommentSidebarStore } from '../stores/useCommentSidebarStore';
 
 interface CommentSideBarProps {
   onClose: () => void;

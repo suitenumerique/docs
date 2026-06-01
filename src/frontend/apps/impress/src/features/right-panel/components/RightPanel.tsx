@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
-import { CommentSideBar } from '@/features/docs/doc-editor/components/comments/CommentSideBar';
+import { CommentSideBar } from '@/features/docs/doc-comments/components/CommentSideBar';
 import { useDocStore, useProviderStore } from '@/features/docs/doc-management';
 import { TableContentSideBar } from '@/features/docs/doc-table-content/components/TableContentSideBar';
 import { HEADER_HEIGHT } from '@/features/header';

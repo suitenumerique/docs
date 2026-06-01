@@ -19,12 +19,6 @@ import { Box, Icon } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useDocStore } from '@/features/docs/doc-management';
 
-import {
-  DocsBlockSchema,
-  DocsInlineContentSchema,
-  DocsStyleSchema,
-} from '../../types';
-
 export const CommentToolbarButton = () => {
   const Components = useComponentsContext();
   const { currentDoc } = useDocStore();
@@ -35,12 +29,7 @@ export const CommentToolbarButton = () => {
   >;
   const { store } = useExtension(FormattingToolbarExtension);
 
-  const editor = useBlockNoteEditor<
-    DocsBlockSchema,
-    DocsInlineContentSchema,
-    DocsStyleSchema
-  >();
-
+  const editor = useBlockNoteEditor();
   const selectedBlocks = useSelectedBlocks(editor);
 
   const show = useMemo(() => {
