@@ -1076,6 +1076,16 @@ class DocumentViewSet(
                     defaults={"role": models.RoleChoices.OWNER},
                 )
 
+        posthog_capture(
+            PosthogEventName.DOC_MOVED,
+            user,
+            {
+                "position": position,
+                "targeted_document_id": str(target_document_id),
+            },
+            document=document,
+        )
+
         return drf.response.Response(
             {"message": "Document moved successfully."}, status=status.HTTP_200_OK
         )

@@ -3,6 +3,7 @@ Test moving documents within the document tree via an detail action API endpoint
 """
 
 import random
+from unittest import mock
 from uuid import uuid4
 
 from django.utils import timezone
@@ -11,6 +12,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import enums, factories, models
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -144,10 +146,11 @@ def test_api_documents_move_authenticated_target_roles_mocked(
     models.DocumentAccess.objects.create(document=target, user=user, role=target_role)
     target_children = factories.DocumentFactory.create_batch(2, parent=target)
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": position},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={"target_document_id": str(target.id), "position": position},
+        )
 
     document.refresh_from_db()
 
@@ -160,6 +163,14 @@ def test_api_documents_move_authenticated_target_roles_mocked(
     ):
         assert response.status_code == 200
         assert response.json() == {"message": "Document moved successfully."}
+
+        # The move should be tracked in PostHog
+        mock_capture.assert_called_once_with(
+            PosthogEventName.DOC_MOVED,
+            user,
+            {"position": position, "targeted_document_id": str(target.id)},
+            document=document,
+        )
 
         match position:
             case "first-child":
@@ -207,6 +218,9 @@ def test_api_documents_move_authenticated_target_roles_mocked(
         )
         assert document.is_root() is True
 
+        # No event should be tracked when the move is not permitted
+        mock_capture.assert_not_called()
+
 
 def test_api_documents_move_authenticated_no_owner_user_and_team():
     """
@@ -226,14 +240,23 @@ def test_api_documents_move_authenticated_no_owner_user_and_team():
     child = factories.DocumentFactory(parent=document)
     target = factories.DocumentFactory()
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": "first-sibling"},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={"target_document_id": str(target.id), "position": "first-sibling"},
+        )
 
     assert response.status_code == 200
     assert response.json() == {"message": "Document moved successfully."}
     assert list(target.get_siblings()) == [document, parent, target]
+
+    # The move should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_MOVED,
+        user,
+        {"position": "first-sibling", "targeted_document_id": str(target.id)},
+        document=document,
+    )
 
     document.refresh_from_db()
     assert list(document.get_children()) == [child]
@@ -260,14 +283,23 @@ def test_api_documents_move_authenticated_no_owner_same_user():
     child = factories.DocumentFactory(parent=document)
     target = factories.DocumentFactory()
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": "first-sibling"},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={"target_document_id": str(target.id), "position": "first-sibling"},
+        )
 
     assert response.status_code == 200
     assert response.json() == {"message": "Document moved successfully."}
     assert list(target.get_siblings()) == [document, parent, target]
+
+    # The move should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_MOVED,
+        user,
+        {"position": "first-sibling", "targeted_document_id": str(target.id)},
+        document=document,
+    )
 
     document.refresh_from_db()
     assert list(document.get_children()) == [child]
@@ -293,14 +325,23 @@ def test_api_documents_move_authenticated_no_owner_same_team():
     child = factories.DocumentFactory(parent=document)
     target = factories.DocumentFactory()
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": "first-sibling"},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={"target_document_id": str(target.id), "position": "first-sibling"},
+        )
 
     assert response.status_code == 200
     assert response.json() == {"message": "Document moved successfully."}
     assert list(target.get_siblings()) == [document, parent, target]
+
+    # The move should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_MOVED,
+        user,
+        {"position": "first-sibling", "targeted_document_id": str(target.id)},
+        document=document,
+    )
 
     document.refresh_from_db()
     assert list(document.get_children()) == [child]
