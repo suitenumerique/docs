@@ -16,6 +16,7 @@ from core.tests.conftest import TEAM, USER, VIA
 from core.tests.test_services_collaboration_services import (  # pylint: disable=unused-import
     mock_reset_connections,
 )
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -1182,12 +1183,20 @@ def test_api_document_accesses_delete_administrators_except_owners(
     assert models.DocumentAccess.objects.filter(user=access.user).exists()
 
     with mock_reset_connections(document.id, str(access.user_id)):
-        response = client.delete(
-            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-        )
+        with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+            response = client.delete(
+                f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+            )
 
         assert response.status_code == 204
         assert models.DocumentAccess.objects.count() == 1
+
+    # The access deletion should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_ACCESS_DELETED,
+        user,
+        {"access_id": str(access.id), "document_id": str(access.document_id)},
+    )
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -1255,12 +1264,20 @@ def test_api_document_accesses_delete_owners(
     assert models.DocumentAccess.objects.filter(user=access.user).exists()
 
     with mock_reset_connections(document.id, str(access.user_id)):
-        response = client.delete(
-            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-        )
+        with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+            response = client.delete(
+                f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+            )
 
     assert response.status_code == 204
     assert models.DocumentAccess.objects.count() == 1
+
+    # The access deletion should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_ACCESS_DELETED,
+        user,
+        {"access_id": str(access.id), "document_id": str(access.document_id)},
+    )
 
 
 @pytest.mark.parametrize("via", VIA)

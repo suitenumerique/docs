@@ -2796,12 +2796,22 @@ class DocumentAccessViewSet(
 
     def perform_destroy(self, instance):
         """Delete an access to the document and notify the collaboration server."""
+        # Snapshot the identifiers before deletion as Django resets the primary key
+        # on the instance once it is deleted.
+        access_id = str(instance.id)
+        document_id = str(instance.document_id)
+        user_id = str(instance.user.id)
+
         instance.delete()
 
-        # Notify collaboration server about the access removed
-        CollaborationService().reset_connections(
-            str(instance.document.id), str(instance.user.id)
+        posthog_capture(
+            PosthogEventName.DOC_ACCESS_DELETED,
+            self.request.user,
+            {"access_id": access_id, "document_id": document_id},
         )
+
+        # Notify collaboration server about the access removed
+        CollaborationService().reset_connections(document_id, user_id)
 
 
 class InvitationViewset(
