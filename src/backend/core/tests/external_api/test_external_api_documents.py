@@ -18,6 +18,7 @@ from rest_framework.test import APIClient
 
 from core import factories, models
 from core.services import mime_types
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -283,13 +284,14 @@ def test_external_api_documents_create_with_markdown_file_success(
     file = BytesIO(file_content)
     file.name = "readme.md"
 
-    response = client.post(
-        "/external_api/v1.0/documents/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/external_api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 201
 
@@ -305,6 +307,13 @@ def test_external_api_documents_create_with_markdown_file_success(
         file_content,
         content_type=mime_types.MARKDOWN,
         accept=mime_types.YJS,
+    )
+
+    # The successful conversion should be tracked in PostHog
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_IMPORTED,
+        user_specific_sub,
+        {"content_type": mime_types.MARKDOWN},
     )
 
 

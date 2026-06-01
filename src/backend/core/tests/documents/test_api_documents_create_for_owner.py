@@ -207,12 +207,23 @@ def test_api_documents_create_for_owner_existing(mock_convert_md):
     assert document.creator == user
     assert document.accesses.filter(user=user, role="owner").exists()
 
-    mock_capture.assert_called_once_with(
+    mock_capture.assert_any_call(
         PosthogEventName.DOC_CREATED,
         user,
         {},
         document=document,
     )
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_IMPORTED,
+        user,
+        {
+            "content_type": mime_types.MARKDOWN,
+            "create_for_owner": True,
+        },
+        document=document,
+    )
+
+    assert mock_capture.call_count == 2
 
     assert Invitation.objects.exists() is False
 
@@ -262,12 +273,23 @@ def test_api_documents_create_for_owner_new_user(mock_convert_md):
     assert document.creator is None
     assert document.accesses.exists() is False
 
-    mock_capture.assert_called_once_with(
+    mock_capture.assert_any_call(
         PosthogEventName.DOC_CREATED,
         None,
         {},
         document=document,
     )
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_IMPORTED,
+        None,
+        {
+            "content_type": mime_types.MARKDOWN,
+            "create_for_owner": True,
+        },
+        document=document,
+    )
+
+    assert mock_capture.call_count == 2
 
     invitation = Invitation.objects.get()
     assert invitation.email == "john.doe@example.com"

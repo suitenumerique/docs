@@ -492,6 +492,15 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
         )
 
         posthog_capture(PosthogEventName.DOC_CREATED, user, {}, document=document)
+        posthog_capture(
+            PosthogEventName.DOC_IMPORTED,
+            user,
+            {
+                "content_type": mime_types.MARKDOWN,
+                "create_for_owner": True,
+            },
+            document=document,
+        )
 
         if user:
             # Associate the document with the pre-existing user

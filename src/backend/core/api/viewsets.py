@@ -755,6 +755,12 @@ class DocumentViewSet(
                 serializer.validated_data["content"] = converted_content
                 serializer.validated_data["title"] = uploaded_file.name
                 logger.info("conversion ended successfully")
+
+                posthog_capture(
+                    PosthogEventName.DOC_IMPORTED,
+                    self.request.user,
+                    {"content_type": uploaded_file.content_type},
+                )
             except ConversionError as err:
                 logger.error("could not convert file content with error: %s", err)
                 raise drf.exceptions.ValidationError(

@@ -16,6 +16,7 @@ from core.services.converter_services import (
     ConversionError,
     ServiceUnavailableError,
 )
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -60,13 +61,14 @@ def test_api_documents_create_with_docx_file_success(mock_convert, settings):
     file = BytesIO(file_content)
     file.name = "My Important Document.docx"
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 201
     document = Document.objects.get()
@@ -80,6 +82,21 @@ def test_api_documents_create_with_docx_file_success(mock_convert, settings):
         content_type=mime_types.DOCX,
         accept=mime_types.YJS,
     )
+
+    # The successful conversion should be tracked in PostHog
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_IMPORTED,
+        user,
+        {"content_type": mime_types.DOCX},
+    )
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {},
+        document=document,
+    )
+
+    assert mock_capture.call_count == 2
 
 
 @patch("core.services.converter_services.Converter.convert")
@@ -98,19 +115,23 @@ def test_api_documents_create_with_docx_file_disabled(mock_convert, settings):
     file = BytesIO(file_content)
     file.name = "My Important Document.docx"
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 400
     assert response.json() == {"file": ["file upload is not allowed"]}
 
     # Verify the converter was not called
     mock_convert.assert_not_called()
+
+    # No event should be tracked since the upload is rejected
+    mock_capture.assert_not_called()
 
 
 @patch("core.services.converter_services.Converter.convert")
@@ -133,13 +154,14 @@ def test_api_documents_create_with_markdown_file_success(mock_convert, settings)
     file = BytesIO(file_content)
     file.name = "readme.md"
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 201
     document = Document.objects.get()
@@ -153,6 +175,21 @@ def test_api_documents_create_with_markdown_file_success(mock_convert, settings)
         content_type=mime_types.MARKDOWN,
         accept=mime_types.YJS,
     )
+
+    # The successful conversion should be tracked in PostHog
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_IMPORTED,
+        user,
+        {"content_type": mime_types.MARKDOWN},
+    )
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {},
+        document=document,
+    )
+
+    assert mock_capture.call_count == 2
 
 
 @patch("core.services.converter_services.Converter.convert")
@@ -175,19 +212,35 @@ def test_api_documents_create_with_file_and_explicit_title(mock_convert, setting
     file = BytesIO(file_content)
     file.name = "Uploaded Document.docx"
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "file": file,
-            "title": "This should be overridden",
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+                "title": "This should be overridden",
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 201
     document = Document.objects.get()
     # The filename should take precedence
     assert document.title == "Uploaded Document.docx"
+
+    # The successful conversion should be tracked in PostHog
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_IMPORTED,
+        user,
+        {"content_type": mime_types.DOCX},
+    )
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {},
+        document=document,
+    )
+
+    assert mock_capture.call_count == 2
 
 
 def test_api_documents_create_with_empty_file(settings):
@@ -204,17 +257,20 @@ def test_api_documents_create_with_empty_file(settings):
     file = BytesIO(b"")
     file.name = "empty.docx"
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 400
     assert response.json() == {"file": ["The submitted file is empty."]}
     assert not Document.objects.exists()
+
+    mock_capture.assert_not_called()
 
 
 @patch("core.services.converter_services.Converter.convert")
@@ -236,17 +292,21 @@ def test_api_documents_create_with_file_conversion_error(mock_convert, settings)
     file = BytesIO(file_content)
     file.name = "corrupted.docx"
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 400
     assert response.json() == {"file": ["Could not convert file content"]}
     assert not Document.objects.exists()
+
+    # No event should be tracked when the conversion fails
+    mock_capture.assert_not_called()
 
 
 @patch("core.services.converter_services.Converter.convert")
@@ -270,17 +330,21 @@ def test_api_documents_create_with_file_service_unavailable(mock_convert, settin
     file = BytesIO(file_content)
     file.name = "document.docx"
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 400
     assert response.json() == {"file": ["Could not convert file content"]}
     assert not Document.objects.exists()
+
+    # No event should be tracked when the conversion service is unavailable
+    mock_capture.assert_not_called()
 
 
 def test_api_documents_create_without_file_still_works():
@@ -291,19 +355,27 @@ def test_api_documents_create_without_file_still_works():
     client = APIClient()
     client.force_login(user)
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "title": "Regular document without file",
-        },
-        format="json",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "title": "Regular document without file",
+            },
+            format="json",
+        )
 
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "Regular document without file"
     assert document.content is None
     assert document.accesses.filter(role="owner", user=user).exists()
+
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {},
+        document=document,
+    )
 
 
 @patch("core.services.converter_services.Converter.convert")
@@ -317,20 +389,27 @@ def test_api_documents_create_with_file_null_value(mock_convert, settings):
 
     settings.CONVERSION_UPLOAD_ENABLED = True
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "title": "Document with null file",
-            "file": None,
-        },
-        format="json",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "title": "Document with null file",
+                "file": None,
+            },
+            format="json",
+        )
 
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "Document with null file"
     # Converter should not have been called
     mock_convert.assert_not_called()
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {},
+        document=document,
+    )
 
 
 @patch("core.services.converter_services.Converter.convert")
@@ -355,19 +434,35 @@ def test_api_documents_create_with_file_preserves_content_format(
     file = BytesIO(file_content)
     file.name = "complex_document.docx"
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 201
     document = Document.objects.get()
 
     # Verify the content is stored as returned by the converter
     assert document.content == converted_yjs
+
+    # The successful conversion should be tracked in PostHog
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_IMPORTED,
+        user,
+        {"content_type": mime_types.DOCX},
+    )
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {},
+        document=document,
+    )
+
+    assert mock_capture.call_count == 2
 
     # Verify it's valid base64 (can be decoded)
     try:
@@ -396,17 +491,33 @@ def test_api_documents_create_with_file_unicode_filename(mock_convert, settings)
     file = BytesIO(file_content)
     file.name = "文档-télécharger-документ.docx"
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "文档-télécharger-документ.docx"
+
+    # The successful conversion should be tracked in PostHog
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_IMPORTED,
+        user,
+        {"content_type": mime_types.DOCX},
+    )
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {},
+        document=document,
+    )
+
+    assert mock_capture.call_count == 2
 
 
 def test_api_documents_create_with_file_max_size_exceeded(settings):
@@ -423,17 +534,19 @@ def test_api_documents_create_with_file_max_size_exceeded(settings):
     file = BytesIO(b"a" * (10))
     file.name = "test.docx"
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 400
 
     assert response.json() == {"file": ["File size exceeds the maximum limit of 0 MB."]}
+    mock_capture.assert_not_called()
 
 
 def test_api_documents_create_with_file_extension_not_allowed(settings):
@@ -450,13 +563,14 @@ def test_api_documents_create_with_file_extension_not_allowed(settings):
     file = BytesIO(b"fake docx content")
     file.name = "test.md"
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 400
     assert response.json() == {
@@ -464,3 +578,5 @@ def test_api_documents_create_with_file_extension_not_allowed(settings):
             "File extension .md is not allowed. Allowed extensions are: ['.docx']."
         ]
     }
+
+    mock_capture.assert_not_called()

@@ -330,13 +330,14 @@ def test_api_documents_children_create_with_docx_file_success(mock_convert, sett
 
     parent = factories.DocumentFactory(creator=user, users=[(user, "owner")])
 
-    response = client.post(
-        f"/api/v1.0/documents/{parent.id}/children/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{parent.id}/children/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 201
     assert Document.objects.count() == 2
@@ -349,6 +350,13 @@ def test_api_documents_children_create_with_docx_file_success(mock_convert, sett
         file_content,
         content_type=mime_types.DOCX,
         accept=mime_types.YJS,
+    )
+
+    # The successful conversion should be tracked in PostHog
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_IMPORTED,
+        user,
+        {"content_type": mime_types.DOCX},
     )
 
 
@@ -370,19 +378,23 @@ def test_api_documents_children_create_with_docx_file_disabled(mock_convert, set
 
     parent = factories.DocumentFactory(creator=user, users=[(user, "owner")])
 
-    response = client.post(
-        f"/api/v1.0/documents/{parent.id}/children/",
-        {
-            "file": file,
-        },
-        format="multipart",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{parent.id}/children/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
 
     assert response.status_code == 400
     assert response.json() == {"file": ["file upload is not allowed"]}
 
     # Verify the converter was not called
     mock_convert.assert_not_called()
+
+    # No event should be tracked since the upload is rejected
+    mock_capture.assert_not_called()
 
 
 def test_api_documents_children_create_with_file_max_size_exceeded(settings):
