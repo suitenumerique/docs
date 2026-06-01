@@ -3,6 +3,7 @@ Test document accesses API endpoints for users in impress's core app.
 """
 
 import random
+from unittest import mock
 
 from django.core import mail
 
@@ -12,6 +13,7 @@ from rest_framework.test import APIClient
 from core import factories, models
 from core.api import serializers
 from core.tests.conftest import TEAM, USER, VIA
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -155,18 +157,34 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_user(
 
     assert len(mail.outbox) == 0
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/accesses/",
-        {
-            "user_id": str(other_user.id),
-            "role": role,
-        },
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/accesses/",
+            {
+                "user_id": str(other_user.id),
+                "role": role,
+            },
+            format="json",
+        )
 
     assert response.status_code == 201
     assert models.DocumentAccess.objects.filter(user=other_user).count() == 1
     new_document_access = models.DocumentAccess.objects.filter(user=other_user).get()
+
+    # The new access creation should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_ACCESS_CREATED,
+        user,
+        {
+            "access_id": str(new_document_access.id),
+            "document_id": str(new_document_access.document_id),
+            "role": role,
+            "created_by": str(user.id),
+            "access_user_id": str(new_document_access.user_id),
+            "team": None,
+        },
+    )
+
     other_user = serializers.UserSerializer(instance=other_user).data
     assert response.json() == {
         "abilities": new_document_access.get_abilities(user),
@@ -246,18 +264,34 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_team(
 
     assert len(mail.outbox) == 0
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/accesses/",
-        {
-            "team": "new-team",
-            "role": role,
-        },
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/accesses/",
+            {
+                "team": "new-team",
+                "role": role,
+            },
+            format="json",
+        )
 
     assert response.status_code == 201
     assert models.DocumentAccess.objects.filter(team="new-team").count() == 1
     new_document_access = models.DocumentAccess.objects.filter(team="new-team").get()
+
+    # The new team access creation should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_ACCESS_CREATED,
+        user,
+        {
+            "access_id": str(new_document_access.id),
+            "document_id": str(new_document_access.document_id),
+            "role": role,
+            "created_by": str(user.id),
+            "access_user_id": None,
+            "team": "new-team",
+        },
+    )
+
     other_user = serializers.UserSerializer(instance=other_user).data
     assert response.json() == {
         "abilities": new_document_access.get_abilities(user),
@@ -311,18 +345,34 @@ def test_api_document_accesses_create_authenticated_owner_share_to_user(
 
     assert len(mail.outbox) == 0
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/accesses/",
-        {
-            "user_id": str(other_user.id),
-            "role": role,
-        },
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/accesses/",
+            {
+                "user_id": str(other_user.id),
+                "role": role,
+            },
+            format="json",
+        )
 
     assert response.status_code == 201
     assert models.DocumentAccess.objects.filter(user=other_user).count() == 1
     new_document_access = models.DocumentAccess.objects.filter(user=other_user).get()
+
+    # The new access creation should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_ACCESS_CREATED,
+        user,
+        {
+            "access_id": str(new_document_access.id),
+            "document_id": str(new_document_access.document_id),
+            "role": role,
+            "created_by": str(user.id),
+            "access_user_id": str(new_document_access.user_id),
+            "team": None,
+        },
+    )
+
     other_user = serializers.UserSerializer(instance=other_user).data
     assert response.json() == {
         "abilities": new_document_access.get_abilities(user),
@@ -385,18 +435,34 @@ def test_api_document_accesses_create_authenticated_owner_share_to_team(
 
     assert len(mail.outbox) == 0
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/accesses/",
-        {
-            "team": "new-team",
-            "role": role,
-        },
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/accesses/",
+            {
+                "team": "new-team",
+                "role": role,
+            },
+            format="json",
+        )
 
     assert response.status_code == 201
     assert models.DocumentAccess.objects.filter(team="new-team").count() == 1
     new_document_access = models.DocumentAccess.objects.filter(team="new-team").get()
+
+    # The new team access creation should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_ACCESS_CREATED,
+        user,
+        {
+            "access_id": str(new_document_access.id),
+            "document_id": str(new_document_access.document_id),
+            "role": role,
+            "created_by": str(user.id),
+            "access_user_id": None,
+            "team": "new-team",
+        },
+    )
+
     other_user = serializers.UserSerializer(instance=other_user).data
     assert response.json() == {
         "abilities": new_document_access.get_abilities(user),
@@ -445,20 +511,36 @@ def test_api_document_accesses_create_email_in_receivers_language(via, mock_user
 
     for index, other_user in enumerate(other_users):
         expected_language = other_user.language
-        response = client.post(
-            f"/api/v1.0/documents/{document.id!s}/accesses/",
-            {
-                "user_id": str(other_user.id),
-                "role": role,
-            },
-            format="json",
-        )
+        with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+            response = client.post(
+                f"/api/v1.0/documents/{document.id!s}/accesses/",
+                {
+                    "user_id": str(other_user.id),
+                    "role": role,
+                },
+                format="json",
+            )
 
         assert response.status_code == 201
         assert models.DocumentAccess.objects.filter(user=other_user).count() == 1
         new_document_access = models.DocumentAccess.objects.filter(
             user=other_user
         ).get()
+
+        # The new access creation should be tracked in PostHog
+        mock_capture.assert_called_once_with(
+            PosthogEventName.DOC_ACCESS_CREATED,
+            user,
+            {
+                "access_id": str(new_document_access.id),
+                "document_id": str(new_document_access.document_id),
+                "role": role,
+                "created_by": str(user.id),
+                "access_user_id": str(new_document_access.user_id),
+                "team": None,
+            },
+        )
+
         other_user_data = serializers.UserSerializer(instance=other_user).data
         assert response.json() == {
             "abilities": new_document_access.get_abilities(user),

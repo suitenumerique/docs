@@ -14,12 +14,18 @@ from core.models import User
 class PosthogEventName(StrEnum):
     """Posthog event name enum"""
 
+    # Document
     DOC_CREATED = "doc_created"
     DOC_DELETED = "doc_deleted"
     DOC_DUPLICATED = "doc_duplicated"
     DOC_IMPORTED = "doc_imported"
     DOC_FAVORITED = "doc_favorited"
     DOC_AI_ACTION = "doc_ai_action"
+
+    # DocumentAccess
+    DOC_ACCESS_CREATED = "doc_access_created"
+
+    # User
     USER_LOGIN = "user_login"
 
 

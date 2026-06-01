@@ -2758,6 +2758,19 @@ class DocumentAccessViewSet(
 
         access = serializer.save(document_id=self.kwargs["resource_id"])
 
+        posthog_capture(
+            PosthogEventName.DOC_ACCESS_CREATED,
+            self.request.user,
+            {
+                "access_id": str(access.id),
+                "document_id": str(access.document_id),
+                "role": access.role,
+                "created_by": str(self.request.user.id),
+                "access_user_id": str(access.user_id) if access.user else None,
+                "team": access.team or None,
+            },
+        )
+
         if access.user:
             access.document.send_invitation_email(
                 access.user.email,
