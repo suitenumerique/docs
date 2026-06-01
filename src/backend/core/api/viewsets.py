@@ -1343,6 +1343,15 @@ class DocumentViewSet(
             user=user,
         )
 
+        posthog_capture(
+            PosthogEventName.DOC_DUPLICATED,
+            user,
+            {
+                "duplicated_from": str(document_to_duplicate.id),
+            },
+            document=duplicated_document,
+        )
+
         return drf_response.Response(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
         )

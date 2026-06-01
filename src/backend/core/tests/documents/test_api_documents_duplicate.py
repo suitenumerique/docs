@@ -5,6 +5,7 @@ Test file uploads API endpoint for users in impress's core app.
 import base64
 import uuid
 from io import BytesIO
+from unittest import mock
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -46,16 +47,18 @@ def test_api_documents_duplicate_forbidden():
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(
-        link_reach="restricted",
-        users=[factories.UserFactory()],
-        title="my document",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        document = factories.DocumentFactory(
+            link_reach="restricted",
+            users=[factories.UserFactory()],
+            title="my document",
+        )
 
     response = client.post(f"/api/v1.0/documents/{document.id!s}/duplicate/")
 
     assert response.status_code == 403
     assert models.Document.objects.count() == 1
+    mock_capture.assert_not_called()
 
 
 def test_api_documents_duplicate_anonymous():
@@ -63,10 +66,12 @@ def test_api_documents_duplicate_anonymous():
 
     document = factories.DocumentFactory(link_reach="public", link_role="reader")
 
-    response = APIClient().post(f"/api/v1.0/documents/{document.id!s}/duplicate/")
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = APIClient().post(f"/api/v1.0/documents/{document.id!s}/duplicate/")
 
     assert response.status_code == 401
     assert models.Document.objects.count() == 1
+    mock_capture.assert_not_called()
 
 
 @pytest.mark.parametrize("index", range(3))
@@ -108,7 +113,8 @@ def test_api_documents_duplicate_success(index):
     # Don't create document for third ID to check that it doesn't impact access to attachments
 
     # Duplicate the document via the API endpoint
-    response = client.post(f"/api/v1.0/documents/{document.id}/duplicate/")
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(f"/api/v1.0/documents/{document.id}/duplicate/")
 
     assert response.status_code == 201
 
@@ -124,6 +130,13 @@ def test_api_documents_duplicate_success(index):
     ]  # Only the first image key
     assert duplicated_document.get_parent() == document.get_parent()
     assert duplicated_document.path == document.get_last_sibling().path
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(document.id)},
+        document=duplicated_document,
+    )
 
     # Check that accesses were not duplicated.
     # The user who did the duplicate is forced as owner
@@ -195,11 +208,12 @@ def test_api_documents_duplicate_with_accesses_admin(role):
     paths = {document.pk: document.path for document in all_documents}
 
     # Duplicate the document via the API endpoint requesting to duplicate accesses
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/duplicate/",
-        {"with_accesses": True},
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/duplicate/",
+            {"with_accesses": True},
+            format="json",
+        )
 
     assert response.status_code == 201
 
@@ -211,6 +225,13 @@ def test_api_documents_duplicate_with_accesses_admin(role):
     assert duplicated_document.creator == user
     assert duplicated_document.duplicated_from == document
     assert duplicated_document.attachments == []
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(document.id)},
+        document=duplicated_document,
+    )
 
     # Check that accesses were duplicated and the user who did the duplicate is forced as owner
     duplicated_accesses = duplicated_document.accesses
@@ -242,11 +263,12 @@ def test_api_documents_duplicate_with_accesses_non_admin(role):
     factories.TeamDocumentAccessFactory(document=document)
 
     # Duplicate the document via the API endpoint requesting to duplicate accesses
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/duplicate/",
-        {"with_accesses": True},
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/duplicate/",
+            {"with_accesses": True},
+            format="json",
+        )
 
     assert response.status_code == 201
 
@@ -258,6 +280,13 @@ def test_api_documents_duplicate_with_accesses_non_admin(role):
     assert duplicated_document.creator == user
     assert duplicated_document.duplicated_from == document
     assert duplicated_document.attachments == []
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(document.id)},
+        document=duplicated_document,
+    )
 
     # Check that accesses were duplicated and the user who did the duplicate is forced as owner
     duplicated_accesses = duplicated_document.accesses
@@ -282,11 +311,12 @@ def test_api_documents_duplicate_non_root_document(role):
     assert child.accesses.count() == 1
 
     # Duplicate the document via the API endpoint requesting to duplicate accesses
-    response = client.post(
-        f"/api/v1.0/documents/{child.id!s}/duplicate/",
-        {"with_accesses": True},
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{child.id!s}/duplicate/",
+            {"with_accesses": True},
+            format="json",
+        )
 
     assert response.status_code == 201
 
@@ -298,6 +328,13 @@ def test_api_documents_duplicate_non_root_document(role):
     assert duplicated_document.creator == user
     assert duplicated_document.duplicated_from == child
     assert duplicated_document.attachments == []
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(child.id)},
+        document=duplicated_document,
+    )
 
     # No access should be created for non root documents
     duplicated_accesses = duplicated_document.accesses
@@ -320,15 +357,23 @@ def test_api_documents_duplicate_reader_non_root_document():
 
     assert child.get_role(user) == "reader"
 
-    response = client.post(
-        f"/api/v1.0/documents/{child.id!s}/duplicate/", format="json"
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{child.id!s}/duplicate/", format="json"
+        )
     assert response.status_code == 201
 
     duplicated_document = models.Document.objects.get(id=response.json()["id"])
     assert duplicated_document.is_root()
     assert duplicated_document.accesses.count() == 1
     assert duplicated_document.accesses.get(user=user).role == "owner"
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(child.id)},
+        document=duplicated_document,
+    )
 
 
 def test_api_documents_duplicate_with_descendants_simple():
@@ -357,11 +402,12 @@ def test_api_documents_duplicate_with_descendants_simple():
     assert initial_count == 3
 
     # Duplicate with descendants
-    response = client.post(
-        f"/api/v1.0/documents/{root.id!s}/duplicate/",
-        {"with_descendants": True},
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{root.id!s}/duplicate/",
+            {"with_descendants": True},
+            format="json",
+        )
 
     assert response.status_code == 201
     duplicated_root = models.Document.objects.get(id=response.json()["id"])
@@ -374,6 +420,13 @@ def test_api_documents_duplicate_with_descendants_simple():
     assert duplicated_root.creator == user
     assert duplicated_root.duplicated_from == root
     assert duplicated_root.get_children().count() == 2
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(root.id)},
+        document=duplicated_root,
+    )
 
     # Check children duplication
     duplicated_children = duplicated_root.get_children().order_by("title")
@@ -421,14 +474,22 @@ def test_api_documents_duplicate_with_descendants_multi_level():
     assert initial_count == 4
 
     # Duplicate with descendants
-    response = client.post(
-        f"/api/v1.0/documents/{root.id!s}/duplicate/",
-        {"with_descendants": True},
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{root.id!s}/duplicate/",
+            {"with_descendants": True},
+            format="json",
+        )
 
     assert response.status_code == 201
     duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(root.id)},
+        document=duplicated_root,
+    )
 
     # Check that all documents were duplicated
     assert models.Document.objects.count() == 8
@@ -455,6 +516,7 @@ def test_api_documents_duplicate_with_descendants_multi_level():
     assert dup_great_grandchild.duplicated_from == great_grandchild
 
 
+# pylint: disable=too-many-locals
 def test_api_documents_duplicate_with_descendants_and_attachments():
     """
     Duplicating with descendants should properly handle attachments in all children.
@@ -499,7 +561,8 @@ def test_api_documents_duplicate_with_descendants_and_attachments():
     update_child = ydoc_child.get_update()
     child_content = base64.b64encode(update_child).decode("utf-8")
 
-    child = factories.DocumentFactory(
+    # child
+    factories.DocumentFactory(
         id=child_id,
         parent=root,
         title="Child with Image",
@@ -508,14 +571,22 @@ def test_api_documents_duplicate_with_descendants_and_attachments():
     )
 
     # Duplicate with descendants
-    response = client.post(
-        f"/api/v1.0/documents/{root.id!s}/duplicate/",
-        {"with_descendants": True},
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{root.id!s}/duplicate/",
+            {"with_descendants": True},
+            format="json",
+        )
 
     assert response.status_code == 201
     duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(root.id)},
+        document=duplicated_root,
+    )
 
     # Check root attachments
     assert duplicated_root.attachments == [image_key_root]
@@ -550,14 +621,22 @@ def test_api_documents_duplicate_with_descendants_and_accesses():
     factories.UserDocumentAccessFactory(document=child, user=other_user, role="reader")
 
     # Duplicate with descendants and accesses
-    response = client.post(
-        f"/api/v1.0/documents/{root.id!s}/duplicate/",
-        {"with_descendants": True, "with_accesses": True},
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{root.id!s}/duplicate/",
+            {"with_descendants": True, "with_accesses": True},
+            format="json",
+        )
 
     assert response.status_code == 201
     duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(root.id)},
+        document=duplicated_root,
+    )
 
     # Check root accesses (should be duplicated)
     root_accesses = duplicated_root.accesses.order_by("user_id")
@@ -597,14 +676,22 @@ def test_api_documents_duplicate_with_descendants_non_root_document_becomes_root
     assert child.is_child_of(parent)
 
     # Duplicate the child (non-root) with descendants
-    response = client.post(
-        f"/api/v1.0/documents/{child.id!s}/duplicate/",
-        {"with_descendants": True},
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{child.id!s}/duplicate/",
+            {"with_descendants": True},
+            format="json",
+        )
 
     assert response.status_code == 201
     duplicated_child = models.Document.objects.get(id=response.json()["id"])
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(child.id)},
+        document=duplicated_child,
+    )
 
     assert duplicated_child.title == "Copy of Sub Document"
 
@@ -628,7 +715,8 @@ def test_api_documents_duplicate_without_descendants_should_not_duplicate_childr
         users=[(user, "owner")],
         title="Root",
     )
-    child = factories.DocumentFactory(
+    # child
+    factories.DocumentFactory(
         parent=root,
         title="Child",
     )
@@ -637,13 +725,21 @@ def test_api_documents_duplicate_without_descendants_should_not_duplicate_childr
     assert initial_count == 2
 
     # Duplicate without descendants (default behavior)
-    response = client.post(
-        f"/api/v1.0/documents/{root.id!s}/duplicate/",
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{root.id!s}/duplicate/",
+            format="json",
+        )
 
     assert response.status_code == 201
     duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(root.id)},
+        document=duplicated_root,
+    )
 
     # Only root should be duplicated, not children
     assert models.Document.objects.count() == 3
@@ -674,14 +770,22 @@ def test_api_documents_duplicate_with_descendants_preserves_link_configuration()
     )
 
     # Duplicate with descendants and accesses
-    response = client.post(
-        f"/api/v1.0/documents/{root.id!s}/duplicate/",
-        {"with_descendants": True, "with_accesses": True},
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{root.id!s}/duplicate/",
+            {"with_descendants": True, "with_accesses": True},
+            format="json",
+        )
 
     assert response.status_code == 201
     duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(root.id)},
+        document=duplicated_root,
+    )
 
     # Check root link configuration
     assert duplicated_root.link_reach == root.link_reach
@@ -722,14 +826,22 @@ def test_api_documents_duplicate_with_descendants_complex_tree():
     assert initial_count == 6
 
     # Duplicate with descendants
-    response = client.post(
-        f"/api/v1.0/documents/{root.id!s}/duplicate/",
-        {"with_descendants": True},
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{root.id!s}/duplicate/",
+            {"with_descendants": True},
+            format="json",
+        )
 
     assert response.status_code == 201
     duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(root.id)},
+        document=duplicated_root,
+    )
 
     # All documents should be duplicated
     assert models.Document.objects.count() == 12
