@@ -26,6 +26,9 @@ class PosthogEventName(StrEnum):
     DOC_ACCESS_CREATED = "doc_access_created"
     DOC_ACCESS_DELETED = "doc_access_deleted"
 
+    # Thread
+    THREAD_CREATED = "thread_created"
+
     # User
     USER_LOGIN = "user_login"
 

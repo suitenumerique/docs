@@ -1,9 +1,12 @@
 """Test Thread viewset."""
 
+from unittest import mock
+
 import pytest
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -47,16 +50,26 @@ def test_api_documents_threads_public_document(link_role):
     )
 
     client = APIClient()
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/",
-        {
-            "body": "test",
-        },
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/threads/",
+            {
+                "body": "test",
+            },
+        )
 
     assert response.status_code == 201
     thread = models.Thread.objects.first()
     comment = thread.comments.first()
+
+    # The thread creation should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.THREAD_CREATED,
+        None,
+        {"thread_id": str(thread.id)},
+        document=document,
+    )
+
     content = response.json()
     assert content == {
         "id": str(thread.id),
@@ -136,16 +149,26 @@ def test_api_documents_threads_restricted_document_editor(role):
 
     client = APIClient()
     client.force_login(user)
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/",
-        {
-            "body": "test",
-        },
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/threads/",
+            {
+                "body": "test",
+            },
+        )
 
     assert response.status_code == 201
     thread = models.Thread.objects.first()
     comment = thread.comments.first()
+
+    # The thread creation should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.THREAD_CREATED,
+        user,
+        {"thread_id": str(thread.id)},
+        document=document,
+    )
+
     content = response.json()
     assert content == {
         "id": str(thread.id),
@@ -247,16 +270,26 @@ def test_api_documents_threads_authenticated_document(link_role):
 
     client = APIClient()
     client.force_login(user)
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/",
-        {
-            "body": "test",
-        },
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/threads/",
+            {
+                "body": "test",
+            },
+        )
 
     assert response.status_code == 201
     thread = models.Thread.objects.first()
     comment = thread.comments.first()
+
+    # The thread creation should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.THREAD_CREATED,
+        user,
+        {"thread_id": str(thread.id)},
+        document=document,
+    )
+
     content = response.json()
     assert content == {
         "id": str(thread.id),

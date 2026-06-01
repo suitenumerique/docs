@@ -3136,10 +3136,19 @@ class ThreadViewSet(
         del serializer.validated_data["body"]
         thread = serializer.save()
 
+        user = self.request.user if self.request.user.is_authenticated else None
+
         models.Comment.objects.create(
             thread=thread,
-            user=self.request.user if self.request.user.is_authenticated else None,
+            user=user,
             body=body,
+        )
+
+        posthog_capture(
+            PosthogEventName.THREAD_CREATED,
+            user,
+            {"thread_id": str(thread.id)},
+            document=self.get_document_or_404(),
         )
 
     @drf.decorators.action(detail=True, methods=["post"], url_path="resolve")
