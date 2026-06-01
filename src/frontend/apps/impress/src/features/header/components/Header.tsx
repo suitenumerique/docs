@@ -35,7 +35,7 @@ export const Header = () => {
           top: 0;
           left: 0;
           right: 0;
-          z-index: 1000;
+          z-index: 10;
           flex-direction: row;
           align-items: center;
           justify-content: space-between;

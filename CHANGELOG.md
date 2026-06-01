@@ -21,6 +21,7 @@ and this project adheres to
 - ♻️(backend) allow global search in sub documents
 - ✨(backend) add a breadcrumb in the search response
 - ♻️(frontend) move doc action buttons to fix toolbar #2360
+- ♿️(frontend) add aria-hidden to decorative avatar SVGs in share modal #2324
 
 ### Fixed
 
@@ -28,12 +29,9 @@ and this project adheres to
 - 🐛(backend) prevent admins/owners from overwriting other users comments
 - 🐛(y-provider) return empty output when converting empty Yjs document
 - 🐛(backend) use computed_link_reach in handle_onboarding_document #2305
+- 🐛(frontend) fix toolbar blocknote hidden #2373
 - 🐛(frontend) fix application crashes when using GTranslate and zoom #2372
 - 🐛(frontend) fix emoji pdf not matching #2375
-
-### Changed
-
-- ♿️(frontend) add aria-hidden to decorative avatar SVGs in share modal #2324
 
 ## [v5.1.0] - 2026-05-11
 
