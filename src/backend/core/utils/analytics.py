@@ -18,6 +18,7 @@ class PosthogEventName(StrEnum):
     DOC_DELETED = "doc_deleted"
     DOC_DUPLICATED = "doc_duplicated"
     DOC_IMPORTED = "doc_imported"
+    DOC_FAVORITED = "doc_favorited"
     USER_LOGIN = "user_login"
 
 

@@ -1,9 +1,12 @@
 """Test favorite document API endpoint for users in impress's core app."""
 
+from unittest import mock
+
 import pytest
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -58,10 +61,19 @@ def test_api_document_favorite_authenticated_post_allowed(reach, has_role):
         models.DocumentAccess.objects.create(document=document, user=user)
 
     # Mark as favorite
-    response = client.post(f"/api/v1.0/documents/{document.id!s}/favorite/")
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(f"/api/v1.0/documents/{document.id!s}/favorite/")
 
     assert response.status_code == 201
     assert response.json() == {"detail": "Document marked as favorite"}
+
+    # The favorite action should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_FAVORITED,
+        user,
+        {},
+        document=document,
+    )
 
     # Verify in database
     assert models.DocumentFavorite.objects.filter(document=document, user=user).exists()
@@ -119,10 +131,14 @@ def test_api_document_favorite_authenticated_post_already_favorited_allowed(
         models.DocumentAccess.objects.create(document=document, user=user)
 
     # Try to mark as favorite again
-    response = client.post(f"/api/v1.0/documents/{document.id!s}/favorite/")
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(f"/api/v1.0/documents/{document.id!s}/favorite/")
 
     assert response.status_code == 200
     assert response.json() == {"detail": "Document already marked as favorite"}
+
+    # No event should be tracked since the document was already a favorite
+    mock_capture.assert_not_called()
 
     # Verify in database
     assert models.DocumentFavorite.objects.filter(document=document, user=user).exists()
@@ -293,18 +309,28 @@ def test_api_document_favorite_authenticated_post_unmark_then_mark_again_allowed
 
     url = f"/api/v1.0/documents/{document.id!s}/favorite/"
 
-    # Mark as favorite
-    response = client.post(url)
-    assert response.status_code == 201
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        # Mark as favorite
+        response = client.post(url)
+        assert response.status_code == 201
 
-    # Unmark as favorite
-    response = client.delete(url)
-    assert response.status_code == 204
+        # Unmark as favorite
+        response = client.delete(url)
+        assert response.status_code == 204
 
-    # Mark as favorite again
-    response = client.post(url)
-    assert response.status_code == 201
-    assert response.json() == {"detail": "Document marked as favorite"}
+        # Mark as favorite again
+        response = client.post(url)
+        assert response.status_code == 201
+        assert response.json() == {"detail": "Document marked as favorite"}
+
+    # Only the two POST that effectively marked the document should be tracked
+    assert mock_capture.call_count == 2
+    mock_capture.assert_has_calls(
+        [
+            mock.call(PosthogEventName.DOC_FAVORITED, user, {}, document=document),
+            mock.call(PosthogEventName.DOC_FAVORITED, user, {}, document=document),
+        ]
+    )
 
     # Verify in database
     assert models.DocumentFavorite.objects.filter(document=document, user=user).exists()

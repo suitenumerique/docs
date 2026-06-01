@@ -1798,6 +1798,8 @@ class DocumentViewSet(
                     {"detail": "Document already marked as favorite"},
                     status=drf.status.HTTP_200_OK,
                 )
+
+            posthog_capture(PosthogEventName.DOC_FAVORITED, user, {}, document=document)
             return drf.response.Response(
                 {"detail": "Document marked as favorite"},
                 status=drf.status.HTTP_201_CREATED,
