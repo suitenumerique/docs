@@ -12,9 +12,11 @@ export const LeftPanelToggleMobile = () => {
     <Button
       size="medium"
       onClick={() => togglePanel({ type: 'mobile' })}
-      aria-label={t(
-        isPanelOpenMobile ? 'Close the header menu' : 'Open the header menu',
-      )}
+      aria-label={
+        isPanelOpenMobile
+          ? t('Close the header menu')
+          : t('Open the header menu')
+      }
       aria-expanded={isPanelOpenMobile}
       variant="tertiary"
       icon={
