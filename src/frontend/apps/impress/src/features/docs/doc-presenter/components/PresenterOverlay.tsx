@@ -1,5 +1,6 @@
 import { announce } from '@react-aria/live-announcer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FocusScope } from 'react-aria';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -126,37 +127,39 @@ export const PresenterOverlay = ({
   }
 
   return createPortal(
-    <Box
-      $css={overlayCss}
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('Presenter mode')}
-    >
-      <Box ref={frameRef} $css={slideAreaCss}>
-        {mountedIndices.map((i) => (
-          <PresenterSlide
-            key={i}
-            blocks={slides[i] as unknown[]}
-            frameRef={frameRef}
-            isCurrent={i === currentIndex}
-            ariaLabel={t('Slide {{current}} of {{total}}', {
-              current: i + 1,
-              total,
-            })}
-          />
-        ))}
-      </Box>
+    <FocusScope contain>
+      <Box
+        $css={overlayCss}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('Presenter mode')}
+      >
+        <Box ref={frameRef} $css={slideAreaCss}>
+          {mountedIndices.map((i) => (
+            <PresenterSlide
+              key={i}
+              blocks={slides[i] as unknown[]}
+              frameRef={frameRef}
+              isCurrent={i === currentIndex}
+              ariaLabel={t('Slide {{current}} of {{total}}', {
+                current: i + 1,
+                total,
+              })}
+            />
+          ))}
+        </Box>
 
-      <PresenterFloatingBar
-        index={currentIndex}
-        total={total}
-        isFullscreen={isFullscreen}
-        onPrev={goPrev}
-        onNext={goNext}
-        onToggleFullscreen={() => void toggle()}
-        onClose={onClose}
-      />
-    </Box>,
+        <PresenterFloatingBar
+          index={currentIndex}
+          total={total}
+          isFullscreen={isFullscreen}
+          onPrev={goPrev}
+          onNext={goNext}
+          onToggleFullscreen={() => void toggle()}
+          onClose={onClose}
+        />
+      </Box>
+    </FocusScope>,
     document.body,
   );
 };

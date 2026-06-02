@@ -1,6 +1,6 @@
 import { BlockNoteView } from '@blocknote/mantine';
 import { useCreateBlockNote } from '@blocknote/react';
-import { RefObject, useRef } from 'react';
+import { RefObject, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -95,6 +95,18 @@ export const PresenterSlide = ({
         : undefined,
     schema: blockNoteSchema,
   });
+
+  // ProseMirror adds role="textbox" and contenteditable on its root even
+  // when editable=false, making the SR announce "editing, autocomplete" on
+  // focus. Strip those attributes so the slide reads as plain content.
+  useEffect(() => {
+    const pm = innerRef.current?.querySelector('.ProseMirror');
+    if (pm) {
+      pm.removeAttribute('role');
+      pm.removeAttribute('contenteditable');
+      pm.setAttribute('tabindex', '-1');
+    }
+  }, []);
 
   const fit = useFitScale(innerRef, frameRef);
 
