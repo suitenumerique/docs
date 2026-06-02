@@ -97,18 +97,6 @@ export const PresenterFloatingBar = ({
       <Text as="span" $size="sm" $color="neutral" aria-hidden="true">
         {index + 1} / {total}
       </Text>
-      <Text
-        as="span"
-        className="sr-only"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {t('Slide {{current}} of {{total}}', {
-          current: index + 1,
-          total,
-        })}
-      </Text>
       <Button
         size="small"
         color="neutral"

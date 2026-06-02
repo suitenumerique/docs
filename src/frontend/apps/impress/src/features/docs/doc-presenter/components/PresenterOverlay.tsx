@@ -1,3 +1,4 @@
+import { announce } from '@react-aria/live-announcer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +11,7 @@ import { Doc } from '@/docs/doc-management';
 import { PRESENTER_WINDOW_RADIUS } from '../constants';
 import { useBrowserFullscreen } from '../hooks/useBrowserFullscreen';
 import { usePresenterShortcuts } from '../hooks/usePresenterShortcuts';
-import { useSlides } from '../hooks/useSlides';
+import { getSlideTitle, useSlides } from '../hooks/useSlides';
 
 import { PresenterFloatingBar } from './PresenterFloatingBar';
 import { PresenterSlide } from './PresenterSlide';
@@ -104,6 +105,21 @@ export const PresenterOverlay = ({
   }, [currentIndex, total]);
 
   const frameRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const title = getSlideTitle(slides[currentIndex] ?? []);
+    const message = title
+      ? t('Slide {{current}} of {{total}}: {{title}}', {
+          current: currentIndex + 1,
+          total,
+          title,
+        })
+      : t('Slide {{current}} of {{total}}', {
+          current: currentIndex + 1,
+          total,
+        });
+    announce(message, 'polite');
+  }, [slides, currentIndex, total, t]);
 
   if (typeof document === 'undefined') {
     return null;

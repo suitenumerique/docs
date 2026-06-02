@@ -40,3 +40,41 @@ export const splitBlocksIntoSlides = <T extends Block>(blocks: T[]): T[][] => {
 export const useSlides = <T extends Block>(blocks: T[]): T[][] => {
   return useMemo(() => splitBlocksIntoSlides(blocks), [blocks]);
 };
+
+const extractInlineText = (content: unknown): string => {
+  if (typeof content === 'string') {
+    return content;
+  }
+  if (!Array.isArray(content)) {
+    return '';
+  }
+  return content
+    .map((node) => {
+      if (typeof node === 'string') {
+        return node;
+      }
+      if (node && typeof node === 'object') {
+        const inline = node as { text?: unknown; content?: unknown };
+        if (typeof inline.text === 'string') {
+          return inline.text;
+        }
+        if (inline.content !== undefined) {
+          return extractInlineText(inline.content);
+        }
+      }
+      return '';
+    })
+    .join('');
+};
+
+/** First heading text, or first block with text — for SR announcements. */
+export const getSlideTitle = (
+  blocks: { type: string; content?: unknown }[],
+): string => {
+  const heading = blocks.find((block) => block.type === 'heading');
+  const source =
+    heading ??
+    blocks.find((block) => extractInlineText(block.content).trim().length > 0);
+
+  return source ? extractInlineText(source.content).trim() : '';
+};
