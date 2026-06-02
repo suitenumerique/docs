@@ -40,19 +40,21 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
   }
 
   return (
-    <Box $direction="row">
+    <Box $direction="row" $align="center">
       <Text
+        as="p"
         $variation="tertiary"
         $size="s"
         $weight="bold"
         $theme={isEditable ? 'neutral' : 'warning'}
         $direction="row"
+        $margin="0"
       >
         <VisibilityDoc doc={doc} />
         {transRole(isEditable ? doc.user_role || doc.link_role : Role.READER)}
         &nbsp;·&nbsp;
       </Text>
-      <Text $variation="tertiary" $size="s">
+      <Text as="p" $variation="tertiary" $size="s" $margin="0">
         {dateToDisplay}
       </Text>
     </Box>
