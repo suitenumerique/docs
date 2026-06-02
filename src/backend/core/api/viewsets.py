@@ -69,6 +69,7 @@ from core.services.search_indexers import (
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.paths import filter_descendants
+from core.utils.s3_response_stream import content_stream
 from core.utils.treebeard import create_tree_node_with_retry
 from core.utils.users import users_sharing_documents_with
 from core.utils.yjs import extract_attachments
@@ -2161,12 +2162,8 @@ class DocumentViewSet(
             settings.CONTENT_METADATA_CACHE_TIMEOUT,
         )
 
-        def _stream(body):
-            yield from body.iter_chunks()
-            body.close()
-
         response = StreamingHttpResponse(
-            streaming_content=_stream(s3_response["Body"]),
+            streaming_content=content_stream(s3_response["Body"]),
             content_type="text/plain",
             status=status.HTTP_200_OK,
         )
