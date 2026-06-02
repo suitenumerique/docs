@@ -135,7 +135,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       label: t('Present'),
       icon: <Present width={24} height={24} aria-hidden="true" />,
       callback: () => {
-        setIsPresenterOpen(true);
+        requestAnimationFrame(() => {
+          setIsPresenterOpen(true);
+        });
       },
       isHidden: Boolean(doc.deleted_at) || isMobile,
       testId: `docs-actions-present-${doc.id}`,
@@ -284,7 +286,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           doc={doc}
           onClose={() => {
             setIsPresenterOpen(false);
-            restoreFocus();
           }}
         />
       )}

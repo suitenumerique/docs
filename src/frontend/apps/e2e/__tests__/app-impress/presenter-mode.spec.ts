@@ -94,11 +94,17 @@ test.describe('Presenter Mode', () => {
 
     // The visible "1 / 3" counter is decorative (aria-hidden); the position is
     // announced through a polite live region for screen readers instead.
-    const liveRegion = overlay.getByRole('status');
-    await expect(liveRegion).toHaveText('Slide 1 of 3');
+    // react-aria/live-announcer creates a global role="log" div on document.body
+    // (outside the dialog), so we query from `page`, not `overlay`.
+    const liveRegion = page.locator(
+      '[data-live-announcer="true"] [aria-live="polite"]',
+    );
+    // The announcement includes the slide title extracted from the first
+    // text block (getSlideTitle), so assert the full message.
+    await expect(liveRegion).toContainText('Slide 1 of 3: Slide one');
 
     await overlay.getByRole('button', { name: 'Next slide' }).click();
-    await expect(liveRegion).toHaveText('Slide 2 of 3');
+    await expect(liveRegion).toContainText('Slide 2 of 3: Slide two');
 
     // Each slide advertises a localized role description for screen readers.
     await expect(overlay.getByRole('group').first()).toHaveAttribute(

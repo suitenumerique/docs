@@ -41,6 +41,7 @@ export const useSlides = <T extends Block>(blocks: T[]): T[][] => {
   return useMemo(() => splitBlocksIntoSlides(blocks), [blocks]);
 };
 
+// Extract text from a node's inline content for summarization or accessibility.
 const extractInlineText = (content: unknown): string => {
   if (typeof content === 'string') {
     return content;
@@ -67,7 +68,7 @@ const extractInlineText = (content: unknown): string => {
     .join('');
 };
 
-/** First heading text, or first block with text — for SR announcements. */
+/** First heading text, or first block with text, for SR announcements. */
 export const getSlideTitle = (
   blocks: { type: string; content?: unknown }[],
 ): string => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { splitBlocksIntoSlides } from '../hooks/useSlides';
+import { getSlideTitle, splitBlocksIntoSlides } from '../hooks/useSlides';
 
 const para = (text = 'hello') => ({
   type: 'paragraph',
@@ -82,5 +82,61 @@ describe('splitBlocksIntoSlides', () => {
     const result = splitBlocksIntoSlides([para('a'), divider(), image()]);
     expect(result).toHaveLength(2);
     expect(result[1]).toHaveLength(1);
+  });
+});
+
+const heading = (text: string) => ({
+  type: 'heading',
+  content: [{ type: 'text', text }],
+});
+
+describe('getSlideTitle', () => {
+  test('returns text from the first heading', () => {
+    expect(getSlideTitle([para('intro'), heading('My Title')])).toBe(
+      'My Title',
+    );
+  });
+
+  test('falls back to first paragraph when no heading', () => {
+    expect(getSlideTitle([para('fallback text')])).toBe('fallback text');
+  });
+
+  test('returns empty string for empty slide', () => {
+    expect(getSlideTitle([])).toBe('');
+  });
+
+  test('returns empty string when all blocks have empty content', () => {
+    expect(getSlideTitle([para(''), { type: 'image' }])).toBe('');
+  });
+
+  test('skips whitespace-only blocks and picks the first with text', () => {
+    expect(getSlideTitle([para('   '), para('real text')])).toBe('real text');
+  });
+
+  test('prefers heading over paragraph even when paragraph comes first', () => {
+    expect(getSlideTitle([para('first'), heading('Title')])).toBe('Title');
+  });
+
+  test('extracts text from nested inline content (e.g. links)', () => {
+    const linkBlock = {
+      type: 'paragraph',
+      content: [
+        { type: 'text', text: 'Visit ' },
+        {
+          type: 'link',
+          content: [{ type: 'text', text: 'our site' }],
+          href: 'https://example.com',
+        },
+      ],
+    };
+    expect(getSlideTitle([linkBlock])).toBe('Visit our site');
+  });
+
+  test('handles blocks without content property', () => {
+    expect(getSlideTitle([{ type: 'divider' }, para('after')])).toBe('after');
+  });
+
+  test('trims leading and trailing whitespace', () => {
+    expect(getSlideTitle([para('  spaced  ')])).toBe('spaced');
   });
 });

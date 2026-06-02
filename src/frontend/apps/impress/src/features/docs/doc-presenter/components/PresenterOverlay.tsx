@@ -1,4 +1,4 @@
-import { announce } from '@react-aria/live-announcer';
+import { announce, clearAnnouncer } from '@react-aria/live-announcer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FocusScope } from 'react-aria';
 import { createPortal } from 'react-dom';
@@ -120,6 +120,7 @@ export const PresenterOverlay = ({
           total,
         });
     announce(message, 'polite');
+    return () => clearAnnouncer('polite');
   }, [slides, currentIndex, total, t]);
 
   if (typeof document === 'undefined') {
@@ -127,7 +128,7 @@ export const PresenterOverlay = ({
   }
 
   return createPortal(
-    <FocusScope contain>
+    <FocusScope contain autoFocus restoreFocus>
       <Box
         $css={overlayCss}
         role="dialog"
