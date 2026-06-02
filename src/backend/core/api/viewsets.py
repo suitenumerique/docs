@@ -2943,7 +2943,7 @@ class DocumentAskForAccessViewSet(
         permissions.ResourceWithAccessPermission,
     ]
     throttle_scope = "document_ask_for_access"
-    queryset = models.DocumentAskForAccess.objects.all()
+    queryset = models.DocumentAskForAccess.objects.all().order_by("updated_at")
     serializer_class = serializers.DocumentAskForAccessSerializer
     _document = None
 

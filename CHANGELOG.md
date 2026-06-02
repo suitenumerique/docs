@@ -35,6 +35,7 @@ and this project adheres to
 - 🐛(frontend) fix toolbar blocknote hidden #2373
 - 🐛(frontend) fix application crashes when using GTranslate and zoom #2372
 - 🐛(frontend) fix emoji pdf not matching #2375
+- 🐛(backend) fix UnorderedObjectListWarning for DocumentAskForAccess viewset
 
 ## [v5.1.0] - 2026-05-11
 
