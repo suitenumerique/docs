@@ -425,3 +425,18 @@ def test_api_documents_all_comparison_with_list():
     assert len(all_results) == 3
     all_ids = {result["id"] for result in all_results}
     assert all_ids == {str(parent.id), str(child.id), str(grandchild.id)}
+
+
+def test_api_documents_all_settings_diabled(settings):
+    """
+    Test when DOCUMENT_ALL_ENDPOINT_ENABLED is set to False, /all/ endpoint should return a 404
+    """
+
+    settings.DOCUMENT_ALL_ENDPOINT_ENABLED = False
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.get("/api/v1.0/documents/all/")
+    assert response.status_code == 404

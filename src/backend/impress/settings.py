@@ -273,6 +273,13 @@ class Base(Configuration):
     # Document versions
     DOCUMENT_VERSIONS_PAGE_SIZE = 50
 
+    # Document /all endpoint
+    DOCUMENT_ALL_ENDPOINT_ENABLED = values.BooleanValue(
+        default=True,
+        environ_name="DOCUMENT_ALL_ENDPOINT_ENABLED",
+        environ_prefix=None,
+    )
+
     # Internationalization
     # https://docs.djangoproject.com/en/3.1/topics/i18n/
 

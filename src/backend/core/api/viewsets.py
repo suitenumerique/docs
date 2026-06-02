@@ -1186,6 +1186,10 @@ class DocumentViewSet(
         Unlike the list endpoint which only returns top-level documents, this endpoint
         returns all documents including children, grandchildren, etc.
         """
+
+        if not settings.DOCUMENT_ALL_ENDPOINT_ENABLED:
+            raise Http404()
+
         user = self.request.user
 
         accessible_documents = self.get_queryset()

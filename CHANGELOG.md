@@ -16,6 +16,7 @@ and this project adheres to
 - ✨(backend) allow to leave a document #2365
 - ✨(frontend) add the presenter mode
 - 📈(backend) create a utils to capture event with posthog
+- 🔧(backend) new setting DOCUMENT_ALL_ENDPOINT_ENABLED
 
 ### Changed
 
