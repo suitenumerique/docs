@@ -109,7 +109,13 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         emojiSource: {
           format: 'png',
           builder(code) {
-            const emoji = jsonemoji.find((e) =>
+            const emojisFound = jsonemoji.filter(
+              (e) =>
+                e.unified.split('-')[0].toLowerCase() ===
+                code.split('-')[0].toLowerCase(),
+            );
+
+            const emoji = emojisFound.find((e) =>
               e.unified.toLocaleLowerCase().includes(code.toLowerCase()),
             );
 

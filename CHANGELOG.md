@@ -28,6 +28,7 @@ and this project adheres to
 - 🐛(backend) prevent admins/owners from overwriting other users comments
 - 🐛(y-provider) return empty output when converting empty Yjs document
 - 🐛(backend) use computed_link_reach in handle_onboarding_document #2305
+- 🐛(frontend) fix emoji pdf not matching #2375
 
 ### Changed
 
