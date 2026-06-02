@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ♿️(frontend) use heading element for pinned documents section title #2380
+
 ## [v5.2.1] - 2026-06-05
 
 ### Changed
@@ -14,7 +18,7 @@ and this project adheres to
 
 ### Fixed
 
-- 🐛(backend) close thread DB connections to fix test teardown 
+- 🐛(backend) close thread DB connections to fix test teardown
   OperationalError #2385
 - 🐛(frontend) fix crash when orphaned threads #2395
 - 🐛(backend) order trashbin response by most recently deleted #2392
@@ -54,7 +58,7 @@ and this project adheres to
 - 🐛(frontend) fix toolbar blocknote hidden #2373
 - 🐛(frontend) fix application crashes when using GTranslate and zoom #2372
 - 🐛(frontend) fix emoji pdf not matching #2375
-- 🐛(backend) fix UnorderedObjectListWarning for DocumentAskForAccess 
+- 🐛(backend) fix UnorderedObjectListWarning for DocumentAskForAccess
   viewset #2382
 
 ## [v5.1.0] - 2026-05-11

@@ -22,11 +22,7 @@ export const LeftPanelFavorites = () => {
   }
 
   return (
-    <Box
-      as="section"
-      aria-labelledby="pinned-docs-title"
-      className="--docs--left-panel-favorites"
-    >
+    <Box as="section" className="--docs--left-panel-favorites">
       <HorizontalSeparator $margin="none" />
       <Box
         $justify="center"
@@ -36,10 +32,11 @@ export const LeftPanelFavorites = () => {
         data-testid="left-panel-favorites"
       >
         <Text
+          as="h2"
           $size="sm"
           $padding={{ horizontal: '3xs' }}
           $weight="700"
-          id="pinned-docs-title"
+          $margin="0"
         >
           {t('Pinned documents')}
         </Text>
