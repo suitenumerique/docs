@@ -15,6 +15,10 @@ and this project adheres to
 
 - 🐛(frontend) redirect homepage to login when homepage feat is disabled #2521
 
+### Changed
+
+- ♿️(frontend) use semantic `<dl>` structure in document info card #2379
+
 ## [v5.4.1] - 2026-07-09
 
 ### Changed

@@ -26,34 +26,44 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
 
   const relativeOnly = relativeDate(doc.updated_at);
 
-  let dateToDisplay = t('Last update: {{update}}', {
-    update: relativeOnly,
-  });
+  const trashbinCutoff = config?.TRASHBIN_CUTOFF_DAYS;
 
-  if (config?.TRASHBIN_CUTOFF_DAYS && doc.deleted_at) {
-    const daysLeft = calculateDaysLeft(
-      doc.deleted_at,
-      config.TRASHBIN_CUTOFF_DAYS,
-    );
+  let dateLabel: string;
+  let dateValue: string;
 
-    dateToDisplay = `${t('Days remaining:')} ${daysLeft} ${t('days', { count: daysLeft })}`;
+  if (trashbinCutoff && doc.deleted_at) {
+    const daysLeft = calculateDaysLeft(doc.deleted_at, trashbinCutoff);
+    dateLabel = t('Days remaining:');
+    dateValue = `${daysLeft} ${t('days', { count: daysLeft })}`;
+  } else {
+    dateLabel = t('Last update:');
+    dateValue = relativeOnly;
   }
 
   return (
-    <Box $direction="row">
+    <Box as="dl" $direction="row" $align="center" $margin="0">
+      <Text as="dt" className="sr-only">
+        {t('Role')}
+      </Text>
       <Text
+        as="dd"
         $variation="tertiary"
         $size="s"
         $weight="bold"
         $theme={isEditable ? 'neutral' : 'warning'}
         $direction="row"
+        $margin="0"
       >
         <VisibilityDoc doc={doc} />
         {transRole(isEditable ? doc.user_role || doc.link_role : Role.READER)}
         &nbsp;·&nbsp;
       </Text>
-      <Text $variation="tertiary" $size="s">
-        {dateToDisplay}
+      <Text as="dt" $variation="tertiary" $size="s" $margin="0">
+        {dateLabel}
+        &nbsp;
+      </Text>
+      <Text as="dd" $variation="tertiary" $size="s" $margin="0">
+        {dateValue}
       </Text>
     </Box>
   );
