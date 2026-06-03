@@ -6,22 +6,24 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.2.0] - 2026-06-03
+
 ### Added
 
 - ✨(backend) support creating subdoc from file #1987
 - ✨(frontend) comment side panel #2279
 - ✨(buildpack) add PaaS deployment support, tested with Scalingo #2293
-- 🔧(backend) allow configuring settings OIDC_OP_USER_ENDPOINT_FORMAT
-- ⚡️(helm) create a dedicated svc and deployment for yprovider converter #2368
+- 🔧(backend) allow configuring settings OIDC_OP_USER_ENDPOINT_FORMAT #2306
+- ⚡️(helm) create a dedicated svc and deployment for yprovider converter #2358
 - ✨(backend) allow to leave a document #2365
-- ✨(frontend) add the presenter mode
-- 📈(backend) create a utils to capture event with posthog
-- 🔧(backend) new setting DOCUMENT_ALL_ENDPOINT_ENABLED
+- ✨(frontend) add the presenter mode #2321
+- 📈(backend) create a utils to capture event with posthog #2363
+- 🔧(backend) new setting DOCUMENT_ALL_ENDPOINT_ENABLED #2378
 
 ### Changed
 
-- ♻️(backend) allow global search in sub documents
-- ✨(backend) add a breadcrumb in the search response
+- ♻️(backend) allow global search in sub documents #2310
+- ✨(backend) add a breadcrumb in the search response #2310
 - ♻️(frontend) move doc action buttons to fix toolbar #2360
 - ♿️(frontend) add aria-hidden to decorative avatar SVGs in share modal #2324
 - 🏗️(frontend) move comments to its own folder feature #2374
@@ -29,14 +31,15 @@ and this project adheres to
 
 ### Fixed
 
-- 🐛(docs) run migration 0027 without superuser role
-- 🐛(backend) prevent admins/owners from overwriting other users comments
-- 🐛(y-provider) return empty output when converting empty Yjs document
+- 🐛(docs) run migration 0027 without superuser role #2284
+- 🐛(backend) prevent admins/owners from overwriting other users comments #2323
+- 🐛(y-provider) return empty output when converting empty Yjs document #2328
 - 🐛(backend) use computed_link_reach in handle_onboarding_document #2305
 - 🐛(frontend) fix toolbar blocknote hidden #2373
 - 🐛(frontend) fix application crashes when using GTranslate and zoom #2372
 - 🐛(frontend) fix emoji pdf not matching #2375
-- 🐛(backend) fix UnorderedObjectListWarning for DocumentAskForAccess viewset
+- 🐛(backend) fix UnorderedObjectListWarning for DocumentAskForAccess 
+  viewset #2382
 
 ## [v5.1.0] - 2026-05-11
 
@@ -1333,7 +1336,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.1.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.2.0...main
+[v5.2.0]: https://github.com/suitenumerique/docs/releases/v5.2.0
 [v5.1.0]: https://github.com/suitenumerique/docs/releases/v5.1.0
 [v5.0.0]: https://github.com/suitenumerique/docs/releases/v5.0.0
 [v4.8.6]: https://github.com/suitenumerique/docs/releases/v4.8.6

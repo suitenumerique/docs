@@ -7,7 +7,7 @@ build-backend = "uv_build"
 
 [project]
 name = "impress"
-version = "5.1.0"
+version = "5.2.0"
 authors = [{ "name" = "DINUM", "email" = "dev@mail.numerique.gouv.fr" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
