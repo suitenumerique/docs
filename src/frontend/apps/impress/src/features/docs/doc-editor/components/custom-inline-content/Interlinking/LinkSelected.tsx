@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { css } from 'styled-components';
 
-import { Box, BoxButton, Text } from '@/components';
+import { Box, Text } from '@/components';
 import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
 import { getEmojiAndTitle, useDoc } from '@/docs/doc-management/';
 
@@ -41,10 +41,9 @@ export const LinkSelected = ({
   const router = useRouter();
   const href = `/docs/${docId}/`;
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
 
-    // If ctrl or command is pressed, it opens a new tab. If shift is pressed, it opens a new window
     if (e.metaKey || e.ctrlKey || e.shiftKey) {
       window.open(href, '_blank');
       return;
@@ -52,8 +51,7 @@ export const LinkSelected = ({
     void router.push(href);
   };
 
-  // This triggers on middle-mouse click
-  const handleAuxClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleAuxClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (e.button !== 1) {
       return;
     }
@@ -63,8 +61,9 @@ export const LinkSelected = ({
   };
 
   return (
-    <BoxButton
-      as="span"
+    <Box
+      as="a"
+      href={href}
       className="--docs--interlinking-link-inline-content"
       data-href={href}
       onClick={handleClick}
@@ -75,6 +74,7 @@ export const LinkSelected = ({
         display: inline;
         padding: 0.1rem 0.4rem;
         border-radius: 4px;
+        cursor: pointer;
         & svg {
           position: relative;
           top: 2px;
@@ -84,6 +84,11 @@ export const LinkSelected = ({
           background-color: var(
             --c--contextuals--background--semantic--contextual--primary
           );
+        }
+        .--docs--interlinking-link-inline-content:focus-visible {
+          outline: 2px solid
+            var(--c--contextuals--content--semantic--gray--primary);
+          outline-offset: 2px;
         }
         transition: background-color var(--c--globals--transitions--duration)
           var(--c--globals--transitions--ease-out);
@@ -129,6 +134,6 @@ export const LinkSelected = ({
           {titleWithoutEmoji}
         </Box>
       </Text>
-    </BoxButton>
+    </Box>
   );
 };
