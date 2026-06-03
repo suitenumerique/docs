@@ -6,6 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 from unittest import mock
 from uuid import uuid4
 
+from django.db import connection
+
 import pytest
 from rest_framework.test import APIClient
 
@@ -70,16 +72,21 @@ def test_api_documents_create_document_race_condition():
     """
 
     def create_document(title):
-        user = factories.UserFactory()
-        client = APIClient()
-        client.force_login(user)
-        return client.post(
-            "/api/v1.0/documents/",
-            {
-                "title": title,
-            },
-            format="json",
-        )
+        try:
+            user = factories.UserFactory()
+            client = APIClient()
+            client.force_login(user)
+            return client.post(
+                "/api/v1.0/documents/",
+                {
+                    "title": title,
+                },
+                format="json",
+            )
+        finally:
+            # Close this worker thread's thread-local database connection so it
+            # does not linger and block dropping the test database at teardown.
+            connection.close()
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         future1 = executor.submit(create_document, "my document 1")

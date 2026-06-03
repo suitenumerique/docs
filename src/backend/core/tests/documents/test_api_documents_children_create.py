@@ -8,6 +8,8 @@ from unittest import mock
 from unittest.mock import patch
 from uuid import uuid4
 
+from django.db import connection
+
 import pytest
 from rest_framework.test import APIClient
 
@@ -286,12 +288,17 @@ def test_api_documents_create_document_children_race_condition():
     factories.UserDocumentAccessFactory(user=user, document=document, role="owner")
 
     def create_document():
-        return client.post(
-            f"/api/v1.0/documents/{document.id}/children/",
-            {
-                "title": "my child",
-            },
-        )
+        try:
+            return client.post(
+                f"/api/v1.0/documents/{document.id}/children/",
+                {
+                    "title": "my child",
+                },
+            )
+        finally:
+            # Close this worker thread's thread-local database connection so it
+            # does not linger and block dropping the test database at teardown.
+            connection.close()
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         future1 = executor.submit(create_document)
