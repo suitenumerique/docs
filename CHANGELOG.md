@@ -25,6 +25,7 @@ and this project adheres to
 - ♻️(frontend) move doc action buttons to fix toolbar #2360
 - ♿️(frontend) add aria-hidden to decorative avatar SVGs in share modal #2324
 - 🏗️(frontend) move comments to its own folder feature #2374
+- ♿️(frontend) use semantic <p> elements in document info card #2379
 
 ### Fixed
 
