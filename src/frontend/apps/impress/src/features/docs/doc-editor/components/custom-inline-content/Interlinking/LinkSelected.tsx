@@ -85,9 +85,8 @@ export const LinkSelected = ({
             --c--contextuals--background--semantic--contextual--primary
           );
         }
-        .--docs--interlinking-link-inline-content:focus-visible {
-          outline: 2px solid
-            var(--c--contextuals--content--semantic--gray--primary);
+        &:focus-within {
+          outline: 2px solid var(--c--globals--colors--brand-400);
           outline-offset: 2px;
         }
         transition: background-color var(--c--globals--transitions--duration)
