@@ -55,79 +55,158 @@ def test_api_documents_trashbin_format():
     document.soft_delete()
     factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
 
+    # other non deleted documents
+    factories.DocumentFactory.create_batch(2, creator=user, users=[(user, "owner")])
+
+    other_document_to_delete = factories.DocumentFactory(
+        creator=user,
+        users=[(user, "owner")],
+    )
+
+    other_document_to_delete.soft_delete()
+
     response = client.get("/api/v1.0/documents/trashbin/")
 
     assert response.status_code == 200
 
-    content = response.json()
-    results = content.pop("results")
-    assert content == {
-        "count": 1,
+    assert response.json() == {
+        "count": 2,
         "next": None,
         "previous": None,
-    }
-    assert len(results) == 1
-    assert results[0] == {
-        "id": str(document.id),
-        "abilities": {
-            "accesses_manage": False,
-            "accesses_view": False,
-            "ai_proxy": False,
-            "ai_transform": False,
-            "ai_translate": False,
-            "attachment_upload": False,
-            "can_edit": False,
-            "children_create": False,
-            "children_list": False,
-            "collaboration_auth": False,
-            "descendants": False,
-            "cors_proxy": False,
-            "comment": False,
-            "formatted_content": False,
-            "destroy": False,
-            "duplicate": False,
-            "favorite": False,
-            "invite_owner": False,
-            "link_configuration": False,
-            "link_select_options": {
-                "authenticated": ["reader", "commenter", "editor"],
-                "public": ["reader", "commenter", "editor"],
-                "restricted": None,
+        "results": [
+            {
+                "id": str(other_document_to_delete.id),
+                "abilities": {
+                    "accesses_manage": False,
+                    "accesses_view": False,
+                    "ai_proxy": False,
+                    "ai_transform": False,
+                    "ai_translate": False,
+                    "attachment_upload": False,
+                    "can_edit": False,
+                    "children_create": False,
+                    "children_list": False,
+                    "collaboration_auth": False,
+                    "descendants": False,
+                    "cors_proxy": False,
+                    "comment": False,
+                    "formatted_content": False,
+                    "destroy": False,
+                    "duplicate": False,
+                    "favorite": False,
+                    "invite_owner": False,
+                    "link_configuration": False,
+                    "link_select_options": {
+                        "authenticated": ["reader", "commenter", "editor"],
+                        "public": ["reader", "commenter", "editor"],
+                        "restricted": None,
+                    },
+                    "content_patch": False,
+                    "content_retrieve": True,
+                    "leave": False,
+                    "media_auth": False,
+                    "media_check": False,
+                    "move": False,  # Can't move a deleted document
+                    "partial_update": False,
+                    "restore": True,
+                    "retrieve": True,
+                    "search": False,
+                    "tree": True,
+                    "update": False,
+                    "versions_destroy": False,
+                    "versions_list": False,
+                    "versions_retrieve": False,
+                },
+                "ancestors_link_reach": None,
+                "ancestors_link_role": None,
+                "computed_link_reach": other_document_to_delete.computed_link_reach,
+                "computed_link_role": other_document_to_delete.computed_link_role,
+                "created_at": other_document_to_delete.created_at.isoformat().replace(
+                    "+00:00", "Z"
+                ),
+                "creator": str(user.id),
+                "depth": 1,
+                "excerpt": other_document_to_delete.excerpt,
+                "deleted_at": other_document_to_delete.ancestors_deleted_at.isoformat().replace(
+                    "+00:00", "Z"
+                ),
+                "link_reach": other_document_to_delete.link_reach,
+                "link_role": other_document_to_delete.link_role,
+                "nb_accesses_ancestors": 0,
+                "nb_accesses_direct": 1,
+                "numchild": 0,
+                "path": other_document_to_delete.path,
+                "title": other_document_to_delete.title,
+                "updated_at": other_document_to_delete.updated_at.isoformat().replace(
+                    "+00:00", "Z"
+                ),
+                "user_role": "owner",
             },
-            "content_patch": False,
-            "content_retrieve": True,
-            "leave": False,
-            "media_auth": False,
-            "media_check": False,
-            "move": False,  # Can't move a deleted document
-            "partial_update": False,
-            "restore": True,
-            "retrieve": True,
-            "search": False,
-            "tree": True,
-            "update": False,
-            "versions_destroy": False,
-            "versions_list": False,
-            "versions_retrieve": False,
-        },
-        "ancestors_link_reach": None,
-        "ancestors_link_role": None,
-        "computed_link_reach": document.computed_link_reach,
-        "computed_link_role": document.computed_link_role,
-        "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
-        "creator": str(document.creator.id),
-        "depth": 1,
-        "excerpt": document.excerpt,
-        "deleted_at": document.ancestors_deleted_at.isoformat().replace("+00:00", "Z"),
-        "link_reach": document.link_reach,
-        "link_role": document.link_role,
-        "nb_accesses_ancestors": 0,
-        "nb_accesses_direct": 3,
-        "numchild": 0,
-        "path": document.path,
-        "title": document.title,
-        "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_role": "owner",
+            {
+                "id": str(document.id),
+                "abilities": {
+                    "accesses_manage": False,
+                    "accesses_view": False,
+                    "ai_proxy": False,
+                    "ai_transform": False,
+                    "ai_translate": False,
+                    "attachment_upload": False,
+                    "can_edit": False,
+                    "children_create": False,
+                    "children_list": False,
+                    "collaboration_auth": False,
+                    "descendants": False,
+                    "cors_proxy": False,
+                    "comment": False,
+                    "formatted_content": False,
+                    "destroy": False,
+                    "duplicate": False,
+                    "favorite": False,
+                    "invite_owner": False,
+                    "link_configuration": False,
+                    "link_select_options": {
+                        "authenticated": ["reader", "commenter", "editor"],
+                        "public": ["reader", "commenter", "editor"],
+                        "restricted": None,
+                    },
+                    "content_patch": False,
+                    "content_retrieve": True,
+                    "leave": False,
+                    "media_auth": False,
+                    "media_check": False,
+                    "move": False,  # Can't move a deleted document
+                    "partial_update": False,
+                    "restore": True,
+                    "retrieve": True,
+                    "search": False,
+                    "tree": True,
+                    "update": False,
+                    "versions_destroy": False,
+                    "versions_list": False,
+                    "versions_retrieve": False,
+                },
+                "ancestors_link_reach": None,
+                "ancestors_link_role": None,
+                "computed_link_reach": document.computed_link_reach,
+                "computed_link_role": document.computed_link_role,
+                "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
+                "creator": str(document.creator.id),
+                "depth": 1,
+                "excerpt": document.excerpt,
+                "deleted_at": document.ancestors_deleted_at.isoformat().replace(
+                    "+00:00", "Z"
+                ),
+                "link_reach": document.link_reach,
+                "link_role": document.link_role,
+                "nb_accesses_ancestors": 0,
+                "nb_accesses_direct": 3,
+                "numchild": 0,
+                "path": document.path,
+                "title": document.title,
+                "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_role": "owner",
+            },
+        ],
     }
 
 
