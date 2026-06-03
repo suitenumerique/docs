@@ -201,6 +201,7 @@ export const DocMoveModal = ({
           }}
         >
           <QuickSearch
+            label={t('Search for a doc...')}
             placeholder={t('Search for a doc...')}
             loading={loading}
             onFilter={handleInputSearch}

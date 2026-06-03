@@ -126,7 +126,7 @@ const DocSearchModalGlobal = ({
         $padding={{ bottom: 'base' }}
       >
         <QuickSearch
-          label={t('Search documents')}
+          label={t('Type the name of a document')}
           placeholder={t('Type the name of a document')}
           loading={loading}
           onFilter={handleInputSearch}

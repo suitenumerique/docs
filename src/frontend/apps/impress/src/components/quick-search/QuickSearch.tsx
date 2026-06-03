@@ -65,7 +65,6 @@ export const QuickSearch = ({
         >
           {showInput && (
             <QuickSearchInput
-              label={label}
               withSeparator={hasChildrens(children)}
               inputValue={inputValue}
               onFilter={onFilter}

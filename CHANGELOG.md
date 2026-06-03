@@ -21,6 +21,7 @@ and this project adheres to
 - ♿️(frontend) enable blocknote heading ids for toc anchors #2449
 - ♿️(frontend) focus export modal on format select #2421
 - ♿️(frontend) configurable legal submenu in HelpMenu, remove Crisp #2416
+- ♿️(frontend) align search modal field label with placeholder #2384
 
 ## [v5.3.0] - 2026-06-19
 

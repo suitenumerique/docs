@@ -120,9 +120,8 @@ test.describe('Document search', () => {
     const searchButton = page.getByTestId('search-docs-button');
 
     await searchButton.click();
-    await page.getByRole('combobox', { name: 'Search documents' }).click();
     await page
-      .getByRole('combobox', { name: 'Search documents' })
+      .getByRole('combobox', { name: 'Type the name of a document' })
       .fill('sub page');
 
     // Expect to find the first and second docs in the results list
@@ -144,7 +143,7 @@ test.describe('Document search', () => {
     );
     await searchButton.click();
     await page
-      .getByRole('combobox', { name: 'Search documents' })
+      .getByRole('combobox', { name: 'Type the name of a document' })
       .fill('sub page');
 
     // Display only current doc results
@@ -210,7 +209,7 @@ test.describe('Document search', () => {
 
     await otherPage.getByTestId('search-docs-button').click();
     await otherPage
-      .getByRole('combobox', { name: 'Search documents' })
+      .getByRole('combobox', { name: 'Type the name of a document' })
       .fill('sub page');
 
     // Search only in the current doc
