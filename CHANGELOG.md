@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(backend) close thread DB connections to fix test teardown 
+  OperationalError #2385
+
 ## [v5.2.0] - 2026-06-03
 
 ### Added

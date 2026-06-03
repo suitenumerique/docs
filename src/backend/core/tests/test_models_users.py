@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
+from django.db import connection
 from django.test.utils import override_settings
 
 import pytest
@@ -341,7 +342,14 @@ def test_models_users_duplicate_onboarding_sandbox_race_condition():
     """
 
     def create_user():
-        return factories.UserFactory()
+        try:
+            return factories.UserFactory()
+        finally:
+            # Each worker thread gets its own thread-local database connection.
+            # Close it explicitly so it does not linger and block dropping the
+            # test database during teardown (OperationalError: "database is being
+            # accessed by other users").
+            connection.close()
 
     template_document = factories.DocumentFactory(title="Getting started with Docs")
     with (
