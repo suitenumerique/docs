@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { css } from 'styled-components';
 
-import { BoxButton, Text } from '@/components';
+import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { useResponsiveStore } from '@/stores';
@@ -38,15 +38,18 @@ export const Heading = ({
   const isActive = isHighlight || isHover;
 
   return (
-    <BoxButton
-      id={`heading-${headingId}`}
+    <Box
+      as="a"
+      href={`#heading-${headingId}`}
       className="--docs--table-content-heading"
       $width="100%"
       $minHeight="var(--c--globals--spacings--lg)"
       onMouseOver={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
-      onClick={() => {
+      onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
         // With mobile the focus open the keyboard and the scroll is not working
+        e.preventDefault();
+
         if (!isMobile) {
           editor.focus();
         }
@@ -68,17 +71,22 @@ export const Heading = ({
           : 'none'
       }
       $justify="center"
+      $padding="none"
+      $margin="none"
+      $hasTransition
       $css={css`
         text-align: left;
+        display: flex;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
         &:focus-visible {
-          /* Scoped focus style: same footprint as hover, with theme shadow */
           outline: none;
           box-shadow: 0 0 0 2px ${colorsTokens['brand-400']};
           border-radius: var(--c--globals--spacings--st);
         }
       `}
       aria-label={text}
-      aria-selected={isHighlight}
       aria-current={isHighlight ? 'true' : undefined}
     >
       <Text
@@ -87,10 +95,9 @@ export const Heading = ({
         $weight={isHighlight ? '700' : '500'}
         $css="overflow-wrap: break-word;"
         $hasTransition
-        aria-selected={isHighlight}
       >
         {text}
       </Text>
-    </BoxButton>
+    </Box>
   );
 };

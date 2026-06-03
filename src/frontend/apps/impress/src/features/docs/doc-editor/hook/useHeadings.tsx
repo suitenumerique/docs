@@ -7,7 +7,6 @@ export const useHeadings = (editor: DocsBlockNoteEditor) => {
   const { setHeadings, resetHeadings } = useHeadingStore();
 
   useEffect(() => {
-    // Check if editor and its view are mounted before accessing document
     if (!editor) {
       return;
     }

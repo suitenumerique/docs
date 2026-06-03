@@ -32,34 +32,43 @@ test.describe('Doc Table Content', () => {
 
     const elSidePanel = page.getByLabel('Table of contents side panel');
 
-    const level1 = elSidePanel.getByText('Level 1');
+    const link1 = elSidePanel.getByRole('link', { name: 'Level 1' });
+    const link2 = elSidePanel.getByRole('link', { name: 'Level 2' });
+    const link3 = elSidePanel.getByRole('link', { name: 'Level 3' });
+    const level1 = link1.getByText('Level 1');
     const editorLevel1 = editor.getByText('Level 1');
-    const level2 = elSidePanel.getByText('Level 2');
+    const level2 = link2.getByText('Level 2');
     const editorLevel2 = editor.getByText('Level 2');
-    const level3 = elSidePanel.getByText('Level 3');
+    const level3 = link3.getByText('Level 3');
+
+    // TOC entries must be <a> links with fragment hrefs
+    await expect(link1).toBeVisible();
+    await expect(link1).toHaveAttribute('href', /^#heading-/);
+    await expect(link2).toHaveAttribute('href', /^#heading-/);
+    await expect(link3).toHaveAttribute('href', /^#heading-/);
 
     await expect(level1).toBeVisible();
     await expect(editorLevel1).not.toBeInViewport();
-    await expect(level1).toHaveAttribute('aria-selected', 'false');
+    await expect(link1).not.toHaveAttribute('aria-current');
 
     await expect(level2).toBeVisible();
     await expect(level2).toHaveCSS('padding-left', /14.4px/);
     await expect(editorLevel2).toBeInViewport();
-    await expect(level2).toHaveAttribute('aria-selected', 'true');
+    await expect(link2).toHaveAttribute('aria-current', 'true');
 
     await expect(level3).toBeVisible();
     await expect(level3).toHaveCSS('padding-left', /24px/);
-    await expect(level3).toHaveAttribute('aria-selected', 'false');
+    await expect(link3).not.toHaveAttribute('aria-current');
 
-    await level1.click();
+    await link1.click();
     await expect(editorLevel1).toBeInViewport();
-    await expect(level1).toHaveAttribute('aria-selected', 'true');
-    await expect(level2).toHaveAttribute('aria-selected', 'false');
+    await expect(link1).toHaveAttribute('aria-current', 'true');
+    await expect(link2).not.toHaveAttribute('aria-current');
 
-    await level2.click();
+    await link2.click();
     await expect(editorLevel1).not.toBeInViewport();
     await expect(editorLevel2).toBeInViewport();
-    await expect(level2).toHaveAttribute('aria-selected', 'true');
-    await expect(level1).toHaveAttribute('aria-selected', 'false');
+    await expect(link2).toHaveAttribute('aria-current', 'true');
+    await expect(link1).not.toHaveAttribute('aria-current');
   });
 });

@@ -95,7 +95,13 @@ export const TableContentSideBar = ({ onClose }: TableContentSideBarProps) => {
         `}
       >
         <Box $direction="row" $align="center" $justify="space-between">
-          <Text as="h2" $weight="bold" $size="16px" $margin="0">
+          <Text
+            as="h2"
+            id="toc-heading"
+            $weight="bold"
+            $size="16px"
+            $margin="0"
+          >
             {t('Table of Contents')}
           </Text>
           <ButtonCloseModal
@@ -106,33 +112,40 @@ export const TableContentSideBar = ({ onClose }: TableContentSideBarProps) => {
       </Box>
       {editor && headings && headings.length > 0 && (
         <Box
-          as="ul"
-          role="list"
-          $gap={spacingsTokens['3xs']}
-          $padding={{
-            vertical: 'base',
-            horizontal: 'sm',
-          }}
+          as="nav"
+          aria-labelledby="toc-heading"
           $css={css`
             overflow-y: auto;
-            list-style: none;
-            margin: 0;
           `}
         >
-          {headings.map(
-            (heading) =>
-              heading.contentText && (
-                <Box as="li" role="listitem" key={heading.id}>
-                  <Heading
-                    editor={editor}
-                    headingId={heading.id}
-                    level={heading.props.level}
-                    text={heading.contentText}
-                    isHighlight={headingIdHighlight === heading.id}
-                  />
-                </Box>
-              ),
-          )}
+          <Box
+            as="ul"
+            role="list"
+            $gap={spacingsTokens['3xs']}
+            $padding={{
+              vertical: 'base',
+              horizontal: 'sm',
+            }}
+            $css={css`
+              list-style: none;
+              margin: 0;
+            `}
+          >
+            {headings.map(
+              (heading) =>
+                heading.contentText && (
+                  <Box as="li" role="listitem" key={heading.id}>
+                    <Heading
+                      editor={editor}
+                      headingId={heading.id}
+                      level={heading.props.level}
+                      text={heading.contentText}
+                      isHighlight={headingIdHighlight === heading.id}
+                    />
+                  </Box>
+                ),
+            )}
+          </Box>
         </Box>
       )}
     </Box>
