@@ -910,6 +910,8 @@ class DocumentViewSet(
     @drf.decorators.action(
         detail=False,
         methods=["get"],
+        ordering=["-deleted_at"],
+        ordering_fields=["deleted_at"],
     )
     def trashbin(self, request, *args, **kwargs):
         """
@@ -946,6 +948,10 @@ class DocumentViewSet(
         queryset = queryset.annotate_user_roles(
             self.request.user
         ).annotate_user_has_link_trace(self.request.user)
+
+        queryset = filters.OrderingFilter().filter_queryset(
+            self.request, queryset, self
+        )
 
         return self.get_response_for_queryset(queryset)
 
