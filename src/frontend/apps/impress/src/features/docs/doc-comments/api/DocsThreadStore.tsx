@@ -329,6 +329,12 @@ export class DocsThreadStore extends ThreadStore {
 
     const serverThread = (await response.json()) as ServerThread;
 
+    // Orphan threads without comments - we delete them to avoid side effects
+    if (!serverThread.comments || serverThread.comments.length === 0) {
+      void this.deleteThread({ threadId: serverThread.id });
+      return;
+    }
+
     const clientThread = serverThreadToClientThread(serverThread);
     this.upsertClientThreadData(clientThread);
     this.notifySubscribers();
@@ -359,6 +365,12 @@ export class DocsThreadStore extends ThreadStore {
     const threads = (await response.json()) as ServerThreadListResponse;
     const next = new Map<string, ClientThreadData>();
     threads.forEach((thread) => {
+      // Orphan threads without comments - we delete them to avoid side effects
+      if (!thread.comments || thread.comments.length === 0) {
+        void this.deleteThread({ threadId: thread.id });
+        return;
+      }
+
       const threadData: ClientThreadData = serverThreadToClientThread(thread);
       next.set(thread.id, threadData);
     });

@@ -10,6 +10,7 @@ and this project adheres to
 
 - 🐛(backend) close thread DB connections to fix test teardown 
   OperationalError #2385
+- 🐛(frontend) fix crash when orphaned threads #2395
 - 🐛(backend) order trashbin response by most recently deleted
 
 ## [v5.2.0] - 2026-06-03
