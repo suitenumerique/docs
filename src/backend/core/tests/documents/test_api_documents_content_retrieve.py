@@ -10,6 +10,7 @@ from django.core.files.storage import default_storage
 from django.utils import timezone
 
 import pytest
+from asgiref.sync import sync_to_async
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -162,6 +163,36 @@ def test_api_documents_content_retrieve_file_not_in_storage():
     assert not response.get("Cache-Control")
 
     assert not cache.get(get_content_metadata_cache_key(document.id))
+
+
+# The data created in this test through `sync_to_async` is written on a
+# separate thread-local database connection, outside the atomic transaction
+# pytest-django uses to isolate tests. `transaction=True` makes pytest-django
+# flush the tables after the test instead of relying on a rollback, so the row
+# does not leak into the rest of the suite.
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio(loop_scope="function")
+async def test_api_documents_content_retrieve_async(monkeypatch):
+    """
+    Test the content retrieve method in async should use the async generator in the streaming
+    response.
+    """
+    monkeypatch.setenv("PYTHON_SERVER_MODE", "async")
+
+    document = await sync_to_async(factories.DocumentFactory)(link_reach="public")
+    client = APIClient()
+
+    response = await sync_to_async(client.get)(
+        f"/api/v1.0/documents/{document.id!s}/content/"
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    # Wait for the streaming content to be fully received => async iterator -> list
+    # This fails it the streaming is not an async generator
+    response_content = b"".join(
+        [content async for content in response.streaming_content]
+    ).decode("utf-8")
+    assert response_content == factories.YDOC_HELLO_WORLD_BASE64
 
 
 def test_api_documents_content_retrieve_content_length_header():

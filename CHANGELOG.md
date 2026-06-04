@@ -16,6 +16,7 @@ and this project adheres to
   OperationalError #2385
 - 🐛(frontend) fix crash when orphaned threads #2395
 - 🐛(backend) order trashbin response by most recently deleted
+- 🐛(backend) stream document content with an async iterator under ASGI #2381
 
 ## [v5.2.0] - 2026-06-03
 
