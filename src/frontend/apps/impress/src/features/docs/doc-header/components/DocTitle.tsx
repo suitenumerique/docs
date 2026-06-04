@@ -1,4 +1,3 @@
-import { Tooltip } from '@gouvfr-lasuite/cunningham-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -59,49 +58,43 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
   }
 
   return (
-    <Tooltip
-      content={t('Edit document emoji')}
-      aria-hidden={true}
-      placement="top"
+    <Box
+      className={CLASS_DOC_TITLE}
+      $css={css`
+        padding: 4px;
+        padding-top: 3px;
+        cursor: pointer;
+        &:hover {
+          background-color: ${colorsTokens['gray-100']};
+          border-radius: var(--c--globals--spacings--st);
+        }
+        transition: background-color var(--c--globals--transitions--duration)
+          var(--c--globals--transitions--ease-out);
+      `}
     >
-      <Box
-        className={CLASS_DOC_TITLE}
-        $css={css`
-          padding: 4px;
-          padding-top: 3px;
-          cursor: pointer;
-          &:hover {
-            background-color: ${colorsTokens['gray-100']};
-            border-radius: var(--c--globals--spacings--st);
-          }
-          transition: background-color var(--c--globals--transitions--duration)
-            var(--c--globals--transitions--ease-out);
-        `}
-      >
-        <DocIcon
-          buttonProps={{
-            $width: '32px',
-            $height: '32px',
-            $justify: 'space-between',
-            $align: 'center',
-          }}
-          withEmojiPicker={doc.abilities.partial_update}
-          docId={doc.id}
-          title={doc.title}
-          emoji={emoji}
-          $size="23px"
-          defaultIcon={
-            <SimpleFileIcon
-              width="25px"
-              height="25px"
-              aria-hidden="true"
-              aria-label={t('Simple document icon')}
-              color={colorsTokens['brand-500']}
-            />
-          }
-        />
-      </Box>
-    </Tooltip>
+      <DocIcon
+        buttonProps={{
+          $width: '32px',
+          $height: '32px',
+          $justify: 'space-between',
+          $align: 'center',
+        }}
+        withEmojiPicker={doc.abilities.partial_update}
+        docId={doc.id}
+        title={doc.title}
+        emoji={emoji}
+        $size="23px"
+        defaultIcon={
+          <SimpleFileIcon
+            width="25px"
+            height="25px"
+            aria-hidden="true"
+            aria-label={t('Simple document icon')}
+            color={colorsTokens['brand-500']}
+          />
+        }
+      />
+    </Box>
   );
 };
 
@@ -226,42 +219,40 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
         }}
         $width="100%"
       >
-        <Tooltip content={t('Rename')} aria-hidden={true} placement="top">
-          <Box
-            as="span"
-            role="textbox"
-            className="--docs--doc-title-input"
-            contentEditable
-            defaultValue={titleDisplay || undefined}
-            onKeyDownCapture={handleKeyDown}
-            suppressContentEditableWarning={true}
-            aria-label={`${t('Document title')}`}
-            aria-multiline={false}
-            onBlurCapture={(event) =>
-              handleTitleSubmit(event.target.textContent || '')
+        <Box
+          as="span"
+          role="textbox"
+          className="--docs--doc-title-input"
+          contentEditable
+          defaultValue={titleDisplay || undefined}
+          onKeyDownCapture={handleKeyDown}
+          suppressContentEditableWarning={true}
+          aria-label={`${t('Document title')}`}
+          aria-multiline={false}
+          onBlurCapture={(event) =>
+            handleTitleSubmit(event.target.textContent || '')
+          }
+          onPasteCapture={handlePaste}
+          onDropCapture={handleDrop}
+          $css={css`
+            &[contenteditable='true']:empty:not(:focus):before {
+              content: '${untitledDocument}';
+              color: var(
+                --c--contextuals--content--semantic--neutral--tertiary
+              );
+              pointer-events: none;
+              font-style: italic;
             }
-            onPasteCapture={handlePaste}
-            onDropCapture={handleDrop}
-            $css={css`
-              &[contenteditable='true']:empty:not(:focus):before {
-                content: '${untitledDocument}';
-                color: var(
-                  --c--contextuals--content--semantic--neutral--tertiary
-                );
-                pointer-events: none;
-                font-style: italic;
-              }
-              font-size: ${isSmallMobile
-                ? 'var(--c--globals--font--sizes--h4)'
-                : 'var(--c--globals--font--sizes--h2)'};
-              font-weight: 700;
-              outline: none;
-            `}
-            $width="fit-content"
-          >
-            {titleDisplay}
-          </Box>
-        </Tooltip>
+            font-size: ${isSmallMobile
+              ? 'var(--c--globals--font--sizes--h4)'
+              : 'var(--c--globals--font--sizes--h2)'};
+            font-weight: 700;
+            outline: none;
+          `}
+          $width="fit-content"
+        >
+          {titleDisplay}
+        </Box>
       </Box>
     </Box>
   );

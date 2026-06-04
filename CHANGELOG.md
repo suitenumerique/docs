@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 💄(frontend) display emoji button on hover #2396
+
 ### Fixed
 
 - 🐛(backend) close thread DB connections to fix test teardown 

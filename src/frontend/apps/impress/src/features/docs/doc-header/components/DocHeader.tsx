@@ -1,5 +1,6 @@
 import { Button } from '@gouvfr-lasuite/cunningham-react';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 
 import RemoveEmojiSVG from '@/assets/icons/ui-kit/face-remove.svg';
 import AddEmojiSVG from '@/assets/icons/ui-kit/face.svg';
@@ -38,6 +39,20 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
         aria-label={t('It is the card information about the document.')}
         className="--docs--doc-header"
         $minHeight="125px"
+        $css={css`
+          .--docs--doc-header-emoji-button {
+            opacity: 0;
+
+            &:focus {
+              opacity: 1;
+            }
+          }
+          &:hover {
+            .--docs--doc-header-emoji-button {
+              opacity: 1;
+            }
+          }
+        `}
       >
         <Box
           $gap="base"
@@ -49,10 +64,11 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
           {!isEditable && <AlertNetwork />}
         </Box>
         <Box $gap="sm">
-          <Box $minHeight="32px">
+          <Box>
             {displayEmojiButton && (
               <Button
-                size="small"
+                className="--docs--doc-header-emoji-button"
+                size="nano"
                 onClick={() => {
                   const today = new Date();
                   const isAprilFools =
@@ -70,9 +86,9 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                 variant="tertiary"
                 icon={
                   emoji ? (
-                    <RemoveEmojiSVG width={24} height={24} aria-hidden="true" />
+                    <RemoveEmojiSVG width={16} height={16} aria-hidden="true" />
                   ) : (
-                    <AddEmojiSVG width={24} height={24} aria-hidden="true" />
+                    <AddEmojiSVG width={16} height={16} aria-hidden="true" />
                   )
                 }
                 style={{ width: 'fit-content' }}
