@@ -42,7 +42,7 @@ export const Heading = ({
       id={`heading-${headingId}`}
       className="--docs--table-content-heading"
       $width="100%"
-      $height="var(--c--globals--spacings--lg)"
+      $minHeight="var(--c--globals--spacings--lg)"
       onMouseOver={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
       onClick={() => {
@@ -83,7 +83,7 @@ export const Heading = ({
     >
       <Text
         $size="sm"
-        $padding={{ left: leftPaddingMap[level] }}
+        $padding={{ left: leftPaddingMap[level], vertical: 'xs' }}
         $weight={isHighlight ? '700' : '500'}
         $css="overflow-wrap: break-word;"
         $hasTransition
