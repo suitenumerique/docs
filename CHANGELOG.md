@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.2.1] - 2026-06-05
+
 ### Changed
 
 - 💄(frontend) display emoji button on hover #2396
@@ -15,7 +17,7 @@ and this project adheres to
 - 🐛(backend) close thread DB connections to fix test teardown 
   OperationalError #2385
 - 🐛(frontend) fix crash when orphaned threads #2395
-- 🐛(backend) order trashbin response by most recently deleted
+- 🐛(backend) order trashbin response by most recently deleted #2392
 - 🐛(backend) stream document content with an async iterator under ASGI #2381
 - 🐛(frontend) fix long titles in table of content #2399
 
@@ -1346,7 +1348,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.2.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.2.1...main
+[v5.2.1]: https://github.com/suitenumerique/docs/releases/v5.2.1
 [v5.2.0]: https://github.com/suitenumerique/docs/releases/v5.2.0
 [v5.1.0]: https://github.com/suitenumerique/docs/releases/v5.1.0
 [v5.0.0]: https://github.com/suitenumerique/docs/releases/v5.0.0
