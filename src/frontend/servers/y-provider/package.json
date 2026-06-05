@@ -1,6 +1,6 @@
 {
   "name": "server-y-provider",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "description": "Y.js provider for docs",
   "repository": "https://github.com/suitenumerique/docs",
   "license": "MIT",
