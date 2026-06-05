@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-02 18:10+0000\n"
-"PO-Revision-Date: 2026-06-03 09:44\n"
+"POT-Creation-Date: 2026-06-04 15:45+0000\n"
+"PO-Revision-Date: 2026-06-05 10:31\n"
 "Last-Translator: \n"
 "Language-Team: Greek\n"
 "Language: el_GR\n"
@@ -74,7 +74,7 @@ msgstr "Αυτό το πεδίο είναι υποχρεωτικό."
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr "Η εμβέλεια συνδέσμου '%(link_reach)s' δεν επιτρέπεται βάσει της διαμόρφωσης του γονικού εγγράφου."
 
-#: core/api/viewsets.py:1420
+#: core/api/viewsets.py:1427
 #, python-brace-format
 msgid "copy of {title}"
 msgstr "αντίγραφο του {title}"
