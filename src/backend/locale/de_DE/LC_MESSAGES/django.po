@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-02 18:10+0000\n"
-"PO-Revision-Date: 2026-06-03 09:43\n"
+"POT-Creation-Date: 2026-06-04 15:45+0000\n"
+"PO-Revision-Date: 2026-06-05 10:31\n"
 "Last-Translator: \n"
 "Language-Team: German\n"
 "Language: de_DE\n"
@@ -74,7 +74,7 @@ msgstr "Dies ist ein Pflichtfeld."
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr "Der Zugriff auf den Link '%(link_reach)s' ist aufgrund der Konfiguration übergeordneter Dokumente nicht erlaubt."
 
-#: core/api/viewsets.py:1420
+#: core/api/viewsets.py:1427
 #, python-brace-format
 msgid "copy of {title}"
 msgstr "Kopie von {title}"

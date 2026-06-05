@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-02 18:10+0000\n"
-"PO-Revision-Date: 2026-06-03 09:44\n"
+"POT-Creation-Date: 2026-06-04 15:45+0000\n"
+"PO-Revision-Date: 2026-06-05 10:31\n"
 "Last-Translator: \n"
 "Language-Team: Chinese Simplified\n"
 "Language: zh_CN\n"
@@ -74,7 +74,7 @@ msgstr "此欄位為必填。"
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr "根據父文件設定，不允許連結範圍「%(link_reach)s」。"
 
-#: core/api/viewsets.py:1420
+#: core/api/viewsets.py:1427
 #, python-brace-format
 msgid "copy of {title}"
 msgstr "{title} 的副本"
