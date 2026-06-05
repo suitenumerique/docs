@@ -445,7 +445,6 @@ test.describe('Doc Editor', () => {
       .first();
 
     await expect(searchContainerRow).toContainText('😀');
-    await expect(searchContainerRow.locator('svg').first()).toBeHidden();
 
     await input.pressSequentially('-child');
 

@@ -148,6 +148,10 @@ const MainContent = ({
       $css={css`
         overflow-y: auto;
         overflow-x: clip;
+
+        &:focus-visible {
+          outline: none;
+        }
       `}
       {...props}
     >

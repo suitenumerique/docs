@@ -5,11 +5,11 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
+import { KEY_LIST_SEARCH_DOC } from '@/docs/doc-search/api/useSearchDocs';
 
 import { Doc } from '../types';
 
 import { KEY_LIST_DOC } from './useDocs';
-import { KEY_LIST_SEARCH_DOC } from './useSearchDocs';
 
 type CreateDocParams = {
   title?: string;

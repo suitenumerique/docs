@@ -7,18 +7,19 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
+import DocIcon from '@/assets/icons/ui-kit/doc.svg';
+import ArrowIcon from '@/assets/icons/ui-kit/keyboard_return.svg';
 import {
   Box,
   Card,
-  Icon,
   QuickSearch,
   QuickSearchItemContent,
   Text,
 } from '@/components';
-import FoundPageIcon from '@/docs/doc-editor/assets/doc-found.svg';
 import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { Doc, getEmojiAndTitle, useTrans } from '@/docs/doc-management';
-import { DocSearchContent, DocSearchTarget } from '@/docs/doc-search';
+import { DocSearchContent } from '@/docs/doc-search';
+import { useDocSearchFilterStore } from '@/docs/doc-search/stores/useDocSearchFilterStore';
 import { useResponsiveStore } from '@/stores';
 
 import { InterlinkingLinkInlineContentType } from './InterlinkingLinkInlineContent';
@@ -55,6 +56,16 @@ export const SearchPage = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const dropdownId = useId();
   const [popoverOpened, setPopoverOpened] = useState(false);
+  const { setFilter } = useDocSearchFilterStore();
+
+  /**
+   * When the search page is opened, we set the search
+   * target to 'current' to limit the search to the current
+   * document and its sub-documents.
+   */
+  useEffect(() => {
+    setFilter('current');
+  }, [setFilter]);
 
   /**
    * createReactInlineContentSpec add automatically the focus after
@@ -210,6 +221,9 @@ export const SearchPage = ({
                   .quick-search-container & [cmdk-group] {
                     margin-top: 0 !important;
                   }
+                  & h2 {
+                    padding: var(--c--globals--spacings--sm);
+                  }
                   & > div {
                     margin-top: var(--c--globals--spacings--0);
                     & [cmdk-group-heading] {
@@ -249,7 +263,6 @@ export const SearchPage = ({
                 <DocSearchContent
                   groupName={t('Link a doc')}
                   search={search}
-                  target={DocSearchTarget.CURRENT}
                   parentPath={treeContext?.root?.path}
                   isSearchNotMandatory
                   onSelect={(doc) => {
@@ -295,24 +308,32 @@ export const SearchPage = ({
                               {emoji ? (
                                 <Text $size="18px">{emoji}</Text>
                               ) : (
-                                <FoundPageIcon
-                                  width="100%"
-                                  style={{ maxHeight: '24px' }}
+                                <DocIcon
+                                  aria-hidden="true"
+                                  width="24px"
+                                  height="24px"
+                                  color="var(--c--contextuals--content--semantic--neutral--primary)"
                                 />
                               )}
                             </Box>
 
                             <Text
                               $size="sm"
-                              $color="var(--c--globals--colors--gray-1000)"
+                              $color="var(--c--contextuals--content--semantic--neutral--primary)"
                               spellCheck="false"
+                              $weight="500"
                             >
                               {titleWithoutEmoji}
                             </Text>
                           </Box>
                         }
                         right={
-                          <Icon iconName="keyboard_return" spellCheck="false" />
+                          <ArrowIcon
+                            aria-hidden="true"
+                            width="24px"
+                            height="24px"
+                            color="var(--c--contextuals--content--semantic--neutral--tertiary)"
+                          />
                         }
                       />
                     );

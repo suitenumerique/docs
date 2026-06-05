@@ -208,7 +208,9 @@ test.describe('Doc grid move', () => {
     await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
 
     await expect(
-      page.getByRole('dialog').getByRole('heading', { name: 'Move' }),
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: 'Choose a new parent doc' }),
     ).toBeVisible();
 
     const input = page.getByRole('combobox', { name: 'Quick search input' });
@@ -296,7 +298,9 @@ test.describe('Doc grid move', () => {
     await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
 
     await expect(
-      page.getByRole('dialog').getByRole('heading', { name: 'Move' }),
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: 'Choose a new parent doc' }),
     ).toBeVisible();
 
     const input = page.getByRole('combobox', { name: 'Quick search input' });
@@ -365,7 +369,9 @@ test.describe('Doc grid move', () => {
     await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
 
     await expect(
-      page.getByRole('dialog').getByRole('heading', { name: 'Move' }),
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: 'Choose a new parent doc' }),
     ).toBeVisible();
 
     await input.click();

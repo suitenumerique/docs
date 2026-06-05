@@ -33,11 +33,11 @@ test.describe('Document search', () => {
     await page.getByTestId('search-docs-button').click();
 
     await expect(
-      page.getByLabel('Search modal').locator('img[alt=""]'),
+      page.getByRole('listbox', { name: 'Suggestions' }).locator('img'),
     ).toBeVisible();
 
     await expect(
-      page.getByRole('heading', { name: 'Search docs' }),
+      page.getByRole('heading', { name: 'Search for a document' }),
     ).toBeVisible();
 
     const inputSearch = page.getByPlaceholder('Type the name of a document');
@@ -48,7 +48,6 @@ test.describe('Document search', () => {
 
     const listSearch = page.getByRole('listbox').getByRole('group');
     const rowdoc = listSearch.getByRole('option').first();
-    await expect(rowdoc.getByText('keyboard_return')).toBeVisible();
     await expect(rowdoc.getByText(/just now/)).toBeVisible();
 
     await expect(
@@ -83,7 +82,7 @@ test.describe('Document search', () => {
 
     await page.keyboard.press('Control+k');
     await expect(
-      page.getByRole('heading', { name: 'Search docs' }),
+      page.getByRole('heading', { name: 'Search for a document' }),
     ).toBeVisible();
 
     await page.keyboard.press('Escape');
@@ -96,7 +95,7 @@ test.describe('Document search', () => {
     await page.keyboard.press('Control+k');
     await expect(page.getByRole('textbox', { name: 'Edit URL' })).toBeVisible();
     await expect(
-      page.getByLabel('Search modal').getByText('search'),
+      page.getByRole('heading', { name: 'Search for a document' }),
     ).toBeHidden();
   });
 
@@ -150,31 +149,44 @@ test.describe('Document search', () => {
 
     // Display only current doc results
     const updatedResultsList = page.getByRole('listbox');
+    // Top parent are not displayed - only children
     await expect(
       updatedResultsList.getByRole('option', { name: secondDocTitle }),
-    ).toBeVisible();
+    ).toBeHidden();
     await expect(
       updatedResultsList.getByRole('option', { name: secondChildDocTitle }),
     ).toBeVisible();
+    // Breadcrumb not displayed
+    await expect(
+      updatedResultsList
+        .getByRole('option', { name: secondChildDocTitle })
+        .getByText(secondDocTitle),
+    ).toBeHidden();
     await expect(
       updatedResultsList.getByRole('option', { name: firstDocTitle }),
     ).toBeHidden();
 
     // Click on the filter to show all docs
-    const filters = page.getByTestId('doc-search-filters');
-    await filters.click();
-    await filters.getByRole('button', { name: 'Current doc' }).click();
-    await page.getByRole('menuitemcheckbox', { name: 'All docs' }).click();
+    await page
+      .getByLabel('Search results controls')
+      .getByText('All docs')
+      .click();
 
     // Expect to see all docs in the results list
+    await expect(
+      updatedResultsList.getByRole('option', { name: firstDocTitle }),
+    ).toBeVisible();
     await expect(
       updatedResultsList.getByRole('option', { name: secondDocTitle }),
     ).toBeVisible();
     await expect(
       updatedResultsList.getByRole('option', { name: secondChildDocTitle }),
     ).toBeVisible();
+    // Breadcrumb with top parent is displayed
     await expect(
-      updatedResultsList.getByRole('option', { name: firstDocTitle }),
+      updatedResultsList
+        .getByRole('option', { name: secondChildDocTitle })
+        .getByText(secondDocTitle),
     ).toBeVisible();
 
     await page.getByRole('button', { name: 'close' }).click();
@@ -188,6 +200,7 @@ test.describe('Document search', () => {
 
     const docUrl = page.url();
 
+    // Another unauthenticated should be able to search in the current doc
     const { otherPage, cleanup } = await connectOtherUserToDoc({
       browserName,
       docUrl,
@@ -204,7 +217,7 @@ test.describe('Document search', () => {
     const otherPageResultsList = otherPage.getByRole('listbox');
     await expect(
       otherPageResultsList.getByRole('option', { name: secondDocTitle }),
-    ).toBeVisible();
+    ).toBeHidden();
     await expect(
       otherPageResultsList.getByRole('option', { name: secondChildDocTitle }),
     ).toBeVisible();

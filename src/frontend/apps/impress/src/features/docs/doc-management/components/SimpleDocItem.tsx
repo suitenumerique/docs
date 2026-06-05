@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import ArrowSVG from '@/assets/icons/ui-kit/subdirectory_arrow_right.svg';
+import ArrowSVG from '@/assets/icons/ui-kit/arrow-corner-down-right.svg';
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useDate } from '@/hooks/useDate';
@@ -105,16 +105,7 @@ export const SimpleDocItem = ({
         {(showDate || breadcrumb) && (
           <Box $direction="row" $align="center" aria-hidden="true">
             {breadcrumb && (
-              <Box
-                $direction="row"
-                $align="center"
-                $gap="3xs"
-                $css={css`
-                  & > svg {
-                    margin-top: -2px;
-                  }
-                `}
-              >
+              <Box $direction="row" $align="center" $gap="3xs">
                 <ArrowSVG
                   width="16px"
                   height="16px"
