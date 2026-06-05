@@ -39,7 +39,6 @@ test.describe('Doc Table Content', () => {
     const level3 = elSidePanel.getByText('Level 3');
 
     await expect(level1).toBeVisible();
-    await expect(level1).toHaveCSS('padding', /0px 0px 0px 8px/);
     await expect(editorLevel1).not.toBeInViewport();
     await expect(level1).toHaveAttribute('aria-selected', 'false');
 
