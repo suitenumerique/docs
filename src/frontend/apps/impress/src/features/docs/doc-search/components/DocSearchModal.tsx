@@ -2,7 +2,7 @@ import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
@@ -10,21 +10,29 @@ import { useDebouncedCallback } from 'use-debounce';
 import { Box, ButtonCloseModal, Text } from '@/components';
 import { QuickSearch } from '@/components/quick-search';
 import { Doc, useDocUtils } from '@/docs/doc-management';
-import {
-  DocSearchFilters,
-  DocSearchFiltersValues,
-  DocSearchTarget,
-} from '@/docs/doc-search';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useFocusStore, useResponsiveStore } from '@/stores';
+import { useResponsiveStore } from '@/stores';
 
+import { DocSearch } from '../api/useSearchDocs';
 import EmptySearchIcon from '../assets/illustration-docs-empty.png';
+import { useDocSearchFilterStore } from '../stores/useDocSearchFilterStore';
+import { DocSearchFilterTypes } from '../types';
 
 import { DocSearchContent } from './DocSearchContent';
+import { DocSearchFilters } from './DocSearchFilters';
 
 const ModalStyle = createGlobalStyle`
   .c__modal__scroller {
     overflow: inherit ;
+
+    &:has(.quick-search-container) > div.c__modal__title {
+      padding-top: var(--c--globals--spacings--sm);
+      padding-bottom: var(--c--globals--spacings--xs);
+      padding-inline: var(--c--globals--spacings--base);
+    }
+    .quick-search-input {
+      padding: var(--c--globals--spacings--xxs) var(--c--globals--spacings--base);
+    }
   }
 `;
 
@@ -32,7 +40,7 @@ type DocSearchModalGlobalProps = {
   onClose: () => void;
   isOpen: boolean;
   showFilters?: boolean;
-  defaultFilters?: DocSearchFiltersValues;
+  defaultFilters: DocSearchFilterTypes;
   parentPath?: string; // If defined, the search will be limited to the children of the document with the given path
 };
 
@@ -45,24 +53,36 @@ const DocSearchModalGlobal = ({
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Doc[]>([]);
-  const restoreFocus = useFocusStore((state) => state.restoreFocus);
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState<DocSearchFiltersValues>(
-    defaultFilters ?? {},
-  );
   const { isLargeScreen } = useResponsiveStore();
   const handleInputSearch = useDebouncedCallback(setSearch, 300);
+  const { filter, setFilter } = useDocSearchFilterStore();
+
+  useEffect(() => {
+    if (!search) {
+      setResults([]);
+    }
+  }, [search]);
+
+  useEffect(() => {
+    setFilter(defaultFilters);
+  }, [defaultFilters, setFilter]);
 
   const handleSelect = (doc: Doc) => {
     void router.push(`/docs/${doc.id}`);
     modalProps.onClose?.();
   };
 
-  const handleResetFilters = () => {
-    setFilters({});
-    restoreFocus();
-  };
+  /**
+   * When searching within the current document, we only want to show sub-documents
+   * Otherwise, we show all documents in the search results
+   */
+  const filterResults = useCallback(
+    (doc: DocSearch) =>
+      (filter === 'current' && !!doc.parent) || filter === 'all' || !filter,
+    [filter],
+  );
 
   return (
     <Modal
@@ -71,51 +91,55 @@ const DocSearchModalGlobal = ({
       size={isLargeScreen ? ModalSize.LARGE : ModalSize.FULL}
       hideCloseButton
       aria-describedby="doc-search-modal-title"
+      title={
+        <>
+          <Text as="h2" $margin="0" $size="s" $align="flex-start">
+            {t('Search for a document')}
+          </Text>
+          <Box $position="absolute" $css="top: 4px; right: 4px;">
+            <ButtonCloseModal
+              aria-label={t('Close the search modal')}
+              onClick={modalProps.onClose}
+            />
+          </Box>
+        </>
+      }
     >
       <ModalStyle />
       <Box
-        aria-label={t('Search modal')}
         $direction="column"
         $justify="space-between"
         className="--docs--doc-search-modal"
-        $padding={{ vertical: 'base' }}
+        $padding={{ bottom: 'base' }}
+        aria-label={t('Search modal')}
       >
-        <Text
-          as="h1"
-          $margin="0"
-          id="doc-search-modal-title"
-          className="sr-only"
-        >
-          {t('Search docs')}
-        </Text>
-        <Box $position="absolute" $css="top: 4px; right: 4px;">
-          <ButtonCloseModal
-            aria-label={t('Close the search modal')}
-            onClick={modalProps.onClose}
-            size="small"
-            color="brand"
-            variant="tertiary"
-          />
-        </Box>
         <QuickSearch
           label={t('Search documents')}
           placeholder={t('Type the name of a document')}
           loading={loading}
           onFilter={handleInputSearch}
           beforeList={
-            showFilters ? (
-              <Box $padding={{ horizontal: '10px' }}>
-                <DocSearchFilters
-                  values={filters}
-                  onValuesChange={setFilters}
-                  onReset={handleResetFilters}
+            <Box
+              $margin={{ top: 'sm', horizontal: 'base' }}
+              $justify="space-between"
+              $direction="row"
+              $align="center"
+              role="group"
+              aria-label={t('Search results controls')}
+            >
+              <Text $color="textSecondary" $weight="700">
+                <DocSearchStateText
+                  hasResults={results.length > 0}
+                  filter={filter}
+                  isSearching={!!search}
                 />
-              </Box>
-            ) : undefined
+              </Text>
+              {showFilters && <DocSearchFilters />}
+            </Box>
           }
         >
           <Box
-            $padding={{ horizontal: '10px', vertical: 'base' }}
+            $padding={{ horizontal: 'sm', bottom: 'base' }}
             $height={isLargeScreen ? '500px' : 'calc(100vh - 68px - 1rem)'}
           >
             {search.length === 0 && (
@@ -130,21 +154,12 @@ const DocSearchModalGlobal = ({
             )}
             {search && (
               <DocSearchContent
-                groupName={results.length ? t('Select a document') : ''}
+                filterResults={filterResults}
                 search={search}
                 onSelect={handleSelect}
                 onResults={setResults}
                 onLoadingChange={setLoading}
-                target={
-                  filters.target === DocSearchTarget.CURRENT
-                    ? DocSearchTarget.CURRENT
-                    : DocSearchTarget.ALL
-                }
-                parentPath={
-                  filters.target === DocSearchTarget.CURRENT
-                    ? parentPath
-                    : undefined
-                }
+                parentPath={filter === 'current' ? parentPath : undefined}
               />
             )}
           </Box>
@@ -167,18 +182,11 @@ const DocSearchModalDetail = ({
   const treeContext = useTreeContext<Doc>();
   const { authenticated } = useAuth();
 
-  let defaultFilters = DocSearchTarget.ALL;
-  let showFilters = false;
-  if (isWithChildren) {
-    defaultFilters = DocSearchTarget.CURRENT;
-    showFilters = authenticated;
-  }
-
   return (
     <DocSearchModalGlobal
       {...modalProps}
-      showFilters={showFilters}
-      defaultFilters={{ target: defaultFilters }}
+      showFilters={isWithChildren && authenticated}
+      defaultFilters={isWithChildren ? 'current' : 'all'}
       parentPath={treeContext?.root?.path}
     />
   );
@@ -194,4 +202,32 @@ export const DocSearchModal = ({ doc, ...modalProps }: DocSearchModalProps) => {
   }
 
   return <DocSearchModalGlobal {...modalProps} />;
+};
+
+interface DocSearchStateTextProps {
+  hasResults: boolean;
+  filter: DocSearchFilterTypes;
+  isSearching: boolean;
+}
+
+const DocSearchStateText = ({
+  hasResults,
+  filter,
+  isSearching,
+}: DocSearchStateTextProps) => {
+  const { t } = useTranslation();
+
+  if (hasResults && filter === 'all') {
+    return t('Select a document');
+  }
+
+  if (hasResults && filter === 'current') {
+    return t('Select a sub-document');
+  }
+
+  if (isSearching && !hasResults) {
+    return t('No documents found');
+  }
+
+  return null;
 };

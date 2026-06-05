@@ -58,6 +58,7 @@ export const DocSearchButtonModal = () => {
           onClose={closeSearchModal}
           isOpen={isSearchModalOpen}
           doc={currentDoc}
+          defaultFilters="all"
         />
       )}
     </>

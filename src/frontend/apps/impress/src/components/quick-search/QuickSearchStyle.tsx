@@ -16,6 +16,7 @@ export const QuickSearchStyle = createGlobalStyle`
     }
 
     [cmdk-input] {
+      font-family: var(--c--globals--font--families--base);
       border: none;
       width: 100%;
       font-size: 16px;

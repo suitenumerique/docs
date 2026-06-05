@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
+import ArrowSVG from '@/assets/icons/ui-kit/subdirectory_arrow_right.svg';
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useDate } from '@/hooks/useDate';
-import { useResponsiveStore } from '@/stores';
 
 import ChildDocument from '../assets/child-document.svg';
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
@@ -20,22 +20,24 @@ const ItemTextCss = css`
   line-clamp: 1;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
+  justify-content: center;
 `;
 
 type SimpleDocItemProps = {
   doc: Doc;
+  breadcrumb?: string;
   isPinned?: boolean;
-  showAccesses?: boolean;
+  showDate?: boolean;
 };
 
 export const SimpleDocItem = ({
   doc,
   isPinned = false,
-  showAccesses = false,
+  showDate = false,
+  breadcrumb,
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
-  const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
   const { isChild } = useDocUtils(doc);
   const { relativeDate, formatDate } = useDate();
@@ -90,7 +92,7 @@ export const SimpleDocItem = ({
           />
         )}
       </Box>
-      <Box $justify="center" $overflow="auto">
+      <Box $justify="center" $overflow="auto" $gap="3xs">
         <Text
           $size="sm"
           $weight="500"
@@ -99,17 +101,41 @@ export const SimpleDocItem = ({
         >
           {docTitle}
         </Text>
-        {(!isDesktop || showAccesses) && (
-          <Box
-            $direction="row"
-            $align="center"
-            $gap={spacingsTokens['3xs']}
-            $margin={{ top: '-2px' }}
-            aria-hidden="true"
-          >
-            <Text $size="xs" $variation="tertiary">
-              {docRelativeUpdate}
-            </Text>
+
+        {(showDate || breadcrumb) && (
+          <Box $direction="row" $align="center" aria-hidden="true">
+            {breadcrumb && (
+              <Box
+                $direction="row"
+                $align="center"
+                $gap="3xs"
+                $css={css`
+                  & > svg {
+                    margin-top: -2px;
+                  }
+                `}
+              >
+                <ArrowSVG
+                  width="16px"
+                  height="16px"
+                  aria-hidden="true"
+                  color="var(--c--contextuals--content--semantic--neutral--tertiary)"
+                />
+                <Text $size="xs" $variation="tertiary" $css={ItemTextCss}>
+                  {breadcrumb}
+                </Text>
+              </Box>
+            )}
+            {breadcrumb && showDate && (
+              <Text $size="xs" $variation="tertiary">
+                &nbsp;·&nbsp;
+              </Text>
+            )}
+            {showDate && (
+              <Text $size="xs" $variation="tertiary">
+                {docRelativeUpdate}
+              </Text>
+            )}
           </Box>
         )}
       </Box>

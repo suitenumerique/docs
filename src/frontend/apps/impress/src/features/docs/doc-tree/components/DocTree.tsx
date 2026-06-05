@@ -380,7 +380,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
             tabIndex={-1} // avoid double tabstop
           >
             <Box $direction="row" $align="center" $width="100%">
-              <SimpleDocItem doc={treeContext.root} showAccesses={true} />
+              <SimpleDocItem doc={treeContext.root} showDate={true} />
               <DocTreeItemActions
                 doc={treeContext.root}
                 onCreateSuccess={(createdDoc) => {

@@ -14,7 +14,7 @@ export type QuickSearchAction = {
 };
 
 export type QuickSearchData<T> = {
-  groupName: string;
+  groupName?: string;
   groupKey?: string;
   elements: T[];
   emptyString?: string;

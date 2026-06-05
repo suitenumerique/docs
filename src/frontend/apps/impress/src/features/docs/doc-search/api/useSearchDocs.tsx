@@ -8,26 +8,27 @@ import {
   useAPIInfiniteQuery,
 } from '@/api';
 import { Doc } from '@/docs/doc-management';
-import { DocSearchTarget } from '@/docs/doc-search';
+
+import { DocSearchFilterTypes } from '../types';
 
 export type SearchDocsParams = {
   page: number;
   q: string;
-  target?: DocSearchTarget;
+  filter?: DocSearchFilterTypes;
   parentPath?: string;
 };
 
 const constructParams = ({
   q,
   page,
-  target,
+  filter,
   parentPath,
 }: SearchDocsParams): URLSearchParams => {
   const searchParams = new URLSearchParams();
 
   searchParams.set('q', q);
 
-  if (target === DocSearchTarget.CURRENT && parentPath) {
+  if (filter === 'current' && parentPath) {
     searchParams.set('path', parentPath);
   }
   if (page) {
@@ -37,13 +38,19 @@ const constructParams = ({
   return searchParams;
 };
 
+export type DocSearch = Doc & {
+  parent: Doc | null;
+};
+
+type SearchDocsResponse = APIList<DocSearch>;
+
 const searchDocs = async ({
   q,
   page,
-  target,
+  filter,
   parentPath,
-}: SearchDocsParams): Promise<APIList<Doc>> => {
-  const searchParams = constructParams({ q, page, target, parentPath });
+}: SearchDocsParams): Promise<SearchDocsResponse> => {
+  const searchParams = constructParams({ q, page, filter, parentPath });
   const response = await fetchAPI(
     `documents/search/?${searchParams.toString()}`,
   );
@@ -52,18 +59,18 @@ const searchDocs = async ({
     throw new APIError('Failed to get the docs', await errorCauses(response));
   }
 
-  return response.json() as Promise<APIList<Doc>>;
+  return response.json() as Promise<SearchDocsResponse>;
 };
 
 export const KEY_LIST_SEARCH_DOC = 'search-docs';
 
 export const useSearchDocs = (
-  { q, page, target, parentPath }: SearchDocsParams,
+  param: SearchDocsParams,
   queryConfig?: { enabled?: boolean },
 ) => {
-  return useQuery<APIList<Doc>, APIError, APIList<Doc>>({
-    queryKey: [KEY_LIST_SEARCH_DOC, 'search', { q, page, target, parentPath }],
-    queryFn: () => searchDocs({ q, page, target, parentPath }),
+  return useQuery<SearchDocsResponse, APIError, SearchDocsResponse>({
+    queryKey: [KEY_LIST_SEARCH_DOC, param],
+    queryFn: () => searchDocs(param),
     ...queryConfig,
   });
 };

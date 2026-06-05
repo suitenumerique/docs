@@ -55,7 +55,7 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
         `}
         aria-label={`${doc.title}, ${t('Updated')} ${DateTime.fromISO(doc.updated_at).toRelative()}`}
       >
-        <SimpleDocItem showAccesses doc={doc} />
+        <SimpleDocItem showDate doc={doc} />
       </StyledLink>
       <Box className="pinned-actions" $align="center">
         <DocsGridActions doc={doc} />
