@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Changed
 
+- 👷(CI) remove test-e2e-other-browser job #2404
 - ♿️(frontend) use heading element for pinned documents section title #2380
 
 ## [v5.2.1] - 2026-06-05

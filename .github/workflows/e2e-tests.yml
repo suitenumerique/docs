@@ -1,6 +1,23 @@
 name: E2E Tests
 
 on:
+  workflow_dispatch:
+    inputs:
+      browser-name:
+        description: "Name used for cache keys and artifact names (e.g. chromium, other-browser)"
+        required: false
+        default: "other-browser"
+        type: string
+      projects:
+        description: "Playwright --project flags (e.g. --project=firefox --project=webkit)"
+        required: false
+        default: "--project=firefox --project=webkit"
+        type: string
+      timeout-minutes:
+        description: "Job timeout in minutes"
+        required: false
+        default: "30"
+        type: string
   workflow_call:
     inputs:
       browser-name:
