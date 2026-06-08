@@ -94,6 +94,7 @@
 */
 .c__tooltip {
   padding: var(--c--globals--spacings--t) var(--c--globals--spacings--xxs);
+  text-align: center;
 }
 
 .c__tooltip .react-aria-OverlayArrow svg {
