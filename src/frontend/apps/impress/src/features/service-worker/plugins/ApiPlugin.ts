@@ -283,6 +283,7 @@ export class ApiPlugin implements WorkboxPlugin {
         partial_update: true,
         restore: true,
         retrieve: true,
+        search: true,
         update: true,
         versions_destroy: true,
         versions_list: true,

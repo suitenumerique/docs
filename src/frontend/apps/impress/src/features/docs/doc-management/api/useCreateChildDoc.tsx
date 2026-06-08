@@ -5,6 +5,7 @@ import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Doc } from '../types';
 
 import { KEY_LIST_DOC } from './useDocs';
+import { KEY_LIST_SEARCH_DOC } from './useSearchDocs';
 
 export type CreateChildDocParam = Pick<Doc, 'title'> & {
   parentId: string;
@@ -39,6 +40,9 @@ export function useCreateChildDoc({ onSuccess }: UseCreateChildDocProps) {
     onSuccess: (doc) => {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC],
+      });
+      void queryClient.resetQueries({
+        queryKey: [KEY_LIST_SEARCH_DOC],
       });
       onSuccess(doc);
     },

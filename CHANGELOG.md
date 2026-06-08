@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) unauthenticated users can search #2407
+
 ### Changed
 
 - 👷(CI) remove test-e2e-other-browser job #2404

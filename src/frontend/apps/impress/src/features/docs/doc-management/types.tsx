@@ -94,6 +94,7 @@ export interface Doc {
     partial_update: boolean;
     restore: boolean;
     retrieve: boolean;
+    search: boolean;
     update: boolean;
     versions_destroy: boolean;
     versions_list: boolean;

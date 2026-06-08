@@ -1,5 +1,5 @@
 import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
-import { TreeContextType, useTreeContext } from '@gouvfr-lasuite/ui-kit';
+import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
@@ -15,6 +15,7 @@ import {
   DocSearchFiltersValues,
   DocSearchTarget,
 } from '@/docs/doc-search';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
 import EmptySearchIcon from '../assets/illustration-docs-empty.png';
@@ -32,13 +33,13 @@ type DocSearchModalGlobalProps = {
   isOpen: boolean;
   showFilters?: boolean;
   defaultFilters?: DocSearchFiltersValues;
-  treeContext?: TreeContextType<Doc> | null;
+  parentPath?: string; // If defined, the search will be limited to the children of the document with the given path
 };
 
 const DocSearchModalGlobal = ({
   showFilters = false,
   defaultFilters,
-  treeContext,
+  parentPath,
   ...modalProps
 }: DocSearchModalGlobalProps) => {
   const { t } = useTranslation();
@@ -141,7 +142,7 @@ const DocSearchModalGlobal = ({
                 }
                 parentPath={
                   filters.target === DocSearchTarget.CURRENT
-                    ? treeContext?.root?.path
+                    ? parentPath
                     : undefined
                 }
               />
@@ -164,12 +165,13 @@ const DocSearchModalDetail = ({
   const { hasChildren, isChild } = useDocUtils(doc);
   const isWithChildren = isChild || hasChildren;
   const treeContext = useTreeContext<Doc>();
+  const { authenticated } = useAuth();
 
   let defaultFilters = DocSearchTarget.ALL;
   let showFilters = false;
   if (isWithChildren) {
     defaultFilters = DocSearchTarget.CURRENT;
-    showFilters = true;
+    showFilters = authenticated;
   }
 
   return (
@@ -177,7 +179,7 @@ const DocSearchModalDetail = ({
       {...modalProps}
       showFilters={showFilters}
       defaultFilters={{ target: defaultFilters }}
-      treeContext={treeContext}
+      parentPath={treeContext?.root?.path}
     />
   );
 };

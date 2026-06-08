@@ -179,12 +179,13 @@ test.describe('Doc Tree', () => {
     await expect(allSubPageItems.nth(1).getByText('second move')).toBeVisible();
 
     // Will move the first sub page to the second position
-    // Use the testId-based locators for bounding box to avoid stale text locators
+    // Wait for elements to be stable before reading their positions — a React
+    // re-render can transiently detach nodes, making boundingBox() return null.
+    await allSubPageItems.nth(0).waitFor({ state: 'visible' });
+    await allSubPageItems.nth(1).waitFor({ state: 'visible' });
+
     const firstSubPageBoundingBox = await allSubPageItems.nth(0).boundingBox();
     const secondSubPageBoundingBox = await allSubPageItems.nth(1).boundingBox();
-
-    expect(firstSubPageBoundingBox).toBeDefined();
-    expect(secondSubPageBoundingBox).toBeDefined();
 
     if (!firstSubPageBoundingBox || !secondSubPageBoundingBox) {
       throw new Error('unable to determine the position of the elements');
@@ -205,9 +206,10 @@ test.describe('Doc Tree', () => {
 
     await page.mouse.up();
 
-    // check that the sub pages are visible in the tree
-    await expect(firstSubPageItem).toBeVisible();
-    await expect(secondSubPageItem).toBeVisible();
+    // Wait for the reorder to be reflected in the tree before reloading —
+    // this also ensures the API call has had time to persist the new order.
+    await expect(allSubPageItems.nth(0).getByText('second move')).toBeVisible();
+    await expect(allSubPageItems.nth(1).getByText('first move')).toBeVisible();
 
     // reload the page
     await page.reload();

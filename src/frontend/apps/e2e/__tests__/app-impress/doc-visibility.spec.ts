@@ -222,7 +222,6 @@ test.describe('Doc Visibility: Public', () => {
 
     await expect(cardContainer.getByText('Public ·')).toBeVisible();
 
-    await expect(page.getByTestId('search-docs-button')).toBeVisible();
     await expect(page.getByTestId('new-doc-button')).toBeVisible();
 
     const docUrl = page.url();
@@ -234,7 +233,6 @@ test.describe('Doc Visibility: Public', () => {
     });
 
     await expect(otherPage.locator('h2').getByText(docTitle)).toBeVisible();
-    await expect(otherPage.getByTestId('search-docs-button')).toBeHidden();
     await expect(otherPage.getByTestId('new-doc-button')).toBeHidden();
     const card = otherPage.getByLabel('It is the card information');
     await expect(card).toBeVisible();
@@ -306,7 +304,6 @@ test.describe('Doc Visibility: Public', () => {
       docTitle,
     });
 
-    await expect(otherPage.getByTestId('search-docs-button')).toBeHidden();
     await expect(otherPage.getByTestId('new-doc-button')).toBeHidden();
 
     const otherEditor = await getEditor({ page: otherPage });

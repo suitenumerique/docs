@@ -9,6 +9,7 @@ import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Doc } from '../types';
 
 import { KEY_LIST_DOC } from './useDocs';
+import { KEY_LIST_SEARCH_DOC } from './useSearchDocs';
 
 type CreateDocParams = {
   title?: string;
@@ -36,6 +37,9 @@ export function useCreateDoc(options?: UseCreateDocOptions) {
     onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC],
+      });
+      void queryClient.resetQueries({
+        queryKey: [KEY_LIST_SEARCH_DOC],
       });
       options?.onSuccess?.(data, variables, onMutateResult, context);
     },
