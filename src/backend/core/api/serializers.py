@@ -168,17 +168,6 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         return instance.ancestors_deleted_at
 
 
-class SearchDocumentSerializer(ListDocumentSerializer):
-    """Serialize items for search."""
-
-    parents = ListDocumentSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = models.Document
-        fields = ListDocumentSerializer.Meta.fields + ["parents"]
-        read_only_fields = ListDocumentSerializer.Meta.read_only_fields + ["parents"]
-
-
 class DocumentLightSerializer(serializers.ModelSerializer):
     """Minial document serializer for nesting in document accesses."""
 
@@ -306,6 +295,17 @@ class DocumentSerializer(ListDocumentSerializer):
         if not validated_data:
             return instance  # No data provided, skip the update
         return super().update(instance, validated_data)
+
+
+class SearchDocumentSerializer(ListDocumentSerializer):
+    """Serialize items for search."""
+
+    parent = ListDocumentSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = models.Document
+        fields = ListDocumentSerializer.Meta.fields + ["parent"]
+        read_only_fields = ListDocumentSerializer.Meta.read_only_fields + ["parent"]
 
 
 class DocumentContentSerializer(serializers.Serializer):

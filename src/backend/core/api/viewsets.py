@@ -616,49 +616,6 @@ class DocumentViewSet(
         serializer = self.get_serializer(queryset, many=True, context=context)
         return drf.response.Response(serializer.data)
 
-    def _compute_parents(self, documents):
-        """
-        Compute parents for the documents by analyzing their paths and fetching missing parents.
-
-        Nota bene: current implementation may appear naive, but it has been
-        optimized to avoid n+1 database queries issue. At this time, we only
-        perform a single database request when parents are missing.
-        """
-        documents = list(documents)
-        steplen = models.Document.steplen
-
-        # Build parents dictionary and collect missing parent paths
-        parents = {document.path: document for document in documents}
-        missing_parent_paths = set()
-
-        for document in documents:
-            path = document.path
-            for i in range(steplen, len(path), steplen):
-                parent_path = path[:i]
-                if parent_path not in parents:
-                    missing_parent_paths.add(parent_path)
-
-        # Fetch missing ancestors from database
-        if missing_parent_paths:
-            for parent in (
-                models.Document.objects.annotate_user_roles(self.request.user)
-                .annotate_is_favorite(self.request.user)
-                .annotate_user_has_link_trace(self.request.user)
-                .filter(path__in=missing_parent_paths)
-                .iterator()
-            ):
-                parents[parent.path] = parent
-
-        # Set parents for each item
-        for document in documents:
-            path = document.path
-            document_parents = []
-            for i in range(steplen, len(path), steplen):
-                document_parents.append(parents[path[:i]])
-            document.parents = document_parents
-
-        return documents
-
     def list(self, request, *args, **kwargs):
         """
         Returns a DRF response containing the filtered, annotated and ordered document list.
@@ -1606,10 +1563,48 @@ class DocumentViewSet(
             }
         )
 
-    def _get_response_for_search_queryset(self, queryset):
+    def _get_response_for_search_queryset(
+        self, queryset, candidate_parent_paths, resolve_parents
+    ):
+        """
+        Paginate the search results and attach to each document its top parent.
+
+        To avoid loading every accessible root, the top parents are resolved only
+        for the documents on the current page: we determine which candidate parent
+        paths the page actually references, then `resolve_parents` fetches just those.
+
+        Args:
+            queryset: the search result queryset.
+            candidate_parent_paths: iterable of disjoint top-parent path prefixes a
+                result may descend from.
+            resolve_parents: callable taking the set of parent paths referenced by the
+                current page and returning a ``{path: Document}`` mapping.
+        """
         page = self.paginate_queryset(queryset)
-        documents_queryset = page if page else queryset
-        documents = self._compute_parents(documents_queryset)
+        documents = list(page if page else queryset)
+
+        candidate_parent_paths = set(candidate_parent_paths)
+        # Candidate roots are disjoint prefixes, so at most one is a prefix of a
+        # given document path. We only need to test the few distinct prefix lengths.
+        prefix_lengths = sorted({len(path) for path in candidate_parent_paths})
+
+        document_parent_path = {}
+        referenced_paths = set()
+        for document in documents:
+            for length in prefix_lengths:
+                candidate = document.path[:length]
+                if candidate != document.path and candidate in candidate_parent_paths:
+                    document_parent_path[document.path] = candidate
+                    referenced_paths.add(candidate)
+                    break
+
+        parents_by_path = resolve_parents(referenced_paths) if referenced_paths else {}
+
+        for document in documents:
+            document.parent = parents_by_path.get(
+                document_parent_path.get(document.path)
+            )
+
         serializer = self.get_serializer(documents, many=True)
 
         if page is None:
@@ -1648,6 +1643,14 @@ class DocumentViewSet(
         for top_level_document in root_paths:
             path_list |= db.Q(path__startswith=top_level_document)
 
+        # Lazy queryset used to fetch only the top parents referenced by the page.
+        parents_queryset = (
+            queryset.filter(ancestors_deleted_at__isnull=True)
+            .annotate_user_roles(user)
+            .annotate_is_favorite(user)
+            .annotate_user_has_link_trace(user)
+        )
+
         queryset = (
             queryset.filter(path_list)
             .filter(ancestors_deleted_at__isnull=True)
@@ -1663,7 +1666,13 @@ class DocumentViewSet(
             self.request, queryset, self
         )
 
-        return self._get_response_for_search_queryset(queryset)
+        return self._get_response_for_search_queryset(
+            queryset,
+            root_paths,
+            lambda paths: {
+                doc.path: doc for doc in parents_queryset.filter(path__in=paths)
+            },
+        )
 
     def _list_descendants(self, request, validated_data):
         """
@@ -1673,14 +1682,18 @@ class DocumentViewSet(
         """
         # Get parent document without access filtering
         parent_path = validated_data["path"]
+        user = request.user
         try:
-            parent = models.Document.objects.annotate_user_roles(request.user).get(
-                path=parent_path
+            parent = (
+                models.Document.objects.annotate_user_roles(user)
+                .annotate_is_favorite(user)
+                .annotate_user_has_link_trace(user)
+                .get(path=parent_path)
             )
         except models.Document.DoesNotExist as exc:
             raise drf.exceptions.NotFound("Document not found from path.") from exc
 
-        abilities = parent.get_abilities(request.user)
+        abilities = parent.get_abilities(user)
         if not abilities.get("search"):
             raise drf.exceptions.PermissionDenied(
                 "You do not have permission to search within this document."
@@ -1700,7 +1713,13 @@ class DocumentViewSet(
             raise drf.exceptions.ValidationError(filterset.errors)
 
         queryset = filterset.qs
-        return self._get_response_for_search_queryset(queryset)
+        # Every descendant's top parent is the search root itself; reuse the already
+        # fetched (and annotated) parent object instead of querying it again.
+        return self._get_response_for_search_queryset(
+            queryset,
+            [parent.path],
+            lambda paths: {parent.path: parent},
+        )
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
