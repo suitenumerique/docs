@@ -512,6 +512,42 @@ def test_api_documents_threads_list_restricted_document_editor(role):
     assert len(response.json()) == 3
 
 
+@pytest.mark.parametrize("nb_threads", [1, 3])
+def test_api_documents_threads_list_number_of_queries(
+    nb_threads, django_assert_num_queries
+):
+    """
+    Listing threads should run a constant number of queries whatever the number
+    of threads, comments, reactions and reaction users.
+    """
+    document = factories.DocumentFactory(
+        link_reach="public",
+        link_role=models.LinkRoleChoices.COMMENTER,
+    )
+
+    for _ in range(nb_threads):
+        thread = factories.ThreadFactory(document=document)
+        for _ in range(2):
+            comment = factories.CommentFactory(thread=thread)
+            for emoji in ["👍", "🎉"]:
+                factories.ReactionFactory(
+                    comment=comment,
+                    emoji=emoji,
+                    users=factories.UserFactory.create_batch(2),
+                )
+
+    client = APIClient()
+    # 1 query for the document (permission check), 1 for the threads and 1 per
+    # prefetched relation: comments, reactions and reaction users.
+    with django_assert_num_queries(5):
+        response = client.get(
+            f"/api/v1.0/documents/{document.id!s}/threads/",
+        )
+
+    assert response.status_code == 200
+    assert len(response.json()) == nb_threads
+
+
 # Retrieve
 
 
@@ -855,6 +891,41 @@ def test_api_documents_threads_retrieve_restricted_document_privileged_roles(rol
         "resolved_at": None,
         "resolved_by": None,
     }
+
+
+@pytest.mark.parametrize("nb_comments", [1, 3])
+def test_api_documents_threads_retrieve_number_of_queries(
+    nb_comments, django_assert_num_queries
+):
+    """
+    Retrieving a thread should run a constant number of queries whatever the
+    number of comments, reactions and reaction users.
+    """
+    document = factories.DocumentFactory(
+        link_reach="public",
+        link_role=models.LinkRoleChoices.COMMENTER,
+    )
+
+    thread = factories.ThreadFactory(document=document)
+    for _ in range(nb_comments):
+        comment = factories.CommentFactory(thread=thread)
+        for emoji in ["👍", "🎉"]:
+            factories.ReactionFactory(
+                comment=comment,
+                emoji=emoji,
+                users=factories.UserFactory.create_batch(2),
+            )
+
+    client = APIClient()
+    # 1 query for the thread and 1 per prefetched relation: comments, reactions
+    # and reaction users.
+    with django_assert_num_queries(4):
+        response = client.get(
+            f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/",
+        )
+
+    assert response.status_code == 200
+    assert len(response.json()["comments"]) == nb_comments
 
 
 # Destroy

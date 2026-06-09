@@ -3168,7 +3168,16 @@ class ThreadViewSet(
     permission_classes = [permissions.CommentPermission]
     pagination_class = None
     serializer_class = serializers.ThreadSerializer
-    queryset = models.Thread.objects.select_related("creator", "document")
+    queryset = models.Thread.objects.select_related(
+        "creator", "document"
+    ).prefetch_related(
+        db.Prefetch(
+            "comments",
+            queryset=models.Comment.objects.select_related("user").prefetch_related(
+                "reactions__users"
+            ),
+        ),
+    )
     resource_field_name = "document"
 
     def perform_create(self, serializer):
