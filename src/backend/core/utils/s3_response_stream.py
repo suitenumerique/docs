@@ -6,6 +6,15 @@ from asgiref.sync import sync_to_async
 from botocore.response import StreamingBody
 
 
+def _is_async_server():
+    """
+    Return whether the app runs as an ASGI application, based on the
+    PYTHON_SERVER_MODE environment variable (set in impress/asgi.py and
+    impress/wsgi.py).
+    """
+    return os.environ.get("PYTHON_SERVER_MODE", "sync") == "async"
+
+
 def sync_stream(body: StreamingBody):
     """Synchronous generator consuming s3 response body."""
     yield from body.iter_chunks()
@@ -35,6 +44,4 @@ def content_stream(body: StreamingBody):
     warning and be consumed synchronously, defeating the purpose of
     streaming.
     """
-    is_async_server = os.environ.get("PYTHON_SERVER_MODE", "sync") == "async"
-
-    return async_stream(body) if is_async_server else sync_stream(body)
+    return async_stream(body) if _is_async_server() else sync_stream(body)
