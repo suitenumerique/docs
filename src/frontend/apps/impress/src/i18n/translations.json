@@ -1480,6 +1480,8 @@
       "The export failed": "L’exportation a échoué",
       "The link sharing rules differ from the parent document": "Les règles de partage du lien diffèrent du document parent",
       "Thinking...": "Réflexion en cours...",
+      "You cannot leave this document <strong>because you are the unique owner</strong>. Add another user with the owner role to ensure you can transfer ownership before leaving the document.": "Vous ne pouvez pas quitter ce document <strong>parce que vous êtes le propriétaire unique</strong>. Ajoutez un autre utilisateur avec le rôle de propriétaire pour vous assurer de pouvoir transférer la propriété avant de quitter le document.",
+      "This document and <strong>all the sub-documents</strong> will no longer be visible in your document list and in your search results. The rights that were given to you on this document will be removed.": "Ce document et <strong>tous les sous-documents</strong> ne seront plus visibles dans votre liste de documents et dans vos résultats de recherche. Les droits qui vous ont été accordés sur ce document seront supprimés.",
       "This document and <strong>any sub-documents</strong> will be placed in the trashbin. You can restore it within {{days}} days.": "Ce document et <strong>tous les sous-documents</strong> seront placés dans la corbeille. Vous pouvez le restaurer dans {{days}} jours.",
       "This document will be placed in the trashbin. You can restore it within {{days}} days.": "Ce document sera placé dans la corbeille. Vous pouvez le restaurer sous {{days}} jours.",
       "This file is flagged as unsafe.": "Ce fichier est marqué comme non sûr.",

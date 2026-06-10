@@ -88,7 +88,9 @@ export interface Doc {
     favorite: boolean;
     formatted_content: boolean;
     invite_owner: boolean;
+    leave: boolean;
     link_configuration: boolean;
+    link_select_options: LinkSelectOption;
     media_auth: boolean;
     move: boolean;
     partial_update: boolean;
@@ -99,7 +101,6 @@ export interface Doc {
     versions_destroy: boolean;
     versions_list: boolean;
     versions_retrieve: boolean;
-    link_select_options: LinkSelectOption;
   };
 }
 

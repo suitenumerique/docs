@@ -4,6 +4,7 @@ import {
   clickInEditorShareButton,
   createDoc,
   getGridRow,
+  getOtherBrowserName,
   verifyDocName,
 } from './utils-common';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
@@ -166,50 +167,85 @@ test.describe('Document grid item options', () => {
     await expect(page.getByText(docTitle)).toBeHidden();
   });
 
-  test("it checks if the delete option is disabled if we don't have the destroy capability", async ({
-    page,
-  }) => {
-    await page.route(/.*\/api\/v1.0\/documents\/\?page=1/, async (route) => {
-      await route.fulfill({
-        json: {
-          results: [
-            {
-              id: 'mocked-document-id',
-              content: '',
-              title: 'Mocked document',
-              accesses: [],
-              abilities: {
-                destroy: false, // Means not owner
-                link_configuration: false,
-                versions_destroy: false,
-                versions_list: true,
-                versions_retrieve: true,
-                accesses_manage: false, // Means not admin
-                update: false,
-                partial_update: false, // Means not editor
-                retrieve: true,
-              },
-              link_reach: 'restricted',
-              created_at: '2021-09-01T09:00:00Z',
-              user_roles: ['editor'],
-              user_role: 'editor',
-            },
-          ],
-        },
-      });
-    });
+  test('it checks the leave feature', async ({ page, browserName }) => {
+    const [docTitle] = await createDoc(page, `leave doc`, browserName);
+
     await page.goto('/');
 
-    const button = page
-      .getByTestId(`docs-grid-actions-button-mocked-document-id`)
-      .first();
-    await expect(button).toBeVisible();
-    await button.click();
-    const removeButton = page
-      .getByTestId(`docs-grid-actions-remove-mocked-document-id`)
-      .first();
-    await expect(removeButton).toBeVisible();
-    await removeButton.isDisabled();
+    // Assert the document is visible in the grid results
+    await expect(
+      page.getByLabel('Documents grid').getByText(docTitle),
+    ).toBeVisible();
+
+    const row = await getGridRow(page, docTitle);
+    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
+
+    await page.getByRole('menuitem', { name: 'Leave' }).click();
+
+    const modal = page.getByRole('dialog', {
+      name: 'Confirmation to leave the document',
+    });
+
+    await expect(
+      modal.getByRole('heading', { name: 'Leave a doc' }),
+    ).toBeVisible();
+
+    // Check the message when the user is the unique owner
+    await expect(
+      modal.getByText(
+        'You cannot leave this document because you are the unique owner.',
+      ),
+    ).toBeVisible();
+
+    await expect(
+      modal.getByRole('button', {
+        name: 'Confirm leaving the document',
+      }),
+    ).toBeHidden();
+
+    await modal.getByRole('button', { name: 'Close the leave modal' }).click();
+
+    // Assert the document is visible in the search results
+    await page.getByRole('button', { name: 'Search docs' }).click();
+    await page.getByPlaceholder('Type the name of a document').fill(docTitle);
+    await page.getByRole('option').getByText(docTitle).click();
+
+    // We share the doc with another user with owner role
+    const otherBrowserName = getOtherBrowserName(browserName);
+    await page.getByRole('button', { name: 'Share' }).click();
+    await addNewMember(page, 0, 'Owner', otherBrowserName);
+    await expect(
+      page
+        .getByRole('listbox', { name: 'Suggestions' })
+        .getByText(new RegExp(otherBrowserName)),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Close the share modal' }).click();
+
+    // Leave the document
+    await page
+      .getByRole('button', { name: /Open the document options/ })
+      .click();
+    await page.getByRole('menuitem', { name: 'Leave' }).click();
+    // Check the message
+    await expect(
+      modal.getByText(
+        'This document and all the sub-documents will no longer be visible',
+      ),
+    ).toBeVisible();
+    await page
+      .getByRole('button', { name: 'Confirm leaving the document' })
+      .click();
+
+    // We are on the grid page and the document is not visible in the grid results
+    await expect(page.getByLabel('Documents grid')).toBeVisible();
+    await expect(
+      page.getByLabel('Documents grid').getByText(docTitle),
+    ).toBeHidden();
+
+    // We search the document and it's not visible in the search results either
+    await page.getByRole('button', { name: 'Search docs' }).click();
+    await page.getByPlaceholder('Type the name of a document').fill(docTitle);
+    await expect(page.getByRole('option').getByText(docTitle)).toBeHidden();
   });
 });
 

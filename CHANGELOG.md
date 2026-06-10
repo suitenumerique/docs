@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) leave a document #2410
 - ✨(frontend) add top parent on sub docs search #1952
 - ✨(frontend) unauthenticated users can search #2407
 

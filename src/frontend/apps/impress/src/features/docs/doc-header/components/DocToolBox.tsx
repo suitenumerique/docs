@@ -1,4 +1,4 @@
-import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/cunningham-react';
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -18,6 +18,7 @@ import SharedSVG from '@/assets/icons/ui-kit/group.svg';
 import HistorySVG from '@/assets/icons/ui-kit/history.svg';
 import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
 import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
+import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
 import MarkdownCopySVG from '@/assets/icons/ui-kit/markdown_copy.svg';
 import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
 import {
@@ -60,6 +61,16 @@ const DocShareModal = dynamic(
   { ssr: false },
 );
 
+const ConfirmationLeaveModal = dynamic(
+  () =>
+    import('@/docs/doc-share/components/ConfirmationLeaveModal').then(
+      (mod) => ({
+        default: mod.ConfirmationLeaveModal,
+      }),
+    ),
+  { ssr: false },
+);
+
 const ModalExport =
   process.env.NEXT_PUBLIC_PUBLISH_AS_MIT === 'false'
     ? dynamic(
@@ -88,16 +99,18 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const treeContext = useTreeContext<Doc>();
   const router = useRouter();
   const { isTopRoot } = useDocUtils(doc);
+  const isTopParent = doc.id === treeContext?.root?.id; // it can be a child but not for the current user
   const { authenticated } = useAuth();
   const copyCurrentEditorToClipboard = useCopyCurrentEditorToClipboard();
   const [openDropdown, setOpenDropdown] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
-  const shareModal = useModal();
+  const [isModalShareOpen, setIsModalShareOpen] = useState(false);
+  const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
+  const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
   const [isPresenterOpen, setIsPresenterOpen] = useState(false);
-  const selectHistoryModal = useModal();
 
-  const { restoreFocus } = useFocusStore();
+  const { restoreFocus, addLastFocus } = useFocusStore();
   const { isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
   const { mutate: duplicateDoc } = useDuplicateDoc({
@@ -151,7 +164,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       label: t('Share'),
       icon: <SharedSVG width={24} height={24} aria-hidden="true" />,
       callback: () => {
-        shareModal.open();
+        setIsModalShareOpen(true);
       },
       isHidden: !isTopRoot || !authenticated,
     },
@@ -176,7 +189,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       icon: <HistorySVG width={24} height={24} aria-hidden="true" />,
       isDisabled: !doc.abilities.versions_list,
       callback: () => {
-        selectHistoryModal.open();
+        setIsModalHistoryOpen(true);
       },
       isHidden: isMobile || !doc.abilities.versions_list,
       showSeparator: true,
@@ -194,6 +207,19 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       },
       isHidden: !doc.abilities.duplicate,
       showSeparator: true,
+    },
+    {
+      label: t('Leave'),
+      icon: <LeaveSVG width={24} height={24} aria-hidden="true" />,
+      callback: () => {
+        setIsModalLeaveOpen(true);
+      },
+      /**
+       * A user can only leave a top parent because we cannot
+       * leave a child if the parent is not left.
+       * ⚠️ This doc can still be a child for other users.
+       */
+      isHidden: !isTopParent,
     },
     {
       label: t('Delete'),
@@ -223,6 +249,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             e.stopPropagation();
             e.preventDefault();
             setOpenDropdown((o) => !o);
+            addLastFocus(e.currentTarget);
           }}
         />
       </DropdownMenu>
@@ -244,7 +271,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           }}
           doc={doc}
           onSuccess={() => {
-            const isTopParent = doc.id === treeContext?.root?.id;
             const parentId =
               treeContext?.treeData.getParentId(doc.id) ||
               treeContext?.root?.id;
@@ -261,26 +287,34 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           }}
         />
       )}
-      {selectHistoryModal.isOpen && (
+      {isModalHistoryOpen && (
         <ModalSelectVersion
           onClose={() => {
-            selectHistoryModal.close();
+            setIsModalHistoryOpen(false);
             restoreFocus();
           }}
           doc={doc}
         />
       )}
-      {shareModal.isOpen && (
+      {isModalShareOpen && (
         <DocShareModal
           onClose={() => {
-            shareModal.close();
+            setIsModalShareOpen(false);
             restoreFocus();
           }}
           doc={doc}
-          isRootDoc={treeContext?.root?.id === doc.id}
+          isRootDoc={isTopParent}
         />
       )}
-
+      {isModalLeaveOpen && (
+        <ConfirmationLeaveModal
+          onClose={() => {
+            setIsModalLeaveOpen(false);
+            restoreFocus();
+          }}
+          doc={doc}
+        />
+      )}
       {isPresenterOpen && (
         <PresenterOverlay
           doc={doc}

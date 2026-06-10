@@ -1,8 +1,16 @@
 import { Access, Role } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 
-export const useWhoAmI = (access: Access) => {
+export const useWhoAmI = (access?: Access) => {
   const { user } = useAuth();
+
+  if (!access) {
+    return {
+      isLastOwner: false,
+      isOtherOwner: false,
+      isMyself: false,
+    };
+  }
 
   const isMyself = user?.id === access.user.id;
   const rolesAllowed = access.abilities.set_role_to;

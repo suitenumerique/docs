@@ -164,7 +164,7 @@ const DocSearchModalGlobal = ({
                 $align="center"
                 $justify="center"
               >
-                <Image width={320} src={EmptySearchIcon} alt="" />
+                <Image width={320} src={EmptySearchIcon} alt="" priority />
               </Box>
             )}
             {search && (
