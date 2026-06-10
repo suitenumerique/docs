@@ -1,0 +1,15 @@
+{
+  "name": "yhub",
+  "version": "1.0.0",
+  "description": "backend server for yjs collaboration",
+  "license": "MIT",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@y/hub": "^0.2.22"
+  }
+}
