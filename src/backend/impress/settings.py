@@ -569,11 +569,6 @@ class Base(Configuration):
         "https://eu.i.posthog.com", environ_name="POSTHOG_HOST", environ_prefix=None
     )
 
-    # Crisp
-    CRISP_WEBSITE_ID = values.Value(
-        None, environ_name="CRISP_WEBSITE_ID", environ_prefix=None
-    )
-
     # Easy thumbnails
     THUMBNAIL_EXTENSION = "webp"
     THUMBNAIL_TRANSPARENCY_EXTENSION = "webp"

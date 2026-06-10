@@ -52,7 +52,6 @@ export interface ConfigResponse {
   CONVERSION_FILE_EXTENSIONS_ALLOWED: string[];
   CONVERSION_FILE_MAX_SIZE: number;
   CONVERSION_UPLOAD_ENABLED?: boolean;
-  CRISP_WEBSITE_ID?: string;
   ENVIRONMENT: string;
   FRONTEND_CSS_URL?: string;
   FRONTEND_HOMEPAGE_FEATURE_ENABLED?: boolean;

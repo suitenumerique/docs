@@ -1,4 +1,3 @@
-import { terminateCrispSession } from '@/services/Crisp';
 import { safeLocalStorage, safeSessionStorage } from '@/utils/storages';
 
 import {
@@ -66,6 +65,5 @@ export const resetSilent = () => {
 };
 
 export const gotoLogout = () => {
-  terminateCrispSession();
   window.location.replace(LOGOUT_URL);
 };

@@ -78,16 +78,6 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   }, [conf?.POSTHOG_KEY, conf?.POSTHOG_HOST]);
 
   useEffect(() => {
-    if (!conf?.CRISP_WEBSITE_ID) {
-      return;
-    }
-
-    void import('@/services').then(({ CrispAnalytic }) => {
-      new CrispAnalytic({ websiteId: conf.CRISP_WEBSITE_ID });
-    });
-  }, [conf?.CRISP_WEBSITE_ID]);
-
-  useEffect(() => {
     const frontendVersion = process.env.NEXT_PUBLIC_APP_VERSION;
 
     if (

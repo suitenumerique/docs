@@ -8,15 +8,12 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
-import BubbleTextIcon from '@/assets/icons/ui-kit/bubble-text.svg';
 import DocIcon from '@/assets/icons/ui-kit/doc.svg';
 import LegalIcon from '@/assets/icons/ui-kit/legal.svg';
 import HelpIcon from '@/assets/icons/ui-kit/question-mark.svg';
 import WandAndStarsIcon from '@/assets/icons/ui-kit/wand-and-stars.svg';
 import { Box } from '@/components';
 import { useConfig } from '@/core';
-import { openCrispChat } from '@/services';
-
 import { OnBoarding } from './OnBoarding';
 
 const HelpMenuStyle = createGlobalStyle`
@@ -36,7 +33,6 @@ export const HelpMenu = ({
   const { data: config } = useConfig();
   const onboardingEnabled = config?.theme_customization?.onboarding?.enabled;
   const documentationUrl = config?.theme_customization?.help?.documentation_url;
-  const crispEnabled = !!config?.CRISP_WEBSITE_ID;
   const legalLinks = config?.theme_customization?.help?.legal_links;
 
   const toggleMenu = useCallback(() => {
@@ -55,12 +51,6 @@ export const HelpMenu = ({
 
   const options = useMemo<DropdownMenuItem[]>(
     () => [
-      {
-        label: t('Get Support'),
-        icon: <BubbleTextIcon aria-hidden="true" width="24" height="24" />,
-        callback: openCrispChat,
-        isHidden: !crispEnabled,
-      },
       {
         label: t('Documentation'),
         icon: <DocIcon aria-hidden="true" width="24" height="24" />,
@@ -108,7 +98,6 @@ export const HelpMenu = ({
     ],
     [
       t,
-      crispEnabled,
       documentationUrl,
       modalOnbording.open,
       onboardingEnabled,

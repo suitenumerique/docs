@@ -80,61 +80,6 @@ test.describe('Help feature', () => {
     });
   });
 
-  test.describe('Support button', () => {
-    if (process.env.IS_INSTANCE !== 'true') {
-      test('is not displayed if CRISP_WEBSITE_ID is not set', async ({
-        page,
-      }) => {
-        await overrideConfig(page, {
-          CRISP_WEBSITE_ID: '',
-        });
-
-        await page.goto('/');
-
-        await page.getByRole('button', { name: 'Open help menu' }).click();
-        await expect(
-          page.getByRole('menuitem', { name: 'Get Support' }),
-        ).toBeHidden();
-      });
-
-      test('is displayed if CRISP_WEBSITE_ID is set', async ({ page }) => {
-        await overrideConfig(page, {
-          CRISP_WEBSITE_ID: 'test_website_id',
-        });
-
-        await page.goto('/');
-
-        await page.getByRole('button', { name: 'Open help menu' }).click();
-        await expect(
-          page.getByRole('menuitem', {
-            name: 'Get Support',
-          }),
-        ).toBeVisible();
-      });
-    }
-
-    if (process.env.IS_INSTANCE === 'true') {
-      test('it displays Crisp chatbox', async ({ page }) => {
-        const currentConfig = await getCurrentConfig(page);
-        test.skip(
-          !currentConfig.CRISP_WEBSITE_ID,
-          'Crisp chatbox is not enabled',
-        );
-        await page.goto('/');
-
-        await page.getByRole('button', { name: 'Open help menu' }).click();
-        await page
-          .getByRole('menuitem', {
-            name: 'Get Support',
-          })
-          .click();
-
-        const crispElement = page.locator('#crisp-chatbox');
-        await expect(crispElement).toBeAttached();
-      });
-    }
-  });
-
   test.describe('Legal submenu', () => {
     if (process.env.IS_INSTANCE !== 'true') {
       test('is not displayed if legal_links are not set', async ({ page }) => {

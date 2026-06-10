@@ -37,7 +37,6 @@ export const LeftPanelDesktop = () => {
   const { data: config } = useConfig();
   const showHelpMenu =
     config?.theme_customization?.onboarding?.enabled ||
-    !!config?.CRISP_WEBSITE_ID ||
     !!config?.theme_customization?.help?.documentation_url ||
     !!config?.theme_customization?.help?.legal_links;
 
