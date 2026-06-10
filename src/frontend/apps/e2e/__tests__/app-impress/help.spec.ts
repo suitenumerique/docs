@@ -7,6 +7,16 @@ import {
   waitForLanguageSwitch,
 } from './utils-common';
 
+const legalLinks = {
+  personal_data:
+    'https://lasuite.numerique.gouv.fr/legal/docs/donnees-personnelles-cookies',
+  terms_of_use:
+    'https://lasuite.numerique.gouv.fr/legal/docs/modalite-utilisation',
+  accessibility_statement:
+    'https://lasuite.numerique.gouv.fr/legal/docs/declaration-accessibilite',
+  legal_notice: 'https://lasuite.numerique.gouv.fr/legal/docs',
+};
+
 test.describe('Help feature', () => {
   test.describe('Documentation button', () => {
     if (process.env.IS_INSTANCE !== 'true') {
@@ -121,6 +131,102 @@ test.describe('Help feature', () => {
 
         const crispElement = page.locator('#crisp-chatbox');
         await expect(crispElement).toBeAttached();
+      });
+    }
+  });
+
+  test.describe('Legal submenu', () => {
+    if (process.env.IS_INSTANCE !== 'true') {
+      test('is not displayed if legal_links are not set', async ({ page }) => {
+        await overrideConfig(page, {
+          theme_customization: {
+            ...theme_customization,
+            help: {
+              ...theme_customization.help,
+              legal_links: {
+                personal_data: '',
+                terms_of_use: '',
+                accessibility_statement: '',
+                legal_notice: '',
+              },
+            },
+            onboarding: {
+              enabled: true,
+            },
+          },
+        });
+
+        await page.goto('/');
+
+        await page.getByRole('button', { name: 'Open help menu' }).click();
+        await expect(page.getByRole('menuitem', { name: 'Legal' })).toBeHidden();
+      });
+
+      test('is displayed and opens legal links when legal_links are set', async ({
+        page,
+      }) => {
+        await overrideConfig(page, {
+          theme_customization: {
+            ...theme_customization,
+            help: {
+              ...theme_customization.help,
+              legal_links: legalLinks,
+            },
+            onboarding: {
+              enabled: true,
+            },
+          },
+        });
+
+        await page.goto('/');
+
+        await page.getByRole('button', { name: 'Open help menu' }).click();
+        await page.getByRole('menuitem', { name: 'Legal' }).hover();
+
+        await expect(
+          page.getByRole('menuitem', { name: 'Personal data and cookies' }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole('menuitem', { name: 'Terms of use' }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole('menuitem', { name: 'Accessibility statement' }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole('menuitem', { name: 'Legal notice' }),
+        ).toBeVisible();
+
+        const personalDataItem = page.getByRole('menuitem', {
+          name: 'Personal data and cookies',
+        });
+
+        const [newPage] = await Promise.all([
+          page.context().waitForEvent('page'),
+          personalDataItem.click(),
+        ]);
+
+        await expect(newPage).toHaveURL(legalLinks.personal_data);
+      });
+    }
+
+    if (process.env.IS_INSTANCE === 'true') {
+      test('is displayed when legal_links are configured', async ({ page }) => {
+        const currentConfig = await getCurrentConfig(page);
+        const configuredLegalLinks =
+          currentConfig.theme_customization?.help?.legal_links;
+
+        test.skip(
+          !configuredLegalLinks?.personal_data &&
+            !configuredLegalLinks?.terms_of_use &&
+            !configuredLegalLinks?.accessibility_statement &&
+            !configuredLegalLinks?.legal_notice,
+          'Legal links are not configured',
+        );
+
+        await page.goto('/');
+
+        await page.getByRole('button', { name: 'Open help menu' }).click();
+        await expect(page.getByRole('menuitem', { name: 'Legal' })).toBeVisible();
       });
     }
   });

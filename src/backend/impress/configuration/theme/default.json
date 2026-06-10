@@ -165,6 +165,12 @@
     "ready_template_url": ""
   },
   "help": {
-    "documentation_url": ""
+    "documentation_url": "",
+    "legal_links": {
+      "personal_data": "",
+      "terms_of_use": "",
+      "accessibility_statement": "",
+      "legal_notice": ""
+    }
   }
 }

@@ -20,6 +20,12 @@ interface ThemeCustomization {
   header?: HeaderType;
   help: {
     documentation_url?: string;
+    legal_links?: {
+      personal_data?: string;
+      terms_of_use?: string;
+      accessibility_statement?: string;
+      legal_notice?: string;
+    };
   };
   home: {
     'with-proconnect'?: boolean;

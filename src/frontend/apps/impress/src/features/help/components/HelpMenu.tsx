@@ -3,13 +3,14 @@ import {
   ButtonProps,
   useModal,
 } from '@gouvfr-lasuite/cunningham-react';
-import { DropdownMenu, DropdownMenuOption } from '@gouvfr-lasuite/ui-kit';
+import { DropdownMenu, DropdownMenuItem } from '@gouvfr-lasuite/ui-kit';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
+import { createGlobalStyle, css } from 'styled-components';
 
 import BubbleTextIcon from '@/assets/icons/ui-kit/bubble-text.svg';
 import DocIcon from '@/assets/icons/ui-kit/doc.svg';
+import LegalIcon from '@/assets/icons/ui-kit/legal.svg';
 import HelpIcon from '@/assets/icons/ui-kit/question-mark.svg';
 import WandAndStarsIcon from '@/assets/icons/ui-kit/wand-and-stars.svg';
 import { Box } from '@/components';
@@ -17,6 +18,12 @@ import { useConfig } from '@/core';
 import { openCrispChat } from '@/services';
 
 import { OnBoarding } from './OnBoarding';
+
+const HelpMenuStyle = createGlobalStyle`
+  .c__dropdown-menu {
+    overflow: visible;
+  }
+`;
 
 export const HelpMenu = ({
   colorButton,
@@ -30,12 +37,23 @@ export const HelpMenu = ({
   const onboardingEnabled = config?.theme_customization?.onboarding?.enabled;
   const documentationUrl = config?.theme_customization?.help?.documentation_url;
   const crispEnabled = !!config?.CRISP_WEBSITE_ID;
+  const legalLinks = config?.theme_customization?.help?.legal_links;
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen((open) => !open);
   }, []);
 
-  const options = useMemo<DropdownMenuOption[]>(
+  const openExternalLink = useCallback((url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, []);
+
+  const hasLegalLinks =
+    !!legalLinks?.personal_data ||
+    !!legalLinks?.terms_of_use ||
+    !!legalLinks?.accessibility_statement ||
+    !!legalLinks?.legal_notice;
+
+  const options = useMemo<DropdownMenuItem[]>(
     () => [
       {
         label: t('Get Support'),
@@ -48,7 +66,7 @@ export const HelpMenu = ({
         icon: <DocIcon aria-hidden="true" width="24" height="24" />,
         callback: () => {
           if (documentationUrl) {
-            window.open(documentationUrl, '_blank', 'noopener,noreferrer');
+            openExternalLink(documentationUrl);
           }
         },
         isHidden: !documentationUrl,
@@ -59,12 +77,50 @@ export const HelpMenu = ({
         callback: modalOnbording.open,
         isHidden: !onboardingEnabled,
       },
+      {
+        label: t('Legal'),
+        icon: <LegalIcon aria-hidden="true" width="24" height="24" />,
+        isHidden: !hasLegalLinks,
+        children: [
+          {
+            label: t('Personal data and cookies'),
+            callback: () => openExternalLink(legalLinks?.personal_data ?? ''),
+            isHidden: !legalLinks?.personal_data,
+          },
+          {
+            label: t('Terms of use'),
+            callback: () => openExternalLink(legalLinks?.terms_of_use ?? ''),
+            isHidden: !legalLinks?.terms_of_use,
+          },
+          {
+            label: t('Accessibility statement'),
+            callback: () =>
+              openExternalLink(legalLinks?.accessibility_statement ?? ''),
+            isHidden: !legalLinks?.accessibility_statement,
+          },
+          {
+            label: t('Legal notice'),
+            callback: () => openExternalLink(legalLinks?.legal_notice ?? ''),
+            isHidden: !legalLinks?.legal_notice,
+          },
+        ],
+      },
     ],
-    [t, crispEnabled, documentationUrl, modalOnbording.open, onboardingEnabled],
+    [
+      t,
+      crispEnabled,
+      documentationUrl,
+      modalOnbording.open,
+      onboardingEnabled,
+      openExternalLink,
+      legalLinks,
+      hasLegalLinks,
+    ],
   );
 
   return (
     <>
+      {isMenuOpen && <HelpMenuStyle />}
       <Box
         $css={css`
           .c__dropdown-menu-trigger {
