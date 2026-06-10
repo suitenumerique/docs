@@ -1,10 +1,6 @@
 import { createGlobalStyle } from 'styled-components';
 
 export const QuickSearchStyle = createGlobalStyle`
-  & *:focus-visible {
-    outline: none;
-  }
-
   .quick-search-container {
     [cmdk-root] {
       width: 100%;

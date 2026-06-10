@@ -90,11 +90,24 @@ const DocSearchModalGlobal = ({
       closeOnClickOutside
       size={isLargeScreen ? ModalSize.LARGE : ModalSize.FULL}
       hideCloseButton
-      aria-describedby="doc-search-modal-title"
+      aria-label={t('Search for a document')}
+      aria-labelledby="doc-search-modal-title"
+      aria-describedby="doc-search-modal-description"
       title={
         <>
-          <Text as="h2" $margin="0" $size="s" $align="flex-start">
+          <Text
+            as="h2"
+            $margin="0"
+            $size="s"
+            $align="flex-start"
+            id="doc-search-modal-title"
+          >
             {t('Search for a document')}
+          </Text>
+          <Text id="doc-search-modal-description" className="sr-only">
+            {t(
+              'Search documents by name, navigate using arrows, and select a result with Enter.',
+            )}
           </Text>
           <Box $position="absolute" $css="top: 4px; right: 4px;">
             <ButtonCloseModal
@@ -111,7 +124,6 @@ const DocSearchModalGlobal = ({
         $justify="space-between"
         className="--docs--doc-search-modal"
         $padding={{ bottom: 'base' }}
-        aria-label={t('Search modal')}
       >
         <QuickSearch
           label={t('Search documents')}
@@ -120,14 +132,17 @@ const DocSearchModalGlobal = ({
           onFilter={handleInputSearch}
           beforeList={
             <Box
-              $margin={{ top: 'sm', horizontal: 'base' }}
+              $margin={{ vertical: 'sm', horizontal: 'base' }}
               $justify="space-between"
               $direction="row"
               $align="center"
-              role="group"
-              aria-label={t('Search results controls')}
             >
-              <Text $color="textSecondary" $weight="700">
+              <Text
+                $color="textSecondary"
+                $weight="700"
+                role="status"
+                aria-live="polite"
+              >
                 <DocSearchStateText
                   hasResults={results.length > 0}
                   filter={filter}

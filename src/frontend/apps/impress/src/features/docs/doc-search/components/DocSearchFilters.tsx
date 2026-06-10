@@ -9,43 +9,56 @@ import { useDocSearchFilterStore } from '../stores/useDocSearchFilterStore';
 export const DocSearchFilters = () => {
   const { t } = useTranslation();
   const { setFilter, filter } = useDocSearchFilterStore();
+  const isAll = filter === 'all';
+  const toggle = () => setFilter(isAll ? 'current' : 'all');
 
   return (
     /**
      * The switch is not focusable, so we wrap it in a div that can be focused
      * and handle the keydown event to toggle the switch with
-     * space key for accessibility reasons
+     * space or enter key for accessibility reasons
      */
     <Box
+      role="switch"
+      aria-checked={isAll}
+      aria-label={t('Search in all documents')}
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === ' ') {
+        if (e.key === ' ' || e.key === 'Enter') {
           e.preventDefault();
-          setFilter(filter === 'all' ? 'current' : 'all');
+          toggle();
         }
       }}
       $css={css`
-        &:focus-visible .c__switch__rail {
+        &:focus-visible {
           outline: none;
-          box-shadow: 0 0 0 2px
-            var(--c--contextuals--border--semantic--brand--primary);
+
+          .c__switch__rail {
+            outline: none;
+            box-shadow: 0 0 0 2px
+              var(--c--contextuals--border--semantic--brand--primary);
+          }
         }
         // Remove the default focus style of the switch component
-        .c__checkbox:focus-within {
+        .c__checkbox {
           border: none;
           box-shadow: none;
           outline: 0;
+        }
+        & *:focus-visible {
+          outline: none;
         }
       `}
     >
       <Switch
         labelSide="right"
         label={t('All docs')}
-        checked={filter === 'all'}
-        onChange={() => setFilter(filter === 'all' ? 'current' : 'all')}
+        checked={isAll}
+        onChange={toggle}
         aria-label={t(
           'Toggle to search in all documents or only in current document',
         )}
+        tabIndex={-1}
       />
     </Box>
   );

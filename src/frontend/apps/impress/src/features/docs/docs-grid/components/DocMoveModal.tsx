@@ -179,7 +179,7 @@ export const DocMoveModal = ({
             </Text>
             <Box $position="absolute" $css="top: 4px; right: 4px;">
               <ButtonCloseModal
-                aria-label={t('Close the search modal')}
+                aria-label={t('Close the move modal')}
                 onClick={onClose}
               />
             </Box>

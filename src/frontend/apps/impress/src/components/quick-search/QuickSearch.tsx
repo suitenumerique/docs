@@ -43,6 +43,7 @@ export const QuickSearch = ({
   inputValue,
   showInput = true,
   label,
+  loading,
   placeholder,
   beforeList,
   children,
@@ -64,6 +65,7 @@ export const QuickSearch = ({
         >
           {showInput && (
             <QuickSearchInput
+              label={label}
               withSeparator={hasChildrens(children)}
               inputValue={inputValue}
               onFilter={onFilter}
@@ -74,7 +76,7 @@ export const QuickSearch = ({
             </QuickSearchInput>
           )}
           {beforeList}
-          <Command.List id={listId} aria-label={label} role="listbox">
+          <Command.List id={listId} aria-busy={loading}>
             <Box>{children}</Box>
           </Command.List>
         </Command>

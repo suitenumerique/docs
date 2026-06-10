@@ -213,7 +213,7 @@ test.describe('Doc grid move', () => {
         .getByRole('heading', { name: 'Choose a new parent doc' }),
     ).toBeVisible();
 
-    const input = page.getByRole('combobox', { name: 'Quick search input' });
+    const input = page.getByRole('combobox', { name: 'Search' });
     await input.click();
     await input.fill(titleDoc2);
 
@@ -303,7 +303,7 @@ test.describe('Doc grid move', () => {
         .getByRole('heading', { name: 'Choose a new parent doc' }),
     ).toBeVisible();
 
-    const input = page.getByRole('combobox', { name: 'Quick search input' });
+    const input = page.getByRole('combobox', { name: 'Search' });
     await input.click();
     await input.fill(titleDoc2);
 

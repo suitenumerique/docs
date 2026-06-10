@@ -95,9 +95,11 @@ export const DocSearchContent = ({
         : [],
     });
 
-    if (search) {
+    if (search && !loading) {
       announce(
-        t('{{count}} result(s) available', { count: elements.length }),
+        elements.length === 0
+          ? t('No documents found')
+          : t('{{count}} document found', { count: elements.length }),
         'polite',
       );
     }

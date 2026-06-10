@@ -11,6 +11,7 @@ import { Box } from '../Box';
 
 type QuickSearchInputProps = {
   inputValue?: string;
+  label?: string;
   onFilter?: (str: string) => void;
   placeholder?: string;
   withSeparator?: boolean;
@@ -18,6 +19,7 @@ type QuickSearchInputProps = {
 };
 export const QuickSearchInput = ({
   inputValue,
+  label,
   onFilter,
   placeholder,
   children,
@@ -60,14 +62,12 @@ export const QuickSearchInput = ({
         <Command.Input
           ref={inputRef}
           autoFocus={true}
-          aria-label={t('Quick search input')}
+          aria-label={label ?? t('Search')}
           aria-controls={listId}
           value={inputValue}
-          role="combobox"
           placeholder={placeholder ?? t('Search')}
           onValueChange={onFilter}
           maxLength={254}
-          minLength={6}
           data-testid="quick-search-input"
         />
       </Box>

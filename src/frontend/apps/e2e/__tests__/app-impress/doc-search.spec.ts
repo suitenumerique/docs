@@ -168,7 +168,7 @@ test.describe('Document search', () => {
 
     // Click on the filter to show all docs
     await page
-      .getByLabel('Search results controls')
+      .getByRole('switch', { name: 'Search in all documents' })
       .getByText('All docs')
       .click();
 

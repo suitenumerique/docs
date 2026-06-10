@@ -19,15 +19,17 @@ export const QuickSearchGroup = <T,>({
 }: Props<T>) => {
   return (
     <>
-      <Text
-        className="--docs--quick-search-group-title"
-        as="h2"
-        $weight="700"
-        $size="sm"
-        $margin="none"
-      >
-        {group.groupName}
-      </Text>
+      {group.groupName && (
+        <Text
+          className="--docs--quick-search-group-title"
+          as="h2"
+          $weight="700"
+          $size="sm"
+          $margin="none"
+        >
+          {group.groupName}
+        </Text>
+      )}
       <Command.Group
         key={group.groupName}
         forceMount={false}
