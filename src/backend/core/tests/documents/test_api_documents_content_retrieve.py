@@ -141,7 +141,7 @@ def test_api_documents_content_retrieve_nonexistent_document():
 
 
 def test_api_documents_content_retrieve_file_not_in_storage():
-    """Returns an empty string when the file does not exists on the storage."""
+    """Returns an empty string when the file does not exist on the storage."""
     user = factories.UserFactory()
     document = factories.DocumentFactory(link_reach="restricted")
     factories.UserDocumentAccessFactory(document=document, user=user, role="reader")
@@ -188,11 +188,46 @@ async def test_api_documents_content_retrieve_async(monkeypatch):
 
     assert response.status_code == status.HTTP_200_OK
     # Wait for the streaming content to be fully received => async iterator -> list
-    # This fails it the streaming is not an async generator
+    # This fails if the streaming is not an async generator
     response_content = b"".join(
         [content async for content in response.streaming_content]
     ).decode("utf-8")
     assert response_content == factories.YDOC_HELLO_WORLD_BASE64
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.asyncio(loop_scope="function")
+async def test_api_documents_content_retrieve_file_not_in_storage_async(monkeypatch):
+    """Returns an empty string when the file does not exist on the storage."""
+    monkeypatch.setenv("PYTHON_SERVER_MODE", "async")
+
+    user = await sync_to_async(factories.UserFactory)()
+    document = await sync_to_async(factories.DocumentFactory)(link_reach="restricted")
+    await sync_to_async(factories.UserDocumentAccessFactory)(
+        document=document, user=user, role="reader"
+    )
+
+    client = APIClient()
+    await client.aforce_login(user)
+
+    await sync_to_async(default_storage.delete)(document.file_key)
+
+    assert not await sync_to_async(default_storage.exists)(document.file_key)
+
+    response = await sync_to_async(client.get)(
+        f"/api/v1.0/documents/{document.id!s}/content/"
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    # Wait for the streaming content to be fully received => async iterator -> list
+    # This fails if the streaming is not an async generator
+    assert b"".join([content async for content in response.streaming_content]) == b""
+    assert not response.get("Content-Length")
+    assert not response.get("ETag")
+    assert not response.get("Last-Modified")
+    assert not response.get("Cache-Control")
+
+    assert not await cache.aget(get_content_metadata_cache_key(document.id))
 
 
 def test_api_documents_content_retrieve_content_length_header():

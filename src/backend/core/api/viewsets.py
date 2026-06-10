@@ -10,6 +10,7 @@ import logging
 import socket
 import uuid
 from collections import defaultdict
+from io import BytesIO
 from urllib.parse import unquote, urlencode, urlparse
 
 from django.conf import settings
@@ -35,6 +36,7 @@ import requests
 import rest_framework as drf
 import waffle
 from botocore.exceptions import ClientError
+from botocore.response import StreamingBody
 from csp.constants import NONE
 from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
@@ -2143,7 +2145,9 @@ class DocumentViewSet(
                     return drf_response.Response(status=status.HTTP_304_NOT_MODIFIED)
                 case "NoSuchKey" | "404":
                     return StreamingHttpResponse(
-                        b"", content_type="text/plain", status=200
+                        content_stream(StreamingBody(BytesIO(b""), content_length=0)),
+                        content_type="text/plain",
+                        status=200,
                     )
                 case _:
                     raise
