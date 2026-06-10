@@ -35,10 +35,20 @@ export const LeftPanel = () => {
 export const LeftPanelDesktop = () => {
   const { t } = useTranslation();
   const { data: config } = useConfig();
+  const legalLinks = config?.theme_customization?.help?.legal_links;
+  /**
+   * The onboarding can be disable, so we need to check if it's enabled before displaying the help menu.
+   * TODO: As soon as we get more than one fixed element in the help menu,
+   * we should remove this condition and display the help menu even if the onboarding is disabled
+   */
   const showHelpMenu =
     config?.theme_customization?.onboarding?.enabled ||
     !!config?.theme_customization?.help?.documentation_url ||
-    !!config?.theme_customization?.help?.legal_links;
+    !!config?.theme_customization?.help?.support_mailto ||
+    !!legalLinks?.personal_data ||
+    !!legalLinks?.terms_of_use ||
+    !!legalLinks?.accessibility_statement ||
+    !!legalLinks?.legal_notice;
 
   return (
     <Box

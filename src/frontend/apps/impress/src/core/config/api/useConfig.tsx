@@ -20,6 +20,7 @@ interface ThemeCustomization {
   header?: HeaderType;
   help: {
     documentation_url?: string;
+    support_mailto?: string;
     legal_links?: {
       personal_data?: string;
       terms_of_use?: string;

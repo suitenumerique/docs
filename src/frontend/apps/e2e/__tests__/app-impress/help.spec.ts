@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  CONFIG,
   TestLanguage,
   getCurrentConfig,
   overrideConfig,
@@ -16,6 +17,9 @@ const legalLinks = {
     'https://lasuite.numerique.gouv.fr/legal/docs/declaration-accessibilite',
   legal_notice: 'https://lasuite.numerique.gouv.fr/legal/docs',
 };
+
+const supportMailto =
+  'mailto:support-docs@numerique.gouv.fr?subject=Aide%20Docs%27';
 
 test.describe('Help feature', () => {
   test.describe('Documentation button', () => {
@@ -80,14 +84,80 @@ test.describe('Help feature', () => {
     });
   });
 
+  test.describe('Support button', () => {
+    if (process.env.IS_INSTANCE !== 'true') {
+      test('is not displayed if support_mailto is not set', async ({
+        page,
+      }) => {
+        await overrideConfig(page, {
+          theme_customization: {
+            ...CONFIG.theme_customization,
+            help: {
+              ...CONFIG.theme_customization.help,
+              support_mailto: '',
+            },
+          },
+        });
+
+        await page.goto('/');
+
+        await page.getByRole('button', { name: 'Open help menu' }).click();
+        await expect(
+          page.getByRole('menuitem', { name: 'Get Support' }),
+        ).toBeHidden();
+      });
+
+      test('is displayed if support_mailto is set', async ({ page }) => {
+        await overrideConfig(page, {
+          theme_customization: {
+            ...CONFIG.theme_customization,
+            help: {
+              ...CONFIG.theme_customization.help,
+              support_mailto: supportMailto,
+            },
+          },
+        });
+
+        await page.goto('/');
+
+        await page.getByRole('button', { name: 'Open help menu' }).click();
+        await expect(
+          page.getByRole('menuitem', {
+            name: 'Get Support',
+          }),
+        ).toBeVisible();
+      });
+    }
+
+    if (process.env.IS_INSTANCE === 'true') {
+      test('is displayed when support_mailto is configured', async ({
+        page,
+      }) => {
+        const currentConfig = await getCurrentConfig(page);
+        test.skip(
+          !currentConfig.theme_customization?.help?.support_mailto,
+          'Support mailto is not configured',
+        );
+        await page.goto('/');
+
+        await page.getByRole('button', { name: 'Open help menu' }).click();
+        await expect(
+          page.getByRole('menuitem', {
+            name: 'Get Support',
+          }),
+        ).toBeVisible();
+      });
+    }
+  });
+
   test.describe('Legal submenu', () => {
     if (process.env.IS_INSTANCE !== 'true') {
       test('is not displayed if legal_links are not set', async ({ page }) => {
         await overrideConfig(page, {
           theme_customization: {
-            ...theme_customization,
+            ...CONFIG.theme_customization,
             help: {
-              ...theme_customization.help,
+              ...CONFIG.theme_customization.help,
               legal_links: {
                 personal_data: '',
                 terms_of_use: '',
@@ -104,7 +174,9 @@ test.describe('Help feature', () => {
         await page.goto('/');
 
         await page.getByRole('button', { name: 'Open help menu' }).click();
-        await expect(page.getByRole('menuitem', { name: 'Legal' })).toBeHidden();
+        await expect(
+          page.getByRole('menuitem', { name: 'Legal' }),
+        ).toBeHidden();
       });
 
       test('is displayed and opens legal links when legal_links are set', async ({
@@ -112,9 +184,9 @@ test.describe('Help feature', () => {
       }) => {
         await overrideConfig(page, {
           theme_customization: {
-            ...theme_customization,
+            ...CONFIG.theme_customization,
             help: {
-              ...theme_customization.help,
+              ...CONFIG.theme_customization.help,
               legal_links: legalLinks,
             },
             onboarding: {
@@ -171,7 +243,9 @@ test.describe('Help feature', () => {
         await page.goto('/');
 
         await page.getByRole('button', { name: 'Open help menu' }).click();
-        await expect(page.getByRole('menuitem', { name: 'Legal' })).toBeVisible();
+        await expect(
+          page.getByRole('menuitem', { name: 'Legal' }),
+        ).toBeVisible();
       });
     }
   });
