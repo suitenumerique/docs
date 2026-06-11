@@ -8,6 +8,8 @@ and this project adheres to
 
 ### Added
 
+- ✨(backend) add mention endpoint with cooldown-limited email 
+  notification #2447
 - 🚩(setting) add feature flag on Duplicate with Children #2721
 - 💄(frontend) redesign 404 error standalone page #2696
 - 💄(frontend) redesign 403 access denied page #2720
@@ -49,6 +51,7 @@ and this project adheres to
 - ✨(collaboration) add an admin reset-connections endpoint on yhub
 - ✨(collaboration) add a create-ydoc endpoint on yhub
 - 🔧(backend) fine tune redis cache options
+- ✨(frontend) make the full last-update date available #1215
 - ✨(collaboration) soft-migrate legacy S3 documents into yhub
 - ✨(collaboration) replay legacy s3 version history into yhub
 - ✨(backend) add a service to call the yhub REST API
