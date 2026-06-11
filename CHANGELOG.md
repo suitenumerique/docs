@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) fix removed item in the tree #2420
+
+
 ## [v5.3.0] - 2026-06-19
 
 ### Added

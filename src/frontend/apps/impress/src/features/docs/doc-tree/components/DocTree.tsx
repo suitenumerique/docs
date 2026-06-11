@@ -7,7 +7,13 @@ import {
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -257,6 +263,52 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       treeContext?.treeData.selectNodeById(currentDoc.id);
     }
   }, [currentDoc, treeContext]);
+
+  /**
+   * react-arborist's scrollTo calls react-window's scrollToItem, which mutates
+   * the internal scrollOffset state. When navigating to a deep item in a large
+   * tree, this causes all items above the target to be removed from the DOM
+   * (virtualized away), making the tree appear empty above the selected node.
+   * We no-op it to prevent that — the panel's own overflow-y handles scrolling.
+   */
+  const treeApiRef = treeContext?.treeApiRef;
+  useLayoutEffect(() => {
+    if (!treeRoot || !treeApiRef?.current) {
+      return;
+    }
+    const api = treeApiRef.current as unknown as Record<string, unknown>;
+    const origScrollTo = api['scrollTo'];
+    if (typeof origScrollTo !== 'function') {
+      return;
+    }
+    api['scrollTo'] = () => {};
+    return () => {
+      api['scrollTo'] = origScrollTo;
+    };
+  }, [treeRoot, treeApiRef]);
+
+  /**
+   * On initial tree load, scroll the panel to show the current document.
+   * This fires once when initialOpenState is first set (tree data just loaded).
+   * It does not re-fire on user navigation — clicked items are already in view.
+   */
+  useEffect(() => {
+    if (!treeRoot || !initialOpenState) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      treeRoot
+        .querySelector<HTMLElement>(
+          `[data-testid="doc-sub-page-item-${currentDoc.id}"]`,
+        )
+        ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [treeRoot, initialOpenState, currentDoc.id]);
 
   if (!treeContext || !treeContext.root) {
     return <TreeSkeleton />;
