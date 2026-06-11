@@ -58,11 +58,7 @@ export const ModalConfirmationVersion = ({
         return;
       }
 
-      revertUpdate(
-        provider.document,
-        provider.document,
-        base64ToYDoc(version.content),
-      );
+      revertUpdate(provider.doc, provider.doc, base64ToYDoc(version.content));
 
       threadStore?.refreshThreads();
 

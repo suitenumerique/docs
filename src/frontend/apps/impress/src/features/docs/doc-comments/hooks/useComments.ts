@@ -27,15 +27,9 @@ export function useComments(
         encodeURIComponent(user?.full_name || ''),
         canComment,
       ),
-      provider?.document,
+      provider?.doc,
     );
-  }, [
-    docId,
-    canComment,
-    provider?.awareness,
-    provider?.document,
-    user?.full_name,
-  ]);
+  }, [docId, canComment, provider?.awareness, provider?.doc, user?.full_name]);
 
   useEffect(() => {
     if (canComment) {

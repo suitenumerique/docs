@@ -60,11 +60,25 @@ jobs:
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
       docker_user: 1001:127
 
+  # build-and-push-yhub:
+  #   uses: ./.github/workflows/docker-publish.yml
+  #   permissions:
+  #     contents: read
+  #   secrets: inherit
+  #   with:
+  #     image_name: lasuite/impress-yhub
+  #     context: .
+  #     file: src/frontend/servers/yhub/Dockerfile
+  #     target: yhub
+  #     should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
+  #     docker_user: 1001:127
+
   notify-argocd:
     needs:
       - build-and-push-backend
       - build-and-push-frontend
       - build-and-push-y-provider
+      # - build-and-push-yhub
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
     steps:

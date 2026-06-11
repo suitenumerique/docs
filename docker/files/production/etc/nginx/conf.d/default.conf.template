@@ -55,14 +55,19 @@ server {
         try_files $uri @proxy_to_docs_backend;
     }
 
-    # Proxy auth for collaboration server
-    location /collaboration/ws/ {
+    # Collaboration server (yhub).
+    # Transition setup: frontend bundles still in browser caches use the old
+    # Hocuspocus URL form `/collaboration/ws/?room={uuid}` (exact match below,
+    # routed to y-provider); current bundles use the y-websocket form
+    # `/collaboration/ws/{uuid}` (regex, routed to yhub). Drop the exact-match
+    # block and YPROVIDER_HOST WS routing once the fleet has converged.
+    location = /collaboration/ws/ {
         # Ensure WebSocket upgrade
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";
 
-        # Collaboration server
+        # Legacy collaboration server (Hocuspocus)
         proxy_pass http://${YPROVIDER_HOST}:4444;
 
         # Set appropriate timeout for WebSocket
@@ -75,9 +80,28 @@ server {
         proxy_set_header Host $host;
     }
 
+    location ~ ^/collaboration/ws/[0-9a-fA-F-]{36}$ {
+        # Ensure WebSocket upgrade
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+
+        # Collaboration server (yhub)
+        proxy_pass http://${YHUB_HOST}:4444;
+
+        # Set appropriate timeout for WebSocket
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+
+        # Preserve original host and additional headers
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Origin $http_origin;
+        proxy_set_header Host $host;
+    }
+
     location /collaboration/api/ {
-        # Collaboration server
-        proxy_pass http://${YPROVIDER_HOST}:4444;
+        # Collaboration server (yhub)
+        proxy_pass http://${YHUB_HOST}:4444;
         proxy_set_header Host $host;
     }
 

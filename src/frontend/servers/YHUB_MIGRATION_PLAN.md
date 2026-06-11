@@ -1,10 +1,24 @@
 # Collaboration server migration: y-provider (Hocuspocus) → yhub (@y/hub)
 
-> Status: **proposed plan** — analysis date 2026-06-10, against `@y/hub@0.2.22`.
+> Status: **implemented (Phase 1)** — plan written and executed 2026-06-10, against
+> `@y/hub@0.2.22`.
 > Scope: a brand-new collaboration server in `src/frontend/servers/yhub`, replacing the
 > realtime part of `src/frontend/servers/y-provider`. The conversion endpoint
 > (`POST /api/convert/`) is **out of scope**: it stays in y-provider and will be moved to a
 > dedicated application later.
+>
+> Implementation status:
+> - Step 0 spike **passed 13/13** (yjs-13 ↔ @y/y-14-rc round-trip incl. incremental
+>   merges/gc/state-vectors/PG path; purge primitive; HTTP-level auth rejection).
+> - Server implemented in `servers/yhub` (44 unit + 2 integration tests, lint/build clean).
+> - Frontend swapped to `y-websocket` (tsc/eslint clean, 250 impress tests pass).
+> - Infra done: Dockerfile (node:22-trixie-slim, `yarn cache clean` in install layers),
+>   compose (`yhub-development` on :4444, redis:7, y-provider keeps the converter role),
+>   e2e compose (`yhub` + `y-provider-converter`), Makefile targets, nginx prod
+>   dual-location template, docker-hub/ghcr publish jobs, `uws` lockfile entry switched
+>   to git+https (CI-friendly).
+> - Remaining: full-stack Playwright e2e run; production rollout per §3.12; Phase 2
+>   (server-side write-back) is unstarted by design.
 
 Hard constraints driving every decision below:
 
@@ -213,7 +227,7 @@ same auth plugin.
 | **Durable room state** (Redis+PG) vs Hocuspocus amnesia | Stale cache can resurrect content after an out-of-band Django change (restore/import). Needs an invalidation strategy (§3.5) |
 | Merge-only persistence — no rewind primitive | "Django wins" requires actual row deletion + stream trim, not `unsafePersistDoc` |
 | ESM-only; package `exports` allow only `.` and `./plugins/s3` | New server must be ESM; no reaching into internals like `protocol.js` |
-| `uws` glibc-only | Docker base `node:22-slim`, **not** alpine |
+| `uws` glibc-only | Docker base `node:22-trixie-slim` (glibc ≥ 2.38), **not** alpine or Debian ≤ 12 |
 | Redis ≥ 6.2 required (`XAUTOCLAIM` for worker task claiming) | Dev compose runs `redis:5` — must upgrade |
 | `@y/y@14-rc` server-side vs `yjs` 13 in the browser | Wire compatibility is the design intent ("y-websocket compatible") but must be **proven by a spike before anything else** (§3.10 step 0) |
 | Beta (0.2.x), CORS hardcoded `*` on its REST API | Pin the exact version; keep the uws server internal-only |
@@ -366,7 +380,7 @@ same `_FILE` secret pattern, same logger style).
 package.json            "type": "module"; deps: @y/hub 0.2.22 (PINNED), express 5.2.1,
                         ws ^8, axios 1.16.1, redis ^5, cors 2.8.6, @sentry/node;
                         devDeps += y-websocket + yjs + y-protocols (test clients)
-Dockerfile              node:22-slim (uws is glibc-only — NEVER alpine), y-provider stages
+Dockerfile              node:22-trixie-slim (uws needs glibc ≥ 2.38 — never alpine), y-provider stages
 src/
   env.ts                config (§3.7)
   routes.ts             route constants
@@ -444,7 +458,7 @@ New:
   healthy; side-by-side on host port `4453`, swapped to `4444` at switchover). Dev
   reuses the `postgresql:16` impress DB (`yhub_ydoc_v1` is namespaced); production
   guidance: dedicated database/instance so cache churn doesn't share Django's DB.
-- **Dockerfile**: mirror y-provider's stages on `node:22-slim`, with a loud comment that
+- **Dockerfile**: mirror y-provider's stages on `node:22-trixie-slim`, with a loud comment that
   alpine breaks `uws` at *runtime*, plus the AGPL notice (§3.13 #4).
 - **nginx prod template**: introduce `${YHUB_HOST}`; during transition:
   - `location = /collaboration/ws/` (exact: old `?room=` URLs from cached bundles) →
@@ -464,7 +478,7 @@ New:
    booted `createYHub` (`stream.addMessage` → `getDoc` → re-apply in yjs 13; BlockNote
    fragment `document-store`) — *if the @y/y-14 ↔ yjs-13 binary formats don't round-trip,
    the architecture needs a transcode step and this plan stops here*; (b) redis:7 smoke
-   incl. Django; (c) `createYHub` boots on node:22-slim; (d) observe upgrade-rejection
+   incl. Django; (c) `createYHub` boots in the target container image; (d) observe upgrade-rejection
    statuses and `maxDocSize`-exceeded behavior.
 1. Scaffold (`package.json` rewrite to ESM, configs copied, `/ping`, Sentry) — builds,
    starts, pings.

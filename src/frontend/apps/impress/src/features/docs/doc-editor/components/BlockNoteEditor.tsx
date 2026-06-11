@@ -17,11 +17,10 @@ import {
   ThreadsSidebar,
   useCreateBlockNote,
 } from '@blocknote/react';
-import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import type { Awareness } from 'y-protocols/awareness';
+import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
@@ -85,7 +84,7 @@ export const blockNoteSchema = (withMultiColumn?.(baseBlockNoteSchema) ||
 
 interface BlockNoteEditorProps {
   doc: Doc;
-  provider: HocuspocusProvider;
+  provider: WebsocketProvider;
 }
 
 export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
@@ -93,7 +92,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { setEditor } = useEditorStore();
   const { themeTokens } = useCunninghamTheme();
   const refEditorContainer = useRef<HTMLDivElement>(null);
-  useSaveDoc(doc.id, provider.document);
+  useSaveDoc(doc.id, provider.doc);
 
   const { i18n, t } = useTranslation();
   const langLocalesBN =
@@ -150,8 +149,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     {
       collaboration: {
-        provider: provider as { awareness?: Awareness | undefined },
-        fragment: provider.document.getXmlFragment('document-store'),
+        provider: provider,
+        fragment: provider.doc.getXmlFragment('document-store'),
         user: {
           name: cursorName,
           color: randomColor(),

@@ -52,7 +52,7 @@ export const useSaveDoc = (docId: string, yDoc: Y.Doc) => {
        * so we check if the origin constructor to know where
        * the transaction comes from.
        * "PluginKey" constructor comes from the current user, but transaction.local is more reliable
-       * "HocuspocusProvider" constructor comes from other users from the collaboration server,
+       * "WebsocketProvider" constructor comes from other users from the collaboration server,
        * it seems quite reliable too.
        * The AI constructor name seems to not be reliable enough, but by deduction if it's not local
        * and not from other users, it has to be from the AI.
@@ -61,7 +61,7 @@ export const useSaveDoc = (docId: string, yDoc: Y.Doc) => {
        */
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       const transactionOrigin = transaction?.origin?.constructor?.name;
-      const PROVIDER_ORIGIN_CONSTRUCTOR = 'HocuspocusProvider';
+      const PROVIDER_ORIGIN_CONSTRUCTOR = 'WebsocketProvider';
 
       const isAIChange =
         !transaction.local && transactionOrigin !== PROVIDER_ORIGIN_CONSTRUCTOR;

@@ -17,7 +17,13 @@ services:
       - ./docker/files/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
 
   redis:
-    image: redis:5
+    # ≥ 6.2 required by the yhub collaboration server (XAUTOCLAIM)
+    image: redis:7
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 2s
+      retries: 60
 
   mailcatcher:
     image: sj26/mailcatcher:latest
@@ -192,8 +198,6 @@ services:
     env_file:
       - env.d/development/common
       - env.d/development/common.local
-    ports:
-      - "4444:4444"
     volumes:
       - ./src/frontend/:/home/frontend
       - /home/frontend/node_modules
@@ -210,9 +214,35 @@ services:
       - ./src/frontend/:/home/frontend
       - /home/frontend/node_modules
       - /home/frontend/servers/y-provider/node_modules
+    # depends_on:
+    #   y-provider-development:
+    #     condition: service_started
+
+  yhub-development:
+    user: ${DOCKER_USER:-1000}
+    build:
+      context: .
+      dockerfile: ./src/frontend/servers/yhub/Dockerfile
+      target: yhub-development
+    image: impress:yhub-development
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgres://dinum:pass@postgresql:5432/impress
+    env_file:
+      - env.d/development/common
+      - env.d/development/common.local
+    ports:
+      - "4444:4444"
+    volumes:
+      - ./src/frontend/:/home/frontend
+      - /home/frontend/node_modules
+      - /home/frontend/servers/yhub/node_modules
     depends_on:
-      y-provider-development:
-        condition: service_started
+      redis:
+        condition: service_healthy
+      postgresql:
+        condition: service_healthy
 
   kc_postgresql:
     image: postgres:14.3

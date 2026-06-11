@@ -13,7 +13,29 @@ services:
     ports:
       - "3000:3000"
 
-  y-provider:
+  yhub:
+    user: ${DOCKER_USER:-1000}
+    build:
+      context: .
+      dockerfile: ./src/frontend/servers/yhub/Dockerfile
+      target: yhub
+    image: impress:yhub-production
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgres://dinum:pass@postgresql:5432/impress
+    env_file:
+      - env.d/development/common
+      - env.d/development/common.local
+    ports:
+      - "4444:4444"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgresql:
+        condition: service_healthy
+
+  y-provider-converter:
     user: ${DOCKER_USER:-1000}
     build:
       context: .
@@ -24,16 +46,3 @@ services:
     env_file:
       - env.d/development/common
       - env.d/development/common.local
-    ports:
-      - "4444:4444"
-
-  y-provider-converter:
-    user: ${DOCKER_USER:-1000}
-    image: impress:y-provider-production
-    restart: unless-stopped
-    env_file:
-      - env.d/development/common
-      - env.d/development/common.local
-    depends_on:
-      y-provider:
-        condition: service_started

@@ -1,5 +1,4 @@
-import { CloseEvent } from '@hocuspocus/common';
-import { HocuspocusProvider, WebSocketStatus } from '@hocuspocus/provider';
+import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 import { create } from 'zustand';
 
@@ -7,15 +6,15 @@ import { Base64 } from '@/docs/doc-management';
 
 export interface UseCollaborationStore {
   createProvider: (
-    providerUrl: string,
+    serverUrl: string,
     storeId: string,
     initialDoc?: Base64,
-  ) => HocuspocusProvider;
+  ) => WebsocketProvider;
   destroyProvider: () => void;
   setReady: (value: boolean) => void;
   pauseForInactivity: () => void;
   resumeFromInactivity: () => void;
-  provider: HocuspocusProvider | undefined;
+  provider: WebsocketProvider | undefined;
   isConnected: boolean;
   isReady: boolean;
   isSynced: boolean;
@@ -33,7 +32,29 @@ const defaultValues = {
   isPausedForInactivity: false,
 };
 
-type ExtendedCloseEvent = CloseEvent & { wasClean: boolean };
+/**
+ * Close code sent by the collaboration server when Django resets the
+ * connections of a room (permission change). The provider auto-reconnects
+ * and re-authenticates against the gateway with its updated rights.
+ */
+const KICK_CLOSE_CODE = 4000;
+
+/**
+ * The gateway rejects unauthorized or WS-blocked connections at the HTTP
+ * level, before the WebSocket handshake. After this many consecutive failed
+ * attempts we mark the editor as ready so the user can work without
+ * collaboration (direct Django save fallback) — but the provider keeps
+ * retrying in the background (backoff capped at MAX_BACKOFF_TIME_MS), so a
+ * transient outage such as a server deploy recovers automatically.
+ */
+const READY_WITHOUT_COLLAB_FAILURES = 3;
+
+/**
+ * Cap on y-websocket's exponential reconnect backoff. The default (2.5s)
+ * would hammer a WS-blocked network forever; 30s keeps retries cheap while
+ * still recovering from outages without a page reload.
+ */
+const MAX_BACKOFF_TIME_MS = 30000;
 
 /**
  * When a massive simultaneous disconnection occurs (e.g. infra restart), all
@@ -41,15 +62,13 @@ type ExtendedCloseEvent = CloseEvent & { wasClean: boolean };
  * time, causing a possible DB spike. Adding random jitter spreads these events over a
  * time window so the load is absorbed gradually.
  */
-const RECONNECT_BASE_DELAY_MS = 1000;
 const RECONNECT_JITTER_MAX_MS = 3000;
 
-let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
 let lostConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
   ...defaultValues,
-  createProvider: (wsUrl, storeId, initialDoc) => {
+  createProvider: (serverUrl, storeId, initialDoc) => {
     const doc = new Y.Doc({
       guid: storeId,
     });
@@ -58,102 +77,79 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       Y.applyUpdate(doc, Buffer.from(initialDoc, 'base64'));
     }
 
-    const provider = new HocuspocusProvider({
-      url: wsUrl,
-      name: storeId,
-      document: doc,
-      onDisconnect(data) {
-        // Skip reconnect when the disconnect was triggered by inactivity:
-        // reconnection only happens once the user becomes active again.
-        if (get().isPausedForInactivity) {
-          return;
-        }
+    const provider = new WebsocketProvider(serverUrl, storeId, doc, {
+      // Cross-tab sync is handled by useBroadcastStore through the shared
+      // Y.Doc tasks; the provider reconnection logic is enough here.
+      disableBc: true,
+      maxBackoffTime: MAX_BACKOFF_TIME_MS,
+    });
 
-        // Attempt to reconnect if the disconnection was clean (initiated by the client or server)
-        if ((data.event as ExtendedCloseEvent).wasClean) {
-          if (data.event.reason === 'No cookies' && data.event.code === 4001) {
-            console.error(
-              'Disconnection due to missing cookies. Not attempting to reconnect.',
-            );
-            void provider.disconnect();
-            set({
-              isReady: true,
-              isConnected: false,
-            });
-            return;
-          }
+    let consecutiveFailures = 0;
 
-          clearTimeout(reconnectTimeout);
+    provider.on('status', ({ status }) => {
+      const isConnected = status === 'connected';
+      const wasConnected = get().isConnected;
 
-          // Jitter spreading for reconnection attempts
-          // Math.random() generates a random delay to avoid all clients
-          // reconnecting at the same time
-          reconnectTimeout = setTimeout(
-            () => void provider.connect(),
-            RECONNECT_BASE_DELAY_MS + Math.random() * RECONNECT_JITTER_MAX_MS,
-          );
-        }
-      },
-      onAuthenticationFailed() {
-        set({ isReady: true, isConnected: false });
-      },
-      onAuthenticated() {
-        set({ isReady: true, isConnected: true });
-      },
-      onStatus: ({ status }) => {
-        const isConnected = status === WebSocketStatus.Connected;
-        const wasConnected = get().isConnected;
+      if (isConnected) {
+        // Connected implies authenticated: the gateway authenticates against
+        // the backend before accepting the WebSocket handshake.
+        consecutiveFailures = 0;
+        clearTimeout(lostConnectionTimeout);
+        set({ isConnected: true, isReady: true });
+        return;
+      }
 
-        if (isConnected) {
-          clearTimeout(lostConnectionTimeout);
-        }
-        // If we were previously connected and now we're not,
-        // we might have lost the connection
-        else if (wasConnected && !get().isPausedForInactivity) {
-          clearTimeout(lostConnectionTimeout);
-          // Jitter spreading for reconnection attempts
-          // Math.random() generates a random delay to avoid all clients
-          // reconnecting at the same time
-          lostConnectionTimeout = setTimeout(
-            () => set({ hasLostConnection: true }),
-            Math.random() * RECONNECT_JITTER_MAX_MS,
-          );
-        }
+      // If we were previously connected and now we're not,
+      // we might have lost the connection
+      if (
+        status === 'disconnected' &&
+        wasConnected &&
+        !get().isPausedForInactivity
+      ) {
+        clearTimeout(lostConnectionTimeout);
+        // Math.random() generates a random delay to avoid all clients
+        // refetching at the same time
+        lostConnectionTimeout = setTimeout(
+          () => set({ hasLostConnection: true }),
+          Math.random() * RECONNECT_JITTER_MAX_MS,
+        );
+      }
 
-        set((state) => {
-          /**
-           * status === WebSocketStatus.Connected does not mean we are totally connected
-           * because authentication can still be in progress and failed
-           * So we only update isConnected when we lose the connection
-           */
-          const connected =
-            status !== WebSocketStatus.Connected
-              ? {
-                  isConnected: false,
-                }
-              : undefined;
+      set((state) => ({
+        isConnected: false,
+        isReady: state.isReady || status === 'disconnected',
+      }));
+    });
 
-          return {
-            ...connected,
-            isReady: state.isReady || status === WebSocketStatus.Disconnected,
-          };
+    provider.on('sync', (isSynced: boolean) => {
+      set({ isSynced, isReady: true });
+    });
+
+    provider.on('connection-close', (event) => {
+      if (event?.code === KICK_CLOSE_CODE) {
+        // Server-side reset: the automatic reconnection re-authenticates
+        // with up-to-date permissions. Not a failure.
+        consecutiveFailures = 0;
+      }
+    });
+
+    provider.on('connection-error', () => {
+      if (get().isPausedForInactivity) {
+        return;
+      }
+      consecutiveFailures += 1;
+      if (consecutiveFailures === READY_WITHOUT_COLLAB_FAILURES) {
+        // Unblock the editor (Django save fallback); reconnection attempts
+        // keep running in the background and re-enable collaboration when
+        // the server becomes reachable again.
+        console.warn(
+          'Collaboration server unreachable; editing without realtime sync.',
+        );
+        set({
+          isReady: true,
+          isConnected: false,
         });
-      },
-      onSynced: ({ state }) => {
-        set({ isSynced: state, isReady: true });
-      },
-      onClose(data) {
-        /**
-         * Handle the "Reset Connection" event from the server
-         * This is triggered when the server wants to reset the connection
-         * for clients in the room.
-         * A disconnect is made automatically but it takes time to be triggered,
-         * so we force the disconnection here.
-         */
-        if (data.event.code === 1000) {
-          provider.disconnect();
-        }
-      },
+      }
     });
 
     set({
@@ -163,7 +159,6 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     return provider;
   },
   destroyProvider: () => {
-    clearTimeout(reconnectTimeout);
     clearTimeout(lostConnectionTimeout);
     const provider = get().provider;
     if (provider) {
@@ -177,7 +172,6 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     if (get().isPausedForInactivity) {
       return;
     }
-    clearTimeout(reconnectTimeout);
     clearTimeout(lostConnectionTimeout);
     set({ isPausedForInactivity: true, hasLostConnection: false });
     get().provider?.disconnect();
@@ -188,7 +182,7 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     }
     clearTimeout(lostConnectionTimeout);
     set({ isPausedForInactivity: false });
-    void get().provider?.connect();
+    get().provider?.connect();
   },
   resetLostConnection: () => set({ hasLostConnection: false }),
 }));

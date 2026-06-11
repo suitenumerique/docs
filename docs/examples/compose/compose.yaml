@@ -41,12 +41,32 @@ services:
       redis:
         condition: service_started
 
+  # Conversion endpoint only (/api/convert/); realtime collaboration is
+  # served by the yhub service below.
   y-provider:
     image: lasuite/impress-y-provider:latest
     user: ${DOCKER_USER:-1000}
     env_file:
       - env.d/common
       - env.d/yprovider
+
+  # Realtime collaboration server (routed by nginx via ${YHUB_HOST}).
+  # Requires Redis >= 6.2 and a PostgreSQL database for its document cache.
+  yhub:
+    image: lasuite/impress-yhub:latest
+    user: ${DOCKER_USER:-1000}
+    environment:
+      - REDIS_URL=redis://redis:6379
+      # Must match the credentials in env.d/postgresql
+      - POSTGRES_URL=postgres://docs:${DB_PASSWORD}@postgresql:5432/docs
+    env_file:
+      - env.d/common
+      - env.d/yprovider
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   frontend:
     image: lasuite/impress-frontend:latest

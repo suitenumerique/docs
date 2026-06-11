@@ -20,8 +20,7 @@ export const RightPanel = () => {
   const { setIsPanelOpen, isPanelOpen, activePanel } = useRightPanelStore();
   const { isMobile } = useResponsiveStore();
   const { provider, isReady } = useProviderStore();
-  const isProviderReady =
-    isReady && provider && provider?.configuration.name === doc?.id;
+  const isProviderReady = isReady && provider && provider?.roomname === doc?.id;
   const { restoreFocus } = useFocusStore();
 
   /**

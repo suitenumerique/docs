@@ -7,6 +7,14 @@ import { openSuggestionMenu, writeInEditor } from './utils-editor';
 import { connectOtherUserToDoc, updateShareLink } from './utils-share';
 import { createRootSubPage } from './utils-sub-pages';
 
+/**
+ * The y-websocket provider builds the collaboration WebSocket URL as
+ * `${serverUrl}/${documentId}` — a path segment, no `?room=` query string.
+ */
+const COLLABORATION_WS_URL_PATTERN = /\/collaboration\/ws\/[0-9a-f-]{36}$/;
+const isCollaborationWsUrl = (url: string) =>
+  COLLABORATION_WS_URL_PATTERN.test(url);
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
@@ -20,9 +28,7 @@ test.describe('Doc Collaboration', () => {
    */
   test('checks the connection with collaborative server', async ({ page }) => {
     let webSocketPromise = page.waitForEvent('websocket', (webSocket) => {
-      return webSocket
-        .url()
-        .includes(`${process.env.COLLABORATION_WS_URL}?room=`);
+      return isCollaborationWsUrl(webSocket.url());
     });
 
     await page
@@ -32,9 +38,7 @@ test.describe('Doc Collaboration', () => {
       .click();
 
     let webSocket = await webSocketPromise;
-    expect(webSocket.url()).toContain(
-      `${process.env.COLLABORATION_WS_URL}?room=`,
-    );
+    expect(webSocket.url()).toMatch(COLLABORATION_WS_URL_PATTERN);
 
     // Is connected
     let framesentPromise = webSocket.waitForEvent('framesent');
@@ -60,9 +64,7 @@ test.describe('Doc Collaboration', () => {
 
     // Check the ws is connected again
     webSocket = await page.waitForEvent('websocket', (webSocket) => {
-      return webSocket
-        .url()
-        .includes(`${process.env.COLLABORATION_WS_URL}?room=`);
+      return isCollaborationWsUrl(webSocket.url());
     });
     framesentPromise = webSocket.waitForEvent('framesent');
     framesent = await framesentPromise;
@@ -210,18 +212,14 @@ test.describe('Doc Collaboration', () => {
     const webSocketPromise = otherPage.waitForEvent(
       'websocket',
       (webSocket) => {
-        return webSocket
-          .url()
-          .includes(`${process.env.COLLABORATION_WS_URL}?room=`);
+        return isCollaborationWsUrl(webSocket.url());
       },
     );
 
     await otherPage.goto(urlChildDoc);
 
     const webSocket = await webSocketPromise;
-    expect(webSocket.url()).toContain(
-      `${process.env.COLLABORATION_WS_URL}?room=`,
-    );
+    expect(webSocket.url()).toMatch(COLLABORATION_WS_URL_PATTERN);
 
     await verifyDocName(otherPage, childTitle);
 
@@ -287,9 +285,7 @@ test.describe('Doc Collaboration', () => {
     await page.goto('/');
 
     let webSocketPromise = page.waitForEvent('websocket', (webSocket) => {
-      return webSocket
-        .url()
-        .includes(`${process.env.COLLABORATION_WS_URL}?room=`);
+      return isCollaborationWsUrl(webSocket.url());
     });
 
     await page
@@ -299,9 +295,7 @@ test.describe('Doc Collaboration', () => {
       .click();
 
     let webSocket = await webSocketPromise;
-    expect(webSocket.url()).toContain(
-      `${process.env.COLLABORATION_WS_URL}?room=`,
-    );
+    expect(webSocket.url()).toMatch(COLLABORATION_WS_URL_PATTERN);
 
     // Is connected
     let framesentPromise = webSocket.waitForEvent('framesent');
@@ -330,9 +324,7 @@ test.describe('Doc Collaboration', () => {
 
     // Check the ws is connected again
     webSocketPromise = page.waitForEvent('websocket', (webSocket) => {
-      return webSocket
-        .url()
-        .includes(`${process.env.COLLABORATION_WS_URL}?room=`);
+      return isCollaborationWsUrl(webSocket.url());
     });
 
     // Simulate the tab becoming visible again

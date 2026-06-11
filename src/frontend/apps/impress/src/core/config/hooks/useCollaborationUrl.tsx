@@ -13,5 +13,10 @@ export const useCollaborationUrl = (room?: string) => {
       ? `wss://${window.location.host}/collaboration/ws/`
       : '');
 
-  return `${base}?room=${room}`;
+  /**
+   * The y-websocket provider builds `${serverUrl}/${room}` itself; stripping
+   * the trailing slash keeps existing COLLABORATION_WS_URL values (which end
+   * with `/`) working unchanged.
+   */
+  return base.replace(/\/+$/, '');
 };

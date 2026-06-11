@@ -71,7 +71,7 @@ export const useCollaboration = (room: string) => {
    * when the document visibility changes.
    */
   useEffect(() => {
-    if (!room || broadcastProvider?.document?.guid !== room) {
+    if (!room || broadcastProvider?.doc?.guid !== room) {
       return;
     }
 
@@ -80,7 +80,7 @@ export const useCollaboration = (room: string) => {
         queryKey: [KEY_DOC, { id: room }],
       });
     });
-  }, [addTask, room, queryClient, broadcastProvider?.document?.guid]);
+  }, [addTask, room, queryClient, broadcastProvider?.doc?.guid]);
 
   /**
    * Set the provider when the collaboration URL and the document content are available.

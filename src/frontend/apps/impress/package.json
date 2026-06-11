@@ -43,7 +43,6 @@
     "@gouvfr-lasuite/cunningham-react": "4.3.0",
     "@gouvfr-lasuite/integration": "1.0.3",
     "@gouvfr-lasuite/ui-kit": "0.23.2",
-    "@hocuspocus/provider": "3.4.4",
     "@mantine/core": "9.2.1",
     "@mantine/hooks": "9.2.1",
     "@react-aria/live-announcer": "3.5.0",
@@ -78,6 +77,7 @@
     "use-debounce": "10.1.1",
     "uuid": "14.0.0",
     "y-protocols": "1.0.7",
+    "y-websocket": "3.0.0",
     "yjs": "*",
     "zod": "4.4.3",
     "zustand": "5.0.13"
