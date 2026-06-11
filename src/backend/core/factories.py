@@ -246,3 +246,15 @@ class ReactionFactory(factory.django.DjangoModelFactory):
 
         # Add the iterable of groups using bulk addition
         self.users.add(*extracted)
+
+
+class MentionFactory(factory.django.DjangoModelFactory):
+    """A factory to create mentions of users on a document"""
+
+    class Meta:
+        model = models.Mention
+
+    document = factory.SubFactory(DocumentFactory)
+    anchor_id = factory.Sequence(lambda n: f"block-{n}")
+    mentioned_user = factory.SubFactory(UserFactory)
+    mentioned_by_user = factory.SubFactory(UserFactory)

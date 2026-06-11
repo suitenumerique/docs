@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(backend) add mention endpoint with cooldown-limited email notification
 - 🔧(backend) fine tune redis cache options
 - ✨(frontend) make the full last-update date available #1215
 

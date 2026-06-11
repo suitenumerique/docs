@@ -34,6 +34,9 @@ class PosthogEventName(StrEnum):
     # Comment
     COMMENT_CREATED = "comment_created"
 
+    # Mention
+    MENTION_CREATED = "mention_created"
+
     # User
     USER_LOGIN = "user_login"
 
