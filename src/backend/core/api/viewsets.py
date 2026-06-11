@@ -2719,10 +2719,10 @@ class DocumentAccessViewSet(
             | models.Document.objects.filter(pk=self.document.pk)
         ).filter(ancestors_deleted_at__isnull=True)
 
+        # All users with access see the full list of accesses (with limited
+        # user details for unprivileged roles) so that any collaborator
+        # allowed to comment can mention the others.
         queryset = self.get_queryset().filter(document__in=ancestors)
-
-        if role not in choices.PRIVILEGED_ROLES:
-            queryset = queryset.filter(role__in=choices.PRIVILEGED_ROLES)
 
         accesses = list(queryset.order_by("document__path"))
 

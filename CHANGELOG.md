@@ -16,6 +16,7 @@ and this project adheres to
 
 ### Changed
 
+- 🛂(backend) make document access list visible to all collaborators
 - 👷(CI) remove test-e2e-other-browser job #2404
 - ♿️(frontend) use heading element for pinned documents section title #2380
 - ♿️(frontend) use anchor links for table of contents entries #2390
