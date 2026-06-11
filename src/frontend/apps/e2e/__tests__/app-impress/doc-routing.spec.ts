@@ -162,6 +162,9 @@ test.describe('Doc Routing', () => {
       await route.continue();
     });
 
+    // Navigate after setting up the route overrides so the config endpoint
+    // is intercepted and returns the mismatched version, triggering a reload.
+    await page.goto('/');
     await page.waitForTimeout(1000);
 
     // The sessionStorage guard should be set to the mismatched backend version.
