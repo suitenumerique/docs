@@ -1398,6 +1398,7 @@ class Document(MP_Node, BaseModel):
             "link_configuration": is_owner_or_admin,
             "invite_owner": is_owner and not is_deleted,
             "leave": can_leave,
+            "mention": can_comment and user.is_authenticated,
             "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
             "restore": is_owner,
@@ -2028,6 +2029,136 @@ class Reaction(BaseModel):
     def __str__(self):
         """Return the string representation of the reaction."""
         return f"Reaction {self.emoji} on comment {self.comment.id}"
+
+
+class Mention(BaseModel):
+    """A mention of a user in a document body or in a comment thread.
+
+    A mention record is always created, but the email notification is only
+    sent if no notification was already sent to the same user in the same
+    context (the document or a specific thread) within the cooldown period.
+    """
+
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="mentions",
+    )
+    anchor_id = models.TextField()
+    thread = models.ForeignKey(
+        Thread,
+        on_delete=models.CASCADE,
+        related_name="mentions",
+        null=True,
+        blank=True,
+    )
+    mentioned_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="mentions_received",
+        null=True,
+        blank=True,
+    )
+    mentioned_by_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="mentions_sent",
+    )
+    notified_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "impress_mention"
+        ordering = ("-created_at",)
+        verbose_name = _("Mention")
+        verbose_name_plural = _("Mentions")
+        indexes = [
+            models.Index(
+                fields=["mentioned_user", "-created_at"],
+                name="mention_user_created_idx",
+            ),
+            models.Index(
+                fields=["document", "mentioned_user"],
+                name="mention_document_user_idx",
+            ),
+        ]
+
+    def __str__(self):
+        mentioned = self.mentioned_user or _("a deleted user")
+        return (
+            f"{self.mentioned_by_user!s} mentioned {mentioned!s} on {self.document!s}"
+        )
+
+    def clean(self):
+        """Validate that the thread, if any, belongs to the mention's document."""
+        super().clean()
+        if self.thread_id and self.thread.document_id != self.document_id:
+            raise ValidationError(
+                {"thread_id": [_("The thread does not belong to this document.")]}
+            )
+
+    def is_notification_in_cooldown(self):
+        """Return whether the mentioned user was already notified in the same context
+        (same document and thread, the document body when the thread is null) within
+        the cooldown period."""
+        cooldown_start = timezone.now() - timedelta(
+            minutes=settings.MENTION_NOTIFICATION_COOLDOWN_MINUTES
+        )
+        return (
+            self._meta.model.objects.filter(
+                document_id=self.document_id,
+                mentioned_user_id=self.mentioned_user_id,
+                thread_id=self.thread_id,
+                notified_at__isnull=False,
+                created_at__gt=cooldown_start,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        )
+
+    def notify(self, language=None):
+        """Send the mention notification email unless the context is in cooldown.
+
+        Set `notified_at` on the mention and return True if an email was sent,
+        return False otherwise.
+        """
+        user = self.mentioned_user
+        if user is None or not user.email or self.is_notification_in_cooldown():
+            return False
+
+        sender = self.mentioned_by_user
+        language = (
+            language or user.language or sender.language or settings.LANGUAGE_CODE
+        )
+        sender_name = sender.full_name or sender.email
+        domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
+
+        with override(language):
+            title = self.document.title or str(_("Untitled Document"))
+            if self.thread_id:
+                subject = _(
+                    "You were mentioned in a comment on the document {title}"
+                ).format(title=title)
+                message = _(
+                    "{name} mentioned you in a comment on the following document:"
+                ).format(name=sender_name)
+            else:
+                subject = _("You were mentioned in the document {title}").format(
+                    title=title
+                )
+                message = _("{name} mentioned you in the following document:").format(
+                    name=sender_name
+                )
+            context = {
+                "title": subject,
+                "message": message,
+                "link": f"{domain}/docs/{self.document_id}/#{self.anchor_id}",
+            }
+
+        self.document.send_email(subject, [user.email], context, language)
+
+        self.notified_at = timezone.now()
+        self.save(update_fields=["notified_at", "updated_at"])
+        return True
 
 
 class Invitation(BaseModel):

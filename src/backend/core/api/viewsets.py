@@ -517,6 +517,16 @@ class DocumentViewSet(
     15. **AI Proxy**: Proxy an AI request to an external AI service.
         Example: POST /api/v1.0/documents/<resource_id>/ai-proxy
 
+    16. **Mention**: Mention a user on the document and notify them by email.
+        Example: POST /documents/{id}/mention/
+        Expected data:
+        - anchor_id (str): The location of the mention, used for the email deeplink.
+        - mentioned_user_id (uuid): The user being mentioned, must have access
+          to the document.
+        - thread_id (uuid, optional): The comment thread in which the mention
+          occurs. Omit for mentions in the document body.
+        Returns: 201 with the created mention.
+
     ### Ordering: created_at, updated_at, is_favorite, title
 
         Example:
@@ -1855,6 +1865,42 @@ class DocumentViewSet(
         return drf.response.Response(
             {"detail": "Document was already not marked as favorite"},
             status=drf.status.HTTP_200_OK,
+        )
+
+    @drf.decorators.action(detail=True, methods=["post"], url_path="mention")
+    def mention(self, request, *args, **kwargs):
+        """Mention a user on the document and notify them by email.
+
+        The mention record is always created; the email notification is
+        suppressed when the same user was already notified in the same context
+        (document body or thread) within the cooldown period.
+        """
+        # Check permissions first
+        document = self.get_object()
+
+        serializer = serializers.MentionSerializer(
+            data=request.data,
+            context={**self.get_serializer_context(), "document": document},
+        )
+        serializer.is_valid(raise_exception=True)
+        mention = serializer.save(document=document, mentioned_by_user=request.user)
+
+        mention.notify()
+
+        posthog_capture(
+            PosthogEventName.MENTION_CREATED,
+            request.user,
+            {
+                "mention_id": str(mention.id),
+                "mentioned_user_id": str(mention.mentioned_user_id),
+                "thread_id": str(mention.thread_id) if mention.thread_id else None,
+                "notified": mention.notified_at is not None,
+            },
+            document=document,
+        )
+
+        return drf.response.Response(
+            serializer.data, status=drf.status.HTTP_201_CREATED
         )
 
     @drf.decorators.action(detail=True, methods=["post"], url_path="attachment-upload")

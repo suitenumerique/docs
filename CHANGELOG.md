@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add limit on distinct reactions per comment #1978
+- ✨(backend) add mention endpoint with cooldown-limited email notification
 - ✨(frontend) leave a document #2410
 - ✨(frontend) add top parent on sub docs search #1952
 - ✨(frontend) unauthenticated users can search #2407
