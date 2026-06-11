@@ -1413,21 +1413,22 @@ class Document(MP_Node, BaseModel):
         }
 
     def send_email(self, subject, emails, context=None, language=None):
-        """Generate and send email from a template."""
-        context = context or {}
+        """Generate and send email from a template.
+
+        Keys passed in `context` take precedence over the default values.
+        """
         domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
         language = language or get_language()
-        context.update(
-            {
-                "brandname": settings.EMAIL_BRAND_NAME,
-                "document": self,
-                "domain": domain,
-                "link": f"{domain}/docs/{self.id}/?utm_source=docssharelink&utm_campaign={self.id}",
-                "link_label": self.title or str(_("Untitled Document")),
-                "button_label": _("Open"),
-                "logo_img": settings.EMAIL_LOGO_IMG,
-            }
-        )
+        context = {
+            "brandname": settings.EMAIL_BRAND_NAME,
+            "document": self,
+            "domain": domain,
+            "link": f"{domain}/docs/{self.id}/?utm_source=docssharelink&utm_campaign={self.id}",
+            "link_label": self.title or str(_("Untitled Document")),
+            "button_label": _("Open"),
+            "logo_img": settings.EMAIL_LOGO_IMG,
+            **(context or {}),
+        }
 
         with override(language):
             msg_html = render_to_string("mail/html/template.html", context)
