@@ -48,7 +48,11 @@ def expected_access(access, user, via):
         },
         "user": None
         if via == TEAM
-        else {"full_name": user.full_name, "short_name": user.short_name},
+        else {
+            "full_name": user.full_name,
+            "short_name": user.short_name,
+            "id": str(user.id),
+        },
         "team": "lasuite" if via == TEAM else "",
         "role": access.role,
         "max_ancestors_role": None,

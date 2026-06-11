@@ -175,6 +175,7 @@ def test_api_documents_threads_restricted_document_editor(role):
         "created_at": thread.created_at.isoformat().replace("+00:00", "Z"),
         "updated_at": thread.updated_at.isoformat().replace("+00:00", "Z"),
         "creator": {
+            "id": str(user.id),
             "full_name": user.full_name,
             "short_name": user.short_name,
         },
@@ -185,6 +186,7 @@ def test_api_documents_threads_restricted_document_editor(role):
                 "created_at": comment.created_at.isoformat().replace("+00:00", "Z"),
                 "updated_at": comment.updated_at.isoformat().replace("+00:00", "Z"),
                 "user": {
+                    "id": str(user.id),
                     "full_name": user.full_name,
                     "short_name": user.short_name,
                 },
@@ -296,6 +298,7 @@ def test_api_documents_threads_authenticated_document(link_role):
         "created_at": thread.created_at.isoformat().replace("+00:00", "Z"),
         "updated_at": thread.updated_at.isoformat().replace("+00:00", "Z"),
         "creator": {
+            "id": str(user.id),
             "full_name": user.full_name,
             "short_name": user.short_name,
         },
@@ -306,6 +309,7 @@ def test_api_documents_threads_authenticated_document(link_role):
                 "created_at": comment.created_at.isoformat().replace("+00:00", "Z"),
                 "updated_at": comment.updated_at.isoformat().replace("+00:00", "Z"),
                 "user": {
+                    "id": str(user.id),
                     "full_name": user.full_name,
                     "short_name": user.short_name,
                 },
