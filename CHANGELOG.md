@@ -19,6 +19,7 @@ and this project adheres to
 
 - ♿️(frontend) hide mobile left panel from screen readers when collapsed #2450
 - ♿️(frontend) enable blocknote heading ids for toc anchors #2449
+- ♿️(frontend) focus export modal on format select #2421
 
 ## [v5.3.0] - 2026-06-19
 

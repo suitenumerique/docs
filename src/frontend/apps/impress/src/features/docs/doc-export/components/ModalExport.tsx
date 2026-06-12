@@ -14,7 +14,13 @@ import { DocumentProps, pdf } from '@react-pdf/renderer';
 import jsonemoji from 'emoji-datasource-apple' with { type: 'json' };
 import i18next from 'i18next';
 import JSZip from 'jszip';
-import { cloneElement, isValidElement, useState } from 'react';
+import {
+  cloneElement,
+  isValidElement,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -59,6 +65,17 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   );
   const { untitledDocument } = useTrans();
   const mediaUrl = useMediaUrl();
+  const selectRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const frameId = requestAnimationFrame(() => {
+      const button = selectRef.current?.querySelector<HTMLButtonElement>(
+        'button, [role="combobox"]',
+      );
+      button?.focus();
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, []);
 
   const formatOptions = [
     { label: t('PDF'), value: DocDownloadFormat.PDF },
@@ -227,7 +244,6 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             aria-label={t('Cancel the download')}
             variant="secondary"
             fullWidth
-            autoFocus
             onClick={() => onClose()}
           >
             {t('Cancel')}
@@ -282,16 +298,18 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             'Export your document to print or download in .docx, .odt, .pdf or .html(zip) format.',
           )}
         </Text>
-        <Select
-          clearable={false}
-          fullWidth
-          label={t('Format')}
-          options={formatOptions}
-          value={format}
-          onChange={(options) =>
-            setFormat(options.target.value as DocDownloadFormat)
-          }
-        />
+        <Box ref={selectRef}>
+          <Select
+            clearable={false}
+            fullWidth
+            label={t('Format')}
+            options={formatOptions}
+            value={format}
+            onChange={(options) =>
+              setFormat(options.target.value as DocDownloadFormat)
+            }
+          />
+        </Box>
 
         {isExporting && (
           <Box
