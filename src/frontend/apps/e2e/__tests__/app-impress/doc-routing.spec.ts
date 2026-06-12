@@ -27,8 +27,9 @@ test.describe('Doc Routing', () => {
   test('checks alias docs url with homepage', async ({ page }) => {
     await expect(page).toHaveURL('/');
 
-    const buttonCreateHomepage = page.getByRole('button', {
-      name: 'New doc',
+    const buttonCreateHomepage = page.getByRole('link', {
+      name: 'New',
+      exact: true,
     });
 
     await expect(buttonCreateHomepage).toBeVisible();

@@ -143,8 +143,9 @@ export const createDoc = async (
     );
 
     await page
-      .getByRole('button', {
-        name: 'New doc',
+      .getByRole('link', {
+        name: 'New',
+        exact: true,
       })
       .click();
 

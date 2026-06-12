@@ -264,7 +264,9 @@ test.describe('Help feature', () => {
 
       await page.goto('/');
 
-      await expect(page.getByRole('button', { name: 'New doc' })).toBeVisible();
+      await expect(
+        page.getByRole('link', { name: 'New', exact: true }),
+      ).toBeVisible();
 
       await expect(
         page.getByRole('button', { name: 'Open help menu' }),
@@ -386,7 +388,9 @@ test.describe('Help feature', () => {
     }) => {
       await page.goto('/');
 
-      await expect(page.getByRole('button', { name: 'New doc' })).toBeVisible();
+      await expect(
+        page.getByRole('link', { name: 'New', exact: true }),
+      ).toBeVisible();
       await expect(page.getByTestId('onboarding-modal')).toBeHidden();
 
       await page.route(/.*\/api\/v1.0\/users\/me\//, async (route) => {

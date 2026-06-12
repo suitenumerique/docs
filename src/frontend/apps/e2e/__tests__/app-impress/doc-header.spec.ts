@@ -491,8 +491,9 @@ test.describe('Doc Header', () => {
 
     // create page and navigate to it
     await page
-      .getByRole('button', {
-        name: 'New doc',
+      .getByRole('link', {
+        name: 'New',
+        exact: true,
       })
       .click();
 

@@ -15,7 +15,10 @@ import {
   errorCauses,
   fetchAPI,
 } from '@/api';
-import { Doc, DocsResponse, KEY_LIST_DOC } from '@/docs/doc-management';
+
+import { Doc } from '../types';
+
+import { DocsResponse, KEY_LIST_DOC } from './useDocs';
 
 interface ContentType {
   mime: string;

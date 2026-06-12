@@ -1,34 +1,21 @@
-import {
-  Button,
-  Tooltip as TooltipBase,
-} from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/cunningham-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
-import styled, { css } from 'styled-components';
+import { css } from 'styled-components';
 
 import AllDocs from '@/assets/icons/doc-all.svg';
 import { Box, Card, Icon, Text } from '@/components';
-import { DocDefaultFilter, useInfiniteDocs } from '@/docs/doc-management';
+import { useInfiniteDocs } from '@/docs/doc-management/api/useDocs';
+import { useImport } from '@/docs/doc-management/hooks/useImport';
+import { DocDefaultFilter } from '@/docs/doc-management/types';
 import { useResponsiveStore } from '@/stores';
 
 import { useInfiniteDocsTrashbin } from '../api';
-import { useImport } from '../hooks/useImport';
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import { DocGridContentList } from './DocGridContentList';
 import { DocsGridLoader } from './DocsGridLoader';
-
-const Tooltip = styled(TooltipBase)`
-  & {
-    max-width: 200px;
-
-    .c__tooltip__content {
-      max-width: 200px;
-      width: max-content;
-    }
-  }
-`;
 
 type DocsGridProps = {
   target?: DocDefaultFilter;
@@ -41,8 +28,6 @@ export const DocsGrid = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const {
     getRootProps,
-    getInputProps,
-    open,
     isPending: isImportPending,
     isEnabled: isImportEnabled,
   } = useImport({
@@ -122,13 +107,7 @@ export const DocsGrid = ({
           ? getRootProps({ className: 'dropzone', tabIndex: -1 })
           : {})}
       >
-        {withUpload && <input {...getInputProps()} />}
-        <DocGridTitleBar
-          target={target}
-          onUploadClick={open}
-          withUpload={withUpload}
-        />
-
+        <DocGridTitleBar target={target} />
         {!hasDocs && !loading && (
           <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
             <Text $size="sm" $weight="700">
@@ -193,15 +172,7 @@ export const DocsGrid = ({
   );
 };
 
-const DocGridTitleBar = ({
-  target,
-  onUploadClick,
-  withUpload,
-}: {
-  target: DocDefaultFilter;
-  onUploadClick: () => void;
-  withUpload: boolean;
-}) => {
+const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
 
@@ -237,27 +208,6 @@ const DocGridTitleBar = ({
           {title}
         </Text>
       </Box>
-      {withUpload && (
-        <Tooltip
-          content={
-            <Text $textAlign="center" $theme="neutral" $variation="tertiary">
-              {t('Import Docx or Markdown files')}
-            </Text>
-          }
-        >
-          <Button
-            color="brand"
-            variant="tertiary"
-            onClick={(e) => {
-              e.stopPropagation();
-              onUploadClick();
-            }}
-            aria-label={t('Open the upload dialog')}
-          >
-            <Icon iconName="upload_file" $withThemeInherited />
-          </Button>
-        </Tooltip>
-      )}
     </Box>
   );
 };

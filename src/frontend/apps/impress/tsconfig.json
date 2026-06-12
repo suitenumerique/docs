@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@/docs/*": ["./src/features/docs/*"]
+      "@/docs/*": ["./src/features/docs/*"],
+      "@/icons/*": ["./src/assets/icons/ui-kit/*"]
     }
   },
   "include": ["src/custom-next.d.ts", "**/*.ts", "**/*.tsx"],

@@ -11,17 +11,18 @@ and this project adheres to
 - ✨(y-provider) preserve callouts, PDFs, page breaks, interlinking
   links and commented text on HTML/markdown export #2296
 
-### Fixed
-
-- 🐛(frontend) fix removed item in the tree #2420
-
 ### Changed
 
 - ♿️(frontend) hide mobile left panel from screen readers when collapsed #2450
 - ♿️(frontend) enable blocknote heading ids for toc anchors #2449
 - ♿️(frontend) focus export modal on format select #2421
 - ♿️(frontend) configurable legal submenu in HelpMenu, remove Crisp #2416
+- ♻️(frontend) new create button for docs #2423
 - ♿️(frontend) align search modal field label with placeholder #2384
+
+### Fixed
+
+- 🐛(frontend) fix removed item in the tree #2420
 
 ## [v5.3.0] - 2026-06-19
 

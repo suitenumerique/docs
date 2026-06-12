@@ -9,16 +9,18 @@ import { useDropzone } from 'react-dropzone';
 import { useConfig } from '@/core';
 
 import { ContentTypes, useImportDoc } from '../api/useImportDoc';
+import { Doc } from '../types';
 
 interface UseImportProps {
-  onDragOver: (isDragOver: boolean) => void;
+  onDragOver?: (isDragOver: boolean) => void;
+  onImportSuccess?: (doc: Doc) => void;
 }
 
 interface AcceptedMap {
   [mime: string]: string[];
 }
 
-export const useImport = ({ onDragOver }: UseImportProps) => {
+export const useImport = ({ onDragOver, onImportSuccess }: UseImportProps) => {
   const { toast } = useToastProvider();
   const { data: config } = useConfig();
 
@@ -84,7 +86,7 @@ export const useImport = ({ onDragOver }: UseImportProps) => {
     accept: ACCEPT,
     maxSize: MAX_FILE_SIZE.bytes,
     onDrop(acceptedFiles) {
-      onDragOver(false);
+      onDragOver?.(false);
       const allowedExtensions = Object.values(ACCEPT).flat();
       for (const file of acceptedFiles) {
         const ext = `.${file.name.split('.').pop()?.toLowerCase()}`;
@@ -92,14 +94,18 @@ export const useImport = ({ onDragOver }: UseImportProps) => {
           toastInvalidFileType(file.name);
           continue;
         }
-        importDoc([file, file.type]);
+        importDoc([file, file.type], {
+          onSuccess: (doc: Doc) => {
+            onImportSuccess?.(doc);
+          },
+        });
       }
     },
     onDragEnter: () => {
-      onDragOver(true);
+      onDragOver?.(true);
     },
     onDragLeave: () => {
-      onDragOver(false);
+      onDragOver?.(false);
     },
     onDropRejected(fileRejections) {
       fileRejections.forEach((rejection) => {

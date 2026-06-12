@@ -47,8 +47,9 @@ test.describe('Language', () => {
 
     // initial language should be english
     await expect(
-      page.getByRole('button', {
-        name: 'New doc',
+      page.getByRole('link', {
+        name: 'New',
+        exact: true,
       }),
     ).toBeVisible();
 

@@ -75,8 +75,9 @@ test.describe('Config', () => {
     await page.goto('/');
 
     void page
-      .getByRole('button', {
-        name: 'New doc',
+      .getByRole('link', {
+        name: 'New',
+        exact: true,
       })
       .click();
 

@@ -26,8 +26,9 @@ test.describe('Doc Collaboration', () => {
     });
 
     await page
-      .getByRole('button', {
-        name: 'New doc',
+      .getByRole('link', {
+        name: 'New',
+        exact: true,
       })
       .click();
 
@@ -293,8 +294,9 @@ test.describe('Doc Collaboration', () => {
     });
 
     await page
-      .getByRole('button', {
-        name: 'New doc',
+      .getByRole('link', {
+        name: 'New',
+        exact: true,
       })
       .click();
 

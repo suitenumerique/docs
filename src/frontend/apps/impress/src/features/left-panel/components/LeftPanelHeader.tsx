@@ -6,17 +6,16 @@ import { PropsWithChildren } from 'react';
 import HomeSVG from '@/assets/icons/ui-kit/house-rounded.svg';
 import { Box, SeparatedSection } from '@/components';
 import { useAuth } from '@/features/auth';
+import { NewDocButton } from '@/features/docs/doc-management/components/NewDocButton';
 import { DocSearchButtonModal } from '@/features/docs/doc-search/components/DocSearchButtonModal';
 
 import { useLeftPanelStore } from '../stores';
-
-import { LeftPanelHeaderNewDoc } from './LeftPanelHeaderNewDoc';
 
 export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   const router = useRouter();
   const { authenticated } = useAuth();
 
-  const { togglePanel } = useLeftPanelStore();
+  const { togglePanel, closePanel } = useLeftPanelStore();
 
   const goToHome = () => {
     void router.push('/');
@@ -33,7 +32,9 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
           $justify="space-between"
           $align="center"
         >
-          {authenticated && <LeftPanelHeaderNewDoc />}
+          {authenticated && (
+            <NewDocButton onClose={() => closePanel({ type: 'mobile' })} />
+          )}
           <Box $direction="row" $gap="2px" $margin={{ left: 'auto' }}>
             {router.pathname !== '/' && (
               <Button

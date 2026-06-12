@@ -18,12 +18,14 @@ test.describe('Doc Import', () => {
 
     await page.goto('/');
 
-    await expect(page.getByLabel('Open the upload dialog')).toBeHidden();
+    await expect(page.getByLabel('Open new document options')).toBeHidden();
   });
 
   test('it imports 2 docs with the import icon', async ({ page }) => {
     const fileChooserPromise = page.waitForEvent('filechooser');
-    await page.getByLabel('Open the upload dialog').click();
+
+    await page.getByLabel('Open new document options').click();
+    await page.getByRole('menuitem', { name: 'Import a document' }).click();
 
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles([
@@ -42,6 +44,7 @@ test.describe('Doc Import', () => {
       ),
     ).toBeVisible();
 
+    await page.getByLabel('Back to homepage').first().click();
     const docsGrid = page.getByTestId('docs-grid');
     await expect(docsGrid.getByText('test_import.docx').first()).toBeVisible();
     await expect(docsGrid.getByText('test_import.md').first()).toBeVisible();
