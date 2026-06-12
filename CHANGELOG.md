@@ -18,6 +18,7 @@ and this project adheres to
 - ♿️(frontend) use heading element for pinned documents section title #2380
 - ♿️(frontend) use anchor links for table of contents entries #2390
 - ♿️(frontend) improve presenter mode screen reader and keyboard support #2383
+♿️(frontend) link export modal name to its heading #2422
 
 ### Fixed
 

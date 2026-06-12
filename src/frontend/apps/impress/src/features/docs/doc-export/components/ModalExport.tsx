@@ -219,8 +219,8 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       closeOnClickOutside
       onClose={() => onClose()}
       hideCloseButton
-      aria-label={t('Export')}
-      aria-describedby="modal-export-title"
+      aria-labelledby="modal-export-title"
+      aria-describedby="modal-export-description"
       rightActions={
         <>
           <Button
@@ -272,7 +272,12 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         $gap="1rem"
         className="--docs--modal-export-content"
       >
-        <Text $variation="secondary" $size="sm" as="p">
+        <Text
+          $variation="secondary"
+          $size="sm"
+          as="p"
+          id="modal-export-description"
+        >
           {t(
             'Export your document to print or download in .docx, .odt, .pdf or .html(zip) format.',
           )}
