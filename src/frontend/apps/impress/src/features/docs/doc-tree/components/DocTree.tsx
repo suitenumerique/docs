@@ -1,19 +1,22 @@
 import { ButtonElement } from '@gouvfr-lasuite/cunningham-react';
 import {
   OpenMap,
+  TreeDataItem,
   TreeView,
   TreeViewMoveResult,
   useResponsive,
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import {
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react';
+import { NodeApi } from 'react-arborist';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -40,7 +43,6 @@ type DocTreeProps = {
 
 export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const { spacingsTokens } = useCunninghamTheme();
-  const { isDesktop } = useResponsive();
   const { untitledDocument } = useTrans();
   const [treeRoot, setTreeRoot] = useState<HTMLElement | null>(null);
   const treeContext = useTreeContext<Doc | null>();
@@ -59,8 +61,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     undefined,
   );
 
-  const { mutate: moveDoc } = useMoveDoc();
-
   const { data: tree, isFetching } = useDocTree(
     { docId: currentDoc.id },
     {
@@ -68,15 +68,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       queryKey: [KEY_DOC_TREE, { id: currentDoc.id }],
     },
   );
-
-  const handleMove = (result: TreeViewMoveResult) => {
-    moveDoc({
-      sourceDocumentId: result.sourceId,
-      targetDocumentId: result.targetModeId,
-      position: result.mode,
-    });
-    treeContext?.treeData.handleMove(result);
-  };
 
   /**
    * This function resets the tree states.
@@ -95,7 +86,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const navigateToRoot = useCallback(() => {
     const id = treeContext?.root?.id;
     if (id) {
-      router.push(`/docs/${id}`);
+      void router.push(`/docs/${id}`);
     }
   }, [router, treeContext?.root?.id]);
 
@@ -158,41 +149,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         rootItemRef.current?.focus();
       });
     }
-  }, []);
-
-  const handleRowKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Tab' && e.shiftKey) {
-      e.preventDefault();
-      e.stopPropagation();
-      rootItemRef.current?.focus();
-      return;
-    }
-
-    if (e.key !== 'Enter') {
-      return;
-    }
-
-    const target = e.target as HTMLElement | null;
-    if (
-      !target ||
-      !(
-        target.classList.contains('c__tree-view--row') ||
-        target.classList.contains('c__tree-view--node')
-      )
-    ) {
-      return;
-    }
-
-    const treeItem = e.currentTarget.querySelector('[role="treeitem"]');
-    if (treeItem?.getAttribute('aria-selected') === 'true') {
-      e.preventDefault();
-      document.querySelector<HTMLElement>(`.${CLASS_DOC_TITLE}`)?.focus();
-      return;
-    }
-
-    e.currentTarget
-      .querySelector<HTMLDivElement>('.c__tree-view--node')
-      ?.click();
   }, []);
 
   /**
@@ -303,7 +259,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
           `[data-testid="doc-sub-page-item-${currentDoc.id}"]`,
         )
         ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }, 100);
+    }, 500);
 
     return () => {
       clearTimeout(timeoutId);
@@ -426,7 +382,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
               treeContext.treeData.setSelectedNode(
                 treeContext.root ?? undefined,
               );
-              router.push(`/docs/${treeContext?.root?.id}`);
+              void router.push(`/docs/${treeContext?.root?.id}`);
             }}
             aria-label={`${t('Open root document')}: ${treeContext.root?.title || untitledDocument}`}
             tabIndex={-1} // avoid double tabstop
@@ -458,37 +414,128 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       {initialOpenState &&
         treeContext.treeData.nodes.length > 0 &&
         treeRoot && (
-          <Overlayer isOverlay={currentDoc.deleted_at != null} inert>
-            <TreeView
-              dndRootElement={treeRoot}
-              initialOpenState={initialOpenState}
-              afterMove={handleMove}
-              selectedNodeId={
-                treeContext.treeData.selectedNode?.id ??
-                treeContext.initialTargetId ??
-                undefined
-              }
-              canDrop={({ parentNode }) => {
-                const parentValue = parentNode?.data.value;
-                if (!parentValue || !isDocNode(parentValue)) {
-                  return currentDoc.abilities.move && isDesktop;
-                }
-                return parentValue.abilities.move && isDesktop;
-              }}
-              canDrag={(node) => {
-                if (!isDocNode(node.value)) {
-                  return false;
-                }
-                return node.value.abilities.move && isDesktop;
-              }}
-              rootNodeId={treeContext.root.id}
-              renderNode={DocSubPageItem}
-              rowProps={{
-                onKeyDown: handleRowKeyDown,
-              }}
-            />
-          </Overlayer>
+          <DocTreeView
+            doc={currentDoc}
+            treeRoot={treeRoot}
+            initialOpenState={initialOpenState}
+            rootNodeId={treeContext.root.id}
+            rootItem={rootItemRef.current}
+          />
         )}
     </Box>
   );
 };
+
+interface DocTreeViewProps {
+  doc: Doc;
+  treeRoot: HTMLElement;
+  initialOpenState: OpenMap;
+  rootNodeId: string;
+  rootItem: HTMLDivElement | null;
+}
+
+const DocTreeView = memo(function DocTreeView({
+  doc,
+  treeRoot,
+  initialOpenState,
+  rootNodeId,
+  rootItem,
+}: DocTreeViewProps) {
+  const { isDesktop } = useResponsive();
+  const treeContext = useTreeContext<Doc | null>();
+  const { mutate: moveDoc } = useMoveDoc();
+  const { query } = useRouter();
+
+  const handleMove = useCallback(
+    (result: TreeViewMoveResult) => {
+      moveDoc({
+        sourceDocumentId: result.sourceId,
+        targetDocumentId: result.targetModeId,
+        position: result.mode,
+      });
+      treeContext?.treeData.handleMove(result);
+    },
+    [moveDoc, treeContext],
+  );
+
+  const canDrop = useCallback(
+    ({ parentNode }: { parentNode: NodeApi<TreeDataItem<Doc>> | null }) => {
+      const parentValue = parentNode?.data.value;
+      if (!parentValue || !isDocNode(parentValue)) {
+        return doc.abilities.move && isDesktop;
+      }
+      return parentValue.abilities.move && isDesktop;
+    },
+    [doc.abilities.move, isDesktop],
+  );
+
+  const canDrag = useCallback(
+    (node: TreeDataItem<Doc>) => {
+      if (!isDocNode(node.value)) {
+        return false;
+      }
+      return node.value.abilities.move && isDesktop;
+    },
+    [isDesktop],
+  );
+
+  const handleRowKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Tab' && e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        rootItem?.focus();
+        return;
+      }
+
+      if (e.key !== 'Enter') {
+        return;
+      }
+
+      const target = e.target as HTMLElement | null;
+      if (
+        !target ||
+        !(
+          target.classList.contains('c__tree-view--row') ||
+          target.classList.contains('c__tree-view--node')
+        )
+      ) {
+        return;
+      }
+
+      const treeItem = e.currentTarget.querySelector('[role="treeitem"]');
+      if (treeItem?.getAttribute('aria-selected') === 'true') {
+        e.preventDefault();
+        document.querySelector<HTMLElement>(`.${CLASS_DOC_TITLE}`)?.focus();
+        return;
+      }
+
+      e.currentTarget
+        .querySelector<HTMLDivElement>('.c__tree-view--node')
+        ?.click();
+    },
+    [rootItem],
+  );
+
+  return (
+    <Overlayer isOverlay={doc.deleted_at != null} inert>
+      <TreeView
+        dndRootElement={treeRoot}
+        initialOpenState={initialOpenState}
+        afterMove={handleMove}
+        selectedNodeId={
+          (query.id as string | undefined) ??
+          treeContext?.initialTargetId ??
+          undefined
+        }
+        canDrop={canDrop}
+        canDrag={canDrag}
+        rootNodeId={rootNodeId}
+        renderNode={DocSubPageItem}
+        rowProps={{
+          onKeyDown: handleRowKeyDown,
+        }}
+      />
+    </Overlayer>
+  );
+});
