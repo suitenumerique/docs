@@ -6,10 +6,10 @@ We provide a sample configuration for running Docs using Docker Compose. Please 
 
 - A modern version of Docker and its Compose plugin.
 - A domain name and DNS configured to your server.
-- An Identity Provider that supports OpenID Connect protocol - we provide [an example to deploy Keycloak](../examples/compose/keycloak/README.md).
-- An Object Storage that implements S3 API - we provide [an example to deploy Minio](../examples/compose/minio/README.md).
-- A Postgresql database - we provide [an example in the compose file](../examples/compose/compose.yaml).
-- A Redis database - we provide [an example in the compose file](../examples/compose/compose.yaml).
+- An Identity Provider that supports OpenID Connect protocol - we provide [an example to deploy Keycloak](../../deploy/docker/examples/keycloak/README.md).
+- An Object Storage that implements S3 API - we provide [an example to deploy Minio](../../deploy/docker/examples/minio/README.md).
+- A Postgresql database - we provide [an example in the compose file](../../deploy/docker/compose.yml).
+- A Redis database - we provide [an example in the compose file](../../deploy/docker/compose.yml).
 
 ## Software Requirements
 
@@ -32,7 +32,7 @@ For older versions of Docker Engine that do not include Docker Compose:
 ```bash
 mkdir -p docs/env.d
 cd docs
-curl -o compose.yaml https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/docs/examples/compose/compose.yaml
+curl -o compose.yml https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/deploy/docker/compose.yml
 curl -o env.d/common https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/common
 curl -o env.d/backend https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/backend
 curl -o env.d/yprovider https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/yprovider
@@ -61,7 +61,7 @@ In this example, we assume the following services:
 
 Authentication in Docs is managed through Open ID Connect protocol. A functional Identity Provider implementing this protocol is required.
 
-For guidance, refer to our [Keycloak deployment example](../examples/compose/keycloak/README.md).
+For guidance, refer to our [Keycloak deployment example](../../deploy/docker/examples/keycloak/README.md).
 
 If using Keycloak as your Identity Provider, set `OIDC_RP_CLIENT_ID` and `OIDC_RP_CLIENT_SECRET` variables with those of the OIDC client created for Docs. By default we have set `docs` as the realm name, if you have named your realm differently, update the value `REALM_NAME` in `env.d/common`
 
@@ -71,7 +71,7 @@ For others OIDC providers, update the variables in `env.d/backend`.
 
 Files and media are stored in an Object Store that supports the S3 API.
 
-For guidance, refer to our [Minio deployment example](../examples/compose/minio/README.md).
+For guidance, refer to our [Minio deployment example](../../deploy/docker/examples/minio/README.md).
 
 Set `AWS_S3_ACCESS_KEY_ID` and `AWS_S3_SECRET_ACCESS_KEY` with the credentials of a user with `readwrite` access to the bucket created for Docs.
 
@@ -147,7 +147,7 @@ AI_MODEL=<model used> e.g. llama
 
 ### Frontend theme
 
-You can [customize your Docs instance](../theming.md) with your own theme and custom css.
+You can [customize your Docs instance](../customization.md) with your own theme and custom css.
 
 The following environment variables must be set in `env.d/backend`:
 
@@ -163,7 +163,7 @@ FRONTEND_CSS_URL=https://storage.yourdomain.tld/themes/custom.css # custom css
 
 If you have your own certificates and proxy setup, you can skip this part.
 
-You can follow our [nginx proxy example](../examples/compose/nginx-proxy/README.md) with automatic generation and renewal of certificate with Let's Encrypt. 
+You can follow our [nginx proxy example](../../deploy/docker/examples/nginx-proxy/README.md) with automatic generation and renewal of certificate with Let's Encrypt. 
 
 You will need to uncomment the environment and network sections in compose file and update it with your values.
 

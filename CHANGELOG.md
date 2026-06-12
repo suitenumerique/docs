@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+- ♻️ (deploy) harmonize prod deployment layout under deploy/ #2425
+
 ### Added
 
 - ✨(frontend) add top parent on sub docs search #1952

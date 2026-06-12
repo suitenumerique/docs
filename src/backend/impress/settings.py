@@ -551,6 +551,12 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    THEME_CUSTOMIZATION_JSON = values.Value(
+        None,
+        environ_name="THEME_CUSTOMIZATION_JSON",
+        environ_prefix=None,
+    )
+
     THEME_CUSTOMIZATION_CACHE_TIMEOUT = values.IntegerValue(
         60 * 60 * 24,
         environ_name="THEME_CUSTOMIZATION_CACHE_TIMEOUT",

@@ -89,6 +89,28 @@ Then, set the `FRONTEND_JS_URL` environment variable to the URL of your custom J
 
 ----
 
+## **Providing theme customization** ⚙️
+
+The theme customization configuration can be provided in two ways. Pick the one that fits your deployment:
+
+* **Inline JSON via env var (recommended for PaaS / Docker / Kubernetes)** — set `THEME_CUSTOMIZATION_JSON` to the JSON string itself. No file mount required.
+
+    ```shellscript
+    THEME_CUSTOMIZATION_JSON='{"header":{"icon":"https://..."}}'
+    ```
+
+* **Mounted JSON file** — set `THEME_CUSTOMIZATION_FILE_PATH` to the absolute path of a JSON file inside the container.
+
+    ```shellscript
+    THEME_CUSTOMIZATION_FILE_PATH=<path>
+    ```
+
+When both are set, `THEME_CUSTOMIZATION_JSON` is prioritized.
+
+The sections below describe the schema. Each example links to the reference JSON at `deploy/kubernetes/helm/env.d/dev/configuration/theme/demo.json`.
+
+----
+
 ## **Your Docs icon** 📝
 
 You can add your own Docs icon in the header from the theme customization file.
@@ -97,11 +119,13 @@ You can add your own Docs icon in the header from the theme customization file.
 
 ```shellscript
 THEME_CUSTOMIZATION_FILE_PATH=<path>
+# or
+THEME_CUSTOMIZATION_JSON=<inline JSON>
 ```
 
 ### Example of JSON
 
-You can activate it with the `header.icon` configuration: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
+You can activate it with the `header.icon` configuration: https://github.com/suitenumerique/docs/blob/main/deploy/kubernetes/helm/env.d/dev/configuration/theme/demo.json
 
 This configuration is optional. If not set, the default icon will be used.
 
@@ -119,7 +143,7 @@ THEME_CUSTOMIZATION_FILE_PATH=<path>
 
 ### Example of JSON
 
-The json must follow some rules: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
+The json must follow some rules: https://github.com/suitenumerique/docs/blob/main/deploy/kubernetes/helm/env.d/dev/configuration/theme/demo.json
 
 `footer.default` is the fallback if the language is not supported.
 
@@ -142,7 +166,7 @@ THEME_CUSTOMIZATION_FILE_PATH=<path>
 
 ### Example of JSON
 
-The json must follow some rules: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
+The json must follow some rules: https://github.com/suitenumerique/docs/blob/main/deploy/kubernetes/helm/env.d/dev/configuration/theme/demo.json
 
 ----
 
@@ -168,7 +192,7 @@ See: [LaGaufreV2Props](https://github.com/suitenumerique/ui-kit/blob/main/src/co
 
 ### Complete Example
 
-From the theme customization file: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
+From the theme customization file: https://github.com/suitenumerique/docs/blob/main/deploy/kubernetes/helm/env.d/dev/configuration/theme/demo.json
 
 ### Behavior
 

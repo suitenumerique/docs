@@ -39,8 +39,8 @@ scalingo env-set LASUITE_APP_NAME="docs"
 scalingo env-set LASUITE_BACKEND_DIR="src/backend/"
 scalingo env-set LASUITE_FRONTEND_DIR="src/frontend/"
 scalingo env-set LASUITE_NGINX_DIR="."
-scalingo env-set LASUITE_SCRIPT_POSTCOMPILE="bin/buildpack_postcompile.sh"
-scalingo env-set LASUITE_SCRIPT_POSTFRONTEND="bin/buildpack_postfrontend.sh"
+scalingo env-set LASUITE_SCRIPT_POSTCOMPILE="deploy/paas/buildpack_postcompile.sh"
+scalingo env-set LASUITE_SCRIPT_POSTFRONTEND="deploy/paas/buildpack_postfrontend.sh"
 ```
 
 ### Database and Cache
@@ -237,12 +237,12 @@ On Scalingo, the application runs as follows:
 
 1. The buildpack compiles the frontend (Next.js static export)
 2. The buildpack compiles the backend (Python dependencies)
-3. `bin/buildpack_postcompile.sh` runs to clean up unused files and reduce slug size
-4. `bin/buildpack_postfrontend.sh` moves the frontend build to `build/frontend-out`, downloads custom logos, injects the custom theme, and prepares the deployment structure
+3. `deploy/paas/buildpack_postcompile.sh` runs to clean up unused files and reduce slug size
+4. `deploy/paas/buildpack_postfrontend.sh` moves the frontend build to `build/frontend-out`, downloads custom logos, injects the custom theme, and prepares the deployment structure
 
 ### Runtime
 
-The `bin/buildpack_start.sh` script starts three processes:
+The `deploy/paas/buildpack_start.sh` script starts three processes:
 
 - **Nginx** serves static files and proxies requests to the backend
 - **uvicorn** runs the Django ASGI application on port 8000

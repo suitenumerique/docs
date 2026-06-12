@@ -21,7 +21,7 @@ jobs:
       shell: bash
       run: |
         set -e
-        HELMFILE=src/helm/helmfile.yaml.gotmpl
+        HELMFILE=deploy/kubernetes/helm/helmfile.yaml.gotmpl
         environments=$(awk 'BEGIN {in_env=0} /^environments:/ {in_env=1; next} /^---/ {in_env=0} in_env && /^  [^ ]/ {gsub(/^  /,""); gsub(/:.*$/,""); print}' "$HELMFILE")
         for env in $environments; do
           echo "################### $env lint ###################"

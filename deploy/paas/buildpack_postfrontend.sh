@@ -45,7 +45,7 @@ if [ -n "$THEME_CUSTOMIZATION_LOGO_URL" ]; then
 fi
 
 mv src/backend/* ./
-mv deploy/paas/* ./
+mv deploy/paas/servers.conf.erb ./
 
 # Inject custom theme JSON
 if [ -n "$THEME_CUSTOMIZATION_JSON" ]; then
