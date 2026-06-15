@@ -60,7 +60,7 @@ COPY --from=impress-builder /home/frontend/apps/impress/out /app
 FROM ${FRONTEND_IMAGE} AS frontend-source
 
 # ---- Front-end image ----
-FROM nginxinc/nginx-unprivileged:alpine3.23 AS frontend-production
+FROM nginxinc/nginx-unprivileged:1.30.2-alpine3.23 AS frontend-production
 
 # Upgrade system packages to install security updates
 USER root
