@@ -55,7 +55,7 @@ def test_utils_users_sharing_documents_with():
     doc_3_pierre_2.created_at = yesterday
     doc_3_pierre_2.save()
 
-    shared_map = users_sharing_documents_with(user)
+    shared_map = users_sharing_documents_with(user.id)
 
     assert shared_map == {
         pierre_1.id: last_week,

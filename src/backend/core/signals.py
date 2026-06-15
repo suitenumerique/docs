@@ -36,9 +36,8 @@ def document_access_post_save(sender, instance, created, **kwargs):  # pylint: d
         )
 
     # Invalidate cache for the user
-    if instance.user:
-        cache_key = get_users_sharing_documents_with_cache_key(instance.user)
-        cache.delete(cache_key)
+    cache_key = get_users_sharing_documents_with_cache_key(instance.user_id)
+    cache.delete(cache_key)
 
 
 @receiver(signals.post_delete, sender=models.DocumentAccess)
@@ -46,6 +45,5 @@ def document_access_post_delete(sender, instance, **kwargs):  # pylint: disable=
     """
     Clear cache for the affected user when document access is deleted.
     """
-    if instance.user:
-        cache_key = get_users_sharing_documents_with_cache_key(instance.user)
-        cache.delete(cache_key)
+    cache_key = get_users_sharing_documents_with_cache_key(instance.user_id)
+    cache.delete(cache_key)

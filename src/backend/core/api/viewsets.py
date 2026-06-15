@@ -246,7 +246,7 @@ class UserViewSet(
         # For security results, users that match neither of these proximity criteria
         # are not returned at all, to prevent email enumeration.
         current_user = self.request.user
-        shared_map = users_sharing_documents_with(current_user)
+        shared_map = users_sharing_documents_with(current_user.id)
 
         user_email_domain = get_domain_from_email(current_user.email) or ""
 

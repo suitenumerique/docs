@@ -130,10 +130,10 @@ def test_utils_users_sharing_documents_with_cache_miss():
     factories.UserDocumentAccessFactory(user=user2, document=doc1)
     factories.UserDocumentAccessFactory(user=user3, document=doc2)
 
-    cache_key = get_users_sharing_documents_with_cache_key(user1)
+    cache_key = get_users_sharing_documents_with_cache_key(user1.id)
     cache.delete(cache_key)
 
-    result = users_sharing_documents_with(user1)
+    result = users_sharing_documents_with(user1.id)
 
     assert user2.id in result
 
@@ -150,12 +150,12 @@ def test_utils_users_sharing_documents_with_cache_hit():
     factories.UserDocumentAccessFactory(user=user1, document=doc1)
     factories.UserDocumentAccessFactory(user=user2, document=doc1)
 
-    cache_key = get_users_sharing_documents_with_cache_key(user1)
+    cache_key = get_users_sharing_documents_with_cache_key(user1.id)
 
     test_cached_data = {user2.id: "2025-02-10"}
     cache.set(cache_key, test_cached_data, 86400)
 
-    result = users_sharing_documents_with(user1)
+    result = users_sharing_documents_with(user1.id)
     assert result == test_cached_data
 
 
@@ -167,7 +167,7 @@ def test_utils_users_sharing_documents_with_cache_invalidation_on_create():
     doc1 = factories.DocumentFactory()
 
     # Pre-populate cache
-    cache_key = get_users_sharing_documents_with_cache_key(user1)
+    cache_key = get_users_sharing_documents_with_cache_key(user1.id)
     cache.set(cache_key, {}, 86400)
 
     # Verify cache exists
@@ -193,7 +193,7 @@ def test_utils_users_sharing_documents_with_cache_invalidation_on_delete():
 
     doc_access = factories.UserDocumentAccessFactory(user=user1, document=doc1)
 
-    cache_key = get_users_sharing_documents_with_cache_key(user1)
+    cache_key = get_users_sharing_documents_with_cache_key(user1.id)
     cache.set(cache_key, {user2.id: "2025-02-10"}, 86400)
 
     assert cache.get(cache_key) is not None
@@ -207,10 +207,10 @@ def test_utils_users_sharing_documents_with_empty_result():
     """Test when user is not sharing any documents."""
     user1 = factories.UserFactory()
 
-    cache_key = get_users_sharing_documents_with_cache_key(user1)
+    cache_key = get_users_sharing_documents_with_cache_key(user1.id)
     cache.delete(cache_key)
 
-    result = users_sharing_documents_with(user1)
+    result = users_sharing_documents_with(user1.id)
 
     assert result == {}
 

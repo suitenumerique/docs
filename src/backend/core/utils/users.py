@@ -12,35 +12,35 @@ from core import models
 logger = logging.getLogger(__name__)
 
 
-def get_users_sharing_documents_with_cache_key(user):
+def get_users_sharing_documents_with_cache_key(user_id):
     """Generate a unique cache key for each user."""
-    return f"users_sharing_documents_with_{user.id}"
+    return f"users_sharing_documents_with_{user_id}"
 
 
-def users_sharing_documents_with(user):
+def users_sharing_documents_with(user_id):
     """
     Returns a map of users sharing documents with the given user,
     sorted by last shared date.
     """
     start_time = time.time()
-    cache_key = get_users_sharing_documents_with_cache_key(user)
+    cache_key = get_users_sharing_documents_with_cache_key(user_id)
     cached_result = cache.get(cache_key)
 
     if cached_result is not None:
         elapsed = time.time() - start_time
         logger.info(
             "users_sharing_documents_with cache hit for user %s (took %.3fs)",
-            user.id,
+            user_id,
             elapsed,
         )
         return cached_result
 
-    user_docs_qs = models.DocumentAccess.objects.filter(user=user).values_list(
+    user_docs_qs = models.DocumentAccess.objects.filter(user__id=user_id).values_list(
         "document_id", flat=True
     )
     shared_qs = (
-        models.DocumentAccess.objects.filter(document_id__in=Subquery(user_docs_qs))
-        .exclude(user=user)
+        models.DocumentAccess.objects.filter(document__id__in=Subquery(user_docs_qs))
+        .exclude(user__id=user_id)
         .values("user")
         .annotate(last_shared=db.Max("created_at"))
     )
@@ -49,7 +49,7 @@ def users_sharing_documents_with(user):
     elapsed = time.time() - start_time
     logger.info(
         "users_sharing_documents_with cache miss for user %s (took %.3fs)",
-        user.id,
+        user_id,
         elapsed,
     )
     return result
