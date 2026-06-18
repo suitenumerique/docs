@@ -98,6 +98,30 @@ class UserAdmin(auth_admin.UserAdmin):
         "updated_at",
     )
     search_fields = ("id", "sub", "admin_email", "email", "full_name")
+    actions = ["permanently_delete_users"]
+
+    def __init__(self, model, admin_site):
+        """
+        Disable delete_selected action.
+        Only the `permanently_delete_users` should be used to delete a user.
+        """
+        super().__init__(model, admin_site)
+
+        self.admin_site.disable_action("delete_selected")
+
+    def has_delete_permission(self, request, obj=None):
+        """
+        Force delete permission to False to remove the delete button.
+        Only the `permanently_delete_users` should be used to delete a user.
+        """
+        return False
+
+    @admin.action(description=_("Permanently delete selected users"))
+    def permanently_delete_users(self, request, queryset):
+        """Permanently delete users present in the queryset."""
+        self.log_deletions(request, queryset)
+        for user in queryset:
+            user.delete()
 
 
 @admin.register(models.UserReconciliationCsvImport)
