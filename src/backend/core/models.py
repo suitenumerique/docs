@@ -20,6 +20,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.db import models, transaction
+from django.db.models import Count
 from django.db.models.functions import Left, Length
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -224,6 +225,55 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
             self._handle_onboarding_documents_access()
             self._duplicate_onboarding_sandbox_document()
             self._convert_valid_invitations()
+
+    def delete(self, using=None, keep_parents=False):
+        """Completely delete a user and its relations."""
+        with transaction.atomic():
+            self._delete_user_shared_documents_accesses()
+            self._delete_documents_single_owner()
+            self._clear_user_created_documents()
+
+            return super().delete(using=using, keep_parents=keep_parents)
+
+    def _delete_user_shared_documents_accesses(self):
+        """
+        accesses to delete where there are more than one owner.
+
+        Create first a subquery to filter all the the accesses having more than one
+        owner. Then use this subquery to filter the accesses belonging to this list of
+        documents and to the user to delete
+        """
+        docs_ids = (
+            DocumentAccess.objects.filter(role=RoleChoices.OWNER)
+            .values("document_id")
+            .annotate(owner_count=Count("id"))
+            .filter(owner_count__gte=2)
+            .values("document_id")
+        )
+        DocumentAccess.objects.filter(user=self, document_id__in=docs_ids).delete()
+
+        logger.info(
+            "user_delete: shared documents accesses for user %s have been deleted",
+            self.id,
+        )
+
+    def _delete_documents_single_owner(self):
+        """Delete the documents where the user is the single owner."""
+        Document.objects.filter(
+            accesses__user=self, accesses__role=RoleChoices.OWNER
+        ).delete()
+        logger.info(
+            "user_delete: documents where the user %s is the sole owner deleted",
+            self.id,
+        )
+
+    def _clear_user_created_documents(self):
+        """Set creator to Null for documents where the user is the creator."""
+        Document.objects.filter(creator=self).update(creator=None)
+        logger.info(
+            "user_delete: documents created by user %s have been cleared",
+            self.id,
+        )
 
     def _handle_onboarding_documents_access(self):
         """
