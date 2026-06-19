@@ -1400,7 +1400,7 @@ class Document(MP_Node, BaseModel):
             "leave": can_leave,
             "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
-            "restore": is_owner,
+            "restore": is_owner and bool(self.deleted_at),
             "retrieve": retrieve,
             "media_auth": can_get,
             "link_select_options": link_select_options,
