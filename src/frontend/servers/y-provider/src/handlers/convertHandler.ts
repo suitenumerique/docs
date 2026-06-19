@@ -1,4 +1,9 @@
 import { PartialBlock } from '@blocknote/core';
+import {
+  CommentsExtension,
+  DefaultThreadStoreAuth,
+  YjsThreadStore,
+} from '@blocknote/core/comments';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
 import { Request, Response } from 'express';
 import * as Y from 'yjs';
@@ -33,11 +38,40 @@ interface OutputWriter {
   write(blocks: DocsPartialBlock[]): Promise<ConversionResponseBody>;
 }
 
+/**
+ * The "comment" mark must exist in the editor schema, otherwise y-prosemirror
+ * silently discards every commented run of text when it reads the Yjs document
+ * (a mark with no matching type in the schema is dropped together with the text
+ * it wraps). This corrupts *all* conversion targets (HTML, Markdown, JSON...),
+ * turning any block that holds a comment into an empty block.
+ *
+ * Registering the CommentsExtension is the only supported way to add that mark to
+ * the schema. The thread store and user resolver below are never exercised during
+ * conversion (we only read the document, we never resolve threads or users); they
+ * exist solely to satisfy the extension's constructor.
+ */
+const commentsThreadStore = new YjsThreadStore(
+  'y-provider',
+  new Y.Doc().getMap('comment-threads'),
+  new DefaultThreadStoreAuth('y-provider', 'editor'),
+);
+
 const editor = ServerBlockNoteEditor.create<
   DocsBlockSchema,
   DocsInlineContentSchema,
   DocsStyleSchema
->({ schema: docsBlockNoteSchema });
+>({
+  schema: docsBlockNoteSchema,
+  extensions: [
+    CommentsExtension({
+      threadStore: commentsThreadStore,
+      resolveUsers: (userIds) =>
+        Promise.resolve(
+          userIds.map((id) => ({ id, username: id, avatarUrl: '' })),
+        ),
+    }),
+  ],
+});
 
 const ContentTypes = {
   XMarkdown: 'text/x-markdown',

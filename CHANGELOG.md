@@ -8,8 +8,8 @@ and this project adheres to
 
 ### Added
 
-- ✨(y-provider) preserve callouts, PDFs, page breaks and 
-  interlinking links on HTML/markdown export #2296
+- ✨(y-provider) preserve callouts, PDFs, page breaks, interlinking
+  links and commented text on HTML/markdown export #2296
 
 ### Fixed
 

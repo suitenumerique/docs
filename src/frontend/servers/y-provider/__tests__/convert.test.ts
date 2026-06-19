@@ -1,6 +1,13 @@
+import {
+  CommentsExtension,
+  DefaultThreadStoreAuth,
+  YjsThreadStore,
+} from '@blocknote/core/comments';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
+import { Fragment, Node as PMNode } from 'prosemirror-model';
 import request from 'supertest';
 import { afterEach, describe, expect, test, vi } from 'vitest';
+import { prosemirrorToYXmlFragment } from 'y-prosemirror';
 import * as Y from 'yjs';
 
 vi.mock('../src/env', async (importOriginal) => {
@@ -60,6 +67,76 @@ const expectedBlocks = [
     type: 'paragraph',
   },
 ];
+
+// Text used by the commented-document fixture below.
+const commentedText = 'This whole paragraph is wrapped in a comment.';
+const plainText = 'This paragraph has no comment.';
+
+/**
+ * Builds a Yjs update for a document whose first paragraph is entirely wrapped in a
+ * (resolved/orphan) comment mark, mimicking what the frontend editor stores once a
+ * thread has been added. Producing the fixture requires an editor that knows the
+ * "comment" mark, so we register the CommentsExtension here — this is independent of
+ * the y-provider editor that performs the conversion under test.
+ */
+const buildYjsUpdateWithComment = (): Buffer => {
+  const threadsDoc = new Y.Doc();
+  const threadStore = new YjsThreadStore(
+    'fixture-user',
+    threadsDoc.getMap('threads'),
+    new DefaultThreadStoreAuth('fixture-user', 'editor'),
+  );
+  const commentsEditor = ServerBlockNoteEditor.create({
+    schema: docsBlockNoteSchema,
+    extensions: [
+      CommentsExtension({
+        threadStore,
+        resolveUsers: (userIds) =>
+          Promise.resolve(
+            userIds.map((id) => ({ id, username: id, avatarUrl: '' })),
+          ),
+      }),
+    ],
+  });
+
+  const commentMark = commentsEditor.editor.pmSchema.marks.comment;
+  const pmNode = commentsEditor._blocksToProsemirrorNode([
+    { type: 'paragraph', content: [{ type: 'text', text: commentedText }] },
+    { type: 'paragraph', content: [{ type: 'text', text: plainText }] },
+  ]);
+
+  // Add the comment mark to every text node of the node passed in.
+  const addComment = (node: PMNode): PMNode => {
+    if (node.isText) {
+      return node.mark(
+        node.marks.concat(
+          commentMark.create({ threadId: 'thread-1', orphan: true }),
+        ),
+      );
+    }
+    const children: PMNode[] = [];
+    node.content.forEach((child) => children.push(addComment(child)));
+    return node.copy(Fragment.fromArray(children));
+  };
+
+  // Comment only the first block container, leave the rest untouched.
+  const blockGroups: PMNode[] = [];
+  pmNode.content.forEach((blockGroup) => {
+    const containers: PMNode[] = [];
+    blockGroup.content.forEach((container, _offset, index) => {
+      containers.push(index === 0 ? addComment(container) : container);
+    });
+    blockGroups.push(blockGroup.copy(Fragment.fromArray(containers)));
+  });
+  const commentedDoc = pmNode.copy(Fragment.fromArray(blockGroups));
+
+  const ydoc = new Y.Doc();
+  prosemirrorToYXmlFragment(
+    commentedDoc,
+    ydoc.getXmlFragment('document-store'),
+  );
+  return Buffer.from(Y.encodeStateAsUpdate(ydoc));
+};
 
 console.error = vi.fn();
 
@@ -396,7 +473,7 @@ describe('Conversion Testing', () => {
 
     expect(response.status).toBe(200);
     expect(response.text).toContain(
-      '[Other doc](/docs/00000000-0000-0000-0000-000000000123/ "Other doc")',
+      '[Other doc](http://localhost:3000/docs/00000000-0000-0000-0000-000000000123/ "Other doc")',
     );
   });
 
@@ -494,7 +571,7 @@ describe('Conversion Testing', () => {
 
     expect(response.status).toBe(200);
     expect(response.text).toContain(
-      'href="/docs/00000000-0000-0000-0000-000000000123/"',
+      'href="http://localhost:3000/docs/00000000-0000-0000-0000-000000000123/"',
     );
     expect(response.text).toContain(
       'data-doc-id="00000000-0000-0000-0000-000000000123"',
@@ -650,5 +727,58 @@ describe('Conversion Testing', () => {
 
     expect(markdownResponse.status).toBe(200);
     expect(markdownResponse.text).toBe('\n');
+  });
+
+  test('POST /api/convert Yjs with a comment to HTML keeps the commented text', async () => {
+    const app = initApp();
+    const yjsUpdate = buildYjsUpdateWithComment();
+
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'text/html')
+      .send(yjsUpdate);
+
+    expect(response.status).toBe(200);
+    // Before the fix the commented paragraph is serialized as an empty `<p></p>`.
+    expect(response.text).toBe(`<p>${commentedText}</p><p>${plainText}</p>`);
+  });
+
+  test('POST /api/convert Yjs with a comment to Markdown keeps the commented text', async () => {
+    const app = initApp();
+    const yjsUpdate = buildYjsUpdateWithComment();
+
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'text/markdown')
+      .send(yjsUpdate);
+
+    expect(response.status).toBe(200);
+    expect(response.text.trim()).toBe(`${commentedText}\n\n${plainText}`);
+  });
+
+  test('POST /api/convert Yjs with a comment to JSON keeps the commented text', async () => {
+    const app = initApp();
+    const yjsUpdate = buildYjsUpdateWithComment();
+
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'application/json')
+      .send(yjsUpdate);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toBeInstanceOf(Array);
+    const texts = (response.body as { content: { text: string }[] }[]).map(
+      (block) => block.content.map((inline) => inline.text).join(''),
+    );
+    expect(texts).toStrictEqual([commentedText, plainText]);
   });
 });
