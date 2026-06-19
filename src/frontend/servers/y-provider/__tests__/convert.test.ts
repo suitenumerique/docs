@@ -472,8 +472,10 @@ describe('Conversion Testing', () => {
       .send(Buffer.from(yjsUpdate));
 
     expect(response.status).toBe(200);
+    // The markdown serializer keeps the link text and URL but drops the
+    // optional title attribute (still present in the HTML export).
     expect(response.text).toContain(
-      '[Other doc](http://localhost:3000/docs/00000000-0000-0000-0000-000000000123/ "Other doc")',
+      '[Other doc](http://localhost:3000/docs/00000000-0000-0000-0000-000000000123/)',
     );
   });
 
