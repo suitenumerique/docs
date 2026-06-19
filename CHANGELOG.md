@@ -6,13 +6,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.3.0] - 2026-06-19
+
 ### Added
 
 - ✨(backend) add limit on distinct reactions per comment #1978
 - ✨(frontend) leave a document #2410
 - ✨(frontend) add top parent on sub docs search #1952
 - ✨(frontend) unauthenticated users can search #2407
-- ✨(backend) specific user delete method to delete its relations
+- ✨(backend) specific user delete method to delete its relations #2437
 
 ### Changed
 
@@ -20,7 +22,7 @@ and this project adheres to
 - ♿️(frontend) use heading element for pinned documents section title #2380
 - ♿️(frontend) use anchor links for table of contents entries #2390
 - ♿️(frontend) improve presenter mode screen reader and keyboard support #2383
-♿️(frontend) link export modal name to its heading #2422
+- ♿️(frontend) link export modal name to its heading #2422
 
 ### Fixed
 
@@ -1369,7 +1371,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.2.1...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.3.0...main
+[v5.3.0]: https://github.com/suitenumerique/docs/releases/v5.3.0
 [v5.2.1]: https://github.com/suitenumerique/docs/releases/v5.2.1
 [v5.2.0]: https://github.com/suitenumerique/docs/releases/v5.2.0
 [v5.1.0]: https://github.com/suitenumerique/docs/releases/v5.1.0
