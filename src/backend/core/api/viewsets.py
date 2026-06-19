@@ -71,7 +71,7 @@ from core.services.search_indexers import (
 from core.services.yhub_services import YHubError, YHubService
 from core.tasks.access import reset_service_connections_in_cascade
 from core.tasks.documents import sync_service_deletions_in_cascade
-from core.tasks.mail import send_ask_for_access_mail
+from core.tasks.mail import send_ask_for_access_mail, send_mention_notification_mail
 from core.tasks.search import trigger_batch_document_indexer
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.dicts import lowercase_keys
@@ -1881,9 +1881,10 @@ class DocumentViewSet(
     def mention(self, request, *args, **kwargs):
         """Mention a user on the document and notify them by email.
 
-        The mention record is always created; the email notification is
-        suppressed when the same user was already notified in the same context
-        (document body or thread) within the cooldown period.
+        The mention record is created synchronously; the email notification is
+        sent asynchronously by a Celery task, which suppresses it when the same
+        user was already notified in the same context (document body or thread)
+        within the cooldown period.
         """
         # Check permissions first
         document = self.get_object()
@@ -1895,19 +1896,7 @@ class DocumentViewSet(
         serializer.is_valid(raise_exception=True)
         mention = serializer.save(document=document, mentioned_by_user=request.user)
 
-        mention.notify()
-
-        posthog_capture(
-            PosthogEventName.MENTION_CREATED,
-            request.user,
-            {
-                "mention_id": str(mention.id),
-                "mentioned_user_id": str(mention.mentioned_user_id),
-                "thread_id": str(mention.thread_id) if mention.thread_id else None,
-                "notified": mention.notified_at is not None,
-            },
-            document=document,
-        )
+        send_mention_notification_mail.delay(str(mention.id))
 
         return drf.response.Response(
             serializer.data, status=drf.status.HTTP_201_CREATED

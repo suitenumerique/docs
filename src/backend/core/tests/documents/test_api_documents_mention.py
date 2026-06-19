@@ -128,7 +128,9 @@ def test_api_documents_mention_authenticated_success(role):
         "mentioned_user_id": str(mentioned_user.id),
         "mentioned_by_user_id": str(user.id),
         "created_at": mention.created_at.isoformat().replace("+00:00", "Z"),
-        "notified_at": mention.notified_at.isoformat().replace("+00:00", "Z"),
+        # The email is sent asynchronously, so the create response carries no
+        # notification timestamp even though the stored mention is notified.
+        "notified_at": None,
     }
 
     assert len(mail.outbox) == 1
@@ -352,7 +354,7 @@ def test_api_documents_mention_cooldown_same_context():
 
     response = client.post(f"/api/v1.0/documents/{document.id!s}/mention/", payload)
     assert response.status_code == 201
-    assert response.json()["notified_at"] is not None
+    assert models.Mention.objects.get(anchor_id="block-1").notified_at is not None
     assert len(mail.outbox) == 1
 
     response = client.post(
@@ -360,7 +362,7 @@ def test_api_documents_mention_cooldown_same_context():
         {"anchor_id": "block-2", "mentioned_user_id": str(mentioned_user.id)},
     )
     assert response.status_code == 201
-    assert response.json()["notified_at"] is None
+    assert models.Mention.objects.get(anchor_id="block-2").notified_at is None
     assert len(mail.outbox) == 1
 
     assert models.Mention.objects.count() == 2
@@ -390,7 +392,9 @@ def test_api_documents_mention_cooldown_distinct_contexts():
             payload["thread_id"] = thread_id
         response = client.post(f"/api/v1.0/documents/{document.id!s}/mention/", payload)
         assert response.status_code == 201
-        assert response.json()["notified_at"] is not None
+        assert (
+            models.Mention.objects.get(anchor_id=f"block-{i}").notified_at is not None
+        )
 
     assert len(mail.outbox) == 3
 
@@ -404,7 +408,7 @@ def test_api_documents_mention_cooldown_distinct_contexts():
         },
     )
     assert response.status_code == 201
-    assert response.json()["notified_at"] is None
+    assert models.Mention.objects.get(anchor_id="block-4").notified_at is None
     assert len(mail.outbox) == 3
 
     # The cooldown should apply per mentioned user
@@ -419,7 +423,7 @@ def test_api_documents_mention_cooldown_distinct_contexts():
         },
     )
     assert response.status_code == 201
-    assert response.json()["notified_at"] is not None
+    assert models.Mention.objects.get(anchor_id="block-5").notified_at is not None
     assert len(mail.outbox) == 4
 
 
@@ -453,7 +457,7 @@ def test_api_documents_mention_cooldown_expired(settings):
         {"anchor_id": "block-2", "mentioned_user_id": str(mentioned_user.id)},
     )
     assert response.status_code == 201
-    assert response.json()["notified_at"] is not None
+    assert models.Mention.objects.get(anchor_id="block-2").notified_at is not None
     assert len(mail.outbox) == 2
 
 
@@ -467,7 +471,7 @@ def test_api_documents_mention_cooldown_only_considers_notified_mentions():
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
     factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
-    factories.MentionFactory(
+    existing_mention = factories.MentionFactory(
         document=document,
         mentioned_user=mentioned_user,
         mentioned_by_user=user,
@@ -482,7 +486,8 @@ def test_api_documents_mention_cooldown_only_considers_notified_mentions():
     )
 
     assert response.status_code == 201
-    assert response.json()["notified_at"] is not None
+    new_mention = models.Mention.objects.exclude(pk=existing_mention.pk).get()
+    assert new_mention.notified_at is not None
     assert len(mail.outbox) == 1
 
 
