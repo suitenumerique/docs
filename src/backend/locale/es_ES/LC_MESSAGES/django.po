@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-04 15:45+0000\n"
-"PO-Revision-Date: 2026-06-05 10:31\n"
+"POT-Creation-Date: 2026-06-19 12:04+0000\n"
+"PO-Revision-Date: 2026-06-19 12:54\n"
 "Last-Translator: \n"
 "Language-Team: Spanish\n"
 "Language: es_ES\n"
@@ -21,7 +21,7 @@ msgstr ""
 msgid "Personal info"
 msgstr "Información Personal"
 
-#: core/admin.py:46 core/admin.py:166
+#: core/admin.py:46 core/admin.py:190
 msgid "Permissions"
 msgstr "Permisos"
 
@@ -29,15 +29,19 @@ msgstr "Permisos"
 msgid "Important dates"
 msgstr "Fechas importantes"
 
-#: core/admin.py:117
+#: core/admin.py:119
+msgid "Permanently delete selected users"
+msgstr ""
+
+#: core/admin.py:141
 msgid "Import job created and queued."
 msgstr ""
 
-#: core/admin.py:121
+#: core/admin.py:145
 msgid "Process selected user reconciliations"
 msgstr ""
 
-#: core/admin.py:176
+#: core/admin.py:200
 msgid "Tree structure"
 msgstr "Estructura en árbol"
 
@@ -74,10 +78,15 @@ msgstr ""
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr ""
 
-#: core/api/viewsets.py:1427
+#: core/api/viewsets.py:1386
 #, python-brace-format
 msgid "copy of {title}"
 msgstr "copia de {title}"
+
+#: core/api/viewsets.py:3299
+#, python-format
+msgid "A comment can have a maximum of %(max)d distinct reactions."
+msgstr ""
 
 #: core/apps.py:12
 msgid "Impress core application"
@@ -139,198 +148,198 @@ msgstr "Izquierda"
 msgid "Right"
 msgstr "Derecha"
 
-#: core/models.py:81
+#: core/models.py:82
 msgid "id"
 msgstr "id"
 
-#: core/models.py:82
+#: core/models.py:83
 msgid "primary key for the record as UUID"
 msgstr "clave primaria para el registro como UUID"
 
-#: core/models.py:88
+#: core/models.py:89
 msgid "created on"
 msgstr "creado el"
 
-#: core/models.py:89
+#: core/models.py:90
 msgid "date and time at which a record was created"
 msgstr "fecha y hora en la que se creó un registro"
 
-#: core/models.py:94
+#: core/models.py:95
 msgid "updated on"
 msgstr "actualizado el"
 
-#: core/models.py:95
+#: core/models.py:96
 msgid "date and time at which a record was last updated"
 msgstr "fecha y hora en la que un registro fue actualizado por última vez"
 
-#: core/models.py:131
+#: core/models.py:132
 msgid "We couldn't find a user with this sub but the email is already associated with a registered user."
 msgstr "No se ha podido encontrar un usuario con este sub (UUID), pero el correo electrónico ya está asociado con un usuario."
 
-#: core/models.py:142
+#: core/models.py:143
 msgid "sub"
 msgstr "sub (UUID)"
 
-#: core/models.py:143
+#: core/models.py:144
 msgid "Required. 255 characters or fewer. ASCII characters only."
 msgstr "Obligatorio. 255 caracteres o menos. Solo caracteres ASCII."
 
-#: core/models.py:151
+#: core/models.py:152
 msgid "full name"
 msgstr "nombre completo"
 
-#: core/models.py:153
+#: core/models.py:154
 msgid "short name"
 msgstr "nombre abreviado"
 
-#: core/models.py:156
+#: core/models.py:157
 msgid "identity email address"
 msgstr "correo electrónico de identidad"
 
-#: core/models.py:161
+#: core/models.py:162
 msgid "admin email address"
 msgstr "correo electrónico del administrador"
 
-#: core/models.py:168
+#: core/models.py:169
 msgid "language"
 msgstr "idioma"
 
-#: core/models.py:169
+#: core/models.py:170
 msgid "The language in which the user wants to see the interface."
 msgstr "El idioma en el que el usuario desea ver la interfaz."
 
-#: core/models.py:177
+#: core/models.py:178
 msgid "The timezone in which the user wants to see times."
 msgstr "La zona horaria en la que el usuario quiere ver los tiempos."
 
-#: core/models.py:180
+#: core/models.py:181
 msgid "device"
 msgstr "dispositivo"
 
-#: core/models.py:182
+#: core/models.py:183
 msgid "Whether the user is a device or a real user."
 msgstr "Si el usuario es un dispositivo o un usuario real."
 
-#: core/models.py:185
+#: core/models.py:186
 msgid "staff status"
 msgstr "rol en el equipo"
 
-#: core/models.py:187
+#: core/models.py:188
 msgid "Whether the user can log into this admin site."
 msgstr "Si el usuario puede iniciar sesión en esta página web de administración."
 
-#: core/models.py:190
+#: core/models.py:191
 msgid "active"
 msgstr "activo"
 
-#: core/models.py:193
+#: core/models.py:194
 msgid "Whether this user should be treated as active. Unselect this instead of deleting accounts."
 msgstr "Si este usuario debe ser considerado como activo. Deseleccionar en lugar de eliminar cuentas."
 
-#: core/models.py:198
+#: core/models.py:199
 msgid "first connection status"
 msgstr ""
 
-#: core/models.py:200
+#: core/models.py:201
 msgid "Whether the user has completed the first connection process."
 msgstr ""
 
-#: core/models.py:210
+#: core/models.py:211
 msgid "user"
 msgstr "usuario"
 
-#: core/models.py:211
+#: core/models.py:212
 msgid "users"
 msgstr "usuarios"
 
-#: core/models.py:370
+#: core/models.py:420
 msgid "Active email address"
 msgstr ""
 
-#: core/models.py:371
+#: core/models.py:421
 msgid "Email address to deactivate"
 msgstr ""
 
-#: core/models.py:398
+#: core/models.py:448
 msgid "Unique ID in the source file"
 msgstr ""
 
-#: core/models.py:404 core/models.py:702
+#: core/models.py:454 core/models.py:752
 msgid "Pending"
 msgstr "Pending"
 
-#: core/models.py:405
+#: core/models.py:455
 msgid "Ready"
 msgstr "Listo"
 
-#: core/models.py:406 core/models.py:704
+#: core/models.py:456 core/models.py:754
 msgid "Done"
 msgstr "Terminado"
 
-#: core/models.py:407 core/models.py:705
+#: core/models.py:457 core/models.py:755
 msgid "Error"
 msgstr "Error"
 
-#: core/models.py:415
+#: core/models.py:465
 msgid "user reconciliation"
 msgstr ""
 
-#: core/models.py:416
+#: core/models.py:466
 msgid "user reconciliations"
 msgstr ""
 
-#: core/models.py:654
+#: core/models.py:704
 msgid "You have requested a reconciliation of your user accounts on Docs.\n"
 "            To confirm that you are the one who initiated the request\n"
 "            and that this email belongs to you:"
 msgstr ""
 
-#: core/models.py:660
+#: core/models.py:710
 msgid "Confirm by clicking the link to start the reconciliation"
 msgstr ""
 
-#: core/models.py:665 core/models.py:771
+#: core/models.py:715 core/models.py:821
 msgid "Click here"
 msgstr "Haga click aquí"
 
-#: core/models.py:666
+#: core/models.py:716
 msgid "Confirm"
 msgstr "Confirmar"
 
-#: core/models.py:677
+#: core/models.py:727
 msgid "Your reconciliation request has been processed.\n"
 "            New documents are likely associated with your account:"
 msgstr ""
 
-#: core/models.py:682
+#: core/models.py:732
 msgid "Your accounts have been merged"
 msgstr ""
 
-#: core/models.py:687
+#: core/models.py:737
 msgid "Click here to see"
 msgstr "Haz clic aquí para ver"
 
-#: core/models.py:688
+#: core/models.py:738
 msgid "See my documents"
 msgstr ""
 
-#: core/models.py:698
+#: core/models.py:748
 msgid "CSV file"
 msgstr "Archivo CSV"
 
-#: core/models.py:703
+#: core/models.py:753
 msgid "Running"
 msgstr "En ejecución"
 
-#: core/models.py:713
+#: core/models.py:763
 msgid "user reconciliation CSV import"
 msgstr ""
 
-#: core/models.py:714
+#: core/models.py:764
 msgid "user reconciliation CSV imports"
 msgstr ""
 
-#: core/models.py:758
+#: core/models.py:808
 #, python-brace-format
 msgid "Your request for reconciliation was unsuccessful.\n"
 "            Reconciliation failed for the following email addresses:\n"
@@ -339,169 +348,169 @@ msgid "Your request for reconciliation was unsuccessful.\n"
 "            You can submit another request with the valid email addresses."
 msgstr ""
 
-#: core/models.py:766
+#: core/models.py:816
 msgid "Reconciliation of your Docs accounts not completed"
 msgstr ""
 
-#: core/models.py:772
+#: core/models.py:822
 msgid "Make a new request"
 msgstr "Hacer un nuevo pedido"
 
-#: core/models.py:887
+#: core/models.py:937
 msgid "title"
 msgstr "título"
 
-#: core/models.py:888
+#: core/models.py:938
 msgid "excerpt"
 msgstr "resumen"
 
-#: core/models.py:937
+#: core/models.py:987
 msgid "Document"
 msgstr "Documento"
 
-#: core/models.py:938
+#: core/models.py:988
 msgid "Documents"
 msgstr "Documentos"
 
-#: core/models.py:950 core/models.py:1376
+#: core/models.py:1000 core/models.py:1426
 msgid "Untitled Document"
 msgstr "Documento sin título"
 
-#: core/models.py:1377
+#: core/models.py:1427
 msgid "Open"
 msgstr "Abrir"
 
-#: core/models.py:1412
+#: core/models.py:1462
 #, python-brace-format
 msgid "{name} shared a document with you!"
 msgstr "¡{name} ha compartido un documento contigo!"
 
-#: core/models.py:1416
+#: core/models.py:1466
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
 msgstr "Te ha invitado {name} al siguiente documento con el rol \"{role}\" :"
 
-#: core/models.py:1422
+#: core/models.py:1472
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
 msgstr "{name} ha compartido un documento contigo: {title}"
 
-#: core/models.py:1522
+#: core/models.py:1572
 msgid "Document/user link trace"
 msgstr "Traza del enlace de documento/usuario"
 
-#: core/models.py:1523
+#: core/models.py:1573
 msgid "Document/user link traces"
 msgstr "Trazas del enlace de documento/usuario"
 
-#: core/models.py:1529
+#: core/models.py:1579
 msgid "A link trace already exists for this document/user."
 msgstr "Ya existe una traza de enlace para este documento/usuario."
 
-#: core/models.py:1552
+#: core/models.py:1602
 msgid "Document favorite"
 msgstr "Documento favorito"
 
-#: core/models.py:1553
+#: core/models.py:1603
 msgid "Document favorites"
 msgstr "Documentos favoritos"
 
-#: core/models.py:1559
+#: core/models.py:1609
 msgid "This document is already targeted by a favorite relation instance for the same user."
 msgstr "Este documento ya ha sido marcado como favorito por el usuario."
 
-#: core/models.py:1581
+#: core/models.py:1631
 msgid "Document/user relation"
 msgstr "Relación documento/usuario"
 
-#: core/models.py:1582
+#: core/models.py:1632
 msgid "Document/user relations"
 msgstr "Relaciones documento/usuario"
 
-#: core/models.py:1588
+#: core/models.py:1638
 msgid "This user is already in this document."
 msgstr "Este usuario ya forma parte del documento."
 
-#: core/models.py:1594
+#: core/models.py:1644
 msgid "This team is already in this document."
 msgstr "Este equipo ya forma parte del documento."
 
-#: core/models.py:1600
+#: core/models.py:1650
 msgid "Either user or team must be set, not both."
 msgstr "Debe establecerse un usuario o un equipo, no ambos."
 
-#: core/models.py:1751
+#: core/models.py:1801
 msgid "Document ask for access"
 msgstr "Solicitud de acceso"
 
-#: core/models.py:1752
+#: core/models.py:1802
 msgid "Document ask for accesses"
 msgstr "Solicitud de accesos"
 
-#: core/models.py:1758
+#: core/models.py:1808
 msgid "This user has already asked for access to this document."
 msgstr "Este usuario ya ha solicitado acceso a este documento."
 
-#: core/models.py:1815
+#: core/models.py:1865
 #, python-brace-format
 msgid "{name} would like access to a document!"
 msgstr "¡{name} desea acceder a un documento!"
 
-#: core/models.py:1819
+#: core/models.py:1869
 #, python-brace-format
 msgid "{name} would like access to the following document:"
 msgstr "{name} desea acceso al siguiente documento:"
 
-#: core/models.py:1825
+#: core/models.py:1875
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
 msgstr "{name} está pidiendo acceso al documento: {title}"
 
-#: core/models.py:1867
+#: core/models.py:1917
 msgid "Thread"
 msgstr "Thread"
 
-#: core/models.py:1868
+#: core/models.py:1918
 msgid "Threads"
 msgstr "Threads"
 
-#: core/models.py:1871 core/models.py:1924
+#: core/models.py:1921 core/models.py:1974
 msgid "Anonymous"
 msgstr "Anónimo"
 
-#: core/models.py:1919
+#: core/models.py:1969
 msgid "Comment"
 msgstr "Comentario"
 
-#: core/models.py:1920
+#: core/models.py:1970
 msgid "Comments"
 msgstr "Comentarios"
 
-#: core/models.py:1970
+#: core/models.py:2020
 msgid "This emoji has already been reacted to this comment."
 msgstr ""
 
-#: core/models.py:1974
+#: core/models.py:2024
 msgid "Reaction"
 msgstr "Reacción"
 
-#: core/models.py:1975
+#: core/models.py:2025
 msgid "Reactions"
 msgstr "Reacciones"
 
-#: core/models.py:1985
+#: core/models.py:2035
 msgid "email address"
 msgstr "dirección de correo electrónico"
 
-#: core/models.py:2004
+#: core/models.py:2054
 msgid "Document invitation"
 msgstr "Invitación al documento"
 
-#: core/models.py:2005
+#: core/models.py:2055
 msgid "Document invitations"
 msgstr "Invitaciones a documentos"
 
-#: core/models.py:2025
+#: core/models.py:2075
 msgid "This email is already associated to a registered user."
 msgstr "Este correo electrónico está asociado a un usuario registrado."
 
@@ -521,7 +530,7 @@ msgstr "Docs, su nueva herramienta esencial para organizar, compartir y colabora
 msgid " Brought to you by %(brandname)s "
 msgstr " Presentado por %(brandname)s "
 
-#: impress/settings.py:863
+#: impress/settings.py:869
 msgid "Docs AI"
 msgstr "Docs AI"
 
