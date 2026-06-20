@@ -1867,7 +1867,12 @@ class DocumentViewSet(
             status=drf.status.HTTP_200_OK,
         )
 
-    @drf.decorators.action(detail=True, methods=["post"], url_path="mention")
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="mention",
+        throttle_scope="mention",
+    )
     def mention(self, request, *args, **kwargs):
         """Mention a user on the document and notify them by email.
 

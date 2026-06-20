@@ -509,3 +509,65 @@ def test_api_documents_mention_soft_deleted_document():
 
     assert response.status_code == 404
     assert models.Mention.objects.exists() is False
+
+
+def test_api_documents_mention_throttling(settings):
+    """Mention requests should be throttled once the mention rate is exceeded."""
+    current_rate = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["mention"]
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["mention"] = "3/minute"
+
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach="restricted")
+    factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
+    mentioned_user = factories.UserFactory()
+    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+
+    client = APIClient()
+    client.force_login(user)
+    payload = {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)}
+
+    # The first three requests within the minute are allowed.
+    for _i in range(3):
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/mention/", payload
+        )
+        assert response.status_code == 201
+
+    # The fourth request is throttled.
+    response = client.post(f"/api/v1.0/documents/{document.id!s}/mention/", payload)
+    assert response.status_code == 429
+
+    # Restore original rate
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["mention"] = current_rate
+
+
+def test_api_documents_mention_throttling_y_provider_exempted(settings):
+    """
+    Collaboration-server requests bypass the mention throttle, just like other
+    document endpoints relying on the document throttle exemption.
+    """
+    current_rate = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["mention"]
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["mention"] = "3/minute"
+    settings.Y_PROVIDER_API_KEY = "test-y-provider-key"
+
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach="restricted")
+    factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
+    mentioned_user = factories.UserFactory()
+    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+
+    client = APIClient()
+    client.force_login(user)
+    payload = {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)}
+
+    # More requests than the rate allows all succeed with the y-provider key.
+    for _i in range(5):
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/mention/",
+            payload,
+            HTTP_X_Y_PROVIDER_KEY="test-y-provider-key",
+        )
+        assert response.status_code == 201
+
+    # Restore original rate
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["mention"] = current_rate

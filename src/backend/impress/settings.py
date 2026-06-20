@@ -456,6 +456,11 @@ class Base(Configuration):
                 environ_name="API_DOCUMENT_ASK_FOR_ACCESS_THROTTLE_RATE",
                 environ_prefix=None,
             ),
+            "mention": values.Value(
+                default="30/minute",
+                environ_name="API_MENTION_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
             "config": values.Value(
                 default="30/minute",
                 environ_name="API_CONFIG_THROTTLE_RATE",
