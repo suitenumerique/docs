@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+- ♻️ (deploy) harmonize prod deployment layout under deploy/ #2425
+
 ### Added
 
 - ✨(backend) add limit on distinct reactions per comment #1978

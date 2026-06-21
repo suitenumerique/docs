@@ -3103,6 +3103,25 @@ class ConfigView(drf.views.APIView):
         return drf.response.Response(dict_settings)
 
     def _load_theme_customization(self):
+        if settings.THEME_CUSTOMIZATION_JSON:
+            cache_key = "theme_customization_env"
+            theme_customization = cache.get(cache_key, {})
+            if theme_customization:
+                return theme_customization
+
+            try:
+                theme_customization = json.loads(settings.THEME_CUSTOMIZATION_JSON)
+            except json.JSONDecodeError:
+                logger.error("THEME_CUSTOMIZATION_JSON is not a valid JSON")
+                return {}
+
+            cache.set(
+                cache_key,
+                theme_customization,
+                settings.THEME_CUSTOMIZATION_CACHE_TIMEOUT,
+            )
+            return theme_customization
+
         if not settings.THEME_CUSTOMIZATION_FILE_PATH:
             return {}
 

@@ -5,6 +5,7 @@ Test config API endpoints in the Impress core app.
 import json
 from unittest.mock import patch
 
+from django.core.cache import cache
 from django.test import override_settings
 
 import pytest
@@ -198,6 +199,67 @@ def test_api_config_with_original_theme_customization(is_authenticated, settings
         theme_customization = json.load(f)
 
     assert content["theme_customization"] == theme_customization
+
+
+@override_settings(
+    THEME_CUSTOMIZATION_JSON=json.dumps(
+        {"colors": {"primary": "#abcdef", "secondary": "#fedcba"}}
+    ),
+)
+@pytest.mark.parametrize("is_authenticated", [False, True])
+def test_api_config_with_theme_customization_from_env_var(is_authenticated):
+    """Theme customization can be provided inline via THEME_CUSTOMIZATION_JSON."""
+    cache.clear()
+    client = APIClient()
+
+    if is_authenticated:
+        user = factories.UserFactory()
+        client.force_login(user)
+
+    response = client.get("/api/v1.0/config/")
+    assert response.status_code == HTTP_200_OK
+    assert response.json()["theme_customization"] == {
+        "colors": {"primary": "#abcdef", "secondary": "#fedcba"},
+    }
+
+
+@override_settings(THEME_CUSTOMIZATION_JSON="not a json")
+@pytest.mark.parametrize("is_authenticated", [False, True])
+def test_api_config_with_invalid_theme_customization_env_var(is_authenticated):
+    """An invalid THEME_CUSTOMIZATION_JSON value should yield an empty dict."""
+    cache.clear()
+    client = APIClient()
+
+    if is_authenticated:
+        user = factories.UserFactory()
+        client.force_login(user)
+
+    response = client.get("/api/v1.0/config/")
+    assert response.status_code == HTTP_200_OK
+    assert response.json()["theme_customization"] == {}
+
+
+@override_settings(
+    THEME_CUSTOMIZATION_JSON=json.dumps({"from": "env"}),
+    THEME_CUSTOMIZATION_FILE_PATH="/configuration/theme/default.json",
+)
+@pytest.mark.parametrize("is_authenticated", [False, True])
+def test_api_config_theme_customization_env_var_takes_precedence(is_authenticated, fs):
+    """THEME_CUSTOMIZATION_JSON takes precedence over THEME_CUSTOMIZATION_FILE_PATH."""
+    cache.clear()
+    fs.create_file(
+        "/configuration/theme/default.json",
+        contents=json.dumps({"from": "file"}),
+    )
+    client = APIClient()
+
+    if is_authenticated:
+        user = factories.UserFactory()
+        client.force_login(user)
+
+    response = client.get("/api/v1.0/config/")
+    assert response.status_code == HTTP_200_OK
+    assert response.json()["theme_customization"] == {"from": "env"}
 
 
 def test_api_config_throttling(settings):

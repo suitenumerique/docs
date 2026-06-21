@@ -7,7 +7,7 @@ Whenever we are cooking a new release (e.g. `4.18.1`) we should follow a standar
 
        - for backend, update the version number by hand in `pyproject.toml`,
        - for each projects (`src/frontend`, `src/frontend/apps/*`, `src/frontend/packages/*`, `src/mail`), run `yarn version --new-version --no-git-tag-version 4.18.1` in their directory. This will update their `package.json` for you,
-       - for Helm, update Docker image tag in files located at `src/helm/env.d` for both `preprod` and `production` environments:
+       - for Helm, update Docker image tag in files located at `deploy/kubernetes/helm/env.d` for both `preprod` and `production` environments:
 
          ```yaml
          image:
