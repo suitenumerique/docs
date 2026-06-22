@@ -93,6 +93,7 @@ const LeftPanelMobile = () => {
       <Box
         $hasTransition
         $height="100vh"
+        inert={!isPanelOpenMobile}
         $css={css`
           z-index: 999;
           width: 100dvw;

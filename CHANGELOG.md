@@ -15,6 +15,9 @@ and this project adheres to
 
 - 🐛(frontend) fix removed item in the tree #2420
 
+### Changed
+
+- ♿️(frontend) hide mobile left panel from screen readers when collapsed #2450
 
 ## [v5.3.0] - 2026-06-19
 
