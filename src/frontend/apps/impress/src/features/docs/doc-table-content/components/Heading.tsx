@@ -40,7 +40,7 @@ export const Heading = ({
   return (
     <Box
       as="a"
-      href={`#heading-${headingId}`}
+      href={`#${headingId}`}
       className="--docs--table-content-heading"
       $width="100%"
       $minHeight="var(--c--globals--spacings--lg)"
@@ -56,13 +56,12 @@ export const Heading = ({
 
         editor.setTextCursorPosition(headingId, 'end');
 
-        document
-          .querySelector<HTMLElement>(`[data-id="${headingId}"]`)
-          ?.scrollIntoView({
-            behavior: 'smooth',
-            inline: 'start',
-            block: 'start',
-          });
+        const blockEl = document.getElementById(headingId);
+        blockEl?.scrollIntoView({
+          behavior: 'smooth',
+          inline: 'start',
+          block: 'start',
+        });
       }}
       $radius="var(--c--globals--spacings--st)"
       $background={

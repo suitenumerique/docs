@@ -18,6 +18,7 @@ and this project adheres to
 ### Changed
 
 - ♿️(frontend) hide mobile left panel from screen readers when collapsed #2450
+- ♿️(frontend) enable blocknote heading ids for toc anchors #2449
 
 ## [v5.3.0] - 2026-06-19
 

@@ -240,6 +240,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         cellTextColor: true,
         headers: true,
       },
+      setIdAttribute: true,
       uploadFile,
       schema: blockNoteSchema,
     },
@@ -341,6 +342,7 @@ export const BlockNoteReader = ({
         },
         provider: undefined,
       },
+      setIdAttribute: true,
       schema: blockNoteSchema,
       extensions: [
         CommentsExtension({

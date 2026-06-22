@@ -41,11 +41,11 @@ test.describe('Doc Table Content', () => {
     const editorLevel2 = editor.getByText('Level 2');
     const level3 = link3.getByText('Level 3');
 
-    // TOC entries must be <a> links with fragment hrefs
+    // TOC entries must be <a> links with fragment hrefs pointing to block ids
     await expect(link1).toBeVisible();
-    await expect(link1).toHaveAttribute('href', /^#heading-/);
-    await expect(link2).toHaveAttribute('href', /^#heading-/);
-    await expect(link3).toHaveAttribute('href', /^#heading-/);
+    await expect(link1).toHaveAttribute('href', /^#.+/);
+    await expect(link2).toHaveAttribute('href', /^#.+/);
+    await expect(link3).toHaveAttribute('href', /^#.+/);
 
     await expect(level1).toBeVisible();
     await expect(editorLevel1).not.toBeInViewport();
