@@ -7,10 +7,13 @@ import { useTranslation } from 'react-i18next';
 import { Text } from '@/components';
 import { useConfig } from '@/core/config/api/useConfig';
 import ArrowDownIcon from '@/icons/arrow-drop-down.svg';
+import SubDocIcon from '@/icons/doc-new-subdoc.svg';
 import PlusIcon from '@/icons/doc-plus.svg';
 import UploadIcon from '@/icons/upload-arrow.svg';
 
+import { useCreateChildDoc } from '../api/useCreateChildDoc';
 import { useImport } from '../hooks/useImport';
+import { useDocStore } from '../stores/useDocStore';
 
 interface NewDocButtonProps {
   onClose?: () => void;
@@ -55,6 +58,7 @@ export const NewDocButton = ({ onClose }: NewDocButtonProps) => {
 export function DropdownArrow() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { currentDoc } = useDocStore();
   const { t } = useTranslation();
   const {
     getInputProps,
@@ -66,6 +70,11 @@ export function DropdownArrow() {
       void router.push(`/docs/${doc.id}/`);
     },
   });
+  const { mutate: createChildDoc } = useCreateChildDoc({
+    onSuccess: (newDoc) => {
+      void router.push(`/docs/${newDoc.id}`);
+    },
+  });
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen((open) => !open);
@@ -74,13 +83,25 @@ export function DropdownArrow() {
   const options = useMemo<DropdownMenuItem[]>(
     () => [
       {
+        label: t('New sub-doc'),
+        icon: <SubDocIcon aria-hidden="true" width="24" height="24" />,
+        callback: () => {
+          if (currentDoc) {
+            createChildDoc({
+              parentId: currentDoc.id,
+            });
+          }
+        },
+        isHidden: !currentDoc,
+      },
+      {
         label: t('Import a document'),
         icon: <UploadIcon aria-hidden="true" width="24" height="24" />,
         callback: openImport,
         isHidden: !isImportEnabled,
       },
     ],
-    [t, openImport, isImportEnabled],
+    [t, openImport, currentDoc, createChildDoc, isImportEnabled],
   );
 
   return (

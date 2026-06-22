@@ -31,6 +31,22 @@ test.describe('Doc Create', () => {
     await expect(docsGrid.getByText(docTitle)).toBeVisible();
   });
 
+  test('it creates a sub doc from the submenu "New" button', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'my-new-button-sub-doc', browserName, 1);
+
+    await page.getByLabel('Open new document options').click();
+    await page.getByRole('menuitem', { name: 'New sub-doc' }).click();
+
+    const input = page.getByRole('textbox', { name: 'Document title' });
+    await expect(input).toHaveText('', { timeout: 10000 });
+    await expect(
+      page.locator('.c__tree-view--row-content').getByText('Untitled document'),
+    ).toBeVisible();
+  });
+
   test('it creates a sub doc from slash menu editor', async ({
     page,
     browserName,
