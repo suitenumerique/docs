@@ -14,6 +14,9 @@
   <a href="https://github.com/suitenumerique/docs/blob/main/LICENSE">
     <img alt="MIT License" src="https://img.shields.io/github/license/suitenumerique/docs"/>
   </a>
+  <a href="https://snyk.io/test/github/suitenumerique/docs">
+    <img alt="MIT License" src="https://snyk.io/test/github/suitenumerique/docs/badge.svg"/>
+  </a>
 </p>
 
 <p align="center">
