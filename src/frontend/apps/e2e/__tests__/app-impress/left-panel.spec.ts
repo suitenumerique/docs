@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
+import {
+  createDoc,
+  goToGridDoc,
+  overrideConfig,
+  verifyDocName,
+} from './utils-common';
 import { tryFocusEditorContent } from './utils-editor';
 import { createRootSubPage } from './utils-sub-pages';
 
@@ -18,6 +23,91 @@ test.describe('Left panel desktop', () => {
     await goToGridDoc(page);
 
     await expect(page.getByTestId('home-button')).toBeVisible();
+  });
+
+  test('checks a custom waffle', async ({ page }) => {
+    await overrideConfig(page, {
+      theme_customization: {
+        waffle: {
+          data: {
+            services: [
+              {
+                name: 'Docs E2E Custom 1',
+                url: 'https://docs.numerique.gouv.fr/',
+                maturity: 'stable',
+                logo: 'https://lasuite.numerique.gouv.fr/assets/products/docs.svg',
+              },
+              {
+                name: 'Docs E2E Custom 2',
+                url: 'https://docs.numerique.gouv.fr/',
+                maturity: 'stable',
+                logo: 'https://lasuite.numerique.gouv.fr/assets/products/docs.svg',
+              },
+            ],
+          },
+          showMoreLimit: 9,
+        },
+      },
+    });
+
+    await page.goto('/');
+
+    const leftPanel = page.getByTestId('left-panel-desktop');
+
+    await expect(
+      leftPanel.getByRole('button', { name: 'Digital LaSuite services' }),
+    ).toBeVisible();
+
+    /**
+     * The Waffle loads a js file from a remote server,
+     * it takes some time to load the file and have the interaction available
+     */
+    await page.waitForTimeout(1500);
+
+    await leftPanel
+      .getByRole('button', { name: 'Digital LaSuite services' })
+      .click();
+
+    await expect(
+      page.getByRole('link', { name: 'Docs E2E Custom 1' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Docs E2E Custom 2' }),
+    ).toBeVisible();
+  });
+
+  test('checks the waffle dsfr', async ({ page }) => {
+    await overrideConfig(page, {
+      theme_customization: {
+        waffle: {
+          apiUrl: 'https://lasuite.numerique.gouv.fr/api/services',
+          showMoreLimit: 9,
+        },
+      },
+    });
+    await page.goto('/');
+
+    const leftPanel = page.getByTestId('left-panel-desktop');
+
+    await expect(
+      leftPanel.getByRole('button', { name: 'Digital LaSuite services' }),
+    ).toBeVisible();
+
+    /**
+     * The Waffle loads a js file from a remote server,
+     * it takes some time to load the file and have the interaction available
+     */
+    await page.waitForTimeout(1500);
+
+    await leftPanel
+      .getByRole('button', {
+        name: 'Digital LaSuite services',
+      })
+      .click();
+
+    await expect(page.getByRole('link', { name: 'Tchap' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Grist' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Visio' })).toBeVisible();
   });
 
   test('focuses page heading after switching the docs filter', async ({

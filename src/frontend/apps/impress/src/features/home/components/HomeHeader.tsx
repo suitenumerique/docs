@@ -1,9 +1,10 @@
 import Image from 'next/image';
 
 import { Box } from '@/components';
+import { Waffle } from '@/components/Waffle';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
-import { Title, Waffle } from '@/features/header';
+import { Title } from '@/features/header';
 import { LanguagePicker } from '@/features/language';
 import { LeftPanelToggleMobile } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';

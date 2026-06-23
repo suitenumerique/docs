@@ -13,7 +13,6 @@ import { useResponsiveStore } from '@/stores';
 import { HEADER_HEIGHT } from '../conf';
 
 import { Title } from './Title';
-import { Waffle } from './Waffle';
 
 export const Header = () => {
   const { t } = useTranslation();
@@ -82,11 +81,7 @@ export const Header = () => {
             />
           </Box>
         </StyledLink>
-        {!isLargeScreen ? (
-          <Box $direction="row" $gap={spacingsTokens['sm']}>
-            <Waffle />
-          </Box>
-        ) : (
+        {isLargeScreen && (
           <Box
             className="--docs--header-block-right"
             $align="center"
@@ -95,7 +90,6 @@ export const Header = () => {
           >
             <ButtonLogin />
             <LanguagePicker />
-            <Waffle />
           </Box>
         )}
       </Box>

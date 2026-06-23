@@ -1,3 +1,4 @@
+import { LaGaufreV2Props } from '@gouvfr-lasuite/ui-kit';
 import { useQuery } from '@tanstack/react-query';
 import type { Resource } from 'i18next';
 import Image from 'next/image';
@@ -6,7 +7,7 @@ import type { LinkHTMLAttributes } from 'react';
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import type { Theme } from '@/cunningham/';
 import type { FooterType } from '@/features/footer';
-import type { HeaderType, WaffleType } from '@/features/header';
+import type { HeaderType } from '@/features/header';
 import type { PostHogConf } from '@/services/PosthogAnalytic';
 
 type Imagetype = React.ComponentProps<typeof Image>;
@@ -38,7 +39,7 @@ interface ThemeCustomization {
     ready_template_url?: string;
   };
   translations?: Resource;
-  waffle?: WaffleType;
+  waffle?: LaGaufreV2Props;
 }
 
 export interface ConfigResponse {

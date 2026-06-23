@@ -19,6 +19,7 @@ and this project adheres to
 - ♿️(frontend) configurable legal submenu in HelpMenu, remove Crisp #2416
 - ♻️(frontend) new create button for docs #2423
 - ♿️(frontend) align search modal field label with placeholder #2384
+- 🚚(frontend) move Waffle to bottom left #2455
 
 ### Fixed
 

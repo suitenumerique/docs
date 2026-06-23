@@ -5,14 +5,14 @@ import { useCunninghamTheme } from '@/cunningham';
 
 import { Box } from '../Box';
 
-type Props = {
-  showSeparator?: boolean;
+type SeparatedSectionProps = {
+  showSeparator?: 'top' | 'bottom' | boolean;
 };
 
 export const SeparatedSection = ({
   showSeparator = true,
   children,
-}: PropsWithChildren<Props>) => {
+}: PropsWithChildren<SeparatedSectionProps>) => {
   const { spacingsTokens } = useCunninghamTheme();
 
   return (
@@ -20,11 +20,18 @@ export const SeparatedSection = ({
       $css={css`
         width: 100%;
         padding: ${spacingsTokens['sm']} 0;
-        ${showSeparator &&
-        css`
-          border-bottom: 1px solid
-            var(--c--contextuals--border--surface--primary);
-        `}
+        ${showSeparator === 'top' || showSeparator === true
+          ? css`
+              border-top: 1px solid
+                var(--c--contextuals--border--surface--primary);
+            `
+          : ''}
+        ${showSeparator === 'bottom' || showSeparator === true
+          ? css`
+              border-bottom: 1px solid
+                var(--c--contextuals--border--surface--primary);
+            `
+          : ''}
       `}
     >
       {children}

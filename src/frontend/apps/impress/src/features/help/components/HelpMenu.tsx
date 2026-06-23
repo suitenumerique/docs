@@ -39,6 +39,19 @@ export const HelpMenu = ({
   const documentationUrl = config?.theme_customization?.help?.documentation_url;
   const supportMailto = config?.theme_customization?.help?.support_mailto;
   const legalLinks = config?.theme_customization?.help?.legal_links;
+  /**
+   * The onboarding can be disable, so we need to check if it's enabled before displaying the help menu.
+   * TODO: As soon as we get more than one fixed element in the help menu,
+   * we should remove this condition and display the help menu even if the onboarding is disabled
+   */
+  const showHelpMenu =
+    onboardingEnabled ||
+    !!documentationUrl ||
+    !!supportMailto ||
+    !!legalLinks?.personal_data ||
+    !!legalLinks?.terms_of_use ||
+    !!legalLinks?.accessibility_statement ||
+    !!legalLinks?.legal_notice;
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen((open) => !open);
@@ -142,6 +155,10 @@ export const HelpMenu = ({
       hasLegalLinks,
     ],
   );
+
+  if (!showHelpMenu) {
+    return null;
+  }
 
   return (
     <>

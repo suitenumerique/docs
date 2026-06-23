@@ -3,18 +3,15 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, HorizontalSeparator, SeparatedSection } from '@/components';
-import { useConfig } from '@/core/config/api/useConfig';
+import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { ButtonLogin } from '@/features/auth';
 import { HEADER_HEIGHT } from '@/features/header/conf';
-import { HelpMenu } from '@/features/help';
-import { LanguagePicker } from '@/features/language';
 import { useResponsiveStore } from '@/stores';
 
 import { useLeftPanelStore } from '../stores';
 
 import { LeftPanelContent } from './LeftPanelContent';
+import { LeftPanelFooter } from './LeftPanelFooter';
 import { LeftPanelHeader } from './LeftPanelHeader';
 
 const MobileLeftPanelStyle = createGlobalStyle`
@@ -34,21 +31,6 @@ export const LeftPanel = () => {
 
 export const LeftPanelDesktop = () => {
   const { t } = useTranslation();
-  const { data: config } = useConfig();
-  const legalLinks = config?.theme_customization?.help?.legal_links;
-  /**
-   * The onboarding can be disable, so we need to check if it's enabled before displaying the help menu.
-   * TODO: As soon as we get more than one fixed element in the help menu,
-   * we should remove this condition and display the help menu even if the onboarding is disabled
-   */
-  const showHelpMenu =
-    config?.theme_customization?.onboarding?.enabled ||
-    !!config?.theme_customization?.help?.documentation_url ||
-    !!config?.theme_customization?.help?.support_mailto ||
-    !!legalLinks?.personal_data ||
-    !!legalLinks?.terms_of_use ||
-    !!legalLinks?.accessibility_statement ||
-    !!legalLinks?.legal_notice;
 
   return (
     <Box
@@ -71,13 +53,7 @@ export const LeftPanelDesktop = () => {
         <LeftPanelHeader />
       </Box>
       <LeftPanelContent />
-      {showHelpMenu && (
-        <SeparatedSection showSeparator={false}>
-          <Box $padding={{ horizontal: 'sm' }} $justify="flex-start">
-            <HelpMenu />
-          </Box>
-        </SeparatedSection>
-      )}
+      <LeftPanelFooter />
     </Box>
   );
 };
@@ -126,22 +102,7 @@ const LeftPanelMobile = () => {
         >
           <LeftPanelHeader />
           <LeftPanelContent />
-          <Box $width="100%">
-            <HorizontalSeparator $margin="none" />
-            <SeparatedSection showSeparator={false}>
-              <Box
-                $justify="end"
-                $align="center"
-                $gap={spacingsTokens['xs']}
-                $direction="row"
-                $padding={{ horizontal: 'sm' }}
-              >
-                <HelpMenu colorButton="brand" />
-                <ButtonLogin />
-                <LanguagePicker />
-              </Box>
-            </SeparatedSection>
-          </Box>
+          <LeftPanelFooter />
         </Box>
       </Box>
     </>

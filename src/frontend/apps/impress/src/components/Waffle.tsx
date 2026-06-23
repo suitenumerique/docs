@@ -1,30 +1,10 @@
-import { LaGaufreV2, LaGaufreV2Props } from '@gouvfr-lasuite/ui-kit';
+import { LaGaufreV2 } from '@gouvfr-lasuite/ui-kit';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
 import { useConfig } from '@/core';
-
-type WaffleAPIType = {
-  apiUrl: LaGaufreV2Props['apiUrl'];
-  data?: never;
-};
-
-type WaffleDataType = {
-  apiUrl?: never;
-  data?: LaGaufreV2Props['data'];
-};
-
-export type WaffleType = Omit<
-  LaGaufreV2Props,
-  'apiUrl' | 'data' | 'widgetPath'
-> &
-  (WaffleAPIType | WaffleDataType) & {
-    widgetPath?: string;
-  };
-
-const LaGaufreV2Fixed = LaGaufreV2 as React.ComponentType<WaffleType>;
 
 export const Waffle = () => {
   const { t } = useTranslation();
@@ -41,10 +21,14 @@ export const Waffle = () => {
       $css={css`
         & > div {
           display: flex;
+
+          .c__button--brand--tertiary svg path {
+            fill: var(--c--contextuals--content--semantic--neutral--tertiary);
+          }
         }
       `}
     >
-      <LaGaufreV2Fixed
+      <LaGaufreV2
         {...waffleConfig}
         label={waffleConfig.label ?? t('Digital LaSuite services')}
         newWindowLabelSuffix={` (${t('new window')})`}
