@@ -38,7 +38,6 @@
     "@types/react-dom": "19.2.3",
     "eslint": "10.5.0",
     "postcss": "8.5.15",
-    "prosemirror-view": "1.41.9",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "serialize-javascript": "7.0.5",
