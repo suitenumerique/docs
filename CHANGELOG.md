@@ -23,6 +23,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) fix removed item in the tree #2420
+- 🐛(frontend) fix service worker causing reload on tab focus #2454
 
 ## [v5.3.0] - 2026-06-19
 
