@@ -7,9 +7,6 @@
     "@html-to/text-cli": "0.6.0",
     "mjml": "5.3.0"
   },
-  "resolutions": {
-    "minimatch": "^10.0.0"
-  },
   "private": true,
   "scripts": {
     "build-mjml-to-html": "bash ./bin/mjml-to-html",
