@@ -85,7 +85,6 @@ export const Heading = ({
           border-radius: var(--c--globals--spacings--st);
         }
       `}
-      aria-label={text}
       aria-current={isHighlight ? 'true' : undefined}
     >
       <Text

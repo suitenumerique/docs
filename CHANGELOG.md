@@ -20,6 +20,7 @@ and this project adheres to
 - ♻️(frontend) new create button for docs #2423
 - ♿️(frontend) align search modal field label with placeholder #2384
 - 🚚(frontend) move Waffle to bottom left #2455
+- ♿️(frontend) remove redundant aria-label on table of contents links #2459
 
 ### Fixed
 
