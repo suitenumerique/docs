@@ -24,6 +24,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(backend) prevent owner from leaving a soft-deleted document
 - 🐛(frontend) fix removed item in the tree #2420
 - 🐛(frontend) fix service worker causing reload on tab focus #2454
 
