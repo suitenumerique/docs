@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test';
 
 import { overrideConfig } from './utils-common';
-import { SignIn, expectLoginPage } from './utils-signin';
 
 test.describe('Header', () => {
   test('checks all the elements are visible', async ({ page }) => {
@@ -14,14 +13,6 @@ test.describe('Header', () => {
       'font-family',
       /Roboto/i,
     );
-
-    await expect(
-      header.getByRole('button', {
-        name: 'Logout',
-      }),
-    ).toBeVisible();
-
-    await expect(header.getByText('English')).toBeVisible();
   });
 
   test('checks all the elements are visible with DSFR theme', async ({
@@ -104,23 +95,5 @@ test.describe('Header', () => {
     await expect(logoImage).not.toHaveAttribute('src', '/assets/icon-docs.svg');
     await expect(logoImage).toHaveAttribute('src', '/assets/logo-gouv.svg');
     await expect(logoImage).toHaveAttribute('alt', '');
-  });
-});
-
-test.describe('Header: Log out', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
-
-  // eslint-disable-next-line playwright/expect-expect
-  test('checks logout button', async ({ page, browserName }) => {
-    await page.goto('/');
-    await SignIn(page, browserName);
-
-    await page
-      .getByRole('button', {
-        name: 'Logout',
-      })
-      .click();
-
-    await expectLoginPage(page);
   });
 });

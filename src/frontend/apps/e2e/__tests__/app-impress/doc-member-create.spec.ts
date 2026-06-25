@@ -9,7 +9,7 @@ import {
 } from './utils-common';
 import { writeInEditor } from './utils-editor';
 import { connectOtherUserToDoc, updateRoleUser } from './utils-share';
-import { SignIn } from './utils-signin';
+import { SignIn, logOut } from './utils-signin';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Document create member', () => {
@@ -371,11 +371,7 @@ test.describe('Document create member: Multiple login', () => {
 
     const urlDoc = page.url();
 
-    await page
-      .getByRole('button', {
-        name: 'Logout',
-      })
-      .click();
+    await logOut(page);
 
     const otherBrowser = BROWSERS.find((b) => b !== browserName);
 

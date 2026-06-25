@@ -1,12 +1,24 @@
+import { UserMenu } from '@gouvfr-lasuite/ui-kit';
+import { useTranslation } from 'react-i18next';
+
 import { Box, SeparatedSection } from '@/components';
 import { Waffle } from '@/components/Waffle';
 import { ButtonLogin } from '@/features/auth';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { gotoLogout } from '@/features/auth/utils';
 import { HelpMenu } from '@/features/help';
-import { LanguagePicker } from '@/features/language';
+import { LanguagePicker } from '@/features/language/components/LanguagePicker';
 import { useResponsiveStore } from '@/stores';
 
 export const LeftPanelFooter = () => {
   const { isLargeScreen } = useResponsiveStore();
+  const { t } = useTranslation();
+  const { user } = useAuth();
+
+  const userMenu = user || {
+    full_name: t('Guest'),
+    email: '',
+  };
 
   return (
     <SeparatedSection showSeparator="top">
@@ -15,14 +27,15 @@ export const LeftPanelFooter = () => {
         $justify="space-between"
         $direction="row"
       >
-        <Box $direction="row">
+        <Box $direction="row" $align="center" $gap="0.2rem">
+          <UserMenu
+            user={userMenu}
+            logout={user ? gotoLogout : undefined}
+            actions={<LanguagePicker />}
+            withMobileView={false}
+          />
           <Waffle />
-          {!isLargeScreen && (
-            <>
-              <ButtonLogin />
-              <LanguagePicker />
-            </>
-          )}
+          {!isLargeScreen && <ButtonLogin />}
         </Box>
         <HelpMenu />
       </Box>

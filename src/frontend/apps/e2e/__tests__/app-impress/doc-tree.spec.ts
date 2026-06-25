@@ -407,21 +407,23 @@ test.describe('Doc Tree', () => {
     await expect(selectedSubDoc).toBeFocused();
 
     await page.keyboard.press('Tab');
+    await expect(page.getByLabel('User menu')).toBeFocused();
 
+    await page.keyboard.press('Tab');
     await expect(page.getByLabel('Open help menu')).toBeFocused();
 
     await page.keyboard.press('Tab');
-
     await expect(
       page.locator('[data-panel-resize-handle-id]').first(),
     ).toBeFocused();
 
     await page.keyboard.press('Shift+Tab');
-
     await expect(page.getByLabel('Open help menu')).toBeFocused();
 
     await page.keyboard.press('Shift+Tab');
+    await expect(page.getByLabel('User menu')).toBeFocused();
 
+    await page.keyboard.press('Shift+Tab');
     await expect(selectedSubDoc).toBeFocused();
   });
 

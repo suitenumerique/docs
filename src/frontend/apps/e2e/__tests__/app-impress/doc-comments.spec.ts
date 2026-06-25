@@ -17,6 +17,7 @@ import {
   updateRoleUser,
   updateShareLink,
 } from './utils-share';
+import { logOut } from './utils-signin';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -312,7 +313,7 @@ test.describe('Doc Comments', () => {
     await updateShareLink(page, 'Public', 'Editing');
 
     // Anonymous user can see and add comments
-    await otherPage.getByRole('button', { name: 'Logout' }).click();
+    await logOut(otherPage);
 
     await expect(
       otherPage

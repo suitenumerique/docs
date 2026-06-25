@@ -657,6 +657,7 @@ export const tokens = {
           'border-radius--active': '4px',
           'border-radius--focus': '4px',
         },
+        'resize-handle': { 'hover--color': '#E2E2EA' },
         datagrid: {
           'header--color': '#25252F',
           'header--size': '12px',
@@ -1961,6 +1962,7 @@ export const tokens = {
           'border-radius--active': '4px',
           'border-radius--focus': '4px',
         },
+        'resize-handle': { 'hover--color': '#E2E2EA' },
         datagrid: {
           'header--color': '#25252F',
           'header--size': '12px',

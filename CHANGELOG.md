@@ -10,6 +10,7 @@ and this project adheres to
 
 - ✨(y-provider) preserve callouts, PDFs, page breaks, interlinking
   links and commented text on HTML/markdown export #2296
+- ✨(frontend) add a user menu #2463
 
 ### Changed
 

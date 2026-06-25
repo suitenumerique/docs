@@ -7,6 +7,7 @@ import {
   verifyDocName,
 } from './utils-common';
 import { tryFocusEditorContent } from './utils-editor';
+import { SignIn, expectLoginPage, logOut } from './utils-signin';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Left panel desktop', () => {
@@ -19,6 +20,8 @@ test.describe('Left panel desktop', () => {
     await expect(page.getByTestId('left-panel-mobile')).toBeHidden();
     await expect(page.getByTestId('home-button')).toBeHidden();
     await expect(page.getByTestId('new-doc-button')).toBeVisible();
+    await expect(page.getByLabel('User menu')).toBeVisible();
+    await expect(page.getByLabel('Open help menu')).toBeVisible();
 
     await goToGridDoc(page);
 
@@ -178,6 +181,7 @@ test.describe('Left panel desktop', () => {
 test.describe('Left panel responsive', () => {
   test('checks elements visibility on different screen sizes', async ({
     page,
+    browserName,
   }) => {
     await page.setViewportSize({ width: 500, height: 1200 });
     await page.goto('/');
@@ -188,26 +192,22 @@ test.describe('Left panel responsive', () => {
     const header = page.locator('header').first();
     const homeButton = page.getByTestId('home-button');
     const newDocButton = page.getByTestId('new-doc-button');
-    const languageButton = page.getByRole('button', {
-      name: 'Select language',
+    const userMenu = page.getByRole('button', {
+      name: 'User menu',
     });
-    const logoutButton = page.getByRole('button', { name: 'Logout' });
 
     await expect(homeButton).not.toBeInViewport();
     await expect(newDocButton).not.toBeInViewport();
-    await expect(languageButton).not.toBeInViewport();
-    await expect(logoutButton).not.toBeInViewport();
+    await expect(userMenu).not.toBeInViewport();
 
-    const title = await goToGridDoc(page);
-    await verifyDocName(page, title);
+    await createDoc(page, 'mobile-doc-test', browserName, 1, true);
 
     await header.getByLabel('Open the header menu').click();
 
     await expect(page.getByTestId('left-panel-mobile')).toBeInViewport();
     await expect(homeButton).toBeInViewport();
     await expect(newDocButton).toBeInViewport();
-    await expect(languageButton).toBeInViewport();
-    await expect(logoutButton).toBeInViewport();
+    await expect(userMenu).toBeInViewport();
 
     await header.getByLabel('Close the header menu').click();
 
@@ -217,8 +217,7 @@ test.describe('Left panel responsive', () => {
 
     await expect(page.getByRole('link', { name: 'All docs' })).toBeInViewport();
     await expect(newDocButton).toBeInViewport();
-    await expect(languageButton).toBeInViewport();
-    await expect(logoutButton).toBeInViewport();
+    await expect(userMenu).toBeInViewport();
     await expect(header.getByLabel('Open the header menu')).toBeHidden();
   });
 
@@ -307,5 +306,18 @@ test.describe('Left panel responsive', () => {
       .click();
     await expect(rightPanel).not.toBeInViewport();
     await expect(leftPanel).toBeHidden();
+  });
+});
+
+test.describe('Left Panel: Log out', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  // eslint-disable-next-line playwright/expect-expect
+  test('checks logout button', async ({ page, browserName }) => {
+    await page.goto('/');
+    await SignIn(page, browserName);
+    await logOut(page);
+
+    await expectLoginPage(page);
   });
 });

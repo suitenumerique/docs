@@ -6,7 +6,6 @@ import { Box, SkipToContent, StyledLink } from '@/components/';
 import { useConfig } from '@/core/config';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonLogin } from '@/features/auth';
-import { LanguagePicker } from '@/features/language';
 import { LeftPanelToggleMobile } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
@@ -89,7 +88,6 @@ export const Header = () => {
             $direction="row"
           >
             <ButtonLogin />
-            <LanguagePicker />
           </Box>
         )}
       </Box>

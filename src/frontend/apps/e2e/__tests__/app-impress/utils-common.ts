@@ -399,9 +399,11 @@ type TestLanguageValue = (typeof TestLanguage)[TestLanguageKey];
 export async function waitForLanguageSwitch(
   page: Page,
   lang: TestLanguageValue,
+  labelUserMenu = 'User menu',
+  withMocking = true,
 ) {
   await page.route(/\**\/api\/v1.0\/users\/\**/, async (route, request) => {
-    if (request.method().includes('PATCH')) {
+    if (request.method().includes('PATCH') && withMocking) {
       await route.fulfill({
         json: {
           language: lang.expectedLocale[0],
@@ -412,19 +414,21 @@ export async function waitForLanguageSwitch(
     }
   });
 
-  const header = page.locator('header').first();
-  const languagePicker = header.locator('.--docs--language-picker-text');
+  await page.getByLabel(labelUserMenu).click();
+  const languagePicker = page.getByRole('button', { name: /Language/ });
   const isAlreadyTargetLanguage = await languagePicker
     .innerText()
     .then((text) => text.toLowerCase().includes(lang.label.toLowerCase()));
 
   if (isAlreadyTargetLanguage) {
+    await page.keyboard.press('Escape');
     return;
   }
 
   await languagePicker.click();
 
-  await page.getByRole('menuitemradio', { name: lang.label }).click();
+  await page.getByRole('menuitem', { name: lang.label }).click();
+  await page.keyboard.press('Escape');
 }
 
 export const clickInEditorShareButton = async (page: Page) => {

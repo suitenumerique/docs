@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { BROWSERS, createDoc, verifyDocName } from './utils-common';
 import { getEditor, writeInEditor } from './utils-editor';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
-import { SignIn, expectLoginPage } from './utils-signin';
+import { SignIn, expectLoginPage, logOut } from './utils-signin';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc Visibility', () => {
@@ -81,13 +81,7 @@ test.describe('Doc Visibility: Restricted', () => {
     await verifyDocName(page, docTitle);
 
     const urlDoc = page.url();
-
-    await page
-      .getByRole('button', {
-        name: 'Logout',
-      })
-      .click();
-
+    await logOut(page);
     await expectLoginPage(page);
 
     await page.goto(urlDoc);
@@ -112,11 +106,7 @@ test.describe('Doc Visibility: Restricted', () => {
 
     const urlDoc = page.url();
 
-    await page
-      .getByRole('button', {
-        name: 'Logout',
-      })
-      .click();
+    await logOut(page);
 
     const otherBrowser = BROWSERS.find((b) => b !== browserName);
     if (!otherBrowser) {

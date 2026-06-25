@@ -8,14 +8,14 @@ import { useAuthQuery } from '../api';
 const regexpUrlsAuth = [/\/docs\/$/g, /\/docs$/g, /^\/$/g];
 
 export const useAuth = () => {
-  const { data: user, ...authStates } = useAuthQuery();
+  const { data: user, isFetched, isLoading, isSuccess } = useAuthQuery();
   const { pathname } = useRouter();
   const { trackEvent } = useAnalytics();
-  const [hasTracked, setHasTracked] = useState(authStates.isFetched);
-  const isAuthLoading =
-    authStates.fetchStatus !== 'idle' || authStates.isLoading;
+  const [hasTracked, setHasTracked] = useState(isFetched);
+  const isAuthLoading = isLoading;
+
   const hasInitiallyLoaded = useRef(false);
-  if (authStates.isFetched) {
+  if (isFetched) {
     hasInitiallyLoaded.current = true;
   }
   const [pathAllowed, setPathAllowed] = useState<boolean>(
@@ -27,7 +27,7 @@ export const useAuth = () => {
   }, [pathname]);
 
   useEffect(() => {
-    if (!hasTracked && user && authStates.isSuccess) {
+    if (!hasTracked && user && isSuccess) {
       trackEvent({
         eventName: 'user',
         id: user?.id || '',
@@ -35,14 +35,13 @@ export const useAuth = () => {
       });
       setHasTracked(true);
     }
-  }, [hasTracked, authStates.isSuccess, user, trackEvent]);
+  }, [hasTracked, isSuccess, user, trackEvent]);
 
   return {
     user,
-    authenticated: !!user && authStates.isSuccess,
+    authenticated: !!user && isSuccess,
     pathAllowed,
     hasInitiallyLoaded: hasInitiallyLoaded.current,
     isAuthLoading,
-    ...authStates,
   };
 };

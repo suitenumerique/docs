@@ -5,7 +5,7 @@ import { Waffle } from '@/components/Waffle';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Title } from '@/features/header';
-import { LanguagePicker } from '@/features/language';
+import { LanguagePickerLegacy } from '@/features/language';
 import { LeftPanelToggleMobile } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
@@ -80,7 +80,7 @@ export const HomeHeader = () => {
       </Box>
       {!isSmallMobile && (
         <Box $direction="row" $gap="1rem" $align="center">
-          <LanguagePicker />
+          <LanguagePickerLegacy />
           <Waffle />
         </Box>
       )}

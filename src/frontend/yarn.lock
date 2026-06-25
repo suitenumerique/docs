@@ -2128,10 +2128,10 @@
   resolved "https://registry.yarnpkg.com/@gouvfr-lasuite/integration/-/integration-1.0.3.tgz#7aca824ba61d343a7905dc90c8a8bbdbce8f9a09"
   integrity sha512-OgP28CqlPi35wQPul1Dr52SngACXAk8buLGqHYXDp23fbTOJThqarrZE/pgJHoc9Ndwiu7ngwBSO4rZ7OPyMpA==
 
-"@gouvfr-lasuite/ui-kit@0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@gouvfr-lasuite/ui-kit/-/ui-kit-0.23.2.tgz#9a7531fb35821b75b786bfc3167ad53aab116c4c"
-  integrity sha512-o6bQjqJadBbWMbFiwDYwVeNKYAD/EGeU2W0/omqNgTEYWjKQCGYwgcxgeYR+SZN9GnWKCXEARs18aYgBl+oRbQ==
+"@gouvfr-lasuite/ui-kit@0.25.0":
+  version "0.25.0"
+  resolved "https://registry.yarnpkg.com/@gouvfr-lasuite/ui-kit/-/ui-kit-0.25.0.tgz#9feb7da860ea610cb5f171b90ee074fe39271940"
+  integrity sha512-yvP1/rpckaDPFGcuNiZqwUn43asnSq8ffS660Oikxrq/m+/5oMtRsApHjkt2Wtn1HfUWGvqazN8wSrr1yEwG0Q==
   dependencies:
     "@dnd-kit/core" "6.3.1"
     "@dnd-kit/modifiers" "9.0.0"
@@ -8322,11 +8322,6 @@ crelt@^1.0.0:
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/crelt/-/crelt-1.0.6.tgz#7cc898ea74e190fb6ef9dae57f8f81cf7302df72"
   integrity sha512-VQ2MBenTq1fWZUH9DJNGti7kKv6EeAuYr3cLwxUWhIu1baTaXh4Ib5W2CqHVqib4/MqbYGJqiL3Zb8GJZr3l4g==
-
-crisp-sdk-web@1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/crisp-sdk-web/-/crisp-sdk-web-1.1.2.tgz#e5b31ee784cef678a711170f54eca68e28968a22"
-  integrity sha512-qxSpiT4EGHnVEO6J/t1UURY6fg1ojgquLU0IIr7RNjZxXZs1R2e6AhAiFqxiGZ13Vb4o5VoUpATFU2TzX/ppOQ==
 
 cross-env@10.1.0:
   version "10.1.0"
