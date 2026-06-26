@@ -93,13 +93,13 @@ If you are using an external service, you need to set `REDIS_URL` environment va
 
 The Y provider service enables collaboration through websockets.
 
-Generates a secure key for `Y_PROVIDER_API_KEY` and `COLLABORATION_SERVER_SECRET` in ``env.d/yprovider``. 
+Generate a secure key for `Y_PROVIDER_API_KEY` and `COLLABORATION_SERVER_SECRET` in ``env.d/yprovider``. 
 
 ### Docs
 
 The Docs backend is built on the Django Framework.
 
-Generates a secure key for `DJANGO_SECRET_KEY` in `env.d/backend`. 
+Generate a secure key for `DJANGO_SECRET_KEY` in `env.d/backend`. 
 
 ### Logging
 
@@ -222,10 +222,10 @@ You can also check the [Changelog](../../CHANGELOG.md) for brief summary of the 
 docker compose pull
 ```
 
-### Step 3: Restart your containers
+### Step 3: Restart/Reconfigure your containers
 
 ```bash
-docker compose restart
+docker compose up -d
 ```
 
 ### Step 4: Run the database migration
