@@ -1,0 +1,70 @@
+name: Feature request
+description: Suggest an new feature or an enhancement.
+title: "✨(feature)  "
+labels: ["triage"]
+projects: ["suitenumerique/2"]
+assignees:
+  - virgile-dev
+type: feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a feature!
+  - type: markdown
+    attributes:
+      value: |
+        Before filing a new issue, please do a quick search in the issues / prs list to avoid duplicates.
+  - type: markdown
+    attributes:
+      value: |
+        We use [BlockNote](https://www.blocknotejs.org/) for the text editing features of Docs. It's best to suggest features on the text editor directly on the [BlockNote repository](https://github.com/TypeCellOS/BlockNote/discussions/categories/ideas-enhancements).
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem do you want to fix?
+      description: A concise description of what the problem is.
+      placeholder: 
+      value: "My problem is"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Possible solution?
+      description: A concise description of what you need to fix your problem.
+      placeholder: I
+      value: "I need this feature"
+    validations:
+      required: true
+  - type: textarea
+    id: alternative
+    attributes:
+      label: Do you have an alternative?
+      description: If you found a workaround or have thought of another way to solve your problem.
+      value: "My workaround is ..."
+    validations:
+      required: false
+  - type: upload
+    id: screenshots
+    attributes:
+      label: Upload 
+      description: If applicable, add screenshots to help explain your problem.
+    validations:
+      required: false
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
