@@ -187,6 +187,39 @@ def test_api_documents_leave_connected_access_with_privileged_role_not_allowed(
     "link_reach",
     models.LinkReachChoices.values,
 )
+def test_api_documents_leave_connected_owner_on_deleted_document_not_allowed(
+    link_reach,
+):
+    """
+    An owner can not leave a soft-deleted document, even when it also has a link_trace.
+    """
+    user = factories.UserFactory()
+
+    document = factories.DocumentFactory(
+        link_reach=link_reach,
+        link_traces=[user],
+        users=[(user, models.RoleChoices.OWNER)],
+    )
+    document.soft_delete()
+
+    assert models.DocumentAccess.objects.filter(document=document, user=user).exists()
+    assert models.LinkTrace.objects.filter(document=document, user=user).exists()
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.post(f"/api/v1.0/documents/{document.id!s}/leave/")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # The owner kept its access and link_trace: it did not leave the trashed document.
+    assert models.DocumentAccess.objects.filter(document=document, user=user).exists()
+    assert models.LinkTrace.objects.filter(document=document, user=user).exists()
+
+
+@pytest.mark.parametrize(
+    "link_reach",
+    models.LinkReachChoices.values,
+)
 @pytest.mark.parametrize(
     "role", [role for role in models.RoleChoices if role not in models.PRIVILEGED_ROLES]
 )

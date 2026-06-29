@@ -1326,11 +1326,15 @@ class Document(MP_Node, BaseModel):
         ) and not is_deleted
 
         # compute can_leave
-        # A user can leave a document if it has non privileged role on the document or it has
-        # access to it with a link_trace
-        can_leave = user.is_authenticated and (
-            (has_access_role and not is_owner_or_admin)
-            or (not has_access_role and self.has_link_trace(user))
+        # An authenticated user can leave a document if it has a non
+        # privileged role on the document or access to it with a link_trace
+        can_leave = (
+            user.is_authenticated
+            and not is_deleted
+            and (
+                (has_access_role and not is_owner_or_admin)
+                or (not has_access_role and self.has_link_trace(user))
+            )
         )
 
         link_select_options = LinkReachChoices.get_select_options(
