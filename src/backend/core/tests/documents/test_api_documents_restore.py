@@ -137,8 +137,10 @@ def test_api_documents_restore_authenticated_owner_not_deleted():
 
     response = client.post(f"/api/v1.0/documents/{document.id!s}/restore/")
 
-    assert response.status_code == 400
-    assert response.json() == {"detail": "This document is not deleted."}
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "You do not have permission to perform this action."
+    }
 
     document.refresh_from_db()
     assert document.deleted_at is None
