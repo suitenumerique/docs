@@ -23,7 +23,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       - name: Create empty source files
         run: |
           touch src/backend/locale/django.pot
@@ -31,7 +31,7 @@ jobs:
           touch src/frontend/packages/i18n/locales/impress/translations-crowdin.json
       # crowdin workflow
       - name: crowdin action
-        uses: crowdin/github-action@8868a33591d21088edfc398968173a3b98d51706 # v2
+        uses: crowdin/github-action@52aa776766211d83d975df51f3b9c53c2f8ba35f # v2
         with:
           config: crowdin/config.yml
           upload_sources: false
