@@ -16,6 +16,7 @@ import { usePresenterShortcuts } from '../hooks/usePresenterShortcuts';
 import { getSlideTitle, useSlides } from '../hooks/useSlides';
 import type { PresenterBlock, PresenterSlideData } from '../types';
 
+import { PresenterDocsLogo } from './PresenterDocsLogo';
 import { PresenterFloatingBar } from './PresenterFloatingBar';
 import { PresenterSlide } from './PresenterSlide';
 
@@ -45,6 +46,13 @@ const slideAreaCss = css`
 
 const clampSlideIndex = (index: number, total: number) =>
   Math.max(0, Math.min(index, Math.max(total - 1, 0)));
+
+const docsLogoCss = css`
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 1;
+`;
 
 export const PresenterOverlay = ({
   doc,
@@ -193,6 +201,10 @@ export const PresenterOverlay = ({
               })}
             />
           ))}
+        </Box>
+
+        <Box $css={docsLogoCss}>
+          <PresenterDocsLogo />
         </Box>
 
         <PresenterFloatingBar
