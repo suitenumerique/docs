@@ -1,4 +1,4 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button, ButtonProps } from '@gouvfr-lasuite/cunningham-react';
 import { t } from 'i18next';
 import dynamic from 'next/dynamic';
 import { useCallback, useState } from 'react';
@@ -16,7 +16,7 @@ const DocSearchModal = dynamic(
   { ssr: false },
 );
 
-export const DocSearchButtonModal = () => {
+export const DocSearchButtonModal = ({ ...props }: ButtonProps) => {
   const { currentDoc } = useDocStore();
   const { authenticated } = useAuth();
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -52,6 +52,7 @@ export const DocSearchButtonModal = () => {
         variant="tertiary"
         aria-label={t('Search docs')}
         icon={<SearchSVG aria-hidden="true" width={24} height={24} />}
+        {...props}
       />
       {isSearchModalOpen && (
         <DocSearchModal

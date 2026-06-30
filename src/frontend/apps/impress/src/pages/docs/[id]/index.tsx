@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Loading } from '@/components';
 import { DEFAULT_QUERY_RETRY } from '@/core';
+import { DocFloatingBar } from '@/docs/doc-header/components/DocFloatingBar';
 import {
   Doc,
   DocPage403,
@@ -17,7 +18,6 @@ import {
   useTrans,
 } from '@/docs/doc-management/';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
-import { FloatingBar } from '@/features/docs/doc-header/components/FloatingBar';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { DocEditorSkeleton, useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
@@ -65,7 +65,7 @@ export function DocLayout() {
         }}
       >
         <MainLayout enableResizablePanel={true}>
-          <FloatingBar />
+          <DocFloatingBar />
           <DocPage id={id} />
         </MainLayout>
       </TreeProvider>
