@@ -2,10 +2,9 @@ import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
 import SharedSVG from '@/assets/icons/ui-kit/shared.svg';
-import { Card } from '@/components/Card';
+import { CardFloatingBar } from '@/components/FloatingBar';
 import { Doc } from '@/docs/doc-management/types';
 import { useAuth } from '@/features/auth';
 import { useFocusStore } from '@/stores/useFocusStore';
@@ -54,17 +53,7 @@ export const DocShareButton = ({
 
   return (
     <>
-      <Card
-        className="--docs--card--share"
-        $direction="row"
-        $css={css`
-          padding: var(--c--globals--spacings--xxxs);
-          align-items: center;
-          gap: var(--c--globals--spacings--xxxs);
-          border-radius: var(--c--globals--spacings--xs);
-          box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
-        `}
-      >
+      <CardFloatingBar className="--docs--card--share">
         <Button
           color={hasAccesses ? 'brand' : 'neutral'}
           size="small"
@@ -84,7 +73,7 @@ export const DocShareButton = ({
         >
           {hasAccesses ? t('Shared') : t('Share')}
         </Button>
-      </Card>
+      </CardFloatingBar>
       {modalShare.isOpen && (
         <DocShareModal
           onClose={() => {
