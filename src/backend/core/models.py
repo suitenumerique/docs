@@ -2115,6 +2115,14 @@ class Mention(BaseModel):
             .exists()
         )
 
+    @property
+    def notification_guard_key(self):
+        """Cache key claiming a notification slot for this mention's context."""
+        return (
+            "mention-notify:"
+            f"{self.document_id}:{self.mentioned_user_id}:{self.thread_id or ''}"
+        )
+
     def notify(self, language=None):
         """Send the mention notification email unless the context is in cooldown.
 
@@ -2123,6 +2131,16 @@ class Mention(BaseModel):
         """
         user = self.mentioned_user
         if user is None or not user.email or self.is_notification_in_cooldown():
+            return False
+
+        # Guard against concurrent notification tasks for the same context.
+        # cache.add is atomic on the shared Redis backend: only the first task
+        # acquires the key and proceeds, the others get False
+        if not cache.add(
+            self.notification_guard_key,
+            str(self.pk),
+            timeout=settings.MENTION_NOTIFICATION_COOLDOWN_MINUTES * 60,
+        ):
             return False
 
         sender = self.mentioned_by_user
