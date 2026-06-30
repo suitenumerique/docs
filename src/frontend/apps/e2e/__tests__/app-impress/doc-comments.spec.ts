@@ -1,11 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import {
-  closeHeaderMenu,
-  createDoc,
-  getOtherBrowserName,
-  verifyDocName,
-} from './utils-common';
+import { createDoc, getOtherBrowserName, verifyDocName } from './utils-common';
 import {
   getEditor,
   tryFocusEditorContent,
@@ -412,8 +407,6 @@ test.describe('Doc Comments mobile', () => {
       1,
       true,
     );
-
-    await closeHeaderMenu(page);
 
     await verifyDocName(page, title);
 

@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 import {
   createDoc,
   goToGridDoc,
+  openHeaderMenu,
   overrideConfig,
   verifyDocName,
 } from './utils-common';
@@ -16,16 +17,86 @@ test.describe('Left panel desktop', () => {
   });
 
   test('checks all the elements are visible', async ({ page }) => {
-    await expect(page.getByTestId('left-panel-desktop')).toBeVisible();
-    await expect(page.getByTestId('left-panel-mobile')).toBeHidden();
-    await expect(page.getByTestId('home-button')).toBeHidden();
-    await expect(page.getByTestId('new-doc-button')).toBeVisible();
-    await expect(page.getByLabel('User menu')).toBeVisible();
-    await expect(page.getByLabel('Open help menu')).toBeVisible();
+    const leftPanel = page.getByLabel('Left panel');
+
+    await expect(leftPanel.getByTestId('home-button')).toBeHidden();
+    await expect(leftPanel.getByTestId('new-doc-button')).toBeVisible();
+    await expect(leftPanel.getByLabel('User menu')).toBeVisible();
+    await expect(leftPanel.getByLabel('Open help menu')).toBeVisible();
+
+    await expect(leftPanel.getByTestId('header-logo-link')).toBeVisible();
+    await expect(leftPanel.locator('h1').getByText('Docs')).toHaveCSS(
+      'font-family',
+      /Roboto/i,
+    );
 
     await goToGridDoc(page);
 
-    await expect(page.getByTestId('home-button')).toBeVisible();
+    await expect(leftPanel.getByTestId('home-button')).toBeVisible();
+  });
+
+  test('checks all the elements are visible with DSFR theme', async ({
+    page,
+  }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+      theme_customization: {
+        header: {
+          icon: {
+            src: '/assets/icon-docs-dsfr-v2.svg',
+            style: {
+              width: '100px',
+              height: 'auto',
+            },
+            alt: '',
+            withTitle: false,
+            'data-testid': 'custom-testid-docs',
+          },
+        },
+      },
+    });
+    await page.goto('/');
+
+    const leftPanel = page.getByRole('navigation', { name: 'Left panel' });
+
+    await expect(leftPanel.getByTestId('custom-testid-docs')).toHaveAttribute(
+      'src',
+      '/assets/icon-docs-dsfr-v2.svg',
+    );
+    // With withTitle: false, the h1 is kept for accessibility but visually hidden via sr-only
+    await expect(leftPanel.locator('h1').getByText('Docs')).toHaveClass(
+      /sr-only/,
+    );
+  });
+
+  test('checks the left panel is correctly overrided', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+      theme_customization: {
+        header: {
+          icon: {
+            src: '/assets/logo-gouv.svg',
+            style: {
+              width: '100px',
+              height: 'auto',
+            },
+            alt: '',
+          },
+        },
+      },
+    });
+
+    await page.goto('/');
+    const leftPanel = page.getByRole('navigation', { name: 'Left panel' });
+
+    const logoImage = leftPanel.getByTestId('header-icon-docs');
+    await expect(logoImage).toBeVisible({
+      timeout: 10000,
+    });
+
+    await expect(logoImage).not.toHaveAttribute('src', '/assets/icon-docs.svg');
+    await expect(logoImage).toHaveAttribute('src', '/assets/logo-gouv.svg');
+    await expect(logoImage).toHaveAttribute('alt', '');
   });
 
   test('checks a custom waffle', async ({ page }) => {
@@ -55,7 +126,7 @@ test.describe('Left panel desktop', () => {
 
     await page.goto('/');
 
-    const leftPanel = page.getByTestId('left-panel-desktop');
+    const leftPanel = page.getByLabel('Left panel', { exact: true });
 
     await expect(
       leftPanel.getByRole('button', { name: 'Digital LaSuite services' }),
@@ -90,7 +161,7 @@ test.describe('Left panel desktop', () => {
     });
     await page.goto('/');
 
-    const leftPanel = page.getByTestId('left-panel-desktop');
+    const leftPanel = page.getByLabel('Left panel', { exact: true });
 
     await expect(
       leftPanel.getByRole('button', { name: 'Digital LaSuite services' }),
@@ -145,7 +216,7 @@ test.describe('Left panel desktop', () => {
     resizeHandle = page.locator('[data-panel-resize-handle-id]').first();
     await expect(resizeHandle).toBeVisible();
 
-    const leftPanel = page.getByTestId('left-panel-desktop');
+    const leftPanel = page.getByTestId('left-panel');
     await expect(leftPanel).toBeVisible();
 
     // Get initial panel width
@@ -186,30 +257,29 @@ test.describe('Left panel responsive', () => {
     await page.setViewportSize({ width: 500, height: 1200 });
     await page.goto('/');
 
-    await expect(page.getByTestId('left-panel-desktop')).toBeHidden();
-    await expect(page.getByTestId('left-panel-mobile')).not.toBeInViewport();
-
     const header = page.locator('header').first();
+    const leftPanel = page.getByLabel('Left panel', { exact: true });
     const homeButton = page.getByTestId('home-button');
     const newDocButton = page.getByTestId('new-doc-button');
     const userMenu = page.getByRole('button', {
       name: 'User menu',
     });
 
+    await expect(leftPanel).not.toBeInViewport();
     await expect(homeButton).not.toBeInViewport();
     await expect(newDocButton).not.toBeInViewport();
     await expect(userMenu).not.toBeInViewport();
 
     await createDoc(page, 'mobile-doc-test', browserName, 1, true);
 
-    await header.getByLabel('Open the header menu').click();
+    await header.getByLabel(/Show the side panel/).click();
 
-    await expect(page.getByTestId('left-panel-mobile')).toBeInViewport();
+    await expect(leftPanel).toBeInViewport();
     await expect(homeButton).toBeInViewport();
     await expect(newDocButton).toBeInViewport();
     await expect(userMenu).toBeInViewport();
 
-    await header.getByLabel('Close the header menu').click();
+    await leftPanel.getByRole('button', { name: 'Close left panel' }).click();
 
     // Tablet size - like in desktop, left panel should be visible
     await page.setViewportSize({ width: 900, height: 1200 });
@@ -218,7 +288,11 @@ test.describe('Left panel responsive', () => {
     await expect(page.getByRole('link', { name: 'All docs' })).toBeInViewport();
     await expect(newDocButton).toBeInViewport();
     await expect(userMenu).toBeInViewport();
-    await expect(header.getByLabel('Open the header menu')).toBeHidden();
+    await expect(header.getByLabel('Toggle left panel')).toBeVisible();
+
+    await page.setViewportSize({ width: 1100, height: 1200 });
+    await page.goto('/');
+    await expect(header.getByLabel('Toggle left panel')).toBeHidden();
   });
 
   test('checks panel closes when clicking on a subdoc', async ({
@@ -250,10 +324,17 @@ test.describe('Left panel responsive', () => {
       true,
     );
 
-    const header = page.locator('header').first();
-    await header.getByLabel('Open the header menu').click();
+    await page.waitForTimeout(500);
 
-    await expect(page.getByTestId('left-panel-mobile')).toBeInViewport();
+    const leftPanel = page.getByLabel('Left panel', { exact: true });
+
+    await expect(leftPanel).not.toBeInViewport();
+
+    await openHeaderMenu(page);
+
+    await expect(leftPanel).toBeInViewport({
+      ratio: 1,
+    });
 
     const docTree = page.getByTestId('doc-tree');
     await expect(docTree.getByText(docTitle)).toBeVisible();
@@ -262,7 +343,7 @@ test.describe('Left panel responsive', () => {
 
     await docTree.getByText(docChild).click();
     await verifyDocName(page, docChild);
-    await expect(page.getByTestId('left-panel-mobile')).not.toBeInViewport();
+    await expect(leftPanel).not.toBeInViewport();
   });
 
   test('checks panel coordination on tablet sizes', async ({

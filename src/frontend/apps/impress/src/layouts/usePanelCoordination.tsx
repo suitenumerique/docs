@@ -48,7 +48,7 @@ export function usePanelCoordination(): void {
     // Case 2 – leaving tablet
     if (screenSize !== 'tablet' && prevScreenSize === 'tablet') {
       if (useLeftPanelStore.getState().wasAutoClosed) {
-        toggleLeftPanel({ type: 'desktop', value: true });
+        toggleLeftPanel();
       }
       return;
     }
@@ -64,7 +64,7 @@ export function usePanelCoordination(): void {
     // Case 4 – right closes on tablet
     if (screenSize === 'tablet' && !isRightPanelOpen && prevRightOpen) {
       if (useLeftPanelStore.getState().wasAutoClosed) {
-        toggleLeftPanel({ type: 'desktop', value: true });
+        toggleLeftPanel();
       }
       return;
     }

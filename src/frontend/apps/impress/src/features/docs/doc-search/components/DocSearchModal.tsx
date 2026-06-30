@@ -155,7 +155,8 @@ const DocSearchModalGlobal = ({
         >
           <Box
             $padding={{ horizontal: 'sm', bottom: 'base' }}
-            $height={isLargeScreen ? '500px' : 'calc(100vh - 68px - 1rem)'}
+            // TODO: DOM feature badly made - find a way to not calculate the height of the modal
+            $height={isLargeScreen ? '500px' : 'calc(100vh - 9rem)'}
           >
             {search.length === 0 && (
               <Box

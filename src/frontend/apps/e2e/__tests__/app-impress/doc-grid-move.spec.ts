@@ -5,7 +5,7 @@ import {
   getGridRow,
   getOtherBrowserName,
   mockedListDocs,
-  toggleHeaderMenu,
+  openHeaderMenu,
   verifyDocName,
 } from './utils-common';
 import { writeInEditor } from './utils-editor';
@@ -426,7 +426,7 @@ test.describe('Doc grid dnd mobile', () => {
       true,
     );
 
-    await toggleHeaderMenu(page);
+    await openHeaderMenu(page);
 
     await expect(page.locator('.--docs-sub-page-item').first()).toHaveAttribute(
       'draggable',

@@ -1,65 +1,45 @@
 import { create } from 'zustand';
 
-type TogglePanelType = { type: 'desktop' | 'mobile' };
-
-type TogglePanelArgs = {
-  value?: boolean;
-} & Partial<TogglePanelType>;
+import {
+  MOBILE_BREAKPOINT,
+  useResponsiveStore,
+} from '@/stores/useResponsiveStore';
 
 interface LeftPanelState {
   isPanelOpen: boolean;
-  isPanelOpenMobile: boolean;
   /**
    * Depending on the responsive breakpoint, the panel can be auto-closed, and so
    * auto-opened later on.
    */
   wasAutoClosed: boolean;
-  togglePanel: (args?: TogglePanelArgs) => void;
-  closePanel: (args?: TogglePanelType) => void;
+  togglePanel: () => void;
+  closePanel: () => void;
+  openPanel: () => void;
   autoClose: () => void;
 }
 
-export const useLeftPanelStore = create<LeftPanelState>((set, get) => ({
-  isPanelOpen: true,
-  isPanelOpenMobile: false,
-  wasAutoClosed: false,
-  togglePanel: ({ value, type }: TogglePanelArgs = {}) => {
-    set({ wasAutoClosed: false });
-    if (typeof value === 'boolean') {
-      if (type === 'mobile') {
-        set({ isPanelOpenMobile: value });
-        return;
-      }
-      if (type === 'desktop') {
-        set({ isPanelOpen: value });
-        return;
-      }
-      set({ isPanelOpen: value, isPanelOpenMobile: value });
-      return;
-    }
+const isMobileOnInit = () =>
+  typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT;
 
-    const { isPanelOpen, isPanelOpenMobile } = get();
-    if (type === 'mobile') {
-      set({ isPanelOpenMobile: !isPanelOpenMobile });
-      return;
-    }
-    if (type === 'desktop') {
-      set({ isPanelOpen: !isPanelOpen });
-      return;
-    }
-    set({ isPanelOpen: !isPanelOpen, isPanelOpenMobile: !isPanelOpenMobile });
+export const useLeftPanelStore = create<LeftPanelState>((set, get) => ({
+  isPanelOpen: !isMobileOnInit(),
+  wasAutoClosed: false,
+  togglePanel: () => {
+    const { isPanelOpen } = get();
+    set({ isPanelOpen: !isPanelOpen, wasAutoClosed: false });
   },
-  closePanel: ({ type }: Partial<TogglePanelType> = {}) => {
-    set({ wasAutoClosed: false });
-    if (type === 'mobile') {
-      set({ isPanelOpenMobile: false });
-      return;
-    }
-    if (type === 'desktop') {
-      set({ isPanelOpen: false });
-      return;
-    }
-    set({ isPanelOpen: false, isPanelOpenMobile: false });
+  openPanel: () => {
+    set({ isPanelOpen: true, wasAutoClosed: false });
+  },
+  closePanel: () => {
+    set({ isPanelOpen: false, wasAutoClosed: false });
   },
   autoClose: () => set({ isPanelOpen: false, wasAutoClosed: true }),
 }));
+
+// Close the panel automatically whenever the responsive store switches to mobile.
+useResponsiveStore.subscribe((state, prevState) => {
+  if (state.isMobile && !prevState.isMobile) {
+    useLeftPanelStore.getState().autoClose();
+  }
+});

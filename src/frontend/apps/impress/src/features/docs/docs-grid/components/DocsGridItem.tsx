@@ -8,6 +8,7 @@ import { Box, Icon, StyledLink, Text } from '@/components';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, LinkReach, SimpleDocItem, useTrans } from '@/docs/doc-management';
+import { useLeftPanelStore } from '@/features/left-panel';
 import { useDate } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
@@ -29,15 +30,25 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const { untitledDocument } = useTrans();
 
   const { t } = useTranslation();
-  const { isDesktop } = useResponsiveStore();
+  const { isDesktop, isLargeScreen } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
   const { spacingsTokens } = useCunninghamTheme();
   const dateToDisplay = useDateToDisplay(doc, isInTrashbin);
+  const { openPanel } = useLeftPanelStore();
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       (e.target as HTMLAnchorElement).click();
+    }
+  };
+
+  /**
+   * When coming from the index page, we want the left panel to be open by default
+   */
+  const handleClick = () => {
+    if (isLargeScreen) {
+      openPanel();
     }
   };
 
@@ -79,6 +90,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
             `}
             href={`/docs/${doc.id}`}
             onKeyDown={handleKeyDown}
+            onClick={handleClick}
           >
             <DocsGridItemTitle doc={doc} withTooltip={!dragMode} />
           </StyledLink>
