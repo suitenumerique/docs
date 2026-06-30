@@ -14,6 +14,7 @@ import {
   getMatchingLocales,
   useSynchronizedLanguage,
 } from '@/features/language';
+import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 /**
  * LanguagePickerLegacy component for selecting language.
@@ -22,6 +23,7 @@ import {
  * @returns JSX.Element
  */
 export const LanguagePickerLegacy = () => {
+  const { isSmallMobile } = useResponsiveStore();
   const { t, i18n } = useTranslation();
   const { data: conf } = useConfig();
   const { data: user } = useAuthQuery();
@@ -87,7 +89,9 @@ export const LanguagePickerLegacy = () => {
         $gap="0.5rem"
         $align="center"
       >
-        <Icon iconName="translate" $color="inherit" $size="xl" />
+        {!isSmallMobile && (
+          <Icon iconName="translate" $color="inherit" $size="xl" />
+        )}
         <span lang={toLangTag(currentLanguageCode)}>
           {currentLanguageLabel}
         </span>

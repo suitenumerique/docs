@@ -34,21 +34,10 @@ export const useRouteChangeCompleteFocus = () => {
           return;
         }
 
-        const prefersReducedMotion = window.matchMedia(
-          '(prefers-reduced-motion: reduce)',
-        ).matches;
-
         if (isKeyboardNavigationRef.current) {
           focusMainContentStart({ preventScroll: true });
           isKeyboardNavigationRef.current = false;
         }
-        if (router.pathname === '/docs/[id]') {
-          return;
-        }
-        focusTarget.scrollIntoView({
-          behavior: prefersReducedMotion ? 'auto' : 'smooth',
-          block: 'start',
-        });
       });
     };
 

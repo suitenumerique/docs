@@ -1,12 +1,11 @@
 import Image from 'next/image';
 
 import { Box } from '@/components';
+import { Title } from '@/components/Title';
 import { Waffle } from '@/components/Waffle';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
-import { Title } from '@/features/header';
 import { LanguagePickerLegacy } from '@/features/language';
-import { LeftPanelToggleMobile } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
 export const HEADER_HEIGHT = 91;
@@ -38,14 +37,9 @@ export const HomeHeader = () => {
         $align="center"
         $gap="2rem"
         $direction="row"
-        $width={isSmallMobile ? '100%' : 'auto'}
+        $width="auto"
         $justify="center"
       >
-        {isSmallMobile && (
-          <Box $position="absolute" $css="left: 1rem;">
-            <LeftPanelToggleMobile />
-          </Box>
-        )}
         {!isSmallMobile && logo?.src && (
           <Image
             priority
@@ -78,12 +72,14 @@ export const HomeHeader = () => {
           {icon?.withTitle && <Title />}
         </Box>
       </Box>
-      {!isSmallMobile && (
-        <Box $direction="row" $gap="1rem" $align="center">
-          <LanguagePickerLegacy />
-          <Waffle />
-        </Box>
-      )}
+      <Box
+        $direction="row"
+        $gap={!isSmallMobile ? '1rem' : undefined}
+        $align="center"
+      >
+        <LanguagePickerLegacy />
+        <Waffle />
+      </Box>
     </Box>
   );
 };

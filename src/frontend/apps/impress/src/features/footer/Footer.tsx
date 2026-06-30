@@ -4,9 +4,8 @@ import { useTranslation } from 'react-i18next';
 import styled, { css } from 'styled-components';
 
 import { Box, StyledLink, Text } from '@/components/';
+import { Title } from '@/components/Title';
 import { useConfig } from '@/core/config';
-
-import { Title } from '../header';
 
 import IconLink from './assets/external-link.svg';
 import { ContentType } from './types';
