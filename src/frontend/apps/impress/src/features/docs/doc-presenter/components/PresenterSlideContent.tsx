@@ -21,6 +21,10 @@ const slideContentCss = css`
   .bn-slash-menu {
     display: none !important;
   }
+
+  .bn-block-content[data-content-type='divider'] {
+    display: none;
+  }
 `;
 
 const setRefValue = (
