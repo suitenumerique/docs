@@ -20,6 +20,12 @@ const slideContentCss = css`
     display: none !important;
   }
 
+  .bn-block-content.ProseMirror-selectednode > *,
+  .ProseMirror-selectednode > .bn-block-content > *,
+  .ProseMirror-selectednode {
+    outline: 0 !important;
+  }
+
   .bn-block-content[data-content-type='divider'] {
     display: none;
   }
