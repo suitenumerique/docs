@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) export presenter slides as PDF #2487
+
 ### Fixed
 
 - 🐛(frontend) hide Leave in the doc menu when not logged in #2626

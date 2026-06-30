@@ -6,6 +6,7 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
+  Download,
   Link,
   Maximize,
   Minimize,
@@ -25,8 +26,10 @@ interface PresenterFloatingBarProps {
   onPrev: () => void;
   onNext: () => void;
   onCopyLink: () => void;
+  onExportPdf: () => void;
   onToggleFullscreen: () => void;
   onClose: () => void;
+  isExportingPdf: boolean;
 }
 
 const barCss = css`
@@ -83,8 +86,10 @@ export const PresenterFloatingBar = ({
   onPrev,
   onNext,
   onCopyLink,
+  onExportPdf,
   onToggleFullscreen,
   onClose,
+  isExportingPdf,
 }: PresenterFloatingBarProps) => {
   const { t } = useTranslation();
   const isFirst = index <= 0;
@@ -121,8 +126,14 @@ export const PresenterFloatingBar = ({
         icon: <Link aria-hidden="true" width="16" height="16" />,
         callback: onCopyLink,
       },
+      {
+        label: t('Download PDF'),
+        icon: <Download aria-hidden="true" width="16" height="16" />,
+        callback: onExportPdf,
+        isDisabled: isExportingPdf,
+      },
     ],
-    [onCopyLink, t],
+    [isExportingPdf, onCopyLink, onExportPdf, t],
   );
 
   return (
