@@ -15,6 +15,7 @@ import { useCopyPresenterLink } from '../hooks/useCopyPresenterLink';
 import { usePresenterShortcuts } from '../hooks/usePresenterShortcuts';
 import { getSlideTitle, useSlides } from '../hooks/useSlides';
 import type { PresenterBlock, PresenterSlideData } from '../types';
+import { printPresenterSlides } from '../utils_print';
 
 import { PresenterDocsLogo } from './PresenterDocsLogo';
 import { PresenterFloatingBar } from './PresenterFloatingBar';
@@ -86,6 +87,8 @@ export const PresenterOverlay = ({
     ],
     [contentSlides, title],
   );
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
   const total = slides.length;
   const [currentIndex, setCurrentIndex] = useState(() =>
     clampSlideIndex(initialSlideIndex, total),
@@ -128,6 +131,18 @@ export const PresenterOverlay = ({
     () => setCurrentIndex(clamp(total - 1)),
     [clamp, total],
   );
+  const exportPdf = useCallback(async () => {
+    if (isExportingPdf) {
+      return;
+    }
+
+    setIsExportingPdf(true);
+    try {
+      await printPresenterSlides(slides);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  }, [isExportingPdf, slides]);
 
   const { isFullscreen, enter, exitIfOwned, toggle } = useBrowserFullscreen();
 
@@ -214,6 +229,8 @@ export const PresenterOverlay = ({
           onPrev={goPrev}
           onNext={goNext}
           onCopyLink={() => copyPresenterLink(currentIndex)}
+          onExportPdf={() => void exportPdf()}
+          isExportingPdf={isExportingPdf}
           onToggleFullscreen={() => void toggle()}
           onClose={onClose}
         />
