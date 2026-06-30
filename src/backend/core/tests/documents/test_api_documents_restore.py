@@ -110,24 +110,6 @@ def test_api_documents_restore_authenticated_owner_ancestor_deleted():
     assert grand_parent_deleted_at > document_deleted_at
 
 
-def test_api_documents_restore_ability_false_when_only_ancestor_deleted():
-    """The restore ability should be false when only an ancestor is deleted."""
-    user = factories.UserFactory()
-    client = APIClient()
-    client.force_login(user)
-
-    parent = factories.DocumentFactory()
-    document = factories.DocumentFactory(parent=parent)
-    factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
-
-    parent.soft_delete()
-
-    response = client.get(f"/api/v1.0/documents/{document.id!s}/")
-
-    assert response.status_code == 200
-    assert response.json()["abilities"]["restore"] is False
-
-
 def test_api_documents_restore_authenticated_owner_expired():
     """It should not be possible to restore a document beyond the allowed time limit."""
     user = factories.UserFactory()

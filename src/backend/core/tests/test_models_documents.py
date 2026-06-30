@@ -458,7 +458,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "media_check": True,
         "move": True,
         "partial_update": True,
-        "restore": True,
+        "restore": False,
         "retrieve": True,
         "tree": True,
         "update": True,
@@ -513,6 +513,20 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "versions_retrieve": False,
         "search": False,
     }
+
+
+def test_models_documents_get_abilities_restore_false_when_only_ancestor_deleted():
+    """The restore ability should be false when only an ancestor is deleted."""
+    user = factories.UserFactory()
+    parent = factories.DocumentFactory()
+    document = factories.DocumentFactory(parent=parent, users=[(user, "owner")])
+
+    parent.soft_delete()
+    document.refresh_from_db()
+
+    assert document.deleted_at is None
+    assert document.ancestors_deleted_at == parent.deleted_at
+    assert document.get_abilities(user)["restore"] is False
 
 
 @override_settings(
