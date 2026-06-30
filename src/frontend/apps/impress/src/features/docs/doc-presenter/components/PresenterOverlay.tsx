@@ -13,10 +13,11 @@ import { PRESENTER_WINDOW_RADIUS } from '../constants';
 import { useBrowserFullscreen } from '../hooks/useBrowserFullscreen';
 import { useCopyPresenterLink } from '../hooks/useCopyPresenterLink';
 import { usePresenterShortcuts } from '../hooks/usePresenterShortcuts';
-import { getSlideTitle, useSlides } from '../hooks/useSlides';
+import { getSlideTitle, hasDividerBlock, useSlides } from '../hooks/useSlides';
 import { PresenterBlock, PresenterSlideData } from '../types';
 import { printPresenterSlides } from '../utils_print';
 
+import { PresenterDividerHint } from './PresenterDividerHint';
 import { PresenterDocsLogo } from './PresenterDocsLogo';
 import { PresenterFloatingBar } from './PresenterFloatingBar';
 import { PresenterSlide } from './PresenterSlide';
@@ -53,6 +54,13 @@ const docsLogoCss = css`
   z-index: 1;
 `;
 
+const dividerHintCss = css`
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
+  z-index: 1;
+`;
+
 export const PresenterOverlay = ({
   doc,
   onClose,
@@ -72,16 +80,20 @@ export const PresenterOverlay = ({
   const snapshotBlocks = snapshotRef.current;
 
   const contentSlides = useSlides(snapshotBlocks as PresenterBlock[]);
+  const hasDividers = useMemo(
+    () => hasDividerBlock(snapshotBlocks as PresenterBlock[]),
+    [snapshotBlocks],
+  );
   const title = useMemo(() => {
     const { titleWithoutEmoji } = getEmojiAndTitle(doc.title ?? '');
     return titleWithoutEmoji.trim() || t('Untitled document');
   }, [doc.title, t]);
   const slides = useMemo<PresenterSlideData[]>(
     () => [
-      { kind: 'title', title, showDividerHint: false },
+      { kind: 'title', title, showDividerHint: !hasDividers },
       ...contentSlides.map((blocks) => ({ kind: 'content' as const, blocks })),
     ],
-    [contentSlides, title],
+    [contentSlides, hasDividers, title],
   );
   // Clamp to a valid slide already at init (not only via the effect below), so
   // an out-of-range deep-link (e.g. `slide=99`) never emits a transient
@@ -90,6 +102,7 @@ export const PresenterOverlay = ({
     Math.min(Math.max(0, initialIndex), slides.length - 1),
   );
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isDividerHintDismissed, setIsDividerHintDismissed] = useState(false);
 
   const total = slides.length;
   const clamp = useCallback(
@@ -168,6 +181,11 @@ export const PresenterOverlay = ({
   }, [currentIndex, total]);
 
   const frameRef = useRef<HTMLDivElement>(null);
+  const shouldShowDividerHint =
+    currentIndex === 0 &&
+    !isDividerHintDismissed &&
+    slides[0]?.kind === 'title' &&
+    slides[0].showDividerHint;
 
   useEffect(() => {
     const currentSlide = slides[currentIndex];
@@ -218,6 +236,14 @@ export const PresenterOverlay = ({
             />
           ))}
         </Box>
+
+        {shouldShowDividerHint && (
+          <Box $css={dividerHintCss}>
+            <PresenterDividerHint
+              onDismiss={() => setIsDividerHintDismissed(true)}
+            />
+          </Box>
+        )}
 
         <Box $css={docsLogoCss}>
           <PresenterDocsLogo />
