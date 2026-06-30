@@ -1,1 +1,2 @@
-export { PresenterOverlay } from './components/PresenterOverlay';
+export { PresenterRoot } from './components/PresenterRoot';
+export * from './stores';
