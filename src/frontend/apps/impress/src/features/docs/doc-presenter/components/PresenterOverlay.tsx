@@ -11,6 +11,7 @@ import { Doc, getEmojiAndTitle } from '@/docs/doc-management';
 
 import { PRESENTER_WINDOW_RADIUS } from '../constants';
 import { useBrowserFullscreen } from '../hooks/useBrowserFullscreen';
+import { useCopyPresenterLink } from '../hooks/useCopyPresenterLink';
 import { usePresenterShortcuts } from '../hooks/usePresenterShortcuts';
 import { getSlideTitle, useSlides } from '../hooks/useSlides';
 import type { PresenterBlock, PresenterSlideData } from '../types';
@@ -22,6 +23,8 @@ interface PresenterOverlayProps {
   doc: Doc;
   initialSlideIndex: number;
   onClose: () => void;
+  /** Notified whenever the current slide changes (used to sync the URL). */
+  onIndexChange?: (index: number) => void;
 }
 
 const overlayCss = css`
@@ -47,9 +50,11 @@ export const PresenterOverlay = ({
   doc,
   initialSlideIndex,
   onClose,
+  onIndexChange,
 }: PresenterOverlayProps) => {
   const { t } = useTranslation();
   const editor = useEditorStore((state) => state.editor);
+  const copyPresenterLink = useCopyPresenterLink(doc.id);
 
   // Snapshot the editor's blocks once at mount. Subsequent collaborator
   // edits do not affect the ongoing presentation (by design).
@@ -82,6 +87,25 @@ export const PresenterOverlay = ({
   useEffect(() => {
     setCurrentIndex(clamp(initialSlideIndex));
   }, [initialSlideIndex, clamp]);
+
+  // `total` is only known after slides are computed, so a deep-link with an
+  // out-of-range slide (e.g. `slide=99`) is snapped to the last slide here.
+  useEffect(() => {
+    setCurrentIndex((i) => clamp(i));
+  }, [clamp]);
+
+  // Keep the URL (or any consumer) in sync with the displayed slide. Also fires
+  // on mount, so opening manually writes `slide=1` to the address bar. The ref
+  // guard ensures we only notify on a real slide change: `onIndexChange` may
+  // change identity when the consumer rewrites the URL, and re-emitting the
+  // same index would loop.
+  const lastEmittedRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (lastEmittedRef.current !== currentIndex) {
+      lastEmittedRef.current = currentIndex;
+      onIndexChange?.(currentIndex);
+    }
+  }, [currentIndex, onIndexChange]);
 
   const goPrev = useCallback(
     () => setCurrentIndex((i) => clamp(i - 1)),
@@ -149,7 +173,7 @@ export const PresenterOverlay = ({
   }
 
   return createPortal(
-    <FocusScope contain autoFocus restoreFocus>
+    <FocusScope autoFocus restoreFocus>
       <Box
         $css={overlayCss}
         role="dialog"
@@ -177,6 +201,7 @@ export const PresenterOverlay = ({
           isFullscreen={isFullscreen}
           onPrev={goPrev}
           onNext={goNext}
+          onCopyLink={() => copyPresenterLink(currentIndex)}
           onToggleFullscreen={() => void toggle()}
           onClose={onClose}
         />
