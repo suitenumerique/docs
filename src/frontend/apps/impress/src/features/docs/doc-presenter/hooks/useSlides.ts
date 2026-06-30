@@ -164,6 +164,12 @@ const getRenderedSlideGroups = <T extends PresenterBlock>(
     stripLeadingEmptyParagraphsAfterDivider,
   );
 
+const hasBlockId = (blocks: PresenterBlock[], blockId: string): boolean =>
+  blocks.some(
+    (block) =>
+      block.id === blockId || hasBlockId(block.children ?? [], blockId),
+  );
+
 /**
  * Split a flat list of top-level blocks into slide groups.
  *
@@ -188,6 +194,67 @@ export const splitBlocksIntoSlides = <T extends PresenterBlock>(
     .filter((group) => group.length > 0);
 
   return nonEmpty.length > 0 ? nonEmpty : [[]];
+};
+
+/**
+ * Map a block id to the index of the rendered (non-empty) content slide it
+ * belongs to. Accepts a regular block id, a block nested under a divider, or a
+ * divider's own id. When the matching group is dropped at render time (e.g. an
+ * empty slide), falls back to the closest rendered slide: the one directly
+ * containing the block, else the following content slide, else the previous
+ * one. Returns 0 when the block is absent (and as the ultimate fallback).
+ */
+export const getContentSlideIndexForBlock = <T extends PresenterBlock>(
+  blocks: T[],
+  blockId: string,
+): number => {
+  const rawGroups = getRawSlideGroups(blocks);
+  const renderedGroups = getRenderedSlideGroups(blocks);
+  const nonEmptyGroups = renderedGroups
+    .map((group, index) => ({ group, index }))
+    .filter(({ group }) => group.blocks.length > 0);
+
+  const getClosestRenderedSlideIndex = (groupIndex: number) => {
+    const directSlideIndex = nonEmptyGroups.findIndex(
+      ({ index }) => index === groupIndex,
+    );
+
+    if (directSlideIndex !== -1) {
+      return directSlideIndex;
+    }
+
+    const followingSlideIndex = nonEmptyGroups.findIndex(
+      ({ index }) => index > groupIndex,
+    );
+
+    if (followingSlideIndex !== -1) {
+      return followingSlideIndex;
+    }
+
+    const previousSlideIndex = nonEmptyGroups.findLastIndex(
+      ({ index }) => index < groupIndex,
+    );
+
+    return previousSlideIndex !== -1 ? previousSlideIndex : 0;
+  };
+
+  const directGroupIndex = rawGroups.findIndex((group) =>
+    hasBlockId(group.blocks, blockId),
+  );
+
+  if (directGroupIndex !== -1) {
+    return getClosestRenderedSlideIndex(directGroupIndex);
+  }
+
+  const dividerGroupIndex = rawGroups.findIndex(
+    (group) => group.dividerId === blockId,
+  );
+
+  if (dividerGroupIndex === -1) {
+    return 0;
+  }
+
+  return getClosestRenderedSlideIndex(dividerGroupIndex);
 };
 
 /** Memoized {@link splitBlocksIntoSlides} for use during render. */
