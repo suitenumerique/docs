@@ -10,11 +10,15 @@ from lasuite.marketing.tasks import create_or_update_contact
 from lasuite.oidc_login.backends import (
     OIDCAuthenticationBackend as LaSuiteOIDCAuthenticationBackend,
 )
+from rest_framework.authentication import (
+    SessionAuthentication as BaseSessionAuthentication,
+)
 
 from core.models import DuplicateEmailError
 from core.utils.analytics import PosthogEventName, posthog_capture
 
 logger = logging.getLogger(__name__)
+
 
 # Settings renamed warnings
 if os.environ.get("USER_OIDC_FIELDS_TO_FULLNAME"):
@@ -81,3 +85,19 @@ class OIDCAuthenticationBackend(LaSuiteOIDCAuthenticationBackend):
 
         if user:
             posthog_capture(PosthogEventName.USER_LOGIN, user)
+
+
+class SessionAuthentication(BaseSessionAuthentication):
+    """
+    SessionAuthentication that yields a 401 (instead of 403) for unauthenticated requests.
+
+    DRF chooses between 401 and 403 based on whether the first authentication class returns a
+    truthy `authenticate_header`. The stock `SessionAuthentication` does not implement it
+    (it inherits `BaseAuthentication.authenticate_header`, which returns `None`), so anonymous
+    requests get a misleading 403. Returning a value restores the correct 401, signalling that the
+    client may authenticate and retry.
+    """
+
+    def authenticate_header(self, request):
+        """Return a non-empty challenge so DRF responds with 401 rather than 403."""
+        return "Session"

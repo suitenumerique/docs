@@ -29,6 +29,10 @@ and this project adheres to
 - 🐛(frontend) fix service worker causing reload on tab focus #2454
 - 🐛(backend) update restore ability for inherited deletion #2148
 
+### Removed
+
+- 🔥(backend) remove unused default authentication backend
+
 ## [v5.3.0] - 2026-06-19
 
 ### Added
