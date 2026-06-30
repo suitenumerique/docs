@@ -142,7 +142,7 @@
     "icon": {
       "src": "/assets/icon-docs.svg",
       "style": {
-        "width": "32px",
+        "width": "40px",
         "height": "auto"
       },
       "alt": "",

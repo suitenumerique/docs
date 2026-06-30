@@ -4,7 +4,6 @@ import { css } from 'styled-components';
 
 import { Box, Icon, Text } from '@/components';
 import { Footer } from '@/features/footer';
-import { LeftPanel } from '@/features/left-panel';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 import { useResponsiveStore } from '@/stores';
 
@@ -50,11 +49,6 @@ export function HomeContent() {
       `}
     >
       <HomeHeader />
-      {isSmallMobile && (
-        <Box $css="& .--docs--left-panel-header{display: none;}">
-          <LeftPanel />
-        </Box>
-      )}
       <Box
         $css={css`
           height: calc(100vh - ${getHeaderHeight(isSmallMobile)}px);
