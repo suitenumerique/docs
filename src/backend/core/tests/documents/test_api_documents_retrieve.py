@@ -536,7 +536,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "media_check": True,
             "move": access.role in ["administrator", "owner"],
             "partial_update": access.role not in ["reader", "commenter"],
-            "restore": access.role == "owner",
+            "restore": False,
             "retrieve": True,
             "search": True,
             "tree": True,

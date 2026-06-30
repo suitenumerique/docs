@@ -72,26 +72,28 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
         />
         {t('Document deleted')}
       </Box>
-      <Button
-        onClick={() =>
-          restoreDoc({
-            docId: doc.id,
-          })
-        }
-        color="error"
-        variant="tertiary"
-        size="nano"
-        icon={
-          <Icon
-            iconName="undo"
-            $withThemeInherited
-            $size="18px"
-            variant="symbols-outlined"
-          />
-        }
-      >
-        Restore
-      </Button>
+      {doc.abilities.restore && (
+        <Button
+          onClick={() =>
+            restoreDoc({
+              docId: doc.id,
+            })
+          }
+          color="error"
+          variant="tertiary"
+          size="nano"
+          icon={
+            <Icon
+              iconName="undo"
+              $withThemeInherited
+              $size="18px"
+              variant="symbols-outlined"
+            />
+          }
+        >
+          Restore
+        </Button>
+      )}
     </Card>
   );
 };

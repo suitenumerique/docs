@@ -458,7 +458,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "media_check": True,
         "move": True,
         "partial_update": True,
-        "restore": True,
+        "restore": False,
         "retrieve": True,
         "tree": True,
         "update": True,
@@ -905,6 +905,22 @@ def test_models_documents_get_abilities_children_destroy(  # noqa: PLR0913
 
     abilities = document.get_abilities(user)
     assert abilities["destroy"] is can_destroy
+
+
+@pytest.mark.parametrize("parent_deleted", [False, True])
+def test_models_documents_get_abilities_owner_ancestor_deleted(parent_deleted):
+    """Test restore a child should not be enabled when a parent is deleted."""
+    user = factories.UserFactory()
+    parent = factories.DocumentFactory(users=[(user, "owner")])
+    document = factories.DocumentFactory(parent=parent)
+
+    if parent_deleted:
+        parent.soft_delete()
+        document.refresh_from_db()
+
+    abilities = document.get_abilities(user)
+
+    assert abilities["restore"] is False
 
 
 @override_settings(AI_ALLOW_REACH_FROM="public")
