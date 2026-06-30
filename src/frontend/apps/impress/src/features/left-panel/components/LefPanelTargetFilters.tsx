@@ -7,12 +7,13 @@ import { Box, Icon, StyledLink, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { DocDefaultFilter } from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
+import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 export const LeftPanelTargetFilters = () => {
   const { t } = useTranslation();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
+  const { isMobile } = useResponsiveStore();
   const { closePanel } = useLeftPanelStore();
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
 
@@ -50,7 +51,9 @@ export const LeftPanelTargetFilters = () => {
   };
 
   const handleFilterClick = () => {
-    closePanel({ type: 'mobile' });
+    if (isMobile) {
+      closePanel();
+    }
   };
 
   return (

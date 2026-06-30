@@ -6,10 +6,12 @@ import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components';
 import { useConfig } from '@/core/config/api/useConfig';
+import { useLeftPanelStore } from '@/features/left-panel/stores/useLeftPanelStore';
 import ArrowDownIcon from '@/icons/arrow-drop-down.svg';
 import SubDocIcon from '@/icons/doc-new-subdoc.svg';
 import PlusIcon from '@/icons/doc-plus.svg';
 import UploadIcon from '@/icons/upload-arrow.svg';
+import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 import { useCreateChildDoc } from '../api/useCreateChildDoc';
 import { useImport } from '../hooks/useImport';
@@ -56,6 +58,8 @@ export const NewDocButton = ({ onClose }: NewDocButtonProps) => {
 };
 
 export function DropdownArrow() {
+  const { isMobile } = useResponsiveStore();
+  const { closePanel } = useLeftPanelStore();
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentDoc } = useDocStore();
@@ -68,11 +72,17 @@ export function DropdownArrow() {
   } = useImport({
     onImportSuccess: (doc) => {
       void router.push(`/docs/${doc.id}/`);
+      if (isMobile) {
+        closePanel();
+      }
     },
   });
   const { mutate: createChildDoc } = useCreateChildDoc({
     onSuccess: (newDoc) => {
       void router.push(`/docs/${newDoc.id}`);
+      if (isMobile) {
+        closePanel();
+      }
     },
   });
 

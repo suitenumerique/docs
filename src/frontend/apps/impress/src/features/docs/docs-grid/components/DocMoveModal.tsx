@@ -208,7 +208,8 @@ export const DocMoveModal = ({
           >
             <Box
               $padding={{ horizontal: 'md', top: 'base' }}
-              $height={isModal ? 'min(60vh, 350px)' : 'calc(100vh - 260px)'}
+              // TODO: DOM feature badly made - find a way to not calculate the height of the modal
+              $height={isModal ? 'min(60vh, 350px)' : 'calc(100vh - 180px)'}
             >
               <Box>
                 <DocSearchContent

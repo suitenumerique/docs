@@ -5,6 +5,7 @@ import { css } from 'styled-components';
 
 import { Box } from '@/components';
 import { useConfig } from '@/core';
+import { useResponsiveStore } from '@/stores';
 
 const SHADOW_HOST_ID = 'lasuite-widget-lagaufre-shadow';
 const BUTTON_CLASS = 'lagaufre-button';
@@ -12,8 +13,13 @@ const BUTTON_CLASS = 'lagaufre-button';
 /**
  * TODO: This is a temporary workaround to fix the placement of the waffle panel.
  * @see https://github.com/suitenumerique/ui-kit/pull/260
+ *
+ * We improve the positioning on mobile, we should check if the uikit manage correctly
+ * this case as well before totally remove this code.
  */
 const useWafflePanelPlacement = () => {
+  const { isSmallMobile } = useResponsiveStore();
+
   useEffect(() => {
     const observers: MutationObserver[] = [];
 
@@ -30,7 +36,19 @@ const useWafflePanelPlacement = () => {
 
       const buttonRect = button.getBoundingClientRect();
       const bottom = `${window.innerHeight - buttonRect.top + 10}px`;
-      const left = `${buttonRect.left}px`;
+
+      /**
+       * We want to position the dialog such that it is aligned with the button,
+       * but also ensure that it does not overflow the viewport.
+       */
+      const dialogWidth = dialog.offsetWidth;
+      const idealLeft = buttonRect.left;
+      const margin = 10; // 10px margin from the edge of the viewport
+      const clampedLeft = Math.max(
+        0,
+        Math.min(idealLeft, window.innerWidth - dialogWidth - margin),
+      );
+      const left = isSmallMobile ? `${clampedLeft}px` : `${idealLeft}px`;
 
       if (
         dialog.style.getPropertyValue('bottom') === bottom &&
@@ -44,6 +62,7 @@ const useWafflePanelPlacement = () => {
       dialog.style.setProperty('bottom', bottom, 'important');
       dialog.style.setProperty('right', 'auto', 'important');
       dialog.style.setProperty('left', left, 'important');
+      dialog.style.setProperty('width', 'auto', 'important');
     };
 
     const setupPanel = (host: HTMLElement) => {
@@ -83,7 +102,7 @@ const useWafflePanelPlacement = () => {
     observers.push(outerObserver);
 
     return () => observers.forEach((o) => o.disconnect());
-  }, []);
+  }, [isSmallMobile]);
 };
 
 export const Waffle = () => {

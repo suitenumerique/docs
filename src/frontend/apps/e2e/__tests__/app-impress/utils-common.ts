@@ -94,7 +94,7 @@ export const randomName = (name: string, browserName: string, length: number) =>
   });
 
 export const openHeaderMenu = async (page: Page) => {
-  const toggleButton = page.getByTestId('header-menu-toggle');
+  const toggleButton = page.getByTestId('floating-bar-toggle-left-panel');
   await expect(toggleButton).toBeVisible();
 
   const isExpanded =
@@ -104,8 +104,16 @@ export const openHeaderMenu = async (page: Page) => {
   }
 };
 
-export const closeHeaderMenu = async (page: Page) => {
-  const toggleButton = page.getByTestId('header-menu-toggle');
+export const closeHeaderMenu = async (page: Page, isMobile = false) => {
+  if (isMobile) {
+    const closeButton = page.getByRole('button', { name: 'Close left panel' });
+    await expect(closeButton).toBeVisible();
+    await closeButton.click();
+
+    return;
+  }
+
+  const toggleButton = page.getByTestId('floating-bar-toggle-left-panel');
   await expect(toggleButton).toBeVisible();
 
   const isExpanded =
@@ -116,9 +124,10 @@ export const closeHeaderMenu = async (page: Page) => {
 };
 
 export const toggleHeaderMenu = async (page: Page) => {
-  const toggleButton = page.getByTestId('header-menu-toggle');
-  await expect(toggleButton).toBeVisible();
-  await toggleButton.click();
+  await page
+    .getByTestId('floating-bar-toggle-left-panel')
+    .or(page.getByRole('button', { name: 'Close left panel' }))
+    .click();
 };
 
 export const createDoc = async (

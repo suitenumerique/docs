@@ -1,10 +1,22 @@
+import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 
-import { Box, HorizontalSeparator, InfiniteScroll, Text } from '@/components';
+import {
+  Box,
+  HorizontalSeparator,
+  InfiniteScroll,
+  StyledLink,
+  Text,
+} from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useInfiniteDocsFavorite } from '@/docs/doc-management';
-
-import { LeftPanelFavoriteItem } from './LeftPanelFavoriteItem';
+import {
+  Doc,
+  SimpleDocItem,
+  useInfiniteDocsFavorite,
+} from '@/docs/doc-management';
+import { DocsGridActions } from '@/features/docs/docs-grid';
+import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 export const LeftPanelFavorites = () => {
   const { t } = useTranslation();
@@ -55,6 +67,63 @@ export const LeftPanelFavorites = () => {
             />
           )}
         </Box>
+      </Box>
+    </Box>
+  );
+};
+
+type LeftPanelFavoriteItemProps = {
+  doc: Doc;
+};
+
+export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
+  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { isLargeScreen } = useResponsiveStore();
+  const { t } = useTranslation();
+
+  return (
+    <Box
+      as="li"
+      $direction="row"
+      $align="center"
+      $justify="space-between"
+      $css={css`
+        padding: ${spacingsTokens['2xs']};
+        border-radius: 4px;
+        .pinned-actions {
+          opacity: ${isLargeScreen ? 0 : 1};
+        }
+        &:hover {
+          background-color: var(
+            --c--contextuals--background--semantic--contextual--primary
+          );
+          .pinned-actions {
+            opacity: 1;
+          }
+        }
+        &:focus-within {
+          cursor: pointer;
+          box-shadow: 0 0 0 2px ${colorsTokens['brand-400']} !important;
+          .pinned-actions {
+            opacity: 1;
+          }
+        }
+      `}
+      key={doc.id}
+      className="--docs--left-panel-favorite-item"
+    >
+      <StyledLink
+        href={`/docs/${doc.id}`}
+        $css={css`
+          overflow: auto;
+          outline: none !important;
+        `}
+        aria-label={`${doc.title}, ${t('Updated')} ${DateTime.fromISO(doc.updated_at).toRelative()}`}
+      >
+        <SimpleDocItem showDate doc={doc} />
+      </StyledLink>
+      <Box className="pinned-actions" $align="center">
+        <DocsGridActions doc={doc} />
       </Box>
     </Box>
   );

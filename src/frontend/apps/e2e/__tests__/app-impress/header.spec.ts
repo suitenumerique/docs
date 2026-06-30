@@ -1,53 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-import { overrideConfig } from './utils-common';
-
 test.describe('Header', () => {
-  test('checks all the elements are visible', async ({ page }) => {
-    await page.goto('/');
-
-    const header = page.locator('header').first();
-
-    await expect(header.getByTestId('header-logo-link')).toBeVisible();
-    await expect(header.locator('h1').getByText('Docs')).toHaveCSS(
-      'font-family',
-      /Roboto/i,
-    );
-  });
-
-  test('checks all the elements are visible with DSFR theme', async ({
-    page,
-  }) => {
-    await overrideConfig(page, {
-      FRONTEND_THEME: 'dsfr',
-      theme_customization: {
-        header: {
-          icon: {
-            src: '/assets/icon-docs-v2.svg',
-            style: {
-              width: '100px',
-              height: 'auto',
-            },
-            alt: '',
-            withTitle: false,
-            'data-testid': 'custom-testid-docs',
-          },
-        },
-      },
-    });
-    await page.goto('/');
-
-    const header = page.locator('header').first();
-
-    await expect(header.getByTestId('custom-testid-docs')).toHaveAttribute(
-      'src',
-      '/assets/icon-docs-v2.svg',
-    );
-    // With withTitle: false, the h1 is kept for accessibility but visually hidden via sr-only
-    await expect(header.locator('h1').getByText('Docs')).toHaveClass(/sr-only/);
-  });
-
-  test('it displays skip link on first TAB and focuses page heading on click', async ({
+  /**
+   * TODO: add back the skip link
+   */
+  test.skip('it displays skip link on first TAB and focuses page heading on click', async ({
     page,
   }) => {
     await page.goto('/');
@@ -71,29 +28,32 @@ test.describe('Header', () => {
     await expect(pageHeading).toBeFocused();
   });
 
-  test('checks the header is correctly overrided', async ({ page }) => {
-    await overrideConfig(page, {
-      FRONTEND_THEME: 'dsfr',
-      theme_customization: {
-        header: {
-          icon: {
-            src: '/assets/logo-gouv.svg',
-            width: '220px',
-            height: 'auto',
-            alt: '',
-          },
-        },
-      },
-    });
-
+  test('checks elements visibility on different screen sizes', async ({
+    page,
+  }) => {
+    // Desktop viewport
     await page.goto('/');
+
     const header = page.locator('header').first();
 
-    const logoImage = header.getByTestId('header-icon-docs');
-    await expect(logoImage).toBeVisible();
+    await expect(header.getByLabel('Toggle left panel')).toBeHidden();
+    await expect(header.getByLabel('Search docs')).toBeHidden();
 
-    await expect(logoImage).not.toHaveAttribute('src', '/assets/icon-docs.svg');
-    await expect(logoImage).toHaveAttribute('src', '/assets/logo-gouv.svg');
-    await expect(logoImage).toHaveAttribute('alt', '');
+    // Tablet viewport
+    await page.setViewportSize({ width: 900, height: 1200 });
+    await expect(header.getByLabel('Toggle left panel')).toBeVisible();
+    await expect(header.getByLabel('Search docs')).toBeHidden();
+
+    await header.getByLabel('Toggle left panel').click();
+    await expect(header.getByLabel('Toggle left panel')).toBeVisible();
+    await expect(header.getByLabel('Search docs')).toBeVisible();
+
+    await expect(header.getByLabel('Toggle left panel')).toBeVisible();
+    await expect(header.getByLabel('Search docs')).toBeVisible();
+
+    // Mobile viewport
+    await page.setViewportSize({ width: 500, height: 1200 });
+    await expect(header.getByLabel('Toggle left panel')).toBeVisible();
+    await expect(header.getByLabel('Search docs')).toBeVisible();
   });
 });
