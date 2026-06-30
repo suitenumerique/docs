@@ -18,6 +18,7 @@ import {
 } from '@/docs/doc-management/';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import { FloatingBar } from '@/features/docs/doc-header/components/FloatingBar';
+import { PresenterRoot } from '@/features/docs/doc-presenter';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { DocEditorSkeleton, useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
@@ -68,6 +69,7 @@ export function DocLayout() {
           <FloatingBar />
           <DocPage id={id} />
         </MainLayout>
+        <PresenterRoot />
       </TreeProvider>
     </>
   );
