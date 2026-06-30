@@ -262,6 +262,15 @@ export const useSlides = <T extends PresenterBlock>(blocks: T[]): T[][] => {
   return useMemo(() => splitBlocksIntoSlides(blocks), [blocks]);
 };
 
+/** Whether the block tree contains at least one divider (at any depth). */
+export const hasDividerBlock = <T extends PresenterBlock>(
+  blocks: T[],
+): boolean =>
+  blocks.some(
+    (block) =>
+      block.type === 'divider' || hasDividerBlock(block.children ?? []),
+  );
+
 const getBlocksInReadingOrder = <T extends PresenterBlock>(
   blocks: T[],
 ): PresenterBlock[] => {
