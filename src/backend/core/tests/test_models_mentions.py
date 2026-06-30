@@ -81,3 +81,28 @@ def test_models_mentions_notify_mentioned_user_deleted():
     assert mention.notified_at is None
     # pylint: disable-next=no-member
     assert len(mail.outbox) == 0
+
+
+def test_models_mentions_notify_concurrent_duplicate():
+    """A notification should be suppressed when the context guard is already claimed.
+
+    Simulates two notification tasks racing on the same context: the second
+    task reads the database before the first one commits its `notified_at`
+    update, so the cache guard is the only thing preventing a duplicate email.
+    """
+    document = factories.DocumentFactory()
+    mentioned_user = factories.UserFactory()
+    first = factories.MentionFactory(document=document, mentioned_user=mentioned_user)
+    second = factories.MentionFactory(document=document, mentioned_user=mentioned_user)
+
+    assert first.notify() is True
+
+    # Hide the first notification from the database cooldown check, as a
+    # concurrent task would see it before the first task commits.
+    models.Mention.objects.filter(pk=first.pk).update(notified_at=None)
+    assert second.is_notification_in_cooldown() is False
+
+    assert second.notify() is False
+    assert second.notified_at is None
+    # pylint: disable-next=no-member
+    assert len(mail.outbox) == 1

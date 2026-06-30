@@ -6,6 +6,7 @@ import random
 from datetime import timedelta
 
 from django.core import mail
+from django.core.cache import cache
 from django.utils import timezone
 
 import pytest
@@ -446,11 +447,14 @@ def test_api_documents_mention_cooldown_expired(settings):
     assert response.status_code == 201
     assert len(mail.outbox) == 1
 
-    # Age the first mention beyond the cooldown period
+    # Age the first mention beyond the cooldown period. The concurrency guard
+    # key expires together with the cooldown in real time, so drop it too.
+    first_mention = models.Mention.objects.get()
     expired = timezone.now() - timedelta(
         minutes=settings.MENTION_NOTIFICATION_COOLDOWN_MINUTES + 1
     )
     models.Mention.objects.update(created_at=expired, notified_at=expired)
+    cache.delete(first_mention.notification_guard_key)
 
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
