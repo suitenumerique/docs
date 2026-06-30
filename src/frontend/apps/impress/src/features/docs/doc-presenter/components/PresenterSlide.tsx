@@ -10,13 +10,15 @@ import {
   PRESENTER_SLIDE_FADE_MS,
 } from '../constants';
 import { useFitScale } from '../hooks/useFitScale';
+import { PresenterSlideData } from '../types';
 
 import { PresenterSlideContent } from './PresenterSlideContent';
+import { PresenterTitleSlide } from './PresenterTitleSlide';
 
 interface PresenterSlideProps {
-  blocks: unknown[];
   frameRef: RefObject<HTMLDivElement | null>;
   isCurrent: boolean;
+  slide: PresenterSlideData;
   ariaLabel?: string;
 }
 
@@ -71,9 +73,9 @@ const innerCss = css`
 `;
 
 export const PresenterSlide = ({
-  blocks,
   frameRef,
   isCurrent,
+  slide,
   ariaLabel,
 }: PresenterSlideProps) => {
   const { t } = useTranslation();
@@ -107,7 +109,11 @@ export const PresenterSlide = ({
     >
       <Box $css={stageCss} style={stageStyle}>
         <Box ref={innerRef} $css={innerCss} style={innerStyle}>
-          <PresenterSlideContent blocks={blocks} />
+          {slide.kind === 'title' ? (
+            <PresenterTitleSlide title={slide.title} />
+          ) : (
+            <PresenterSlideContent blocks={slide.blocks} />
+          )}
         </Box>
       </Box>
     </Box>

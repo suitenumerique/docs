@@ -1,7 +1,13 @@
+import path from 'path';
+
 import { Page, expect, test } from '@playwright/test';
 
 import { createDoc, goToGridDoc, mockedDocument } from './utils-common';
-import { openSuggestionMenu, writeInEditor } from './utils-editor';
+import {
+  openSuggestionMenu,
+  tryFocusEditorContent,
+  writeInEditor,
+} from './utils-editor';
 
 const openPresenter = async (page: Page) => {
   await page.getByLabel('Open the document options').click();
@@ -15,6 +21,29 @@ const openPresenter = async (page: Page) => {
 const insertDivider = async (page: Page) => {
   const { suggestionMenu } = await openSuggestionMenu({ page });
   await suggestionMenu.getByText('Divider', { exact: true }).click();
+};
+
+const insertImageInCurrentBlock = async (page: Page) => {
+  const fileChooserPromise = page.waitForEvent('filechooser');
+
+  await tryFocusEditorContent({ page });
+  await page.keyboard.type('/');
+  await page
+    .locator('.bn-suggestion-menu')
+    .getByText('Resizable image with caption', { exact: true })
+    .click();
+  await page.getByText('Upload image').click();
+
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles(
+    path.join(__dirname, 'assets/logo-suite-numerique.png'),
+  );
+
+  const image = page
+    .locator('.--docs--editor-container img.bn-visual-media')
+    .first();
+  await expect(image).toBeVisible({ timeout: 10000 });
+  return image;
 };
 
 const writeMultiSlideDoc = async (page: Page) => {
@@ -46,6 +75,8 @@ test.describe('Presenter Mode', () => {
     await expect(
       overlay.getByRole('toolbar', { name: 'Presenter controls' }),
     ).toBeVisible();
+    await expect(overlay.getByText(/presenter-open/)).toBeVisible();
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
     await expect(overlay.getByText('Hello presenter')).toBeVisible();
 
     // The presenter calls requestFullscreen on open. usePresenterShortcuts
@@ -92,19 +123,19 @@ test.describe('Presenter Mode', () => {
 
     const overlay = await openPresenter(page);
 
-    // The visible "1 / 3" counter is decorative (aria-hidden); the position is
+    // The visible "1 / 4" counter is decorative (aria-hidden); the position is
     // announced through a polite live region for screen readers instead.
     // react-aria/live-announcer creates a global role="log" div on document.body
     // (outside the dialog), so we query from `page`, not `overlay`.
     const liveRegion = page.locator(
       '[data-live-announcer="true"] [aria-live="polite"]',
     );
-    // The announcement includes the slide title extracted from the first
-    // text block (getSlideTitle), so assert the full message.
-    await expect(liveRegion).toContainText('Slide 1 of 3: Slide one');
+    // The title slide uses the document title, then content slides use the
+    // first text block (getSlideTitle).
+    await expect(liveRegion).toContainText('Slide 1 of 4:');
 
     await overlay.getByRole('button', { name: 'Next slide' }).click();
-    await expect(liveRegion).toContainText('Slide 2 of 3: Slide two');
+    await expect(liveRegion).toContainText('Slide 2 of 4: Slide one');
 
     // Each slide advertises a localized role description for screen readers.
     await expect(overlay.getByRole('group').first()).toHaveAttribute(
@@ -113,7 +144,7 @@ test.describe('Presenter Mode', () => {
     );
   });
 
-  test('renders a single-slide doc with counter 1/1 and disabled nav buttons', async ({
+  test('renders a content-only doc after the generated title slide', async ({
     page,
     browserName,
   }) => {
@@ -122,17 +153,56 @@ test.describe('Presenter Mode', () => {
 
     const overlay = await openPresenter(page);
 
-    await expect(overlay.getByText('1 / 1')).toBeVisible();
+    await expect(overlay.getByText('1 / 2')).toBeVisible();
     await expect(
       overlay.getByRole('button', { name: 'Previous slide' }),
     ).toBeDisabled();
     await expect(
       overlay.getByRole('button', { name: 'Next slide' }),
-    ).toBeDisabled();
+    ).toBeEnabled();
+
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    await expect(overlay.getByText('2 / 2')).toBeVisible();
     await expect(overlay.getByText('Slide A')).toBeVisible();
+    await expect(
+      overlay.getByRole('button', { name: 'Next slide' }),
+    ).toBeDisabled();
 
     await overlay.getByRole('button', { name: 'Close presenter' }).click();
     await expect(overlay).toBeHidden();
+  });
+
+  test('does not show selected-node chrome when the first slide block is an image', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-image-first', browserName, 1);
+    await insertImageInCurrentBlock(page);
+
+    const overlay = await openPresenter(page);
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    const presenterImage = overlay.locator('img.bn-visual-media').first();
+    await expect(presenterImage).toBeAttached({ timeout: 10000 });
+
+    const outline = await presenterImage.evaluate((img) => {
+      const blockContent = img.closest('.bn-block-content');
+      blockContent?.classList.add('ProseMirror-selectednode');
+
+      const outlinedElement =
+        (blockContent?.firstElementChild as HTMLElement | null) ??
+        (img as HTMLElement);
+      const style = getComputedStyle(outlinedElement);
+
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: style.outlineWidth,
+      };
+    });
+
+    expect(outline).toEqual({
+      outlineStyle: 'none',
+      outlineWidth: '0px',
+    });
   });
 
   test('navigates between slides via the floating bar buttons', async ({
@@ -147,23 +217,27 @@ test.describe('Presenter Mode', () => {
     const prev = overlay.getByRole('button', { name: 'Previous slide' });
     const next = overlay.getByRole('button', { name: 'Next slide' });
 
-    await expect(overlay.getByText('1 / 3')).toBeVisible();
-    await expect(overlay.getByText('Slide one')).toBeVisible();
+    await expect(overlay.getByText('1 / 4')).toBeVisible();
+    await expect(overlay.getByText(/presenter-nav-bar/)).toBeVisible();
     await expect(prev).toBeDisabled();
     await expect(next).toBeEnabled();
 
     await next.click();
-    await expect(overlay.getByText('2 / 3')).toBeVisible();
+    await expect(overlay.getByText('2 / 4')).toBeVisible();
+    await expect(overlay.getByText('Slide one')).toBeVisible();
+
+    await next.click();
+    await expect(overlay.getByText('3 / 4')).toBeVisible();
     await expect(overlay.getByText('Slide two')).toBeVisible();
 
     await next.click();
-    await expect(overlay.getByText('3 / 3')).toBeVisible();
+    await expect(overlay.getByText('4 / 4')).toBeVisible();
     await expect(overlay.getByText('Slide three')).toBeVisible();
     await expect(next).toBeDisabled();
     await expect(prev).toBeEnabled();
 
     await prev.click();
-    await expect(overlay.getByText('2 / 3')).toBeVisible();
+    await expect(overlay.getByText('3 / 4')).toBeVisible();
     await expect(overlay.getByText('Slide two')).toBeVisible();
   });
 
@@ -176,20 +250,20 @@ test.describe('Presenter Mode', () => {
 
     const overlay = await openPresenter(page);
 
-    await expect(overlay.getByText('1 / 3')).toBeVisible();
+    await expect(overlay.getByText('1 / 4')).toBeVisible();
 
     await page.keyboard.press('ArrowRight');
-    await expect(overlay.getByText('2 / 3')).toBeVisible();
+    await expect(overlay.getByText('2 / 4')).toBeVisible();
 
     await page.keyboard.press('End');
-    await expect(overlay.getByText('3 / 3')).toBeVisible();
+    await expect(overlay.getByText('4 / 4')).toBeVisible();
 
     await page.keyboard.press('Home');
-    await expect(overlay.getByText('1 / 3')).toBeVisible();
+    await expect(overlay.getByText('1 / 4')).toBeVisible();
 
-    // ArrowLeft on the first slide is clamped — counter stays at 1 / 3.
+    // ArrowLeft on the first slide is clamped — counter stays at 1 / 4.
     await page.keyboard.press('ArrowLeft');
-    await expect(overlay.getByText('1 / 3')).toBeVisible();
+    await expect(overlay.getByText('1 / 4')).toBeVisible();
   });
 
   test('scales each slide to fit the viewport (outer width = 900 × scale)', async ({
@@ -251,7 +325,11 @@ test.describe('Presenter Mode', () => {
     }
 
     const overlay = await openPresenter(page);
-    const slide = overlay.getByRole('group').filter({ hasNotText: '' }).first();
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    const slide = overlay
+      .getByRole('group')
+      .filter({ hasText: 'TOP MARKER' })
+      .first();
     await expect(slide).toBeVisible();
 
     // The first block ('TOP MARKER') must be at y=0 of the slide wrapper
