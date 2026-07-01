@@ -24,6 +24,7 @@ and this project adheres to
 - ♿️(frontend) align search modal field label with placeholder #2384
 - 🚚(frontend) move Waffle to bottom left #2455
 - ♿️(frontend) remove redundant aria-label on table of contents links #2459
+- ♻️(core) fix typo in settings COLLABORATION_WS_NOT_CONNECTED_READY_ONLY #2481
 
 ### Fixed
 

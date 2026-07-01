@@ -323,7 +323,7 @@ def test_api_documents_update_authenticated_no_websocket(settings):
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -366,7 +366,7 @@ def test_api_documents_update_authenticated_no_websocket_user_already_editing(se
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -405,7 +405,7 @@ def test_api_documents_update_no_websocket_other_user_connected_to_websocket(set
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -443,7 +443,7 @@ def test_api_documents_update_user_connected_to_websocket(settings):
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -487,7 +487,7 @@ def test_api_documents_update_websocket_server_unreachable_fallback_to_no_websoc
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -531,7 +531,7 @@ def test_api_documents_update_websocket_server_unreachable_fallback_to_no_websoc
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -572,7 +572,7 @@ def test_api_documents_update_websocket_server_room_not_found_fallback_to_no_web
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -650,7 +650,7 @@ def test_api_documents_update_feature_flag_disabled(settings):
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = False
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = False
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -983,7 +983,7 @@ def test_api_documents_patch_authenticated_no_websocket(settings):
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -1024,7 +1024,7 @@ def test_api_documents_patch_authenticated_no_websocket_user_already_editing(set
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -1059,7 +1059,7 @@ def test_api_documents_patch_no_websocket_other_user_connected_to_websocket(sett
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -1094,7 +1094,7 @@ def test_api_documents_patch_user_connected_to_websocket(settings):
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -1137,7 +1137,7 @@ def test_api_documents_patch_websocket_server_unreachable_fallback_to_no_websock
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -1180,7 +1180,7 @@ def test_api_documents_patch_websocket_server_unreachable_fallback_to_no_websock
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -1217,7 +1217,7 @@ def test_api_documents_patch_websocket_server_room_not_found_fallback_to_no_webs
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -1290,7 +1290,7 @@ def test_api_documents_patch_feature_flag_disabled(settings):
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = False
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = False
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -1375,7 +1375,7 @@ def test_api_documents_patch_empty_body(settings):
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
