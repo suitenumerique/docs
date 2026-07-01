@@ -23,6 +23,35 @@ You also have to add an environment variable in your `y-provider` configuration,
 Y_PROVIDER_API_KEY: a-shared-private-key-with-y-provider
 ```
 
+### Splitting conversion service
+
+The conversion service is present in the `y-provider` server. The same server used to managed websockets. You can split in one side the websocket server and in an other side the converter service.
+This feature is only available in our helm chart, if you are deploying an other way you can take example of what is made to implement it.
+The idea is to deploy twice the `y-provider` server, one dedicated for websockets and one dedicated to the conversion.
+
+in the helm chart, you can use this value that will do the job for you:
+
+```
+yProvider:
+  converter:
+    enabled: true
+```
+
+every parameters in the `yProvider` key can be overriden in the `yProvider.converter` key.
+
+Once enabled, you have to enable the `Y_PROVIDER_API_BASE_URL` with the url of the newly created service, it is the same as before with `-converter` at the end.
+If before it was
+
+```
+Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
+```
+
+now it is
+
+```
+Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider-converter:443/api/
+```
+
 ## Docspec configuration
 
 [Docspec](https://github.com/docspec) is an external service made to transform legacy document formats into accessible, reusable content for modern editors. We are using it to import `.docx` file and convert them to be used with docs, enabling all the power of Docs without the caveats of this legacy format.
