@@ -68,7 +68,7 @@ from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,
 )
-from core.tasks.mail import send_ask_for_access_mail
+from core.tasks.mail import send_ask_for_access_mail, send_mention_notification_mail
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.paths import filter_descendants
 from core.utils.s3_response_stream import content_stream
@@ -516,6 +516,16 @@ class DocumentViewSet(
 
     15. **AI Proxy**: Proxy an AI request to an external AI service.
         Example: POST /api/v1.0/documents/<resource_id>/ai-proxy
+
+    16. **Mention**: Mention a user on the document and notify them by email.
+        Example: POST /documents/{id}/mention/
+        Expected data:
+        - anchor_id (str): The location of the mention, used for the email deeplink.
+        - mentioned_user_id (uuid): The user being mentioned, must have access
+          to the document.
+        - thread_id (uuid, optional): The comment thread in which the mention
+          occurs. Omit for mentions in the document body.
+        Returns: 201 with the created mention.
 
     ### Ordering: created_at, updated_at, is_favorite, title
 
@@ -1857,6 +1867,36 @@ class DocumentViewSet(
             status=drf.status.HTTP_200_OK,
         )
 
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="mention",
+        throttle_scope="mention",
+    )
+    def mention(self, request, *args, **kwargs):
+        """Mention a user on the document and notify them by email.
+
+        The mention record is created synchronously; the email notification is
+        sent asynchronously by a Celery task, which suppresses it when the same
+        user was already notified in the same context (document body or thread)
+        within the cooldown period.
+        """
+        # Check permissions first
+        document = self.get_object()
+
+        serializer = serializers.MentionSerializer(
+            data=request.data,
+            context={**self.get_serializer_context(), "document": document},
+        )
+        serializer.is_valid(raise_exception=True)
+        mention = serializer.save(document=document, mentioned_by_user=request.user)
+
+        send_mention_notification_mail.delay(str(mention.id))
+
+        return drf.response.Response(
+            serializer.data, status=drf.status.HTTP_201_CREATED
+        )
+
     @drf.decorators.action(detail=True, methods=["post"], url_path="attachment-upload")
     def attachment_upload(self, request, *args, **kwargs):
         """Upload a file related to a given document"""
@@ -2719,10 +2759,10 @@ class DocumentAccessViewSet(
             | models.Document.objects.filter(pk=self.document.pk)
         ).filter(ancestors_deleted_at__isnull=True)
 
+        # All users with access see the full list of accesses (with limited
+        # user details for unprivileged roles) so that any collaborator
+        # allowed to comment can mention the others.
         queryset = self.get_queryset().filter(document__in=ancestors)
-
-        if role not in choices.PRIVILEGED_ROLES:
-            queryset = queryset.filter(role__in=choices.PRIVILEGED_ROLES)
 
         accesses = list(queryset.order_by("document__path"))
 

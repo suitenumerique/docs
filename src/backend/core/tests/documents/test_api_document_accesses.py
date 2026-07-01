@@ -80,8 +80,9 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
     via, role, mock_user_teams, django_assert_num_queries
 ):
     """
-    Authenticated users with no privileged role should only be able to list document
-    accesses associated with privileged roles for a document, including from ancestors.
+    Authenticated users with no privileged role should be able to list all document
+    accesses, including from ancestors, but with limited user information, so that
+    any collaborator allowed to comment can mention the others.
     """
     user = factories.UserFactory()
     client = APIClient()
@@ -108,18 +109,20 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
     factories.UserDocumentAccessFactory(document=child)
 
     if via == USER:
-        models.DocumentAccess.objects.create(
+        user_access = models.DocumentAccess.objects.create(
             document=document,
             user=user,
             role=role,
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
-        models.DocumentAccess.objects.create(
+        user_access = models.DocumentAccess.objects.create(
             document=document,
             team="lasuite",
             role=role,
         )
+    else:
+        raise RuntimeError()
 
     # Accesses for other documents to which the user is related should not be listed either
     other_access = factories.UserDocumentAccessFactory(user=user)
@@ -131,11 +134,9 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
     assert response.status_code == 200
     content = response.json()
 
-    # Make sure only privileged roles are returned
-    privileged_accesses = [
-        acc for acc in accesses if acc.role in choices.PRIVILEGED_ROLES
-    ]
-    assert len(content) == len(privileged_accesses)
+    # All accesses on the document and its ancestors are returned
+    all_accesses = [*accesses, user_access]
+    assert len(content) == len(all_accesses)
 
     assert sorted(content, key=lambda x: x["id"]) == sorted(
         [
@@ -147,6 +148,7 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                     "depth": access.document.depth,
                 },
                 "user": {
+                    "id": str(access.user.id),
                     "full_name": access.user.full_name,
                     "short_name": access.user.short_name,
                 }
@@ -159,12 +161,12 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                 "abilities": {
                     "destroy": False,
                     "partial_update": False,
-                    "retrieve": False,
+                    "retrieve": access.user is not None and access.user.id == user.id,
                     "set_role_to": [],
                     "update": False,
                 },
             }
-            for access in privileged_accesses
+            for access in all_accesses
         ],
         key=lambda x: x["id"],
     )

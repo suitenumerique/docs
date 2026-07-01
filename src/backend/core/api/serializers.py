@@ -73,8 +73,8 @@ class UserLightSerializer(UserSerializer):
 
     class Meta:
         model = models.User
-        fields = ["full_name", "short_name"]
-        read_only_fields = ["full_name", "short_name"]
+        fields = ["id", "full_name", "short_name"]
+        read_only_fields = ["id", "full_name", "short_name"]
 
 
 class ListDocumentSerializer(serializers.ModelSerializer):
@@ -1003,6 +1003,67 @@ class ThreadSerializer(serializers.ModelSerializer):
         if request:
             return thread.get_abilities(request.user)
         return {}
+
+
+class MentionSerializer(serializers.ModelSerializer):
+    """Serialize mentions of users in a document body or comment thread.
+
+    Expects the document on which the mention is created in the context.
+    """
+
+    document_id = serializers.PrimaryKeyRelatedField(source="document", read_only=True)
+    mentioned_user_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.User.objects.filter(is_active=True),
+        source="mentioned_user",
+    )
+    mentioned_by_user_id = serializers.PrimaryKeyRelatedField(
+        source="mentioned_by_user", read_only=True
+    )
+    thread_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Thread.objects.all(),
+        source="thread",
+        required=False,
+        allow_null=True,
+        default=None,
+    )
+
+    class Meta:
+        model = models.Mention
+        fields = [
+            "id",
+            "document_id",
+            "anchor_id",
+            "thread_id",
+            "mentioned_user_id",
+            "mentioned_by_user_id",
+            "created_at",
+            "notified_at",
+        ]
+        read_only_fields = [
+            "id",
+            "document_id",
+            "mentioned_by_user_id",
+            "created_at",
+            "notified_at",
+        ]
+
+    def validate_mentioned_user_id(self, user):
+        """Ensure the mentioned user has access to the document."""
+        document = models.Document.objects.get(pk=self.context["document"].pk)
+        if document.get_role(user) is None:
+            raise serializers.ValidationError(
+                "This user does not have access to the document."
+            )
+        return user
+
+    def validate_thread_id(self, thread):
+        """Ensure the thread belongs to the document on which the mention is created."""
+        document = self.context["document"]
+        if thread is not None and thread.document_id != document.id:
+            raise serializers.ValidationError(
+                "The thread does not belong to this document."
+            )
+        return thread
 
 
 class SearchQueryParamDocumentSerializer(serializers.Serializer):
