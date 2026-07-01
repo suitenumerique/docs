@@ -19,7 +19,7 @@ backend:
     COLLABORATION_SERVER_SECRET: my-secret
     CONVERSION_UPLOAD_ENABLED: True
     COLLABORATION_API_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}/collaboration/api/
-    COLLABORATION_WS_NOT_CONNECTED_READY_ONLY: True
+    COLLABORATION_WS_NOT_CONNECTED_READ_ONLY: True
     DJANGO_CSRF_TRUSTED_ORIGINS: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     DJANGO_CONFIGURATION: Feature
     DJANGO_ALLOWED_HOSTS: {{ .Values.feature }}-docs.{{ .Values.domain }}

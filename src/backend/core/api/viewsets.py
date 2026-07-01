@@ -805,7 +805,7 @@ class DocumentViewSet(
         """Check rules about collaboration."""
         if (
             not serializer.validated_data.get("websocket", False)
-            and settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY
+            and settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY
             and not self._can_user_edit_document(serializer.instance.id, set_cache=True)
         ):
             raise drf.exceptions.PermissionDenied(
@@ -825,7 +825,7 @@ class DocumentViewSet(
 
         can_edit = (
             True
-            if not settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY
+            if not settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY
             else self._can_user_edit_document(document.id)
         )
 
@@ -2049,7 +2049,7 @@ class DocumentViewSet(
 
         if (
             not serializer.validated_data.get("websocket", False)
-            and settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY
+            and settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY
             and not self._can_user_edit_document(document.id, set_cache=True)
         ):
             raise drf.exceptions.PermissionDenied(
@@ -3071,7 +3071,7 @@ class ConfigView(drf.views.APIView):
             "AI_FEATURE_LEGACY_ENABLED",
             "API_USERS_SEARCH_QUERY_MIN_LENGTH",
             "COLLABORATION_WS_URL",
-            "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
+            "COLLABORATION_WS_NOT_CONNECTED_READ_ONLY",
             "COLLABORATION_WS_INACTIVITY_TIMEOUT",
             "CONVERSION_FILE_EXTENSIONS_ALLOWED",
             "CONVERSION_FILE_MAX_SIZE",

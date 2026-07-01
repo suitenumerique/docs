@@ -150,7 +150,7 @@ test.describe('Doc Collaboration', () => {
      */
     await overrideConfig(page, {
       COLLABORATION_WS_URL: 'ws://localhost:5555/collaboration/ws/',
-      COLLABORATION_WS_NOT_CONNECTED_READY_ONLY: true,
+      COLLABORATION_WS_NOT_CONNECTED_READ_ONLY: true,
     });
 
     await page.goto('/');

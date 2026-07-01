@@ -522,9 +522,13 @@ class Base(Configuration):
     COLLABORATION_WS_URL = values.Value(
         None, environ_name="COLLABORATION_WS_URL", environ_prefix=None
     )
-    COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = values.BooleanValue(
-        False,
-        environ_name="COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
+    COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = values.BooleanValue(
+        default=values.BooleanValue(  # COLLABORATION_WS_NOT_CONNECTED_READY_ONLY compat
+            default=False,
+            environ_name="COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
+            environ_prefix=None,
+        ),
+        environ_name="COLLABORATION_WS_NOT_CONNECTED_READ_ONLY",
         environ_prefix=None,
     )
     COLLABORATION_WS_INACTIVITY_TIMEOUT = values.IntegerValue(
