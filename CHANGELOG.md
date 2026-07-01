@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ♿️(frontend) restore skip to content link after header redesign #2510
+- 🌐(i18n) rename cn_CN to zh_CN, add eo_PL and zh_TW locales #2486
 
 ## [v5.4.1] - 2026-07-09
 

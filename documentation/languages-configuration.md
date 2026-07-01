@@ -118,9 +118,9 @@ Before adding a new language, ensure that:
 The following languages have translation files available in `src/backend/locale/`:
 
 - `br_FR` - Breton (France)
-- `cn_CN` - Chinese (China) - *Note: Use `zh-cn` in DJANGO_LANGUAGES*
 - `de_DE` - German (Germany) - Use `de-de`
 - `en_US` - English (United States) - Use `en-us`
+- `eo_PL` - Esperanto - Use `eo-pl`
 - `es_ES` - Spanish (Spain) - Use `es-es`
 - `fr_FR` - French (France) - Use `fr-fr`
 - `it_IT` - Italian (Italy) - Use `it-it`
@@ -132,6 +132,7 @@ The following languages have translation files available in `src/backend/locale/
 - `tr_TR` - Turkish (Turkey) - Use `tr-tr`
 - `uk_UA` - Ukrainian (Ukraine) - Use `uk-ua`
 - `zh_CN` - Chinese (China) - Use `zh-cn`
+- `zh_TW` - Traditional Chinese (Taiwan) - Use `zh-tw`
 
 **Note:** When configuring `DJANGO_LANGUAGES`, use lowercase with hyphens (e.g., `pt-pt`, `ru-ru`) rather than the directory name format.
 
