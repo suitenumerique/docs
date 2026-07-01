@@ -32,6 +32,7 @@ import {
   useDocUtils,
   useDuplicateDoc,
 } from '@/docs/doc-management';
+import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useAuth } from '@/features/auth';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
@@ -82,14 +83,6 @@ const ModalExport =
       )
     : null;
 
-const PresenterOverlay = dynamic(
-  () =>
-    import('@/docs/doc-presenter').then((mod) => ({
-      default: mod.PresenterOverlay,
-    })),
-  { ssr: false },
-);
-
 interface DocToolBoxProps {
   doc: Doc;
 }
@@ -108,11 +101,13 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const [isModalShareOpen, setIsModalShareOpen] = useState(false);
   const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
-  const [isPresenterOpen, setIsPresenterOpen] = useState(false);
 
   const { restoreFocus, addLastFocus } = useFocusStore();
   const { isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
+  // Deep-link (#2397) and slide/URL sync live in PresenterRoot; here we only
+  // trigger the manual "Present" action.
+  const openPresenter = usePresenterStore((state) => state.open);
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: (data) => {
       void router.push(`/docs/${data.id}`);
@@ -148,9 +143,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       label: t('Present'),
       icon: <Present width={24} height={24} aria-hidden="true" />,
       callback: () => {
-        requestAnimationFrame(() => {
-          setIsPresenterOpen(true);
-        });
+        openPresenter(0);
       },
       isHidden: Boolean(doc.deleted_at) || isMobile,
       testId: `docs-actions-present-${doc.id}`,
@@ -313,14 +306,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             restoreFocus();
           }}
           doc={doc}
-        />
-      )}
-      {isPresenterOpen && (
-        <PresenterOverlay
-          doc={doc}
-          onClose={() => {
-            setIsPresenterOpen(false);
-          }}
         />
       )}
     </>
