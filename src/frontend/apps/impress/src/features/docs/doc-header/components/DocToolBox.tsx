@@ -7,7 +7,7 @@ import {
 import { Present } from '@gouvfr-lasuite/ui-kit/icons';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AddLinkSVG from '@/assets/icons/ui-kit/add_link.svg';
@@ -32,6 +32,7 @@ import {
   useDocUtils,
   useDuplicateDoc,
 } from '@/docs/doc-management';
+import { usePresenterToggleShortcut } from '@/docs/doc-presenter/hooks/usePresenterToggleShortcut';
 import { useAuth } from '@/features/auth';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
@@ -113,6 +114,15 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { restoreFocus, addLastFocus } = useFocusStore();
   const { isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
+
+  const togglePresenter = useCallback(() => {
+    setIsPresenterOpen((isOpen) => !isOpen);
+  }, []);
+  usePresenterToggleShortcut(
+    togglePresenter,
+    !doc.deleted_at && !isMobile, // same conditions as the "Present" menu entry
+  );
+
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: (data) => {
       void router.push(`/docs/${data.id}`);
