@@ -388,6 +388,27 @@ test.describe('Presenter Mode', () => {
     );
   });
 
+  test('opens the presenter at the targeted slide from a block side menu', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-side-menu', browserName, 1);
+    await writeMultiSlideDoc(page);
+
+    await page
+      .locator('.bn-block-outer')
+      .filter({ hasText: 'Slide two' })
+      .first()
+      .hover();
+    await page.locator('.bn-side-menu > button').last().click();
+    await page.getByRole('menuitem', { name: 'Present' }).click();
+
+    const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
+    await expect(overlay).toBeVisible();
+    await expect(overlay.getByText('3 / 4')).toBeVisible();
+    await expect(overlay.getByText('Slide two')).toBeVisible();
+  });
+
   test('opens presenter deep-links and normalizes slide params', async ({
     page,
     browserName,
