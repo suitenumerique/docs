@@ -38,16 +38,35 @@ backend:
     LOGGING_LEVEL_LOGGERS_APP: INFO
     OIDC_USERINFO_SHORTNAME_FIELD: "first_name"
     OIDC_USERINFO_FULLNAME_FIELDS: "name"
-    OIDC_OP_JWKS_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/certs
-    OIDC_OP_AUTHORIZATION_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/auth
-    OIDC_OP_TOKEN_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/token
-    OIDC_OP_USER_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/userinfo
-    OIDC_OP_LOGOUT_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/logout
+    # Point at the shared conversations Keycloak / realm "conversations" so docs
+    # and conversations share one identity pool. The shared dev client accepts any
+    # redirect host (redirectUris/webOrigins = "*").
+    OIDC_OP_JWKS_ENDPOINT: https://conversations-keycloak.127.0.0.1.nip.io/realms/conversations/protocol/openid-connect/certs
+    OIDC_OP_AUTHORIZATION_ENDPOINT: https://conversations-keycloak.127.0.0.1.nip.io/realms/conversations/protocol/openid-connect/auth
+    OIDC_OP_TOKEN_ENDPOINT: https://conversations-keycloak.127.0.0.1.nip.io/realms/conversations/protocol/openid-connect/token
+    OIDC_OP_USER_ENDPOINT: https://conversations-keycloak.127.0.0.1.nip.io/realms/conversations/protocol/openid-connect/userinfo
+    OIDC_OP_LOGOUT_ENDPOINT: https://conversations-keycloak.127.0.0.1.nip.io/realms/conversations/protocol/openid-connect/logout
     OIDC_REDIRECT_ALLOWED_HOSTS: "docs.127.0.0.1.nip.io"
-    OIDC_RP_CLIENT_ID: docs
+    OIDC_RP_CLIENT_ID: conversations
     OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
     OIDC_RP_SIGN_ALGO: RS256
     OIDC_RP_SCOPES: "openid email profile"
+    # Store the OIDC access/refresh tokens in the session so
+    # lasuite.oidc_login.backends.get_oidc_refresh_token works (used by the
+    # document-search conditional-refresh decorator).
+    OIDC_STORE_ACCESS_TOKEN: "True"
+    OIDC_STORE_REFRESH_TOKEN: "True"
+    OIDC_STORE_REFRESH_TOKEN_KEY: "qnw7gZrOFLkLuZIixzuxksNORFJyjWyi5ACugNchKJY="
+    # Resource server — let Conversations call /external_api/v1.0/* with the user's
+    # access token. The token introspects with client_id=conversations (shared dev
+    # client), and OIDC_RS_AUDIENCE_CLAIM defaults to "client_id", so allowing the
+    # "conversations" audience accepts it directly — no token exchange needed.
+    OIDC_RESOURCE_SERVER_ENABLED: "True"
+    OIDC_OP_URL: https://conversations-keycloak.127.0.0.1.nip.io/realms/conversations
+    OIDC_OP_INTROSPECTION_ENDPOINT: https://conversations-keycloak.127.0.0.1.nip.io/realms/conversations/protocol/openid-connect/token/introspect
+    OIDC_RS_CLIENT_ID: conversations
+    OIDC_RS_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
+    OIDC_RS_ALLOWED_AUDIENCES: conversations
     LOGIN_REDIRECT_URL: https://docs.127.0.0.1.nip.io
     LOGIN_REDIRECT_URL_FAILURE: https://docs.127.0.0.1.nip.io
     LOGOUT_REDIRECT_URL: https://docs.127.0.0.1.nip.io
