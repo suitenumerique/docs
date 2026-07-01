@@ -20,6 +20,7 @@ Use the section below to quickly find what you are looking for.
 - Configuration
   - [Environment variables](env.md)
   - [Object storage](s3.md)
+  - [Collaboration](collaboration.md)
   - [Customization](customization.md)
   - [Language configuration](languages-configuration.md)
   - [Search configuration](search.md)
