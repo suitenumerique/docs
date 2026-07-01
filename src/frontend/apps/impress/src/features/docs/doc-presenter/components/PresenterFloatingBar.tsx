@@ -1,14 +1,17 @@
 import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { DropdownMenu, DropdownMenuItem } from '@gouvfr-lasuite/ui-kit';
 import {
   ChevronLeft,
   ChevronRight,
+  Link,
   Maximize,
   Minimize,
+  Share,
   XMark,
 } from '@gouvfr-lasuite/ui-kit/icons';
-import { useEffect, useRef } from 'react';
+import { MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
+import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 
@@ -18,13 +21,15 @@ interface PresenterFloatingBarProps {
   isFullscreen: boolean;
   onPrev: () => void;
   onNext: () => void;
+  onCopyLink: () => void;
   onToggleFullscreen: () => void;
   onClose: () => void;
 }
 
 const barCss = css`
+  height: 32px;
   position: fixed;
-  bottom: 1.5rem;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1;
@@ -39,13 +44,48 @@ const barCss = css`
   border: 1px solid var(--c--contextuals--border--surface--primary);
   background: var(--c--contextuals--background--surface--primary);
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  button {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    min-height: 24px;
+    padding: 0;
+    border-radius: 4px;
+  }
+
+  button svg {
+    width: 16px;
+    height: 16px;
+  }
 `;
 
 const separatorCss = css`
   width: 1px;
   height: 1.25rem;
   background: var(--c--theme--colors--greyscale-200, #e5e5e5);
-  margin: 0 0.25rem;
+`;
+
+// The ui-kit DropdownMenu renders its popover in a React Aria portal at the
+// document root, outside the presenter overlay's stacking context — so its
+// z-index (and width) can only be raised above the overlay via a global style.
+// Mounted only while the menu is open (see render below).
+const presenterDropdownLayerZIndex = 1002;
+
+const PresenterDropdownLayerStyle = createGlobalStyle`
+  .react-aria-Popover {
+    z-index: ${presenterDropdownLayerZIndex};
+  }
+
+  .react-aria-Popover .c__dropdown-menu--tiny {
+    width: 150px;
+    min-width: 150px;
+  }
+
+  .react-aria-Popover .c__dropdown-menu--tiny .c__dropdown-menu-item {
+    box-sizing: border-box;
+    height: 32px;
+  }
 `;
 
 export const PresenterFloatingBar = ({
@@ -54,12 +94,14 @@ export const PresenterFloatingBar = ({
   isFullscreen,
   onPrev,
   onNext,
+  onCopyLink,
   onToggleFullscreen,
   onClose,
 }: PresenterFloatingBarProps) => {
   const { t } = useTranslation();
   const isFirst = index <= 0;
   const isLast = index >= total - 1;
+  const [isActionsOpen, setIsActionsOpen] = useState(false);
 
   // Move focus into the dialog on open so keyboard users land on the
   // controls (an ARIA dialog must move focus inside itself; here on the
@@ -76,53 +118,95 @@ export const PresenterFloatingBar = ({
     return () => cancelAnimationFrame(id);
   }, []);
 
+  // The DropdownMenu is controlled (isOpen/onOpenChange); stop the click from
+  // also reaching the overlay so the menu toggles cleanly.
+  const toggleActions = (event: MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setIsActionsOpen((isOpen) => !isOpen);
+  };
+
+  const actionOptions = useMemo<DropdownMenuItem[]>(
+    () => [
+      {
+        label: t('Copy link to slide'),
+        icon: <Link aria-hidden="true" width="16" height="16" />,
+        callback: onCopyLink,
+      },
+    ],
+    [onCopyLink, t],
+  );
+
   return (
-    <Box
-      ref={barRef}
-      $direction="row"
-      $align="center"
-      $css={barCss}
-      role="toolbar"
-      aria-label={t('Presenter controls')}
-    >
-      <Button
-        size="small"
-        color="neutral"
-        variant="tertiary"
-        disabled={isFirst}
-        onClick={onPrev}
-        aria-label={t('Previous slide')}
-        icon={<ChevronLeft />}
-      />
-      <Text as="span" $size="sm" $color="neutral" aria-hidden="true">
-        {index + 1} / {total}
-      </Text>
-      <Button
-        size="small"
-        color="neutral"
-        variant="tertiary"
-        disabled={isLast}
-        onClick={onNext}
-        aria-label={t('Next slide')}
-        icon={<ChevronRight />}
-      />
-      <Box $css={separatorCss} aria-hidden />
-      <Button
-        size="small"
-        color="neutral"
-        variant="tertiary"
-        onClick={onToggleFullscreen}
-        aria-label={isFullscreen ? t('Exit fullscreen') : t('Enter fullscreen')}
-        icon={isFullscreen ? <Minimize /> : <Maximize />}
-      />
-      <Button
-        size="small"
-        color="neutral"
-        variant="tertiary"
-        onClick={onClose}
-        aria-label={t('Close presenter')}
-        icon={<XMark />}
-      />
-    </Box>
+    <>
+      {isActionsOpen && <PresenterDropdownLayerStyle />}
+      <Box
+        ref={barRef}
+        $direction="row"
+        $align="center"
+        $css={barCss}
+        role="toolbar"
+        aria-label={t('Presenter controls')}
+      >
+        <Button
+          size="nano"
+          color="neutral"
+          variant="tertiary"
+          disabled={isFirst}
+          onClick={onPrev}
+          aria-label={t('Previous slide')}
+          icon={<ChevronLeft />}
+        />
+        <Text as="span" $size="sm" $color="neutral" aria-hidden="true">
+          {index + 1} / {total}
+        </Text>
+        <Button
+          size="nano"
+          color="neutral"
+          variant="tertiary"
+          disabled={isLast}
+          onClick={onNext}
+          aria-label={t('Next slide')}
+          icon={<ChevronRight />}
+        />
+        <Box $css={separatorCss} aria-hidden />
+        <DropdownMenu
+          options={actionOptions}
+          isOpen={isActionsOpen}
+          onOpenChange={setIsActionsOpen}
+          shouldCloseOnInteractOutside={() => true}
+          variant="tiny"
+        >
+          <Button
+            size="nano"
+            color="neutral"
+            variant="tertiary"
+            onClick={toggleActions}
+            aria-label={t('More options')}
+            aria-expanded={isActionsOpen}
+            aria-haspopup="menu"
+            icon={<Share />}
+          />
+        </DropdownMenu>
+        <Button
+          size="nano"
+          color="neutral"
+          variant="tertiary"
+          onClick={onToggleFullscreen}
+          aria-label={
+            isFullscreen ? t('Exit fullscreen') : t('Enter fullscreen')
+          }
+          icon={isFullscreen ? <Minimize /> : <Maximize />}
+        />
+        <Button
+          size="nano"
+          color="neutral"
+          variant="tertiary"
+          onClick={onClose}
+          aria-label={t('Close presenter')}
+          icon={<XMark />}
+        />
+      </Box>
+    </>
   );
 };

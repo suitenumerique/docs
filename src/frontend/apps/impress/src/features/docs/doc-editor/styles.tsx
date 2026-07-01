@@ -152,14 +152,32 @@ export const DocsEditorStyle = createGlobalStyle`
     /**
     * Divider
     */
-    [data-content-type='divider'] hr {
-      background: #d3d2cf;
-      margin: 1rem 0;
+    .bn-block-content[data-content-type='divider'] {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 28px;
+      padding: 0;
+    }
+    .bn-block-content[data-content-type='divider'] hr {
+      flex: 1 1 100%;
       width: 100%;
-      border: 1px solid #d3d2cf;
+      height: 1px;
+      margin: 0;
+      border: 0;
+      border-radius: 11px;
+      background: var(--c--contextuals--border--surface--primary);
+    }
+    .bn-block-content[data-content-type='divider'].ProseMirror-selectednode hr {
+      height: 9.5px;
+      outline: 0 !important;
+      box-shadow: none;
+      border: 4px solid
+        var(--c--contextuals--border--semantic--brand--tertiary);
+      background: var(--c--contextuals--border--semantic--brand--secondary);
     }
     .bn-side-menu[data-block-type='divider'] {
-      height: 38px;
+      height: 28px;
     }
 
     /**
