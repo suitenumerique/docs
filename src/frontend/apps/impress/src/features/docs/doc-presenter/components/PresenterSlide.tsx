@@ -1,11 +1,8 @@
-import { BlockNoteView } from '@blocknote/mantine';
-import { useCreateBlockNote } from '@blocknote/react';
-import { RefObject, useEffect, useRef } from 'react';
+import { RefObject, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
-import { blockNoteSchema } from '@/docs/doc-editor/components/BlockNoteEditor';
 
 import {
   PRESENTER_FRAME_PADDING_Y,
@@ -13,11 +10,15 @@ import {
   PRESENTER_SLIDE_FADE_MS,
 } from '../constants';
 import { useFitScale } from '../hooks/useFitScale';
+import { PresenterSlideData } from '../types';
+
+import { PresenterSlideContent } from './PresenterSlideContent';
+import { PresenterTitleSlide } from './PresenterTitleSlide';
 
 interface PresenterSlideProps {
-  blocks: unknown[];
   frameRef: RefObject<HTMLDivElement | null>;
   isCurrent: boolean;
+  slide: PresenterSlideData;
   ariaLabel?: string;
 }
 
@@ -47,12 +48,6 @@ const outerCss = css`
   overflow-x: hidden;
   background: white;
   transition: opacity ${PRESENTER_SLIDE_FADE_MS}ms ease;
-  /* Hide editor chrome that may leak through despite editable={false} */
-  .bn-side-menu,
-  .bn-formatting-toolbar,
-  .bn-slash-menu {
-    display: none !important;
-  }
 `;
 
 // The stage absorbs the un-scaled inner's layout box. Its explicit height
@@ -78,35 +73,13 @@ const innerCss = css`
 `;
 
 export const PresenterSlide = ({
-  blocks,
   frameRef,
   isCurrent,
+  slide,
   ariaLabel,
 }: PresenterSlideProps) => {
   const { t } = useTranslation();
   const innerRef = useRef<HTMLDivElement>(null);
-  const editor = useCreateBlockNote({
-    initialContent:
-      // BlockNote rejects an empty initialContent array — fall back to one empty paragraph.
-      blocks.length > 0
-        ? (blocks as NonNullable<
-            Parameters<typeof useCreateBlockNote>[0]
-          >['initialContent'])
-        : undefined,
-    schema: blockNoteSchema,
-  });
-
-  // ProseMirror adds role="textbox" and contenteditable on its root even
-  // when editable=false, making the SR announce "editing, autocomplete" on
-  // focus. Strip those attributes so the slide reads as plain content.
-  useEffect(() => {
-    const pm = innerRef.current?.querySelector('.ProseMirror');
-    if (pm) {
-      pm.removeAttribute('role');
-      pm.removeAttribute('contenteditable');
-      pm.setAttribute('tabindex', '-1');
-    }
-  }, []);
 
   const fit = useFitScale(innerRef, frameRef);
 
@@ -136,14 +109,11 @@ export const PresenterSlide = ({
     >
       <Box $css={stageCss} style={stageStyle}>
         <Box ref={innerRef} $css={innerCss} style={innerStyle}>
-          <BlockNoteView
-            editor={editor}
-            editable={false}
-            theme="light"
-            formattingToolbar={false}
-            slashMenu={false}
-            comments={false}
-          />
+          {slide.kind === 'title' ? (
+            <PresenterTitleSlide title={slide.title} />
+          ) : (
+            <PresenterSlideContent blocks={slide.blocks} />
+          )}
         </Box>
       </Box>
     </Box>
