@@ -523,7 +523,7 @@ class Base(Configuration):
         None, environ_name="COLLABORATION_WS_URL", environ_prefix=None
     )
     COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = values.BooleanValue(
-        default=values.BooleanValue(  # to keep compatibility with COLLABORATION_WS_NOT_CONNECTED_READY_ONLY
+        default=values.BooleanValue(  # COLLABORATION_WS_NOT_CONNECTED_READY_ONLY compat
             default=False,
             environ_name="COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
             environ_prefix=None,
