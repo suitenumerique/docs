@@ -1,8 +1,13 @@
 import path from 'path';
 
-import { Page, expect, test } from '@playwright/test';
+import { Locator, Page, expect, test } from '@playwright/test';
 
-import { createDoc, goToGridDoc, mockedDocument } from './utils-common';
+import {
+  createDoc,
+  goToGridDoc,
+  mockedDocument,
+  saveContent,
+} from './utils-common';
 import {
   openSuggestionMenu,
   tryFocusEditorContent,
@@ -46,6 +51,14 @@ const insertImageInCurrentBlock = async (page: Page) => {
   return image;
 };
 
+const getDocIdFromUrl = (page: Page) => {
+  const id = /\/docs\/([^/?]+)/.exec(page.url())?.[1];
+  if (!id) {
+    throw new Error(`Could not extract doc id from URL: ${page.url()}`);
+  }
+  return id;
+};
+
 const writeMultiSlideDoc = async (page: Page) => {
   const editor = await writeInEditor({ page, text: 'Slide one' });
   await editor.press('Enter');
@@ -56,6 +69,18 @@ const writeMultiSlideDoc = async (page: Page) => {
   await insertDivider(page);
   await editor.press('Enter');
   await writeInEditor({ page, text: 'Slide three' });
+};
+
+const openPresenterActions = async (page: Page, overlay: Locator) => {
+  await overlay.getByRole('button', { name: 'More options' }).click();
+  await expect(
+    page.getByRole('menuitem', { name: 'Copy link to slide' }),
+  ).toBeVisible();
+};
+
+const copyCurrentPresenterSlideLink = async (page: Page, overlay: Locator) => {
+  await openPresenterActions(page, overlay);
+  await page.getByRole('menuitem', { name: 'Copy link to slide' }).click();
 };
 
 test.beforeEach(async ({ page }) => {
@@ -356,6 +381,90 @@ test.describe('Presenter Mode', () => {
       topVisible.clientHeight ?? 0,
     );
   });
+
+  test('opens presenter deep-links and normalizes slide params', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'presenter-deeplink',
+      browserName,
+      1,
+    );
+    await writeMultiSlideDoc(page);
+    const docId = getDocIdFromUrl(page);
+
+    // Ensure the typed content is persisted (awaits the PATCH /content/) before
+    // reloading the page through the deep-link, instead of using a fixed sleep.
+    await saveContent(page, docTitle);
+    await page.goto(`/docs/${docId}/?view=present&slide=3`);
+
+    const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
+    await expect(overlay).toBeVisible({ timeout: 15000 });
+    await expect(overlay.getByText('3 / 4')).toBeVisible();
+    await expect(overlay.getByText('Slide two')).toBeVisible();
+
+    await page.goto(`/docs/${docId}/?view=present&slide=99`);
+    await expect(overlay).toBeVisible({ timeout: 15000 });
+    await expect(overlay.getByText('4 / 4')).toBeVisible();
+    await expect.poll(() => page.url()).toContain('slide=4');
+
+    await page.goto(`/docs/${docId}/?view=present&slide=abc`);
+    await expect(overlay).toBeVisible({ timeout: 15000 });
+    await expect(overlay.getByText('1 / 4')).toBeVisible();
+  });
+
+  test('syncs slide URLs, copies the current-slide link, and strips params on close', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-url-sync', browserName, 1);
+    await writeMultiSlideDoc(page);
+
+    const overlay = await openPresenter(page);
+    await expect.poll(() => page.url()).toContain('view=present');
+    await expect.poll(() => page.url()).toContain('slide=1');
+
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    await expect(overlay.getByText('2 / 4')).toBeVisible();
+    await expect.poll(() => page.url()).toContain('slide=2');
+
+    await copyCurrentPresenterSlideLink(page, overlay);
+    await expect(page.getByText('Link Copied !')).toBeVisible();
+
+    await overlay.getByRole('button', { name: 'Close presenter' }).click();
+    await expect(overlay).toBeHidden();
+    await expect.poll(() => page.url()).not.toContain('view=present');
+    await expect.poll(() => page.url()).not.toContain('slide=');
+    await expect(page.locator('.--docs--editor-container')).toBeVisible();
+  });
+
+  test('copies a deep-link pointing to the current slide', async ({
+    page,
+    browserName,
+    context,
+  }) => {
+    test.skip(
+      browserName !== 'chromium',
+      'Clipboard read-back is Chromium-only',
+    );
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+
+    await createDoc(page, 'presenter-copy-link-content', browserName, 1);
+    await writeMultiSlideDoc(page);
+    const docId = getDocIdFromUrl(page);
+
+    const overlay = await openPresenter(page);
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    await expect(overlay.getByText('2 / 4')).toBeVisible();
+
+    await copyCurrentPresenterSlideLink(page, overlay);
+    await expect(page.getByText('Link Copied !')).toBeVisible();
+
+    const clipboard = await page.evaluate(() => navigator.clipboard.readText());
+    expect(clipboard).toContain(`/docs/${docId}/?view=present&slide=2`);
+  });
 });
 
 test.describe('Presenter Mode mobile', () => {
@@ -387,5 +496,23 @@ test.describe('Presenter Mode mobile', () => {
 
     await page.getByLabel('Open the document options').click();
     await expect(page.getByRole('menuitem', { name: 'Present' })).toBeHidden();
+  });
+
+  test('ignores a ?view=present deep-link on small mobile viewports', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-mobile-deeplink', browserName, 1, true);
+    await writeInEditor({ page, text: 'Slide A' });
+    const docId = getDocIdFromUrl(page);
+
+    await page.goto(`/docs/${docId}/?view=present&slide=1`);
+
+    await expect(page.locator('.--docs--editor-container')).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(
+      page.getByRole('dialog', { name: 'Presenter mode' }),
+    ).toBeHidden();
   });
 });
