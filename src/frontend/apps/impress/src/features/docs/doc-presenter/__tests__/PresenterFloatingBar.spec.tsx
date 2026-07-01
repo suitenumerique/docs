@@ -19,9 +19,11 @@ describe('PresenterFloatingBar', () => {
         index={0}
         total={3}
         isFullscreen={false}
+        isExportingPdf={false}
         onPrev={noop}
         onNext={noop}
         onCopyLink={noop}
+        onExportPdf={noop}
         onToggleFullscreen={noop}
         onClose={noop}
       />,
@@ -33,7 +35,7 @@ describe('PresenterFloatingBar', () => {
       screen.getByRole('menuitem', { name: 'Copy link to slide' }),
     ).toBeVisible();
     expect(
-      screen.queryByRole('menuitem', { name: 'Download PDF' }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('menuitem', { name: 'Download PDF' }),
+    ).toBeVisible();
   });
 });

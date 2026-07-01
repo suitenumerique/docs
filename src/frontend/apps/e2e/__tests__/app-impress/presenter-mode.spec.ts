@@ -1,6 +1,7 @@
 import path from 'path';
 
 import { Locator, Page, expect, test } from '@playwright/test';
+import { PDFParse } from 'pdf-parse';
 
 import {
   createDoc,
@@ -71,16 +72,36 @@ const writeMultiSlideDoc = async (page: Page) => {
   await writeInEditor({ page, text: 'Slide three' });
 };
 
+const stubPrintDialog = async (page: Page) => {
+  await page.evaluate(() => {
+    window.print = () => undefined;
+  });
+};
+
+const finishStubbedPrintDialog = async (page: Page) => {
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('afterprint'));
+  });
+};
+
 const openPresenterActions = async (page: Page, overlay: Locator) => {
   await overlay.getByRole('button', { name: 'More options' }).click();
   await expect(
     page.getByRole('menuitem', { name: 'Copy link to slide' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('menuitem', { name: 'Download PDF' }),
   ).toBeVisible();
 };
 
 const copyCurrentPresenterSlideLink = async (page: Page, overlay: Locator) => {
   await openPresenterActions(page, overlay);
   await page.getByRole('menuitem', { name: 'Copy link to slide' }).click();
+};
+
+const exportPresenterPdf = async (page: Page, overlay: Locator) => {
+  await openPresenterActions(page, overlay);
+  await page.getByRole('menuitem', { name: 'Download PDF' }).click();
 };
 
 test.beforeEach(async ({ page }) => {
@@ -491,6 +512,152 @@ test.describe('Presenter Mode', () => {
 
     const clipboard = await page.evaluate(() => navigator.clipboard.readText());
     expect(clipboard).toContain(`/docs/${docId}/?view=present&slide=2`);
+  });
+
+  test('exports every presenter slide through browser print as landscape PDF pages', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium',
+      'page.pdf() is only available on Chromium',
+    );
+
+    await createDoc(page, 'presenter-print-pdf', browserName, 1);
+    await writeMultiSlideDoc(page);
+
+    const overlay = await openPresenter(page);
+    await stubPrintDialog(page);
+
+    await exportPresenterPdf(page, overlay);
+
+    await expect(page.locator('#presenter-print-styles')).toBeAttached();
+    await expect(page.locator('[data-presenter-print-page]')).toHaveCount(4);
+
+    await page.emulateMedia({ media: 'print' });
+    const pdfBuffer = await page.pdf({
+      printBackground: true,
+      preferCSSPageSize: true,
+      scale: 1,
+    });
+    await page.emulateMedia({ media: 'screen' });
+
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfInfo = await pdfParse.getInfo({ parsePageInfo: true });
+    const pdfText = await pdfParse.getText();
+    await pdfParse.destroy();
+
+    expect(pdfInfo.total).toBe(4);
+    expect(pdfInfo.pages).toHaveLength(4);
+    pdfInfo.pages.forEach((pdfPage) => {
+      expect(pdfPage.width).toBeGreaterThan(pdfPage.height);
+    });
+    expect(pdfText.text).toContain('Slide one');
+    expect(pdfText.text).toContain('Slide two');
+    expect(pdfText.text).toContain('Slide three');
+
+    await finishStubbedPrintDialog(page);
+    await expect(page.locator('#presenter-print-styles')).not.toBeAttached({
+      timeout: 5000,
+    });
+  });
+
+  test('renders file blocks as printable links in presenter export', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-print-file-link', browserName, 1);
+    await writeInEditor({ page, text: 'Slide with a file' });
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    const responseCheckPromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('media-check') && response.status() === 200,
+    );
+
+    await openSuggestionMenu({
+      page,
+      suggestion: 'Embedded file',
+    });
+    await page.getByText('Upload file').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.html'));
+    await responseCheckPromise;
+
+    await expect(
+      page.locator('.bn-block-content[data-name="test.html"]'),
+    ).toBeVisible();
+
+    const overlay = await openPresenter(page);
+    await stubPrintDialog(page);
+
+    await exportPresenterPdf(page, overlay);
+
+    const printFileBlock = page.locator(
+      '#presenter-print-root [data-content-type="file"][data-name="test.html"]',
+    );
+    await expect(printFileBlock).toBeAttached();
+
+    const printLinkText = await printFileBlock.evaluate((el) => {
+      const shadowRoot = el.firstElementChild?.shadowRoot;
+      return shadowRoot?.textContent ?? '';
+    });
+
+    expect(printLinkText).toContain('test.html');
+
+    await finishStubbedPrintDialog(page);
+    await expect(page.locator('#presenter-print-styles')).not.toBeAttached({
+      timeout: 5000,
+    });
+  });
+
+  test('clips a tall content slide to a single printed page after the title page', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium',
+      'page.pdf() is only available on Chromium',
+    );
+
+    await createDoc(page, 'presenter-print-tall', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'TOP PRINT MARKER' });
+    for (let i = 0; i < 45; i += 1) {
+      await editor.press('Enter');
+      await editor.pressSequentially(`Printed filler line ${i}`);
+    }
+
+    const overlay = await openPresenter(page);
+    await stubPrintDialog(page);
+
+    await exportPresenterPdf(page, overlay);
+
+    await expect(page.locator('#presenter-print-styles')).toBeAttached();
+    await expect(page.locator('[data-presenter-print-page]')).toHaveCount(2);
+
+    await page.emulateMedia({ media: 'print' });
+    const pdfBuffer = await page.pdf({
+      printBackground: true,
+      preferCSSPageSize: true,
+      scale: 1,
+    });
+    await page.emulateMedia({ media: 'screen' });
+
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfInfo = await pdfParse.getInfo({ parsePageInfo: true });
+    const pdfText = await pdfParse.getText();
+    await pdfParse.destroy();
+
+    expect(pdfInfo.total).toBe(2);
+    expect(pdfInfo.pages[0].width).toBeGreaterThan(pdfInfo.pages[0].height);
+    expect(pdfText.text).toContain('TOP PRINT MARKER');
+
+    await finishStubbedPrintDialog(page);
+    await expect(page.locator('#presenter-print-styles')).not.toBeAttached({
+      timeout: 5000,
+    });
   });
 });
 
