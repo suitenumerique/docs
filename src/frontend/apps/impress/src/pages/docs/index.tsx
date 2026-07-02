@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { DocDefaultFilter, useTrans } from '@/docs/doc-management';
 import { DocsGrid } from '@/docs/docs-grid';
+import { HeaderFloatingBar } from '@/features/header/components/HeaderFloatingBar';
 import { MainLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 
@@ -27,13 +28,14 @@ const Page: NextPageWithLayout = () => {
           key="title"
         />
       </Head>
+      <HeaderFloatingBar />
       <DocsGrid target={target} />
     </>
   );
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <MainLayout backgroundColor="grey">{page}</MainLayout>;
+  return <MainLayout>{page}</MainLayout>;
 };
 
 export default Page;

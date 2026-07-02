@@ -5,6 +5,7 @@ import ArrowSVG from '@/assets/icons/ui-kit/arrow-corner-down-right.svg';
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useDate } from '@/hooks/useDate';
+import { useResponsiveStore } from '@/stores';
 
 import ChildDocument from '../assets/child-document.svg';
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
@@ -37,6 +38,7 @@ export const SimpleDocItem = ({
   breadcrumb,
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
+  const { isSmallMobile } = useResponsiveStore();
   const { spacingsTokens } = useCunninghamTheme();
   const { untitledDocument } = useTrans();
   const { isChild } = useDocUtils(doc);
@@ -92,7 +94,7 @@ export const SimpleDocItem = ({
           />
         )}
       </Box>
-      <Box $justify="center" $overflow="auto" $gap="3xs">
+      <Box $justify="center" $overflow="auto" $gap="4xs">
         <Text
           $size="sm"
           $weight="500"
@@ -103,7 +105,11 @@ export const SimpleDocItem = ({
         </Text>
 
         {(showDate || breadcrumb) && (
-          <Box $direction="row" $align="center" aria-hidden="true">
+          <Box
+            $direction={isSmallMobile ? 'column' : 'row'}
+            $align={isSmallMobile ? 'flex-start' : 'center'}
+            aria-hidden="true"
+          >
             {breadcrumb && (
               <Box $direction="row" $align="center" $gap="3xs">
                 <ArrowSVG
@@ -117,13 +123,13 @@ export const SimpleDocItem = ({
                 </Text>
               </Box>
             )}
-            {breadcrumb && showDate && (
+            {breadcrumb && showDate && !isSmallMobile && (
               <Text $size="xs" $variation="tertiary">
                 &nbsp;·&nbsp;
               </Text>
             )}
             {showDate && (
-              <Text $size="xs" $variation="tertiary">
+              <Text $size="xs" $variation="tertiary" $shrink="0">
                 {docRelativeUpdate}
               </Text>
             )}

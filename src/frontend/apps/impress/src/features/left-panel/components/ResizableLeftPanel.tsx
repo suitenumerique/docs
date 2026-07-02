@@ -7,9 +7,11 @@ import {
   PanelResizeHandle,
 } from 'react-resizable-panels';
 
-import { useResponsiveStore } from '@/stores';
+import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 import { useLeftPanelStore } from '../stores';
+
+import { LeftPanel } from './LeftPanel';
 
 // Convert a target pixel width to a percentage of the current viewport width.
 const pxToPercent = (px: number) => {
@@ -38,21 +40,19 @@ const getValueLabel = (
 };
 
 type ResizableLeftPanelProps = {
-  leftPanel: React.ReactNode;
   children: React.ReactNode;
   minPanelSizePx?: number;
   maxPanelSizePx?: number;
 };
 
 export const ResizableLeftPanel = ({
-  leftPanel,
   children,
   minPanelSizePx = 300,
   maxPanelSizePx = 450,
 }: ResizableLeftPanelProps) => {
   const { t } = useTranslation();
-  const { isLargeScreen } = useResponsiveStore();
   const { isPanelOpen } = useLeftPanelStore();
+  const { isLargeScreen } = useResponsiveStore();
   const ref = useRef<ImperativePanelHandle>(null);
   const savedWidthPxRef = useRef<number>(minPanelSizePx);
   const [isDragging, setIsDragging] = useState(false);
@@ -170,7 +170,7 @@ export const ResizableLeftPanel = ({
         maxSize={isLargeScreen ? maxPanelSizePercent : 0}
         onResize={handleResize}
       >
-        {leftPanel}
+        <LeftPanel isResizable={isLargeScreen} />
       </Panel>
       {isPanelOpen && (
         <PanelResizeHandle

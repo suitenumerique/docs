@@ -413,7 +413,7 @@ test.describe('Doc Comments mobile', () => {
       true,
     );
 
-    await closeHeaderMenu(page);
+    await closeHeaderMenu(page, true);
 
     await verifyDocName(page, title);
 

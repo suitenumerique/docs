@@ -6,7 +6,6 @@ import { Box } from '@/components';
 import { CommentSideBar } from '@/features/docs/doc-comments/components/CommentSideBar';
 import { useDocStore, useProviderStore } from '@/features/docs/doc-management';
 import { TableContentSideBar } from '@/features/docs/doc-table-content/components/TableContentSideBar';
-import { HEADER_HEIGHT } from '@/features/header';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
 import {
@@ -77,7 +76,7 @@ export const RightPanel = () => {
       aria-label={panelLabel}
       inert={!isPanelOpen}
       $width="300px"
-      $height={`calc(100dvh - ${HEADER_HEIGHT}px)`}
+      $height="100dvh"
       $position={isMobile ? 'absolute' : 'sticky'}
       $zIndex={25}
       $hasTransition

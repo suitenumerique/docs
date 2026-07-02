@@ -1,7 +1,6 @@
 import { ButtonElement } from '@gouvfr-lasuite/cunningham-react';
 import {
   Spinner,
-  TreeViewDataType,
   TreeViewItem,
   TreeViewNodeProps,
   TreeViewNodeTypeEnum,
@@ -104,11 +103,11 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
   const treeContext = useTreeContext<Doc>();
   const { untitledDocument } = useTrans();
   const { node } = props;
-  const { isDesktop } = useResponsiveStore();
+  const { isLargeScreen, isMobile } = useResponsiveStore();
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
-  const { togglePanel } = useLeftPanelStore();
+  const { closePanel } = useLeftPanelStore();
 
   const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title || '');
   const displayTitle = titleWithoutEmoji || untitledDocument;
@@ -119,15 +118,14 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
     if (actualChildren.length === 0) {
       treeContext?.treeData
         .handleLoadChildren(node?.data.value.id)
-        .then((allChildren) => {
+        .then(() => {
           node.open();
 
           void router.push(`/docs/${createdDoc.id}`);
-          treeContext?.treeData.setChildren(
-            node.data.value.id,
-            allChildren as TreeViewDataType<Doc>[],
-          );
-          togglePanel({ type: 'mobile' });
+
+          if (isMobile) {
+            closePanel();
+          }
         })
         .catch(console.error);
     } else {
@@ -140,13 +138,15 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
       treeContext?.treeData.addChild(node.data.value.id, newDoc);
       node.open();
       void router.push(`/docs/${createdDoc.id}`);
-      togglePanel({ type: 'mobile' });
+      if (isMobile) {
+        closePanel();
+      }
     }
   };
 
   const docTitle = doc.title || untitledDocument;
   const isCurrentPage = router.query?.id === doc.id;
-  const isDisabled = !!doc.deleted_at;
+  const isDeleted = !!doc.deleted_at;
   const actionsRef = useRef<HTMLDivElement>(null);
   const buttonOptionRef = useRef<ButtonElement | null>(null);
 
@@ -178,19 +178,28 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
   return (
     <StyledLink
       className="--docs-sub-page-item"
-      draggable={doc.abilities.move && isDesktop}
+      draggable={doc.abilities.move && isLargeScreen}
       href={`/docs/${doc.id}`}
       tabIndex={-1}
       aria-label={
-        isDisabled
+        isDeleted
           ? t('{{title}} (deleted)', { title: docTitle })
           : t('Open document {{title}}', { title: docTitle })
       }
       aria-current={isCurrentPage ? 'page' : undefined}
       data-testid={`doc-sub-page-item-${doc.id}`}
       onKeyDown={handleKeyDown}
-      aria-disabled={isDisabled}
-      onClick={isDisabled ? (e) => e.preventDefault() : undefined}
+      aria-disabled={isDeleted}
+      onClick={(e) => {
+        if (isDeleted) {
+          e.preventDefault();
+          return;
+        }
+
+        if (isMobile) {
+          closePanel();
+        }
+      }}
       /**
        * Prevent the default click behavior when clicking on the expand/collapse arrow to avoid
        * navigating to the document page.
@@ -209,7 +218,7 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
         width: 100%;
         border-radius: var(--c--globals--spacings--st);
         .light-doc-item-actions {
-          display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
+          display: ${menuOpen || !isLargeScreen ? 'flex' : 'none'};
           right: var(--c--globals--spacings--0);
         }
         .c__tree-view--node {

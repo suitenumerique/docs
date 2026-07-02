@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Loading } from '@/components';
 import { DEFAULT_QUERY_RETRY } from '@/core';
+import { DocFloatingBar } from '@/docs/doc-header/components/DocFloatingBar';
 import {
   Doc,
   DocPage403,
@@ -17,11 +18,12 @@ import {
   useTrans,
 } from '@/docs/doc-management/';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
-import { FloatingBar } from '@/features/docs/doc-header/components/FloatingBar';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
+import { useLeftPanelStore } from '@/features/left-panel';
 import { DocEditorSkeleton, useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
+import { useResponsiveStore } from '@/stores';
 import { NextPageWithLayout } from '@/types/next';
 
 const DocEditor = dynamic(
@@ -39,6 +41,12 @@ export function DocLayout() {
   const {
     query: { id },
   } = useRouter();
+
+  useEffect(() => {
+    if (typeof id === 'string' && useResponsiveStore.getState().isLargeScreen) {
+      useLeftPanelStore.setState({ isPanelOpen: true, wasAutoClosed: false });
+    }
+  }, [id]);
 
   if (typeof id !== 'string') {
     return null;
@@ -65,7 +73,7 @@ export function DocLayout() {
         }}
       >
         <MainLayout enableResizablePanel={true}>
-          <FloatingBar />
+          <DocFloatingBar />
           <DocPage id={id} />
         </MainLayout>
       </TreeProvider>

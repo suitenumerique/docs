@@ -28,7 +28,9 @@ import {
   useMoveDoc,
   useTrans,
 } from '@/docs/doc-management';
+import { useLeftPanelStore } from '@/features/left-panel/stores/useLeftPanelStore';
 import { TreeSkeleton } from '@/features/skeletons/components/TreeSkeleton';
+import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 import { CLASS_DOC_TITLE } from '../../doc-header';
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
@@ -43,6 +45,8 @@ type DocTreeProps = {
 
 export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const { spacingsTokens } = useCunninghamTheme();
+  const { isMobile } = useResponsiveStore();
+  const { closePanel } = useLeftPanelStore();
   const { untitledDocument } = useTrans();
   const [treeRoot, setTreeRoot] = useState<HTMLElement | null>(null);
   const treeContext = useTreeContext<Doc | null>();
@@ -399,6 +403,10 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
                     parentId: treeContext.root?.id ?? undefined,
                   };
                   treeContext?.treeData.addChild(null, newDoc);
+
+                  if (isMobile) {
+                    closePanel();
+                  }
                 }}
                 isOpen={rootActionsOpen}
                 isRoot={true}

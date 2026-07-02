@@ -79,12 +79,13 @@ export const DocsGrid = ({
 
   return (
     <Box
+      className="--docs--doc-grid"
       $position="relative"
+      $padding={{ horizontal: 'sm' }}
       $width="100%"
       $maxWidth="960px"
-      $maxHeight={`calc(100vh - 52px - ${isDesktop ? '2rem' : '0rem'})`}
+      $minHeight="0"
       $align="center"
-      className="--docs--doc-grid"
     >
       <DocsGridLoader isLoading={isRefetching || loading || isImportPending} />
       <Card
@@ -92,7 +93,7 @@ export const DocsGrid = ({
         $height="100%"
         $width="100%"
         $css={css`
-          ${!isDesktop ? 'border: none;' : ''}
+          border: none;
           ${isDragOver
             ? `
               border: 2px dashed var(--c--contextuals--border--semantic--brand--primary);
@@ -118,7 +119,6 @@ export const DocsGrid = ({
         {hasDocs && (
           <Box
             $gap="6px"
-            $overflow="auto"
             $padding={{ vertical: 'sm', horizontal: isDesktop ? 'md' : 'xs' }}
           >
             <Box aria-label={t('Documents grid')}>
@@ -193,7 +193,7 @@ const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
     <Box
       $direction="row"
       $padding={{
-        vertical: 'md',
+        vertical: 'sm',
         horizontal: isDesktop ? 'md' : 'xs',
       }}
       $css={css`

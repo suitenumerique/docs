@@ -21,7 +21,7 @@ export const LeftPanelFooter = () => {
   };
 
   return (
-    <SeparatedSection showSeparator="top">
+    <SeparatedSection showSeparator="top" $margin={{ top: 'auto' }}>
       <Box
         $padding={{ horizontal: 'sm' }}
         $justify="space-between"

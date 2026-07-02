@@ -7,7 +7,7 @@ import type { LinkHTMLAttributes } from 'react';
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import type { Theme } from '@/cunningham/';
 import type { FooterType } from '@/features/footer';
-import type { HeaderType } from '@/features/header';
+import { HeaderType } from '@/features/left-panel/types';
 import type { PostHogConf } from '@/services/PosthogAnalytic';
 
 type Imagetype = React.ComponentProps<typeof Image>;
