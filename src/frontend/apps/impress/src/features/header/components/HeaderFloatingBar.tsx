@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 
 import { CardFloatingBar, FloatingBar } from '@/components/FloatingBar';
@@ -7,7 +6,7 @@ import { LeftPanelCollapseButton } from '@/features/left-panel/components/LeftPa
 import { useLeftPanelStore } from '@/features/left-panel/stores/useLeftPanelStore';
 import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
-import DocsLoaderGif from '../assets/DocsLoader.gif';
+import { HeaderIcon } from './HeaderIcon';
 
 export const HeaderFloatingBar = () => {
   const { isMobile, isTablet } = useResponsiveStore();
@@ -15,19 +14,13 @@ export const HeaderFloatingBar = () => {
   const { isPanelOpen } = useLeftPanelStore();
 
   return (
-    <FloatingBar>
+    <FloatingBar $align="center">
       {isTablet && (
         <LeftPanelCollapseButton ariaLabel={t('Toggle left panel')} />
       )}
       {(isTablet && !isPanelOpen) || isMobile ? (
         <>
-          <Image
-            src={DocsLoaderGif.src}
-            alt=""
-            width={40}
-            height={40}
-            style={{ width: 40, height: 'auto' }}
-          />
+          <HeaderIcon />
           <CardFloatingBar>
             <DocSearchButtonModal size="small" color="neutral" />
           </CardFloatingBar>

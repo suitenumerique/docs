@@ -44,6 +44,7 @@
     "@gouvfr-lasuite/integration": "1.0.3",
     "@gouvfr-lasuite/ui-kit": "0.25.0",
     "@hocuspocus/provider": "3.4.4",
+    "@lottiefiles/dotlottie-react": "^0.19.6",
     "@mantine/core": "9.3.1",
     "@mantine/hooks": "9.3.1",
     "@react-aria/live-announcer": "3.5.1",
