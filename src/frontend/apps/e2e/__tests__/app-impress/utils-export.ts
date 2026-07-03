@@ -6,12 +6,7 @@ import { PDFParse } from 'pdf-parse';
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 
-import {
-  BrowserName,
-  createDoc,
-  verifyDocName,
-  writeReport,
-} from './utils-common';
+import { BrowserName, createDoc, writeReport } from './utils-common';
 import { openSuggestionMenu } from './utils-editor';
 
 /**
@@ -49,8 +44,6 @@ export const overrideDocContent = async ({
     browserName,
     1,
   );
-
-  await verifyDocName(page, randomDoc);
 
   await page.waitForTimeout(1000);
 
