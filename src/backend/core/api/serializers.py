@@ -1049,7 +1049,9 @@ class MentionSerializer(serializers.ModelSerializer):
 
     def validate_mentioned_user_id(self, user):
         """Ensure the mentioned user has access to the document."""
-        document = models.Document.objects.get(pk=self.context["document"].pk)
+        document = models.Document.objects.annotate_user_roles(user).get(
+            pk=self.context["document"].pk
+        )
         if document.get_role(user) is None:
             raise serializers.ValidationError(
                 "This user does not have access to the document."
