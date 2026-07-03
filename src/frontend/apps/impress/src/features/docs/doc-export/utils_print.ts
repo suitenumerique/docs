@@ -175,7 +175,7 @@ function appendPrintOnlyStyles() {
 /**
  * Wraps media elements with links to their source URLs for printing.
  */
-function wrapMediaWithLink() {
+export function wrapMediaWithLink(root: ParentNode = document) {
   const createdShadowWrapper: HTMLElement[] = [];
 
   const prependLink = (
@@ -222,7 +222,7 @@ function wrapMediaWithLink() {
     createdShadowWrapper.push(shadowWrapper);
   };
 
-  document
+  root
     .querySelectorAll(
       '[data-content-type="pdf"], [data-content-type="file"], [data-content-type="audio"], [data-content-type="video"]',
     )
@@ -251,14 +251,14 @@ function wrapMediaWithLink() {
  * Wraps interlink inline content with anchor tags for printing,
  * so they appear as clickable links in the printed PDF.
  */
-function wrapInterlinksWithAnchor() {
+export function wrapInterlinksWithAnchor(root: ParentNode = document) {
   const wrappedElements: Array<{
     el: Element;
     anchor: HTMLAnchorElement;
     parent: Node;
   }> = [];
 
-  document
+  root
     .querySelectorAll('.--docs--interlinking-link-inline-content[data-href]')
     .forEach((el) => {
       const href = el.getAttribute('data-href');

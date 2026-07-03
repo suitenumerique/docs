@@ -180,6 +180,12 @@ export const createDoc = async (
     expect(responseUpdateDoc.ok()).toBeTruthy();
   }
 
+  // Wait for the editor to be mounted before handing control back, so callers
+  // that immediately type or open features don't race the editor load.
+  await expect(
+    page.locator('.--docs--editor-container .ProseMirror'),
+  ).toBeVisible({ timeout: 10000 });
+
   return randomDocs;
 };
 
