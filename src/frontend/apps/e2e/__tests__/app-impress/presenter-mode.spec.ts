@@ -1,7 +1,19 @@
-import { Page, expect, test } from '@playwright/test';
+import path from 'path';
 
-import { createDoc, goToGridDoc, mockedDocument } from './utils-common';
-import { openSuggestionMenu, writeInEditor } from './utils-editor';
+import { Locator, Page, expect, test } from '@playwright/test';
+import { PDFParse } from 'pdf-parse';
+
+import {
+  createDoc,
+  goToGridDoc,
+  mockedDocument,
+  saveContent,
+} from './utils-common';
+import {
+  openSuggestionMenu,
+  tryFocusEditorContent,
+  writeInEditor,
+} from './utils-editor';
 
 const openPresenter = async (page: Page) => {
   await page.getByLabel('Open the document options').click();
@@ -17,6 +29,37 @@ const insertDivider = async (page: Page) => {
   await suggestionMenu.getByText('Divider', { exact: true }).click();
 };
 
+const insertImageInCurrentBlock = async (page: Page) => {
+  const fileChooserPromise = page.waitForEvent('filechooser');
+
+  await tryFocusEditorContent({ page });
+  await page.keyboard.type('/');
+  await page
+    .locator('.bn-suggestion-menu')
+    .getByText('Resizable image with caption', { exact: true })
+    .click();
+  await page.getByText('Upload image').click();
+
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles(
+    path.join(__dirname, 'assets/logo-suite-numerique.png'),
+  );
+
+  const image = page
+    .locator('.--docs--editor-container img.bn-visual-media')
+    .first();
+  await expect(image).toBeVisible({ timeout: 10000 });
+  return image;
+};
+
+const getDocIdFromUrl = (page: Page) => {
+  const id = /\/docs\/([^/?]+)/.exec(page.url())?.[1];
+  if (!id) {
+    throw new Error(`Could not extract doc id from URL: ${page.url()}`);
+  }
+  return id;
+};
+
 const writeMultiSlideDoc = async (page: Page) => {
   const editor = await writeInEditor({ page, text: 'Slide one' });
   await editor.press('Enter');
@@ -29,11 +72,49 @@ const writeMultiSlideDoc = async (page: Page) => {
   await writeInEditor({ page, text: 'Slide three' });
 };
 
+const stubPrintDialog = async (page: Page) => {
+  await page.evaluate(() => {
+    window.print = () => undefined;
+  });
+};
+
+const finishStubbedPrintDialog = async (page: Page) => {
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('afterprint'));
+  });
+};
+
+const openPresenterActions = async (page: Page, overlay: Locator) => {
+  await overlay.getByRole('button', { name: 'More options' }).click();
+  await expect(
+    page.getByRole('menuitem', { name: 'Copy link to slide' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('menuitem', { name: 'Download PDF' }),
+  ).toBeVisible();
+};
+
+const copyCurrentPresenterSlideLink = async (page: Page, overlay: Locator) => {
+  await openPresenterActions(page, overlay);
+  await page.getByRole('menuitem', { name: 'Copy link to slide' }).click();
+};
+
+const exportPresenterPdf = async (page: Page, overlay: Locator) => {
+  await openPresenterActions(page, overlay);
+  await page.getByRole('menuitem', { name: 'Download PDF' }).click();
+};
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
 test.describe('Presenter Mode', () => {
+  // Step out of the suite-wide fullyParallel mode: these tests create and edit
+  // docs that race the editor/persistence layer under heavy parallelism. Run
+  // them sequentially within the file (each test is still fully independent —
+  // no shared state — so this is `default`, not `serial`).
+  test.describe.configure({ mode: 'default' });
+
   test('opens the presenter overlay from the doc options menu and closes with Escape', async ({
     page,
     browserName,
@@ -46,6 +127,13 @@ test.describe('Presenter Mode', () => {
     await expect(
       overlay.getByRole('toolbar', { name: 'Presenter controls' }),
     ).toBeVisible();
+    await expect(overlay.getByText(/presenter-open/)).toBeVisible();
+    await expect(
+      overlay.getByText(
+        'You can use the divider to tell Docs where to split your slides',
+      ),
+    ).toBeVisible();
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
     await expect(overlay.getByText('Hello presenter')).toBeVisible();
 
     // The presenter calls requestFullscreen on open. usePresenterShortcuts
@@ -92,19 +180,19 @@ test.describe('Presenter Mode', () => {
 
     const overlay = await openPresenter(page);
 
-    // The visible "1 / 3" counter is decorative (aria-hidden); the position is
+    // The visible "1 / 4" counter is decorative (aria-hidden); the position is
     // announced through a polite live region for screen readers instead.
     // react-aria/live-announcer creates a global role="log" div on document.body
     // (outside the dialog), so we query from `page`, not `overlay`.
     const liveRegion = page.locator(
       '[data-live-announcer="true"] [aria-live="polite"]',
     );
-    // The announcement includes the slide title extracted from the first
-    // text block (getSlideTitle), so assert the full message.
-    await expect(liveRegion).toContainText('Slide 1 of 3: Slide one');
+    // The title slide uses the document title, then content slides use the
+    // first text block (getSlideTitle).
+    await expect(liveRegion).toContainText('Slide 1 of 4:');
 
     await overlay.getByRole('button', { name: 'Next slide' }).click();
-    await expect(liveRegion).toContainText('Slide 2 of 3: Slide two');
+    await expect(liveRegion).toContainText('Slide 2 of 4: Slide one');
 
     // Each slide advertises a localized role description for screen readers.
     await expect(overlay.getByRole('group').first()).toHaveAttribute(
@@ -113,7 +201,7 @@ test.describe('Presenter Mode', () => {
     );
   });
 
-  test('renders a single-slide doc with counter 1/1 and disabled nav buttons', async ({
+  test('renders a content-only doc after the generated title slide', async ({
     page,
     browserName,
   }) => {
@@ -122,17 +210,56 @@ test.describe('Presenter Mode', () => {
 
     const overlay = await openPresenter(page);
 
-    await expect(overlay.getByText('1 / 1')).toBeVisible();
+    await expect(overlay.getByText('1 / 2')).toBeVisible();
     await expect(
       overlay.getByRole('button', { name: 'Previous slide' }),
     ).toBeDisabled();
     await expect(
       overlay.getByRole('button', { name: 'Next slide' }),
-    ).toBeDisabled();
+    ).toBeEnabled();
+
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    await expect(overlay.getByText('2 / 2')).toBeVisible();
     await expect(overlay.getByText('Slide A')).toBeVisible();
+    await expect(
+      overlay.getByRole('button', { name: 'Next slide' }),
+    ).toBeDisabled();
 
     await overlay.getByRole('button', { name: 'Close presenter' }).click();
     await expect(overlay).toBeHidden();
+  });
+
+  test('does not show selected-node chrome when the first slide block is an image', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-image-first', browserName, 1);
+    await insertImageInCurrentBlock(page);
+
+    const overlay = await openPresenter(page);
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    const presenterImage = overlay.locator('img.bn-visual-media').first();
+    await expect(presenterImage).toBeAttached({ timeout: 10000 });
+
+    const outline = await presenterImage.evaluate((img) => {
+      const blockContent = img.closest('.bn-block-content');
+      blockContent?.classList.add('ProseMirror-selectednode');
+
+      const outlinedElement =
+        (blockContent?.firstElementChild as HTMLElement | null) ??
+        (img as HTMLElement);
+      const style = getComputedStyle(outlinedElement);
+
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: style.outlineWidth,
+      };
+    });
+
+    expect(outline).toEqual({
+      outlineStyle: 'none',
+      outlineWidth: '0px',
+    });
   });
 
   test('navigates between slides via the floating bar buttons', async ({
@@ -147,23 +274,27 @@ test.describe('Presenter Mode', () => {
     const prev = overlay.getByRole('button', { name: 'Previous slide' });
     const next = overlay.getByRole('button', { name: 'Next slide' });
 
-    await expect(overlay.getByText('1 / 3')).toBeVisible();
-    await expect(overlay.getByText('Slide one')).toBeVisible();
+    await expect(overlay.getByText('1 / 4')).toBeVisible();
+    await expect(overlay.getByText(/presenter-nav-bar/)).toBeVisible();
     await expect(prev).toBeDisabled();
     await expect(next).toBeEnabled();
 
     await next.click();
-    await expect(overlay.getByText('2 / 3')).toBeVisible();
+    await expect(overlay.getByText('2 / 4')).toBeVisible();
+    await expect(overlay.getByText('Slide one')).toBeVisible();
+
+    await next.click();
+    await expect(overlay.getByText('3 / 4')).toBeVisible();
     await expect(overlay.getByText('Slide two')).toBeVisible();
 
     await next.click();
-    await expect(overlay.getByText('3 / 3')).toBeVisible();
+    await expect(overlay.getByText('4 / 4')).toBeVisible();
     await expect(overlay.getByText('Slide three')).toBeVisible();
     await expect(next).toBeDisabled();
     await expect(prev).toBeEnabled();
 
     await prev.click();
-    await expect(overlay.getByText('2 / 3')).toBeVisible();
+    await expect(overlay.getByText('3 / 4')).toBeVisible();
     await expect(overlay.getByText('Slide two')).toBeVisible();
   });
 
@@ -176,20 +307,20 @@ test.describe('Presenter Mode', () => {
 
     const overlay = await openPresenter(page);
 
-    await expect(overlay.getByText('1 / 3')).toBeVisible();
+    await expect(overlay.getByText('1 / 4')).toBeVisible();
 
     await page.keyboard.press('ArrowRight');
-    await expect(overlay.getByText('2 / 3')).toBeVisible();
+    await expect(overlay.getByText('2 / 4')).toBeVisible();
 
     await page.keyboard.press('End');
-    await expect(overlay.getByText('3 / 3')).toBeVisible();
+    await expect(overlay.getByText('4 / 4')).toBeVisible();
 
     await page.keyboard.press('Home');
-    await expect(overlay.getByText('1 / 3')).toBeVisible();
+    await expect(overlay.getByText('1 / 4')).toBeVisible();
 
-    // ArrowLeft on the first slide is clamped — counter stays at 1 / 3.
+    // ArrowLeft on the first slide is clamped — counter stays at 1 / 4.
     await page.keyboard.press('ArrowLeft');
-    await expect(overlay.getByText('1 / 3')).toBeVisible();
+    await expect(overlay.getByText('1 / 4')).toBeVisible();
   });
 
   test('scales each slide to fit the viewport (outer width = 900 × scale)', async ({
@@ -251,7 +382,11 @@ test.describe('Presenter Mode', () => {
     }
 
     const overlay = await openPresenter(page);
-    const slide = overlay.getByRole('group').filter({ hasNotText: '' }).first();
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    const slide = overlay
+      .getByRole('group')
+      .filter({ hasText: 'TOP MARKER' })
+      .first();
     await expect(slide).toBeVisible();
 
     // The first block ('TOP MARKER') must be at y=0 of the slide wrapper
@@ -278,9 +413,326 @@ test.describe('Presenter Mode', () => {
       topVisible.clientHeight ?? 0,
     );
   });
+
+  test('opens the presenter at the targeted slide from a block side menu', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-side-menu', browserName, 1);
+    await writeMultiSlideDoc(page);
+
+    // Reveal the block side menu for the "Slide two" paragraph, then trigger its
+    // drag-handle "Present" action.
+    await page
+      .locator('.bn-block-outer')
+      .filter({ hasText: 'Slide two' })
+      .first()
+      .hover();
+    await page.locator('.bn-side-menu > button').last().click();
+    await page.getByRole('menuitem', { name: 'Present' }).click();
+
+    // "Slide two" is the 2nd content slide; with the generated title slide
+    // first that is slide 3 of 4.
+    const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
+    await expect(overlay).toBeVisible();
+    await expect(overlay.getByText('3 / 4')).toBeVisible();
+    await expect(overlay.getByText('Slide two')).toBeVisible();
+  });
+
+  test('deep-link ?view=present&slide=3 opens the presenter at content slide 2', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'presenter-deeplink',
+      browserName,
+      1,
+    );
+    await writeMultiSlideDoc(page);
+    const docId = getDocIdFromUrl(page);
+
+    // Ensure the typed content is persisted (awaits the PATCH /content/) before
+    // we reload the page through the deep-link, instead of a fixed sleep.
+    await saveContent(page, docTitle);
+    await page.goto(`/docs/${docId}/?view=present&slide=3`);
+
+    const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
+    await expect(overlay).toBeVisible({ timeout: 15000 });
+    await expect(overlay.getByText('3 / 4')).toBeVisible();
+    await expect(overlay.getByText('Slide two')).toBeVisible();
+  });
+
+  test('deep-link with an out-of-range slide clamps to the last slide and rewrites the URL', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'presenter-deeplink-oob',
+      browserName,
+      1,
+    );
+    await writeMultiSlideDoc(page);
+    const docId = getDocIdFromUrl(page);
+
+    await saveContent(page, docTitle);
+    await page.goto(`/docs/${docId}/?view=present&slide=99`);
+
+    const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
+    await expect(overlay).toBeVisible({ timeout: 15000 });
+    await expect(overlay.getByText('4 / 4')).toBeVisible();
+    // The address bar self-corrects to the real slide.
+    await expect.poll(() => page.url()).toContain('slide=4');
+  });
+
+  test('deep-link with an invalid slide param falls back to the first slide', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'presenter-deeplink-invalid',
+      browserName,
+      1,
+    );
+    await writeMultiSlideDoc(page);
+    const docId = getDocIdFromUrl(page);
+
+    await saveContent(page, docTitle);
+    await page.goto(`/docs/${docId}/?view=present&slide=abc`);
+
+    const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
+    await expect(overlay).toBeVisible({ timeout: 15000 });
+    await expect(overlay.getByText('1 / 4')).toBeVisible();
+  });
+
+  test('shows a confirmation toast when copying the current-slide link', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-copy-link', browserName, 1);
+    await writeMultiSlideDoc(page);
+
+    const overlay = await openPresenter(page);
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    await expect(overlay.getByText('2 / 4')).toBeVisible();
+
+    await copyCurrentPresenterSlideLink(page, overlay);
+    await expect(page.getByText('Link Copied !')).toBeVisible();
+  });
+
+  test('copies a deep-link pointing to the current slide', async ({
+    page,
+    browserName,
+    context,
+  }) => {
+    // Clipboard read-back is only reliable on Chromium with granted permissions.
+    test.skip(
+      browserName !== 'chromium',
+      'Clipboard read-back is Chromium-only',
+    );
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+
+    await createDoc(page, 'presenter-copy-link-content', browserName, 1);
+    await writeMultiSlideDoc(page);
+    const docId = getDocIdFromUrl(page);
+
+    const overlay = await openPresenter(page);
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    await expect(overlay.getByText('2 / 4')).toBeVisible();
+
+    await copyCurrentPresenterSlideLink(page, overlay);
+    await expect(page.getByText('Link Copied !')).toBeVisible();
+
+    const clipboard = await page.evaluate(() => navigator.clipboard.readText());
+    expect(clipboard).toContain(`/docs/${docId}/?view=present&slide=2`);
+  });
+
+  test('syncs the slide to the URL while navigating', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-url-sync', browserName, 1);
+    await writeMultiSlideDoc(page);
+
+    const overlay = await openPresenter(page);
+    // Opening writes slide=1 to the address bar.
+    await expect.poll(() => page.url()).toContain('view=present');
+    await expect.poll(() => page.url()).toContain('slide=1');
+
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    await expect(overlay.getByText('2 / 4')).toBeVisible();
+    await expect.poll(() => page.url()).toContain('slide=2');
+  });
+
+  test('strips the present query params when closing', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-url-strip', browserName, 1);
+    await writeInEditor({ page, text: 'Slide A' });
+
+    const overlay = await openPresenter(page);
+    await expect.poll(() => page.url()).toContain('view=present');
+
+    await overlay.getByRole('button', { name: 'Close presenter' }).click();
+    await expect(overlay).toBeHidden();
+    await expect.poll(() => page.url()).not.toContain('view=present');
+    await expect.poll(() => page.url()).not.toContain('slide=');
+    // The editor is still mounted (shallow routing, no full reload).
+    await expect(page.locator('.--docs--editor-container')).toBeVisible();
+  });
+
+  test('exports every presenter slide through browser print as landscape PDF pages', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium',
+      'page.pdf() is only available on Chromium',
+    );
+
+    await createDoc(page, 'presenter-print-pdf', browserName, 1);
+    await writeMultiSlideDoc(page);
+
+    const overlay = await openPresenter(page);
+    await stubPrintDialog(page);
+
+    await exportPresenterPdf(page, overlay);
+
+    await expect(page.locator('#presenter-print-styles')).toBeAttached();
+    await expect(page.locator('[data-presenter-print-page]')).toHaveCount(4);
+
+    await page.emulateMedia({ media: 'print' });
+    const pdfBuffer = await page.pdf({
+      printBackground: true,
+      preferCSSPageSize: true,
+      scale: 1,
+    });
+    await page.emulateMedia({ media: 'screen' });
+
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfInfo = await pdfParse.getInfo({ parsePageInfo: true });
+    const pdfText = await pdfParse.getText();
+    await pdfParse.destroy();
+
+    expect(pdfInfo.total).toBe(4);
+    expect(pdfInfo.pages).toHaveLength(4);
+    pdfInfo.pages.forEach((pdfPage) => {
+      expect(pdfPage.width).toBeGreaterThan(pdfPage.height);
+    });
+    expect(pdfText.text).toContain('Slide one');
+    expect(pdfText.text).toContain('Slide two');
+    expect(pdfText.text).toContain('Slide three');
+
+    await finishStubbedPrintDialog(page);
+    await expect(page.locator('#presenter-print-styles')).not.toBeAttached({
+      timeout: 5000,
+    });
+  });
+
+  test('renders file blocks as printable links in presenter export', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-print-file-link', browserName, 1);
+    await writeInEditor({ page, text: 'Slide with a file' });
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    const responseCheckPromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('media-check') && response.status() === 200,
+    );
+
+    await openSuggestionMenu({
+      page,
+      suggestion: 'Embedded file',
+    });
+    await page.getByText('Upload file').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.html'));
+    await responseCheckPromise;
+
+    await expect(
+      page.locator('.bn-block-content[data-name="test.html"]'),
+    ).toBeVisible();
+
+    const overlay = await openPresenter(page);
+    await stubPrintDialog(page);
+
+    await exportPresenterPdf(page, overlay);
+
+    const printFileBlock = page.locator(
+      '#presenter-print-root [data-content-type="file"][data-name="test.html"]',
+    );
+    await expect(printFileBlock).toBeAttached();
+
+    const printLinkText = await printFileBlock.evaluate((el) => {
+      const shadowRoot = el.firstElementChild?.shadowRoot;
+      return shadowRoot?.textContent ?? '';
+    });
+
+    expect(printLinkText).toContain('test.html');
+
+    await finishStubbedPrintDialog(page);
+    await expect(page.locator('#presenter-print-styles')).not.toBeAttached({
+      timeout: 5000,
+    });
+  });
+
+  test('clips a tall content slide to a single printed page after the title page', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium',
+      'page.pdf() is only available on Chromium',
+    );
+
+    await createDoc(page, 'presenter-print-tall', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'TOP PRINT MARKER' });
+    for (let i = 0; i < 45; i += 1) {
+      await editor.press('Enter');
+      await editor.pressSequentially(`Printed filler line ${i}`);
+    }
+
+    const overlay = await openPresenter(page);
+    await stubPrintDialog(page);
+
+    await exportPresenterPdf(page, overlay);
+
+    await expect(page.locator('#presenter-print-styles')).toBeAttached();
+    await expect(page.locator('[data-presenter-print-page]')).toHaveCount(2);
+
+    await page.emulateMedia({ media: 'print' });
+    const pdfBuffer = await page.pdf({
+      printBackground: true,
+      preferCSSPageSize: true,
+      scale: 1,
+    });
+    await page.emulateMedia({ media: 'screen' });
+
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfInfo = await pdfParse.getInfo({ parsePageInfo: true });
+    const pdfText = await pdfParse.getText();
+    await pdfParse.destroy();
+
+    expect(pdfInfo.total).toBe(2);
+    expect(pdfInfo.pages[0].width).toBeGreaterThan(pdfInfo.pages[0].height);
+    expect(pdfText.text).toContain('TOP PRINT MARKER');
+
+    await finishStubbedPrintDialog(page);
+    await expect(page.locator('#presenter-print-styles')).not.toBeAttached({
+      timeout: 5000,
+    });
+  });
 });
 
 test.describe('Presenter Mode mobile', () => {
+  test.describe.configure({ mode: 'default' });
   test.use({ viewport: { width: 500, height: 1200 } });
 
   test.beforeEach(async ({ page }) => {
@@ -309,5 +761,27 @@ test.describe('Presenter Mode mobile', () => {
 
     await page.getByLabel('Open the document options').click();
     await expect(page.getByRole('menuitem', { name: 'Present' })).toBeHidden();
+  });
+
+  test('ignores a ?view=present deep-link on small mobile viewports', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-mobile-deeplink', browserName, 1, true);
+    await writeInEditor({ page, text: 'Slide A' });
+    const docId = getDocIdFromUrl(page);
+
+    // No persistence wait needed: this asserts the deep-link is ignored on
+    // mobile, which does not depend on the typed content being saved.
+    await page.goto(`/docs/${docId}/?view=present&slide=1`);
+
+    // The editor loads normally...
+    await expect(page.locator('.--docs--editor-container')).toBeVisible({
+      timeout: 15000,
+    });
+    // ...but the presenter is never auto-opened on mobile.
+    await expect(
+      page.getByRole('dialog', { name: 'Presenter mode' }),
+    ).toBeHidden();
   });
 });
