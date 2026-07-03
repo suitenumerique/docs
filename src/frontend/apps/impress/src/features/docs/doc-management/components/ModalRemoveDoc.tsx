@@ -6,7 +6,6 @@ import {
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
-import { useRouter } from 'next/router';
 import { useEffect, useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
@@ -36,7 +35,6 @@ export const ModalRemoveDoc = ({
   const { t } = useTranslation();
   const { data: config } = useConfig();
   const trashBinCutoffDays = config?.TRASHBIN_CUTOFF_DAYS || 30;
-  const { push } = useRouter();
   const { hasChildren } = useDocUtils(doc);
   const cancelButtonRef = useRef<ButtonElement>(null);
 
@@ -50,8 +48,6 @@ export const ModalRemoveDoc = ({
       onSuccess: () => {
         if (onSuccess) {
           onSuccess(doc);
-        } else {
-          void push('/');
         }
 
         onClose();

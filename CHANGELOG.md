@@ -32,6 +32,7 @@ and this project adheres to
 - 🐛(frontend) fix removed item in the tree #2420
 - 🐛(frontend) fix service worker causing reload on tab focus #2454
 - 🐛(backend) update restore ability for inherited deletion #2148
+- 🐛(frontend) stop force index redirect when delete doc #2490
 
 ### Removed
 
