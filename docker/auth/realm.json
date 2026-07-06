@@ -687,19 +687,8 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "secret": "ThisIsAnExampleKeyForDevPurposeOnly",
-      "redirectUris": [
-        "http://localhost:8070/*",
-        "http://localhost:8071/*",
-        "http://localhost:3200/*",
-        "http://localhost:8088/*",
-        "http://localhost:3000/*"
-      ],
-      "webOrigins": [
-        "http://localhost:3200",
-        "http://localhost:8088",
-        "http://localhost:8070",
-        "http://localhost:3000"
-      ],
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
       "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,

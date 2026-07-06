@@ -76,6 +76,7 @@ create-env-local-files:
 	@touch env.d/development/crowdin.local
 	@touch env.d/development/common.local
 	@touch env.d/development/postgresql.local
+	@touch env.d/development/kc_auth.local
 	@touch env.d/development/kc_postgresql.local
 .PHONY: create-env-local-files
 

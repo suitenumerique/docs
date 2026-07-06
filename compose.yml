@@ -231,11 +231,13 @@ services:
     image: quay.io/keycloak/keycloak:26.3
     volumes:
       - ./docker/auth/realm.json:/opt/keycloak/data/import/realm.json
+    env_file:
+      - env.d/development/kc_auth
+      - env.d/development/kc_auth.local
     command:
       - start-dev
       - --features=preview
       - --import-realm
-      - --hostname=http://localhost:8083
       - --hostname-strict=false
       - --health-enabled=true
       - --metrics-enabled=true
@@ -249,16 +251,6 @@ services:
       interval: 1s
       timeout: 2s
       retries: 300
-    environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_DB: postgres
-      KC_DB_URL_HOST: kc_postgresql
-      KC_DB_URL_DATABASE: keycloak
-      KC_DB_PASSWORD: pass
-      KC_DB_USERNAME: impress
-      KC_DB_SCHEMA: public
-      PROXY_ADDRESS_FORWARDING: "true"
     ports:
       - "8080:8080"
     depends_on:
