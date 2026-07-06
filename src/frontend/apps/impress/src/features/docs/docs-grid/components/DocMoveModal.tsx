@@ -39,7 +39,15 @@ const ModalConfirmationMoveDoc = dynamic(
 
 export const DocMoveModalStyle = createGlobalStyle`
   .c__modal--full .c__modal__scroller {
-    height: 100vh;
+    height: 100dvh;
+  }
+
+  .c__modal--full .c__modal__content {
+    flex-grow: 0;
+  }
+
+  .c__modal--full .c__modal__footer {
+    flex-shrink: 0;
   }
 
   .c__modal__scroller:has(.quick-search-container){
@@ -209,7 +217,7 @@ export const DocMoveModal = ({
             <Box
               $padding={{ horizontal: 'md', top: 'base' }}
               // TODO: DOM feature badly made - find a way to not calculate the height of the modal
-              $height={isModal ? 'min(60vh, 350px)' : 'calc(100vh - 180px)'}
+              $height={isModal ? 'min(60dvh, 350px)' : 'calc(100dvh - 180px)'}
             >
               <Box>
                 <DocSearchContent

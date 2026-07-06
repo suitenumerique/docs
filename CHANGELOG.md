@@ -34,6 +34,7 @@ and this project adheres to
 - 🐛(backend) update restore ability for inherited deletion #2148
 - 🔧(dev) make the dev stack domain-agnostic #2498
 - 🐛(frontend) stop force index redirect when delete doc #2490
+- 🐛(frontend) fix CTA on move modal on mobile #2502
 
 ### Removed
 
