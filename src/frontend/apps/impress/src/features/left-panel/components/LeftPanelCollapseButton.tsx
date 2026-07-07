@@ -1,6 +1,7 @@
 import { Button } from '@gouvfr-lasuite/cunningham-react';
 
 import { Text } from '@/components';
+import { FadeComponent } from '@/components/Effect';
 import { CardFloatingBar } from '@/components/FloatingBar';
 
 import LeftPanelIcon from '../assets/left-panel.svg';
@@ -27,15 +28,16 @@ export const LeftPanelCollapseButton = ({
         icon={<LeftPanelIcon width={24} height={24} aria-hidden="true" />}
         data-testid="floating-bar-toggle-left-panel"
       ></Button>
-      {buttonTitle && (
+      <FadeComponent isVisible={!!buttonTitle}>
         <Text
           $size="sm"
           $weight={700}
           $color="var(--c--globals--colors--gray-1000)"
+          $padding={{ right: '2xs' }}
         >
           {buttonTitle}
         </Text>
-      )}
+      </FadeComponent>
     </CardFloatingBar>
   );
 };

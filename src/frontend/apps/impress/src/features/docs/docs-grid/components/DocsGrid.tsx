@@ -90,10 +90,9 @@ export const DocsGrid = ({
       <DocsGridLoader isLoading={isRefetching || loading || isImportPending} />
       <Card
         data-testid="docs-grid"
-        $height="100%"
         $width="100%"
         $css={css`
-          border: none;
+          border: 1px solid var(--c--contextuals--border--surface--primary);
           ${isDragOver
             ? `
               border: 2px dashed var(--c--contextuals--border--semantic--brand--primary);

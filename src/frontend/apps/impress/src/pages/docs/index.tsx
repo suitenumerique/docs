@@ -35,7 +35,15 @@ const Page: NextPageWithLayout = () => {
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <MainLayout>{page}</MainLayout>;
+  return (
+    <MainLayout
+      propsContent={{
+        $background: 'var(--c--contextuals--background--surface--tertiary)',
+      }}
+    >
+      {page}
+    </MainLayout>
+  );
 };
 
 export default Page;

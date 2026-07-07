@@ -100,6 +100,7 @@ export const SimpleDocItem = ({
           $weight="500"
           $css={ItemTextCss}
           data-testid="doc-title"
+          title={docTitle}
         >
           {docTitle}
         </Text>

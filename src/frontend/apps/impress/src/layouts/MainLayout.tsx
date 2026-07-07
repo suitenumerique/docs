@@ -2,7 +2,7 @@ import { PropsWithChildren } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, BoxProps } from '@/components';
+import { Box, BoxType } from '@/components';
 import { LeftPanel, ResizableLeftPanel } from '@/features/left-panel';
 import { RightPanel } from '@/features/right-panel/components/RightPanel';
 import { DocEditorSkeleton, Skeleton } from '@/features/skeletons';
@@ -12,11 +12,15 @@ import { usePanelCoordination } from './usePanelCoordination';
 
 type MainLayoutProps = {
   enableResizablePanel?: boolean;
+  propsLayout?: BoxType;
+  propsContent?: BoxType;
 };
 
 export function MainLayout({
   children,
   enableResizablePanel = false,
+  propsLayout,
+  propsContent,
 }: PropsWithChildren<MainLayoutProps>) {
   return (
     <Box
@@ -24,42 +28,50 @@ export function MainLayout({
       $direction="row"
       $width="100%"
       $height="100dvh"
+      {...propsLayout}
     >
-      <MainLayoutContent enableResizablePanel={enableResizablePanel}>
+      <MainLayoutContent
+        enableResizablePanel={enableResizablePanel}
+        {...propsContent}
+      >
         {children}
       </MainLayoutContent>
     </Box>
   );
 }
 
-export interface MainLayoutContentProps {
+export interface MainLayoutContentProps extends BoxType {
   enableResizablePanel: boolean;
 }
 
 export function MainLayoutContent({
   children,
   enableResizablePanel,
+  ...props
 }: PropsWithChildren<MainLayoutContentProps>) {
   if (enableResizablePanel) {
-    return <MainResizableLayout>{children}</MainResizableLayout>;
+    return <MainResizableLayout {...props}>{children}</MainResizableLayout>;
   }
 
   return (
     <>
       <LeftPanel />
-      <MainContent>{children}</MainContent>
+      <MainContent {...props}>{children}</MainContent>
       <RightPanel />
     </>
   );
 }
 
-const MainResizableLayout = ({ children }: PropsWithChildren) => {
+const MainResizableLayout = ({
+  children,
+  ...props
+}: PropsWithChildren<BoxType>) => {
   usePanelCoordination();
 
   return (
     <ResizableLeftPanel>
       <Box $direction="row" $width="100%" $position="relative">
-        <MainContent $flex="auto" $padding="0">
+        <MainContent $flex="auto" $padding="0" {...props}>
           {children}
         </MainContent>
         <RightPanel />
@@ -71,7 +83,7 @@ const MainResizableLayout = ({ children }: PropsWithChildren) => {
 export const MainContent = ({
   children,
   ...props
-}: PropsWithChildren<BoxProps>) => {
+}: PropsWithChildren<BoxType>) => {
   const { t } = useTranslation();
 
   return (
