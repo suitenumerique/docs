@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-19 12:04+0000\n"
-"PO-Revision-Date: 2026-06-19 12:54\n"
+"POT-Creation-Date: 2026-07-07 09:43+0000\n"
+"PO-Revision-Date: 2026-07-07 14:38\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr_FR\n"
@@ -31,7 +31,7 @@ msgstr "Dates importantes"
 
 #: core/admin.py:119
 msgid "Permanently delete selected users"
-msgstr ""
+msgstr "Supprimer définitivement les utilisateurs sélectionnés"
 
 #: core/admin.py:141
 msgid "Import job created and queued."
@@ -83,7 +83,7 @@ msgstr "La portée du lien '%(link_reach)s' n'est pas autorisée en fonction de 
 msgid "copy of {title}"
 msgstr "copie de {title}"
 
-#: core/api/viewsets.py:3299
+#: core/api/viewsets.py:3306
 #, python-format
 msgid "A comment can have a maximum of %(max)d distinct reactions."
 msgstr "Un commentaire peut recevoir au maximum %(max)d réactions différentes."
@@ -379,145 +379,145 @@ msgstr "Document"
 msgid "Documents"
 msgstr "Documents"
 
-#: core/models.py:1000 core/models.py:1426
+#: core/models.py:1000 core/models.py:1430
 msgid "Untitled Document"
 msgstr "Document sans titre"
 
-#: core/models.py:1427
+#: core/models.py:1431
 msgid "Open"
 msgstr "Ouvrir"
 
-#: core/models.py:1462
+#: core/models.py:1466
 #, python-brace-format
 msgid "{name} shared a document with you!"
 msgstr "{name} a partagé un document avec vous!"
 
-#: core/models.py:1466
+#: core/models.py:1470
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
 msgstr "{name} vous a invité avec le rôle \"{role}\" sur le document suivant :"
 
-#: core/models.py:1472
+#: core/models.py:1476
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
 msgstr "{name} a partagé un document avec vous : {title}"
 
-#: core/models.py:1572
+#: core/models.py:1576
 msgid "Document/user link trace"
 msgstr "Trace du lien document/utilisateur"
 
-#: core/models.py:1573
+#: core/models.py:1577
 msgid "Document/user link traces"
 msgstr "Traces du lien document/utilisateur"
 
-#: core/models.py:1579
+#: core/models.py:1583
 msgid "A link trace already exists for this document/user."
 msgstr "Une trace de lien existe déjà pour ce document/utilisateur."
 
-#: core/models.py:1602
+#: core/models.py:1606
 msgid "Document favorite"
 msgstr "Document favori"
 
-#: core/models.py:1603
+#: core/models.py:1607
 msgid "Document favorites"
 msgstr "Documents favoris"
 
-#: core/models.py:1609
+#: core/models.py:1613
 msgid "This document is already targeted by a favorite relation instance for the same user."
 msgstr "Ce document est déjà un favori de cet utilisateur."
 
-#: core/models.py:1631
+#: core/models.py:1635
 msgid "Document/user relation"
 msgstr "Relation document/utilisateur"
 
-#: core/models.py:1632
+#: core/models.py:1636
 msgid "Document/user relations"
 msgstr "Relations document/utilisateur"
 
-#: core/models.py:1638
+#: core/models.py:1642
 msgid "This user is already in this document."
 msgstr "Cet utilisateur est déjà dans ce document."
 
-#: core/models.py:1644
+#: core/models.py:1648
 msgid "This team is already in this document."
 msgstr "Cette équipe est déjà dans ce document."
 
-#: core/models.py:1650
+#: core/models.py:1654
 msgid "Either user or team must be set, not both."
 msgstr "L'utilisateur ou l'équipe doivent être définis, pas les deux."
 
-#: core/models.py:1801
+#: core/models.py:1805
 msgid "Document ask for access"
 msgstr "Demande d'accès au document"
 
-#: core/models.py:1802
+#: core/models.py:1806
 msgid "Document ask for accesses"
 msgstr "Demande d'accès au document"
 
-#: core/models.py:1808
+#: core/models.py:1812
 msgid "This user has already asked for access to this document."
 msgstr "Cet utilisateur a déjà demandé l'accès à ce document."
 
-#: core/models.py:1865
+#: core/models.py:1869
 #, python-brace-format
 msgid "{name} would like access to a document!"
 msgstr "{name} souhaiterait accéder au document suivant !"
 
-#: core/models.py:1869
+#: core/models.py:1873
 #, python-brace-format
 msgid "{name} would like access to the following document:"
 msgstr "{name} souhaiterait accéder au document suivant :"
 
-#: core/models.py:1875
+#: core/models.py:1879
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
 msgstr "{name} demande l'accès au document : {title}"
 
-#: core/models.py:1917
+#: core/models.py:1921
 msgid "Thread"
 msgstr "Conversation"
 
-#: core/models.py:1918
+#: core/models.py:1922
 msgid "Threads"
 msgstr "Conversations"
 
-#: core/models.py:1921 core/models.py:1974
+#: core/models.py:1925 core/models.py:1978
 msgid "Anonymous"
 msgstr "Anonyme"
 
-#: core/models.py:1969
+#: core/models.py:1973
 msgid "Comment"
 msgstr "Commentaire"
 
-#: core/models.py:1970
+#: core/models.py:1974
 msgid "Comments"
 msgstr "Commentaires"
 
-#: core/models.py:2020
+#: core/models.py:2024
 msgid "This emoji has already been reacted to this comment."
 msgstr "Cet émoji a déjà été réagi à ce commentaire."
 
-#: core/models.py:2024
+#: core/models.py:2028
 msgid "Reaction"
 msgstr "Réaction"
 
-#: core/models.py:2025
+#: core/models.py:2029
 msgid "Reactions"
 msgstr "Réactions"
 
-#: core/models.py:2035
+#: core/models.py:2039
 msgid "email address"
 msgstr "adresse e-mail"
 
-#: core/models.py:2054
+#: core/models.py:2058
 msgid "Document invitation"
 msgstr "Invitation à un document"
 
-#: core/models.py:2055
+#: core/models.py:2059
 msgid "Document invitations"
 msgstr "Invitations à un document"
 
-#: core/models.py:2075
+#: core/models.py:2079
 msgid "This email is already associated to a registered user."
 msgstr "Cette adresse email est déjà associée à un utilisateur inscrit."
 
@@ -537,7 +537,7 @@ msgstr " Docs, votre nouvel outil incontournable pour organiser, partager et col
 msgid " Brought to you by %(brandname)s "
 msgstr " Proposé par %(brandname)s "
 
-#: impress/settings.py:869
+#: impress/settings.py:867
 msgid "Docs AI"
 msgstr "Docs IA"
 
