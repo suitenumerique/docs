@@ -63,7 +63,7 @@ def test_external_api_documents_link_configuration_not_allowed(
     COLLABORATION_API_URL="http://example.com/",
     COLLABORATION_SERVER_SECRET="secret-token",
 )
-@patch("core.services.collaboration_services.CollaborationService.reset_connections")
+@patch("core.api.viewsets.reset_service_connections_in_cascade.delay")
 def test_external_api_documents_link_configuration_can_be_allowed(
     mock_reset, user_token, resource_server_backend, user_specific_sub
 ):
@@ -103,3 +103,6 @@ def test_external_api_documents_link_configuration_can_be_allowed(
     document.refresh_from_db()
     assert document.link_reach == models.LinkReachChoices.PUBLIC
     assert document.link_role == models.LinkRoleChoices.EDITOR
+
+    # the collaboration server should be notified through the Celery task
+    mock_reset.assert_called_once_with(str(document.id))

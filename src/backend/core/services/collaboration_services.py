@@ -1,9 +1,15 @@
 """Collaboration services."""
 
+from logging import getLogger
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 import requests
+
+from core import models
+
+logger = getLogger(__name__)
 
 
 class CollaborationService:
@@ -14,11 +20,33 @@ class CollaborationService:
         if settings.COLLABORATION_API_URL is None:
             raise ImproperlyConfigured("Collaboration configuration not set")
 
-    def reset_connections(self, room, user_id=None):
+    def reset_connections(self, document_id, user_id=None):
         """
-        Reset connections of a room in the collaboration server.
+        Reset the connections of a document and all its descendants in the
+        collaboration server.
+
         Resetting a connection means that the user will be disconnected and will
         have to reconnect to the collaboration server, with updated rights.
+        """
+        try:
+            document = models.Document.objects.get(pk=document_id)
+        except models.Document.DoesNotExist:
+            logger.error("Document %s does not exists anymore", document_id)
+            return
+
+        documents = models.Document.objects.filter(
+            path__startswith=document.path, depth__gte=document.depth
+        ).order_by("path")
+
+        for doc in documents:
+            try:
+                self._reset_connection(doc.id, user_id)
+            except requests.HTTPError:
+                logger.error("impossible to reset connections for document %s", doc.id)
+
+    def _reset_connection(self, room, user_id=None):
+        """
+        Reset connections of a single room in the collaboration server.
         """
         endpoint = "reset-connections"
 

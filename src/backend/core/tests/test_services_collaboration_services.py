@@ -4,8 +4,11 @@ core.services.collaboration_services module.
 """
 
 import json
+import logging
 import re
 from contextlib import contextmanager
+from unittest import mock
+from uuid import uuid4
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -13,11 +16,14 @@ import pytest
 import requests
 import responses
 
+from core import factories, models
 from core.services.collaboration_services import CollaborationService
 
+# pylint: disable=protected-access
 
-@pytest.fixture
-def mock_reset_connections(settings):
+
+@pytest.fixture(name="mock_reset_connections")
+def mock_reset_connections_fixture(settings):
     """
     Creates a context manager to mock the reset-connections endpoint for collaboration services.
     Args:
@@ -88,8 +94,8 @@ def test_init_with_api_url(settings):
 
 
 @responses.activate
-def test_reset_connections_with_user_id(settings):
-    """Test reset_connections with a provided user_id."""
+def test_reset_connection_with_user_id(settings):
+    """Test _reset_connection with a provided user_id."""
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
     service = CollaborationService()
@@ -100,7 +106,7 @@ def test_reset_connections_with_user_id(settings):
 
     responses.add(responses.POST, endpoint_url, json={}, status=200)
 
-    service.reset_connections(room, user_id)
+    service._reset_connection(room, user_id)
 
     assert len(responses.calls) == 1
     request = responses.calls[0].request
@@ -111,8 +117,8 @@ def test_reset_connections_with_user_id(settings):
 
 
 @responses.activate
-def test_reset_connections_without_user_id(settings):
-    """Test reset_connections without a user_id."""
+def test_reset_connection_without_user_id(settings):
+    """Test _reset_connection without a user_id."""
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
     service = CollaborationService()
@@ -128,7 +134,7 @@ def test_reset_connections_without_user_id(settings):
         status=200,
     )
 
-    service.reset_connections(room, user_id)
+    service._reset_connection(room, user_id)
 
     assert len(responses.calls) == 1
     request = responses.calls[0].request
@@ -139,7 +145,7 @@ def test_reset_connections_without_user_id(settings):
 
 
 @responses.activate
-def test_reset_connections_non_200_response(settings):
+def test_reset_connection_non_200_response(settings):
     """Test that an HTTPError is raised when the response status is not 200."""
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
@@ -157,13 +163,13 @@ def test_reset_connections_non_200_response(settings):
     ) + re.escape(json.dumps(response_body))
 
     with pytest.raises(requests.HTTPError, match=expected_exception_message):
-        service.reset_connections(room, user_id)
+        service._reset_connection(room, user_id)
 
     assert len(responses.calls) == 1
 
 
 @responses.activate
-def test_reset_connections_request_exception(settings):
+def test_reset_connection_request_exception(settings):
     """Test that an HTTPError is raised when a RequestException occurs."""
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
@@ -180,6 +186,159 @@ def test_reset_connections_request_exception(settings):
     )
 
     with pytest.raises(requests.HTTPError, match="Failed to notify WebSocket server."):
-        service.reset_connections(room, user_id)
+        service._reset_connection(room, user_id)
 
     assert len(responses.calls) == 1
+
+
+@pytest.fixture(name="collaboration_service")
+def collaboration_service_fixture(settings):
+    """Return a configured CollaborationService instance."""
+    settings.COLLABORATION_API_URL = "http://example.com/"
+    settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    return CollaborationService()
+
+
+@pytest.mark.django_db
+@mock.patch.object(CollaborationService, "_reset_connection")
+def test_reset_connections_document_does_not_exist(
+    mock_reset_connection,
+    collaboration_service,
+    caplog,
+):
+    """
+    When the document does not exist anymore, an error is logged and no
+    connection is reset.
+    """
+    unknown_id = uuid4()
+
+    with caplog.at_level(logging.ERROR, logger="core.services.collaboration_services"):
+        collaboration_service.reset_connections(unknown_id)
+
+    mock_reset_connection.assert_not_called()
+    assert f"Document {unknown_id} does not exists anymore" in caplog.text
+
+
+@pytest.mark.django_db
+@mock.patch.object(CollaborationService, "_reset_connection")
+def test_reset_connections_single_document(
+    mock_reset_connection,
+    collaboration_service,
+):
+    """A document without descendants should have its own connections reset."""
+    document = factories.DocumentFactory()
+
+    collaboration_service.reset_connections(document.id)
+
+    mock_reset_connection.assert_called_once_with(document.id, None)
+
+
+@pytest.mark.django_db
+@mock.patch.object(CollaborationService, "_reset_connection")
+def test_reset_connections_cascade_on_document_and_descendants(
+    mock_reset_connection,
+    collaboration_service,
+):
+    """
+    The document itself and every one of its descendants should be reset,
+    ordered by path.
+    """
+    root = factories.DocumentFactory()
+    child1 = factories.DocumentFactory(parent=root)
+    child2 = factories.DocumentFactory(parent=root)
+    grandchild = factories.DocumentFactory(parent=child1)
+
+    collaboration_service.reset_connections(root.id)
+
+    expected_ids = [
+        doc.id
+        for doc in models.Document.objects.filter(
+            path__startswith=root.path, depth__gte=root.depth
+        ).order_by("path")
+    ]
+    assert set(expected_ids) == {root.id, child1.id, child2.id, grandchild.id}
+
+    called_ids = [call.args[0] for call in mock_reset_connection.call_args_list]
+    assert called_ids == expected_ids
+    assert mock_reset_connection.call_count == 4
+
+
+@pytest.mark.django_db
+@mock.patch.object(CollaborationService, "_reset_connection")
+def test_reset_connections_starts_from_a_sub_document(
+    mock_reset_connection,
+    collaboration_service,
+):
+    """
+    When called on a sub-document, only that sub-document and its own
+    descendants should be reset, not its ancestors or siblings.
+    """
+    root = factories.DocumentFactory()
+    child = factories.DocumentFactory(parent=root)
+    sibling = factories.DocumentFactory(parent=root)
+    grandchild = factories.DocumentFactory(parent=child)
+
+    collaboration_service.reset_connections(child.id)
+
+    called_ids = {call.args[0] for call in mock_reset_connection.call_args_list}
+    assert called_ids == {child.id, grandchild.id}
+    assert root.id not in called_ids
+    assert sibling.id not in called_ids
+
+
+@pytest.mark.django_db
+@mock.patch.object(CollaborationService, "_reset_connection")
+def test_reset_connections_forwards_user_id(
+    mock_reset_connection,
+    collaboration_service,
+):
+    """The provided user_id should be forwarded to every reset call."""
+    root = factories.DocumentFactory()
+    factories.DocumentFactory(parent=root)
+    user_id = str(uuid4())
+
+    collaboration_service.reset_connections(root.id, user_id=user_id)
+
+    assert mock_reset_connection.call_count == 2
+    for call in mock_reset_connection.call_args_list:
+        assert call.args[1] == user_id
+
+
+@pytest.mark.django_db
+@mock.patch.object(CollaborationService, "_reset_connection")
+def test_reset_connections_continues_on_http_error(
+    mock_reset_connection,
+    collaboration_service,
+    caplog,
+):
+    """
+    An HTTPError raised while resetting one document should be logged and must
+    not prevent the remaining documents from being processed.
+    """
+    root = factories.DocumentFactory()
+    child1 = factories.DocumentFactory(parent=root)
+    child2 = factories.DocumentFactory(parent=root)
+
+    ordered_docs = list(
+        models.Document.objects.filter(
+            path__startswith=root.path, depth__gte=root.depth
+        ).order_by("path")
+    )
+    failing_doc = ordered_docs[1]
+
+    def _side_effect(room, _user_id=None):
+        if room == failing_doc.id:
+            raise requests.HTTPError("boom")
+
+    mock_reset_connection.side_effect = _side_effect
+
+    with caplog.at_level(logging.ERROR, logger="core.services.collaboration_services"):
+        collaboration_service.reset_connections(root.id)
+
+    assert mock_reset_connection.call_count == 3
+    called_ids = [call.args[0] for call in mock_reset_connection.call_args_list]
+    assert set(called_ids) == {root.id, child1.id, child2.id}
+
+    assert (
+        f"impossible to reset connections for document {failing_doc.id}" in caplog.text
+    )

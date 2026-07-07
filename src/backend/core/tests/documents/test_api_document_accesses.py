@@ -4,6 +4,7 @@ Test document accesses API endpoints for users in impress's core app.
 # pylint: disable=too-many-lines
 
 import random
+from contextlib import contextmanager
 from unittest import mock
 from uuid import uuid4
 
@@ -13,12 +14,28 @@ from rest_framework.test import APIClient
 from core import choices, factories, models
 from core.api import serializers
 from core.tests.conftest import TEAM, USER, VIA
-from core.tests.test_services_collaboration_services import (  # pylint: disable=unused-import
-    mock_reset_connections,
-)
 from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture(name="mock_reset_connections")
+def mock_reset_connections_fixture():
+    """
+    Provide a context manager that patches the ``reset_service_connections_in_cascade``
+    Celery task and asserts its ``delay`` method is called exactly once for the given
+    document and user when leaving the context.
+    """
+
+    @contextmanager
+    def _mock_reset_connections(document_id, user_id=None):
+        with mock.patch(
+            "core.api.viewsets.reset_service_connections_in_cascade.delay"
+        ) as mock_delay:
+            yield mock_delay
+            mock_delay.assert_called_once_with(str(document_id), user_id)
+
+    return _mock_reset_connections
 
 
 def test_api_document_accesses_list_anonymous():
@@ -737,7 +754,7 @@ def test_api_document_accesses_update_administrator_except_owner(
     create_for,
     via,
     mock_user_teams,
-    mock_reset_connections,  # pylint: disable=redefined-outer-name
+    mock_reset_connections,
 ):
     """
     A user who is a direct administrator in a document should be allowed to update a user
@@ -847,7 +864,7 @@ def test_api_document_accesses_update_administrator_from_owner(via, mock_user_te
 def test_api_document_accesses_update_administrator_to_owner(
     via,
     mock_user_teams,
-    mock_reset_connections,  # pylint: disable=redefined-outer-name
+    mock_reset_connections,
 ):
     """
     A user who is an administrator in a document, should not be allowed to update
@@ -914,7 +931,7 @@ def test_api_document_accesses_update_owner(
     create_for,
     via,
     mock_user_teams,
-    mock_reset_connections,  # pylint: disable=redefined-outer-name
+    mock_reset_connections,
 ):
     """
     A user who is an owner in a document should be allowed to update
@@ -977,7 +994,7 @@ def test_api_document_accesses_update_owner(
 def test_api_document_accesses_update_owner_self_root(
     via,
     mock_user_teams,
-    mock_reset_connections,  # pylint: disable=redefined-outer-name
+    mock_reset_connections,
 ):
     """
     A user who is owner of a document should be allowed to update
@@ -1039,7 +1056,7 @@ def test_api_document_accesses_update_owner_self_root(
 def test_api_document_accesses_update_owner_self_child(
     via,
     mock_user_teams,
-    mock_reset_connections,  # pylint: disable=redefined-outer-name
+    mock_reset_connections,
 ):
     """
     A user who is owner of a document should be allowed to update
@@ -1153,7 +1170,7 @@ def test_api_document_accesses_delete_reader_or_editor(via, role, mock_user_team
 def test_api_document_accesses_delete_administrators_except_owners(
     via,
     mock_user_teams,
-    mock_reset_connections,  # pylint: disable=redefined-outer-name
+    mock_reset_connections,
 ):
     """
     Users who are administrators in a document should be allowed to delete an access
@@ -1238,7 +1255,7 @@ def test_api_document_accesses_delete_administrator_on_owners(via, mock_user_tea
 def test_api_document_accesses_delete_owners(
     via,
     mock_user_teams,
-    mock_reset_connections,  # pylint: disable=redefined-outer-name
+    mock_reset_connections,
 ):
     """
     Users should be able to delete the document access of another user
@@ -1311,7 +1328,7 @@ def test_api_document_accesses_delete_owners_last_owner_root(via, mock_user_team
 
 
 def test_api_document_accesses_delete_owners_last_owner_child_user(
-    mock_reset_connections,  # pylint: disable=redefined-outer-name
+    mock_reset_connections,
 ):
     """
     It should be possible to delete the last owner access from a document that is not a root.
@@ -1342,7 +1359,7 @@ def test_api_document_accesses_delete_owners_last_owner_child_user(
 )
 def test_api_document_accesses_delete_owners_last_owner_child_team(
     mock_user_teams,
-    mock_reset_connections,  # pylint: disable=redefined-outer-name
+    mock_reset_connections,
 ):
     """
     It should be possible to delete the last owner access from a document that

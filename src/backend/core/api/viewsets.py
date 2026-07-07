@@ -68,6 +68,7 @@ from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,
 )
+from core.tasks.access import reset_service_connections_in_cascade
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.paths import filter_descendants
@@ -1825,7 +1826,7 @@ class DocumentViewSet(
         serializer.save()
 
         # Notify collaboration server about the link updated
-        CollaborationService().reset_connections(str(document.id))
+        reset_service_connections_in_cascade.delay(str(document.id))
 
         return drf.response.Response(serializer.data, status=drf.status.HTTP_200_OK)
 
@@ -2839,7 +2840,7 @@ class DocumentAccessViewSet(
             access_user_id = str(access.user.id)
 
         # Notify collaboration server about the access change
-        CollaborationService().reset_connections(
+        reset_service_connections_in_cascade.delay(
             str(access.document.id), access_user_id
         )
 
@@ -2860,7 +2861,7 @@ class DocumentAccessViewSet(
         )
 
         # Notify collaboration server about the access removed
-        CollaborationService().reset_connections(document_id, user_id)
+        reset_service_connections_in_cascade.delay(document_id, user_id)
 
 
 class InvitationViewset(

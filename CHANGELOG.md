@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ♻️(backend) reset collaboration connection in cascade for all children #2507
+
 ## [v5.4.0] - 2026-07-07
 
 ### Added

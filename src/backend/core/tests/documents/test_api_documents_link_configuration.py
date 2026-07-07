@@ -1,16 +1,35 @@
 """Tests for link configuration of documents on API endpoint"""
 
+from contextlib import contextmanager
+from unittest import mock
+
 import pytest
 from rest_framework.test import APIClient
 
 from core import factories, models
 from core.api import serializers
 from core.tests.conftest import TEAM, USER, VIA
-from core.tests.test_services_collaboration_services import (  # pylint: disable=unused-import
-    mock_reset_connections,
-)
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture(name="mock_reset_connections")
+def mock_reset_connections_fixture():
+    """
+    Provide a context manager that patches the ``reset_service_connections_in_cascade``
+    Celery task and asserts its ``delay`` method is called exactly once for the given
+    document when leaving the context.
+    """
+
+    @contextmanager
+    def _mock_reset_connections(document_id):
+        with mock.patch(
+            "core.api.viewsets.reset_service_connections_in_cascade.delay"
+        ) as mock_delay:
+            yield mock_delay
+            mock_delay.assert_called_once_with(str(document_id))
+
+    return _mock_reset_connections
 
 
 @pytest.mark.parametrize("role", models.LinkRoleChoices.values)
