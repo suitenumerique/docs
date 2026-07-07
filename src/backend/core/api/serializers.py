@@ -1009,4 +1009,4 @@ class SearchQueryParamDocumentSerializer(serializers.Serializer):
     """Serializer for fulltext search requests through Find application"""
 
     q = serializers.CharField(required=True, allow_blank=True, trim_whitespace=True)
-    path = serializers.CharField(required=False, allow_blank=False)
+    document = serializers.UUIDField(required=False)

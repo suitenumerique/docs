@@ -547,7 +547,7 @@ def test_api_documents_search_indexer_crashes(
     parent = factories.DocumentFactory(title="parent", users=[user])
     q = "alpha"
     response = client.get(
-        "/api/v1.0/documents/search/", data={"q": "alpha", "path": parent.path}
+        "/api/v1.0/documents/search/", data={"q": "alpha", "document": parent.id}
     )
 
     # the search endpoint did not crash
@@ -555,7 +555,9 @@ def test_api_documents_search_indexer_crashes(
     # fallback on title_search
     assert mock_search_using_database.call_count == 1
     assert mock_search_using_database.call_args[0][0].GET.get("q") == q
-    assert mock_search_using_database.call_args[0][0].GET.get("path") == parent.path
+    assert mock_search_using_database.call_args[0][0].GET.get("document") == str(
+        parent.id
+    )
     assert response.json() == mocked_response
 
 

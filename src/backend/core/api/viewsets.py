@@ -1542,15 +1542,23 @@ class DocumentViewSet(
         """
         queryset = models.Document.objects.all()
 
+        # The indexer filters descendants by path prefix, so resolve the document
+        # id to its path before querying it.
+        path = None
+        document_id = params.validated_data.get("document")
+        if document_id:
+            try:
+                path = models.Document.objects.get(pk=document_id).values_list(
+                    "path", flat=True
+                )
+            except models.Document.DoesNotExist as exc:
+                raise drf.exceptions.NotFound("Document not found.") from exc
+
         results = indexer.search(
             q=params.validated_data["q"],
             search_type=search_type,
             token=request.session.get("oidc_access_token"),
-            path=(
-                params.validated_data["path"]
-                if "path" in params.validated_data
-                else None
-            ),
+            path=path,
             visited=get_visited_document_ids_of(queryset, request.user),
         )
 
@@ -1618,7 +1626,7 @@ class DocumentViewSet(
         Only searches in the title field of documents.
         """
 
-        if validated_data.get("path"):
+        if validated_data.get("document"):
             return self._list_descendants(request, validated_data)
 
         top_level_documents = self.get_queryset()
@@ -1676,22 +1684,22 @@ class DocumentViewSet(
 
     def _list_descendants(self, request, validated_data):
         """
-        List all documents whose path starts with the provided path parameter.
-        Includes the parent document itself.
-        Used internally by the search endpoint when path filtering is requested.
+        List all documents descending from the document identified by the provided
+        document id. Includes the parent document itself.
+        Used internally by the search endpoint when document filtering is requested.
         """
         # Get parent document without access filtering
-        parent_path = validated_data["path"]
+        document_id = validated_data["document"]
         user = request.user
         try:
             parent = (
                 models.Document.objects.annotate_user_roles(user)
                 .annotate_is_favorite(user)
                 .annotate_user_has_link_trace(user)
-                .get(path=parent_path)
+                .get(pk=document_id)
             )
         except models.Document.DoesNotExist as exc:
-            raise drf.exceptions.NotFound("Document not found from path.") from exc
+            raise drf.exceptions.NotFound("Document not found.") from exc
 
         abilities = parent.get_abilities(user)
         if not abilities.get("search"):

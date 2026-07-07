@@ -1,6 +1,6 @@
 """
 Tests for search API endpoint in impress's core app when indexer is not
-available and a path param is given.
+available and a document param is given.
 """
 # pylint: disable=too-many-lines
 
@@ -34,7 +34,7 @@ def test_api_documents_search_descendants_list_anonymous_public_standalone():
     factories.UserDocumentAccessFactory(document=child1)
 
     response = APIClient().get(
-        "/api/v1.0/documents/search/", data={"q": "doc", "path": document.path}
+        "/api/v1.0/documents/search/", data={"q": "doc", "document": document.id}
     )
 
     assert response.status_code == 200
@@ -248,7 +248,7 @@ def test_api_documents_search_descendants_list_anonymous_public_parent():
     factories.UserDocumentAccessFactory(document=child1)
 
     response = APIClient().get(
-        "/api/v1.0/documents/search/", data={"q": "doc", "path": document.path}
+        "/api/v1.0/documents/search/", data={"q": "doc", "document": document.id}
     )
 
     assert response.status_code == 200
@@ -448,7 +448,7 @@ def test_api_documents_search_descendants_list_anonymous_restricted_or_authentic
     _grand_child = factories.DocumentFactory(title="grand child", parent=child)
 
     response = APIClient().get(
-        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
+        "/api/v1.0/documents/search/", data={"q": "child", "document": document.id}
     )
 
     assert response.status_code == 403
@@ -478,7 +478,7 @@ def test_api_documents_search_descendants_list_authenticated_unrelated_public_or
     factories.UserDocumentAccessFactory(document=child1)
 
     response = client.get(
-        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
+        "/api/v1.0/documents/search/", data={"q": "child", "document": document.id}
     )
 
     assert response.status_code == 200
@@ -669,7 +669,7 @@ def test_api_documents_search_descendants_list_authenticated_public_or_authentic
     factories.UserDocumentAccessFactory(document=child1)
 
     response = client.get(
-        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
+        "/api/v1.0/documents/search/", data={"q": "child", "document": document.id}
     )
 
     assert response.status_code == 200
@@ -850,7 +850,7 @@ def test_api_documents_search_descendants_list_authenticated_unrelated_restricte
     factories.UserDocumentAccessFactory(document=child1)
 
     response = client.get(
-        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
+        "/api/v1.0/documents/search/", data={"q": "child", "document": document.id}
     )
 
     assert response.status_code == 403
@@ -881,7 +881,7 @@ def test_api_documents_search_descendants_list_authenticated_related_direct():
     grand_child = factories.DocumentFactory(parent=child1, title="grand child")
 
     response = client.get(
-        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
+        "/api/v1.0/documents/search/", data={"q": "child", "document": document.id}
     )
     assert response.status_code == 200
     assert response.json() == {
@@ -1073,7 +1073,7 @@ def test_api_documents_search_descendants_list_authenticated_related_parent():
     grand_child = factories.DocumentFactory(parent=child1, title="grand child")
 
     response = client.get(
-        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
+        "/api/v1.0/documents/search/", data={"q": "child", "document": document.id}
     )
     assert response.status_code == 200
     assert response.json() == {
@@ -1252,7 +1252,7 @@ def test_api_documents_search_descendants_list_authenticated_related_child():
     factories.UserDocumentAccessFactory(document=document)
 
     response = client.get(
-        "/api/v1.0/documents/search/", data={"q": "doc", "path": document.path}
+        "/api/v1.0/documents/search/", data={"q": "doc", "document": document.id}
     )
     assert response.status_code == 403
     assert response.json() == {
@@ -1279,7 +1279,7 @@ def test_api_documents_search_descendants_list_authenticated_related_team_none(
     factories.TeamDocumentAccessFactory(document=document, team="myteam")
 
     response = client.get(
-        "/api/v1.0/documents/search/", data={"q": "doc", "path": document.path}
+        "/api/v1.0/documents/search/", data={"q": "doc", "document": document.id}
     )
 
     assert response.status_code == 403
@@ -1310,7 +1310,7 @@ def test_api_documents_search_descendants_list_authenticated_related_team_member
     access = factories.TeamDocumentAccessFactory(document=document, team="myteam")
 
     response = client.get(
-        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
+        "/api/v1.0/documents/search/", data={"q": "child", "document": document.id}
     )
 
     # pylint: disable=R0801
@@ -1509,7 +1509,7 @@ def test_api_documents_search_descendants_search_on_title(query, nb_results):
 
     # Perform the search query
     response = client.get(
-        "/api/v1.0/documents/search/", data={"q": query, "path": parent.path}
+        "/api/v1.0/documents/search/", data={"q": query, "document": parent.id}
     )
 
     assert response.status_code == 200
