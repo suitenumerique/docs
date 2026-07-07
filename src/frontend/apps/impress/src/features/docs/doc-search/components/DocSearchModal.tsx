@@ -41,13 +41,13 @@ type DocSearchModalGlobalProps = {
   isOpen: boolean;
   showFilters?: boolean;
   defaultFilters: DocSearchFilterTypes;
-  parentPath?: string; // If defined, the search will be limited to the children of the document with the given path
+  parentDocId?: string; // If defined, the search will be limited to the children of the document with the given id
 };
 
 const DocSearchModalGlobal = ({
   showFilters = false,
   defaultFilters,
-  parentPath,
+  parentDocId,
   ...modalProps
 }: DocSearchModalGlobalProps) => {
   const { t } = useTranslation();
@@ -175,7 +175,7 @@ const DocSearchModalGlobal = ({
                 onSelect={handleSelect}
                 onResults={setResults}
                 onLoadingChange={setLoading}
-                parentPath={filter === 'current' ? parentPath : undefined}
+                parentDocId={filter === 'current' ? parentDocId : undefined}
               />
             )}
           </Box>
@@ -203,7 +203,7 @@ const DocSearchModalDetail = ({
       {...modalProps}
       showFilters={isWithChildren && authenticated}
       defaultFilters={isWithChildren ? 'current' : 'all'}
-      parentPath={treeContext?.root?.path}
+      parentDocId={treeContext?.root?.id}
     />
   );
 };

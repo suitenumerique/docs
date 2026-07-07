@@ -19,7 +19,7 @@ type DocSearchContentProps = {
   onResults?: (results: DocSearch[]) => void;
   onSelect: (doc: DocSearch) => void;
   onLoadingChange?: (loading: boolean) => void;
-  parentPath?: string;
+  parentDocId?: string;
   renderSearchElement?: (doc: DocSearch) => React.ReactNode;
 };
 
@@ -31,7 +31,7 @@ export const DocSearchContent = ({
   onSelect,
   onLoadingChange,
   renderSearchElement,
-  parentPath,
+  parentDocId,
   isSearchNotMandatory,
 }: DocSearchContentProps) => {
   const { filter } = useDocSearchFilterStore();
@@ -47,10 +47,10 @@ export const DocSearchContent = ({
       q: search,
       page: 1,
       filter,
-      parentPath,
+      parentDocId,
     },
     {
-      enabled: filter !== 'current' || !!parentPath,
+      enabled: filter !== 'current' || !!parentDocId,
     },
   );
 

@@ -263,7 +263,7 @@ export const SearchPage = ({
                 <DocSearchContent
                   groupName={t('Link a doc')}
                   search={search}
-                  parentPath={treeContext?.root?.path}
+                  parentDocId={treeContext?.root?.id}
                   isSearchNotMandatory
                   onSelect={(doc) => {
                     if (!isEditable) {

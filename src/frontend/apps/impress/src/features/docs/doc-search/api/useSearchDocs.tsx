@@ -15,21 +15,21 @@ export type SearchDocsParams = {
   page: number;
   q: string;
   filter?: DocSearchFilterTypes;
-  parentPath?: string;
+  parentDocId?: string;
 };
 
 const constructParams = ({
   q,
   page,
   filter,
-  parentPath,
+  parentDocId,
 }: SearchDocsParams): URLSearchParams => {
   const searchParams = new URLSearchParams();
 
   searchParams.set('q', q);
 
-  if (filter === 'current' && parentPath) {
-    searchParams.set('path', parentPath);
+  if (filter === 'current' && parentDocId) {
+    searchParams.set('document', parentDocId);
   }
   if (page) {
     searchParams.set('page', page.toString());
@@ -48,9 +48,9 @@ const searchDocs = async ({
   q,
   page,
   filter,
-  parentPath,
+  parentDocId,
 }: SearchDocsParams): Promise<SearchDocsResponse> => {
-  const searchParams = constructParams({ q, page, filter, parentPath });
+  const searchParams = constructParams({ q, page, filter, parentDocId });
   const response = await fetchAPI(
     `documents/search/?${searchParams.toString()}`,
   );
