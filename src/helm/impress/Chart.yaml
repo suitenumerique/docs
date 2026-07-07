@@ -1,5 +1,5 @@
 apiVersion: v2
 type: application
 name: docs
-version: 5.3.0
+version: 5.4.0
 appVersion: latest
