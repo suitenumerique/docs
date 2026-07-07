@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.4.0] - 2026-07-07
+
 ### Added
 
 - ✨(y-provider) preserve callouts, PDFs, page breaks, interlinking
@@ -29,7 +31,7 @@ and this project adheres to
 
 ### Fixed
 
-- 🐛(backend) prevent owner from leaving a soft-deleted document
+- 🐛(backend) prevent owner from leaving a soft-deleted document #2456
 - 🐛(frontend) fix removed item in the tree #2420
 - 🐛(frontend) fix service worker causing reload on tab focus #2454
 - 🐛(backend) update restore ability for inherited deletion #2148
@@ -39,7 +41,7 @@ and this project adheres to
 
 ### Removed
 
-- 🔥(backend) remove unused default authentication backend
+- 🔥(backend) remove unused default authentication backend #2480
 
 ## [v5.3.0] - 2026-06-19
 
@@ -1406,7 +1408,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.3.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.4.0...main
+[v5.4.0]: https://github.com/suitenumerique/docs/releases/v5.4.0
 [v5.3.0]: https://github.com/suitenumerique/docs/releases/v5.3.0
 [v5.2.1]: https://github.com/suitenumerique/docs/releases/v5.2.1
 [v5.2.0]: https://github.com/suitenumerique/docs/releases/v5.2.0
