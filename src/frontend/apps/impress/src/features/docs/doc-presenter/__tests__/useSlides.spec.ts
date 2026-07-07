@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
   getContentSlideIndexForBlock,
   getSlideTitle,
+  hasDividerBlock,
   splitBlocksIntoSlides,
 } from '../hooks/useSlides';
 
@@ -192,6 +193,23 @@ describe('splitBlocksIntoSlides', () => {
       { type: 'quote', content: [{ text: 'dfsqdqsdqs' }] },
       { content: [{ text: 'fsdf' }] },
     ]);
+  });
+});
+
+describe('hasDividerBlock', () => {
+  test('returns false when the document has no divider', () => {
+    expect(hasDividerBlock([para('a'), para('b')])).toBe(false);
+  });
+
+  test('detects dividers nested in the block tree', () => {
+    const parent = {
+      ...para('parent'),
+      children: [para('nested'), divider()],
+    };
+
+    expect(hasDividerBlock([para('a'), quote('intro'), para('b')])).toBe(false);
+    expect(hasDividerBlock([para('a'), quote('intro'), divider()])).toBe(true);
+    expect(hasDividerBlock([para('a'), parent])).toBe(true);
   });
 });
 

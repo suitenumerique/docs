@@ -15,6 +15,9 @@ import {
   writeInEditor,
 } from './utils-editor';
 
+const dividerHintText =
+  'You can use the divider to tell Docs where to split your slides';
+
 const openPresenter = async (page: Page) => {
   await page.getByLabel('Open the document options').click();
   await page.getByRole('menuitem', { name: 'Present' }).click();
@@ -149,6 +152,36 @@ test.describe('Presenter Mode', () => {
     ).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(overlay).toBeHidden();
+  });
+
+  test('shows and dismisses the divider hint on the title slide', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-divider-hint', browserName, 1);
+    await writeInEditor({ page, text: 'Hello presenter' });
+
+    const overlay = await openPresenter(page);
+
+    await expect(overlay.getByText(dividerHintText)).toBeVisible();
+    await overlay.getByRole('button', { name: /^Close$/ }).click();
+    await expect(overlay.getByText(dividerHintText)).toBeHidden();
+
+    await overlay.getByRole('button', { name: 'Next slide' }).click();
+    await overlay.getByRole('button', { name: 'Previous slide' }).click();
+    await expect(overlay.getByText(dividerHintText)).toBeHidden();
+  });
+
+  test('hides the divider hint when the document already has a divider', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-divider-hint-hidden', browserName, 1);
+    await writeMultiSlideDoc(page);
+
+    const overlay = await openPresenter(page);
+
+    await expect(overlay.getByText(dividerHintText)).toBeHidden();
   });
 
   test('moves focus onto the first available control when opened', async ({
