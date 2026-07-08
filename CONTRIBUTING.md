@@ -157,7 +157,7 @@ We're writing this down so everyone knows where we stand, and so we can keep wel
 
 Please remember: LaSuite is maintained by humans for humans.
 
-### Contributing using AI tools
+### Human accountability
 
 Using AI to help write, review, or improve your contribution is fine.
 
@@ -168,6 +168,13 @@ The rules are simple: **you must understand and be able to explain the code that
 As maintainers, we might ask to walk us through your code. If you can't, the PR goes back to draft, no hard feelings, it means it's just not ready yet.
 
 Remember that for your contributions to go through the CI, your commits have to be signed off  with `git commit --signoff`. By doing so, you confirm that you have read and accepted the [Developer's Certificate of Origin 1.1](https://developercertificate.org/). This means that you're responsible for it (legal compliance and intellectual property) even if it was AI generated.
+
+Therefore our policy prohibits:
+- Listing AI as a co-author on commit
+- Using AI co-signing on commits
+- Adding trailers like "assisted-by" or "co-developed" that attribute work to AI
+
+This isn’t about undermining AI’s value as a tool, it’s about ensuring clear accountability. When issues arise, there must be a human who can understand the root cause and implement a solution.
 
 Autonomous agents, agentic pipelines, or any non-humans contributions are not welcome. They'll be closed without review by maintainers.
 
