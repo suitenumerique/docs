@@ -1,10 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Header', () => {
-  /**
-   * TODO: add back the skip link
-   */
-  test.skip('it displays skip link on first TAB and focuses page heading on click', async ({
+  test('it displays skip link on first TAB and focuses page heading on click', async ({
     page,
   }) => {
     await page.goto('/');

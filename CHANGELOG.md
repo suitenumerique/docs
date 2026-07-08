@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ♿️(frontend) restore skip to content link after header redesign #2510
+
 ## [v5.4.1] - 2026-07-09
 
 ### Changed
@@ -16,7 +20,6 @@ and this project adheres to
 
 - 💄(frontend) fix some UI/UX in the left panel #2516
 - 🐛(frontend) fix tree dnd firefox #2516
-
 
 ## [v5.4.0] - 2026-07-07
 

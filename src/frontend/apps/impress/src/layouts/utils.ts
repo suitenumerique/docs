@@ -12,6 +12,11 @@ export const getMainContentFocusTarget = (): HTMLElement | null => {
     return null;
   }
 
+  const docTitle = mainContent.querySelector('.--docs--doc-title');
+  if (docTitle instanceof HTMLElement) {
+    return docTitle;
+  }
+
   const firstHeading =
     mainContent.querySelector('h1') ?? mainContent.querySelector('h2');
 
