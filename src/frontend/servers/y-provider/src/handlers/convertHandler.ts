@@ -5,6 +5,7 @@ import {
   YjsThreadStore,
 } from '@blocknote/core/comments';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
+import * as Sentry from '@sentry/node';
 import { Request, Response } from 'express';
 import * as Y from 'yjs';
 
@@ -191,6 +192,14 @@ export const convertHandler = async (
       .setHeader('content-type', accept)
       .send(await writer.write(blocks ?? []));
   } catch (e) {
+    Sentry.captureException(e, {
+      tags: { handler: 'convert' },
+      extra: {
+        contentType,
+        accept,
+        bodyBytes: req.body?.length ?? 0,
+      },
+    });
     logger('conversion failed:', e);
     res.status(500).json({ error: 'An error occurred' });
   }
