@@ -108,7 +108,7 @@ export function DropdownArrow() {
         label: t('Import a document'),
         icon: <UploadIcon aria-hidden="true" width="24" height="24" />,
         callback: openImport,
-        isHidden: !isImportEnabled,
+        isHidden: !isImportEnabled || !!currentDoc,
       },
     ],
     [t, openImport, currentDoc, createChildDoc, isImportEnabled],
