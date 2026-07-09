@@ -14,7 +14,7 @@ items:
       labels:
         {{- include "impress.common.labels" (list $ $component) | nindent 8 }}
     spec:
-      schedule: {{ .schedule }}
+      schedule: {{ .schedule | quote }}
       concurrencyPolicy: {{ .concurrencyPolicy | default "Forbid" }}
       successfulJobsHistoryLimit: {{ .successfulJobsHistoryLimit | default 3 }}
       failedJobsHistoryLimit: {{ .failedJobsHistoryLimit | default 1 }}
@@ -42,9 +42,9 @@ items:
                   env:
                     {{- $envVars | indent 22 }}
                   {{- end }}
-                  {{- if .Values.backend.envFrom }}
+                  {{- if $.Values.backend.envFrom }}
                   envFrom:
-                    {{- toYaml .Values.backend.envFrom | nindent 22 }}
+                    {{- toYaml $.Values.backend.envFrom | nindent 22 }}
                   {{- end }}
                   {{- with $.Values.backend.securityContext }}
                   securityContext:
