@@ -178,7 +178,11 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
   return (
     <StyledLink
       className="--docs-sub-page-item"
-      draggable={doc.abilities.move && isLargeScreen}
+      /**
+       * Conflict with the react-arborist DND.
+       * It should be disabled to have the DND working properly.
+       */
+      draggable={false}
       href={`/docs/${doc.id}`}
       tabIndex={-1}
       aria-label={

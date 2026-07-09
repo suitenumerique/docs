@@ -10,6 +10,11 @@ and this project adheres to
 
 - ♻️(backend) reset collaboration connection in cascade for all children #2507
 
+### Fixed
+
+- 🐛(frontend) fix tree dnd firefox #2516
+
+
 ## [v5.4.0] - 2026-07-07
 
 ### Added
