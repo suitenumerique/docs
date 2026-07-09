@@ -40,6 +40,13 @@ If you run a public instance and would like it listed here, feel free to open a 
 **Type:** Demo instance  
 <https://docs.demo.mosacloud.eu/>
 
+### email.eu
+
+**Organization:** Email.eu  
+**Type:** Sovereign business workspace  
+**Access:** Account required  
+<https://email.eu/>
+
 ### notes.liiib.re
 
 **Organization:** lasuite.coop  
