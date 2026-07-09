@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.4.1] - 2026-07-09
+
 ### Changed
 
 - ♻️(backend) reset collaboration connection in cascade for all children #2507
@@ -1418,7 +1420,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.4.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.4.1...main
+[v5.4.1]: https://github.com/suitenumerique/docs/releases/v5.4.1
 [v5.4.0]: https://github.com/suitenumerique/docs/releases/v5.4.0
 [v5.3.0]: https://github.com/suitenumerique/docs/releases/v5.3.0
 [v5.2.1]: https://github.com/suitenumerique/docs/releases/v5.2.1
