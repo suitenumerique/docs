@@ -22,10 +22,12 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     paragraph: blockMappingParagraphPDF,
     quote: blockMappingQuotePDF,
     table: blockMappingTablePDF,
-    // We're using the file block mapping for PDF blocks
+    // We're using the file block mapping for PDF/embed blocks
     // The types don't match exactly but the implementation is compatible
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pdf: pdfDefaultSchemaMappings.blockMapping.file as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    embed: pdfDefaultSchemaMappings.blockMapping.file as any,
     uploadLoader: blockMappingUploadLoaderPDF,
   },
   inlineContentMapping: {

@@ -544,7 +544,7 @@ test.describe('Doc Editor', () => {
   });
 
   test('it embeds PDF', async ({ page, browserName }) => {
-    await createDoc(page, 'doc-toolbar', browserName, 1);
+    await createDoc(page, 'doc-embed-pdf', browserName, 1);
 
     await page.getByRole('button', { name: 'Share' }).click();
     await updateShareLink(page, 'Public', 'Reading');
@@ -636,5 +636,53 @@ test.describe('Doc Editor', () => {
     await page.waitForTimeout(500);
 
     await expect(editor.getByText('Mobile Text')).toBeVisible();
+  });
+
+  test('it embeds a web page', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-embed-web', browserName, 1);
+
+    await openSuggestionMenu({ page, suggestion: 'Embed a web page' });
+
+    const embedBlock = page.locator('div[data-content-type="embed"]').last();
+
+    await expect(embedBlock).toBeVisible();
+
+    // Try with same domain first
+    await page
+      .getByText(/Add embed/)
+      .first()
+      .click();
+
+    await page
+      .locator('[data-test="embed-input"]')
+      .fill('http://localhost:3000/');
+
+    await page.locator('[data-test="embed-input-button"]').click();
+
+    await expect(page.getByText('Invalid or unsafe URL.')).toBeVisible();
+
+    await openSuggestionMenu({ page, suggestion: 'Embed a web page' });
+
+    // Now with a valid URL
+    await page
+      .getByText(/Add embed/)
+      .first()
+      .click();
+
+    await page
+      .locator('[data-test="embed-input"]')
+      .fill('http://127.0.0.1:3000/');
+    await page.locator('[data-test="embed-input-button"]').click();
+
+    const embedIframe = page
+      .locator('.--docs--editor-container iframe.bn-visual-media')
+      .first();
+
+    // Check src of embed iframe
+    expect(await embedIframe.getAttribute('src')).toMatch(
+      /http:\/\/127.0.0.1:3000\//,
+    );
+
+    await expect(embedIframe).toHaveAttribute('role', 'presentation');
   });
 });

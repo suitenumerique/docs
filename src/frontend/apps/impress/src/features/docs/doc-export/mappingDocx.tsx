@@ -14,10 +14,12 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
   blockMapping: {
     ...docxDefaultSchemaMappings.blockMapping,
     callout: blockMappingCalloutDocx,
-    // We're reusing the file block mapping for PDF blocks; both share the same
+    // We're reusing the file block mapping for PDF/embed blocks; both share the same
     // implementation signature, so we can reuse the handler directly.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pdf: docxDefaultSchemaMappings.blockMapping.file as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    embed: docxDefaultSchemaMappings.blockMapping.file as any,
     quote: blockMappingQuoteDocx,
     image: blockMappingImageDocx,
     uploadLoader: blockMappingUploadLoaderDocx,

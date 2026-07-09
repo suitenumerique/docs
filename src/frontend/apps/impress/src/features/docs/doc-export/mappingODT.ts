@@ -18,10 +18,12 @@ export const odtDocsSchemaMappings: DocsExporterODT['mappings'] = {
     ...odtDefaultSchemaMappings.blockMapping,
     callout: blockMappingCalloutODT,
     image: blockMappingImageODT,
-    // We're reusing the file block mapping for PDF blocks
+    // We're reusing the file block mapping for PDF/embed blocks
     // The types don't match exactly but the implementation is compatible
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pdf: odtDefaultSchemaMappings.blockMapping.file as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    embed: odtDefaultSchemaMappings.blockMapping.file as any,
     uploadLoader: blockMappingUploadLoaderODT,
   },
 

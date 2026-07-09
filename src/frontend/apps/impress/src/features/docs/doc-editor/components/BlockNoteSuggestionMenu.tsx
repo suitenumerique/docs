@@ -20,6 +20,7 @@ import {
 import BlockNoteAI from './AI';
 import {
   getCalloutReactSlashMenuItems,
+  getEmbedReactSlashMenuItems,
   getPdfReactSlashMenuItems,
 } from './custom-blocks';
 import { useGetInterlinkingMenuItems } from './custom-inline-content';
@@ -56,6 +57,7 @@ export const BlockNoteSuggestionMenu = ({
       getPageBreakReactSlashMenuItems(editor),
       getMultiColumnSlashMenuItems?.(editor) || [],
       getPdfReactSlashMenuItems(editor, t, fileBlocksName),
+      getEmbedReactSlashMenuItems(editor, t, fileBlocksName),
       getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
       aiAllowed && getAISlashMenuItems ? getAISlashMenuItems(editor) : [],
     );

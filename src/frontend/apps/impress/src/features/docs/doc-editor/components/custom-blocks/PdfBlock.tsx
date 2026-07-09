@@ -20,9 +20,10 @@ import { createGlobalStyle } from 'styled-components';
 import { Box, Icon, Loading } from '@/components';
 import { isSafeUrl } from '@/utils/url';
 
-import Warning from '../../assets/warning.svg';
 import { ANALYZE_URL } from '../../conf';
 import { DocsBlockNoteEditor } from '../../types';
+
+import { CustomBlockStatus } from './CustomBlockStatus';
 
 const PDFBlockStyle = createGlobalStyle`
   .bn-block-content[data-content-type="pdf"] .bn-file-block-content-wrapper {
@@ -120,17 +121,7 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
 
   if (isInvalidPDF) {
     return (
-      <Box
-        $direction="row"
-        $gap="0.5rem"
-        $width="inherit"
-        $css="pointer-events: none;"
-        contentEditable={false}
-        draggable={false}
-      >
-        <Warning />
-        {t('Invalid or missing PDF file.')}
-      </Box>
+      <CustomBlockStatus>{t('Invalid or missing PDF file.')}</CustomBlockStatus>
     );
   }
 
