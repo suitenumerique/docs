@@ -455,6 +455,11 @@ class Base(Configuration):
                 environ_name="API_DOCUMENT_ASK_FOR_ACCESS_THROTTLE_RATE",
                 environ_prefix=None,
             ),
+            "mention": values.Value(
+                default="30/minute",
+                environ_name="API_MENTION_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
             "config": values.Value(
                 default="30/minute",
                 environ_name="API_CONFIG_THROTTLE_RATE",
@@ -484,6 +489,11 @@ class Base(Configuration):
 
     TRASHBIN_CUTOFF_DAYS = values.IntegerValue(
         30, environ_name="TRASHBIN_CUTOFF_DAYS", environ_prefix=None
+    )
+
+    # Mentions
+    MENTION_NOTIFICATION_COOLDOWN_MINUTES = values.IntegerValue(
+        15, environ_name="MENTION_NOTIFICATION_COOLDOWN_MINUTES", environ_prefix=None
     )
 
     # Mail

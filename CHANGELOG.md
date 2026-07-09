@@ -48,6 +48,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add limit on distinct reactions per comment #1978
+- ✨(backend) add mention endpoint with cooldown-limited email notification
 - ✨(frontend) leave a document #2410
 - ✨(frontend) add top parent on sub docs search #1952
 - ✨(frontend) unauthenticated users can search #2407
@@ -55,6 +56,7 @@ and this project adheres to
 
 ### Changed
 
+- 🛂(backend) make document access list visible to all collaborators
 - 👷(CI) remove test-e2e-other-browser job #2404
 - ♿️(frontend) use heading element for pinned documents section title #2380
 - ♿️(frontend) use anchor links for table of contents entries #2390
