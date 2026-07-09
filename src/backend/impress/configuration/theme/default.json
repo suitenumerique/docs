@@ -4,6 +4,8 @@
       "logo": {
         "src": "/assets/icon-docs.svg",
         "alt": "Docs Logo",
+        "width": 54,
+        "height": 63,
         "style": { "width": "54px", "height": "auto" },
         "withTitle": true
       },
@@ -130,6 +132,8 @@
     "with-proconnect": false,
     "icon-banner": {
       "src": "/assets/icon-docs.svg",
+      "width": 64,
+      "height": 74,
       "style": {
         "width": "64px",
         "height": "auto"
@@ -141,6 +145,8 @@
     "logo": {},
     "icon": {
       "src": "/assets/icon-docs.svg",
+      "width": 36,
+      "height": 42,
       "style": {
         "width": "36px",
         "height": "auto"

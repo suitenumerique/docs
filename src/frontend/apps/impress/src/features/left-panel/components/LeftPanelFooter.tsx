@@ -8,10 +8,8 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { gotoLogout } from '@/features/auth/utils';
 import { HelpMenu } from '@/features/help';
 import { LanguagePicker } from '@/features/language/components/LanguagePicker';
-import { useResponsiveStore } from '@/stores';
 
 export const LeftPanelFooter = () => {
-  const { isLargeScreen } = useResponsiveStore();
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -35,7 +33,7 @@ export const LeftPanelFooter = () => {
             withMobileView={false}
           />
           <Waffle />
-          {!isLargeScreen && <ButtonLogin />}
+          <ButtonLogin />
         </Box>
         <HelpMenu />
       </Box>

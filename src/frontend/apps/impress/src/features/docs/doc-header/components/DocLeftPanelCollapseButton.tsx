@@ -50,7 +50,7 @@ export const DocLeftPanelCollapseButton = () => {
    * visibility to show or hide the collapse button accordingly
    */
   useEffect(() => {
-    if (!isDocTitleInDom) {
+    if (!isDocTitleInDom || isPanelOpen) {
       return;
     }
 
@@ -77,7 +77,7 @@ export const DocLeftPanelCollapseButton = () => {
       observer.disconnect();
       setIsDocTitleVisible(true);
     };
-  }, [isDocTitleInDom]);
+  }, [isDocTitleInDom, isPanelOpen]);
 
   const { untitledDocument } = useTrans();
 

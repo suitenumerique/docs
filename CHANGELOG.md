@@ -12,6 +12,7 @@ and this project adheres to
 
 ### Fixed
 
+- 💄(frontend) fix some UI/UX in the left panel #2516
 - 🐛(frontend) fix tree dnd firefox #2516
 
 
