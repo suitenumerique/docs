@@ -19,7 +19,11 @@ const FLOATING_STYLES = css`
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0) 100%);
+    background: linear-gradient(
+      180deg,
+      var(--c--contextuals--background--surface--primary) 0%,
+      transparent 100%
+    );
     backdrop-filter: blur(1px);
     -webkit-backdrop-filter: blur(1px);
     mask-image: linear-gradient(180deg, black 50%, transparent 100%);

@@ -5,16 +5,19 @@ import {
 } from '../useCunninghamTheme';
 
 const setSystemPrefersDark = (matches: boolean) => {
-  window.matchMedia = ((query: string) => ({
-    matches,
-    media: query,
-    onchange: null,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    addListener: () => {},
-    removeListener: () => {},
-    dispatchEvent: () => false,
-  })) as unknown as typeof window.matchMedia;
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string) => ({
+      matches,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  });
 };
 
 const installStorageMock = () => {
@@ -86,5 +89,13 @@ describe('useCunninghamTheme colour mode', () => {
   it('getStoredThemeMode ignores invalid stored values', () => {
     window.localStorage.setItem(THEME_MODE_STORAGE_KEY, 'bogus');
     expect(getStoredThemeMode()).toBeNull();
+  });
+
+  it('applyThemeMode resolves the theme without persisting', () => {
+    useCunninghamTheme.getState().applyThemeMode('dark');
+
+    expect(useCunninghamTheme.getState().theme).toBe('dark');
+    expect(useCunninghamTheme.getState().themeMode).toBe('dark');
+    expect(window.localStorage.getItem(THEME_MODE_STORAGE_KEY)).toBeNull();
   });
 });

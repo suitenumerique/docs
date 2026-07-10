@@ -57,6 +57,7 @@ interface ThemeStore {
   setTheme: (theme: Theme) => void;
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
+  applyThemeMode: (mode: ThemeMode) => void;
   spacingsTokens: Partial<SpacingsTokens>;
   theme: Theme;
   themeTokens: Partial<Tokens['globals']>;
@@ -93,6 +94,12 @@ export const useCunninghamTheme = create<ThemeStore>((set) => ({
   themeMode: DEFAULT_MODE,
   setTheme: (theme: Theme) => {
     set(tokenSlices(theme));
+  },
+  // Resolve and apply a mode WITHOUT persisting it. Used for the in-memory
+  // default so an unset preference does not get written to localStorage and
+  // mask a backend brand theme.
+  applyThemeMode: (mode: ThemeMode) => {
+    set({ ...tokenSlices(resolveTheme(mode)), themeMode: mode });
   },
   setThemeMode: (mode: ThemeMode) => {
     if (typeof window !== 'undefined') {
