@@ -287,7 +287,7 @@ export const DropdownMenu = ({
                   <Icon
                     iconName="check"
                     $size="20px"
-                    $theme="gray"
+                    $color="var(--c--contextuals--content--semantic--neutral--primary)"
                     aria-hidden="true"
                   />
                 )}
