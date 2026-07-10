@@ -16,3 +16,4 @@ export * from './separators';
 export * from './SkipToContent';
 export * from './Text';
 export * from './TextErrors';
+export * from './ThemeSwitch';

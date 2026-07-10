@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) add dark / light / system colour-mode switcher
+
 ## [v5.4.1] - 2026-07-09
 
 ### Changed

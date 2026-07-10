@@ -21,8 +21,11 @@ export const DocsEditorStyle = createGlobalStyle`
   }
 
   .bn-root {
+    /* Editor shares the page background rather than BlockNote's Mantine
+       surface, so the canvas matches the app background in any theme. */
     .bn-editor {
       height: 100%;
+      background-color: transparent;
     }
 
     .mantine-Menu-itemLabel,
