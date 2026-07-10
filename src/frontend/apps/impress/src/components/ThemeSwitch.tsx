@@ -38,7 +38,6 @@ export const ThemeSwitch = () => {
   return (
     <DropdownMenu
       options={options}
-      selectedValues={[themeMode]}
       label={t('Change theme')}
       buttonCss={css`
         transition: all var(--c--globals--transitions--duration)
@@ -52,12 +51,7 @@ export const ThemeSwitch = () => {
         }
       `}
     >
-      <Box
-        className="--docs--theme-switch"
-        $direction="row"
-        $align="center"
-        aria-label={t('Change theme')}
-      >
+      <Box className="--docs--theme-switch" $direction="row" $align="center">
         <Icon iconName={MODE_ICON[themeMode]} $color="inherit" $size="xl" />
       </Box>
     </DropdownMenu>

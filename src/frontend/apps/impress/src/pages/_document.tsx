@@ -6,13 +6,14 @@ import Document, {
   NextScript,
 } from 'next/document';
 
+import { THEME_MODE_STORAGE_KEY } from '../cunningham/useCunninghamTheme';
 import { fallbackLng } from '../i18n/config';
 
 // Runs before hydration to set the Cunningham theme class on <html>, so the
-// correct colour scheme paints on first frame (no flash). Mirrors the logic in
-// useCunninghamTheme (storage key + light->`default`, dark->`dark`). Keep in sync.
+// correct colour scheme paints on first frame (no flash). Mirrors the mode
+// resolution in useCunninghamTheme (light->`default`, dark->`dark`).
 const THEME_INIT_SCRIPT = `(function(){try{
-var m=localStorage.getItem('doc-theme-mode')||'system';
+var m=localStorage.getItem('${THEME_MODE_STORAGE_KEY}')||'system';
 var dark=m==='dark'||(m==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
 var t=dark?'dark':'default';
 var r=document.documentElement;
