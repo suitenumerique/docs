@@ -42,6 +42,17 @@ interface ThemeCustomization {
   waffle?: LaGaufreV2Props;
 }
 
+/**
+ * Map of an allowed embed host to the iframe `sandbox` attribute to apply.
+ * Record<host, sandboxAttribute>
+ * Example:
+ * {
+ *   "excalidraw.com": "allow-scripts allow-same-origin",
+ *   "www.tldraw.com": "allow-scripts allow-same-origin",
+ * }
+ */
+export type EmbedAllowedOrigins = Record<string, string>;
+
 export interface ConfigResponse {
   AI_BOT: { name: string; color: string };
   AI_FEATURE_ENABLED?: boolean;
@@ -56,6 +67,8 @@ export interface ConfigResponse {
   CONVERSION_UPLOAD_ENABLED?: boolean;
   ENVIRONMENT: string;
   FRONTEND_CSS_URL?: string;
+  FRONTEND_EMBED_BLOCK_ENABLED?: boolean;
+  FRONTEND_EMBED_BLOCK_ALLOWED_ORIGINS?: EmbedAllowedOrigins;
   FRONTEND_HOMEPAGE_FEATURE_ENABLED?: boolean;
   FRONTEND_JS_URL?: string;
   FRONTEND_SILENT_LOGIN_ENABLED?: boolean;

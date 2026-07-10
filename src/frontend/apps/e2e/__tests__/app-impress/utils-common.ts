@@ -25,6 +25,10 @@ export const CONFIG = {
   CONVERSION_FILE_EXTENSIONS_ALLOWED: ['.docx', '.md'],
   CONVERSION_FILE_MAX_SIZE: 20971520,
   ENVIRONMENT: 'development',
+  FRONTEND_EMBED_BLOCK_ENABLED: true,
+  FRONTEND_EMBED_BLOCK_ALLOWED_ORIGINS: {
+    '*': 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms',
+  },
   FRONTEND_CSS_URL: null,
   FRONTEND_JS_URL: null,
   FRONTEND_HOMEPAGE_FEATURE_ENABLED: true,

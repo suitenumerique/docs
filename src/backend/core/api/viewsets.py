@@ -3087,6 +3087,8 @@ class ConfigView(drf.views.APIView):
             "CONVERSION_UPLOAD_ENABLED",
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
+            "FRONTEND_EMBED_BLOCK_ENABLED",
+            "FRONTEND_EMBED_BLOCK_ALLOWED_ORIGINS",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
             "FRONTEND_JS_URL",
             "FRONTEND_SILENT_LOGIN_ENABLED",

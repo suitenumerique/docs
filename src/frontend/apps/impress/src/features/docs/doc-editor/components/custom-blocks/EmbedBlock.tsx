@@ -3,9 +3,14 @@
  * `<iframe>`. The URL is stored in the collaborative document and rendered on
  * every member's machine, so it is treated as untrusted content.
  *
- * ⚠️ To keep it secure, the block enforces two invariants:
+ * ⚠️ To keep it secure, the block enforces three invariants:
  * 1. The URL must be safe (https, no javascript: or data:).
  * 2. The URL must be cross-origin (not same-origin with the app).
+ * 3. The URL's host must be explicitly allowlisted server-side
+ *    (FRONTEND_EMBED_BLOCK_ALLOWED_ORIGINS). Each allowlist entry also carries
+ *    the `sandbox` applied to its iframe, so an embed only gets the
+ *    capabilities the administrator granted to that origin. A host that is not
+ *    listed is refused, and the user is invited to ask an administrator.
  *
  * Two layers keep it cross-origin, where the
  * Same-Origin Policy blocks parent access:
@@ -38,6 +43,7 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
 import { Box, Icon } from '@/components';
+import { EmbedAllowedOrigins, useConfig } from '@/core';
 import { isSafeUrl } from '@/utils/url';
 
 import { DocsBlockNoteEditor } from '../../types';
@@ -64,6 +70,74 @@ export const isSameOriginUrl = (url: string): boolean => {
   } catch {
     return true;
   }
+};
+
+/**
+ * Returns the `sandbox` to apply for a URL, or `undefined` when the host is not
+ * covered by the configured origins.
+ *
+ * Entry formats (port is always significant):
+ *  - `"example.com"` — exact host, default port only
+ *  - `"example.com:8080"` — exact host, specific port
+ *  - `"*.example.com"` — all subdomains, default port only
+ *  - `"*.example.com:8080"` — all subdomains, specific port
+ *  - `"*"` — catch-all (any host/port)
+ *
+ * Priority: exact host > longest `"*."` wildcard > `"*"` catch-all.
+ * See `matchEmbedOrigin` tests for concrete examples (`./__tests__/EmbedBlock.test.ts`).
+ */
+export const matchEmbedOrigin = (
+  url: string,
+  allowedOrigins: EmbedAllowedOrigins,
+): string | undefined => {
+  let host: string;
+  try {
+    host = new URL(url, window.location.origin).host.toLowerCase();
+  } catch {
+    return undefined;
+  }
+
+  let bestWildcardMatch: { baseHost: string; sandbox: string } | undefined;
+  let catchAllSandbox: string | undefined;
+
+  for (const [origin, sandbox] of Object.entries(allowedOrigins)) {
+    let allowedHost = origin.trim().toLowerCase();
+    if (allowedHost === '*') {
+      catchAllSandbox = sandbox;
+      continue;
+    }
+
+    if (allowedHost.includes('://')) {
+      try {
+        allowedHost = new URL(allowedHost).host;
+      } catch {
+        continue;
+      }
+    } else {
+      allowedHost = allowedHost.split('/')[0];
+    }
+
+    const isWildcard = allowedHost.startsWith('*.');
+    const baseHost = isWildcard ? allowedHost.slice(2) : allowedHost;
+    if (!baseHost) {
+      continue;
+    }
+
+    if (!isWildcard && host === baseHost) {
+      return sandbox;
+    }
+
+    if (
+      isWildcard &&
+      host.endsWith(`.${baseHost}`) &&
+      (!bestWildcardMatch ||
+        baseHost.length > bestWildcardMatch.baseHost.length)
+    ) {
+      bestWildcardMatch = { baseHost, sandbox };
+    }
+  }
+
+  return bestWildcardMatch?.sandbox ?? catchAllSandbox;
 };
 
 type CreateEmbedBlockConfig = BlockConfig<
@@ -111,11 +185,30 @@ const EmbedBlockComponent = ({ editor, block }: EmbedBlockComponentProps) => {
     }
   }, [lang, t]);
 
-  const isInvalidEmbed =
-    !!embedUrl && (!isSafeUrl(embedUrl) || isSameOriginUrl(embedUrl));
+  const conf = useConfig().data;
+  const allowedOrigins = conf?.FRONTEND_EMBED_BLOCK_ALLOWED_ORIGINS ?? {};
 
-  if (isInvalidEmbed) {
+  const isUnsafeEmbed =
+    !!embedUrl && (!isSafeUrl(embedUrl) || isSameOriginUrl(embedUrl));
+  const sandbox =
+    !!embedUrl && !isUnsafeEmbed
+      ? matchEmbedOrigin(embedUrl, allowedOrigins)
+      : undefined;
+  const isDisallowedEmbed =
+    !!embedUrl && !isUnsafeEmbed && sandbox === undefined;
+
+  if (isUnsafeEmbed) {
     return <CustomBlockStatus>{t('Invalid or unsafe URL.')}</CustomBlockStatus>;
+  }
+
+  if (isDisallowedEmbed) {
+    return (
+      <CustomBlockStatus>
+        {t(
+          'This domain is not allowed for embedding. Please contact your administrator to have it added to the list of allowed domains.',
+        )}
+      </CustomBlockStatus>
+    );
   }
 
   return (
@@ -137,7 +230,7 @@ const EmbedBlockComponent = ({ editor, block }: EmbedBlockComponentProps) => {
             $height="450px"
             src={embedUrl}
             title={block.props.name || t('Embedded content')}
-            sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
+            sandbox={sandbox ?? ''}
             referrerPolicy="no-referrer"
             loading="lazy"
             contentEditable={false}

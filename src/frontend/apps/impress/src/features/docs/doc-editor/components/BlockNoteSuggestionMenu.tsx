@@ -11,6 +11,8 @@ import {
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useConfig } from '@/core';
+
 import {
   DocsBlockSchema,
   DocsInlineContentSchema,
@@ -45,6 +47,7 @@ export const BlockNoteSuggestionMenu = ({
   const dictionaryDate = useDictionary();
   const basicBlocksName = dictionaryDate.slash_menu.page_break.group;
   const fileBlocksName = dictionaryDate.slash_menu.file.group;
+  const embedEnabled = useConfig().data?.FRONTEND_EMBED_BLOCK_ENABLED ?? false;
 
   const getInterlinkingMenuItems = useGetInterlinkingMenuItems();
 
@@ -57,7 +60,9 @@ export const BlockNoteSuggestionMenu = ({
       getPageBreakReactSlashMenuItems(editor),
       getMultiColumnSlashMenuItems?.(editor) || [],
       getPdfReactSlashMenuItems(editor, t, fileBlocksName),
-      getEmbedReactSlashMenuItems(editor, t, fileBlocksName),
+      embedEnabled
+        ? getEmbedReactSlashMenuItems(editor, t, fileBlocksName)
+        : [],
       getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
       aiAllowed && getAISlashMenuItems ? getAISlashMenuItems(editor) : [],
     );
@@ -82,6 +87,7 @@ export const BlockNoteSuggestionMenu = ({
     fileBlocksName,
     basicBlocksName,
     aiAllowed,
+    embedEnabled,
     getInterlinkingMenuItems,
   ]);
 
