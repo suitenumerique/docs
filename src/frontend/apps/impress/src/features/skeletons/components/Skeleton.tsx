@@ -2,7 +2,6 @@ import { PropsWithChildren, useEffect, useRef, useState } from 'react';
 import { css, keyframes } from 'styled-components';
 
 import { Box } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
 import { useSkeletonStore } from '@/features/skeletons';
 
 const FADE_DURATION_MS = 250;
@@ -18,7 +17,6 @@ const fadeOut = keyframes`
 
 export const Skeleton = ({ children }: PropsWithChildren) => {
   const { isSkeletonVisible } = useSkeletonStore();
-  const { colorsTokens } = useCunninghamTheme();
   const [isVisible, setIsVisible] = useState(isSkeletonVisible);
   const [isFadingOut, setIsFadingOut] = useState(true);
   const timeoutVisibleRef = useRef<NodeJS.Timeout | null>(null);
@@ -54,7 +52,7 @@ export const Skeleton = ({ children }: PropsWithChildren) => {
       $align="center"
       $width="100%"
       $height="100%"
-      $background={colorsTokens['gray-000']}
+      $background="var(--c--contextuals--background--surface--primary)"
       $css={css`
         position: absolute;
         inset: 0;
