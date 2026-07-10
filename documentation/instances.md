@@ -43,9 +43,9 @@ If you run a public instance and would like it listed here, feel free to open a 
 ### email.eu
 
 **Organization:** Email.eu  
-**Type:** Sovereign business workspace  
-**Access:** Account required  
-<https://email.eu/>
+**Type:** Demo instance  
+**Access:** Open, no account needed  
+<https://email-eu.wiki.email.eu/docs/f23cd0ac-87d6-4b8e-8b55-5a15c814a4b6/>
 
 ### notes.liiib.re
 
