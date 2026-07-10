@@ -1,6 +1,6 @@
 import Image from 'next/image';
 
-import { Box } from '@/components';
+import { Box, ThemeSwitch } from '@/components';
 import { Title } from '@/components/Title';
 import { Waffle } from '@/components/Waffle';
 import { useConfig } from '@/core';
@@ -77,6 +77,7 @@ export const HomeHeader = () => {
         $gap={!isSmallMobile ? '1rem' : undefined}
         $align="center"
       >
+        <ThemeSwitch />
         <LanguagePickerLegacy />
         <Waffle />
       </Box>

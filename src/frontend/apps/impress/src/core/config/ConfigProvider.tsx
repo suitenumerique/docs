@@ -5,7 +5,7 @@ import { PropsWithChildren, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
+import { getStoredThemeMode, useCunninghamTheme } from '@/cunningham';
 import { useAuthQuery } from '@/features/auth';
 import {
   useCustomTranslations,
@@ -59,6 +59,16 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     if (!conf?.FRONTEND_THEME) {
+      return;
+    }
+
+    // Light/dark is driven by the user's colour-mode preference (ThemeProvider),
+    // so a stored mode wins, and we ignore the plain light/dark backend defaults.
+    // Non-default brand themes (e.g. `dsfr`) still come from backend config.
+    if (getStoredThemeMode()) {
+      return;
+    }
+    if (conf.FRONTEND_THEME === 'default' || conf.FRONTEND_THEME === 'dark') {
       return;
     }
 
