@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/suitenumerique/docs">
-    <img alt="Docs" src="/docs/assets/banner-docs.png" width="100%" />
+    <img alt="Docs" src="/documentation/assets/banner-docs.png" width="100%" />
   </a>
 </p>
 
@@ -24,7 +24,7 @@
 
 <p align="center">
   <a href="https://matrix.to/#/#docs-official:matrix.org">Chat on Matrix</a> •
-  <a href="/docs/">Documentation</a> •
+  <a href="/documentation/">Documentation</a> •
   <a href="#try-docs">Try Docs</a> •
   <a href="mailto:docs@numerique.gouv.fr">Contact us</a>
 </p>
@@ -35,7 +35,7 @@
 
 Docs is an open-source collaborative editor that helps teams write, organize, and share knowledge together - in real time.
 
-![Live collaboration demo](/docs/assets/docs_live_collaboration_light.gif)
+![Live collaboration demo](/documentation/assets/docs_live_collaboration_light.gif)
 
 
 ## What is Docs?
@@ -89,7 +89,7 @@ Experience Docs instantly - no installation required.
 
 Docs supports Kubernetes, Docker Compose, and community-provided methods such as Nix and YunoHost.
 
-Get started with self-hosting: [Installation guide](/docs/installation/README.md)
+Get started with self-hosting: [Installation guide](/documentation/installation/README.md)
 
 > [!WARNING]
 > Some advanced features (for example: `Export as PDF`) rely on XL packages from Blocknote.
@@ -103,7 +103,7 @@ Get started with self-hosting: [Installation guide](/docs/installation/README.md
 >
 > This builds an image of Docs without non-MIT features.
 >
-> More details can be found in [environment variables](/docs/env.md)
+> More details can be found in [environment variables](/documentation/env.md)
 
 ## Local Development (for contributors)
 
@@ -247,5 +247,5 @@ Docs is the result of a joint initiative led by the French 🇫🇷 ([DINUM](htt
 We are always looking for new public partners (we are currently onboarding the Netherlands 🇳🇱), feel free to [contact us](mailto:docs@numerique.gouv.fr) if you are interested in using or contributing to Docs.
 
 <p align="center">
-  <img src="/docs/assets/europe_opensource.png" width="50%"/ alt="Europe Opensource">
+  <img src="/documentation/assets/europe_opensource.png" width="50%"/ alt="Europe Opensource">
 </p>
