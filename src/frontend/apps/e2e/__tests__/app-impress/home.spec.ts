@@ -178,4 +178,34 @@ test.describe('Home page', () => {
       page.locator(`${process.env.SIGN_IN_EL_LOGIN_PAGE}`).getByText('impress'),
     ).toBeVisible();
   });
+
+  test('it redirects a direct /home link to login when the homepage feature is disabled', async ({
+    page,
+  }) => {
+    await overrideConfig(page, {
+      FRONTEND_HOMEPAGE_FEATURE_ENABLED: false,
+    });
+
+    await page.goto('/home/');
+
+    // Keyclock login page
+    await expect(
+      page.locator(`${process.env.SIGN_IN_EL_LOGIN_PAGE}`).getByText('impress'),
+    ).toBeVisible();
+  });
+
+  test('it shows the homepage for a direct /home link when the homepage feature is enabled', async ({
+    page,
+  }) => {
+    await overrideConfig(page, {
+      FRONTEND_HOMEPAGE_FEATURE_ENABLED: true,
+    });
+
+    await page.goto('/home/');
+
+    // Homepage content, not the login page
+    await expect(
+      page.locator('h2').getByText('Govs ❤️ Open Source.'),
+    ).toBeVisible();
+  });
 });
