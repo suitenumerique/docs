@@ -35,6 +35,20 @@ describe('utils', () => {
       expect(result.cause).toBeUndefined();
       expect(result.data).toBeUndefined();
     });
+
+    it('returns undefined causes when response body is not valid JSON (e.g. 413 from Nginx)', async () => {
+      const mockResponse = {
+        status: 413,
+        json: () =>
+          Promise.reject(new SyntaxError('Unexpected token < in JSON')),
+      } as unknown as Response;
+
+      const result = await errorCauses(mockResponse);
+
+      expect(result.status).toBe(413);
+      expect(result.cause).toBeUndefined();
+      expect(result.data).toBeUndefined();
+    });
   });
 
   describe('getCSRFToken', () => {
