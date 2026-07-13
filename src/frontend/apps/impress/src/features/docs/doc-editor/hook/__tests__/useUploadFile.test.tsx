@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,7 +9,7 @@ import { useUploadFile } from '../useUploadFile';
 
 vi.mock('@/core', () => ({
   useConfig: () => ({
-    data: { DOCUMENT_IMAGE_MAX_SIZE: 1 }, // 1 byte limit for test
+    data: { DOCUMENT_IMAGE_MAX_SIZE: 1 * 1024 * 1024 }, // 1MB limit for test
   }),
 }));
 
@@ -49,12 +49,23 @@ describe('useUploadFile', () => {
       wrapper: AppWrapper,
     });
 
-    // Fake 2 bytes file
-    const bigFile = new File([new ArrayBuffer(2)], 'big.png', {
-      type: 'image/png',
-    });
-
     await expect(result.current.uploadFile(bigFile)).rejects.toThrow(APIError);
     expect(fetchMock.calls()).toHaveLength(0);
+  });
+
+  it('sets errorAttachment with a user-friendly message when file exceeds the size limit', async () => {
+    const { result } = renderHook(() => useUploadFile('doc-id'), {
+      wrapper: AppWrapper,
+    });
+
+    await result.current.uploadFile(bigFile).catch(() => {});
+
+    await waitFor(() => {
+      expect(result.current.isErrorAttachment).toBe(true);
+    });
+
+    expect(result.current.errorAttachment?.cause).toEqual([
+      'File size exceeds the maximum allowed size of 1MB.',
+    ]);
   });
 });

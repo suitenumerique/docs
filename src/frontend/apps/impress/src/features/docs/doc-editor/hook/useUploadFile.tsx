@@ -1,6 +1,6 @@
 import { Block } from '@blocknote/core';
 import { captureException } from '@sentry/nextjs';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { APIError, backendUrl } from '@/api';
@@ -14,6 +14,7 @@ import { DocsBlockNoteEditor } from '../types';
 export const useUploadFile = (docId: string) => {
   const { t } = useTranslation();
   const { data: config } = useConfig();
+  const [sizeError, setSizeError] = useState<APIError | null>(null);
   const {
     mutateAsync: createDocAttachment,
     isError: isErrorAttachment,
@@ -24,7 +25,7 @@ export const useUploadFile = (docId: string) => {
     async (file: File) => {
       const maxSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? 10 * 1024 * 1024; // Default to 10MB if config isn't provided by the backend.
       if (file.size > maxSize) {
-        throw new APIError(t('File is too large'), {
+        const error = new APIError(t('File is too large'), {
           status: 413, // Replicate what Nginx answers when dealing with a file too big.
           cause: [
             t('File size exceeds the maximum allowed size of {{size}}MB.', {
@@ -32,7 +33,10 @@ export const useUploadFile = (docId: string) => {
             }),
           ],
         });
+        setSizeError(error);
+        throw error;
       }
+      setSizeError(null);
 
       const body = new FormData();
       body.append('file', file);
@@ -49,8 +53,8 @@ export const useUploadFile = (docId: string) => {
 
   return {
     uploadFile,
-    isErrorAttachment,
-    errorAttachment,
+    isErrorAttachment: isErrorAttachment || !!sizeError,
+    errorAttachment: sizeError ?? errorAttachment,
   };
 };
 
