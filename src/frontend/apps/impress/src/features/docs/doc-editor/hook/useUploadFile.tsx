@@ -3,7 +3,8 @@ import { captureException } from '@sentry/nextjs';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { backendUrl } from '@/api';
+import { APIError, backendUrl } from '@/api';
+import { useConfig } from '@/core';
 import { isSafeUrl } from '@/utils/url';
 
 import { useCreateDocAttachment } from '../api';
@@ -11,6 +12,8 @@ import { ANALYZE_URL } from '../conf';
 import { DocsBlockNoteEditor } from '../types';
 
 export const useUploadFile = (docId: string) => {
+  const { t } = useTranslation();
+  const { data: config } = useConfig();
   const {
     mutateAsync: createDocAttachment,
     isError: isErrorAttachment,
@@ -19,6 +22,18 @@ export const useUploadFile = (docId: string) => {
 
   const uploadFile = useCallback(
     async (file: File) => {
+      const maxSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? 10 * 1024 * 1024; // Default to 10MB if config isn't provided by the backend.
+      if (file.size > maxSize) {
+        throw new APIError(t('File is too large'), {
+          status: 413, // Replicate what Nginx answers when dealing with a file too big.
+          cause: [
+            t('File size exceeds the maximum allowed size of {{size}}MB.', {
+              size: Math.round(maxSize / (1024 * 1024)),
+            }),
+          ],
+        });
+      }
+
       const body = new FormData();
       body.append('file', file);
 
