@@ -19,6 +19,25 @@ const dropFileInEditor = async (page: Page) => {
     .dispatchEvent('drop', { dataTransfer });
 };
 
+const pasteFileInEditor = async (page: Page) => {
+  await page.getByLabel('Document editor').focus();
+
+  await page.getByLabel('Document editor').evaluate((el) => {
+    const dt = new DataTransfer();
+    const file = new File([new Uint8Array(1048577)], 'video.mp4', {
+      type: 'video/mp4',
+    });
+    dt.items.add(file);
+
+    const event = new ClipboardEvent('paste', {
+      clipboardData: dt,
+      bubbles: true,
+      cancelable: true,
+    });
+    el.dispatchEvent(event);
+  });
+};
+
 test.describe('Doc Editor - File Upload', () => {
   test('dropping a file that is too large shows an error and does not leave a loading block', async ({
     page,
@@ -63,5 +82,27 @@ test.describe('Doc Editor - File Upload', () => {
     await expect(
       page.getByText('File size exceeds the maximum allowed size of 1MB.'),
     ).toBeVisible();
+  });
+
+  test('pasting a file that is too large shows an error and does not leave a loading block', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName === 'firefox',
+      'Firefox does not expose clipboardData.items on synthetic ClipboardEvents, making this untestable via dispatchEvent.',
+    );
+    await overrideConfig(page, { DOCUMENT_IMAGE_MAX_SIZE: 1048576 });
+    await page.goto('/');
+    await createDoc(page, 'doc-upload-paste-too-large', browserName, 1);
+    await getEditor({ page });
+
+    await pasteFileInEditor(page);
+
+    await expect(
+      page.getByText('File size exceeds the maximum allowed size of 1MB.'),
+    ).toBeVisible();
+
+    await expect(page.getByText('Loading...')).toBeHidden();
   });
 });
