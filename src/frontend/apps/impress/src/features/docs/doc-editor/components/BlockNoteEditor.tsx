@@ -133,8 +133,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       ? DEFAULT_LOCALE
       : i18n.resolvedLanguage;
 
-  const { uploadFile, checkFileSize, errorAttachment, sizeErrorKey } =
-    useUploadFile(doc.id);
+  const { uploadFile, errorAttachment } = useUploadFile(doc.id);
   const conf = useConfig().data;
   const { isFeatureFlagActivated } = useAnalytics();
   const aiBlockNoteAllowed = !!(
@@ -237,6 +236,13 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         }),
       },
       pasteHandler: ({ event, defaultPasteHandler }) => {
+        const files = Array.from(event.clipboardData?.files ?? []);
+        try {
+          files.forEach(checkFileSize);
+        } catch {
+          return;
+        }
+
         // Get clipboard data
         const blocknoteData = event.clipboardData?.getData('blocknote/html');
 
@@ -321,9 +327,24 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       }
     };
 
+    const handlePaste = (event: ClipboardEvent) => {
+      const files = Array.from(event.clipboardData?.items ?? [])
+        .filter((item) => item.kind === 'file')
+        .map((item) => item.getAsFile())
+        .filter((f): f is File => f !== null);
+      try {
+        files.forEach(checkFileSize);
+      } catch {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+    };
+
     container.addEventListener('drop', handleDrop, true);
+    container.addEventListener('paste', handlePaste, true);
     return () => {
       container.removeEventListener('drop', handleDrop, true);
+      container.removeEventListener('paste', handlePaste, true);
     };
   }, [checkFileSize]);
 

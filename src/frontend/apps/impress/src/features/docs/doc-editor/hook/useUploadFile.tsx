@@ -1,6 +1,6 @@
 import { Block } from '@blocknote/core';
 import { captureException } from '@sentry/nextjs';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { APIError, backendUrl } from '@/api';
@@ -14,58 +14,37 @@ import { DocsBlockNoteEditor } from '../types';
 export const useUploadFile = (docId: string) => {
   const { t } = useTranslation();
   const { data: config } = useConfig();
-  const [sizeError, setSizeError] = useState<APIError | null>(null);
-  const [sizeErrorKey, setSizeErrorKey] = useState(0);
   const {
     mutateAsync: createDocAttachment,
     isError: isErrorAttachment,
     error: errorAttachment,
   } = useCreateDocAttachment();
 
-  const checkFileSize = useCallback(
-    (file: File) => {
-      const maxSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? 10 * 1024 * 1024; // Default to 10MB if config isn't provided by the backend.
-      if (file.size > maxSize) {
-        const error = new APIError(t('File is too large'), {
-          status: 413, // Replicate what Nginx answers when dealing with a file too big.
-          cause: [
-            t('File size exceeds the maximum allowed size of {{size}}MB.', {
-              size: Math.round(maxSize / (1024 * 1024)),
-            }),
-          ],
-        });
-        setSizeError(error);
-        setSizeErrorKey((prev) => prev + 1);
-        throw error;
-      }
-      setSizeError(null);
-    },
-    [config?.DOCUMENT_IMAGE_MAX_SIZE, setSizeError, setSizeErrorKey, t],
-  );
-
   const uploadFile = useCallback(
     async (file: File) => {
-      checkFileSize(file);
-
+      const maxSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? 10 * 1024 * 1024; // Default to 10MB if config isn't provided by the backend.
       const body = new FormData();
       body.append('file', file);
 
       const ret = await createDocAttachment({
         docId,
         body,
+        maxSize,
+        errorTitle: t('File is too large'),
+        errorCause: t('File size exceeds the maximum allowed size of {{size}}MB.', {
+          size: Math.round(maxSize / (1024 * 1024)),
+        }),
       });
 
       return `${backendUrl()}${ret.file}`;
     },
-    [checkFileSize, createDocAttachment, docId],
+    [config?.DOCUMENT_IMAGE_MAX_SIZE, createDocAttachment, docId, t],
   );
 
   return {
     uploadFile,
-    checkFileSize,
-    isErrorAttachment: isErrorAttachment || !!sizeError,
-    errorAttachment: sizeError ?? errorAttachment,
-    sizeErrorKey,
+    isErrorAttachment,
+    errorAttachment,
   };
 };
 
