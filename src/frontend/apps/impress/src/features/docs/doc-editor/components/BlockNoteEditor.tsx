@@ -133,7 +133,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       ? DEFAULT_LOCALE
       : i18n.resolvedLanguage;
 
-  const { uploadFile, errorAttachment } = useUploadFile(doc.id);
+  const { uploadFile, checkFileSize, errorAttachment, sizeErrorKey } =
+    useUploadFile(doc.id);
   const conf = useConfig().data;
   const { isFeatureFlagActivated } = useAnalytics();
   const aiBlockNoteAllowed = !!(
@@ -307,6 +308,26 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   useScrollToBlockAnchor();
 
   useEffect(() => {
+    const container = refEditorContainer.current;
+    if (!container) return;
+
+    const handleDrop = (event: DragEvent) => {
+      const files = Array.from(event.dataTransfer?.files ?? []);
+      try {
+        files.forEach(checkFileSize);
+      } catch {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+    };
+
+    container.addEventListener('drop', handleDrop, true);
+    return () => {
+      container.removeEventListener('drop', handleDrop, true);
+    };
+  }, [checkFileSize]);
+
+  useEffect(() => {
     setEditor(editor);
 
     return () => {
@@ -323,7 +344,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       />
       <DocsFindReplaceStyle />
       {errorAttachment && (
-        <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
+        <Box
+          key={sizeErrorKey}
+          $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}
+        >
           <TextErrors
             causes={errorAttachment.cause}
             canClose
