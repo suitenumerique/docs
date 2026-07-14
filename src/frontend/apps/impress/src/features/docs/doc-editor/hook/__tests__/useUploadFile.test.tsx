@@ -68,4 +68,28 @@ describe('useUploadFile', () => {
       'File size exceeds the maximum allowed size of 1MB.',
     ]);
   });
+
+  it('exposes checkFileSize that does not throw for files within the limit', () => {
+    const { result } = renderHook(() => useUploadFile('doc-id'), {
+      wrapper: AppWrapper,
+    });
+
+    expect(() => result.current.checkFileSize(smallFile)).not.toThrow();
+  });
+
+  it('exposes checkFileSize that throws and sets errorAttachment for files over the limit', async () => {
+    const { result } = renderHook(() => useUploadFile('doc-id'), {
+      wrapper: AppWrapper,
+    });
+
+    expect(() => result.current.checkFileSize(bigFile)).toThrow(APIError);
+
+    await waitFor(() => {
+      expect(result.current.isErrorAttachment).toBe(true);
+    });
+
+    expect(result.current.errorAttachment?.cause).toEqual([
+      'File size exceeds the maximum allowed size of 1MB.',
+    ]);
+  });
 });

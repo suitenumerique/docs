@@ -15,14 +15,15 @@ export const useUploadFile = (docId: string) => {
   const { t } = useTranslation();
   const { data: config } = useConfig();
   const [sizeError, setSizeError] = useState<APIError | null>(null);
+  const [sizeErrorKey, setSizeErrorKey] = useState(0);
   const {
     mutateAsync: createDocAttachment,
     isError: isErrorAttachment,
     error: errorAttachment,
   } = useCreateDocAttachment();
 
-  const uploadFile = useCallback(
-    async (file: File) => {
+  const checkFileSize = useCallback(
+    (file: File) => {
       const maxSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? 10 * 1024 * 1024; // Default to 10MB if config isn't provided by the backend.
       if (file.size > maxSize) {
         const error = new APIError(t('File is too large'), {
@@ -34,9 +35,17 @@ export const useUploadFile = (docId: string) => {
           ],
         });
         setSizeError(error);
+        setSizeErrorKey((prev) => prev + 1);
         throw error;
       }
       setSizeError(null);
+    },
+    [config?.DOCUMENT_IMAGE_MAX_SIZE, setSizeError, setSizeErrorKey, t],
+  );
+
+  const uploadFile = useCallback(
+    async (file: File) => {
+      checkFileSize(file);
 
       const body = new FormData();
       body.append('file', file);
@@ -48,13 +57,15 @@ export const useUploadFile = (docId: string) => {
 
       return `${backendUrl()}${ret.file}`;
     },
-    [createDocAttachment, docId],
+    [checkFileSize, createDocAttachment, docId],
   );
 
   return {
     uploadFile,
+    checkFileSize,
     isErrorAttachment: isErrorAttachment || !!sizeError,
     errorAttachment: sizeError ?? errorAttachment,
+    sizeErrorKey,
   };
 };
 
