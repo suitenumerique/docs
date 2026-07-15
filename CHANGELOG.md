@@ -10,6 +10,10 @@ and this project adheres to
 
 - ♿️(frontend) restore skip to content link after header redesign #2510
 
+### Changed 
+
+- ♿(frontend) hide decorative emojis in document titles from SR #2527
+
 ## [v5.4.1] - 2026-07-09
 
 ### Changed
