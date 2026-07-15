@@ -1,4 +1,5 @@
 import { Button } from '@gouvfr-lasuite/ui-components';
+import { ReactNode } from 'react';
 
 import { Text } from '@/components';
 import { FadeComponent } from '@/components/Effect';
@@ -13,7 +14,7 @@ export const LeftPanelCollapseButton = ({
   buttonTitle,
 }: {
   ariaLabel: string;
-  buttonTitle?: string;
+  buttonTitle?: ReactNode;
 }) => {
   const { isPanelOpen, togglePanel } = useLeftPanelStore();
   const { isSmallMobile } = useResponsiveStore();
@@ -36,7 +37,6 @@ export const LeftPanelCollapseButton = ({
               $size="sm"
               $weight={700}
               $color="var(--c--globals--colors--gray-1000)"
-              title={buttonTitle}
             >
               {buttonTitle}
             </Text>
