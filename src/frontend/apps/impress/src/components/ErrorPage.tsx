@@ -1,20 +1,58 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
 import Head from 'next/head';
-import Image, { StaticImageData } from 'next/image';
+import Link from 'next/link';
+import { ComponentType, ReactNode, SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import { Box, Icon, StyledLink, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
+import HomeSvg from '@/icons/house-rounded.svg';
 
-const StyledButton = styled(Button)`
-  width: fit-content;
+const errorActionStyles = `
+  display: flex;
+  height: var(--md, 24px);
+  padding: 0 var(--xxxs, 4px);
+  justify-content: center;
+  align-items: center;
+  gap: var(--xxxs, 4px);
+  color: var(--c--contextuals--content--semantic--neutral--tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: var(--line-height-xs, 16px);
+  text-decoration: none;
+
+  svg {
+    text-decoration: none;
+  }
+
+  .--docs--error-action-label {
+    text-decoration: none;
+  }
+
+  &:hover:not(:disabled) .--docs--error-action-label {
+    text-decoration: underline;
+  }
+`;
+
+const ErrorActionLink = styled.button`
+  ${errorActionStyles}
+`;
+
+const ErrorActionLinkStyled = styled(Link)`
+  ${errorActionStyles}
 `;
 
 interface ErrorPageProps {
-  image: StaticImageData;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  title: string;
   description: string;
   refreshTarget?: string;
   showReload?: boolean;
+  showHome?: boolean;
+  actions?: ReactNode;
 }
 
 const getSafeRefreshUrl = (target?: string): string | undefined => {
@@ -40,94 +78,108 @@ const getSafeRefreshUrl = (target?: string): string | undefined => {
 };
 
 export const ErrorPage = ({
-  image,
+  icon: IconComponent,
+  title,
   description,
   refreshTarget,
   showReload,
+  showHome = true,
+  actions,
 }: ErrorPageProps) => {
   const { t } = useTranslation();
 
-  const errorTitle = t('An unexpected error occurred.');
   const safeTarget = getSafeRefreshUrl(refreshTarget);
 
   return (
     <>
       <Head>
         <title>
-          {errorTitle} - {t('Docs')}
+          {title} - {t('Docs')}
         </title>
         <meta
           property="og:title"
-          content={`${errorTitle} - ${t('Docs')}`}
+          content={`${title} - ${t('Docs')}`}
           key="title"
         />
       </Head>
       <Box
         $align="center"
-        $margin="auto"
-        $gap="md"
+        $justify="center"
+        $flex="1"
+        $gap="var(--xxxs, 4px)"
         $padding={{ bottom: '2rem' }}
       >
         <Text as="h1" $textAlign="center" className="sr-only">
-          {errorTitle} - {t('Docs')}
+          {title} - {t('Docs')}
         </Text>
-        <Image
-          src={image}
-          alt=""
-          width={300}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-          }}
-        />
+        <IconComponent width={102} height={72} aria-hidden="true" />
 
-        <Text
-          as="p"
-          $textAlign="center"
-          $maxWidth="350px"
-          $theme="neutral"
-          $margin="0"
-        >
-          {description}
-        </Text>
+        <Box $align="center" $gap="0">
+          <Text as="p" $weight="bold" $textAlign="center" $margin="0">
+            {title}
+          </Text>
 
-        <Box $direction="row" $gap="sm">
-          <StyledLink href="/">
-            <StyledButton
-              color="neutral"
-              icon={
-                <Icon
-                  iconName="house"
-                  variant="symbols-outlined"
-                  $withThemeInherited
-                />
-              }
-            >
-              {t('Home')}
-            </StyledButton>
-          </StyledLink>
+          <Text
+            as="p"
+            $textAlign="center"
+            $maxWidth="350px"
+            $margin="0"
+            $css="
+              color: var(--c--contextuals--content--semantic--neutral--secondary);
+              font-size: 12px;
+              font-weight: 400;
+              line-height: var(--line-height-xs, 16px);
+              margin-top: 4px;
+            "
+          >
+            {description}
+          </Text>
+        </Box>
 
-          {(safeTarget || showReload) && (
-            <StyledButton
-              color="neutral"
-              variant="bordered"
-              icon={
+        {actions ? (
+          <Box
+            $direction="row"
+            $align="flex-start"
+            $gap="0.5rem"
+            $css="margin-top: var(--base, 16px);"
+          >
+            {actions}
+          </Box>
+        ) : (
+          <Box
+            $direction="row"
+            $align="flex-start"
+            $gap="0.5rem"
+            $css="margin-top: var(--base, 16px);"
+          >
+            {showHome && (
+              <ErrorActionLinkStyled href="/">
+                <HomeSvg width={16} height={16} aria-hidden="true" />
+                <span className="--docs--error-action-label">{t('Home')}</span>
+              </ErrorActionLinkStyled>
+            )}
+
+            {(safeTarget || showReload) && (
+              <ErrorActionLink
+                onClick={() =>
+                  safeTarget
+                    ? window.location.assign(safeTarget)
+                    : window.location.reload()
+                }
+              >
                 <Icon
                   iconName="refresh"
                   variant="symbols-outlined"
-                  $withThemeInherited
+                  $size="16px"
+                  $color="inherit"
                 />
-              }
-              onClick={() =>
-                safeTarget
-                  ? window.location.assign(safeTarget)
-                  : window.location.reload()
-              }
-            >
-              {t('Refresh page')}
-            </StyledButton>
-          )}
-        </Box>
+                <span className="--docs--error-action-label">
+                  {t('Refresh page')}
+                </span>
+              </ErrorActionLink>
+            )}
+          </Box>
+        )}
       </Box>
     </>
   );
