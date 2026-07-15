@@ -37,6 +37,7 @@ and this project adheres to
 - 🐛(backend) manage async support for Docs custom middleware #2619
 - 🐛(frontend) save the doc with a keepalive 
   request when leaving the page #2619
+- 🐛(frontend) export any raster image supported by the browser to a PDF #2530
 
 ### Removed
 
