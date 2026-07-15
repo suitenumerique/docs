@@ -10,6 +10,10 @@ and this project adheres to
 
 - ♿️(frontend) restore skip to content link after header redesign #2510
 
+### Fixed
+
+- 🐛(frontend) export any raster image supported by the browser to a PDF #2530
+
 ## [v5.4.1] - 2026-07-09
 
 ### Changed
