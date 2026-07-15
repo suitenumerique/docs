@@ -75,13 +75,69 @@ export async function convertSvgToPng(
   await svg.render();
 
   const returnWidth = width || originalWidth || FALLBACK_WIDTH;
-  const returnHeight = calculatedHeight || returnWidth;
+  const returnHeight = calculatedHeight || originalHeight || returnWidth;
 
   return {
     png: canvas.toDataURL('image/png'),
     width: returnWidth,
     height: returnHeight,
   };
+}
+
+/**
+ * Converts any raster format (PNG, WebP, JPEG, ...) into a PNG data URL via canvas.
+ *
+ * This function creates a canvas, draws the image to it, and returns its data URL and size.
+ *
+ * @param {Blob} blob - The raw raster image to convert.
+ * @param {number} width - The desired width of the output PNG (height is auto-calculated to preserve aspect ratio).
+ * @returns {Promise<{ png: string; width: number; height: number }>} A Promise that resolves to an object containing the PNG data URL and its dimensions.
+ *
+ * @throws Will throw an error if the canvas context cannot be initialized.
+ */
+// Convert any raster format (PNG, WebP, JPEG, …) to a PNG data URL via
+// canvas. This has two benefits:
+//   1. Formats unsupported by @react-pdf/renderer (e.g. WebP) are
+//      transcoded to PNG which react-pdf can embed.
+//   2. Passing a raw Blob to react-pdf triggers a WASM "too many
+//      arguments" error in its internal image pipeline; a canvas-derived
+//      data URL sidesteps that entirely.
+export async function convertBlobToPng(
+  blob: Blob,
+  width?: number,
+): Promise<{ png: string; width: number; height: number } | undefined> {
+  if (typeof window === 'undefined') return;
+  const bmp = await createImageBitmap(blob);
+  try {
+    const canvas = document.createElement('canvas');
+
+    let calculatedHeight: number | undefined;
+    // Resize if width provided, preserving aspect ratio
+    if (width) {
+      canvas.width = width;
+      const aspectRatio = bmp.height / bmp.width;
+      calculatedHeight = Math.round(width * aspectRatio);
+      canvas.height = calculatedHeight;
+    } else {
+      canvas.width = bmp.width;
+      canvas.height = bmp.height;
+    }
+
+    const ctx = canvas.getContext('2d', {
+      alpha: true,
+    });
+    if (!ctx) {
+      throw new Error('Canvas context is null');
+    }
+    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    return {
+      png: canvas.toDataURL('image/png'),
+      width: canvas.width,
+      height: canvas.height,
+    };
+  } finally {
+    bmp.close();
+  }
 }
 
 export function docxBlockPropsToStyles(
