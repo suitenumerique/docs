@@ -40,7 +40,8 @@ import {
 import { QuickSearchGroupMember } from './DocShareMember';
 import { DocShareModalFooter } from './DocShareModalFooter';
 
-const DEBOUNCE_MS = 300;
+const SEARCH_QUERY_DEBOUNCE_MS = 300;
+const ACCESSIBILITY_REEXPOSURE_DELAY_MS = 300;
 
 const ShareModalStyle = createGlobalStyle`
   .--docs--doc-share-modal [cmdk-item] {
@@ -122,7 +123,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
 
   const onFilter = useDebouncedCallback((str: string) => {
     setUserQuery(str);
-  }, DEBOUNCE_MS);
+  }, SEARCH_QUERY_DEBOUNCE_MS);
 
   const onRemoveUser = (row: User) => {
     setSelectedUsers((prevState) => {
@@ -176,7 +177,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
 
     const id = window.setTimeout(() => {
       setIsContentAccessible(true);
-    }, DEBOUNCE_MS);
+    }, ACCESSIBILITY_REEXPOSURE_DELAY_MS);
 
     return () => window.clearTimeout(id);
   }, [canShare]);
