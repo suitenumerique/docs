@@ -116,6 +116,12 @@ export const DocSearchContent = ({
   ]);
 
   useEffect(() => {
+    if (loading && (search || isSearchNotMandatory)) {
+      announce(t('Loading documents...'), 'polite');
+    }
+  }, [loading, search, isSearchNotMandatory]);
+
+  useEffect(() => {
     onLoadingChange?.(loading);
   }, [loading, onLoadingChange]);
 
