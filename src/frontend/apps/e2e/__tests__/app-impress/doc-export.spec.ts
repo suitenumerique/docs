@@ -247,6 +247,46 @@ test.describe('Doc Export', () => {
     expect(pdfText.text).toContain('Hello World');
   });
 
+  /**
+   * Regression test for https://github.com/suitenumerique/docs/issues/860
+   *
+   * PNG images were silently dropped from the exported PDF because the raw
+   * Blob was passed directly to @react-pdf/renderer's <Image src>, which
+   * triggered a WASM "too many arguments" error internally and caused the
+   * image to be omitted. SVG images were unaffected because they were already
+   * converted to a data URL string before being passed to <Image>.
+   */
+  test('it includes PNG images in the exported PDF', async ({
+    page,
+    browserName,
+  }) => {
+    // overrideDocContent uploads both an SVG and a PNG image into the editor.
+    await overrideDocContent({ page, browserName });
+
+    await clickInEditorMenu(page, 'Download');
+
+    const downloadPromise = page.waitForEvent('download', (download) =>
+      download.suggestedFilename().endsWith('.pdf'),
+    );
+
+    void page.getByTestId('doc-export-download-button').click();
+
+    const download = await downloadPromise;
+    await page.waitForTimeout(1000);
+
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+
+    // Each embedded image in a PDF is stored as an XObject stream whose
+    // dictionary contains /Width <naturalPixelWidth>. Emoji images are 64px
+    // wide, the SVG (test.svg, 100×100) becomes 100px. The uploaded PNG
+    // (logo-suite-numerique.png) is 756px wide — a value that won't appear
+    // for page sizes (A4 = 595 pt) or emoji. With the bug the PNG is silently
+    // dropped and /Width 756 is absent; after the fix it appears twice (image
+    // data stream + alpha-mask stream).
+    const pdfString = pdfBuffer.toString('latin1');
+    expect(pdfString).toMatch(/\/Width 756/);
+  });
+
   test('it injects the correct language attribute into PDF export', async ({
     page,
     browserName,
