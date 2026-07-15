@@ -168,8 +168,11 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
   // accessibility tree during the opening announcement, then restore it.
   useEffect(() => {
     if (canShare) {
+      setIsContentAccessible(true);
       return;
     }
+
+    setIsContentAccessible(false);
 
     const id = window.setTimeout(() => {
       setIsContentAccessible(true);
