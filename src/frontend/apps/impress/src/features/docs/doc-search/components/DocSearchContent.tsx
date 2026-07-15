@@ -1,6 +1,6 @@
 import { announce } from '@react-aria/live-announcer';
 import { t } from 'i18next';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { InView } from 'react-intersection-observer';
 
 import { Box } from '@/components/';
@@ -115,10 +115,17 @@ export const DocSearchContent = ({
     onResults,
   ]);
 
+  const prevLoadingRef = useRef(false);
+
   useEffect(() => {
-    if (loading && (search || isSearchNotMandatory)) {
+    if (
+      loading &&
+      !prevLoadingRef.current &&
+      (search || isSearchNotMandatory)
+    ) {
       announce(t('Loading documents...'), 'polite');
     }
+    prevLoadingRef.current = loading;
   }, [loading, search, isSearchNotMandatory]);
 
   useEffect(() => {
