@@ -93,6 +93,11 @@ export const LeftPanelTargetFilters = () => {
                   --c--contextuals--background--semantic--contextual--primary
                 );
               }
+              body.is-dnd-dragging &:hover {
+                background-color: ${isActive
+                  ? 'var(--c--contextuals--background--semantic--contextual--primary)'
+                  : 'transparent'};
+              }
               &:focus-visible {
                 outline: none !important;
                 box-shadow: 0 0 0 2px ${colorsTokens['brand-400']} !important;

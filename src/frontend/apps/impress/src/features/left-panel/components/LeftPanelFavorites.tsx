@@ -1,4 +1,6 @@
+import { useDroppable } from '@dnd-kit/core';
 import { DateTime } from 'luxon';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -15,6 +17,7 @@ import {
   SimpleDocItem,
   useInfiniteDocsFavorite,
 } from '@/docs/doc-management';
+import { useDocDnd } from '@/features/docs/DocDndContext';
 import { DocsGridActions } from '@/features/docs/docs-grid';
 import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
@@ -80,16 +83,40 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
   const { isLargeScreen } = useResponsiveStore();
   const { t } = useTranslation();
+  const dnd = useDocDnd();
+  const canDrag = dnd?.canDrag ?? false;
+  const updateCanDrop = dnd?.updateCanDrop;
+  const isSelf = dnd?.selectedDoc?.id === doc.id;
+  const canDrop = doc.abilities.move;
+  const { isOver, setNodeRef } = useDroppable({
+    id: `favorite-${doc.id}`,
+    data: doc,
+  });
+  const showDropHint = canDrag && canDrop && isOver && !isSelf;
+
+  useEffect(() => {
+    if (isOver && !isSelf) {
+      updateCanDrop?.(canDrop, isOver);
+    }
+  }, [isOver, isSelf, canDrop, updateCanDrop]);
 
   return (
     <Box
       as="li"
+      ref={setNodeRef}
       $direction="row"
       $align="center"
       $justify="space-between"
       $css={css`
         padding: ${spacingsTokens['2xs']};
-        border-radius: 4px;
+        border-radius: var(--c--globals--spacings--st);
+        border: 1.5px solid
+          ${showDropHint
+            ? 'var(--c--globals--colors--brand-500)'
+            : 'transparent'};
+        background-color: ${showDropHint
+          ? 'var(--c--globals--colors--brand-100)'
+          : 'transparent'};
         .pinned-actions {
           opacity: ${isLargeScreen ? 0 : 1};
         }
@@ -99,6 +126,14 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
           );
           .pinned-actions {
             opacity: 1;
+          }
+        }
+        body.is-dnd-dragging &:hover {
+          background-color: ${showDropHint
+            ? 'var(--c--globals--colors--brand-100)'
+            : 'transparent'};
+          .pinned-actions {
+            opacity: ${isLargeScreen ? 0 : 1};
           }
         }
         &:focus-within {
