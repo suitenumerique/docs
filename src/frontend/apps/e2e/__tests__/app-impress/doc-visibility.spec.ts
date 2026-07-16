@@ -87,7 +87,7 @@ test.describe('Doc Visibility: Restricted', () => {
     await page.goto(urlDoc);
 
     await expect(
-      page.getByText('Log in to access the document.'),
+      page.getByText('Sign in to access the document.'),
     ).toBeVisible();
   });
 
@@ -354,7 +354,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await expect(otherPage.locator('h2').getByText(docTitle)).toBeHidden();
 
     await expect(
-      otherPage.getByText('Log in to access the document.'),
+      otherPage.getByText('Sign in to access the document.'),
     ).toBeVisible();
 
     await cleanup();

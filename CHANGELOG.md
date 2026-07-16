@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ♿️(frontend) restore skip to content link after header redesign #2510
+- 💄(frontend) redesign error pages with Figma layout #2528
 
 ## [v5.4.1] - 2026-07-09
 
