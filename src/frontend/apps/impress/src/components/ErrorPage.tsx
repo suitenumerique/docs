@@ -20,7 +20,7 @@ const errorActionStyles = `
   cursor: pointer;
   font-family: inherit;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: var(--line-height-xs, 16px);
   text-decoration: none;
 
@@ -172,6 +172,7 @@ export const ErrorPage = ({
                   variant="symbols-outlined"
                   $size="16px"
                   $color="inherit"
+                  $weight={500}
                 />
                 <span className="--docs--error-action-label">
                   {t('Refresh page')}
