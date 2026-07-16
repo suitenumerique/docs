@@ -1,4 +1,4 @@
-import { Button } from '@openfun/cunningham-react';
+import { Button } from '@gouvfr-lasuite/cunningham-react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { ReactElement, useEffect } from 'react';
@@ -70,6 +70,7 @@ const Page: NextPageWithLayout = () => {
           <Button
             onClick={() => gotoLogin(false)}
             aria-label={t('Sign in')}
+            size="small"
           >
             {t('Sign in')}
           </Button>

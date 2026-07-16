@@ -51,6 +51,7 @@ const ErrorActionLinkStyled = styled(Link)`
 
 const RequestAccessButton = styled.button`
   ${errorActionStyles}
+  color: var(--c--contextuals--content--semantic--brand--tertiary);
 
   &:disabled {
     opacity: 0.5;
