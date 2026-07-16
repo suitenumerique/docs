@@ -1,18 +1,61 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
 import Head from 'next/head';
-import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import img403 from '@/assets/icons/icon-403.png';
-import { Box, Icon, Loading, StyledLink, Text } from '@/components';
-import { ButtonAccessRequest } from '@/docs/doc-share';
-import { useDocAccessRequests } from '@/docs/doc-share/api/useDocAccessRequest';
+import ErrorAccessDeniedSvg from '@/assets/icons/Docs Locked.svg';
+import BubbleTextSvg from '@/icons/bubble-text.svg';
+import { Box, Loading, Text } from '@/components';
+import { Role } from '@/docs/doc-management';
+import {
+  useCreateDocAccessRequest,
+  useDocAccessRequests,
+} from '@/docs/doc-share/api/useDocAccessRequest';
+import HomeSvg from '@/icons/house-rounded.svg';
 import { useSkeletonStore } from '@/features/skeletons';
 
-const StyledButton = styled(Button)`
-  width: fit-content;
+const errorActionStyles = `
+  display: flex;
+  height: var(--md, 24px);
+  padding: 0 var(--xxxs, 4px);
+  justify-content: center;
+  align-items: center;
+  gap: var(--xxxs, 4px);
+  color: var(--c--contextuals--content--semantic--neutral--tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: var(--line-height-xs, 16px);
+  text-decoration: none;
+
+  svg {
+    text-decoration: none;
+  }
+
+  .--docs--error-action-label {
+    text-decoration: none;
+  }
+
+  &:hover:not(:disabled) .--docs--error-action-label {
+    text-decoration: underline;
+  }
+`;
+
+const ErrorActionLinkStyled = styled(Link)`
+  ${errorActionStyles}
+`;
+
+const RequestAccessButton = styled.button`
+  ${errorActionStyles}
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 interface DocProps {
@@ -24,7 +67,6 @@ export const DocPage403 = ({ id }: DocProps) => {
   const { setIsSkeletonVisible } = useSkeletonStore();
 
   useEffect(() => {
-    // Ensure the skeleton overlay is hidden on 403 page
     setIsSkeletonVisible(false);
   }, [setIsSkeletonVisible]);
 
@@ -36,6 +78,8 @@ export const DocPage403 = ({ id }: DocProps) => {
     docId: id,
     page: 1,
   });
+
+  const { mutate: createRequest } = useCreateDocAccessRequest();
 
   const hasRequested = !!requests?.results.find(
     (request) => request.document === id,
@@ -50,33 +94,41 @@ export const DocPage403 = ({ id }: DocProps) => {
       <Head>
         <meta name="robots" content="noindex" />
         <title>
-          {t('Access Denied - Error 403')} - {t('Docs')}
+          {t('Access denied')} - {t('Docs')}
         </title>
         <meta
           property="og:title"
-          content={`${t('Access Denied - Error 403')} - ${t('Docs')}`}
+          content={`${t('Access denied')} - ${t('Docs')}`}
           key="title"
         />
       </Head>
       <Box
         $align="center"
-        $margin="auto"
-        $gap="1rem"
+        $justify="center"
+        $flex="1"
+        $gap="var(--xxxs, 4px)"
         $padding={{ bottom: '2rem' }}
       >
-        <Image
-          src={img403}
-          alt={t('Image 403')}
-          width={300}
-          height={300}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-          }}
-        />
+        <ErrorAccessDeniedSvg width={102} height={72} aria-hidden="true" />
 
-        <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
+        <Box $align="center" $gap="0">
+          <Text as="p" $weight="bold" $textAlign="center" $margin="0">
+            {t('Access denied')}
+          </Text>
+
+          <Text
+            as="p"
+            $textAlign="center"
+            $maxWidth="350px"
+            $margin="0"
+            $css="
+              color: var(--c--contextuals--content--semantic--neutral--secondary);
+              font-size: 12px;
+              font-weight: 400;
+              line-height: var(--line-height-xs, 16px);
+              margin-top: 4px;
+            "
+          >
             {hasRequested
               ? t('Your access request for this document is pending.')
               : t('Insufficient access rights to view the document.')}
@@ -85,31 +137,45 @@ export const DocPage403 = ({ id }: DocProps) => {
           {docAccessError?.status === 404 && (
             <Text
               as="p"
-              $maxWidth="320px"
               $textAlign="center"
-              $size="sm"
-              $margin={{ top: '0' }}
+              $maxWidth="320px"
+              $margin="0"
+              $css="
+                color: var(--c--contextuals--content--semantic--neutral--secondary);
+                font-size: 12px;
+                font-weight: 400;
+                line-height: var(--line-height-xs, 16px);
+                margin-top: 4px;
+              "
             >
               {t(
                 "You're currently viewing a sub-document. To gain access, please request permission from the main document.",
               )}
             </Text>
           )}
+        </Box>
 
-          <Box $direction="row" $gap="0.7rem">
-            <StyledLink href="/">
-              <StyledButton
-                icon={<Icon iconName="house" $withThemeInherited />}
-                color="brand"
-                variant="secondary"
-              >
-                {t('Home')}
-              </StyledButton>
-            </StyledLink>
-            {docAccessError?.status !== 404 && (
-              <ButtonAccessRequest docId={id} />
-            )}
-          </Box>
+        <Box
+          $direction="row"
+          $align="flex-start"
+          $gap="0.5rem"
+          $css="margin-top: var(--base, 16px);"
+        >
+          <ErrorActionLinkStyled href="/">
+            <HomeSvg width={16} height={16} aria-hidden="true" />
+            <span className="--docs--error-action-label">{t('Home')}</span>
+          </ErrorActionLinkStyled>
+          {docAccessError?.status !== 404 && (
+            <RequestAccessButton
+              onClick={() => createRequest({ docId: id, role: Role.EDITOR })}
+              disabled={hasRequested}
+            >
+              <BubbleTextSvg width={16} height={16} aria-hidden="true" />
+              <span className="--docs--error-action-label">
+                {t('Request access')}
+              </span>
+            </RequestAccessButton>
+          )}
         </Box>
       </Box>
     </>

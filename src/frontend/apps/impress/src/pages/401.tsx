@@ -1,11 +1,10 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@openfun/cunningham-react';
 import Head from 'next/head';
-import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { ReactElement, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import img401 from '@/assets/icons/icon-401.png';
+import ErrorAccessDeniedSvg from '@/assets/icons/Docs Locked.svg';
 import { Box, Text } from '@/components';
 import { gotoLogin, useAuth } from '@/features/auth';
 import { PageLayout } from '@/layouts';
@@ -26,40 +25,53 @@ const Page: NextPageWithLayout = () => {
     <>
       <Head>
         <meta name="robots" content="noindex" />
-        <title>{`${t('401 Unauthorized')} - ${t('Docs')}`}</title>
+        <title>{`${t('Access denied')} - ${t('Docs')}`}</title>
         <meta
           property="og:title"
-          content={`${t('401 Unauthorized')} - ${t('Docs')}`}
+          content={`${t('Access denied')} - ${t('Docs')}`}
           key="title"
         />
       </Head>
       <Box
         $align="center"
-        $margin="auto"
-        $gap="1rem"
+        $justify="center"
+        $flex="1"
+        $gap="var(--xxxs, 4px)"
         $padding={{ bottom: '2rem' }}
       >
         <Text as="h1" $textAlign="center" className="sr-only">
-          {t('401 Unauthorized')} - {t('Docs')}
+          {t('Access denied')} - {t('Docs')}
         </Text>
-        <Image
-          src={img401}
-          alt=""
-          width={300}
-          height={300}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-          }}
-        />
+        <ErrorAccessDeniedSvg width={102} height={72} aria-hidden="true" />
 
-        <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
-            {t('Log in to access the document.')}
+        <Box $align="center" $gap="0">
+          <Text as="p" $weight="bold" $textAlign="center" $margin="0">
+            {t('Access denied')}
           </Text>
 
-          <Button onClick={() => gotoLogin(false)} aria-label={t('Login')}>
-            {t('Login')}
+          <Text
+            as="p"
+            $textAlign="center"
+            $maxWidth="350px"
+            $margin="0"
+            $css="
+              color: var(--c--contextuals--content--semantic--neutral--secondary);
+              font-size: 12px;
+              font-weight: 400;
+              line-height: var(--line-height-xs, 16px);
+              margin-top: 4px;
+            "
+          >
+            {t('Sign in to access the document.')}
+          </Text>
+        </Box>
+
+        <Box $css="margin-top: var(--base, 16px);">
+          <Button
+            onClick={() => gotoLogin(false)}
+            aria-label={t('Sign in')}
+          >
+            {t('Sign in')}
           </Button>
         </Box>
       </Box>
