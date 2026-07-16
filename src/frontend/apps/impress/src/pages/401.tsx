@@ -5,7 +5,7 @@ import { ReactElement, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ErrorAccessDeniedSvg from '@/assets/icons/Docs Locked.svg';
-import { Box, Text } from '@/components';
+import { Box, Text, errorDescriptionStyles } from '@/components';
 import { gotoLogin, useAuth } from '@/features/auth';
 import { PageLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
@@ -54,13 +54,7 @@ const Page: NextPageWithLayout = () => {
             $textAlign="center"
             $maxWidth="350px"
             $margin="0"
-            $css="
-              color: var(--c--contextuals--content--semantic--neutral--secondary);
-              font-size: 12px;
-              font-weight: 400;
-              line-height: var(--line-height-xs, 16px);
-              margin-top: 4px;
-            "
+            $css={errorDescriptionStyles}
           >
             {t('Sign in to access the document.')}
           </Text>

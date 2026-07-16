@@ -1,12 +1,18 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 import ErrorAccessDeniedSvg from '@/assets/icons/Docs Locked.svg';
 import BubbleTextSvg from '@/icons/bubble-text.svg';
-import { Box, Loading, Text } from '@/components';
+import {
+  Box,
+  ErrorActionLinkStyled,
+  Loading,
+  Text,
+  errorActionStyles,
+  errorDescriptionStyles,
+} from '@/components';
 import { Role } from '@/docs/doc-management';
 import {
   useCreateDocAccessRequest,
@@ -14,40 +20,6 @@ import {
 } from '@/docs/doc-share/api/useDocAccessRequest';
 import HomeSvg from '@/icons/house-rounded.svg';
 import { useSkeletonStore } from '@/features/skeletons';
-
-const errorActionStyles = `
-  display: flex;
-  height: var(--md, 24px);
-  padding: 0 var(--xxxs, 4px);
-  justify-content: center;
-  align-items: center;
-  gap: var(--xxxs, 4px);
-  color: var(--c--contextuals--content--semantic--neutral--tertiary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: var(--line-height-xs, 16px);
-  text-decoration: none;
-
-  svg {
-    text-decoration: none;
-  }
-
-  .--docs--error-action-label {
-    text-decoration: none;
-  }
-
-  &:hover:not(:disabled) .--docs--error-action-label {
-    text-decoration: underline;
-  }
-`;
-
-const ErrorActionLinkStyled = styled(Link)`
-  ${errorActionStyles}
-`;
 
 const RequestAccessButton = styled.button`
   ${errorActionStyles}
@@ -122,13 +94,7 @@ export const DocPage403 = ({ id }: DocProps) => {
             $textAlign="center"
             $maxWidth="350px"
             $margin="0"
-            $css="
-              color: var(--c--contextuals--content--semantic--neutral--secondary);
-              font-size: 12px;
-              font-weight: 400;
-              line-height: var(--line-height-xs, 16px);
-              margin-top: 4px;
-            "
+            $css={errorDescriptionStyles}
           >
             {hasRequested
               ? t('Your access request for this document is pending.')
@@ -141,13 +107,7 @@ export const DocPage403 = ({ id }: DocProps) => {
               $textAlign="center"
               $maxWidth="320px"
               $margin="0"
-              $css="
-                color: var(--c--contextuals--content--semantic--neutral--secondary);
-                font-size: 12px;
-                font-weight: 400;
-                line-height: var(--line-height-xs, 16px);
-                margin-top: 4px;
-              "
+              $css={errorDescriptionStyles}
             >
               {t(
                 "You're currently viewing a sub-document. To gain access, please request permission from the main document.",

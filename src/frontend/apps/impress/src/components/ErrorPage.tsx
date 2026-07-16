@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import { Box, Icon, Text } from '@/components';
 import HomeSvg from '@/icons/house-rounded.svg';
 
-const errorActionStyles = `
+export const errorActionStyles = `
   display: flex;
   height: var(--md, 24px);
   padding: 0 var(--xxxs, 4px);
@@ -37,11 +37,19 @@ const errorActionStyles = `
   }
 `;
 
-const ErrorActionLink = styled.button`
+export const errorDescriptionStyles = `
+  color: var(--c--contextuals--content--semantic--neutral--secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: var(--line-height-xs, 16px);
+  margin-top: 4px;
+`;
+
+export const ErrorActionLink = styled.button`
   ${errorActionStyles}
 `;
 
-const ErrorActionLinkStyled = styled(Link)`
+export const ErrorActionLinkStyled = styled(Link)`
   ${errorActionStyles}
 `;
 
@@ -124,13 +132,7 @@ export const ErrorPage = ({
             $textAlign="center"
             $maxWidth="350px"
             $margin="0"
-            $css="
-              color: var(--c--contextuals--content--semantic--neutral--secondary);
-              font-size: 12px;
-              font-weight: 400;
-              line-height: var(--line-height-xs, 16px);
-              margin-top: 4px;
-            "
+            $css={errorDescriptionStyles}
           >
             {description}
           </Text>

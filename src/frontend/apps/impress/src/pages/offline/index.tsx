@@ -13,11 +13,9 @@ const Page: NextPageWithLayout = () => {
     <ErrorPage
       icon={Error503Svg}
       title={t('Error 503')}
-      description={t(
-        'The server is temporarily overloaded or unavailable',
-      )}
-      showReload
+      description={t('The server is temporarily overloaded or unavailable')}
       showHome={false}
+      showReload
     />
   );
 };

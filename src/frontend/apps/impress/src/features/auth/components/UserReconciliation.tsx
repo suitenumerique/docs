@@ -1,41 +1,17 @@
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
 
 import Error500Svg from '@/assets/icons/500.svg';
 import EmailConfirmationSvg from '@/assets/icons/Mail.svg';
-import { Box, Icon, Loading, Text } from '@/components';
+import {
+  Box,
+  ErrorActionLink,
+  Icon,
+  Loading,
+  Text,
+  errorDescriptionStyles,
+} from '@/components';
 
 import { useUserReconciliationsQuery } from '../api';
-
-const ErrorActionLink = styled.button`
-  display: flex;
-  height: var(--md, 24px);
-  padding: 0 var(--xxxs, 4px);
-  justify-content: center;
-  align-items: center;
-  gap: var(--xxxs, 4px);
-  color: var(--c--contextuals--content--semantic--neutral--tertiary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: var(--line-height-xs, 16px);
-  text-decoration: none;
-
-  svg {
-    text-decoration: none;
-  }
-
-  .--docs--error-action-label {
-    text-decoration: none;
-  }
-
-  &:hover:not(:disabled) .--docs--error-action-label {
-    text-decoration: underline;
-  }
-`;
 
 interface UserReconciliationProps {
   reconciliationId: string;
@@ -74,13 +50,7 @@ export const UserReconciliation = ({
         $textAlign="center"
         $maxWidth="330px"
         $margin="0"
-        $css="
-          color: var(--c--contextuals--content--semantic--neutral--secondary);
-          font-size: 12px;
-          font-weight: 400;
-          line-height: var(--line-height-xs, 16px);
-          margin-top: 4px;
-        "
+        $css={errorDescriptionStyles}
       >
         {t(
           'To complete the unification of your user accounts, please click the confirmation links sent to all the email addresses you provided.',
@@ -117,13 +87,7 @@ export const UserReconciliation = ({
           $textAlign="center"
           $maxWidth="330px"
           $margin="0"
-          $css="
-            color: var(--c--contextuals--content--semantic--neutral--secondary);
-            font-size: 12px;
-            font-weight: 400;
-            line-height: var(--line-height-xs, 16px);
-            margin-top: 4px;
-          "
+          $css={errorDescriptionStyles}
         >
           {t('An error occurred during email validation.')}
         </Text>
