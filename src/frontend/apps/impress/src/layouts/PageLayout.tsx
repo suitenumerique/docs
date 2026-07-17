@@ -1,4 +1,4 @@
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, ReactNode } from 'react';
 
 import { Box } from '@/components';
 import { Footer } from '@/features/footer';
@@ -10,19 +10,24 @@ import { MainContent } from './MainLayout';
 interface PageLayoutProps {
   withFooter?: boolean;
   withLeftPanel?: boolean;
+  headerSlot?: ReactNode;
+  footerSlot?: ReactNode;
 }
 
 export function PageLayout({
   children,
   withFooter = true,
   withLeftPanel = true,
+  headerSlot,
+  footerSlot,
 }: PropsWithChildren<PageLayoutProps>) {
   return (
     <Box className="--docs--page-layout" $direction="row" $minHeight="100vh">
       {withLeftPanel && <LeftPanel />}
       <MainContent>
-        <HeaderFloatingBar />
+        {headerSlot !== undefined ? headerSlot : <HeaderFloatingBar />}
         {children}
+        {footerSlot}
       </MainContent>
       {withFooter && <Footer />}
     </Box>

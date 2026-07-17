@@ -2,7 +2,7 @@ import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Error503Svg from '@/assets/icons/503.svg';
-import { ErrorPage } from '@/components';
+import { ErrorPage, ErrorPageFooter, ErrorPageHeader } from '@/components';
 import { PageLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 
@@ -21,7 +21,16 @@ const Page: NextPageWithLayout = () => {
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <PageLayout withFooter={false}>{page}</PageLayout>;
+  return (
+    <PageLayout
+      withFooter={false}
+      withLeftPanel={false}
+      headerSlot={<ErrorPageHeader />}
+      footerSlot={<ErrorPageFooter />}
+    >
+      {page}
+    </PageLayout>
+  );
 };
 
 export default Page;

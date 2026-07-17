@@ -5,7 +5,13 @@ import { ReactElement, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ErrorAccessDeniedSvg from '@/assets/icons/Docs Locked.svg';
-import { Box, Text, errorDescriptionStyles } from '@/components';
+import {
+  Box,
+  ErrorPageFooter,
+  ErrorPageHeader,
+  Text,
+  errorDescriptionStyles,
+} from '@/components';
 import { gotoLogin, useAuth } from '@/features/auth';
 import { PageLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
@@ -75,7 +81,16 @@ const Page: NextPageWithLayout = () => {
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <PageLayout withFooter={false}>{page}</PageLayout>;
+  return (
+    <PageLayout
+      withFooter={false}
+      withLeftPanel={false}
+      headerSlot={<ErrorPageHeader />}
+      footerSlot={<ErrorPageFooter />}
+    >
+      {page}
+    </PageLayout>
+  );
 };
 
 export default Page;

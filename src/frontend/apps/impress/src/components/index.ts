@@ -5,6 +5,8 @@ export * from './DropButton';
 export * from './dropdown-menu/DropdownMenu';
 export * from './Emoji/EmojiPicker';
 export * from './ErrorPage';
+export * from './ErrorPageFooter';
+export * from './ErrorPageHeader';
 export * from './quick-search';
 export * from './Icon';
 export * from './InfiniteScroll';
