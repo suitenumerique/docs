@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 import ErrorAccessDeniedSvg from '@/assets/icons/Docs Locked.svg';
-import BubbleTextSvg from '@/icons/bubble-text.svg';
 import {
   Box,
   ErrorActionLinkStyled,
@@ -18,8 +17,9 @@ import {
   useCreateDocAccessRequest,
   useDocAccessRequests,
 } from '@/docs/doc-share/api/useDocAccessRequest';
-import HomeSvg from '@/icons/house-rounded.svg';
 import { useSkeletonStore } from '@/features/skeletons';
+import BubbleTextSvg from '@/icons/bubble-text.svg';
+import HomeSvg from '@/icons/house-rounded.svg';
 
 const RequestAccessButton = styled.button`
   ${errorActionStyles}
@@ -40,6 +40,7 @@ export const DocPage403 = ({ id }: DocProps) => {
   const { setIsSkeletonVisible } = useSkeletonStore();
 
   useEffect(() => {
+    // Ensure the skeleton overlay is hidden on 403 page
     setIsSkeletonVisible(false);
   }, [setIsSkeletonVisible]);
 
