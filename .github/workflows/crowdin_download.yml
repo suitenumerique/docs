@@ -23,7 +23,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       - name: Create empty source files
         run: |
           touch src/backend/locale/django.pot
@@ -31,7 +31,7 @@ jobs:
           touch src/frontend/packages/i18n/locales/impress/translations-crowdin.json
       # crowdin workflow
       - name: crowdin action
-        uses: crowdin/github-action@8868a33591d21088edfc398968173a3b98d51706 # v2
+        uses: crowdin/github-action@e0c8f73cdc0fafde9396e056c5038217000a32d1 # v2
         with:
           config: crowdin/config.yml
           upload_sources: false
@@ -51,7 +51,7 @@ jobs:
           CROWDIN_BASE_PATH: "../src/"
       # frontend i18n
       - name: Restore the frontend cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
