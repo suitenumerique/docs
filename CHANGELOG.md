@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ♿️(frontend) restore skip to content link after header redesign #2510
+- ✨(frontend) warn the user when trying to upload a file size that exceeds the limit #2522
 
 ## [v5.4.1] - 2026-07-09
 
