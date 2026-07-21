@@ -56,6 +56,18 @@
       "allowedVersions": "<5.0.0"
     },
     {
+      "groupName": "allowed @ai-sdk/openai versions",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["@ai-sdk/openai"],
+      "allowedVersions": "<4.0.0"
+    },
+    {
+      "groupName": "allowed ai versions",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["ai"],
+      "allowedVersions": "<7.0.0"
+    },
+    {
       "groupName": "allowed typescript versions",
       "matchManagers": ["npm"],
       "matchPackageNames": ["typescript"],
