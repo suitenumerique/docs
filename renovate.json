@@ -56,6 +56,12 @@
       "allowedVersions": "<5.0.0"
     },
     {
+      "groupName": "allowed typescript versions",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7.0.0"
+    },
+    {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
