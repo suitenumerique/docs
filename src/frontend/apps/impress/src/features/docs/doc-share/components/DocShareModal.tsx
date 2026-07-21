@@ -227,6 +227,9 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
         hideCloseButton
       >
         <ShareModalStyle />
+        {/* aria-hidden is temporary (300ms) to prevent NVDA from reading
+            the entire modal body on open when the search input is absent.
+            autoFocus alone on the close button is not enough. */}
         <Box
           aria-hidden={isContentAccessible ? undefined : true}
           $height="auto"
