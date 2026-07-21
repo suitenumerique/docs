@@ -129,7 +129,7 @@ export const connectOtherUserToDoc = async ({
   if (!withoutSignIn) {
     const loginFromApp = otherPage
       .getByRole('main', { name: 'Main content' })
-      .getByLabel('Login');
+      .getByLabel('Sign in');
     const loginFromHome = otherPage.getByRole('button', {
       name: process.env.SIGN_IN_EL_TRIGGER,
     });

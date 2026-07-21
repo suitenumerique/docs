@@ -2,8 +2,8 @@ import { useRouter } from 'next/router';
 import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import error_img from '@/assets/icons/error-coffee.png';
-import { ErrorPage } from '@/components';
+import Error500Svg from '@/assets/icons/500.svg';
+import { ErrorPage, ErrorPageFooter, ErrorPageHeader } from '@/components';
 import { PageLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 
@@ -16,17 +16,28 @@ const Page: NextPageWithLayout = () => {
 
   return (
     <ErrorPage
-      image={error_img}
+      icon={Error500Svg}
+      title={t('Error 500')}
       description={t(
         'An unexpected error occurred. Go grab a coffee or try to refresh the page.',
       )}
       refreshTarget={refreshTarget}
+      showReload
     />
   );
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <PageLayout withFooter={false}>{page}</PageLayout>;
+  return (
+    <PageLayout
+      withFooter={false}
+      withLeftPanel={false}
+      headerSlot={<ErrorPageHeader />}
+      footerSlot={<ErrorPageFooter />}
+    >
+      {page}
+    </PageLayout>
+  );
 };
 
 export default Page;

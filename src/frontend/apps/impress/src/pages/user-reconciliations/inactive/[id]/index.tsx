@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ErrorPageFooter, ErrorPageHeader } from '@/components';
 import { UserReconciliation } from '@/features/auth/components/UserReconciliation';
 import { PageLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
@@ -34,7 +35,16 @@ const Page: NextPageWithLayout = () => {
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <PageLayout withFooter={false}>{page}</PageLayout>;
+  return (
+    <PageLayout
+      withFooter={false}
+      withLeftPanel={false}
+      headerSlot={<ErrorPageHeader />}
+      footerSlot={<ErrorPageFooter />}
+    >
+      {page}
+    </PageLayout>
+  );
 };
 
 export default Page;

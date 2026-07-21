@@ -141,15 +141,17 @@ test.describe('Doc Routing', () => {
 
     await responsePromise;
 
-    await expect(page.getByText('Log in to access the document.')).toBeVisible({
-      timeout: 10000,
-    });
+    await expect(page.getByText('Sign in to access the document.')).toBeVisible(
+      {
+        timeout: 10000,
+      },
+    );
 
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
       'content',
       'noindex',
     );
-    await expect(page).toHaveTitle(/401 Unauthorized - Docs/);
+    await expect(page).toHaveTitle(/Access denied - Docs/);
   });
 
   test('checks redirect if unsync version', async ({ page }) => {
@@ -202,7 +204,7 @@ test.describe('Doc Routing: Not logged', () => {
     await expect(
       page2
         .getByRole('main', { name: 'Main content' })
-        .getByRole('button', { name: 'Login' }),
+        .getByRole('button', { name: 'Sign in' }),
     ).toBeVisible({
       timeout: 10000,
     });
@@ -212,7 +214,7 @@ test.describe('Doc Routing: Not logged', () => {
     await expect(
       page
         .getByRole('main', { name: 'Main content' })
-        .getByRole('button', { name: 'Login' }),
+        .getByRole('button', { name: 'Sign in' }),
     ).toBeVisible({
       timeout: 10000,
     });
@@ -220,7 +222,7 @@ test.describe('Doc Routing: Not logged', () => {
     // Reconnected
     await page
       .getByRole('main', { name: 'Main content' })
-      .getByRole('button', { name: 'Login' })
+      .getByRole('button', { name: 'Sign in' })
       .click();
     await SignIn(page, browserName, false);
 
