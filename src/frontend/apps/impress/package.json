@@ -98,7 +98,7 @@
     "cross-env": "10.1.0",
     "dotenv": "17.4.2",
     "eslint-plugin-docs": "*",
-    "fetch-mock": "9.11.0",
+    "fetch-mock": "12.6.0",
     "jsdom": "29.1.1",
     "node-fetch": "2.7.0",
     "prettier": "3.9.5",

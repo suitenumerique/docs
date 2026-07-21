@@ -22,7 +22,8 @@ vi.mock('@gouvfr-lasuite/ui-kit', async () => ({
 describe('useDocTitleUpdate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    fetchMock.restore();
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
   });
 
   it('should return the correct functions and state', () => {
@@ -57,12 +58,12 @@ describe('useDocTitleUpdate', () => {
       expect(sanitizedTitle).toBe('My Document');
 
       await waitFor(() => {
-        expect(fetchMock.calls().length).toBe(1);
+        expect(fetchMock.callHistory.calls().length).toBe(1);
       });
-      expect(fetchMock.calls()[0][0]).toBe(
+      expect(fetchMock.callHistory.calls()[0].url).toBe(
         'http://test.jest/api/v1.0/documents/test-doc-id/',
       );
-      expect(fetchMock.calls()[0][1]).toEqual({
+      expect(fetchMock.callHistory.calls()[0].args[1]).toEqual({
         method: 'PATCH',
         credentials: 'include',
         body: JSON.stringify({ title: 'My Document' }),
@@ -90,7 +91,7 @@ describe('useDocTitleUpdate', () => {
       expect(sanitizedTitle).toBe('');
 
       await waitFor(() => {
-        expect(fetchMock.calls().length).toBe(0);
+        expect(fetchMock.callHistory.calls().length).toBe(0);
       });
     });
 
@@ -114,7 +115,7 @@ describe('useDocTitleUpdate', () => {
       expect(sanitizedTitle).toBe('Titlewithnewlines');
 
       await waitFor(() => {
-        expect(fetchMock.calls().length).toBe(1);
+        expect(fetchMock.callHistory.calls().length).toBe(1);
       });
     });
   });
@@ -135,12 +136,12 @@ describe('useDocTitleUpdate', () => {
       result.current.updateDocEmoji('test-doc-id', 'My Document', '🚀');
 
       await waitFor(() => {
-        expect(fetchMock.calls().length).toBe(1);
+        expect(fetchMock.callHistory.calls().length).toBe(1);
       });
-      expect(fetchMock.calls()[0][0]).toBe(
+      expect(fetchMock.callHistory.calls()[0].url).toBe(
         'http://test.jest/api/v1.0/documents/test-doc-id/',
       );
-      expect(fetchMock.calls()[0][1]).toEqual({
+      expect(fetchMock.callHistory.calls()[0].args[1]).toEqual({
         method: 'PATCH',
         credentials: 'include',
         body: JSON.stringify({ title: '🚀 My Document' }),
@@ -163,9 +164,9 @@ describe('useDocTitleUpdate', () => {
       result.current.updateDocEmoji('test-doc-id', '📝 My Document', '🚀');
 
       await waitFor(() => {
-        expect(fetchMock.calls().length).toBe(1);
+        expect(fetchMock.callHistory.calls().length).toBe(1);
       });
-      expect(fetchMock.calls()[0][1]).toEqual({
+      expect(fetchMock.callHistory.calls()[0].args[1]).toEqual({
         method: 'PATCH',
         credentials: 'include',
         body: JSON.stringify({ title: '🚀 My Document' }),
@@ -188,9 +189,9 @@ describe('useDocTitleUpdate', () => {
       result.current.updateDocEmoji('test-doc-id', '📝', '🚀');
 
       await waitFor(() => {
-        expect(fetchMock.calls().length).toBe(1);
+        expect(fetchMock.callHistory.calls().length).toBe(1);
       });
-      expect(fetchMock.calls()[0][1]).toEqual({
+      expect(fetchMock.callHistory.calls()[0].args[1]).toEqual({
         method: 'PATCH',
         credentials: 'include',
         body: JSON.stringify({ title: '🚀 ' }),
@@ -213,9 +214,9 @@ describe('useDocTitleUpdate', () => {
       result.current.updateDocEmoji('test-doc-id', '', '🚀');
 
       await waitFor(() => {
-        expect(fetchMock.calls().length).toBe(1);
+        expect(fetchMock.callHistory.calls().length).toBe(1);
       });
-      expect(fetchMock.calls()[0][1]).toEqual({
+      expect(fetchMock.callHistory.calls()[0].args[1]).toEqual({
         method: 'PATCH',
         credentials: 'include',
         body: JSON.stringify({ title: '🚀 ' }),
@@ -244,7 +245,7 @@ describe('useDocTitleUpdate', () => {
       );
 
       await waitFor(() => {
-        expect(fetchMock.calls().length).toBe(1);
+        expect(fetchMock.callHistory.calls().length).toBe(1);
       });
 
       expect(onSuccess).toHaveBeenCalledWith({
@@ -271,7 +272,7 @@ describe('useDocTitleUpdate', () => {
           'Updated Document',
         );
       } catch {
-        expect(fetchMock.calls().length).toBe(1);
+        expect(fetchMock.callHistory.calls().length).toBe(1);
         expect(onError).toHaveBeenCalledWith(new Error('Update failed'));
       }
     });

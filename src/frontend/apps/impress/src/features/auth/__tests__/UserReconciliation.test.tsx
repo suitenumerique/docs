@@ -13,7 +13,8 @@ vi.mock('../assets/mail-check-filled.svg', () => ({
 
 describe('UserReconciliation', () => {
   beforeEach(() => {
-    fetchMock.reset();
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
   });
 
   ['active', 'inactive'].forEach((type) => {
@@ -34,7 +35,7 @@ describe('UserReconciliation', () => {
       );
 
       await waitFor(() => {
-        expect(fetchMock.calls().length).toBe(1);
+        expect(fetchMock.callHistory.calls().length).toBe(1);
       });
 
       expect(
@@ -58,7 +59,7 @@ describe('UserReconciliation', () => {
     });
 
     await waitFor(() => {
-      expect(fetchMock.calls().length).toBe(1);
+      expect(fetchMock.callHistory.calls().length).toBe(1);
     });
 
     expect(

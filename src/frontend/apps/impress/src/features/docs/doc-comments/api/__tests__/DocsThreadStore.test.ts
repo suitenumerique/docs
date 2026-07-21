@@ -37,13 +37,14 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
   let dispatchEventSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    fetchMock.reset();
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
     dispatchEventSpy = vi
       .spyOn(document, 'dispatchEvent')
       .mockReturnValue(true);
 
     // Default: empty thread list
-    fetchMock.get(THREADS_URL, []);
+    fetchMock.get(THREADS_URL, [], { name: 'threads-list' });
 
     mockAuth = {
       canSee: true,
@@ -55,7 +56,7 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    fetchMock.reset();
+    fetchMock.hardReset();
   });
 
   describe('initThreads()', () => {
@@ -64,8 +65,9 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
       const orphanEmpty = makeThread('orphan-1', []);
       const orphanNull = makeThread('orphan-2', null);
 
+      fetchMock.removeRoute('threads-list');
       fetchMock.get(THREADS_URL, [validThread, orphanEmpty, orphanNull], {
-        overwriteRoutes: true,
+        name: 'threads-list',
       });
       // initThreads calls deleteThread for orphans
       fetchMock.delete(threadUrl('orphan-1'), 204);
@@ -81,20 +83,24 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
     });
 
     it('should delete orphan threads via the API', async () => {
+      fetchMock.removeRoute('threads-list');
       fetchMock.get(THREADS_URL, [makeThread('orphan-1', [])], {
-        overwriteRoutes: true,
+        name: 'threads-list',
       });
       fetchMock.delete(threadUrl('orphan-1'), 204);
 
       await threadStore.initThreads();
 
       expect(
-        fetchMock.called(threadUrl('orphan-1'), { method: 'DELETE' }),
+        fetchMock.callHistory.called(threadUrl('orphan-1'), {
+          method: 'DELETE',
+        }),
       ).toBe(true);
     });
 
     it('should handle an empty thread list', async () => {
-      fetchMock.get(THREADS_URL, [], { overwriteRoutes: true });
+      fetchMock.removeRoute('threads-list');
+      fetchMock.get(THREADS_URL, [], { name: 'threads-list' });
 
       await threadStore.initThreads();
 
@@ -102,10 +108,11 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
     });
 
     it('should throw when the API returns an error', async () => {
+      fetchMock.removeRoute('threads-list');
       fetchMock.get(
         THREADS_URL,
         { status: 500, body: {} },
-        { overwriteRoutes: true },
+        { name: 'threads-list' },
       );
 
       await expect(threadStore.initThreads()).rejects.toThrow(
@@ -122,9 +129,9 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
 
       await threadStore.refreshThread(threadId);
 
-      expect(fetchMock.called(threadUrl(threadId), { method: 'DELETE' })).toBe(
-        true,
-      );
+      expect(
+        fetchMock.callHistory.called(threadUrl(threadId), { method: 'DELETE' }),
+      ).toBe(true);
     });
 
     it('should store a valid thread (with comments) without deleting it', async () => {
@@ -134,16 +141,17 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
 
       await threadStore.refreshThread(threadId);
 
-      expect(fetchMock.called(threadUrl(threadId), { method: 'DELETE' })).toBe(
-        false,
-      );
+      expect(
+        fetchMock.callHistory.called(threadUrl(threadId), { method: 'DELETE' }),
+      ).toBe(false);
       expect(threadStore.getThreads().has(threadId)).toBe(true);
     });
 
     it('should dispatch Escape and call refreshThreads on 404', async () => {
       const threadId = 'deleted-thread';
       fetchMock.get(threadUrl(threadId), 404);
-      fetchMock.get(THREADS_URL, [], { overwriteRoutes: true });
+      fetchMock.removeRoute('threads-list');
+      fetchMock.get(THREADS_URL, [], { name: 'threads-list' });
 
       await threadStore.refreshThread(threadId);
 
@@ -159,11 +167,12 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
       const commentId = 'comment-1';
 
       // Seed the store with a thread that has one comment
+      fetchMock.removeRoute('threads-list');
       fetchMock.get(
         THREADS_URL,
         [makeThread(threadId, [makeComment(commentId)])],
         {
-          overwriteRoutes: true,
+          name: 'threads-list',
         },
       );
       await threadStore.initThreads();
@@ -176,9 +185,9 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
 
       await threadStore.deleteComment({ threadId, commentId });
 
-      expect(fetchMock.called(threadUrl(threadId), { method: 'DELETE' })).toBe(
-        true,
-      );
+      expect(
+        fetchMock.callHistory.called(threadUrl(threadId), { method: 'DELETE' }),
+      ).toBe(true);
       expect(threadStore.getThreads().has(threadId)).toBe(false);
     });
 
@@ -186,6 +195,7 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
       const threadId = 'thread-1';
       const commentToDelete = 'comment-1';
 
+      fetchMock.removeRoute('threads-list');
       fetchMock.get(
         THREADS_URL,
         [
@@ -194,7 +204,7 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
             makeComment('comment-2'),
           ]),
         ],
-        { overwriteRoutes: true },
+        { name: 'threads-list' },
       );
       await threadStore.initThreads();
 
@@ -205,9 +215,9 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
 
       await threadStore.deleteComment({ threadId, commentId: commentToDelete });
 
-      expect(fetchMock.called(threadUrl(threadId), { method: 'DELETE' })).toBe(
-        false,
-      );
+      expect(
+        fetchMock.callHistory.called(threadUrl(threadId), { method: 'DELETE' }),
+      ).toBe(false);
       expect(threadStore.getThreads().has(threadId)).toBe(true);
       expect(threadStore.getThreads().get(threadId)?.comments).toHaveLength(1);
     });

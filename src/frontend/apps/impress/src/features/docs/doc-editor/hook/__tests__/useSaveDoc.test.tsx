@@ -30,7 +30,8 @@ describe('useSaveDoc', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    fetchMock.restore();
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
 
     (useRouter as Mock).mockReturnValue({
       events: mockRouterEvents,
@@ -92,7 +93,7 @@ describe('useSaveDoc', () => {
     vi.useRealTimers();
 
     await waitFor(() => {
-      expect(fetchMock.lastCall()?.[0]).toBe(
+      expect(fetchMock.callHistory.lastCall()?.url).toBe(
         `http://test.jest/api/v1.0/documents/${docId}/content/`,
       );
     });
@@ -123,7 +124,7 @@ describe('useSaveDoc', () => {
     });
 
     // Since there are no local changes, no API call should be made
-    expect(fetchMock.calls().length).toBe(0);
+    expect(fetchMock.callHistory.calls().length).toBe(0);
 
     vi.useRealTimers();
   });

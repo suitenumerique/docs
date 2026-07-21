@@ -12,7 +12,8 @@ import { DocsGridItemDate } from '../DocsGridItem';
 describe('DocsGridItemDate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    fetchMock.restore();
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
   });
 
   it('should not render date when not on desktop', () => {

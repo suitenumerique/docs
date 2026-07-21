@@ -10,11 +10,12 @@ const VALID_URL = 'http://test.jest/media-check/some-file-id';
 
 describe('checkDocMediaStatus', () => {
   beforeEach(() => {
-    fetchMock.restore();
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
   });
 
   afterEach(() => {
-    fetchMock.restore();
+    fetchMock.hardReset();
   });
 
   it('returns the response when the status is ready', async () => {
@@ -25,7 +26,7 @@ describe('checkDocMediaStatus', () => {
     const result = await checkDocMediaStatus({ urlMedia: VALID_URL });
 
     expect(result).toEqual({ status: 'ready', file: '/media/some-file.pdf' });
-    expect(fetchMock.lastOptions(VALID_URL)).toMatchObject({
+    expect(fetchMock.callHistory.lastCall(VALID_URL)?.options).toMatchObject({
       credentials: 'include',
     });
   });
@@ -45,7 +46,7 @@ describe('checkDocMediaStatus', () => {
       checkDocMediaStatus({ urlMedia: 'javascript:alert(1)' }),
     ).rejects.toMatchObject({ status: 400 });
 
-    expect(fetchMock.calls().length).toBe(0);
+    expect(fetchMock.callHistory.calls().length).toBe(0);
   });
 
   it('throws an APIError when the URL does not contain the analyze path', async () => {
@@ -53,7 +54,7 @@ describe('checkDocMediaStatus', () => {
       checkDocMediaStatus({ urlMedia: 'http://test.jest/other/path' }),
     ).rejects.toMatchObject({ status: 400 });
 
-    expect(fetchMock.calls().length).toBe(0);
+    expect(fetchMock.callHistory.calls().length).toBe(0);
   });
 
   it('throws an APIError when the fetch response is not ok', async () => {
@@ -82,12 +83,13 @@ describe('checkDocMediaStatus', () => {
 describe('loopCheckDocMediaStatus', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    fetchMock.restore();
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    fetchMock.restore();
+    fetchMock.hardReset();
   });
 
   it('resolves immediately when the status is already ready', async () => {
@@ -101,12 +103,12 @@ describe('loopCheckDocMediaStatus', () => {
     );
 
     expect(result).toEqual({ status: 'ready', file: '/media/file.pdf' });
-    expect(fetchMock.calls().length).toBe(1);
+    expect(fetchMock.callHistory.calls().length).toBe(1);
   });
 
   it('retries until the status becomes ready', async () => {
     let callCount = 0;
-    fetchMock.mock(VALID_URL, () => {
+    fetchMock.route(VALID_URL, () => {
       callCount++;
       return {
         status: 200,
@@ -129,7 +131,7 @@ describe('loopCheckDocMediaStatus', () => {
     const result = await promise;
 
     expect(result).toEqual({ status: 'ready', file: '/media/file.pdf' });
-    expect(fetchMock.calls().length).toBe(3);
+    expect(fetchMock.callHistory.calls().length).toBe(3);
   });
 
   it('throws an AbortError immediately when the signal is already aborted', async () => {
@@ -142,7 +144,7 @@ describe('loopCheckDocMediaStatus', () => {
       loopCheckDocMediaStatus(VALID_URL, controller.signal),
     ).rejects.toMatchObject({ name: 'AbortError' });
 
-    expect(fetchMock.calls().length).toBe(0);
+    expect(fetchMock.callHistory.calls().length).toBe(0);
   });
 
   it('stops the loop when the signal is aborted during a sleep', async () => {
@@ -158,7 +160,7 @@ describe('loopCheckDocMediaStatus', () => {
 
     await rejectExpectation;
     // Only the first request should have been made
-    expect(fetchMock.calls().length).toBe(1);
+    expect(fetchMock.callHistory.calls().length).toBe(1);
   });
 
   it('rejects when a fetch error occurs', async () => {
@@ -172,6 +174,6 @@ describe('loopCheckDocMediaStatus', () => {
       loopCheckDocMediaStatus(VALID_URL, new AbortController().signal),
     ).rejects.toMatchObject({ status: 500 });
 
-    expect(fetchMock.calls().length).toBe(1);
+    expect(fetchMock.callHistory.calls().length).toBe(1);
   });
 });

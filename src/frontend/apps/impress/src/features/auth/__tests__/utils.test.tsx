@@ -21,7 +21,7 @@ const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
 describe('utils', () => {
   afterEach(() => {
     vi.clearAllMocks();
-    fetchMock.restore();
+    fetchMock.hardReset();
     mockReplace.mockClear();
     setItemSpy.mockClear();
     localStorage.clear();
