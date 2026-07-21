@@ -554,6 +554,28 @@ class Base(Configuration):
     FRONTEND_SILENT_LOGIN_ENABLED = values.BooleanValue(
         default=False, environ_name="FRONTEND_SILENT_LOGIN_ENABLED", environ_prefix=None
     )
+    FRONTEND_EMBED_BLOCK_ENABLED = values.BooleanValue(
+        default=True, environ_name="FRONTEND_EMBED_BLOCK_ENABLED", environ_prefix=None
+    )
+    # Allowlist of origins that may be embedded through the "embed" custom block,
+    # mapping each allowed host to the sandbox attribute to apply to its iframe.
+    # A URL whose host is not covered here is refused by the frontend.
+    # Example:
+    #  {
+    #    "grist.numerique.gouv.fr": "allow-scripts",
+    #    "*.numerique.gouv.fr": "allow-scripts allow-same-origin",
+    #  }
+    FRONTEND_EMBED_BLOCK_ALLOWED_ORIGINS = values.DictValue(
+        default={
+            "*": (
+                "allow-scripts allow-same-origin allow-popups "
+                "allow-popups-to-escape-sandbox allow-forms"
+            )
+        },
+        environ_name="FRONTEND_EMBED_BLOCK_ALLOWED_ORIGINS",
+        environ_prefix=None,
+    )
+
     THEME_CUSTOMIZATION_FILE_PATH = values.Value(
         os.path.join(BASE_DIR, "impress/configuration/theme/default.json"),
         environ_name="THEME_CUSTOMIZATION_FILE_PATH",

@@ -12,6 +12,7 @@ import * as localesBN from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import {
+  FilePanelController,
   FloatingComposerController,
   FloatingThreadController,
   ThreadsSidebar,
@@ -53,7 +54,13 @@ import { randomColor, sanitizeColor } from '../utils';
 import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import { CalloutBlock, PdfBlock, UploadLoaderBlock } from './custom-blocks';
+import {
+  CalloutBlock,
+  DocsFilePanel,
+  EmbedBlock,
+  PdfBlock,
+  UploadLoaderBlock,
+} from './custom-blocks';
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
@@ -70,6 +77,7 @@ const baseBlockNoteSchema = withPageBreak(
       ...defaultBlockSpecs,
       callout: CalloutBlock(),
       codeBlock: createCodeBlockSpec(codeBlockOptions),
+      embed: EmbedBlock(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
     },
@@ -292,6 +300,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         editor={editor}
         formattingToolbar={false}
         slashMenu={false}
+        filePanel={false}
         theme="light"
         comments={false}
         aria-label={t('Document editor')}
@@ -303,6 +312,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         )}
         <BlockNoteSuggestionMenu aiAllowed={aiBlockNoteAllowed} />
         <BlockNoteToolbar aiAllowed={aiBlockNoteAllowed} />
+        <FilePanelController filePanel={DocsFilePanel} />
         {showComments && <FloatingComposerController />}
         {showComments && !isCommentSideBarOpen && <FloatingThreadController />}
         {threadsSidebarTarget &&

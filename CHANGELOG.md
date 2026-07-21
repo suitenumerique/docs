@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) new custom block "embed" #2513
 - ♿️(frontend) restore skip to content link after header redesign #2510
 
 ## [v5.4.1] - 2026-07-09

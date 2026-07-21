@@ -101,8 +101,9 @@ const PRINT_ONLY_CONTENT_CSS = `
 
   /* Hide media/embed placeholders and render their URLs */
   [data-content-type="file"] .bn-file-block-content-wrapper, 
-  [data-content-type="pdf"] .bn-file-block-content-wrapper, 
-  [data-content-type="audio"] .bn-file-block-content-wrapper, 
+  [data-content-type="pdf"] .bn-file-block-content-wrapper,
+  [data-content-type="embed"] .bn-file-block-content-wrapper,
+  [data-content-type="audio"] .bn-file-block-content-wrapper,
   [data-content-type="video"] .bn-file-block-content-wrapper {
     display: none !important;
   }
@@ -182,7 +183,7 @@ function wrapMediaWithLink() {
     el: Element,
     url: string | null,
     name: string | null,
-    type: 'file' | 'audio' | 'video' | 'pdf',
+    type: 'file' | 'audio' | 'video' | 'pdf' | 'embed',
   ) => {
     if (!url || !isSafeUrl(url)) {
       return;
@@ -201,6 +202,8 @@ function wrapMediaWithLink() {
       label.textContent = '📹: ';
     } else if (type === 'pdf') {
       label.textContent = '📑: ';
+    } else if (type === 'embed') {
+      label.textContent = '🌐: ';
     } else {
       label.textContent = '🔗: ';
     }
@@ -224,7 +227,7 @@ function wrapMediaWithLink() {
 
   document
     .querySelectorAll(
-      '[data-content-type="pdf"], [data-content-type="file"], [data-content-type="audio"], [data-content-type="video"]',
+      '[data-content-type="pdf"], [data-content-type="embed"], [data-content-type="file"], [data-content-type="audio"], [data-content-type="video"]',
     )
     .forEach((el) => {
       const url = el?.getAttribute('data-url');
@@ -233,7 +236,8 @@ function wrapMediaWithLink() {
         | 'file'
         | 'audio'
         | 'video'
-        | 'pdf';
+        | 'pdf'
+        | 'embed';
       if (type) {
         prependLink(el, url, name, type);
       }

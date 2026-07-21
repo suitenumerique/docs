@@ -3,8 +3,18 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 
-import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
-import { getEditor, openSuggestionMenu, writeInEditor } from './utils-editor';
+import {
+  createDoc,
+  goToGridDoc,
+  overrideConfig,
+  verifyDocName,
+} from './utils-common';
+import {
+  getEditor,
+  openSuggestionMenu,
+  tryFocusEditorContent,
+  writeInEditor,
+} from './utils-editor';
 import { updateShareLink } from './utils-share';
 import {
   createRootSubPage,
@@ -544,7 +554,7 @@ test.describe('Doc Editor', () => {
   });
 
   test('it embeds PDF', async ({ page, browserName }) => {
-    await createDoc(page, 'doc-toolbar', browserName, 1);
+    await createDoc(page, 'doc-embed-pdf', browserName, 1);
 
     await page.getByRole('button', { name: 'Share' }).click();
     await updateShareLink(page, 'Public', 'Reading');
@@ -636,5 +646,129 @@ test.describe('Doc Editor', () => {
     await page.waitForTimeout(500);
 
     await expect(editor.getByText('Mobile Text')).toBeVisible();
+  });
+
+  test('it embeds a web page', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-embed-web', browserName, 1);
+
+    await openSuggestionMenu({ page, suggestion: 'Embed a web page' });
+
+    const embedBlock = page.locator('div[data-content-type="embed"]').last();
+
+    await expect(embedBlock).toBeVisible();
+
+    // Try with same domain first
+    await page
+      .getByText(/Add embed/)
+      .first()
+      .click();
+
+    await page
+      .locator('[data-test="embed-input"]')
+      .fill('http://localhost:3000/');
+
+    await page.locator('[data-test="embed-input-button"]').click();
+
+    await expect(page.getByText('Invalid or unsafe URL.')).toBeVisible();
+
+    await openSuggestionMenu({ page, suggestion: 'Embed a web page' });
+
+    // Now with a valid URL
+    await page
+      .getByText(/Add embed/)
+      .first()
+      .click();
+
+    await page
+      .locator('[data-test="embed-input"]')
+      .fill('http://localhost:3001/');
+    await page.locator('[data-test="embed-input-button"]').click();
+
+    const embedIframe = page
+      .locator('.--docs--editor-container iframe.bn-visual-media')
+      .first();
+
+    // Check src of embed iframe
+    expect(await embedIframe.getAttribute('src')).toMatch(
+      /http:\/\/localhost:3001\//,
+    );
+
+    await expect(embedIframe).toHaveAttribute('role', 'presentation');
+  });
+
+  test('it controls the embeds of a web page with configuration', async ({
+    page,
+    browserName,
+  }) => {
+    // Disable the embed block feature to test the configuration
+    await overrideConfig(page, {
+      FRONTEND_EMBED_BLOCK_ENABLED: false,
+    });
+
+    await createDoc(page, 'doc-embed-web-configuration', browserName, 1);
+
+    await tryFocusEditorContent({ page });
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('/');
+
+    await expect(
+      page.locator('.bn-suggestion-menu').getByText('Embed a web page'),
+    ).toBeHidden();
+
+    await overrideConfig(page, {
+      FRONTEND_EMBED_BLOCK_ALLOWED_ORIGINS: {
+        'http://localhost:3001': 'allow-scripts',
+      },
+    });
+
+    await page.reload();
+
+    await openSuggestionMenu({ page, suggestion: 'Embed a web page' });
+
+    const embedBlock = page.locator('div[data-content-type="embed"]').last();
+
+    await expect(embedBlock).toBeVisible();
+
+    // Try with a domain that is not allowed first
+    await page
+      .getByText(/Add embed/)
+      .first()
+      .click();
+
+    await page
+      .locator('[data-test="embed-input"]')
+      .fill('http://localhost:3002/');
+
+    await page.locator('[data-test="embed-input-button"]').click();
+
+    await expect(
+      page.getByText(
+        'This domain is not allowed for embedding. Please contact your administrator to have it added to the list of allowed domains.',
+      ),
+    ).toBeVisible();
+
+    await openSuggestionMenu({ page, suggestion: 'Embed a web page' });
+
+    // Now with a valid URL
+    await page
+      .getByText(/Add embed/)
+      .first()
+      .click();
+
+    await page
+      .locator('[data-test="embed-input"]')
+      .fill('http://localhost:3001/');
+    await page.locator('[data-test="embed-input-button"]').click();
+
+    const embedIframe = page
+      .locator('.--docs--editor-container iframe.bn-visual-media')
+      .first();
+
+    // Check src of embed iframe
+    expect(await embedIframe.getAttribute('src')).toMatch(
+      /http:\/\/localhost:3001\//,
+    );
+    await expect(embedIframe).toHaveAttribute('sandbox', 'allow-scripts');
+    await expect(embedIframe).toHaveAttribute('role', 'presentation');
   });
 });

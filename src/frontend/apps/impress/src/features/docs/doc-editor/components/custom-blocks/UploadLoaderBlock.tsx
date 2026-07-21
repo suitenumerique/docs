@@ -9,13 +9,13 @@ import { createReactBlockSpec } from '@blocknote/react';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 
-import { Box, Icon, Text } from '@/components';
+import { Text } from '@/components';
 import { useMediaUrl } from '@/core';
 import { isSafeUrl } from '@/utils/url';
 
 import { loopCheckDocMediaStatus } from '../../api';
-import Loader from '../../assets/loader.svg';
-import Warning from '../../assets/warning.svg';
+
+import { CustomBlockStatus } from './CustomBlockStatus';
 
 type UploadLoaderPropSchema = {
   readonly information: { readonly default: '' };
@@ -130,18 +130,12 @@ const UploadLoaderBlockComponent = ({
   }, [block, editor, mediaUrl, isEditable]);
 
   return (
-    <Box className="bn-visual-media-wrapper" $direction="row" $gap="0.5rem">
-      {block.props.type === 'warning' ? (
-        <Warning />
-      ) : (
-        <Icon
-          $theme="brand"
-          $layer="border"
-          icon={<Loader style={{ animation: 'spin 1.5s linear infinite' }} />}
-        />
-      )}
+    <CustomBlockStatus
+      className="bn-visual-media-wrapper"
+      type={block.props.type}
+    >
       <Text>{block.props.information}</Text>
-    </Box>
+    </CustomBlockStatus>
   );
 };
 

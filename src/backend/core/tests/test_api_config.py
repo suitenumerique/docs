@@ -29,6 +29,10 @@ pytestmark = pytest.mark.django_db
     COLLABORATION_WS_INACTIVITY_TIMEOUT=300,
     CONVERSION_UPLOAD_ENABLED=False,
     FRONTEND_CSS_URL="http://testcss/",
+    FRONTEND_EMBED_BLOCK_ENABLED=True,
+    FRONTEND_EMBED_BLOCK_ALLOWED_ORIGINS={
+        "excalidraw.com": "allow-scripts allow-same-origin",
+    },
     FRONTEND_JS_URL="http://testjs/",
     FRONTEND_THEME="test-theme",
     MEDIA_BASE_URL="http://testserver/",
@@ -63,6 +67,10 @@ def test_api_config(is_authenticated):
         "CONVERSION_UPLOAD_ENABLED": False,
         "ENVIRONMENT": "test",
         "FRONTEND_CSS_URL": "http://testcss/",
+        "FRONTEND_EMBED_BLOCK_ENABLED": True,
+        "FRONTEND_EMBED_BLOCK_ALLOWED_ORIGINS": {
+            "excalidraw.com": "allow-scripts allow-same-origin",
+        },
         "FRONTEND_HOMEPAGE_FEATURE_ENABLED": True,
         "FRONTEND_JS_URL": "http://testjs/",
         "FRONTEND_SILENT_LOGIN_ENABLED": False,
