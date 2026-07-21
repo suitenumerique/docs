@@ -116,11 +116,13 @@ export const SkeletonEditorCore = ({
         $flex="1"
         $css={css`
           ${$css}
-          ${isFadingOut &&
-          css`
-            animation: ${skeletonFadeOut} ${SKELETON_FADE_DURATION_MS}ms
-              ease-in-out forwards;
-          `}
+          ${
+            isFadingOut &&
+            css`
+              animation: ${skeletonFadeOut} ${SKELETON_FADE_DURATION_MS}ms
+                ease-in-out forwards;
+            `
+          }
         `}
         {...props}
       >

@@ -15,9 +15,7 @@ type AnalyticEventDoc = {
 };
 
 export type AnalyticEvent =
-  | AnalyticEventClick
-  | AnalyticEventUser
-  | AnalyticEventDoc;
+  AnalyticEventClick | AnalyticEventUser | AnalyticEventDoc;
 
 export abstract class AbstractAnalytic {
   public constructor() {

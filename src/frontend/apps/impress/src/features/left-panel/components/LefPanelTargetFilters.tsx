@@ -81,9 +81,11 @@ export const LeftPanelTargetFilters = () => {
               gap: ${spacingsTokens['xs']};
               padding: ${spacingsTokens['2xs']};
               border-radius: ${spacingsTokens['3xs']};
-              background-color: ${isActive
-                ? 'var(--c--contextuals--background--semantic--contextual--primary)'
-                : 'transparent'};
+              background-color: ${
+                isActive
+                  ? 'var(--c--contextuals--background--semantic--contextual--primary)'
+                  : 'transparent'
+              };
               font-weight: ${isActive ? 700 : 400};
               color: inherit;
               text-decoration: none;

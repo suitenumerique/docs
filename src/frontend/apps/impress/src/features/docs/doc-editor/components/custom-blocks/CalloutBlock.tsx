@@ -110,12 +110,14 @@ const CalloutComponent = ({
           $css={css`
             font-size: 1.125rem;
             cursor: ${isEditable ? 'pointer' : 'default'};
-            ${isEditable &&
-            `
+            ${
+              isEditable &&
+              `
           &:hover {
             background-color: rgba(0, 0, 0, 0.1);
           }
-          `}
+          `
+            }
           `}
           $align="center"
           $width="28px"

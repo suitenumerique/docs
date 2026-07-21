@@ -93,12 +93,14 @@ export const DocsGrid = ({
         $width="100%"
         $css={css`
           border: 1px solid var(--c--contextuals--border--surface--primary);
-          ${isDragOver
-            ? `
+          ${
+            isDragOver
+              ? `
               border: 2px dashed var(--c--contextuals--border--semantic--brand--primary);
               background-color: var(--c--contextuals--background--semantic--brand--tertiary);
             `
-            : ''}
+              : ''
+          }
         `}
         $padding={{
           bottom: 'md',

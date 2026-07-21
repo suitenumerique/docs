@@ -46,38 +46,48 @@ export const LeftPanel = ({ isResizable }: { isResizable?: boolean }) => {
             transform 0.2s ease-in-out,
             width 0.2s ease-in-out;
 
-          ${!isResizable
-            ? css`
-                border-right: 1px solid
-                  var(--c--contextuals--border--surface--primary);
-              `
-            : ''}
+          ${
+            !isResizable
+              ? css`
+                  border-right: 1px solid
+                    var(--c--contextuals--border--surface--primary);
+                `
+              : ''
+          }
 
-          ${isTablet && !isMobile
-            ? css`
-                ${!isPanelOpen
-                  ? css`
-                      transform: translateX(${isPanelOpen ? '0' : '-100%'});
-                      width: 0;
-                    `
-                  : ''}
-              `
-            : ''}
+          ${
+            isTablet && !isMobile
+              ? css`
+                  ${
+                    !isPanelOpen
+                      ? css`
+                          transform: translateX(${isPanelOpen ? '0' : '-100%'});
+                          width: 0;
+                        `
+                      : ''
+                  }
+                `
+              : ''
+          }
 
-          ${isMobile
-            ? css`
-                position: fixed;
-                z-index: 1000;
-                top: 0;
-                left: 0;
-                ${!isPanelOpen
-                  ? css`
-                      transform: translateX(-100%);
-                      width: 0;
-                    `
-                  : ''}
-              `
-            : ''}
+          ${
+            isMobile
+              ? css`
+                  position: fixed;
+                  z-index: 1000;
+                  top: 0;
+                  left: 0;
+                  ${
+                    !isPanelOpen
+                      ? css`
+                          transform: translateX(-100%);
+                          width: 0;
+                        `
+                      : ''
+                  }
+                `
+              : ''
+          }
         `}
       >
         <Box

@@ -89,13 +89,15 @@ export const RightPanel = () => {
         right: 0;
         align-self: flex-start;
         opacity: 1;
-        ${!isPanelOpen &&
-        css`
-          transform: translateX(200%);
-          opacity: 0;
-          margin-left: 0rem;
-          width: 0;
-        `}
+        ${
+          !isPanelOpen &&
+          css`
+            transform: translateX(200%);
+            opacity: 0;
+            margin-left: 0rem;
+            width: 0;
+          `
+        }
 
         &:focus {
           outline: none;

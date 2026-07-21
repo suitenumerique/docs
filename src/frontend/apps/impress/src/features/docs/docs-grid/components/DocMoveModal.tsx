@@ -240,22 +240,28 @@ export const DocMoveModal = ({
                         $gap="sm"
                         $padding="3xs"
                         $css={css`
-                          background-color: ${isSelected
-                            ? 'var(--c--contextuals--background--semantic--brand--tertiary)'
-                            : 'transparent'};
+                          background-color: ${
+                            isSelected
+                              ? 'var(--c--contextuals--background--semantic--brand--tertiary)'
+                              : 'transparent'
+                          };
                           border: 1px solid
-                            ${isSelected
-                              ? 'var(--c--contextuals--border--semantic--brand--tertiary)'
-                              : 'transparent'};
+                            ${
+                              isSelected
+                                ? 'var(--c--contextuals--border--semantic--brand--tertiary)'
+                                : 'transparent'
+                            };
                           border-radius: var(--c--globals--spacings--3xs);
 
                           /* Arrow key navigation highlight */
                           &[data-selected='true'] {
-                            ${!isSelected &&
-                            `
+                            ${
+                              !isSelected &&
+                              `
                                 background-color: var(--c--contextuals--background--semantic--contextual--primary);
                                 border-color: transparent;
-                              `}
+                              `
+                            }
                           }
                         `}
                         aria-selected={isSelected}

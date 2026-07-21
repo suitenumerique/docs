@@ -61,13 +61,15 @@ export const IconAI = ({
         color: var(--c--globals--colors--gray-700);
         transition: all 0.1s ease-in;
         box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.05);
-        ${isHighlighted &&
-        css`
-          background-color: var(--c--globals--colors--brand-450);
-          border: 1px solid var(--c--globals--colors--brand-350);
-          color: #ffffff;
-          box-shadow: 0 1px 4px 0 rgba(88, 88, 225, 0.25);
-        `}
+        ${
+          isHighlighted &&
+          css`
+            background-color: var(--c--globals--colors--brand-450);
+            border: 1px solid var(--c--globals--colors--brand-350);
+            color: #ffffff;
+            box-shadow: 0 1px 4px 0 rgba(88, 88, 225, 0.25);
+          `
+        }
         ${$css}
       `}
       $radius="100%"

@@ -3,12 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { APIError, errorCauses, fetchAPI } from '@/api';
 
 export type AITransformActions =
-  | 'correct'
-  | 'prompt'
-  | 'rephrase'
-  | 'summarize'
-  | 'beautify'
-  | 'emojify';
+  'correct' | 'prompt' | 'rephrase' | 'summarize' | 'beautify' | 'emojify';
 
 export type DocAITransform = {
   docId: string;

@@ -243,9 +243,11 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
               pointer-events: none;
               font-style: italic;
             }
-            font-size: ${isSmallMobile
-              ? 'var(--c--globals--font--sizes--h4)'
-              : 'var(--c--globals--font--sizes--h2)'};
+            font-size: ${
+              isSmallMobile
+                ? 'var(--c--globals--font--sizes--h4)'
+                : 'var(--c--globals--font--sizes--h2)'
+            };
             font-weight: 700;
             outline: none;
           `}

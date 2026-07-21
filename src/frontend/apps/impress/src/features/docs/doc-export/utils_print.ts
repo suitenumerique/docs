@@ -230,10 +230,7 @@ function wrapMediaWithLink() {
       const url = el?.getAttribute('data-url');
       const name = el?.getAttribute('data-name');
       const type = el?.getAttribute('data-content-type') as
-        | 'file'
-        | 'audio'
-        | 'video'
-        | 'pdf';
+        'file' | 'audio' | 'video' | 'pdf';
       if (type) {
         prependLink(el, url, name, type);
       }

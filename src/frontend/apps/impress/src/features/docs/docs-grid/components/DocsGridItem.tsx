@@ -65,9 +65,11 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           cursor: pointer;
           border-radius: 4px;
           &:hover {
-            background-color: ${dragMode
-              ? 'none'
-              : 'var(--c--contextuals--background--semantic--contextual--primary)'};
+            background-color: ${
+              dragMode
+                ? 'none'
+                : 'var(--c--contextuals--background--semantic--contextual--primary)'
+            };
           }
         `}
         className="--docs--doc-grid-item"

@@ -43,8 +43,10 @@ const BoxButton = forwardRef<HTMLButtonElement, BoxButtonType>(
           border: none;
           outline: none;
           font-family: inherit;
-          color: ${disabled &&
-          `var(--c--contextuals--content--semantic--disabled--primary)`};
+          color: ${
+            disabled &&
+            `var(--c--contextuals--content--semantic--disabled--primary)`
+          };
           &:focus-visible {
             transition: none;
             outline: 2px solid

@@ -38,13 +38,13 @@ export const Droppable = ({
       role="none"
       $css={css`
         border-radius: var(--c--globals--spacings--st);
-        background-color: ${enableHover
-          ? 'var(--c--globals--colors--brand-100)'
-          : 'transparent'};
+        background-color: ${
+          enableHover ? 'var(--c--globals--colors--brand-100)' : 'transparent'
+        };
         border: 1.5px solid
-          ${enableHover
-            ? 'var(--c--globals--colors--brand-500)'
-            : 'transparent'};
+          ${
+            enableHover ? 'var(--c--globals--colors--brand-500)' : 'transparent'
+          };
       `}
       className="--docs--grid-droppable"
     >

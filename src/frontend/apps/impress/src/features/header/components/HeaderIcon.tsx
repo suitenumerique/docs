@@ -22,13 +22,15 @@ export const HeaderIcon = () => {
       $height="32px"
       $css={css`
         transition: transform 0.3s ease-in-out;
-        ${isVisible
-          ? css`
-              transform: translateY(0);
-            `
-          : css`
-              transform: translateY(-300%);
-            `}
+        ${
+          isVisible
+            ? css`
+                transform: translateY(0);
+              `
+            : css`
+                transform: translateY(-300%);
+              `
+        }
       `}
     >
       <DotLottieReact

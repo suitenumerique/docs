@@ -18,18 +18,22 @@ export const SeparatedSection = ({
       $padding={{ vertical: 'sm', horizontal: '0' }}
       {...boxProps}
       $css={css`
-        ${showSeparator === 'top' || showSeparator === true
-          ? css`
-              border-top: 1px solid
-                var(--c--contextuals--border--surface--primary);
-            `
-          : ''}
-        ${showSeparator === 'bottom' || showSeparator === true
-          ? css`
-              border-bottom: 1px solid
-                var(--c--contextuals--border--surface--primary);
-            `
-          : ''}
+        ${
+          showSeparator === 'top' || showSeparator === true
+            ? css`
+                border-top: 1px solid
+                  var(--c--contextuals--border--surface--primary);
+              `
+            : ''
+        }
+        ${
+          showSeparator === 'bottom' || showSeparator === true
+            ? css`
+                border-bottom: 1px solid
+                  var(--c--contextuals--border--surface--primary);
+              `
+            : ''
+        }
       `}
     >
       {children}
