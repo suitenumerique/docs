@@ -13,6 +13,11 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
     },
+    server: {
+      deps: {
+        inline: ['@gouvfr-lasuite/ui-kit', '@gouvfr-lasuite/cunningham-react'],
+      },
+    },
   },
   define: {
     'process.env.NODE_ENV': 'test',
@@ -24,6 +29,7 @@ export default defineConfig({
         replacement: path.resolve(__dirname, 'src/tests/__mocks__/svgMock.tsx'),
       },
     ],
+    dedupe: ['@gouvfr-lasuite/cunningham-react'],
     tsconfigPaths: true,
   },
 });

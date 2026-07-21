@@ -2114,31 +2114,7 @@
   dependencies:
     tslib "^2.8.0"
 
-"@gouvfr-lasuite/cunningham-react@4.3.0":
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/@gouvfr-lasuite/cunningham-react/-/cunningham-react-4.3.0.tgz#a92f70e5f32d2b9cae4971642544d306e7fadfed"
-  integrity sha512-jGUebugMdK4LnyctS3EPrd1hKdt7oN4o22oazARuerq9JP0Yb9cmB49NsyleoFaMerF7nTJoD4eJCy0Y/9AeoQ==
-  dependencies:
-    "@fontsource-variable/roboto-flex" "5.2.5"
-    "@fontsource/material-icons-outlined" "5.2.5"
-    "@gouvfr-lasuite/cunningham-tokens" "*"
-    "@internationalized/date" "3.12.0"
-    "@react-aria/calendar" "3.9.5"
-    "@react-aria/datepicker" "3.16.1"
-    "@react-aria/i18n" "3.12.16"
-    "@react-stately/calendar" "3.9.3"
-    "@react-stately/datepicker" "3.16.1"
-    "@tanstack/react-table" "8.21.3"
-    "@types/react-modal" "3.16.3"
-    chromatic "11.28.2"
-    classnames "2.5.1"
-    downshift "9.0.9"
-    react-aria "3.47.0"
-    react-aria-components "1.16.0"
-    react-modal "3.16.3"
-    react-stately "3.45.0"
-
-"@gouvfr-lasuite/cunningham-react@4.3.1":
+"@gouvfr-lasuite/cunningham-react@*", "@gouvfr-lasuite/cunningham-react@4.3.0", "@gouvfr-lasuite/cunningham-react@4.3.1":
   version "4.3.1"
   resolved "https://registry.yarnpkg.com/@gouvfr-lasuite/cunningham-react/-/cunningham-react-4.3.1.tgz#816c3a4c119270ee99feef222332fa8d6c186d31"
   integrity sha512-ECdGJovJ0Sjwo9U+QWZpDtJhfQtnplE2JRdJtTGf+e/Uosk7T5ZjOR9YpP6az7G3urTg9aaYr+j4YAYoZ8bQyg==

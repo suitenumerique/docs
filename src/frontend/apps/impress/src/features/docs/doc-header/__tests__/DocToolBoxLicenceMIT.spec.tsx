@@ -42,7 +42,7 @@ const doc = {
   },
 };
 
-describe('DocToolBox - Licence', () => {
+describe('DocToolBox - Licence MIT', () => {
   afterAll(() => {
     process.env.NEXT_PUBLIC_PUBLISH_AS_MIT = originalEnv;
   });
@@ -52,8 +52,8 @@ describe('DocToolBox - Licence', () => {
     vi.resetModules();
   });
 
-  test('The export button is rendered when MIT version is deactivated', async () => {
-    process.env.NEXT_PUBLIC_PUBLISH_AS_MIT = 'false';
+  test('The export button is not rendered when MIT version is activated', async () => {
+    process.env.NEXT_PUBLIC_PUBLISH_AS_MIT = 'true';
 
     const { AppWrapper } = await import('@/tests/utils');
     const { DocToolBox } = await import('../components/DocToolBox');
@@ -62,6 +62,6 @@ describe('DocToolBox - Licence', () => {
       wrapper: AppWrapper,
     });
 
-    expect(await screen.findByText('Download')).toBeInTheDocument();
+    expect(screen.queryByText('Download')).not.toBeInTheDocument();
   }, 15000);
 });
