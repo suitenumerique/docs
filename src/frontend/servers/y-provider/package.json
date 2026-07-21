@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && tsc-alias",
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "dev": "cross-env COLLABORATION_LOGGING=true && nodemon --config nodemon.json",
     "start": "node ./dist/start-server.js",
     "lint": "eslint",
