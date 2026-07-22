@@ -79,6 +79,7 @@ export const ErrorPage = ({
             maxWidth: '100%',
             height: 'auto',
           }}
+          loading="eager"
         />
 
         <Text

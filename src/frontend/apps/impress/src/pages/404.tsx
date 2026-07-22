@@ -46,6 +46,7 @@ const Page: NextPageWithLayout = () => {
             maxWidth: '100%',
             height: 'auto',
           }}
+          loading="eager"
         />
 
         <Text

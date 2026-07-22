@@ -20,6 +20,7 @@ and this project adheres to
 - 💄(frontend) use the same highlight color for cells and moves #2575
 - ⚡️(backend) optimize media_auth endpoint
 - 🚸(frontend) print from document options menu #2550
+- ♻️(frontend) refacto of the grid documents #2534
 
 ### Fixed
 

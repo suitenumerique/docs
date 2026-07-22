@@ -272,7 +272,6 @@ export const DocMoveModal = ({
                         />
                         <DocsGridItemDate
                           doc={docSearch}
-                          isDesktop={isModal}
                           isInTrashbin={false}
                         />
                       </Box>
