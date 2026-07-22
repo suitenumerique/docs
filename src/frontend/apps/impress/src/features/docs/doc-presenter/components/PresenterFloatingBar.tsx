@@ -27,6 +27,7 @@ interface PresenterFloatingBarProps {
   onNext: () => void;
   onCopyLink: () => void;
   onExportPdf: () => void;
+  onActionsOpenChange?: (isOpen: boolean) => void;
   onToggleFullscreen: () => void;
   onClose: () => void;
   isExportingPdf: boolean;
@@ -49,6 +50,11 @@ const barCss = css`
   border: 1px solid var(--c--contextuals--border--surface--primary);
   background: var(--c--contextuals--background--surface--primary);
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  button[aria-disabled='true'] {
+    opacity: 0.4;
+    cursor: default;
+  }
 `;
 
 const separatorCss = css`
@@ -87,6 +93,7 @@ export const PresenterFloatingBar = ({
   onNext,
   onCopyLink,
   onExportPdf,
+  onActionsOpenChange,
   onToggleFullscreen,
   onClose,
   isExportingPdf,
@@ -105,7 +112,7 @@ export const PresenterFloatingBar = ({
   useEffect(() => {
     const id = requestAnimationFrame(() => {
       barRef.current
-        ?.querySelector<HTMLButtonElement>('button:not([disabled])')
+        ?.querySelector<HTMLButtonElement>('button:not([aria-disabled="true"])')
         ?.focus();
     });
     return () => cancelAnimationFrame(id);
@@ -116,7 +123,16 @@ export const PresenterFloatingBar = ({
   const toggleActions = (event: MouseEvent<HTMLElement>) => {
     event.stopPropagation();
     event.preventDefault();
-    setIsActionsOpen((isOpen) => !isOpen);
+    setIsActionsOpen((prev) => {
+      const next = !prev;
+      onActionsOpenChange?.(next);
+      return next;
+    });
+  };
+
+  const handleActionsOpenChange = (isOpen: boolean) => {
+    setIsActionsOpen(isOpen);
+    onActionsOpenChange?.(isOpen);
   };
 
   const actionOptions = useMemo<DropdownMenuItem[]>(
@@ -151,8 +167,8 @@ export const PresenterFloatingBar = ({
           size="nano"
           color="neutral"
           variant="tertiary"
-          disabled={isFirst}
-          onClick={onPrev}
+          aria-disabled={isFirst}
+          onClick={isFirst ? undefined : onPrev}
           aria-label={t('Previous slide')}
           icon={<ChevronLeft size="small" />}
         />
@@ -163,8 +179,8 @@ export const PresenterFloatingBar = ({
           size="nano"
           color="neutral"
           variant="tertiary"
-          disabled={isLast}
-          onClick={onNext}
+          aria-disabled={isLast}
+          onClick={isLast ? undefined : onNext}
           aria-label={t('Next slide')}
           icon={<ChevronRight size="small" />}
         />
@@ -172,7 +188,7 @@ export const PresenterFloatingBar = ({
         <DropdownMenu
           options={actionOptions}
           isOpen={isActionsOpen}
-          onOpenChange={setIsActionsOpen}
+          onOpenChange={handleActionsOpenChange}
           shouldCloseOnInteractOutside={() => true}
           variant="tiny"
         >

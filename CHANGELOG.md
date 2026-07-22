@@ -19,6 +19,7 @@ and this project adheres to
 - 🐛(backend) skip session creation for the liveness probe
 - 🐛(frontend) preserve page titles when adding an emoji #2586
 - 🐛(frontend) hide the selection highlight on presenter images #2665
+- ♿️(frontend) restore presenter focus trapping after share links #2533
 
 ## [v5.6.1] - 2026-09-04
 
