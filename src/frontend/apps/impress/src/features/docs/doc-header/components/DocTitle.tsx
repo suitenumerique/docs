@@ -38,11 +38,16 @@ export const DocTitleText = () => {
   const { isMobile } = useResponsiveStore();
   const { currentDoc } = useDocStore();
   const { untitledDocument } = useTrans();
+  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(
+    currentDoc?.title ?? '',
+  );
+  const displayTitle = titleWithoutEmoji || untitledDocument;
 
   return (
     <Box className={CLASS_DOC_TITLE} $direction="row" $align="center">
       <Text as="h2" $margin="none" $size={isMobile ? 'h4' : 'h2'}>
-        {currentDoc?.title || untitledDocument}
+        {emoji && <span aria-hidden="true">{emoji} </span>}
+        {displayTitle}
       </Text>
     </Box>
   );

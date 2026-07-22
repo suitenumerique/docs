@@ -85,7 +85,6 @@ export const DocLeftPanelCollapseButton = () => {
     currentDoc?.title ?? '',
   );
   const docTitle = titleWithoutEmoji || untitledDocument;
-  const buttonTitle = emoji ? `${emoji} ${docTitle}` : docTitle;
   const shouldShowButtonTitle = !isPanelOpen && !isDocTitleVisible;
   const ariaLabel = isPanelOpen
     ? t('Hide the side panel for {{title}}', { title: docTitle })
@@ -94,7 +93,8 @@ export const DocLeftPanelCollapseButton = () => {
   return (
     <LeftPanelCollapseButton
       ariaLabel={ariaLabel}
-      buttonTitle={shouldShowButtonTitle ? buttonTitle : undefined}
+      buttonTitle={shouldShowButtonTitle ? docTitle : undefined}
+      buttonEmoji={shouldShowButtonTitle ? emoji : undefined}
     />
   );
 };

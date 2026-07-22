@@ -11,9 +11,11 @@ import { useLeftPanelStore } from '../stores';
 export const LeftPanelCollapseButton = ({
   ariaLabel,
   buttonTitle,
+  buttonEmoji,
 }: {
   ariaLabel: string;
   buttonTitle?: string;
+  buttonEmoji?: string | null;
 }) => {
   const { isPanelOpen, togglePanel } = useLeftPanelStore();
   const { isSmallMobile } = useResponsiveStore();
@@ -38,6 +40,7 @@ export const LeftPanelCollapseButton = ({
               $color="var(--c--globals--colors--gray-1000)"
               title={buttonTitle}
             >
+              {buttonEmoji && <span aria-hidden="true">{buttonEmoji} </span>}
               {buttonTitle}
             </Text>
           </FadeComponent>
