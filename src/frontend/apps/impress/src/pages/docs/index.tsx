@@ -38,7 +38,8 @@ Page.getLayout = function getLayout(page: ReactElement) {
   return (
     <MainLayout
       propsContent={{
-        $background: 'var(--c--contextuals--background--surface--tertiary)',
+        $background:
+          'linear-gradient(53deg, var(--c--contextuals--background--surface--primary) 39.96%, var(--c--contextuals--background--semantic--brand--tertiary) 125.64%)',
       }}
     >
       {page}

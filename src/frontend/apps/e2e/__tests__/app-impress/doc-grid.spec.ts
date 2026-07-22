@@ -315,7 +315,7 @@ test.describe('Documents Grid', () => {
 
     const thead = page.getByTestId('docs-grid-header');
     await expect(thead.getByText(/Name/i)).toBeVisible();
-    await expect(thead.getByText(/Updated at/i)).toBeVisible();
+    await expect(thead.getByText(/Last modified/i)).toBeVisible();
 
     await Promise.all(
       docs.map(async (doc) => {

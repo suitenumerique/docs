@@ -5,17 +5,17 @@ import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
 
 import AllDocs from '@/assets/icons/doc-all.svg';
-import { Box, Card, Icon, Text } from '@/components';
+import { Box, Card, Icon, Loading, Text } from '@/components';
 import { useInfiniteDocs } from '@/docs/doc-management/api/useDocs';
 import { useImport } from '@/docs/doc-management/hooks/useImport';
 import { DocDefaultFilter } from '@/docs/doc-management/types';
+import DocsIcon from '@/icons/Docs.svg';
+import BinIcon from '@/icons/bin.svg';
 import { useResponsiveStore } from '@/stores';
 
 import { useInfiniteDocsTrashbin } from '../api';
-import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import { DocGridContentList } from './DocGridContentList';
-import { DocsGridLoader } from './DocsGridLoader';
 
 type DocsGridProps = {
   target?: DocDefaultFilter;
@@ -42,17 +42,10 @@ export const DocsGrid = ({
       target === DocDefaultFilter.MY_DOCS) &&
     isImportEnabled;
 
-  const { isDesktop } = useResponsiveStore();
-  const { flexLeft, flexRight } = useResponsiveDocGrid();
+  const { isDesktop, isSmallMobile } = useResponsiveStore();
 
-  const {
-    data,
-    isFetching,
-    isRefetching,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-  } = useDocsQuery(target);
+  const { data, isFetching, isLoading, fetchNextPage, hasNextPage } =
+    useDocsQuery(target);
 
   const docs = useMemo(() => {
     const allDocs = data?.pages.flatMap((page) => page.results) ?? [];
@@ -81,18 +74,21 @@ export const DocsGrid = ({
     <Box
       className="--docs--doc-grid"
       $position="relative"
-      $padding={{ horizontal: 'sm' }}
+      $padding={{
+        horizontal: isSmallMobile ? '0' : 'sm',
+        vertical: isSmallMobile ? '0' : 'sm',
+      }}
       $width="100%"
       $maxWidth="960px"
       $minHeight="0"
       $align="center"
     >
-      <DocsGridLoader isLoading={isRefetching || loading || isImportPending} />
       <Card
         data-testid="docs-grid"
         $width="100%"
+        $border="none"
+        $background="transparent"
         $css={css`
-          border: 1px solid var(--c--contextuals--border--surface--primary);
           ${
             isDragOver
               ? `
@@ -109,51 +105,65 @@ export const DocsGrid = ({
           ? getRootProps({ className: 'dropzone', tabIndex: -1 })
           : {})}
       >
-        <DocGridTitleBar target={target} />
-        {!hasDocs && !loading && (
-          <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
-            <Text $size="sm" $weight="700">
-              {t('No documents found')}
-            </Text>
-          </Box>
-        )}
+        <DocGridTitleBar target={target} isImportPending={isImportPending} />
+        {!hasDocs && !loading && <DocGridNoDocs target={target} />}
         {hasDocs && (
           <Box
             $gap="6px"
             $padding={{ vertical: 'sm', horizontal: isDesktop ? 'md' : 'xs' }}
           >
-            <Box aria-label={t('Documents grid')}>
+            <Box
+              aria-label={t('Documents grid')}
+              $display="grid"
+              $css={css`
+                grid-template-columns: ${
+                  isSmallMobile
+                    ? 'minmax(0, 550px) auto'
+                    : 'minmax(0, 550px) auto auto'
+                };
+                column-gap: 20px;
+              `}
+            >
               <Box
-                $direction="row"
-                $padding={{ horizontal: 'xs' }}
-                $gap="10px"
+                $display="grid"
+                $css={css`
+                  grid-column: 1 / -1;
+                  grid-template-columns: subgrid;
+                `}
                 data-testid="docs-grid-header"
                 aria-hidden="true"
               >
-                <Box $flex={flexLeft} $padding="3xs">
+                <Box $padding={{ all: '3xs' }}>
                   <Text $size="xs" $variation="secondary" $weight="500">
                     {t('Name')}
                   </Text>
                 </Box>
-                {isDesktop && (
-                  <Box $flex={flexRight} $padding={{ vertical: '3xs' }}>
+                {!isSmallMobile && (
+                  <Box $padding={{ vertical: '3xs' }}>
                     <Text $size="xs" $weight="500" $variation="secondary">
                       {DocDefaultFilter.TRASHBIN === target
                         ? t('Days remaining')
-                        : t('Updated at')}
+                        : t('Last modified')}
                     </Text>
                   </Box>
                 )}
               </Box>
-              <Box role="list">
+              <Box role="list" $display="contents">
                 <DocGridContentList docs={docs} />
               </Box>
             </Box>
+            {loading && (
+              <Loading
+                loaderProps={{ size: 'small' }}
+                $margin={{ top: 'sm' }}
+              />
+            )}
             {hasNextPage && !loading && (
               <InView
                 data-testid="infinite-scroll-trigger"
                 as="div"
                 onChange={loadMore}
+                style={{ margin: 'auto' }}
               >
                 {!isFetching && hasNextPage && (
                   <Button
@@ -173,7 +183,13 @@ export const DocsGrid = ({
   );
 };
 
-const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
+const DocGridTitleBar = ({
+  target,
+  isImportPending,
+}: {
+  target: DocDefaultFilter;
+  isImportPending: boolean;
+}) => {
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
 
@@ -197,9 +213,6 @@ const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
         vertical: 'sm',
         horizontal: isDesktop ? 'md' : 'xs',
       }}
-      $css={css`
-        border-bottom: 1px solid var(--c--contextuals--border--surface--primary);
-      `}
       $align="center"
       $justify="space-between"
     >
@@ -208,7 +221,52 @@ const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
         <Text as="h2" $size="h4" $margin="none" tabIndex={-1}>
           {title}
         </Text>
+        {isImportPending && <Loading loaderProps={{ size: 'small' }} />}
       </Box>
+    </Box>
+  );
+};
+
+const DocGridNoDocs = ({ target }: { target: DocDefaultFilter }) => {
+  const { t } = useTranslation();
+
+  return (
+    <Box as="p" $padding={{ vertical: 'sm' }} $align="center" $justify="center">
+      {[
+        DocDefaultFilter.ALL_DOCS,
+        DocDefaultFilter.MY_DOCS,
+        DocDefaultFilter.SHARED_WITH_ME,
+      ].includes(target) && (
+        <>
+          <DocsIcon width={56} height={56} aria-hidden="true" />
+          <Text $size="sm" $weight="700">
+            {t('No doc yet')}
+          </Text>
+          {[DocDefaultFilter.ALL_DOCS, DocDefaultFilter.MY_DOCS].includes(
+            target,
+          ) && (
+            <Text $size="sm" $weight="400" $variation="secondary">
+              {t('Your docs will appear here.')}
+            </Text>
+          )}
+          {target === DocDefaultFilter.SHARED_WITH_ME && (
+            <Text $size="sm" $weight="400" $variation="secondary">
+              {t('Your shared docs will appear here.')}
+            </Text>
+          )}
+        </>
+      )}
+      {target === DocDefaultFilter.TRASHBIN && (
+        <>
+          <BinIcon width={56} height={56} aria-hidden="true" />
+          <Text $size="sm" $weight="700">
+            {t('No doc deleted')}
+          </Text>
+          <Text $size="sm" $weight="400" $variation="secondary">
+            {t('Deleted docs will appear here.')}
+          </Text>
+        </>
+      )}
     </Box>
   );
 };
