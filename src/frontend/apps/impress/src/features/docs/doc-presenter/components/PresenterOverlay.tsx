@@ -56,6 +56,10 @@ export const PresenterOverlay = ({
   const editor = useEditorStore((state) => state.editor);
   const copyPresenterLink = useCopyPresenterLink(doc.id);
 
+  // Track the floating bar's actions popover state so keyboard shortcuts
+  // can avoid closing the presenter while the popover is open.
+  const [isActionsOpen, setIsActionsOpen] = useState(false);
+
   // Snapshot the editor's blocks once at mount. Subsequent collaborator
   // edits do not affect the ongoing presentation (by design).
   const snapshotRef = useRef<PresenterBlock[] | null>(null);
@@ -138,6 +142,7 @@ export const PresenterOverlay = ({
     onToggleFullscreen: () => void toggle(),
     onClose,
     isFullscreen,
+    isPopoverOpen: isActionsOpen,
   });
 
   const mountedIndices = useMemo(() => {
@@ -202,6 +207,7 @@ export const PresenterOverlay = ({
           onPrev={goPrev}
           onNext={goNext}
           onCopyLink={() => copyPresenterLink(currentIndex)}
+          onActionsOpenChange={setIsActionsOpen}
           onToggleFullscreen={() => void toggle()}
           onClose={onClose}
         />

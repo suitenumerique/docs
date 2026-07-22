@@ -8,6 +8,7 @@ interface ShortcutHandlers {
   onToggleFullscreen: () => void;
   onClose: () => void;
   isFullscreen: boolean;
+  isPopoverOpen: boolean;
 }
 
 const ARROW_CODES = new Set(['ArrowLeft', 'ArrowRight']);
@@ -20,6 +21,7 @@ export const usePresenterShortcuts = ({
   onToggleFullscreen,
   onClose,
   isFullscreen,
+  isPopoverOpen,
 }: ShortcutHandlers) => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -74,10 +76,10 @@ export const usePresenterShortcuts = ({
         case 'Escape':
           // While fullscreen, the browser handles Esc natively (exits
           // fullscreen) and we deliberately stay open. Once out of
-          // fullscreen, Esc closes the presenter, unless a popover (e.g.
-          // the share dropdown) is open, in which case Esc should only
+          // fullscreen, Esc closes the presenter — unless the presenter's
+          // own actions popover is open, in which case Esc should only
           // dismiss the popover.
-          if (!isFullscreen && !document.querySelector('.react-aria-Popover')) {
+          if (!isFullscreen && !isPopoverOpen) {
             event.preventDefault();
             onClose();
           }
@@ -97,5 +99,6 @@ export const usePresenterShortcuts = ({
     onToggleFullscreen,
     onClose,
     isFullscreen,
+    isPopoverOpen,
   ]);
 };

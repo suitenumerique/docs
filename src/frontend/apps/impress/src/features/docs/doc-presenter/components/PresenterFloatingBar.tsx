@@ -22,6 +22,7 @@ interface PresenterFloatingBarProps {
   onPrev: () => void;
   onNext: () => void;
   onCopyLink: () => void;
+  onActionsOpenChange?: (isOpen: boolean) => void;
   onToggleFullscreen: () => void;
   onClose: () => void;
 }
@@ -91,6 +92,7 @@ export const PresenterFloatingBar = ({
   onPrev,
   onNext,
   onCopyLink,
+  onActionsOpenChange,
   onToggleFullscreen,
   onClose,
 }: PresenterFloatingBarProps) => {
@@ -119,7 +121,16 @@ export const PresenterFloatingBar = ({
   const toggleActions = (event: MouseEvent<HTMLElement>) => {
     event.stopPropagation();
     event.preventDefault();
-    setIsActionsOpen((isOpen) => !isOpen);
+    setIsActionsOpen((prev) => {
+      const next = !prev;
+      onActionsOpenChange?.(next);
+      return next;
+    });
+  };
+
+  const handleActionsOpenChange = (isOpen: boolean) => {
+    setIsActionsOpen(isOpen);
+    onActionsOpenChange?.(isOpen);
   };
 
   const actionOptions = useMemo<DropdownMenuItem[]>(
@@ -169,7 +180,7 @@ export const PresenterFloatingBar = ({
         <DropdownMenu
           options={actionOptions}
           isOpen={isActionsOpen}
-          onOpenChange={setIsActionsOpen}
+          onOpenChange={handleActionsOpenChange}
           shouldCloseOnInteractOutside={() => true}
           variant="tiny"
         >
