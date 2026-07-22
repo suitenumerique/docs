@@ -74,8 +74,10 @@ export const usePresenterShortcuts = ({
         case 'Escape':
           // While fullscreen, the browser handles Esc natively (exits
           // fullscreen) and we deliberately stay open. Once out of
-          // fullscreen, Esc closes the presenter.
-          if (!isFullscreen) {
+          // fullscreen, Esc closes the presenter, unless a popover (e.g.
+          // the share dropdown) is open, in which case Esc should only
+          // dismiss the popover.
+          if (!isFullscreen && !document.querySelector('.react-aria-Popover')) {
             event.preventDefault();
             onClose();
           }

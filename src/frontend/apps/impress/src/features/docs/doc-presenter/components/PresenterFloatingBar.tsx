@@ -43,6 +43,11 @@ const barCss = css`
   border: 1px solid var(--c--contextuals--border--surface--primary);
   background: var(--c--contextuals--background--surface--primary);
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  button[aria-disabled='true'] {
+    opacity: 0.4;
+    cursor: default;
+  }
 `;
 
 const separatorCss = css`
@@ -71,6 +76,12 @@ const PresenterDropdownLayerStyle = createGlobalStyle`
     box-sizing: border-box;
     height: 32px;
   }
+
+  .react-aria-Popover .c__dropdown-menu--tiny .c__dropdown-menu-item:focus-visible {
+    outline: 2px solid var(--c--theme--colors--primary-400, #3b82f6);
+    outline-offset: -2px;
+    border-radius: 4px;
+  }
 `;
 
 export const PresenterFloatingBar = ({
@@ -97,7 +108,7 @@ export const PresenterFloatingBar = ({
   useEffect(() => {
     const id = requestAnimationFrame(() => {
       barRef.current
-        ?.querySelector<HTMLButtonElement>('button:not([disabled])')
+        ?.querySelector<HTMLButtonElement>('button:not([aria-disabled="true"])')
         ?.focus();
     });
     return () => cancelAnimationFrame(id);
@@ -137,8 +148,8 @@ export const PresenterFloatingBar = ({
           size="nano"
           color="neutral"
           variant="tertiary"
-          disabled={isFirst}
-          onClick={onPrev}
+          aria-disabled={isFirst}
+          onClick={isFirst ? undefined : onPrev}
           aria-label={t('Previous slide')}
           icon={<ChevronLeft size="small" />}
         />
@@ -149,8 +160,8 @@ export const PresenterFloatingBar = ({
           size="nano"
           color="neutral"
           variant="tertiary"
-          disabled={isLast}
-          onClick={onNext}
+          aria-disabled={isLast}
+          onClick={isLast ? undefined : onNext}
           aria-label={t('Next slide')}
           icon={<ChevronRight size="small" />}
         />

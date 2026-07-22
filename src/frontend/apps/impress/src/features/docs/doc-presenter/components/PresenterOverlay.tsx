@@ -173,7 +173,7 @@ export const PresenterOverlay = ({
   }
 
   return createPortal(
-    <FocusScope autoFocus restoreFocus>
+    <FocusScope contain autoFocus restoreFocus>
       <Box
         $css={overlayCss}
         role="dialog"
