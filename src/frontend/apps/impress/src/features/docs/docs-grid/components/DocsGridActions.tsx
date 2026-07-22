@@ -1,4 +1,8 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Button,
+  VariantType,
+  useToastProvider,
+} from '@gouvfr-lasuite/cunningham-react';
 import { DropdownMenu, DropdownMenuItem } from '@gouvfr-lasuite/ui-kit';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
@@ -12,6 +16,7 @@ import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
 import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
 import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
 import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
+import { Icon } from '@/components/Icon';
 import {
   Doc,
   KEY_LIST_DOC,
@@ -19,10 +24,13 @@ import {
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
   useDuplicateDoc,
+  useRestoreDoc,
   useTrans,
 } from '@/docs/doc-management';
 import { focusMainContentStart } from '@/layouts/utils';
 import { useFocusStore } from '@/stores';
+
+import { KEY_LIST_DOC_TRASHBIN } from '../api/useDocsTrashbin';
 
 import { DocMoveModal } from './DocMoveModal';
 
@@ -54,17 +62,27 @@ const ConfirmationLeaveModal = dynamic(
 
 interface DocsGridActionsProps {
   doc: Doc;
+  isInTrashbin?: boolean;
 }
 
-export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
+export const DocsGridActions = ({
+  doc,
+  isInTrashbin,
+}: DocsGridActionsProps) => {
+  return isInTrashbin ? (
+    <DocsGridTrashbinActions doc={doc} />
+  ) : (
+    <DocsGridActionsGlobal doc={doc} />
+  );
+};
+
+const DocsGridActionsGlobal = ({ doc }: { doc: Doc }) => {
   const { t } = useTranslation();
-  const { restoreFocus, addLastFocus } = useFocusStore();
-  const [openDropdown, setOpenDropdown] = useState(false);
+  const { restoreFocus } = useFocusStore();
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
   const [isModalShareOpen, setIsModalShareOpen] = useState(false);
   const [isModalMoveOpen, setIsModalMoveOpen] = useState(false);
-  const { untitledDocument } = useTrans();
 
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: () => {
@@ -150,33 +168,7 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
 
   return (
     <>
-      <DropdownMenu
-        options={options}
-        isOpen={openDropdown}
-        shouldCloseOnInteractOutside={() => true}
-        onOpenChange={setOpenDropdown}
-      >
-        <Button
-          data-testid={`docs-grid-actions-button-${doc.id}`}
-          aria-label={t(
-            'Open the menu of actions for the document: {{title}}',
-            {
-              title: doc.title || untitledDocument,
-            },
-          )}
-          size="small"
-          icon={<MoreSVG width={16} height={16} aria-hidden="true" />}
-          color="neutral"
-          variant="tertiary"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setOpenDropdown((o) => !o);
-            addLastFocus(e.currentTarget);
-          }}
-        />
-      </DropdownMenu>
-
+      <DocsGridDropdown doc={doc} options={options} />
       {isModalRemoveOpen && (
         <ModalRemoveDoc
           onClose={() => {
@@ -215,5 +207,101 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
         />
       )}
     </>
+  );
+};
+
+interface DocsGridTrashbinActionsProps {
+  doc: Doc;
+}
+
+export const DocsGridTrashbinActions = ({
+  doc,
+}: DocsGridTrashbinActionsProps) => {
+  const { t } = useTranslation();
+  const { toast } = useToastProvider();
+  const { mutate: restoreDoc, error } = useRestoreDoc({
+    listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_DOC_TRASHBIN],
+    options: {
+      onSuccess: (_data) => {
+        toast(t('The document has been restored.'), VariantType.SUCCESS, {
+          duration: 4000,
+        });
+      },
+      onError: () => {
+        toast(
+          t('An error occurred while restoring the document: {{error}}', {
+            error: error?.message,
+          }),
+          VariantType.ERROR,
+          {
+            duration: 4000,
+          },
+        );
+      },
+    },
+  });
+
+  const options: DropdownMenuItem[] = [
+    {
+      label: t('Restore'),
+      icon: (
+        <Icon
+          $size="20px"
+          iconName="undo"
+          aria-hidden="true"
+          variant="symbols-outlined"
+        />
+      ),
+      callback: () => {
+        restoreDoc({
+          docId: doc.id,
+        });
+      },
+      testId: `docs-grid-actions-restore-${doc.id}`,
+    },
+  ];
+
+  if (!doc.abilities.restore) {
+    return null;
+  }
+
+  return <DocsGridDropdown doc={doc} options={options} />;
+};
+
+interface DocsGridDropdownProps {
+  doc: Doc;
+  options: DropdownMenuItem[];
+}
+
+const DocsGridDropdown = ({ doc, options }: DocsGridDropdownProps) => {
+  const { t } = useTranslation();
+  const [openDropdown, setOpenDropdown] = useState(false);
+  const { addLastFocus } = useFocusStore();
+  const { untitledDocument } = useTrans();
+
+  return (
+    <DropdownMenu
+      options={options}
+      isOpen={openDropdown}
+      shouldCloseOnInteractOutside={() => true}
+      onOpenChange={setOpenDropdown}
+    >
+      <Button
+        data-testid={`docs-grid-actions-button-${doc.id}`}
+        aria-label={t('Open the menu of actions for the document: {{title}}', {
+          title: doc.title || untitledDocument,
+        })}
+        size="small"
+        icon={<MoreSVG width={16} height={16} aria-hidden="true" />}
+        color="neutral"
+        variant="tertiary"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setOpenDropdown((o) => !o);
+          addLastFocus(e.currentTarget);
+        }}
+      />
+    </DropdownMenu>
   );
 };

@@ -91,7 +91,7 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
             />
           }
         >
-          Restore
+          {t('Restore')}
         </Button>
       )}
     </Card>
