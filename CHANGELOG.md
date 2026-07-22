@@ -24,6 +24,7 @@ and this project adheres to
 ### Changed
 
 - ♻️(backend) reset collaboration connection in cascade for all children #2507
+- ♿️(frontend) announce search loading state for screen readers #2526
 
 ### Fixed
 
