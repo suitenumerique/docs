@@ -4,17 +4,17 @@ Here are a bunch of resources to help you install the project.
 
 ## Kubernetes
 We (Docs maintainers) are only using the Kubernetes deployment method in production. We can only provide advanced support for this method.
-Please follow the instructions laid out [here](/docs/installation/kubernetes.md).
+Please follow the instructions laid out [here](/documentation/installation/kubernetes.md).
 
 ## Docker Compose
 We are aware that not everyone has Kubernetes Cluster laying around 😆.
 We also provide [Docker images](https://hub.docker.com/u/lasuite?page=1&search=impress) that you can deploy using Compose.
-Please follow the instructions [here](/docs/installation/compose.md).
+Please follow the instructions [here](/documentation/installation/compose.md).
 ⚠️ Please keep in mind that we do not use it ourselves in production. Let us know in the issues if you run into troubles, we'll try to help.
 
 ## Scalingo
 You can deploy Docs on [Scalingo](https://scalingo.com/) using a custom buildpack. This method handles both frontend and backend builds, serving them through Nginx with the collaboration server (y-provider).
-Please follow the instructions [here](/docs/installation/scalingo.md).
+Please follow the instructions [here](/documentation/installation/scalingo.md).
 
 ## Other ways to install Docs
 Community members have contributed several other ways to install Docs. While we owe them a big thanks 🙏, please keep in mind we (Docs maintainers) can't provide support on these installation methods as we don't use them ourselves and there are too many options out there for us to keep track of. Of course you can contact the contributors and the broader community for assistance.
