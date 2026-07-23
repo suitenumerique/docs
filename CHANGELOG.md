@@ -19,6 +19,10 @@ and this project adheres to
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
 
+### Fixed
+
+- 🐛(frontend) fix DnD hover flash and enable drop on pinned documents #2531
+
 ## [v5.4.1] - 2026-07-09
 
 ### Changed
