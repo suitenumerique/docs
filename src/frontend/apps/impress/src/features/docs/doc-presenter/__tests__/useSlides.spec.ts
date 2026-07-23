@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
 
-import { getSlideTitle, splitBlocksIntoSlides } from '../hooks/useSlides';
+import {
+  getContentSlideIndexForBlock,
+  getSlideTitle,
+  splitBlocksIntoSlides,
+} from '../hooks/useSlides';
 import type { PresenterBlock } from '../types';
 
 type TestBlock = PresenterBlock;
@@ -23,13 +27,14 @@ const textContent = (text: string) => ({
   type: 'text' as const,
 });
 
-const para = (text = 'hello'): TestBlock =>
+const para = (text = 'hello', id?: string): TestBlock =>
   block('paragraph', {
     content: text === '' ? [] : [textContent(text)],
+    ...(id ? { id } : {}),
   });
 
-const divider = (children: TestBlock[] = []): TestBlock =>
-  block('divider', { children });
+const divider = (children: TestBlock[] = [], id?: string): TestBlock =>
+  block('divider', { children, ...(id ? { id } : {}) });
 
 const image = (): TestBlock => block('image', { props: { url: 'x' } });
 
@@ -198,6 +203,134 @@ describe('splitBlocksIntoSlides', () => {
       { type: 'quote', content: [{ text: 'dfsqdqsdqs' }] },
       { content: [{ text: 'fsdf' }] },
     ]);
+  });
+});
+
+describe('getContentSlideIndexForBlock', () => {
+  test('returns the slide containing a regular block', () => {
+    expect(
+      getContentSlideIndexForBlock(
+        [para('a', 'a'), divider(), para('b', 'b'), para('c', 'c')],
+        'c',
+      ),
+    ).toBe(1);
+  });
+
+  test('returns the following slide for a divider', () => {
+    expect(
+      getContentSlideIndexForBlock(
+        [para('a', 'a'), divider(undefined, 'divider'), para('b', 'b')],
+        'divider',
+      ),
+    ).toBe(1);
+  });
+
+  test('returns the first non-empty following slide for consecutive dividers', () => {
+    expect(
+      getContentSlideIndexForBlock(
+        [
+          para('a', 'a'),
+          divider(undefined, 'first-divider'),
+          divider(undefined, 'second-divider'),
+          para('b', 'b'),
+        ],
+        'first-divider',
+      ),
+    ).toBe(1);
+  });
+
+  test('skips empty-only slides after dividers when mapping divider links', () => {
+    expect(
+      getContentSlideIndexForBlock(
+        [
+          para('a', 'a'),
+          divider(undefined, 'first-divider'),
+          para('', 'empty-after-divider'),
+          divider(undefined, 'second-divider'),
+          para('b', 'b'),
+        ],
+        'first-divider',
+      ),
+    ).toBe(1);
+  });
+
+  test('maps a stripped empty block after a divider to the following content slide', () => {
+    expect(
+      getContentSlideIndexForBlock(
+        [
+          para('a', 'a'),
+          divider(undefined, 'divider'),
+          para('', 'empty-after-divider'),
+          para('b', 'b'),
+        ],
+        'empty-after-divider',
+      ),
+    ).toBe(1);
+  });
+
+  test('maps a stripped empty block before a divider to the previous content slide', () => {
+    expect(
+      getContentSlideIndexForBlock(
+        [
+          para('a', 'a'),
+          para('', 'empty-before-divider'),
+          divider(undefined, 'divider'),
+          para('b', 'b'),
+        ],
+        'empty-before-divider',
+      ),
+    ).toBe(0);
+  });
+
+  test('maps a stripped empty-only slide to the next rendered content slide', () => {
+    expect(
+      getContentSlideIndexForBlock(
+        [
+          para('a', 'a'),
+          divider(undefined, 'first-divider'),
+          para('', 'empty-between-dividers'),
+          divider(undefined, 'second-divider'),
+          para('b', 'b'),
+        ],
+        'empty-between-dividers',
+      ),
+    ).toBe(1);
+  });
+
+  test('maps a leading divider to the first content slide', () => {
+    expect(
+      getContentSlideIndexForBlock(
+        [divider(undefined, 'divider'), para('a', 'a')],
+        'divider',
+      ),
+    ).toBe(0);
+  });
+
+  test('maps a trailing divider to the last rendered content slide', () => {
+    expect(
+      getContentSlideIndexForBlock(
+        [para('a', 'a'), divider(undefined, 'divider')],
+        'divider',
+      ),
+    ).toBe(0);
+  });
+
+  test('finds blocks nested under a structural divider', () => {
+    expect(
+      getContentSlideIndexForBlock(
+        [para('a', 'a'), divider([para('nested', 'nested')], 'divider')],
+        'nested',
+      ),
+    ).toBe(1);
+  });
+
+  test('returns the first content slide when the block is missing', () => {
+    expect(
+      getContentSlideIndexForBlock(
+        [para('a', 'a'), divider(), para('b', 'b')],
+        'x',
+      ),
+    ).toBe(0);
   });
 });
 
