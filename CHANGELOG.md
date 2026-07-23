@@ -24,6 +24,7 @@ and this project adheres to
 ### Changed
 
 - ♻️(backend) reset collaboration connection in cascade for all children #2507
+- ♿️(frontend) limit share modal opening announcement for screen readers #2452
 
 ### Fixed
 
