@@ -1,4 +1,4 @@
-import { Loader } from '@gouvfr-lasuite/cunningham-react';
+import { Loader, LoaderProps } from '@gouvfr-lasuite/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, BoxProps } from './Box';
@@ -36,8 +36,11 @@ export const LoadMoreText = ({
   );
 };
 
-export const Loading = (props: BoxProps) => (
+export const Loading = ({
+  loaderProps,
+  ...props
+}: BoxProps & { loaderProps?: LoaderProps }) => (
   <Box $align="center" $justify="center" $height="100%" {...props}>
-    <Loader />
+    <Loader {...loaderProps} />
   </Box>
 );

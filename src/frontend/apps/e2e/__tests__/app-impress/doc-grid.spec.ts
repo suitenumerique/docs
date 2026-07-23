@@ -298,34 +298,6 @@ test.describe('Documents filters', () => {
 });
 
 test.describe('Documents Grid', () => {
-  test('checks all the elements are visible', async ({ page }) => {
-    void page.goto('/');
-
-    let docs: SmallDoc[];
-    const response = await page.waitForResponse(
-      (response) =>
-        response.url().endsWith('documents/?page=1') &&
-        response.status() === 200,
-    );
-    const result = await response.json();
-    docs = result.results as SmallDoc[];
-
-    await expect(page.getByTestId('grid-loader')).toBeHidden();
-    await expect(page.locator('h2').getByText('All docs')).toBeVisible();
-
-    const thead = page.getByTestId('docs-grid-header');
-    await expect(thead.getByText(/Name/i)).toBeVisible();
-    await expect(thead.getByText(/Updated at/i)).toBeVisible();
-
-    await Promise.all(
-      docs.map(async (doc) => {
-        await expect(
-          page.getByTestId(`docs-grid-name-${doc.id}`),
-        ).toBeVisible();
-      }),
-    );
-  });
-
   test('opens a document with keyboard (Tab + Enter)', async ({
     page,
     browserName,
@@ -353,14 +325,14 @@ test.describe('Documents Grid', () => {
     let docs: SmallDoc[];
     const responsePromisePage1 = page.waitForResponse((response) => {
       return (
-        response.url().endsWith(`/documents/?page=1`) &&
+        response.url().endsWith(`/documents/?page=1&ordering=-updated_at`) &&
         response.status() === 200
       );
     });
 
     const responsePromisePage2 = page.waitForResponse(
       (response) =>
-        response.url().endsWith(`/documents/?page=2`) &&
+        response.url().endsWith(`/documents/?page=2&ordering=-updated_at`) &&
         response.status() === 200,
     );
 
@@ -389,5 +361,43 @@ test.describe('Documents Grid', () => {
         ).toBeVisible();
       }),
     );
+  });
+
+  test('it checks the sorting feature', async ({ page, browserName }) => {
+    await page.goto('/');
+
+    const [docA] = await createDoc(page, 'a-sorting-feat-aaa', browserName);
+    const [docB] = await createDoc(page, 'b-sorting-feat-bbb', browserName);
+    const [docZ] = await createDoc(page, 'z-sorting-feat-zzz', browserName);
+
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+
+    const rowFilter = (text: string) =>
+      page.getByTestId('docs-grid').getByRole('listitem').filter({
+        hasText: text,
+      });
+
+    const row = rowFilter('sorting-feat');
+
+    // By default, the documents are sorted by descending order (last modified first)
+    await expect(row.nth(0).getByTestId('doc-title')).toHaveText(docZ);
+    await expect(row.nth(1).getByTestId('doc-title')).toHaveText(docB);
+    await expect(row.nth(2).getByTestId('doc-title')).toHaveText(docA);
+
+    // Sort by ascending order - should be empty
+    await page.getByRole('button', { name: 'Sorted by Last modified' }).click();
+    await expect(row).toHaveCount(0);
+
+    // Sort by title ascending
+    await page.getByRole('button', { name: 'Sort by Name' }).click();
+    await expect(rowFilter(docA)).toHaveCount(1);
+    await expect(rowFilter(docB)).toHaveCount(1);
+    await expect(rowFilter(docZ)).toHaveCount(0);
+
+    // Sort by title descending
+    await page.getByRole('button', { name: 'Sorted by Name' }).click();
+    await expect(rowFilter(docZ)).toHaveCount(1);
+    await expect(rowFilter(docA)).toHaveCount(0);
+    await expect(rowFilter(docB)).toHaveCount(0);
   });
 });

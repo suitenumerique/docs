@@ -104,7 +104,7 @@ test.describe('Document create member', () => {
     ).toBeVisible();
 
     // Select email and verify tag
-    const email = randomName('test@test.fr', browserName, 1)[0];
+    const email = randomName('test@test.fr', browserName, 1, true)[0];
     await inputSearch.fill(email);
     await quickSearchContent.getByText(email).click();
     await expect(list.getByText(email)).toBeVisible();
@@ -164,7 +164,7 @@ test.describe('Document create member', () => {
 
     const inputSearch = page.getByTestId('quick-search-input');
 
-    const [email] = randomName('test@test.fr', browserName, 1);
+    const [email] = randomName('test@test.fr', browserName, 1, true);
     await inputSearch.fill(email);
     await page.getByTestId(`search-user-row-${email}`).click();
 

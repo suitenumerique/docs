@@ -11,13 +11,14 @@ and this project adheres to
 - ♿️(frontend) restore skip to content link after header redesign #2510
 - 🌐(i18n) rename cn_CN to zh_CN, add eo_PL and zh_TW locales #2486
 
-### Fixed
-
-- 🐛(frontend) redirect homepage to login when homepage feat is disabled #2521
-
 ### Changed
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
+- ♻️(frontend) refacto of the grid documents #2534
+
+### Fixed
+
+- 🐛(frontend) redirect homepage to login when homepage feat is disabled #2521
 
 ## [v5.4.1] - 2026-07-09
 

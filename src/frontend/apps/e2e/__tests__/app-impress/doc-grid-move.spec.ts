@@ -22,31 +22,32 @@ test.describe('Doc grid move', () => {
     browserName,
   }) => {
     await page.goto('/');
-    await createDoc(page, 'Draggable doc', browserName, 1);
-    await page.getByRole('button', { name: 'Back to homepage' }).click();
-    await createDoc(page, 'Droppable doc', browserName, 1);
-    await page.getByRole('button', { name: 'Back to homepage' }).click();
-
-    const response = await page.waitForResponse(
-      (response) =>
-        response.url().endsWith('documents/?page=1') &&
-        response.status() === 200,
+    const [draggableTitle] = await createDoc(
+      page,
+      'Draggable doc',
+      browserName,
+      1,
     );
-    const responseJson = await response.json();
+    const [droppableTitle] = await createDoc(
+      page,
+      'Droppable doc',
+      browserName,
+      1,
+    );
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
 
-    const items = responseJson.results;
+    const draggableRow = await getGridRow(page, draggableTitle);
+    const droppableRow = await getGridRow(page, droppableTitle);
 
     const docsGrid = page.getByTestId('docs-grid');
     await expect(docsGrid).toBeVisible();
     await expect(page.getByTestId('grid-loader')).toBeHidden();
-    const draggableElement = page.getByTestId(`draggable-doc-${items[1].id}`);
-    const dropZone = page.getByTestId(`droppable-doc-${items[0].id}`);
-    await expect(draggableElement).toBeVisible();
-    await expect(dropZone).toBeVisible();
+    await expect(draggableRow).toBeVisible();
+    await expect(droppableRow).toBeVisible();
 
     // Get the position of the elements
-    const draggableBoundingBox = await draggableElement.boundingBox();
-    const dropZoneBoundingBox = await dropZone.boundingBox();
+    const draggableBoundingBox = await draggableRow.boundingBox();
+    const dropZoneBoundingBox = await droppableRow.boundingBox();
 
     expect(draggableBoundingBox).toBeDefined();
     expect(dropZoneBoundingBox).toBeDefined();
@@ -71,10 +72,11 @@ test.describe('Doc grid move', () => {
     const dragOverlay = page.getByTestId('drag-doc-overlay');
 
     await expect(dragOverlay).toBeVisible();
-    await expect(dragOverlay).toHaveText(items[1].title as string);
+    await expect(dragOverlay).toHaveText(draggableTitle);
     await page.mouse.up();
 
     await expect(dragOverlay).toBeHidden();
+    await expect(page.getByText(draggableTitle)).toBeHidden();
   });
 
   test("it checks can't drop when we have not the minimum role", async ({

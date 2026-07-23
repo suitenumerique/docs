@@ -88,9 +88,16 @@ export const getOtherBrowserName = (browserName: BrowserName) => {
   return otherBrowserName;
 };
 
-export const randomName = (name: string, browserName: string, length: number) =>
+export const randomName = (
+  name: string,
+  browserName: string,
+  length: number,
+  reverseName = false,
+) =>
   Array.from({ length }, (_el, index) => {
-    return `${browserName}-${Math.floor(Math.random() * 10000)}-${index}-${name}`;
+    return reverseName
+      ? `${browserName}-${Math.floor(Math.random() * 10000)}-${index}-${name}`
+      : `${name}-${browserName}-${Math.floor(Math.random() * 10000)}-${index}`;
   });
 
 export const openHeaderMenu = async (page: Page) => {
@@ -203,9 +210,8 @@ export const getGridRow = async (page: Page, title: string) => {
   await expect(docsGrid).toBeVisible();
   await expect(page.getByTestId('grid-loader')).toBeHidden();
 
-  const rows = docsGrid.getByRole('listitem');
-
-  const row = rows
+  const row = docsGrid
+    .getByRole('listitem')
     .filter({
       hasText: title,
     })
