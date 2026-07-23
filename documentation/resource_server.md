@@ -87,6 +87,7 @@ Here is an example of a view that creates a document from a markdown file at the
                 "file": file,
             },
             format="multipart",
+            headers={"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"},
         )
 
         response.raise_for_status()
