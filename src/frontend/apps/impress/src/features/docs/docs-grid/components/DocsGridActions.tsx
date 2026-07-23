@@ -291,7 +291,7 @@ const DocsGridDropdown = ({ doc, options }: DocsGridDropdownProps) => {
         aria-label={t('Open the menu of actions for the document: {{title}}', {
           title: doc.title || untitledDocument,
         })}
-        size="small"
+        size="nano"
         icon={<MoreSVG width={16} height={16} aria-hidden="true" />}
         color="neutral"
         variant="tertiary"

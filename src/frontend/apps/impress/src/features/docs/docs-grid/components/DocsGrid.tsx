@@ -6,16 +6,17 @@ import { css } from 'styled-components';
 
 import AllDocs from '@/assets/icons/doc-all.svg';
 import { Box, Card, Icon, Loading, Text } from '@/components';
-import { useInfiniteDocs } from '@/docs/doc-management/api/useDocs';
+import { FadeComponent } from '@/components/Effect';
 import { useImport } from '@/docs/doc-management/hooks/useImport';
-import { DocDefaultFilter } from '@/docs/doc-management/types';
+import { DocDefaultFilter, DocsOrdering } from '@/docs/doc-management/types';
 import DocsIcon from '@/icons/Docs.svg';
 import BinIcon from '@/icons/bin.svg';
 import { useResponsiveStore } from '@/stores';
 
-import { useInfiniteDocsTrashbin } from '../api';
+import { useDocsGridQuery } from '../api/useDocsGridQuery';
 
 import { DocGridContentList } from './DocGridContentList';
+import { DocsGridColumnName } from './DocsGridColumnName';
 
 type DocsGridProps = {
   target?: DocDefaultFilter;
@@ -44,8 +45,11 @@ export const DocsGrid = ({
 
   const { isDesktop, isSmallMobile } = useResponsiveStore();
 
+  const [ordering, setOrdering] = useState<DocsOrdering>('-updated_at');
+  const canSort = target !== DocDefaultFilter.TRASHBIN;
+
   const { data, isFetching, isLoading, fetchNextPage, hasNextPage } =
-    useDocsQuery(target);
+    useDocsGridQuery(target, canSort ? ordering : undefined);
 
   const docs = useMemo(() => {
     const allDocs = data?.pages.flatMap((page) => page.results) ?? [];
@@ -107,11 +111,11 @@ export const DocsGrid = ({
       >
         <DocGridTitleBar target={target} isImportPending={isImportPending} />
         {!hasDocs && !loading && <DocGridNoDocs target={target} />}
-        {hasDocs && (
-          <Box
-            $gap="6px"
-            $padding={{ vertical: 'sm', horizontal: isDesktop ? 'md' : 'xs' }}
-          >
+        <Box
+          $gap="6px"
+          $padding={{ vertical: 'sm', horizontal: isDesktop ? 'md' : 'xs' }}
+        >
+          <FadeComponent isVisible={!!hasDocs}>
             <Box
               aria-label={t('Documents grid')}
               $display="grid"
@@ -124,60 +128,39 @@ export const DocsGrid = ({
                 column-gap: 20px;
               `}
             >
-              <Box
-                $display="grid"
-                $css={css`
-                  grid-column: 1 / -1;
-                  grid-template-columns: subgrid;
-                `}
-                data-testid="docs-grid-header"
-                aria-hidden="true"
-              >
-                <Box $padding={{ all: '3xs' }}>
-                  <Text $size="xs" $variation="secondary" $weight="500">
-                    {t('Name')}
-                  </Text>
-                </Box>
-                {!isSmallMobile && (
-                  <Box $padding={{ vertical: '3xs' }}>
-                    <Text $size="xs" $weight="500" $variation="secondary">
-                      {DocDefaultFilter.TRASHBIN === target
-                        ? t('Days remaining')
-                        : t('Last modified')}
-                    </Text>
-                  </Box>
-                )}
-              </Box>
+              <DocsGridColumnName
+                target={target}
+                ordering={ordering}
+                setOrdering={setOrdering}
+              />
               <Box role="list" $display="contents">
                 <DocGridContentList docs={docs} />
               </Box>
             </Box>
-            {loading && (
-              <Loading
-                loaderProps={{ size: 'small' }}
-                $margin={{ top: 'sm' }}
-              />
-            )}
-            {hasNextPage && !loading && (
-              <InView
-                data-testid="infinite-scroll-trigger"
-                as="div"
-                onChange={loadMore}
-                style={{ margin: 'auto' }}
-              >
-                {!isFetching && hasNextPage && (
-                  <Button
-                    onClick={() => void fetchNextPage()}
-                    color="brand"
-                    variant="tertiary"
-                  >
-                    {t('More docs')}
-                  </Button>
-                )}
-              </InView>
-            )}
-          </Box>
-        )}
+          </FadeComponent>
+          {loading && (
+            <Loading loaderProps={{ size: 'small' }} $margin={{ top: 'sm' }} />
+          )}
+          {hasNextPage && !loading && (
+            <InView
+              data-testid="infinite-scroll-trigger"
+              as="div"
+              onChange={loadMore}
+              style={{ margin: 'auto' }}
+            >
+              {!isFetching && hasNextPage && (
+                <Button
+                  onClick={() => void fetchNextPage()}
+                  color="brand"
+                  variant="tertiary"
+                  className="sr-only"
+                >
+                  {t('More docs')}
+                </Button>
+              )}
+            </InView>
+          )}
+        </Box>
       </Card>
     </Box>
   );
@@ -269,30 +252,4 @@ const DocGridNoDocs = ({ target }: { target: DocDefaultFilter }) => {
       )}
     </Box>
   );
-};
-
-const useDocsQuery = (target: DocDefaultFilter) => {
-  const trashbinQuery = useInfiniteDocsTrashbin(
-    {
-      page: 1,
-    },
-    {
-      enabled: target === DocDefaultFilter.TRASHBIN,
-    },
-  );
-
-  const docsQuery = useInfiniteDocs(
-    {
-      page: 1,
-      ...(target &&
-        target !== DocDefaultFilter.ALL_DOCS && {
-          is_creator_me: target === DocDefaultFilter.MY_DOCS,
-        }),
-    },
-    {
-      enabled: target !== DocDefaultFilter.TRASHBIN,
-    },
-  );
-
-  return target === DocDefaultFilter.TRASHBIN ? trashbinQuery : docsQuery;
 };

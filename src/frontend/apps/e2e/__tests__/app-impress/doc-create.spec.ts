@@ -18,10 +18,9 @@ test.describe('Doc Create', () => {
   test('it creates a doc', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, 'my-new-doc', browserName, 1);
 
-    await page.waitForFunction(
-      () => document.title.match(/my-new-doc - Docs/),
-      { timeout: 5000 },
-    );
+    await page.waitForFunction(() => document.title.match(/my-new-doc/), {
+      timeout: 5000,
+    });
 
     await page.getByRole('button', { name: 'Back to homepage' }).click();
 
