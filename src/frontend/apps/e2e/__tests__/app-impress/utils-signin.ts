@@ -24,15 +24,7 @@ export const customSignIn = async (
   fromHome = true,
 ) => {
   // Check if already signed in (Silent login or session still valid)
-  if (
-    await page
-      .locator('header')
-      .first()
-      .getByRole('button', {
-        name: 'Logout',
-      })
-      .isVisible()
-  ) {
+  if (await page.getByLabel('User menu').isVisible()) {
     return;
   }
 
