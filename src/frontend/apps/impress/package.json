@@ -64,7 +64,7 @@
     "idb": "8.0.3",
     "lodash": "4.18.1",
     "luxon": "3.7.2",
-    "next": "16.2.10",
+    "next": "16.2.11",
     "posthog-js": "1.399.5",
     "react": "*",
     "react-aria-components": "1.19.0",
