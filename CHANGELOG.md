@@ -18,6 +18,7 @@ and this project adheres to
 ### Changed
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
+- 🚚(global) move favorite documents API endpoint to `/documents/favorites/`
 
 ## [v5.4.1] - 2026-07-09
 

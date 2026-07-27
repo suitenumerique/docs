@@ -26,7 +26,7 @@ export const getDocsFavorite = async (
   }
 
   const response = await fetchAPI(
-    `documents/favorite_list/?${searchParams.toString()}`,
+    `documents/favorites/?${searchParams.toString()}`,
   );
 
   if (!response.ok) {
