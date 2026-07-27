@@ -1283,6 +1283,10 @@ class Development(Base):
     def __init__(self):
         # pylint: disable=invalid-name
         self.INSTALLED_APPS += ["django_extensions", "drf_spectacular_sidecar"]
+        self.CONTENT_SECURITY_POLICY["EXCLUDE_URL_PREFIXES"] += [
+            f"/api/{self.API_VERSION}/swagger",
+            f"/api/{self.API_VERSION}/redoc",
+        ]
 
 
 class Test(Base):
