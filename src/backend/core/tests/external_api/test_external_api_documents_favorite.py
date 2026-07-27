@@ -35,7 +35,7 @@ def test_external_api_documents_favorites_list_allowed(
         document__favorited_by=[user_specific_sub],
     ).document
 
-    response = client.get("/external_api/v1.0/documents/favorite_list/")
+    response = client.get("/external_api/v1.0/documents/favorites/")
 
     assert response.status_code == 200
     data = response.json()
