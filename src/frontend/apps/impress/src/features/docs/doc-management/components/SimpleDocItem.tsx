@@ -6,7 +6,6 @@ import { useDate } from '@/hooks/useDate';
 import DocsIcon from '@/icons/Docs.svg';
 import SubdocsIcon from '@/icons/Subdocs.svg';
 import ArrowIcon from '@/icons/arrow-corner-down-right.svg';
-import PinnedIcon from '@/icons/pinned.svg';
 import { useResponsiveStore } from '@/stores';
 
 import { useDocUtils, useTrans } from '../hooks';
@@ -26,13 +25,11 @@ const ItemTextCss = css`
 type SimpleDocItemProps = {
   doc: Doc;
   breadcrumb?: string;
-  isPinned?: boolean;
   showDate?: boolean;
 };
 
 export const SimpleDocItem = ({
   doc,
-  isPinned = false,
   showDate = false,
   breadcrumb,
 }: SimpleDocItemProps) => {
@@ -59,34 +56,7 @@ export const SimpleDocItem = ({
       className="--docs--simple-doc-item"
       aria-label={itemAriaLabel}
     >
-      {isPinned ? (
-        <Box
-          $position="relative"
-          data-testid={isPinned ? `doc-pinned-${doc.id}` : undefined}
-        >
-          <Icon
-            icon={
-              <DocsIcon
-                width={isSmallMobile ? '35px' : '40px'}
-                height={isSmallMobile ? '35px' : '40px'}
-                aria-hidden="true"
-                data-testid="doc-simple-icon"
-                color="var(--c--contextuals--content--semantic--info--tertiary)"
-              />
-            }
-            $shrink="0"
-          />
-
-          <PinnedIcon
-            width="16px"
-            height="16px"
-            style={{ position: 'absolute', top: 0, right: 0 }}
-            aria-hidden="true"
-            data-testid="doc-pinned-icon"
-            color="var(--c--contextuals--content--semantic--info--tertiary)"
-          />
-        </Box>
-      ) : isChild ? (
+      {isChild ? (
         <Icon
           icon={
             <SubdocsIcon

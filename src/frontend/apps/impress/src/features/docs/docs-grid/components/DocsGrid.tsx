@@ -4,13 +4,17 @@ import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
 
-import AllDocs from '@/assets/icons/doc-all.svg';
-import { Box, Card, Icon, Loading, Text } from '@/components';
+import { Box, Card, Loading, Text } from '@/components';
 import { FadeComponent } from '@/components/Effect';
 import { useImport } from '@/docs/doc-management/hooks/useImport';
 import { DocDefaultFilter, DocsOrdering } from '@/docs/doc-management/types';
 import DocsIcon from '@/icons/Docs.svg';
 import BinIcon from '@/icons/bin.svg';
+import ClockIcon from '@/icons/clock.svg';
+import SharedIcon from '@/icons/shared.svg';
+import StarIcon from '@/icons/star.svg';
+import TrashIcon from '@/icons/trash.svg';
+import UserIcon from '@/icons/user.svg';
 import { useResponsiveStore } from '@/stores';
 
 import { useDocsGridQuery } from '../api/useDocsGridQuery';
@@ -174,16 +178,19 @@ const DocGridTitleBar = ({
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
 
-  let title = t('All docs');
-  let icon = <Icon icon={<AllDocs width={24} height={24} />} />;
+  let title = t('Recent');
+  let icon = <ClockIcon width={24} height={24} aria-hidden="true" />;
   if (target === DocDefaultFilter.MY_DOCS) {
-    icon = <Icon iconName="lock" />;
+    icon = <UserIcon width={24} height={24} aria-hidden="true" />;
     title = t('My docs');
   } else if (target === DocDefaultFilter.SHARED_WITH_ME) {
-    icon = <Icon iconName="group" />;
+    icon = <SharedIcon width={24} height={24} aria-hidden="true" />;
     title = t('Shared with me');
+  } else if (target === DocDefaultFilter.STARRED) {
+    icon = <StarIcon width={24} height={24} aria-hidden="true" />;
+    title = t('Starred');
   } else if (target === DocDefaultFilter.TRASHBIN) {
-    icon = <Icon iconName="delete" />;
+    icon = <TrashIcon width={24} height={24} aria-hidden="true" />;
     title = t('Trashbin');
   }
 
@@ -217,6 +224,7 @@ const DocGridNoDocs = ({ target }: { target: DocDefaultFilter }) => {
         DocDefaultFilter.ALL_DOCS,
         DocDefaultFilter.MY_DOCS,
         DocDefaultFilter.SHARED_WITH_ME,
+        DocDefaultFilter.STARRED,
       ].includes(target) && (
         <>
           <DocsIcon width={56} height={56} aria-hidden="true" />

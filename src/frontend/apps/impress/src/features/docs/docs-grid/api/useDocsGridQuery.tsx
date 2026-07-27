@@ -2,7 +2,8 @@ import {
   DocDefaultFilter,
   DocsOrdering,
   useInfiniteDocs,
-} from '../../doc-management';
+  useInfiniteDocsFavorite,
+} from '@/docs/doc-management';
 
 import { useInfiniteDocsTrashbin } from './useDocsTrashbin';
 
@@ -19,6 +20,16 @@ export const useDocsGridQuery = (
     },
   );
 
+  const favoriteQuery = useInfiniteDocsFavorite(
+    {
+      page: 1,
+      ordering,
+    },
+    {
+      enabled: target === DocDefaultFilter.STARRED,
+    },
+  );
+
   const docsQuery = useInfiniteDocs(
     {
       page: 1,
@@ -29,9 +40,18 @@ export const useDocsGridQuery = (
         }),
     },
     {
-      enabled: target !== DocDefaultFilter.TRASHBIN,
+      enabled:
+        target !== DocDefaultFilter.TRASHBIN &&
+        target !== DocDefaultFilter.STARRED,
     },
   );
 
-  return target === DocDefaultFilter.TRASHBIN ? trashbinQuery : docsQuery;
+  switch (target) {
+    case DocDefaultFilter.TRASHBIN:
+      return trashbinQuery;
+    case DocDefaultFilter.STARRED:
+      return favoriteQuery;
+    default:
+      return docsQuery;
+  }
 };

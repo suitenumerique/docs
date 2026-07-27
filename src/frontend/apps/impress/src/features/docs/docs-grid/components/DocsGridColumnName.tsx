@@ -20,16 +20,8 @@ export const DocsGridColumnName = ({
   ordering,
   setOrdering,
 }: DocsGridColumnNameProps) => {
-  const { t } = useTranslation();
-  const { isSmallMobile } = useResponsiveStore();
-
-  const canSort = target !== DocDefaultFilter.TRASHBIN;
-
-  const toggleOrdering = (field: 'title' | 'updated_at') => {
-    setOrdering((prevOrdering) =>
-      prevOrdering === field ? (`-${field}` as DocsOrdering) : field,
-    );
-  };
+  const canSort =
+    target !== DocDefaultFilter.TRASHBIN && target !== DocDefaultFilter.STARRED;
 
   return (
     <Box
@@ -40,51 +32,109 @@ export const DocsGridColumnName = ({
       `}
       data-testid="docs-grid-header"
     >
+      {canSort ? (
+        <DocGridColumnWithSort ordering={ordering} setOrdering={setOrdering} />
+      ) : (
+        <DocGridColumnWithoutSort target={target} />
+      )}
+    </Box>
+  );
+};
+
+const DocGridColumnWithSort = ({
+  ordering,
+  setOrdering,
+}: {
+  ordering: DocsOrdering;
+  setOrdering: React.Dispatch<React.SetStateAction<DocsOrdering>>;
+}) => {
+  const { t } = useTranslation();
+  const { isSmallMobile } = useResponsiveStore();
+  const defaultOrdering: Record<'title' | 'updated_at', DocsOrdering> = {
+    title: 'title',
+    updated_at: '-updated_at',
+  };
+  const toggleOrdering = (field: 'title' | 'updated_at') => {
+    setOrdering((prevOrdering) => {
+      if (prevOrdering === field) {
+        return `-${field}` as DocsOrdering;
+      }
+      if (prevOrdering === `-${field}`) {
+        return field;
+      }
+      return defaultOrdering[field];
+    });
+  };
+
+  return (
+    <>
       <Box $padding={{ all: '3xs' }}>
-        {canSort ? (
-          <DocGridSortButton
-            label={t('Name')}
-            ariaLabel={t('Name')}
-            ordering={ordering}
-            field="title"
-            onClick={() => toggleOrdering('title')}
-          />
-        ) : (
-          <Text $size="xs" $variation="secondary" $weight="500">
-            {t('Name')}
-          </Text>
-        )}
+        <DocGridSortButton
+          label={t('Name')}
+          ariaLabel={t('Name')}
+          ordering={ordering}
+          field="title"
+          defaultOrdering={defaultOrdering.title}
+          onClick={() => toggleOrdering('title')}
+        />
       </Box>
       {!isSmallMobile && (
         <Box $padding={{ vertical: '3xs' }}>
-          {canSort ? (
-            <DocGridSortButton
-              label={
-                <Text
-                  $size="xs"
-                  $weight="500"
-                  $variation="secondary"
-                  $direction="row"
-                  $align="center"
-                  $gap="2xs"
-                >
-                  <ClockIcon width={16} height={16} aria-hidden="true" />{' '}
-                  {t('Last modified')}
-                </Text>
-              }
-              ariaLabel={t('Last modified')}
-              ordering={ordering}
-              field="updated_at"
-              onClick={() => toggleOrdering('updated_at')}
-            />
-          ) : (
-            <Text $size="xs" $weight="500" $variation="secondary">
-              {t('Days remaining')}
-            </Text>
-          )}
+          <DocGridSortButton
+            label={
+              <Text
+                $size="xs"
+                $weight="500"
+                $variation="secondary"
+                $direction="row"
+                $align="center"
+                $gap="2xs"
+              >
+                <ClockIcon width={16} height={16} aria-hidden="true" />{' '}
+                {t('Last modified')}
+              </Text>
+            }
+            ariaLabel={t('Last modified')}
+            ordering={ordering}
+            field="updated_at"
+            defaultOrdering={defaultOrdering.updated_at}
+            onClick={() => toggleOrdering('updated_at')}
+          />
         </Box>
       )}
-    </Box>
+    </>
+  );
+};
+
+const DocGridColumnWithoutSort = ({ target }: { target: DocDefaultFilter }) => {
+  const { t } = useTranslation();
+  const { isSmallMobile } = useResponsiveStore();
+
+  return (
+    <>
+      <Box $padding={{ all: '3xs' }}>
+        <Text $size="xs" $variation="secondary" $weight="500">
+          {t('Name')}
+        </Text>
+      </Box>
+      {!isSmallMobile && (
+        <Box $padding={{ vertical: '3xs' }}>
+          <Text
+            $size="xs"
+            $weight="500"
+            $variation="secondary"
+            $direction="row"
+            $align="center"
+            $gap="2xs"
+          >
+            <ClockIcon width={16} height={16} aria-hidden="true" />{' '}
+            {target === DocDefaultFilter.STARRED
+              ? t('Last modified')
+              : t('Days remaining')}
+          </Text>
+        </Box>
+      )}
+    </>
   );
 };
 
@@ -93,20 +143,22 @@ const DocGridSortButton = ({
   ariaLabel,
   field,
   ordering,
+  defaultOrdering,
   onClick,
 }: {
   label: ReactNode;
   ariaLabel: string;
   field: 'title' | 'updated_at';
   ordering: DocsOrdering;
+  defaultOrdering: DocsOrdering;
   onClick: () => void;
 }) => {
   const { t } = useTranslation();
-  const isDesc = ordering === `-${field}`;
-  const isActive = ordering === field || isDesc;
+  const isActive = ordering?.includes(field);
+  const isDesc = ordering !== defaultOrdering;
 
   return (
-    <Box $direction="row" $align="center" $gap="4xs">
+    <Box $direction="row" $align="center" $gap="2xs">
       <Text $size="xs" $weight="500" $variation="secondary">
         {label}
       </Text>
@@ -127,7 +179,7 @@ const DocGridSortButton = ({
         }
         iconPosition="right"
         icon={<ArrowUpDownIcon width={16} height={16} aria-hidden="true" />}
-        variant="tertiary"
+        variant={isDesc ? 'tertiary' : 'secondary'}
         color={isActive ? 'brand' : 'neutral'}
       />
     </Box>

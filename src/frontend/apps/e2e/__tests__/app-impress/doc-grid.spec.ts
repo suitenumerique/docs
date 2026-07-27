@@ -112,29 +112,35 @@ test.describe('Document grid item options', () => {
     ).toBeVisible();
   });
 
-  test('it pins a document', async ({ page, browserName }) => {
+  test('it stars a document', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, `Favorite doc`, browserName);
+    const [docTitle2] = await createDoc(page, `Not Favorite doc`, browserName);
 
-    await page.goto('/');
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
 
     const row = await getGridRow(page, docTitle);
 
-    // Pin
+    // Star
     await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-    await page.getByRole('menuitem', { name: 'Pin' }).click();
+    await page.getByRole('menuitem', { name: 'Star' }).click();
 
-    // Check is pinned
-    await expect(row.getByTestId('doc-pinned-icon')).toBeVisible();
-    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
+    // Check is starred
+    await expect(row.getByText(/This document is starred/)).toBeVisible();
+    await expect(page.getByText(docTitle2)).toBeVisible();
 
-    // Unpin
+    await page.getByRole('link', { name: 'Starred', exact: true }).click();
+    await expect(row.getByText(/This document is starred/)).toBeVisible();
+    await expect(page.getByText(docTitle2)).toBeHidden();
+
+    // Unstar
     await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-    await page.getByText('Unpin').click();
+    await page.getByText('Unstar').click();
+    await expect(row).toBeHidden();
 
-    // Check is unpinned
-    await expect(row.getByTestId('doc-pinned-icon')).toBeHidden();
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
+    // Check is unstarred
+    await page.getByRole('link', { name: 'Recent', exact: true }).click();
+    await expect(row).toBeVisible();
+    await expect(row.getByText(/This document is starred/)).toBeHidden();
   });
 
   test('it deletes the document', async ({ page, browserName }) => {
@@ -148,13 +154,6 @@ test.describe('Document grid item options', () => {
     const row = await getGridRow(page, docTitle);
 
     await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-    await page.getByRole('menuitem', { name: 'Pin' }).click();
-
-    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
-
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-
     await page.getByRole('menuitem', { name: 'Delete' }).click();
 
     await expect(
@@ -174,7 +173,6 @@ test.describe('Document grid item options', () => {
     await expect(
       page.getByLabel('Documents grid').getByText(docTitle),
     ).toBeHidden();
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
   });
 
   test('it checks the leave feature', async ({ page, browserName }) => {

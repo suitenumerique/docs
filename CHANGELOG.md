@@ -11,6 +11,7 @@ and this project adheres to
 - ♿️(frontend) use anchor links for interlinking sub-documents #2391
 - ✨(frontend) reset side panel state between documents #2583
 - ♿️(frontend) announce search loading state for screen readers #2526
+- ♻️(frontend) change favorite to star #2539
 
 ### Fixed
 

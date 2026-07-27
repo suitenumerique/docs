@@ -11,6 +11,9 @@ import { useCunninghamTheme } from '@/cunningham';
 import { Doc, LinkReach, SimpleDocItem, useTrans } from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useDate } from '@/hooks';
+import GlobeLockIcon from '@/icons/globe-lock.svg';
+import GlobeIcon from '@/icons/globe.svg';
+import StarIcon from '@/icons/star-filled.svg';
 import { useResponsiveStore } from '@/stores';
 
 import { DocsGridActions } from './DocsGridActions';
@@ -65,7 +68,11 @@ export const DocsGridItem = ({
 
         &:nth-child(1n):not(:last-child) {
           border-bottom: 1px solid
-            var(--c--contextuals--border--surface--primary);
+            color-mix(
+              in srgb,
+              var(--c--contextuals--border--surface--primary) 50%,
+              transparent
+            );
         }
 
         ${$css}
@@ -173,42 +180,38 @@ export const DocsGridItemTitle = ({
       $padding={{ right: isDesktop ? 'md' : '3xs' }}
       $maxWidth="100%"
     >
-      <SimpleDocItem
-        isPinned={doc.is_favorite}
-        doc={doc}
-        showDate={isSmallMobile}
-      />
-      {isShared && (
-        <Box
-          $padding={{ top: !isDesktop ? '4xs' : undefined }}
-          $css={
-            !isDesktop
-              ? css`
-                  align-self: flex-start;
-                `
-              : undefined
-          }
-        >
-          {withTooltip ? (
-            <Tooltip
-              content={
-                <Text $textAlign="center">
-                  {isPublic
-                    ? t('Accessible to anyone')
-                    : t('Accessible to authenticated users')}
-                </Text>
-              }
-              placement="top"
-            >
-              <Box>
-                <IconPublic isPublic={isPublic} />
-              </Box>
-            </Tooltip>
-          ) : (
-            <IconPublic isPublic={isPublic} />
-          )}
-        </Box>
-      )}
+      <SimpleDocItem doc={doc} showDate={isSmallMobile} />
+      <Box $direction="row" $align="center" $gap="3xs">
+        {doc.is_favorite && (
+          <>
+            <Icon
+              $layer="background"
+              $theme="neutral"
+              $variation="primary"
+              $size="sm"
+              icon={<StarIcon aria-hidden="true" width={16} height={16} />}
+            />
+            <span className="sr-only">{t('This document is starred')}</span>
+          </>
+        )}
+        {isShared && !withTooltip && <IconPublic isPublic={isPublic} />}
+        {isShared && withTooltip && (
+          <Tooltip
+            content={
+              <Text $textAlign="center">
+                {isPublic
+                  ? t('Accessible to anyone')
+                  : t('Accessible to authenticated users')}
+              </Text>
+            }
+            placement="top"
+          >
+            <Box>
+              <IconPublic isPublic={isPublic} />
+            </Box>
+          </Tooltip>
+        )}
+      </Box>
     </Box>
   );
 };
@@ -217,20 +220,24 @@ const IconPublic = ({ isPublic }: { isPublic: boolean }) => {
   const { t } = useTranslation();
 
   return (
-    <>
-      <Icon
-        $layer="background"
-        $theme="neutral"
-        $variation="primary"
-        $size="sm"
-        iconName={isPublic ? 'public' : 'vpn_lock'}
-      />
-      <span className="sr-only">
-        {isPublic
+    <Icon
+      $layer="background"
+      $theme="neutral"
+      $variation="primary"
+      $size="sm"
+      aria-label={
+        isPublic
           ? t('Accessible to anyone')
-          : t('Accessible to authenticated users')}
-      </span>
-    </>
+          : t('Accessible to authenticated users')
+      }
+      icon={
+        isPublic ? (
+          <GlobeIcon aria-hidden="true" width={16} height={16} />
+        ) : (
+          <GlobeLockIcon aria-hidden="true" width={16} height={16} />
+        )
+      }
+    />
   );
 };
 

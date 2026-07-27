@@ -9,7 +9,6 @@ import { DocTree } from '@/features/docs/doc-tree/components/DocTree';
 import { TreeSkeleton } from '@/features/skeletons/components/TreeSkeleton';
 
 import { LeftPanelTargetFilters } from './LefPanelTargetFilters';
-import { LeftPanelFavorites } from './LeftPanelFavorites';
 
 export const LeftPanelContent = () => {
   const router = useRouter();
@@ -29,13 +28,6 @@ export const LeftPanelContent = () => {
           <SeparatedSection showSeparator={false}>
             <LeftPanelTargetFilters />
           </SeparatedSection>
-        </Box>
-        <Box
-          $flex={1}
-          $width="100%"
-          $css="overflow-y: auto; overflow-x: hidden;"
-        >
-          <LeftPanelFavorites />
         </Box>
       </>
     );

@@ -10,19 +10,19 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import ContentCopyIcon from '@/assets/icons/ui-kit/copy.svg';
-import DownloadSVG from '@/assets/icons/ui-kit/download.svg';
-import HistorySVG from '@/assets/icons/ui-kit/history.svg';
-import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
-import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
-import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
-import LinkIcon from '@/assets/icons/ui-kit/link.svg';
-import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
-import PrintIcon from '@/assets/icons/ui-kit/print.svg';
-import SharedIcon from '@/assets/icons/ui-kit/shared.svg';
-import DeleteIcon from '@/assets/icons/ui-kit/trash.svg';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useAuth } from '@/features/auth';
+import ContentCopyIcon from '@/icons/copy.svg';
+import DownloadSVG from '@/icons/download.svg';
+import HistorySVG from '@/icons/history.svg';
+import LeaveSVG from '@/icons/leave.svg';
+import LinkIcon from '@/icons/link.svg';
+import MoreSVG from '@/icons/more_horiz.svg';
+import PrintIcon from '@/icons/print.svg';
+import SharedIcon from '@/icons/shared.svg';
+import StarSlashIcon from '@/icons/star-slash.svg';
+import StarIcon from '@/icons/star.svg';
+import DeleteIcon from '@/icons/trash.svg';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
 import { printDocumentWithStyles } from '../../doc-export/utils_print';
@@ -167,11 +167,11 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
     },
     { type: 'separator' },
     {
-      label: doc.is_favorite ? t('Unpin') : t('Pin'),
+      label: doc.is_favorite ? t('Unstar') : t('Star'),
       icon: doc.is_favorite ? (
-        <KeepOffSVG width={18} height={18} aria-hidden="true" />
+        <StarSlashIcon width={18} height={18} aria-hidden="true" />
       ) : (
-        <KeepSVG width={18} height={18} aria-hidden="true" />
+        <StarIcon width={18} height={18} aria-hidden="true" />
       ),
       callback: () => {
         if (doc.is_favorite) {
@@ -181,7 +181,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         }
       },
       isHidden: !doc.abilities.favorite,
-      testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+      testId: `docs-actions-${doc.is_favorite ? 'unstar' : 'star'}-${doc.id}`,
     },
     {
       label: t('Duplicate', {
