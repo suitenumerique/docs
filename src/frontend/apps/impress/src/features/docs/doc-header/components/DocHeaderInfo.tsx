@@ -1,8 +1,6 @@
 import { t } from 'i18next';
 
-import PublicSVG from '@/assets/icons/ui-kit/public.svg';
-import ProtedtedSVG from '@/assets/icons/ui-kit/vpn_lock.svg';
-import { Box, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 import { useConfig } from '@/core';
 import {
   Doc,
@@ -13,6 +11,9 @@ import {
   useTrans,
 } from '@/docs/doc-management';
 import { useDate } from '@/hooks';
+import PublicSVG from '@/icons/public.svg';
+import StarIcon from '@/icons/star-filled.svg';
+import ProtedtedSVG from '@/icons/vpn_lock.svg';
 
 interface DocHeaderInfoProps {
   doc: Doc;
@@ -41,7 +42,31 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
   }
 
   return (
-    <Box as="dl" $direction="row" $align="center" $margin="0">
+    <Box as="dl" $direction="row" $align="center" $margin="0" $gap="3xs">
+      {doc.is_favorite && (
+        <>
+          <Text as="dt" className="sr-only">
+            {t('This document is starred')}
+          </Text>
+          <Text
+            as="dd"
+            $variation="tertiary"
+            $size="s"
+            $weight="bold"
+            $theme={isEditable ? 'neutral' : 'warning'}
+            $direction="row"
+            $margin="0"
+          >
+            <Icon
+              $layer="background"
+              $theme="neutral"
+              $variation="primary"
+              $size="sm"
+              icon={<StarIcon aria-hidden="true" width={16} height={16} />}
+            />
+          </Text>
+        </>
+      )}
       <Text as="dt" className="sr-only">
         {t('Role')}
       </Text>
@@ -56,7 +81,7 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
       >
         <VisibilityDoc doc={doc} />
         {transRole(isEditable ? doc.user_role || doc.link_role : Role.READER)}
-        &nbsp;·&nbsp;
+        &nbsp;&nbsp;·&nbsp;
       </Text>
       <Text as="dt" $variation="tertiary" $size="s" $margin="0">
         {dateLabel}

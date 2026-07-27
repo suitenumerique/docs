@@ -8,7 +8,6 @@ import { useDate } from '@/hooks/useDate';
 import { useResponsiveStore } from '@/stores';
 
 import ChildDocument from '../assets/child-document.svg';
-import PinnedDocumentIcon from '../assets/pinned-document.svg';
 import SimpleFileIcon from '../assets/simple-document.svg';
 import { useDocUtils, useTrans } from '../hooks';
 import { Doc } from '../types';
@@ -27,13 +26,11 @@ const ItemTextCss = css`
 type SimpleDocItemProps = {
   doc: Doc;
   breadcrumb?: string;
-  isPinned?: boolean;
   showDate?: boolean;
 };
 
 export const SimpleDocItem = ({
   doc,
-  isPinned = false,
   showDate = false,
   breadcrumb,
 }: SimpleDocItemProps) => {
@@ -69,16 +66,9 @@ export const SimpleDocItem = ({
           filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.05));
         `}
         $padding={`${spacingsTokens['3xs']} 0`}
-        data-testid={isPinned ? `doc-pinned-${doc.id}` : undefined}
         aria-hidden="true"
       >
-        {isPinned ? (
-          <PinnedDocumentIcon
-            aria-hidden="true"
-            data-testid="doc-pinned-icon"
-            color="var(--c--contextuals--content--semantic--info--tertiary)"
-          />
-        ) : isChild ? (
+        {isChild ? (
           <ChildDocument
             aria-hidden="true"
             data-testid="doc-child-icon"

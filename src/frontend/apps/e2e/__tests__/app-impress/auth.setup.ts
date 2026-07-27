@@ -28,7 +28,7 @@ const saveStorageState = async (
      * If the grid is displayed, it means the user is logged in and the storage state can be saved.
      */
     await expect(
-      page.getByRole('heading', { name: 'All docs', level: 2 }),
+      page.getByRole('heading', { name: 'Recent', level: 2 }),
     ).toBeVisible({ timeout: 10000 });
 
     await page.context().storageState({

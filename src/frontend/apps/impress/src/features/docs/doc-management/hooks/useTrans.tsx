@@ -13,9 +13,10 @@ export const useTrans = () => {
   };
 
   const translatedFilters = {
-    [DocDefaultFilter.ALL_DOCS]: t('All docs'),
+    [DocDefaultFilter.ALL_DOCS]: t('Recent'),
     [DocDefaultFilter.MY_DOCS]: t('My docs'),
     [DocDefaultFilter.SHARED_WITH_ME]: t('Shared with me'),
+    [DocDefaultFilter.STARRED]: t('Starred'),
     [DocDefaultFilter.TRASHBIN]: t('Trashbin'),
   };
 

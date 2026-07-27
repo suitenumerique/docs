@@ -10,17 +10,6 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import AddLinkSVG from '@/assets/icons/ui-kit/add_link.svg';
-import ContentCopySVG from '@/assets/icons/ui-kit/content_copy.svg';
-import DeleteSVG from '@/assets/icons/ui-kit/delete.svg';
-import DownloadSVG from '@/assets/icons/ui-kit/download.svg';
-import SharedSVG from '@/assets/icons/ui-kit/group.svg';
-import HistorySVG from '@/assets/icons/ui-kit/history.svg';
-import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
-import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
-import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
-import MarkdownCopySVG from '@/assets/icons/ui-kit/markdown_copy.svg';
-import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
 import {
   Doc,
   KEY_DOC,
@@ -34,6 +23,17 @@ import {
 } from '@/docs/doc-management';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useAuth } from '@/features/auth';
+import AddLinkSVG from '@/icons/add_link.svg';
+import ContentCopySVG from '@/icons/content_copy.svg';
+import DeleteSVG from '@/icons/delete.svg';
+import DownloadSVG from '@/icons/download.svg';
+import SharedSVG from '@/icons/group.svg';
+import HistorySVG from '@/icons/history.svg';
+import LeaveSVG from '@/icons/leave.svg';
+import MarkdownCopySVG from '@/icons/markdown_copy.svg';
+import MoreSVG from '@/icons/more_horiz.svg';
+import StarSlashIcon from '@/icons/star-slash.svg';
+import StarIcon from '@/icons/star.svg';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
 import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
@@ -122,11 +122,11 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
 
   const options: DropdownMenuItem[] = [
     {
-      label: doc.is_favorite ? t('Unpin') : t('Pin'),
+      label: doc.is_favorite ? t('Unstar') : t('Star'),
       icon: doc.is_favorite ? (
-        <KeepOffSVG width={24} height={24} aria-hidden="true" />
+        <StarSlashIcon width={24} height={24} aria-hidden="true" />
       ) : (
-        <KeepSVG width={24} height={24} aria-hidden="true" />
+        <StarIcon width={24} height={24} aria-hidden="true" />
       ),
       callback: () => {
         if (doc.is_favorite) {
@@ -136,7 +136,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         }
       },
       isHidden: !doc.abilities.favorite,
-      testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+      testId: `docs-actions-${doc.is_favorite ? 'unstar' : 'star'}-${doc.id}`,
     },
     { type: 'separator' },
     {
