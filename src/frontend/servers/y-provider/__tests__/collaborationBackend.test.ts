@@ -63,4 +63,29 @@ describe('CollaborationBackend', () => {
 
     axiosGetSpy.mockRestore();
   });
+
+  test('always sends X-Forwarded-Proto: https regardless of the incoming header', async () => {
+    const axiosGetSpy = vi.spyOn(axios, 'get').mockResolvedValue({
+      status: 200,
+      data: { id: 'test-user-id', email: 'test@example.com' },
+    });
+
+    const { fetchCurrentUser } = await import('@/api/collaborationBackend');
+
+    await fetchCurrentUser({
+      cookie: 'test-cookie',
+      'x-forwarded-proto': 'http',
+    });
+
+    expect(axiosGetSpy).toHaveBeenCalledWith(
+      'http://app-dev:8000/api/v1.0/users/me/',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'X-Forwarded-Proto': 'https',
+        }),
+      }),
+    );
+
+    axiosGetSpy.mockRestore();
+  });
 });
