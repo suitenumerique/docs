@@ -18,6 +18,10 @@ and this project adheres to
 - 🐛(backend) ignore CSPs for API docs in development
 - 🐛(frontend) export images embedded with a relative url #2573
 
+### Security
+
+- 🔒️(yprovider) readOnly connections awareness propagation #2544
+
 ### Changed
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379

@@ -337,6 +337,167 @@ describe('Server Tests', () => {
     });
   });
 
+  test('Read-only connection cannot propagate document updates or awareness', () => {
+    const { promise, done } = promiseDone();
+
+    vi.spyOn(CollaborationBackend, 'fetchDocument').mockResolvedValue({
+      abilities: { retrieve: true, update: false },
+    } as any);
+
+    const room = uuidv4();
+    const wsHocus = new HocuspocusProviderWebsocket({
+      url: `ws://localhost:${portWS}/?room=${room}`,
+      WebSocketPolyfill: WebSocket,
+    });
+
+    const provider = new HocuspocusProvider({
+      websocketProvider: wsHocus,
+      name: room,
+      onSynced: () => {
+        // Attempt a document change.
+        provider.document.getText('test').insert(0, 'hacked');
+
+        // Attempt an awareness broadcast (e.g. cursor/selection presence).
+        provider.awareness?.setLocalStateField('user', {
+          name: 'Reader',
+          color: '#22aa44',
+        });
+
+        setTimeout(() => {
+          // The connection itself must not be cut.
+          expect(wsHocus.webSocket?.readyState).toBe(WebSocket.OPEN);
+
+          const document = hocuspocusServer.hocuspocus.documents.get(room);
+
+          // The document update must never reach the shared document.
+          expect(document?.getText('test').toString()).toBe('');
+
+          // The awareness update must never reach the shared document either.
+          const clientId = provider.awareness?.clientID as number;
+          expect(document?.awareness.getStates().has(clientId)).toBe(false);
+
+          provider.destroy();
+          wsHocus.destroy();
+
+          done();
+        }, 200);
+      },
+    });
+
+    provider.attach();
+
+    return promise;
+  });
+
+  test("Read-only connection catches up on another client's unsaved changes via sync", () => {
+    const { promise, done } = promiseDone();
+
+    const room = uuidv4();
+
+    vi.spyOn(CollaborationBackend, 'fetchDocument').mockResolvedValue({
+      abilities: { retrieve: true, update: true },
+    } as any);
+
+    const editorWs = new HocuspocusProviderWebsocket({
+      url: `ws://localhost:${portWS}/?room=${room}`,
+      WebSocketPolyfill: WebSocket,
+    });
+
+    const editorProvider = new HocuspocusProvider({
+      websocketProvider: editorWs,
+      name: room,
+      onSynced: () => {
+        // The change only lives in the server's in-memory Y.Doc at this
+        // point - nothing persists/reloads it from a database in this test.
+        editorProvider.document.getText('test').insert(0, 'unsaved-content');
+
+        setTimeout(() => {
+          vi.spyOn(CollaborationBackend, 'fetchDocument').mockResolvedValue({
+            abilities: { retrieve: true, update: false },
+          } as any);
+
+          const readerWs = new HocuspocusProviderWebsocket({
+            url: `ws://localhost:${portWS}/?room=${room}`,
+            WebSocketPolyfill: WebSocket,
+          });
+
+          const readerProvider = new HocuspocusProvider({
+            websocketProvider: readerWs,
+            name: room,
+            onSynced: () => {
+              // The reader must catch up via its own SyncStep1, not just
+              // whatever it happened to have locally beforehand.
+              expect(readerProvider.document.getText('test').toString()).toBe(
+                'unsaved-content',
+              );
+
+              editorProvider.destroy();
+              editorWs.destroy();
+              readerProvider.destroy();
+              readerWs.destroy();
+
+              done();
+            },
+          });
+
+          readerProvider.attach();
+        }, 200);
+      },
+    });
+
+    editorProvider.attach();
+
+    return promise;
+  });
+
+  test('Editable connection propagates document updates and awareness', () => {
+    const { promise, done } = promiseDone();
+
+    vi.spyOn(CollaborationBackend, 'fetchDocument').mockResolvedValue({
+      abilities: { retrieve: true, update: true },
+    } as any);
+
+    const room = uuidv4();
+    const wsHocus = new HocuspocusProviderWebsocket({
+      url: `ws://localhost:${portWS}/?room=${room}`,
+      WebSocketPolyfill: WebSocket,
+    });
+
+    const provider = new HocuspocusProvider({
+      websocketProvider: wsHocus,
+      name: room,
+      onSynced: () => {
+        provider.document.getText('test').insert(0, 'hello');
+
+        provider.awareness?.setLocalStateField('user', {
+          name: 'Editor',
+          color: '#22aa44',
+        });
+
+        setTimeout(() => {
+          expect(wsHocus.webSocket?.readyState).toBe(WebSocket.OPEN);
+
+          const document = hocuspocusServer.hocuspocus.documents.get(room);
+
+          expect(document?.getText('test').toString()).toBe('hello');
+
+          const clientId = provider.awareness?.clientID as number;
+          const clientState = document?.awareness.getStates().get(clientId);
+          expect(clientState?.user?.color).toBe('#22aa44');
+
+          provider.destroy();
+          wsHocus.destroy();
+
+          done();
+        }, 200);
+      },
+    });
+
+    provider.attach();
+
+    return promise;
+  });
+
   test('Add request header x-user-id if found', () => {
     const { promise, done } = promiseDone();
 

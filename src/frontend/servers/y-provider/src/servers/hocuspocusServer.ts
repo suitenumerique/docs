@@ -1,8 +1,38 @@
-import { Server } from '@hocuspocus/server';
+import {
+  Connection,
+  Document,
+  MessageReceiver,
+  MessageType,
+  Server,
+} from '@hocuspocus/server';
 import { validate as uuidValidate, version as uuidVersion } from 'uuid';
 
 import { fetchCurrentUser, fetchDocument } from '@/api/collaborationBackend';
 import { logger } from '@/utils';
+
+/**
+ * Override the default apply method of MessageReceiver to prevent applying
+ * awareness updates from read-only connections.
+ */
+const originalApply = MessageReceiver.prototype.apply;
+MessageReceiver.prototype.apply = function (
+  this: MessageReceiver,
+  document: Document,
+  connection?: Connection,
+  reply?: (message: Uint8Array) => void,
+) {
+  if (connection?.readOnly) {
+    const startPos = this.message.decoder.pos;
+    const type = this.message.readVarUint();
+    this.message.decoder.pos = startPos;
+
+    if (type === MessageType.Awareness) {
+      return type;
+    }
+  }
+
+  return originalApply.call(this, document, connection, reply);
+};
 
 export const hocuspocusServer = new Server({
   name: 'docs-collaboration',
