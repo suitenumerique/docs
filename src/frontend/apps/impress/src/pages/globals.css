@@ -9,6 +9,11 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
+
+  /* Nothing else paints the page canvas, so in dark mode the browser default
+     white showed through under the dark text ramp. The theme class sits on
+     <html>, so the token resolves per theme. */
+  background-color: var(--c--contextuals--background--surface--primary);
 }
 
 /* stylelint-disable-next-line selector-id-pattern */
