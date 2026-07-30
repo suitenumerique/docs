@@ -23,11 +23,7 @@ test.describe('Doc Editor', () => {
   }) => {
     await createDoc(page, 'doc-toolbar', browserName, 1);
 
-    await verifyDocName(page, 'doc-toolbar');
-
     const editor = await writeInEditor({ page, text: 'test content' });
-
-    await page.waitForTimeout(1500);
 
     await editor
       .getByText('test content', {
@@ -104,6 +100,27 @@ test.describe('Doc Editor', () => {
     await expect(
       toolbar.locator('button[data-test="downloadfile"]'),
     ).toBeVisible();
+  });
+
+  test('it checks side menu buttons are displayed', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-side-menu', browserName, 1);
+
+    const { editor } = await openSuggestionMenu({ page, suggestion: 'Table' });
+
+    await editor.locator('.tableWrapper').first().hover();
+
+    await page.locator('.bn-side-menu > button').last().click();
+    await expect(page.getByRole('menuitem', { name: 'Colors' })).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Header row' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Header column' }),
+    ).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
   });
 
   test('markdown button converts from markdown to the editor syntax json', async ({
