@@ -21,7 +21,6 @@ from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.db import models, transaction
 from django.db.models import Count
-from django.db.models.functions import Left, Length
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -31,16 +30,13 @@ from django.utils.translation import gettext_lazy as _
 from botocore.exceptions import ClientError
 from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
-from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
 
 from core.choices import (
     PRIVILEGED_ROLES,
     LinkReachChoices,
-    LinkRoleChoices,
+    LinkRoleChoices,  # noqa: F401  (re-exported, e.g. models.LinkRoleChoices)
     RoleChoices,
-    get_equivalent_link_definition,
 )
-from core.utils.treebeard import create_tree_node_with_retry
 from core.validators import sub_validator
 
 logger = getLogger(__name__)
@@ -224,46 +220,22 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         if is_adding:
             self._handle_onboarding_documents_access()
             self._duplicate_onboarding_sandbox_document()
-            self._convert_valid_invitations()
 
     def delete(self, using=None, keep_parents=False):
         """Completely delete a user and its relations."""
         with transaction.atomic():
-            self._delete_user_shared_documents_accesses()
-            self._delete_documents_single_owner()
-            self._clear_user_created_documents()
+            self._delete_created_documents()
 
             return super().delete(using=using, keep_parents=keep_parents)
 
-    def _delete_user_shared_documents_accesses(self):
+    def _delete_created_documents(self):
         """
-        accesses to delete where there are more than one owner.
-
-        Create first a subquery to filter all the the accesses having more than one
-        owner. Then use this subquery to filter the accesses belonging to this list of
-        documents and to the user to delete
+        Delete the documents created by the user. Sharing is owned by Drive:
+        local ownership is materialized by the creator field only.
         """
-        docs_ids = (
-            DocumentAccess.objects.filter(role=RoleChoices.OWNER)
-            .values("document_id")
-            .annotate(owner_count=Count("id"))
-            .filter(owner_count__gte=2)
-            .values("document_id")
-        )
-        DocumentAccess.objects.filter(user=self, document_id__in=docs_ids).delete()
-
+        Document.objects.filter(creator=self).delete()
         logger.info(
-            "user_delete: shared documents accesses for user %s have been deleted",
-            self.id,
-        )
-
-    def _delete_documents_single_owner(self):
-        """Delete the documents where the user is the single owner."""
-        Document.objects.filter(
-            accesses__user=self, accesses__role=RoleChoices.OWNER
-        ).delete()
-        logger.info(
-            "user_delete: documents where the user %s is the sole owner deleted",
+            "user_delete: documents created by user %s deleted",
             self.id,
         )
 
@@ -325,53 +297,28 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
                     sandbox_id,
                 )
                 return
+            # Import here to avoid a circular import through core.api.serializers
+            from core.services import (  # pylint: disable=import-outside-toplevel
+                drive_client,
+            )
+
+            try:
+                drive_item = drive_client.create_doc_item(
+                    self, template_document.title
+                )
+            except drive_client.DriveClientError as exc:
+                logger.warning("Could not create sandbox document in Drive: %s", exc)
+                return
+
             with transaction.atomic():
-                sandbox_document = create_tree_node_with_retry(
-                    lambda: Document.add_root(
-                        title=template_document.title,
-                        content=template_document.content,
-                        attachments=template_document.attachments,
-                        duplicated_from=template_document,
-                        creator=self,
-                    )
+                sandbox_document = Document.objects.create(
+                    id=drive_item["id"],
+                    title=template_document.title,
+                    content=template_document.content,
+                    attachments=template_document.attachments,
+                    creator=self,
                 )
 
-                DocumentAccess.objects.create(
-                    user=self, document=sandbox_document, role=RoleChoices.OWNER
-                )
-
-    def _convert_valid_invitations(self):
-        """
-        Convert valid invitations to document accesses.
-        Expired invitations are ignored.
-        """
-        valid_invitations = Invitation.objects.filter(
-            email__iexact=self.email,
-            created_at__gte=(
-                timezone.now()
-                - timedelta(seconds=settings.INVITATION_VALIDITY_DURATION)
-            ),
-        ).select_related("document")
-
-        if not valid_invitations.exists():
-            return
-
-        DocumentAccess.objects.bulk_create(
-            [
-                DocumentAccess(
-                    user=self, document=invitation.document, role=invitation.role
-                )
-                for invitation in valid_invitations
-            ]
-        )
-
-        # Set creator of documents if not yet set (e.g. documents created via server-to-server API)
-        document_ids = [invitation.document_id for invitation in valid_invitations]
-        Document.objects.filter(id__in=document_ids, creator__isnull=True).update(
-            creator=self
-        )
-
-        valid_invitations.delete()
 
     def send_email(self, subject, context=None, language=None):
         """Generate and send email to the user from a template."""
@@ -509,10 +456,8 @@ class UserReconciliation(BaseModel):
         - Update the reconciliation entry itself.
         """
 
-        # Prepare the data to perform the reconciliation on
-        updated_accesses, removed_accesses = (
-            self.prepare_documentaccess_reconciliation()
-        )
+        # Prepare the data to perform the reconciliation on. Document accesses
+        # are owned by Drive and are not reconciled here anymore.
         updated_linktraces, removed_linktraces = self.prepare_linktrace_reconciliation()
         update_favorites, removed_favorites = (
             self.prepare_document_favorite_reconciliation()
@@ -525,12 +470,6 @@ class UserReconciliation(BaseModel):
         self.inactive_user.is_active = False
 
         # Actually perform the bulk operations
-        DocumentAccess.objects.bulk_update(updated_accesses, ["user", "role"])
-
-        if removed_accesses:
-            ids_to_delete = [entry.id for entry in removed_accesses]
-            DocumentAccess.objects.filter(id__in=ids_to_delete).delete()
-
         DocumentFavorite.objects.bulk_update(update_favorites, ["user"])
         if removed_favorites:
             ids_to_delete = [entry.id for entry in removed_favorites]
@@ -566,46 +505,12 @@ class UserReconciliation(BaseModel):
         User.objects.bulk_update([self.active_user, self.inactive_user], ["is_active"])
 
         # Wrap up the reconciliation entry
-        self.logs += f"""Requested update for {len(updated_accesses)} DocumentAccess items
-            and deletion for {len(removed_accesses)} DocumentAccess items.\n"""
+        self.logs += f"""Requested update for {len(updated_linktraces)} LinkTrace items
+            and deletion for {len(removed_linktraces)} LinkTrace items.\n"""
         self.status = "done"
         self.save()
 
         self.send_reconciliation_done_email()
-
-    def prepare_documentaccess_reconciliation(self):
-        """
-        Prepare the reconciliation by transferring document accesses from the inactive user
-        to the active user.
-        """
-        updated_accesses = []
-        removed_accesses = []
-        inactive_accesses = DocumentAccess.objects.filter(user=self.inactive_user)
-
-        # Check documents where the active user already has access
-        inactive_accesses_documents = inactive_accesses.values_list(
-            "document", flat=True
-        )
-        existing_accesses = DocumentAccess.objects.filter(user=self.active_user).filter(
-            document__in=inactive_accesses_documents
-        )
-        existing_roles_per_doc = dict(existing_accesses.values_list("document", "role"))
-
-        for entry in inactive_accesses:
-            if entry.document_id in existing_roles_per_doc:
-                # Update role if needed
-                existing_role = existing_roles_per_doc[entry.document_id]
-                max_role = RoleChoices.max(entry.role, existing_role)
-                if existing_role != max_role:
-                    existing_access = existing_accesses.get(document=entry.document)
-                    existing_access.role = max_role
-                    updated_accesses.append(existing_access)
-                removed_accesses.append(entry)
-            else:
-                entry.user = self.active_user
-                updated_accesses.append(entry)
-
-        return updated_accesses, removed_accesses
 
     def prepare_document_favorite_reconciliation(self):
         """
@@ -825,25 +730,7 @@ class UserReconciliationCsvImport(BaseModel):
         self.send_email(subject, emails, context, language)
 
 
-class BaseAccess(BaseModel):
-    """Base model for accesses to handle resources."""
-
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
-    team = models.CharField(max_length=100, blank=True)
-    role = models.CharField(
-        max_length=20, choices=RoleChoices.choices, default=RoleChoices.READER
-    )
-
-    class Meta:
-        abstract = True
-
-
-class DocumentQuerySet(MP_NodeQuerySet):
+class DocumentQuerySet(models.QuerySet):
     """
     Custom queryset for the Document model, providing additional methods
     to filter documents based on user permissions.
@@ -851,21 +738,21 @@ class DocumentQuerySet(MP_NodeQuerySet):
 
     def readable_per_se(self, user):
         """
-        Filters the queryset to return documents on which the given user has
-        direct access, team access or link access. This will not return all the
-        documents that a user can read because it can be obtained via an ancestor.
-        :param user: The user for whom readable documents are to be fetched.
-        :return: A queryset of documents for which the user has direct access,
-            team access or link access.
+        Filters the queryset to return documents locally known to the given
+        user: the ones they created or already visited (a LinkTrace is written
+        on first retrieve). Sharing itself is managed by Drive.
         """
         if user.is_authenticated:
             return self.filter(
-                models.Q(accesses__user=user)
-                | models.Q(accesses__team__in=user.teams)
-                | ~models.Q(link_reach=LinkReachChoices.RESTRICTED)
+                models.Q(creator=user)
+                | models.Q(
+                    id__in=LinkTrace.objects.filter(user=user).values_list(
+                        "document_id", flat=True
+                    )
+                )
             )
 
-        return self.filter(link_reach=LinkReachChoices.PUBLIC)
+        return self.none()
 
     def annotate_is_favorite(self, user):
         """
@@ -878,29 +765,6 @@ class DocumentQuerySet(MP_NodeQuerySet):
             return self.annotate(is_favorite=models.Exists(favorite_exists_subquery))
 
         return self.annotate(is_favorite=models.Value(False))
-
-    def annotate_user_roles(self, user):
-        """
-        Annotate document queryset with the roles of the current user
-        on the document or its ancestors.
-        """
-        output_field = ArrayField(base_field=models.CharField())
-
-        if user.is_authenticated:
-            user_roles_subquery = DocumentAccess.objects.filter(
-                models.Q(user=user) | models.Q(team__in=user.teams),
-                document__path=Left(models.OuterRef("path"), Length("document__path")),
-            ).values_list("role", flat=True)
-
-            return self.annotate(
-                user_roles=models.Func(
-                    user_roles_subquery, function="ARRAY", output_field=output_field
-                )
-            )
-
-        return self.annotate(
-            user_roles=models.Value([], output_field=output_field),
-        )
 
     def annotate_user_has_link_trace(self, user):
         """
@@ -919,31 +783,24 @@ class DocumentQuerySet(MP_NodeQuerySet):
         return self.annotate(user_has_link_trace=models.Value(False))
 
 
-class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
+class DocumentManager(models.Manager.from_queryset(DocumentQuerySet)):
     """
     Custom manager for the Document model, enabling the use of the custom
     queryset methods directly from the model manager.
     """
 
-    def get_queryset(self):
-        """Sets the custom queryset as the default."""
-        return self._queryset_class(self.model).order_by("path")
-
 
 # pylint: disable=too-many-public-methods
-class Document(MP_Node, BaseModel):
-    """Pad document carrying the content."""
+class Document(BaseModel):
+    """
+    Pad document carrying the content.
+
+    The document hierarchy and sharing are owned by Drive: this model is a
+    thin wrapper around the Drive item bearing the same id, only holding what
+    Drive cannot (the collaborative content and its attachments).
+    """
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
-    excerpt = models.TextField(_("excerpt"), max_length=300, null=True, blank=True)
-    link_reach = models.CharField(
-        max_length=20,
-        choices=LinkReachChoices.choices,
-        default=LinkReachChoices.RESTRICTED,
-    )
-    link_role = models.CharField(
-        max_length=20, choices=LinkRoleChoices.choices, default=LinkRoleChoices.READER
-    )
     creator = models.ForeignKey(
         User,
         on_delete=models.RESTRICT,
@@ -952,16 +809,6 @@ class Document(MP_Node, BaseModel):
         null=True,
     )
     deleted_at = models.DateTimeField(null=True, blank=True)
-    ancestors_deleted_at = models.DateTimeField(null=True, blank=True)
-    has_deleted_children = models.BooleanField(default=False)
-    duplicated_from = models.ForeignKey(
-        "self",
-        on_delete=models.SET_NULL,
-        related_name="duplicates",
-        editable=False,
-        blank=True,
-        null=True,
-    )
     attachments = ArrayField(
         models.CharField(max_length=255),
         default=list,
@@ -972,38 +819,16 @@ class Document(MP_Node, BaseModel):
 
     _content = None
 
-    # Tree structure
-    alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-    steplen = 7  # nb siblings max: 3,521,614,606,208
-    node_order_by = []  # Manual ordering
-
-    path = models.CharField(max_length=7 * 36, unique=True, db_collation="C")
-
     objects = DocumentManager()
 
     class Meta:
         db_table = "impress_document"
-        ordering = ("path",)
+        ordering = ("-created_at",)
         verbose_name = _("Document")
         verbose_name_plural = _("Documents")
-        constraints = [
-            models.CheckConstraint(
-                condition=(
-                    models.Q(deleted_at__isnull=True)
-                    | models.Q(deleted_at=models.F("ancestors_deleted_at"))
-                ),
-                name="check_deleted_at_matches_ancestors_deleted_at_when_set",
-            ),
-        ]
 
     def __str__(self):
         return str(self.title) if self.title else str(_("Untitled Document"))
-
-    def __init__(self, *args, **kwargs):
-        """Initialize cache property."""
-        super().__init__(*args, **kwargs)
-        self._ancestors_link_definition = None
-        self._computed_link_definition = None
 
     def save(self, *args, **kwargs):
         """Write content to object storage only if _content has changed."""
@@ -1037,12 +862,6 @@ class Document(MP_Node, BaseModel):
         if has_changed:
             content_file = ContentFile(bytes_content)
             default_storage.save(file_key, content_file)
-
-    def is_leaf(self):
-        """
-        :returns: True if the node is has no children
-        """
-        return not self.has_deleted_children and self.numchild == 0
 
     @property
     def key_base(self):
@@ -1152,70 +971,6 @@ class Document(MP_Node, BaseModel):
             Bucket=default_storage.bucket_name, Key=self.file_key, VersionId=version_id
         )
 
-    def get_nb_accesses_cache_key(self):
-        """Generate a unique cache key for each document."""
-        return f"document_{self.id!s}_nb_accesses"
-
-    def get_nb_accesses(self):
-        """
-        Calculate the number of accesses:
-        - directly attached to the document
-        - attached to any of the document's ancestors
-        """
-        cache_key = self.get_nb_accesses_cache_key()
-        nb_accesses = cache.get(cache_key)
-
-        if nb_accesses is None:
-            nb_accesses = (
-                DocumentAccess.objects.filter(document=self).count(),
-                DocumentAccess.objects.filter(
-                    document__path=Left(
-                        models.Value(self.path), Length("document__path")
-                    ),
-                    document__ancestors_deleted_at__isnull=True,
-                ).count(),
-            )
-            cache.set(cache_key, nb_accesses)
-
-        return nb_accesses
-
-    @property
-    def nb_accesses_direct(self):
-        """Returns the number of accesses related to the document or one of its ancestors."""
-        return self.get_nb_accesses()[0]
-
-    @property
-    def nb_accesses_ancestors(self):
-        """Returns the number of accesses related to the document or one of its ancestors."""
-        return self.get_nb_accesses()[1]
-
-    def invalidate_nb_accesses_cache(self):
-        """
-        Invalidate the cache for number of accesses, including on affected descendants.
-        Args:
-            path: can optionally be passed as argument (useful when invalidating cache for a
-                document we just deleted)
-        """
-
-        for document in Document.objects.filter(path__startswith=self.path).only("id"):
-            cache_key = document.get_nb_accesses_cache_key()
-            cache.delete(cache_key)
-
-    def get_role(self, user):
-        """Return the roles a user has on a document."""
-        if not user.is_authenticated:
-            return None
-
-        try:
-            roles = self.user_roles or []
-        except AttributeError:
-            roles = DocumentAccess.objects.filter(
-                models.Q(user=user) | models.Q(team__in=user.teams),
-                document__path=Left(models.Value(self.path), Length("document__path")),
-            ).values_list("role", flat=True)
-
-        return RoleChoices.max(*roles)
-
     def has_link_trace(self, user):
         """Return if the user has a link trace on this document."""
 
@@ -1227,194 +982,87 @@ class Document(MP_Node, BaseModel):
         except AttributeError:
             return LinkTrace.objects.filter(document=self, user=user).exists()
 
-    def compute_ancestors_links_paths_mapping(self):
+    # The document is a thin wrapper around the Drive item bearing the same
+    # id. `drive_item` is a non-DB attribute holding the Drive payload for the
+    # current user, set by the permission layer or lazily fetched.
+    drive_item = None
+
+    def get_drive_item(self, user):
         """
-        Compute the ancestors links for the current document up to the highest readable ancestor.
+        Return the Drive item mirroring this document (abilities, link
+        definition, hierarchy data), fetched on behalf of the given user.
+        Memoized on the instance; drive_client has a short per-user cache.
         """
-        ancestors = (
-            (self.get_ancestors() | self._meta.model.objects.filter(pk=self.pk))
-            .filter(ancestors_deleted_at__isnull=True)
-            .order_by("path")
-        )
-        ancestors_links = []
-        paths_links_mapping = {}
-
-        for ancestor in ancestors:
-            ancestors_links.append(
-                {"link_reach": ancestor.link_reach, "link_role": ancestor.link_role}
-            )
-            paths_links_mapping[ancestor.path] = ancestors_links.copy()
-
-        return paths_links_mapping
-
-    @property
-    def link_definition(self):
-        """Returns link reach/role as a definition in dictionary format."""
-        return {"link_reach": self.link_reach, "link_role": self.link_role}
-
-    @property
-    def ancestors_link_definition(self):
-        """Link definition equivalent to all document's ancestors."""
-        if getattr(self, "_ancestors_link_definition", None) is None:
-            if self.depth <= 1:
-                ancestors_links = []
-            else:
-                mapping = self.compute_ancestors_links_paths_mapping()
-                ancestors_links = mapping.get(self.path[: -self.steplen], [])
-            self._ancestors_link_definition = get_equivalent_link_definition(
-                ancestors_links
+        if self.drive_item is None:
+            # Import here to avoid a circular import through core.api.serializers
+            from core.services import (  # pylint: disable=import-outside-toplevel
+                drive_client,
             )
 
-        return self._ancestors_link_definition
+            self.drive_item = drive_client.get_item(str(self.pk), user)
 
-    @ancestors_link_definition.setter
-    def ancestors_link_definition(self, definition):
-        """Cache the ancestors_link_definition."""
-        self._ancestors_link_definition = definition
+        return self.drive_item
+
+    def get_abilities(self, user):
+        """
+        Return abilities for a given user on the document, as delegated to
+        Drive which owns the document tree and sharing. Fails closed (all
+        False) when the user has no access or Drive cannot be reached.
+        """
+        # Import here to avoid a circular import through core.api.serializers
+        from core.services import drive_client  # pylint: disable=import-outside-toplevel
+
+        try:
+            item = self.get_drive_item(user)
+        except drive_client.DriveClientError:
+            return drive_client.no_abilities()
+
+        return drive_client.map_drive_abilities(item.get("abilities"))
+
+    # Link reach/role are owned by Drive and exposed read-only through the
+    # drive_item payload when it has been loaded.
+
+    @property
+    def link_reach(self):
+        """Link reach is managed in Drive."""
+        if self.drive_item:
+            return self.drive_item.get("link_reach") or LinkReachChoices.RESTRICTED
+        return LinkReachChoices.RESTRICTED
+
+    @property
+    def link_role(self):
+        """Link role is managed in Drive."""
+        return self.drive_item.get("link_role") if self.drive_item else None
 
     @property
     def ancestors_link_reach(self):
         """Link reach equivalent to all document's ancestors."""
-        return self.ancestors_link_definition["link_reach"]
+        if self.drive_item:
+            return (
+                self.drive_item.get("ancestors_link_reach")
+                or LinkReachChoices.RESTRICTED
+            )
+        return LinkReachChoices.RESTRICTED
 
     @property
     def ancestors_link_role(self):
         """Link role equivalent to all document's ancestors."""
-        return self.ancestors_link_definition["link_role"]
-
-    @property
-    def computed_link_definition(self):
-        """
-        Link reach/role on the document, combining inherited ancestors' link
-        definitions and the document's own link definition.
-        """
-        if getattr(self, "_computed_link_definition", None) is None:
-            self._computed_link_definition = get_equivalent_link_definition(
-                [self.ancestors_link_definition, self.link_definition]
-            )
-        return self._computed_link_definition
+        return self.drive_item.get("ancestors_link_role") if self.drive_item else None
 
     @property
     def computed_link_reach(self):
         """Actual link reach on the document."""
-        return self.computed_link_definition["link_reach"]
+        if self.drive_item:
+            return (
+                self.drive_item.get("computed_link_reach")
+                or LinkReachChoices.RESTRICTED
+            )
+        return LinkReachChoices.RESTRICTED
 
     @property
     def computed_link_role(self):
         """Actual link role on the document."""
-        return self.computed_link_definition["link_role"]
-
-    def get_abilities(self, user):  # pylint: disable=too-many-locals
-        """
-        Compute and return abilities for a given user on the document.
-        """
-        # First get the role based on specific access
-        role = self.get_role(user)
-
-        # Characteristics that are based only on specific access
-        is_owner = role == RoleChoices.OWNER
-        is_deleted = self.ancestors_deleted_at
-        is_owner_or_admin = (is_owner or role == RoleChoices.ADMIN) and not is_deleted
-
-        # Compute access roles before adding link roles because we don't
-        # want anonymous users to access versions (we wouldn't know from
-        # which date to allow them anyway)
-        # Anonymous users should also not see document accesses
-        has_access_role = bool(role) and not is_deleted
-        can_update_from_access = (
-            is_owner_or_admin or role == RoleChoices.EDITOR
-        ) and not is_deleted
-
-        # compute can_leave
-        # An authenticated user can leave a document if it has a non
-        # privileged role on the document or access to it with a link_trace
-        can_leave = (
-            user.is_authenticated
-            and not is_deleted
-            and (
-                (has_access_role and not is_owner_or_admin)
-                or (not has_access_role and self.has_link_trace(user))
-            )
-        )
-
-        link_select_options = LinkReachChoices.get_select_options(
-            **self.ancestors_link_definition
-        )
-        link_definition = get_equivalent_link_definition(
-            [
-                self.ancestors_link_definition,
-                {"link_reach": self.link_reach, "link_role": self.link_role},
-            ]
-        )
-
-        link_reach = link_definition["link_reach"]
-        if link_reach == LinkReachChoices.PUBLIC or (
-            link_reach == LinkReachChoices.AUTHENTICATED and user.is_authenticated
-        ):
-            role = RoleChoices.max(role, link_definition["link_role"])
-
-        can_get = bool(role) and not is_deleted
-        retrieve = can_get or is_owner
-        can_update = (
-            is_owner_or_admin or role == RoleChoices.EDITOR
-        ) and not is_deleted
-        can_comment = (can_update or role == RoleChoices.COMMENTER) and not is_deleted
-        can_create_children = can_update and user.is_authenticated
-        can_destroy = (
-            is_owner
-            if self.is_root()
-            else (is_owner_or_admin or (user.is_authenticated and self.creator == user))
-        ) and not is_deleted
-
-        ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
-        ai_access = any(
-            [
-                ai_allow_reach_from == LinkReachChoices.PUBLIC and can_update,
-                ai_allow_reach_from == LinkReachChoices.AUTHENTICATED
-                and user.is_authenticated
-                and can_update,
-                ai_allow_reach_from == LinkReachChoices.RESTRICTED
-                and can_update_from_access,
-            ]
-        )
-
-        return {
-            "accesses_manage": is_owner_or_admin,
-            "accesses_view": has_access_role,
-            "ai_proxy": ai_access,
-            "ai_transform": ai_access,
-            "ai_translate": ai_access,
-            "attachment_upload": can_update,
-            "media_check": can_get,
-            "can_edit": can_update,
-            "children_list": can_get,
-            "children_create": can_create_children,
-            "collaboration_auth": can_get,
-            "comment": can_comment,
-            "formatted_content": can_get,
-            "content_patch": can_update,
-            "content_retrieve": retrieve,
-            "cors_proxy": can_get,
-            "descendants": can_get,
-            "destroy": can_destroy,
-            "duplicate": can_get and user.is_authenticated,
-            "favorite": can_get and user.is_authenticated,
-            "link_configuration": is_owner_or_admin,
-            "invite_owner": is_owner and not is_deleted,
-            "leave": can_leave,
-            "move": is_owner_or_admin and not is_deleted,
-            "partial_update": can_update,
-            "restore": is_owner and bool(self.deleted_at),
-            "retrieve": retrieve,
-            "media_auth": can_get,
-            "link_select_options": link_select_options,
-            "tree": retrieve,
-            "update": can_update,
-            "versions_destroy": is_owner_or_admin,
-            "versions_list": has_access_role,
-            "versions_retrieve": has_access_role,
-            "search": can_get,
-        }
+        return self.drive_item.get("computed_link_role") if self.drive_item else None
 
     def send_email(self, subject, emails, context=None, language=None):
         """Generate and send email from a template."""
@@ -1480,47 +1128,20 @@ class Document(MP_Node, BaseModel):
 
         self.send_email(subject, [email], context, language)
 
-    @transaction.atomic
     def soft_delete(self):
         """
-        Soft delete the document, marking the deletion on descendants.
-        We still keep the .delete() method untouched for programmatic purposes.
+        Soft delete the document. The hierarchy is owned by Drive so there is
+        no descendant propagation: this only hides the local row.
         """
-        if (
-            self._meta.model.objects.filter(
-                models.Q(deleted_at__isnull=False)
-                | models.Q(ancestors_deleted_at__isnull=False),
-                pk=self.pk,
-            ).exists()
-            or self.get_ancestors().filter(deleted_at__isnull=False).exists()
-        ):
-            raise RuntimeError(
-                "This document is already deleted or has deleted ancestors."
-            )
+        if self.deleted_at is not None:
+            raise RuntimeError("This document is already deleted.")
 
-        self.ancestors_deleted_at = self.deleted_at = timezone.now()
-        self.save()
-        self.invalidate_nb_accesses_cache()
+        self.deleted_at = timezone.now()
+        self.save(update_fields=["deleted_at", "updated_at"])
 
-        if self.depth > 1:
-            self._meta.model.objects.filter(pk=self.get_parent().pk).update(
-                numchild=models.F("numchild") - 1,
-                has_deleted_children=True,
-            )
-
-        # Mark all descendants as soft deleted
-        self.get_descendants().filter(ancestors_deleted_at__isnull=True).update(
-            ancestors_deleted_at=self.ancestors_deleted_at,
-            updated_at=self.updated_at,
-        )
-
-    @transaction.atomic
     def restore(self):
         """Cancelling a soft delete with checks."""
-        # This should not happen
-        if self._meta.model.objects.filter(
-            pk=self.pk, deleted_at__isnull=True
-        ).exists():
+        if self.deleted_at is None:
             raise RuntimeError("This document is not deleted.")
 
         if self.deleted_at < get_trashbin_cutoff():
@@ -1528,33 +1149,8 @@ class Document(MP_Node, BaseModel):
                 "This document was permanently deleted and cannot be restored."
             )
 
-        # save the current deleted_at value to exclude it from the descendants update
-        current_deleted_at = self.deleted_at
-
-        # Restore the current document
         self.deleted_at = None
-
-        # Calculate the minimum `deleted_at` among all ancestors
-        ancestors_deleted_at = (
-            self.get_ancestors()
-            .filter(deleted_at__isnull=False)
-            .order_by("deleted_at")
-            .values_list("deleted_at", flat=True)
-            .first()
-        )
-        self.ancestors_deleted_at = ancestors_deleted_at
-        self.save(update_fields=["deleted_at", "ancestors_deleted_at"])
-        self.invalidate_nb_accesses_cache()
-
-        self.get_descendants().exclude(
-            models.Q(deleted_at__isnull=False)
-            | models.Q(ancestors_deleted_at__lt=current_deleted_at)
-        ).update(ancestors_deleted_at=self.ancestors_deleted_at)
-
-        if self.depth > 1:
-            self._meta.model.objects.filter(pk=self.get_parent().pk).update(
-                numchild=models.F("numchild") + 1
-            )
+        self.save(update_fields=["deleted_at", "updated_at"])
 
 
 class LinkTrace(BaseModel):
@@ -1620,172 +1216,6 @@ class DocumentFavorite(BaseModel):
         return f"{self.user!s} favorite on document {self.document!s}"
 
 
-class DocumentAccess(BaseAccess):
-    """Relation model to give access to a document for a user or a team with a role."""
-
-    document = models.ForeignKey(
-        Document,
-        on_delete=models.CASCADE,
-        related_name="accesses",
-    )
-
-    class Meta:
-        db_table = "impress_document_access"
-        ordering = ("-created_at",)
-        verbose_name = _("Document/user relation")
-        verbose_name_plural = _("Document/user relations")
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "document"],
-                condition=models.Q(user__isnull=False),  # Exclude null users
-                name="unique_document_user",
-                violation_error_message=_("This user is already in this document."),
-            ),
-            models.UniqueConstraint(
-                fields=["team", "document"],
-                condition=models.Q(team__gt=""),  # Exclude empty string teams
-                name="unique_document_team",
-                violation_error_message=_("This team is already in this document."),
-            ),
-            models.CheckConstraint(
-                condition=models.Q(user__isnull=False, team="")
-                | models.Q(user__isnull=True, team__gt=""),
-                name="check_document_access_either_user_or_team",
-                violation_error_message=_("Either user or team must be set, not both."),
-            ),
-        ]
-
-    def __str__(self):
-        return f"{self.user!s} is {self.role:s} in document {self.document!s}"
-
-    def save(self, *args, **kwargs):
-        """Override save to clear the document's cache for number of accesses."""
-        super().save(*args, **kwargs)
-        self.document.invalidate_nb_accesses_cache()
-
-    @property
-    def target_key(self):
-        """Get a unique key for the actor targeted by the access, without possible conflict."""
-        return f"user:{self.user_id!s}" if self.user_id else f"team:{self.team:s}"
-
-    def delete(self, *args, **kwargs):
-        """Override delete to clear the document's cache for number of accesses."""
-        super().delete(*args, **kwargs)
-        self.document.invalidate_nb_accesses_cache()
-
-    def set_user_roles_tuple(self, ancestors_role, current_role):
-        """
-        Set a precomputed (ancestor_role, current_role) tuple for this instance.
-
-        This avoids querying the database in `get_roles_tuple()` and is useful
-        when roles are already known, such as in bulk serialization.
-
-        Args:
-            ancestor_role (str | None): Highest role on any ancestor document.
-            current_role (str | None): Role on the current document.
-        """
-        # pylint: disable=attribute-defined-outside-init
-        self._prefetched_user_roles_tuple = (ancestors_role, current_role)
-
-    def get_user_roles_tuple(self, user):
-        """
-        Return a tuple of:
-        - the highest role the user has on any ancestor of the document
-        - the role the user has on the current document
-
-        If roles have been explicitly set using `set_user_roles_tuple()`,
-        those will be returned instead of querying the database.
-
-        This allows viewsets or serializers to precompute roles for performance
-        when handling multiple documents at once.
-
-        Args:
-            user (User): The user whose roles are being evaluated.
-
-        Returns:
-            tuple[str | None, str | None]: (max_ancestor_role, current_document_role)
-        """
-        if not user.is_authenticated:
-            return None, None
-
-        try:
-            return self._prefetched_user_roles_tuple
-        except AttributeError:
-            pass
-
-        ancestors = (
-            self.document.get_ancestors() | Document.objects.filter(pk=self.document_id)
-        ).filter(ancestors_deleted_at__isnull=True)
-
-        access_tuples = DocumentAccess.objects.filter(
-            models.Q(user=user) | models.Q(team__in=user.teams),
-            document__in=ancestors,
-        ).values_list("document_id", "role")
-
-        ancestors_roles = []
-        current_roles = []
-        for doc_id, role in access_tuples:
-            if doc_id == self.document_id:
-                current_roles.append(role)
-            else:
-                ancestors_roles.append(role)
-
-        return RoleChoices.max(*ancestors_roles), RoleChoices.max(*current_roles)
-
-    def get_abilities(self, user):
-        """
-        Compute and return abilities for a given user on the document access.
-        """
-        ancestors_role, current_role = self.get_user_roles_tuple(user)
-        role = RoleChoices.max(ancestors_role, current_role)
-        is_owner_or_admin = role in PRIVILEGED_ROLES
-
-        if self.role == RoleChoices.OWNER:
-            can_delete = role == RoleChoices.OWNER and (
-                # check if document is not root trying to avoid an extra query
-                self.document.depth > 1
-                or DocumentAccess.objects.filter(
-                    document_id=self.document_id, role=RoleChoices.OWNER
-                ).count()
-                > 1
-            )
-            set_role_to = RoleChoices.values if can_delete else []
-        else:
-            can_delete = is_owner_or_admin
-            set_role_to = []
-            if is_owner_or_admin:
-                set_role_to.extend(
-                    [
-                        RoleChoices.READER,
-                        RoleChoices.COMMENTER,
-                        RoleChoices.EDITOR,
-                        RoleChoices.ADMIN,
-                    ]
-                )
-            if role == RoleChoices.OWNER:
-                set_role_to.append(RoleChoices.OWNER)
-
-        # Filter out roles that would be lower than the one the user already has
-        ancestors_role_priority = RoleChoices.get_priority(
-            getattr(self, "max_ancestors_role", None)
-        )
-        set_role_to = [
-            candidate_role
-            for candidate_role in set_role_to
-            if RoleChoices.get_priority(candidate_role) >= ancestors_role_priority
-        ]
-        if len(set_role_to) == 1:
-            set_role_to = []
-
-        return {
-            "destroy": can_delete,
-            "update": bool(set_role_to) and is_owner_or_admin,
-            "partial_update": bool(set_role_to) and is_owner_or_admin,
-            "retrieve": (self.user and self.user.id == user.id) or is_owner_or_admin,
-            "set_role_to": set_role_to,
-        }
-
-
 class DocumentAskForAccess(BaseModel):
     """Relation model to ask for access to a document."""
 
@@ -1839,16 +1269,18 @@ class DocumentAskForAccess(BaseModel):
 
     def accept(self, role=None):
         """Accept a document ask for access resource."""
-        if role is None:
-            role = self.role
-
-        DocumentAccess.objects.update_or_create(
-            document=self.document,
-            user=self.user,
-            defaults={"role": role},
-            create_defaults={"role": role},
-        )
-        self.delete()
+        # POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+        # if role is None:
+        #     role = self.role
+        #
+        # DocumentAccess.objects.update_or_create(
+        #     document=self.document,
+        #     user=self.user,
+        #     defaults={"role": role},
+        #     create_defaults={"role": role},
+        # )
+        # self.delete()
+        raise NotImplementedError("Sharing is managed in Drive.")
 
     def send_ask_for_access_email(self, email, language=None):
         """
@@ -1926,11 +1358,16 @@ class Thread(BaseModel):
         return f"Thread by {author!s} on {self.document!s}"
 
     def get_abilities(self, user):
-        """Compute and return abilities for a given user (mirrors comment logic)."""
-        role = self.document.get_role(user)
-        doc_abilities = self.document.get_abilities(user)
+        """
+        Compute and return abilities for a given user (mirrors comment logic).
+        Sharing is owned by Drive, so abilities and roles come from there.
+        """
+        # Import here to avoid a circular import through core.api.serializers
+        from core.services import drive_client  # pylint: disable=import-outside-toplevel
+
+        doc_abilities, drive_role = drive_client.get_doc_context(self.document_id, user)
         read_access = doc_abilities.get("comment", False)
-        write_access = self.creator == user or role in [
+        write_access = (user.is_authenticated and self.creator == user) or drive_role in [
             RoleChoices.OWNER,
             RoleChoices.ADMIN,
         ]
@@ -1979,13 +1416,20 @@ class Comment(BaseModel):
         return f"Comment by {author!s} on thread {self.thread_id}"
 
     def get_abilities(self, user):
-        """Return the abilities of the comment."""
-        role = self.thread.document.get_role(user)
-        doc_abilities = self.thread.document.get_abilities(user)
+        """
+        Return the abilities of the comment. Sharing is owned by Drive, so
+        abilities and roles come from there.
+        """
+        # Import here to avoid a circular import through core.api.serializers
+        from core.services import drive_client  # pylint: disable=import-outside-toplevel
+
+        doc_abilities, drive_role = drive_client.get_doc_context(
+            self.thread.document_id, user
+        )
         read_access = doc_abilities.get("comment", False)
         can_react = read_access and user.is_authenticated
-        is_author = self.user == user
-        can_moderate = is_author or role in [
+        is_author = user.is_authenticated and self.user == user
+        can_moderate = is_author or drive_role in [
             RoleChoices.OWNER,
             RoleChoices.ADMIN,
         ]
@@ -2031,86 +1475,3 @@ class Reaction(BaseModel):
     def __str__(self):
         """Return the string representation of the reaction."""
         return f"Reaction {self.emoji} on comment {self.comment.id}"
-
-
-class Invitation(BaseModel):
-    """User invitation to a document."""
-
-    email = models.EmailField(_("email address"), null=False, blank=False)
-    document = models.ForeignKey(
-        Document,
-        on_delete=models.CASCADE,
-        related_name="invitations",
-    )
-    role = models.CharField(
-        max_length=20, choices=RoleChoices.choices, default=RoleChoices.READER
-    )
-    issuer = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="invitations",
-        blank=True,
-        null=True,
-    )
-
-    class Meta:
-        db_table = "impress_invitation"
-        verbose_name = _("Document invitation")
-        verbose_name_plural = _("Document invitations")
-        constraints = [
-            models.UniqueConstraint(
-                fields=["email", "document"], name="email_and_document_unique_together"
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.email} invited to {self.document}"
-
-    def clean(self):
-        """Validate fields."""
-        super().clean()
-
-        # Check if an identity already exists for the provided email
-        if (
-            User.objects.filter(email__iexact=self.email).exists()
-            and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
-        ):
-            raise ValidationError(
-                {"email": [_("This email is already associated to a registered user.")]}
-            )
-
-    @property
-    def is_expired(self):
-        """Calculate if invitation is still valid or has expired."""
-        if not self.created_at:
-            return None
-
-        validity_duration = timedelta(seconds=settings.INVITATION_VALIDITY_DURATION)
-        return timezone.now() > (self.created_at + validity_duration)
-
-    def get_abilities(self, user):
-        """Compute and return abilities for a given user."""
-        roles = []
-
-        if user.is_authenticated:
-            teams = user.teams
-            try:
-                roles = self.user_roles or []
-            except AttributeError:
-                try:
-                    roles = self.document.accesses.filter(
-                        models.Q(user=user) | models.Q(team__in=teams),
-                    ).values_list("role", flat=True)
-                except (self._meta.model.DoesNotExist, IndexError):
-                    roles = []
-
-        is_admin_or_owner = bool(
-            set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
-        )
-
-        return {
-            "destroy": is_admin_or_owner,
-            "update": is_admin_or_owner,
-            "partial_update": is_admin_or_owner,
-            "retrieve": is_admin_or_owner,
-        }

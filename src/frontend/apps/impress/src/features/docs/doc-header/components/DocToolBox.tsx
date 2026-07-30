@@ -14,11 +14,9 @@ import AddLinkSVG from '@/assets/icons/ui-kit/add_link.svg';
 import ContentCopySVG from '@/assets/icons/ui-kit/content_copy.svg';
 import DeleteSVG from '@/assets/icons/ui-kit/delete.svg';
 import DownloadSVG from '@/assets/icons/ui-kit/download.svg';
-import SharedSVG from '@/assets/icons/ui-kit/group.svg';
 import HistorySVG from '@/assets/icons/ui-kit/history.svg';
 import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
 import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
-import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
 import MarkdownCopySVG from '@/assets/icons/ui-kit/markdown_copy.svg';
 import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
 import {
@@ -29,11 +27,9 @@ import {
   useCopyDocLink,
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
-  useDocUtils,
   useDuplicateDoc,
 } from '@/docs/doc-management';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
-import { useAuth } from '@/features/auth';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
 import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
@@ -50,24 +46,6 @@ const ModalSelectVersion = dynamic(
   () =>
     import('@/docs/doc-versioning/components/ModalSelectVersion').then(
       (mod) => ({ default: mod.ModalSelectVersion }),
-    ),
-  { ssr: false },
-);
-
-const DocShareModal = dynamic(
-  () =>
-    import('@/docs/doc-share/components/DocShareModal').then((mod) => ({
-      default: mod.DocShareModal,
-    })),
-  { ssr: false },
-);
-
-const ConfirmationLeaveModal = dynamic(
-  () =>
-    import('@/docs/doc-share/components/ConfirmationLeaveModal').then(
-      (mod) => ({
-        default: mod.ConfirmationLeaveModal,
-      }),
     ),
   { ssr: false },
 );
@@ -91,16 +69,12 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
   const treeContext = useTreeContext<Doc>();
   const router = useRouter();
-  const { isTopRoot } = useDocUtils(doc);
   const isTopParent = doc.id === treeContext?.root?.id; // it can be a child but not for the current user
-  const { authenticated } = useAuth();
   const copyCurrentEditorToClipboard = useCopyCurrentEditorToClipboard();
   const [openDropdown, setOpenDropdown] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
-  const [isModalShareOpen, setIsModalShareOpen] = useState(false);
   const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
-  const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
 
   const { restoreFocus, addLastFocus } = useFocusStore();
   const { isMobile } = useResponsiveStore();
@@ -154,14 +128,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       callback: copyDocLink,
     },
     {
-      label: t('Share'),
-      icon: <SharedSVG width={24} height={24} aria-hidden="true" />,
-      callback: () => {
-        setIsModalShareOpen(true);
-      },
-      isHidden: !isTopRoot || !authenticated,
-    },
-    {
       label: t('Download'),
       icon: <DownloadSVG width={24} height={24} aria-hidden="true" />,
       callback: () => {
@@ -200,19 +166,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       },
       isHidden: !doc.abilities.duplicate,
       showSeparator: true,
-    },
-    {
-      label: t('Leave'),
-      icon: <LeaveSVG width={24} height={24} aria-hidden="true" />,
-      callback: () => {
-        setIsModalLeaveOpen(true);
-      },
-      /**
-       * A user can only leave a top parent because we cannot
-       * leave a child if the parent is not left.
-       * ⚠️ This doc can still be a child for other users.
-       */
-      isHidden: !isTopParent,
     },
     {
       label: t('Delete'),
@@ -284,25 +237,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         <ModalSelectVersion
           onClose={() => {
             setIsModalHistoryOpen(false);
-            restoreFocus();
-          }}
-          doc={doc}
-        />
-      )}
-      {isModalShareOpen && (
-        <DocShareModal
-          onClose={() => {
-            setIsModalShareOpen(false);
-            restoreFocus();
-          }}
-          doc={doc}
-          isRootDoc={isTopParent}
-        />
-      )}
-      {isModalLeaveOpen && (
-        <ConfirmationLeaveModal
-          onClose={() => {
-            setIsModalLeaveOpen(false);
             restoreFocus();
           }}
           doc={doc}

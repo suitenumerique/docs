@@ -17,26 +17,28 @@ router.register("users", viewsets.UserViewSet, basename="users")
 
 # - Routes nested under a document
 document_related_router = DefaultRouter()
-document_related_router.register(
-    "accesses",
-    viewsets.DocumentAccessViewSet,
-    basename="document_accesses",
-)
-document_related_router.register(
-    "invitations",
-    viewsets.InvitationViewset,
-    basename="invitations",
-)
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# document_related_router.register(
+#     "accesses",
+#     viewsets.DocumentAccessViewSet,
+#     basename="document_accesses",
+# )
+# document_related_router.register(
+#     "invitations",
+#     viewsets.InvitationViewset,
+#     basename="invitations",
+# )
 document_related_router.register(
     "threads",
     viewsets.ThreadViewSet,
     basename="threads",
 )
-document_related_router.register(
-    "ask-for-access",
-    viewsets.DocumentAskForAccessViewSet,
-    basename="ask_for_access",
-)
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# document_related_router.register(
+#     "ask-for-access",
+#     viewsets.DocumentAskForAccessViewSet,
+#     basename="ask_for_access",
+# )
 
 thread_related_router = DefaultRouter()
 thread_related_router.register(
@@ -88,21 +90,22 @@ if settings.OIDC_RESOURCE_SERVER_ENABLED:
     # - Routes nested under a document in external API
     external_api_document_related_router = DefaultRouter()
 
-    document_access_config = settings.EXTERNAL_API.get("document_access", {})
-    if document_access_config.get("enabled", False):
-        external_api_document_related_router.register(
-            "accesses",
-            external_api_viewsets.ResourceServerDocumentAccessViewSet,
-            basename="resource_server_document_accesses",
-        )
-
-    document_invitation_config = settings.EXTERNAL_API.get("document_invitation", {})
-    if document_invitation_config.get("enabled", False):
-        external_api_document_related_router.register(
-            "invitations",
-            external_api_viewsets.ResourceServerInvitationViewSet,
-            basename="resource_server_document_invitations",
-        )
+    # POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+    # document_access_config = settings.EXTERNAL_API.get("document_access", {})
+    # if document_access_config.get("enabled", False):
+    #     external_api_document_related_router.register(
+    #         "accesses",
+    #         external_api_viewsets.ResourceServerDocumentAccessViewSet,
+    #         basename="resource_server_document_accesses",
+    #     )
+    #
+    # document_invitation_config = settings.EXTERNAL_API.get("document_invitation", {})
+    # if document_invitation_config.get("enabled", False):
+    #     external_api_document_related_router.register(
+    #         "invitations",
+    #         external_api_viewsets.ResourceServerInvitationViewSet,
+    #         basename="resource_server_document_invitations",
+    #     )
 
     urlpatterns.append(
         path(

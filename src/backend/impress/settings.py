@@ -80,6 +80,14 @@ class Base(Configuration):
     SECRET_KEY = SecretFileValue(None)
     SERVER_TO_SERVER_API_TOKENS = values.ListValue([])
 
+    # Drive integration: the document tree and sharing are delegated to Drive.
+    DRIVE_API_BASE_URL = values.Value(
+        None, environ_name="DRIVE_API_BASE_URL", environ_prefix=None
+    )
+    DRIVE_SERVER_TO_SERVER_TOKEN = values.Value(
+        None, environ_name="DRIVE_SERVER_TO_SERVER_TOKEN", environ_prefix=None
+    )
+
     # Application definition
     ROOT_URLCONF = "impress.urls"
     WSGI_APPLICATION = "impress.wsgi.application"

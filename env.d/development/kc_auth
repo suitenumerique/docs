@@ -1,6 +1,6 @@
 # Keycloak
 
-KC_HOSTNAME=http://localhost:8083
+KC_HOSTNAME=http://localhost:8084
 KEYCLOAK_ADMIN: admin
 KEYCLOAK_ADMIN_PASSWORD: admin
 KC_DB: postgres

@@ -15,7 +15,6 @@ import requests
 from core import models
 from core.enums import SearchType
 from core.utils.dicts import get_value_by_pattern
-from core.utils.paths import get_ancestor_to_descendants_map
 from core.utils.yjs import base64_yjs_to_text
 
 logger = logging.getLogger(__name__)
@@ -42,34 +41,33 @@ def get_document_indexer():
     return None
 
 
-def get_batch_accesses_by_users_and_teams(paths):
+def get_batch_accesses_by_users_and_teams(document_ids):
     """
-    Get accesses related to a list of document paths,
-    grouped by users and teams, including all ancestor paths.
+    Get read access candidates for a list of document ids, grouped by users
+    and teams. Sharing is owned by Drive: locally we only know the creator
+    and the users who already visited the document (LinkTrace). Drive still
+    gates actual document opens.
     """
-    ancestor_map = get_ancestor_to_descendants_map(
-        paths, steplen=models.Document.steplen
-    )
-    ancestor_paths = list(ancestor_map.keys())
+    access_by_document_id = defaultdict(lambda: {"users": set(), "teams": set()})
 
-    access_qs = models.DocumentAccess.objects.filter(
-        document__path__in=ancestor_paths
-    ).values("document__path", "user__sub", "team")
+    creators_qs = models.Document.objects.filter(
+        id__in=document_ids, creator__isnull=False
+    ).values("id", "creator__sub")
+    for entry in creators_qs:
+        if entry["creator__sub"]:
+            access_by_document_id[str(entry["id"])]["users"].add(
+                str(entry["creator__sub"])
+            )
 
-    access_by_document_path = defaultdict(lambda: {"users": set(), "teams": set()})
+    traces_qs = models.LinkTrace.objects.filter(
+        document_id__in=document_ids, user__sub__isnull=False
+    ).values("document_id", "user__sub")
+    for entry in traces_qs:
+        access_by_document_id[str(entry["document_id"])]["users"].add(
+            str(entry["user__sub"])
+        )
 
-    for access in access_qs:
-        ancestor_path = access["document__path"]
-        user_sub = access["user__sub"]
-        team = access["team"]
-
-        for descendant_path in ancestor_map.get(ancestor_path, []):
-            if user_sub:
-                access_by_document_path[descendant_path]["users"].add(str(user_sub))
-            if team:
-                access_by_document_path[descendant_path]["teams"].add(team)
-
-    return dict(access_by_document_path)
+    return dict(access_by_document_id)
 
 
 def get_visited_document_ids_of(queryset, user) -> tuple[str, ...]:
@@ -86,10 +84,9 @@ def get_visited_document_ids_of(queryset, user) -> tuple[str, ...]:
     )
 
     docs = (
-        queryset.exclude(accesses__user=user)
+        queryset.exclude(creator=user)
         .filter(
             deleted_at__isnull=True,
-            ancestors_deleted_at__isnull=True,
         )
         .filter(pk__in=visited_ids)
         .order_by("pk")
@@ -153,12 +150,12 @@ class BaseDocumentIndexer(ABC):
             if not documents_batch:
                 break
 
-            doc_paths = [doc.path for doc in documents_batch]
+            doc_ids = [doc.id for doc in documents_batch]
             last_id = documents_batch[-1].id
-            accesses_by_document_path = get_batch_accesses_by_users_and_teams(doc_paths)
+            accesses_by_document_id = get_batch_accesses_by_users_and_teams(doc_ids)
 
             serialized_batch = [
-                self.serialize_document(document, accesses_by_document_path)
+                self.serialize_document(document, accesses_by_document_id)
                 for document in documents_batch
                 if document.content or document.title
             ]
@@ -319,24 +316,24 @@ class FindDocumentIndexer(BaseDocumentIndexer):
         Returns:
             dict: A JSON-serializable dictionary.
         """
-        doc_path = document.path
+        doc_id = str(document.id)
         doc_content = document.content
         text_content = base64_yjs_to_text(doc_content) if doc_content else ""
 
         return {
-            "id": str(document.id),
+            "id": doc_id,
             "title": document.title or "",
             "content": text_content,
-            "depth": document.depth,
-            "path": document.path,
-            "numchild": document.numchild,
+            "depth": 1,
+            "path": doc_id,
+            "numchild": 0,
             "created_at": document.created_at.isoformat(),
             "updated_at": document.updated_at.isoformat(),
-            "users": list(accesses.get(doc_path, {}).get("users", set())),
-            "groups": list(accesses.get(doc_path, {}).get("teams", set())),
+            "users": list(accesses.get(doc_id, {}).get("users", set())),
+            "groups": list(accesses.get(doc_id, {}).get("teams", set())),
             "reach": document.computed_link_reach,
             "size": len(text_content.encode("utf-8")),
-            "is_active": not bool(document.ancestors_deleted_at),
+            "is_active": document.deleted_at is None,
         }
 
     def search_query(self, data, token) -> requests.Response:

@@ -17,14 +17,13 @@ import magic
 from rest_framework import serializers
 
 from core import choices, enums, models, validators
-from core.services import mime_types
+from core.services import drive_client, mime_types
 from core.services.ai_services.legacy import AI_ACTIONS
 from core.services.converter_services import (
     ConversionError,
     Converter,
 )
 from core.utils.analytics import PosthogEventName, posthog_capture
-from core.utils.treebeard import create_tree_node_with_retry
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -81,11 +80,17 @@ class ListDocumentSerializer(serializers.ModelSerializer):
     """Serialize documents with limited fields for display in lists."""
 
     is_favorite = serializers.BooleanField(read_only=True)
-    nb_accesses_ancestors = serializers.IntegerField(read_only=True)
-    nb_accesses_direct = serializers.IntegerField(read_only=True)
+    nb_accesses_ancestors = serializers.SerializerMethodField(read_only=True)
+    nb_accesses_direct = serializers.SerializerMethodField(read_only=True)
     user_role = serializers.SerializerMethodField(read_only=True)
     abilities = serializers.SerializerMethodField(read_only=True)
     deleted_at = serializers.SerializerMethodField(read_only=True)
+    # The hierarchy and sharing are owned by Drive: these keys are kept for
+    # the payload shape and sourced from the document's drive_item.
+    path = serializers.SerializerMethodField(read_only=True)
+    depth = serializers.SerializerMethodField(read_only=True)
+    numchild = serializers.SerializerMethodField(read_only=True)
+    excerpt = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Document
@@ -136,19 +141,61 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         ]
 
     def to_representation(self, instance):
-        """Precompute once per instance"""
-        paths_links_mapping = self.context.get("paths_links_mapping")
+        """
+        Hydrate the document's drive_item once so every field (abilities, link
+        reach/role properties, hierarchy data) reads from it.
 
-        if paths_links_mapping is not None:
-            links = paths_links_mapping.get(instance.path[: -instance.steplen], [])
-            instance.ancestors_link_definition = choices.get_equivalent_link_definition(
-                links
-            )
+        Note (POC): DB-backed lists (favorites, search) trigger one Drive
+        fetch per row, amortized by drive_client's short per-user cache.
+        """
+        request = self.context.get("request")
+        if request is not None:
+            try:
+                instance.get_drive_item(request.user)
+            except drive_client.DriveClientError:
+                pass  # fields fall back to safe defaults
 
         return super().to_representation(instance)
 
+    def _get_drive_item(self, instance):
+        """Return the document's hydrated Drive item, if available."""
+        return instance.drive_item
+
+    def get_path(self, instance):
+        """Return the Drive item path, or the document id as a degenerate path."""
+        item = self._get_drive_item(instance)
+        return item["path"] if item and item.get("path") else str(instance.pk)
+
+    def get_depth(self, instance):
+        """Return the depth in the Drive tree, defaulting to root depth."""
+        item = self._get_drive_item(instance)
+        if item and item.get("path"):
+            return len(str(item["path"]).split("."))
+        return 1
+
+    def get_numchild(self, instance):
+        """Return the number of children as known by Drive."""
+        item = self._get_drive_item(instance)
+        return item.get("numchild", 0) if item else 0
+
+    def get_excerpt(self, _instance):
+        """Excerpts are not supported anymore."""
+        return None
+
+    def get_nb_accesses_direct(self, instance):
+        """Number of accesses, as known by Drive."""
+        item = self._get_drive_item(instance)
+        return item.get("nb_accesses", 0) if item else 0
+
+    def get_nb_accesses_ancestors(self, instance):
+        """Number of accesses including ancestors, as known by Drive."""
+        return self.get_nb_accesses_direct(instance)
+
     def get_abilities(self, instance) -> dict:
-        """Return abilities of the logged-in user on the instance."""
+        """
+        Return abilities of the logged-in user on the instance, as delegated
+        to Drive (which owns the document tree and sharing).
+        """
         request = self.context.get("request")
         if not request:
             return {}
@@ -157,24 +204,35 @@ class ListDocumentSerializer(serializers.ModelSerializer):
 
     def get_user_role(self, instance):
         """
-        Return roles of the logged-in user for the current document,
-        taking into account ancestors.
+        Return the role of the logged-in user for the current document, as
+        known by Drive (which owns sharing).
         """
-        request = self.context.get("request")
-        return instance.get_role(request.user) if request else None
+        item = self._get_drive_item(instance)
+        return item.get("user_role") if item else None
 
     def get_deleted_at(self, instance):
         """Return the deleted_at of the current document."""
-        return instance.ancestors_deleted_at
+        return instance.deleted_at
 
 
 class DocumentLightSerializer(serializers.ModelSerializer):
     """Minial document serializer for nesting in document accesses."""
 
+    path = serializers.SerializerMethodField(read_only=True)
+    depth = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = models.Document
         fields = ["id", "path", "depth"]
         read_only_fields = ["id", "path", "depth"]
+
+    def get_path(self, instance):
+        """The hierarchy is owned by Drive: degenerate single-node path."""
+        return str(instance.pk)
+
+    def get_depth(self, _instance):
+        """The hierarchy is owned by Drive: all local documents are roots."""
+        return 1
 
 
 class DocumentSerializer(ListDocumentSerializer):
@@ -336,97 +394,99 @@ class DocumentContentSerializer(serializers.Serializer):
         raise NotImplementedError("Create is not supported for this serializer.")
 
 
-class DocumentAccessSerializer(serializers.ModelSerializer):
-    """Serialize document accesses."""
-
-    document = DocumentLightSerializer(read_only=True)
-    user_id = serializers.PrimaryKeyRelatedField(
-        queryset=models.User.objects.all(),
-        write_only=True,
-        source="user",
-        required=False,
-        allow_null=True,
-    )
-    user = UserSerializer(read_only=True)
-    team = serializers.CharField(required=False, allow_blank=True)
-    abilities = serializers.SerializerMethodField(read_only=True)
-    max_ancestors_role = serializers.SerializerMethodField(read_only=True)
-    max_role = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = models.DocumentAccess
-        resource_field_name = "document"
-        fields = [
-            "id",
-            "document",
-            "user",
-            "user_id",
-            "team",
-            "role",
-            "abilities",
-            "max_ancestors_role",
-            "max_role",
-        ]
-        read_only_fields = [
-            "id",
-            "document",
-            "abilities",
-            "max_ancestors_role",
-            "max_role",
-        ]
-
-    def get_abilities(self, instance) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return instance.get_abilities(request.user)
-        return {}
-
-    def get_max_ancestors_role(self, instance):
-        """Return max_ancestors_role if annotated; else None."""
-        return getattr(instance, "max_ancestors_role", None)
-
-    def get_max_role(self, instance):
-        """Return max_ancestors_role if annotated; else None."""
-        return choices.RoleChoices.max(
-            getattr(instance, "max_ancestors_role", None),
-            instance.role,
-        )
-
-    def update(self, instance, validated_data):
-        """Make "user" field readonly but only on update."""
-        validated_data.pop("team", None)
-        validated_data.pop("user", None)
-        return super().update(instance, validated_data)
-
-
-class DocumentAccessLightSerializer(DocumentAccessSerializer):
-    """Serialize document accesses with limited fields."""
-
-    user = UserLightSerializer(read_only=True)
-
-    class Meta:
-        model = models.DocumentAccess
-        resource_field_name = "document"
-        fields = [
-            "id",
-            "document",
-            "user",
-            "team",
-            "role",
-            "abilities",
-            "max_ancestors_role",
-            "max_role",
-        ]
-        read_only_fields = [
-            "id",
-            "document",
-            "team",
-            "role",
-            "abilities",
-            "max_ancestors_role",
-            "max_role",
-        ]
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class DocumentAccessSerializer(serializers.ModelSerializer):
+#     """Serialize document accesses."""
+#
+#     document = DocumentLightSerializer(read_only=True)
+#     user_id = serializers.PrimaryKeyRelatedField(
+#         queryset=models.User.objects.all(),
+#         write_only=True,
+#         source="user",
+#         required=False,
+#         allow_null=True,
+#     )
+#     user = UserSerializer(read_only=True)
+#     team = serializers.CharField(required=False, allow_blank=True)
+#     abilities = serializers.SerializerMethodField(read_only=True)
+#     max_ancestors_role = serializers.SerializerMethodField(read_only=True)
+#     max_role = serializers.SerializerMethodField(read_only=True)
+#
+#     class Meta:
+#         model = models.DocumentAccess
+#         resource_field_name = "document"
+#         fields = [
+#             "id",
+#             "document",
+#             "user",
+#             "user_id",
+#             "team",
+#             "role",
+#             "abilities",
+#             "max_ancestors_role",
+#             "max_role",
+#         ]
+#         read_only_fields = [
+#             "id",
+#             "document",
+#             "abilities",
+#             "max_ancestors_role",
+#             "max_role",
+#         ]
+#
+#     def get_abilities(self, instance) -> dict:
+#         """Return abilities of the logged-in user on the instance."""
+#         request = self.context.get("request")
+#         if request:
+#             return instance.get_abilities(request.user)
+#         return {}
+#
+#     def get_max_ancestors_role(self, instance):
+#         """Return max_ancestors_role if annotated; else None."""
+#         return getattr(instance, "max_ancestors_role", None)
+#
+#     def get_max_role(self, instance):
+#         """Return max_ancestors_role if annotated; else None."""
+#         return choices.RoleChoices.max(
+#             getattr(instance, "max_ancestors_role", None),
+#             instance.role,
+#         )
+#
+#     def update(self, instance, validated_data):
+#         """Make "user" field readonly but only on update."""
+#         validated_data.pop("team", None)
+#         validated_data.pop("user", None)
+#         return super().update(instance, validated_data)
+#
+#
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class DocumentAccessLightSerializer(DocumentAccessSerializer):
+#     """Serialize document accesses with limited fields."""
+#
+#     user = UserLightSerializer(read_only=True)
+#
+#     class Meta:
+#         model = models.DocumentAccess
+#         resource_field_name = "document"
+#         fields = [
+#             "id",
+#             "document",
+#             "user",
+#             "team",
+#             "role",
+#             "abilities",
+#             "max_ancestors_role",
+#             "max_role",
+#         ]
+#         read_only_fields = [
+#             "id",
+#             "document",
+#             "team",
+#             "role",
+#             "abilities",
+#             "max_ancestors_role",
+#             "max_role",
+#         ]
 
 
 class ServerCreateDocumentSerializer(serializers.Serializer):
@@ -443,8 +503,11 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
     """
 
     # Document
+    # Optional client-supplied id, used by Drive to make the document reuse
+    # the id of the item pointing to it.
+    id = serializers.UUIDField(required=False)
     title = serializers.CharField(required=True)
-    content = serializers.CharField(required=True)
+    content = serializers.CharField(required=False, allow_blank=True, default="")
     # User
     sub = serializers.CharField(
         required=True, validators=[validators.sub_validator], max_length=255
@@ -456,6 +519,14 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
     # Invitation
     message = serializers.CharField(required=False)
     subject = serializers.CharField(required=False)
+
+    def validate_id(self, value):
+        """Ensure the provided ID is not already taken."""
+        if models.Document.objects.filter(id=value).exists():
+            raise serializers.ValidationError(
+                "A document with this ID already exists. You cannot override it."
+            )
+        return value
 
     def create(self, validated_data):
         """Create the document and associate it with the user or send an invitation."""
@@ -475,20 +546,25 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
             email = user.email
             language = user.language or language
 
-        try:
-            document_content = Converter().convert(
-                validated_data["content"], mime_types.MARKDOWN, mime_types.YJS
-            )
-        except ConversionError as err:
-            raise serializers.ValidationError(
-                {"content": ["Could not convert content"]}
-            ) from err
+        document_content = None
+        if validated_data.get("content"):
+            try:
+                document_content = Converter().convert(
+                    validated_data["content"], mime_types.MARKDOWN, mime_types.YJS
+                )
+            except ConversionError as err:
+                raise serializers.ValidationError(
+                    {"content": ["Could not convert content"]}
+                ) from err
 
-        document = create_tree_node_with_retry(
-            lambda: models.Document.add_root(
-                title=validated_data["title"],
-                creator=user,
-            )
+        extra_document_fields = {}
+        if validated_data.get("id"):
+            extra_document_fields["id"] = validated_data["id"]
+
+        document = models.Document.objects.create(
+            title=validated_data["title"],
+            creator=user,
+            **extra_document_fields,
         )
 
         posthog_capture(PosthogEventName.DOC_CREATED, user, {}, document=document)
@@ -502,25 +578,18 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
             document=document,
         )
 
-        if user:
-            # Associate the document with the pre-existing user
-            models.DocumentAccess.objects.create(
-                document=document,
-                role=models.RoleChoices.OWNER,
-                user=user,
-            )
-        else:
-            # The user doesn't exist in our database: we need to invite him/her
-            models.Invitation.objects.create(
-                document=document,
-                email=email,
-                role=models.RoleChoices.OWNER,
-            )
+        # Sharing is owned by Drive: no local access row is created. When the
+        # user is not known locally yet (creator=None), Drive still grants
+        # access and DriveDelegatedPermission lets them in on first visit.
 
-        document.content = document_content
-        document.save()
+        if document_content is not None:
+            document.content = document_content
+            document.save()
 
-        self._send_email_notification(document, validated_data, email, language)
+        # Back-channel creations from Drive (id provided) are silent: the user
+        # initiated the creation themselves from the Drive UI.
+        if not validated_data.get("id"):
+            self._send_email_notification(document, validated_data, email, language)
         return document
 
     def _send_email_notification(self, document, validated_data, email, language):
@@ -542,74 +611,79 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
         raise NotImplementedError("Update is not supported for this serializer.")
 
 
-class LinkDocumentSerializer(serializers.ModelSerializer):
-    """
-    Serialize link configuration for documents.
-    We expose it separately from document in order to simplify and secure access control.
-    """
-
-    link_reach = serializers.ChoiceField(
-        choices=models.LinkReachChoices.choices, required=True
-    )
-
-    class Meta:
-        model = models.Document
-        fields = [
-            "link_role",
-            "link_reach",
-        ]
-
-    def validate(self, attrs):
-        """Validate that link_role and link_reach are compatible using get_select_options."""
-        link_reach = attrs.get("link_reach")
-        link_role = attrs.get("link_role")
-
-        if not link_reach:
-            raise serializers.ValidationError(
-                {"link_reach": _("This field is required.")}
-            )
-
-        # Get available options based on ancestors' link definition
-        available_options = models.LinkReachChoices.get_select_options(
-            **self.instance.ancestors_link_definition
-        )
-
-        # Validate link_reach is allowed
-        if link_reach not in available_options:
-            msg = _(
-                "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
-            )
-            raise serializers.ValidationError(
-                {"link_reach": msg % {"link_reach": link_reach}}
-            )
-
-        # Validate link_role is compatible with link_reach
-        allowed_roles = available_options[link_reach]
-
-        # Restricted reach: link_role must be None
-        if link_reach == models.LinkReachChoices.RESTRICTED:
-            if link_role is not None:
-                raise serializers.ValidationError(
-                    {
-                        "link_role": (
-                            "Cannot set link_role when link_reach is 'restricted'. "
-                            "Link role must be null for restricted reach."
-                        )
-                    }
-                )
-            return attrs
-        # Non-restricted: link_role must be in allowed roles
-        if link_role not in allowed_roles:
-            allowed_roles_str = ", ".join(allowed_roles) if allowed_roles else "none"
-            raise serializers.ValidationError(
-                {
-                    "link_role": (
-                        f"Link role '{link_role}' is not allowed for link reach '{link_reach}'. "
-                        f"Allowed roles: {allowed_roles_str}"
-                    )
-                }
-            )
-        return attrs
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class LinkDocumentSerializer(serializers.ModelSerializer):
+#     """
+#     Serialize link configuration for documents.
+#     We expose it separately from document in order to simplify and secure access control.
+#     """
+#
+#     link_reach = serializers.ChoiceField(
+#         choices=models.LinkReachChoices.choices, required=True
+#     )
+#     # Link configuration is owned by Drive; kept for payload compatibility only.
+#     link_role = serializers.ChoiceField(
+#         choices=models.LinkRoleChoices.choices, required=False, allow_null=True
+#     )
+#
+#     class Meta:
+#         model = models.Document
+#         fields = [
+#             "link_role",
+#             "link_reach",
+#         ]
+#
+#     def validate(self, attrs):
+#         """Validate that link_role and link_reach are compatible using get_select_options."""
+#         link_reach = attrs.get("link_reach")
+#         link_role = attrs.get("link_role")
+#
+#         if not link_reach:
+#             raise serializers.ValidationError(
+#                 {"link_reach": _("This field is required.")}
+#             )
+#
+#         # Get available options based on ancestors' link definition
+#         available_options = models.LinkReachChoices.get_select_options(
+#             **self.instance.ancestors_link_definition
+#         )
+#
+#         # Validate link_reach is allowed
+#         if link_reach not in available_options:
+#             msg = _(
+#                 "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
+#             )
+#             raise serializers.ValidationError(
+#                 {"link_reach": msg % {"link_reach": link_reach}}
+#             )
+#
+#         # Validate link_role is compatible with link_reach
+#         allowed_roles = available_options[link_reach]
+#
+#         # Restricted reach: link_role must be None
+#         if link_reach == models.LinkReachChoices.RESTRICTED:
+#             if link_role is not None:
+#                 raise serializers.ValidationError(
+#                     {
+#                         "link_role": (
+#                             "Cannot set link_role when link_reach is 'restricted'. "
+#                             "Link role must be null for restricted reach."
+#                         )
+#                     }
+#                 )
+#             return attrs
+#         # Non-restricted: link_role must be in allowed roles
+#         if link_role not in allowed_roles:
+#             allowed_roles_str = ", ".join(allowed_roles) if allowed_roles else "none"
+#             raise serializers.ValidationError(
+#                 {
+#                     "link_role": (
+#                         f"Link role '{link_role}' is not allowed for link reach '{link_reach}'. "
+#                         f"Allowed roles: {allowed_roles_str}"
+#                     )
+#                 }
+#             )
+#         return attrs
 
 
 class DocumentDuplicationSerializer(serializers.Serializer):
@@ -695,119 +769,123 @@ class FileUploadSerializer(serializers.Serializer):
         return attrs
 
 
-class InvitationSerializer(serializers.ModelSerializer):
-    """Serialize invitations."""
-
-    abilities = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = models.Invitation
-        fields = [
-            "id",
-            "abilities",
-            "created_at",
-            "email",
-            "document",
-            "role",
-            "issuer",
-            "is_expired",
-        ]
-        read_only_fields = [
-            "id",
-            "abilities",
-            "created_at",
-            "document",
-            "issuer",
-            "is_expired",
-        ]
-
-    def get_abilities(self, invitation) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return invitation.get_abilities(request.user)
-        return {}
-
-    def validate(self, attrs):
-        """Validate invitation data."""
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-
-        attrs["document_id"] = self.context["resource_id"]
-
-        # Only set the issuer if the instance is being created
-        if self.instance is None:
-            attrs["issuer"] = user
-
-        if attrs.get("email"):
-            attrs["email"] = attrs["email"].lower()
-
-        return attrs
-
-    def validate_role(self, role):
-        """Custom validation for the role field."""
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-        document_id = self.context["resource_id"]
-
-        # If the role is OWNER, check if the user has OWNER access
-        if role == models.RoleChoices.OWNER:
-            if not models.DocumentAccess.objects.filter(
-                Q(user=user) | Q(team__in=user.teams),
-                document=document_id,
-                role=models.RoleChoices.OWNER,
-            ).exists():
-                raise serializers.ValidationError(
-                    "Only owners of a document can invite other users as owners."
-                )
-
-        return role
-
-
-class RoleSerializer(serializers.Serializer):
-    """Serializer validating role choices."""
-
-    role = serializers.ChoiceField(
-        choices=models.RoleChoices.choices, required=False, allow_null=True
-    )
-
-
-class DocumentAskForAccessCreateSerializer(serializers.Serializer):
-    """Serializer for creating a document ask for access."""
-
-    role = serializers.ChoiceField(
-        choices=[
-            role for role in choices.RoleChoices if role != models.RoleChoices.OWNER
-        ],
-        required=False,
-        default=models.RoleChoices.READER,
-    )
-
-
-class DocumentAskForAccessSerializer(serializers.ModelSerializer):
-    """Serializer for document ask for access model"""
-
-    abilities = serializers.SerializerMethodField(read_only=True)
-    user = UserSerializer(read_only=True)
-
-    class Meta:
-        model = models.DocumentAskForAccess
-        fields = [
-            "id",
-            "document",
-            "user",
-            "role",
-            "created_at",
-            "abilities",
-        ]
-        read_only_fields = ["id", "document", "user", "role", "created_at", "abilities"]
-
-    def get_abilities(self, instance) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return instance.get_abilities(request.user)
-        return {}
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class InvitationSerializer(serializers.ModelSerializer):
+#     """Serialize invitations."""
+#
+#     abilities = serializers.SerializerMethodField(read_only=True)
+#
+#     class Meta:
+#         model = models.Invitation
+#         fields = [
+#             "id",
+#             "abilities",
+#             "created_at",
+#             "email",
+#             "document",
+#             "role",
+#             "issuer",
+#             "is_expired",
+#         ]
+#         read_only_fields = [
+#             "id",
+#             "abilities",
+#             "created_at",
+#             "document",
+#             "issuer",
+#             "is_expired",
+#         ]
+#
+#     def get_abilities(self, invitation) -> dict:
+#         """Return abilities of the logged-in user on the instance."""
+#         request = self.context.get("request")
+#         if request:
+#             return invitation.get_abilities(request.user)
+#         return {}
+#
+#     def validate(self, attrs):
+#         """Validate invitation data."""
+#         request = self.context.get("request")
+#         user = getattr(request, "user", None)
+#
+#         attrs["document_id"] = self.context["resource_id"]
+#
+#         # Only set the issuer if the instance is being created
+#         if self.instance is None:
+#             attrs["issuer"] = user
+#
+#         if attrs.get("email"):
+#             attrs["email"] = attrs["email"].lower()
+#
+#         return attrs
+#
+#     def validate_role(self, role):
+#         """Custom validation for the role field."""
+#         request = self.context.get("request")
+#         user = getattr(request, "user", None)
+#         document_id = self.context["resource_id"]
+#
+#         # If the role is OWNER, check if the user has OWNER access
+#         if role == models.RoleChoices.OWNER:
+#             if not models.DocumentAccess.objects.filter(
+#                 Q(user=user) | Q(team__in=user.teams),
+#                 document=document_id,
+#                 role=models.RoleChoices.OWNER,
+#             ).exists():
+#                 raise serializers.ValidationError(
+#                     "Only owners of a document can invite other users as owners."
+#                 )
+#
+#         return role
+#
+#
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class RoleSerializer(serializers.Serializer):
+#     """Serializer validating role choices."""
+#
+#     role = serializers.ChoiceField(
+#         choices=models.RoleChoices.choices, required=False, allow_null=True
+#     )
+#
+#
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class DocumentAskForAccessCreateSerializer(serializers.Serializer):
+#     """Serializer for creating a document ask for access."""
+#
+#     role = serializers.ChoiceField(
+#         choices=[
+#             role for role in choices.RoleChoices if role != models.RoleChoices.OWNER
+#         ],
+#         required=False,
+#         default=models.RoleChoices.READER,
+#     )
+#
+#
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class DocumentAskForAccessSerializer(serializers.ModelSerializer):
+#     """Serializer for document ask for access model"""
+#
+#     abilities = serializers.SerializerMethodField(read_only=True)
+#     user = UserSerializer(read_only=True)
+#
+#     class Meta:
+#         model = models.DocumentAskForAccess
+#         fields = [
+#             "id",
+#             "document",
+#             "user",
+#             "role",
+#             "created_at",
+#             "abilities",
+#         ]
+#         read_only_fields = ["id", "document", "user", "role", "created_at", "abilities"]
+#
+#     def get_abilities(self, instance) -> dict:
+#         """Return abilities of the logged-in user on the instance."""
+#         request = self.context.get("request")
+#         if request:
+#             return instance.get_abilities(request.user)
+#         return {}
 
 
 class VersionFilterSerializer(serializers.Serializer):

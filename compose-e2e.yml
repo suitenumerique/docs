@@ -6,12 +6,12 @@ services:
       dockerfile: ./src/frontend/Dockerfile
       target: frontend-production
       args:
-        API_ORIGIN: "http://localhost:8071"
+        API_ORIGIN: "http://localhost:8072"
         PUBLISH_AS_MIT: "false"
         SW_DEACTIVATED: "true"
     image: impress:frontend-production
     ports:
-      - "3000:3000"
+      - "3001:3000"
 
   y-provider:
     user: ${DOCKER_USER:-1000}
@@ -25,7 +25,7 @@ services:
       - env.d/development/common
       - env.d/development/common.local
     ports:
-      - "4444:4444"
+      - "4445:4444"
 
   y-provider-converter:
     user: ${DOCKER_USER:-1000}

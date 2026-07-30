@@ -13,10 +13,8 @@ from botocore.exceptions import ClientError
 from core.choices import LinkReachChoices, LinkRoleChoices, RoleChoices
 from core.models import (
     Document,
-    DocumentAccess,
     DocumentAskForAccess,
     DocumentFavorite,
-    Invitation,
     LinkTrace,
     Thread,
 )
@@ -80,9 +78,10 @@ class Command(BaseCommand):
         except (Document.DoesNotExist, ValueError) as err:
             raise CommandError(f"Document {document_id} does not exist.") from err
 
-        descendants = list(document.get_descendants())
-        descendant_ids = [doc.id for doc in descendants]
-        all_documents = [document, *descendants]
+        # The hierarchy is owned by Drive: no local descendants anymore.
+        descendants = []
+        descendant_ids = []
+        all_documents = [document]
 
         # Collect all attachment keys before the transaction clears them
         all_attachment_keys = []
@@ -101,11 +100,7 @@ class Command(BaseCommand):
             # update() so the post_save signal fires (search re-indexation) and
             # `updated_at` is refreshed. All descendants are about to be deleted,
             # so the document can no longer have any deleted child either.
-            document.excerpt = None
-            document.link_reach = options["link_reach"]
-            document.link_role = options["link_role"]
             document.attachments = []
-            document.has_deleted_children = False
             if options["title"] is not None:
                 document.title = options["title"]
             document.save()
@@ -150,13 +145,8 @@ class Command(BaseCommand):
         owners), invitations, threads, favorites, link traces and pending
         access requests.
         """
-        access_count, _ = DocumentAccess.objects.filter(
-            Q(document_id=document.id) & ~Q(role=RoleChoices.OWNER)
-        ).delete()
-        self.stdout.write(f"Deleted {access_count} access(es) on root document.")
-
+        # Sharing is owned by Drive: no local accesses/invitations to clean.
         for model, label in (
-            (Invitation, "invitation"),
             (Thread, "thread"),
             (DocumentFavorite, "favorite"),
             (LinkTrace, "link trace"),

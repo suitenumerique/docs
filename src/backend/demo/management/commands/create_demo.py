@@ -118,106 +118,14 @@ class Timeit:
 
 
 def create_demo(stdout):
-    """
-    Create a database with demo data for developers to work in a realistic environment.
-    The code is engineered to create a huge number of objects fast.
-    """
-
-    queue = BulkQueue(stdout)
-
-    with Timeit(stdout, "Creating users"):
-        name_size = int(math.sqrt(defaults.NB_OBJECTS["users"]))
-        first_names = [fake.first_name() for _ in range(name_size)]
-        last_names = [fake.last_name() for _ in range(name_size)]
-        for i in range(defaults.NB_OBJECTS["users"]):
-            first_name = random.choice(first_names)
-            queue.push(
-                models.User(
-                    admin_email=f"user.test{i:d}@example.com",
-                    email=f"user.test{i:d}@example.com",
-                    password="!",
-                    is_superuser=False,
-                    is_active=True,
-                    is_first_connection=False,
-                    is_staff=False,
-                    short_name=first_name,
-                    full_name=f"{first_name:s} {random.choice(last_names):s}",
-                    language=random.choice(languages),
-                )
-            )
-        queue.flush()
-
-    users_ids = list(models.User.objects.values_list("id", flat=True))
-
-    with Timeit(stdout, "Creating documents"):
-        for i in range(defaults.NB_OBJECTS["docs"]):
-            # pylint: disable=protected-access
-            key = models.Document._int2str(i)  # noqa: SLF001
-            padding = models.Document.alphabet[0] * (models.Document.steplen - len(key))
-            title = fake.sentence(nb_words=4)
-            document = models.Document(
-                id=uuid4(),
-                depth=1,
-                path=f"{padding}{key}",
-                creator_id=random.choice(users_ids),
-                title=title,
-                link_reach=models.LinkReachChoices.AUTHENTICATED
-                if random_true_with_probability(0.5)
-                else random.choice(models.LinkReachChoices.values),
-            )
-            document.save_content(get_ydoc_for_text(f"Content for {title:s}"))
-            queue.push(document)
-
-        queue.flush()
-
-    with Timeit(stdout, "Creating docs accesses"):
-        docs_ids = list(models.Document.objects.values_list("id", flat=True))
-        for doc_id in docs_ids:
-            for user_id in random.sample(
-                users_ids,
-                random.randint(1, defaults.NB_OBJECTS["max_users_per_document"]),
-            ):
-                role = random.choice(models.RoleChoices.choices)
-                queue.push(
-                    models.DocumentAccess(
-                        document_id=doc_id, user_id=user_id, role=role[0]
-                    )
-                )
-        queue.flush()
-
-    with Timeit(stdout, "Creating development users"):
-        for dev_user in defaults.DEV_USERS:
-            queue.push(
-                models.User(
-                    admin_email=dev_user["email"],
-                    email=dev_user["email"],
-                    sub=dev_user["email"],
-                    password="!",
-                    is_superuser=False,
-                    is_active=True,
-                    is_first_connection=False,
-                    is_staff=False,
-                    language=dev_user["language"] or random.choice(languages),
-                )
-            )
-
-        queue.flush()
-
-    with Timeit(stdout, "Creating docs accesses on development users"):
-        for dev_user in defaults.DEV_USERS:
-            docs_ids = list(models.Document.objects.values_list("id", flat=True))
-            user_id = models.User.objects.get(email=dev_user["email"]).id
-
-            for doc_id in docs_ids:
-                role = random.choice(models.RoleChoices.choices)
-                queue.push(
-                    models.DocumentAccess(
-                        document_id=doc_id, user_id=user_id, role=role[0]
-                    )
-                )
-
-        queue.flush()
-
+    """Not supported with the Drive integration."""
+    # The document tree, sharing and listing are owned by Drive: demo documents
+    # created locally would have no Drive item and would be invisible in the
+    # app. Seed data through the Drive app instead.
+    raise CommandError(
+        "create_demo is not supported with the Drive integration: documents "
+        "must be created through Drive."
+    )
 
 class Command(BaseCommand):
     """A management command to create a demo database."""
