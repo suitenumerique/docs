@@ -19,6 +19,7 @@ import TableHeaderColumnIcon from '@/icons/table-header-column.svg';
 import TableHeaderRowIcon from '@/icons/table-header-row.svg';
 import TrashIcon from '@/icons/trash.svg';
 
+import { LinkToBlockItem } from './LinkToBlockItem';
 import { TableHeaderSeparator } from './TableHeaderSeparator';
 
 const DocsDragHandleMenu = () => {
@@ -37,6 +38,8 @@ const DocsDragHandleMenu = () => {
           {dict.drag_handle.colors_menuitem}
         </Box>
       </BlockColorsItem>
+      <HorizontalSeparator $margin={{ vertical: '3xs' }} />
+      <LinkToBlockItem />
       <TableHeaderSeparator />
       <TableRowHeaderItem>
         <Box $align="center" $gap="xxs" $direction="row">

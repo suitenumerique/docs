@@ -41,6 +41,7 @@ import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
 import {
   useHeadings,
   useSaveDoc,
+  useScrollToBlockAnchor,
   useShortcuts,
   useUploadFile,
   useUploadStatus,
@@ -263,6 +264,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   useShortcuts(editor, refEditorContainer.current);
 
   useUploadStatus(editor);
+
+  useScrollToBlockAnchor();
 
   useEffect(() => {
     setEditor(editor);
