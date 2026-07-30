@@ -5,15 +5,11 @@ from django.conf import settings
 from lasuite.oidc_resource_server.authentication import ResourceServerAuthentication
 
 from core.api.permissions import (
-    CanCreateInvitationPermission,
-    DocumentPermission,
+    DriveDelegatedPermission,
     IsSelf,
-    ResourceAccessPermission,
 )
 from core.api.viewsets import (
-    DocumentAccessViewSet,
     DocumentViewSet,
-    InvitationViewset,
     UserViewSet,
 )
 from core.external_api.permissions import ResourceServerClientPermission
@@ -34,11 +30,11 @@ class ResourceServerRestrictionMixin:
 
 
 class ResourceServerDocumentViewSet(ResourceServerRestrictionMixin, DocumentViewSet):
-    """Resource Server Viewset for Documents."""
+    """Resource Server Viewset for Documents, abilities delegated to Drive."""
 
     authentication_classes = [ResourceServerAuthentication]
 
-    permission_classes = [ResourceServerClientPermission & DocumentPermission]  # type: ignore
+    permission_classes = [ResourceServerClientPermission & DriveDelegatedPermission]  # type: ignore
 
     @property
     def resource_server_actions(self):
@@ -46,36 +42,38 @@ class ResourceServerDocumentViewSet(ResourceServerRestrictionMixin, DocumentView
         return self._get_resource_server_actions("documents")
 
 
-class ResourceServerDocumentAccessViewSet(
-    ResourceServerRestrictionMixin, DocumentAccessViewSet
-):
-    """Resource Server Viewset for DocumentAccess."""
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class ResourceServerDocumentAccessViewSet(
+#     ResourceServerRestrictionMixin, DocumentAccessViewSet
+# ):
+#     """Resource Server Viewset for DocumentAccess."""
+#
+#     authentication_classes = [ResourceServerAuthentication]
+#
+#     permission_classes = [ResourceServerClientPermission & ResourceAccessPermission]
+#
+#     @property
+#     def resource_server_actions(self):
+#         """Get resource_server_actions from settings."""
+#         return self._get_resource_server_actions("document_access")
 
-    authentication_classes = [ResourceServerAuthentication]
 
-    permission_classes = [ResourceServerClientPermission & ResourceAccessPermission]  # type: ignore
-
-    @property
-    def resource_server_actions(self):
-        """Get resource_server_actions from settings."""
-        return self._get_resource_server_actions("document_access")
-
-
-class ResourceServerInvitationViewSet(
-    ResourceServerRestrictionMixin, InvitationViewset
-):
-    """Resource Server Viewset for Invitations."""
-
-    authentication_classes = [ResourceServerAuthentication]
-
-    permission_classes = [
-        ResourceServerClientPermission & CanCreateInvitationPermission
-    ]
-
-    @property
-    def resource_server_actions(self):
-        """Get resource_server_actions from settings."""
-        return self._get_resource_server_actions("document_invitation")
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class ResourceServerInvitationViewSet(
+#     ResourceServerRestrictionMixin, InvitationViewset
+# ):
+#     """Resource Server Viewset for Invitations."""
+#
+#     authentication_classes = [ResourceServerAuthentication]
+#
+#     permission_classes = [
+#         ResourceServerClientPermission & CanCreateInvitationPermission
+#     ]
+#
+#     @property
+#     def resource_server_actions(self):
+#         """Get resource_server_actions from settings."""
+#         return self._get_resource_server_actions("document_invitation")
 
 
 class ResourceServerUserViewSet(ResourceServerRestrictionMixin, UserViewSet):

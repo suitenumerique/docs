@@ -22,8 +22,8 @@ class CollaborationService:
 
     def reset_connections(self, document_id, user_id=None):
         """
-        Reset the connections of a document and all its descendants in the
-        collaboration server.
+        Reset the connections of a document in the collaboration server. The
+        hierarchy is owned by Drive, so there is no descendant fan-out.
 
         Resetting a connection means that the user will be disconnected and will
         have to reconnect to the collaboration server, with updated rights.
@@ -34,15 +34,12 @@ class CollaborationService:
             logger.error("Document %s does not exists anymore", document_id)
             return
 
-        documents = models.Document.objects.filter(
-            path__startswith=document.path, depth__gte=document.depth
-        ).order_by("path")
-
-        for doc in documents:
-            try:
-                self._reset_connection(doc.id, user_id)
-            except requests.HTTPError:
-                logger.error("impossible to reset connections for document %s", doc.id)
+        try:
+            self._reset_connection(document.id, user_id)
+        except requests.HTTPError:
+            logger.error(
+                "impossible to reset connections for document %s", document.id
+            )
 
     def _reset_connection(self, room, user_id=None):
         """

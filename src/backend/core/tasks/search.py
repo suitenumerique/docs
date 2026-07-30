@@ -54,9 +54,7 @@ def batch_document_indexer_task(timestamp):
 
     if indexer:
         queryset = models.Document.objects.filter(
-            Q(updated_at__gte=timestamp)
-            | Q(deleted_at__gte=timestamp)
-            | Q(ancestors_deleted_at__gte=timestamp)
+            Q(updated_at__gte=timestamp) | Q(deleted_at__gte=timestamp)
         )
 
         count = indexer.index(queryset)

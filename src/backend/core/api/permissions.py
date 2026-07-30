@@ -7,7 +7,7 @@ from django.http import Http404
 from rest_framework import permissions
 
 from core import choices
-from core.models import DocumentAccess, RoleChoices, get_trashbin_cutoff
+from core.models import RoleChoices, get_trashbin_cutoff  # noqa: F401
 
 ACTION_FOR_METHOD_TO_PERMISSION = {
     "versions_detail": {"DELETE": "versions_destroy", "GET": "versions_retrieve"},
@@ -66,122 +66,144 @@ class IsOwnedOrPublic(IsAuthenticated):
             return False
 
 
-class CanCreateInvitationPermission(permissions.BasePermission):
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class CanCreateInvitationPermission(permissions.BasePermission):
+#     """
+#     Custom permission class to handle permission checks for managing invitations.
+#     """
+#
+#     def has_permission(self, request, view):
+#         user = request.user
+#
+#         # Ensure the user is authenticated
+#         if not (bool(request.auth) or request.user.is_authenticated):
+#             return False
+#
+#         # Apply permission checks only for creation (POST requests)
+#         if view.action != "create":
+#             return True
+#
+#         # Check if resource_id is passed in the context
+#         try:
+#             document_id = view.kwargs["resource_id"]
+#         except KeyError as exc:
+#             raise exceptions.ValidationError(
+#                 "You must set a document ID in kwargs to manage document invitations."
+#             ) from exc
+#
+#         # Check if the user has access to manage invitations (Owner/Admin roles)
+#         return DocumentAccess.objects.filter(
+#             Q(user=user) | Q(team__in=user.teams),
+#             document=document_id,
+#             role__in=[RoleChoices.OWNER, RoleChoices.ADMIN],
+#         ).exists()
+#
+#
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class ResourceWithAccessPermission(permissions.BasePermission):
+#     """A permission class for invitations."""
+#
+#     def has_permission(self, request, view):
+#         """check create permission."""
+#         return request.user.is_authenticated or view.action != "create"
+#
+#     def has_object_permission(self, request, view, obj):
+#         """Check permission for a given object."""
+#         abilities = obj.get_abilities(request.user)
+#         action = view.action
+#         return abilities.get(action, False)
+
+
+class DriveDelegatedPermission(permissions.BasePermission):
     """
-    Custom permission class to handle permission checks for managing invitations.
+    Delegate document permissions to Drive: abilities are computed from the
+    Drive item mirroring the document, fetched server-to-server on behalf of
+    the current user.
     """
 
     def has_permission(self, request, view):
-        user = request.user
+        """
+        Let anonymous users through: link reach is owned by Drive, so the
+        Drive-derived abilities (all False unless the item is public) are the
+        actual gate, applied in has_object_permission. List-level actions are
+        safe: DB-backed lists return nothing for anonymous users and Drive
+        proxy calls fail closed with a 401/403 from Drive.
+        """
+        return True
 
-        # Ensure the user is authenticated
-        if not (bool(request.auth) or request.user.is_authenticated):
-            return False
+    def has_object_permission(self, request, view, obj):
+        """Check the action against Drive-derived abilities."""
+        # Import here to avoid a circular import through core.api.serializers
+        from core.services import drive_client  # pylint: disable=import-outside-toplevel
 
-        # Apply permission checks only for creation (POST requests)
-        if view.action != "create":
-            return True
-
-        # Check if resource_id is passed in the context
         try:
-            document_id = view.kwargs["resource_id"]
-        except KeyError as exc:
-            raise exceptions.ValidationError(
-                "You must set a document ID in kwargs to manage document invitations."
-            ) from exc
+            item = drive_client.get_item(obj.id, request.user)
+        except drive_client.DriveClientError as exc:
+            if exc.status_code in (403, 404):
+                return False
+            drive_client.raise_as_drf(exc)
 
-        # Check if the user has access to manage invitations (Owner/Admin roles)
-        return DocumentAccess.objects.filter(
-            Q(user=user) | Q(team__in=user.teams),
-            document=document_id,
-            role__in=[RoleChoices.OWNER, RoleChoices.ADMIN],
-        ).exists()
+        # The document is a wrapper around the Drive item: hydrate it so
+        # abilities and link data flow from the instance everywhere downstream.
+        obj.drive_item = item
+        abilities = drive_client.map_drive_abilities(item.get("abilities"))
 
-
-class ResourceWithAccessPermission(permissions.BasePermission):
-    """A permission class for invitations."""
-
-    def has_permission(self, request, view):
-        """check create permission."""
-        return request.user.is_authenticated or view.action != "create"
-
-    def has_object_permission(self, request, view, obj):
-        """Check permission for a given object."""
-        abilities = obj.get_abilities(request.user)
-        action = view.action
-        return abilities.get(action, False)
-
-
-class DocumentPermission(permissions.BasePermission):
-    """Subclass to handle soft deletion specificities."""
-
-    def has_permission(self, request, view):
-        """check create permission for documents."""
-        return request.user.is_authenticated or view.action != "create"
-
-    def has_object_permission(self, request, view, obj):
-        """
-        Return a 404 on deleted documents
-        - for which the trashbin cutoff is past
-        - for which the current user is not owner of the document or one of its ancestors
-        """
-        if (
-            deleted_at := obj.ancestors_deleted_at
-        ) and deleted_at < get_trashbin_cutoff():
-            raise Http404
-
-        abilities = obj.get_abilities(request.user)
         action = view.action
         try:
             action = ACTION_FOR_METHOD_TO_PERMISSION[view.action][request.method]
         except KeyError:
             pass
 
-        has_permission = abilities.get(action, False)
-
-        if obj.ancestors_deleted_at and not RoleChoices.OWNER in obj.user_roles:
-            raise Http404
-
-        return has_permission
-
-
-class ResourceAccessPermission(IsAuthenticated):
-    """Permission class for document access objects."""
-
-    def has_permission(self, request, view):
-        """check create permission for accesses in documents tree."""
-        if super().has_permission(request, view) is False:
-            return False
-
-        if view.action == "create":
-            role = getattr(view, view.resource_field_name).get_role(request.user)
-            if role not in choices.PRIVILEGED_ROLES:
-                raise exceptions.PermissionDenied(
-                    "You are not allowed to manage accesses for this resource."
-                )
-
-        return True
-
-    def has_object_permission(self, request, view, obj):
-        """Check permission for a given object."""
-        abilities = obj.get_abilities(request.user)
-
-        requested_role = request.data.get("role")
-        if requested_role and requested_role not in abilities.get("set_role_to", []):
-            return False
-
-        action = view.action
         return abilities.get(action, False)
 
 
+# POC-DRIVE-SHARING: disabled until Drive implements AskForAccess — do not delete
+# class ResourceAccessPermission(IsAuthenticated):
+#     """Permission class for document access objects."""
+#
+#     def has_permission(self, request, view):
+#         """check create permission for accesses in documents tree."""
+#         if super().has_permission(request, view) is False:
+#             return False
+#
+#         if view.action == "create":
+#             role = getattr(view, view.resource_field_name).get_role(request.user)
+#             if role not in choices.PRIVILEGED_ROLES:
+#                 raise exceptions.PermissionDenied(
+#                     "You are not allowed to manage accesses for this resource."
+#                 )
+#
+#         return True
+#
+#     def has_object_permission(self, request, view, obj):
+#         """Check permission for a given object."""
+#         abilities = obj.get_abilities(request.user)
+#
+#         requested_role = request.data.get("role")
+#         if requested_role and requested_role not in abilities.get("set_role_to", []):
+#             return False
+#
+#         action = view.action
+#         return abilities.get(action, False)
+
+
 class CommentPermission(permissions.BasePermission):
-    """Permission class for comments."""
+    """
+    Permission class for comments. Abilities are delegated to Drive, which
+    owns document sharing.
+    """
 
     def has_permission(self, request, view):
         """Check permission for a given object."""
         if view.action in ["create", "list"]:
-            document_abilities = view.get_document_or_404().get_abilities(request.user)
-            return document_abilities["comment"]
+            # Import here to avoid a circular import through core.api.serializers
+            from core.services import (  # pylint: disable=import-outside-toplevel
+                drive_client,
+            )
+
+            document = view.get_document_or_404()
+            abilities, _role = drive_client.get_doc_context(document.id, request.user)
+            return abilities["comment"]
 
         return True
 

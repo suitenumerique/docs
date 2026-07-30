@@ -8,7 +8,6 @@ from django.db import transaction
 from django.shortcuts import redirect
 from django.utils.translation import gettext_lazy as _
 
-from treebeard.admin import TreeAdmin
 
 from core import models
 from core.tasks.user_reconciliation import user_reconciliation_csv_import_job
@@ -164,16 +163,8 @@ class UserReconciliationAdmin(admin.ModelAdmin):
     actions = [process_reconciliation]
 
 
-class DocumentAccessInline(admin.TabularInline):
-    """Inline admin class for document accesses."""
-
-    autocomplete_fields = ["user"]
-    model = models.DocumentAccess
-    extra = 0
-
-
 @admin.register(models.Document)
-class DocumentAdmin(TreeAdmin):
+class DocumentAdmin(admin.ModelAdmin):
     """Document admin interface declaration."""
 
     fieldsets = (
@@ -183,76 +174,23 @@ class DocumentAdmin(TreeAdmin):
                 "fields": (
                     "id",
                     "title",
-                )
-            },
-        ),
-        (
-            _("Permissions"),
-            {
-                "fields": (
                     "creator",
-                    "link_reach",
-                    "link_role",
-                )
-            },
-        ),
-        (
-            _("Tree structure"),
-            {
-                "fields": (
-                    "path",
-                    "depth",
-                    "numchild",
-                    "duplicated_from",
                     "attachments",
                 )
             },
         ),
     )
-    inlines = (DocumentAccessInline,)
     list_display = (
         "id",
         "title",
-        "link_reach",
-        "link_role",
         "created_at",
         "updated_at",
     )
     readonly_fields = (
         "attachments",
         "creator",
-        "depth",
-        "duplicated_from",
         "id",
-        "numchild",
-        "path",
     )
     search_fields = ("id", "title")
 
 
-@admin.register(models.Invitation)
-class InvitationAdmin(admin.ModelAdmin):
-    """Admin interface to handle invitations."""
-
-    fields = (
-        "email",
-        "document",
-        "role",
-        "created_at",
-        "issuer",
-    )
-    readonly_fields = (
-        "created_at",
-        "is_expired",
-        "issuer",
-    )
-    list_display = (
-        "email",
-        "document",
-        "created_at",
-        "is_expired",
-    )
-
-    def save_model(self, request, obj, form, change):
-        obj.issuer = request.user
-        obj.save()
