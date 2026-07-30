@@ -7,12 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Loading } from '@/components';
 import { LOGIN_URL, setAuthUrl, useAuth } from '@/features/auth';
-import {
-  LinkReach,
-  LinkRole,
-  useCreateDoc,
-} from '@/features/docs/doc-management';
-import { useUpdateDocLink } from '@/features/docs/doc-share/api/useUpdateDocLink';
+import { useCreateDoc } from '@/features/docs/doc-management';
 import { useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
@@ -22,14 +17,10 @@ const Page: NextPageWithLayout = () => {
   const { setIsSkeletonVisible } = useSkeletonStore();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const linkReach = searchParams.get('link-reach');
-  const linkRole = searchParams.get('link-role');
   const title = searchParams.get('title');
   const { authenticated } = useAuth();
 
   const { mutateAsync: createDocAsync, data: doc } = useCreateDoc();
-
-  const { mutateAsync: updateDocLinkAsync } = useUpdateDocLink();
 
   const redirectToDoc = useCallback(
     (docId: string) => {
@@ -52,32 +43,12 @@ const Page: NextPageWithLayout = () => {
       return;
     }
 
+    // Link configuration is managed in Drive: the legacy link-reach/link-role
+    // query params are ignored.
     createDocAsync({
       title: title || undefined,
     })
       .then((createdDoc) => {
-        if ((linkReach && linkRole) || linkReach) {
-          updateDocLinkAsync({
-            id: createdDoc.id,
-            link_reach: linkReach as LinkReach,
-            link_role: (linkRole as LinkRole | undefined) || undefined,
-          })
-            .catch((error) => {
-              captureException(error, {
-                extra: {
-                  docId: createdDoc.id,
-                  linkReach,
-                  linkRole,
-                },
-              });
-            })
-            .finally(() => {
-              redirectToDoc(createdDoc.id);
-            });
-
-          return;
-        }
-
         redirectToDoc(createdDoc.id);
       })
       .catch((error) => {
@@ -87,16 +58,7 @@ const Page: NextPageWithLayout = () => {
           },
         });
       });
-  }, [
-    authenticated,
-    createDocAsync,
-    doc,
-    linkReach,
-    linkRole,
-    redirectToDoc,
-    title,
-    updateDocLinkAsync,
-  ]);
+  }, [authenticated, createDocAsync, doc, redirectToDoc, title]);
 
   return (
     <>

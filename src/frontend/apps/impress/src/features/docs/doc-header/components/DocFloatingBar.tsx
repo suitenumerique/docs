@@ -1,7 +1,6 @@
 import { Box } from '@/components';
 import { CardFloatingBar, FloatingBar } from '@/components/FloatingBar';
 import { useDocStore } from '@/docs/doc-management/stores/useDocStore';
-import { DocShareButton } from '@/features/docs/doc-share/components/DocShareButton';
 import { RightPanelCollapseButton } from '@/features/right-panel/components/RightPanelCollapseButton';
 
 import { DocLeftPanelCollapseButton } from './DocLeftPanelCollapseButton';
@@ -15,7 +14,6 @@ export const DocFloatingBar = () => {
     <FloatingBar>
       <DocLeftPanelCollapseButton />
       <Box $direction="row" $align="center" $gap="2xs">
-        {!isDeletedDoc && currentDoc && <DocShareButton doc={currentDoc} />}
         <CardFloatingBar>
           <RightPanelCollapseButton />
           {!isDeletedDoc && currentDoc && <DocToolBox doc={currentDoc} />}

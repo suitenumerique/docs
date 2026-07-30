@@ -7,10 +7,8 @@ import { useTranslation } from 'react-i18next';
 import ContentCopySVG from '@/assets/icons/ui-kit/content_copy.svg';
 import DeleteSVG from '@/assets/icons/ui-kit/delete.svg';
 import DocMoveInSVG from '@/assets/icons/ui-kit/doc-move-in.svg';
-import GroupSVG from '@/assets/icons/ui-kit/group.svg';
 import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
 import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
-import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
 import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
 import {
   Doc,
@@ -26,29 +24,11 @@ import { useFocusStore } from '@/stores';
 
 import { DocMoveModal } from './DocMoveModal';
 
-const DocShareModal = dynamic(
-  () =>
-    import('@/docs/doc-share/components/DocShareModal').then((mod) => ({
-      default: mod.DocShareModal,
-    })),
-  { ssr: false },
-);
-
 const ModalRemoveDoc = dynamic(
   () =>
     import('@/docs/doc-management/components/ModalRemoveDoc').then((mod) => ({
       default: mod.ModalRemoveDoc,
     })),
-  { ssr: false },
-);
-
-const ConfirmationLeaveModal = dynamic(
-  () =>
-    import('@/docs/doc-share/components/ConfirmationLeaveModal').then(
-      (mod) => ({
-        default: mod.ConfirmationLeaveModal,
-      }),
-    ),
   { ssr: false },
 );
 
@@ -61,8 +41,6 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
   const { restoreFocus, addLastFocus } = useFocusStore();
   const [openDropdown, setOpenDropdown] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
-  const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
-  const [isModalShareOpen, setIsModalShareOpen] = useState(false);
   const [isModalMoveOpen, setIsModalMoveOpen] = useState(false);
   const { untitledDocument } = useTrans();
 
@@ -100,15 +78,6 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
       showSeparator: true,
     },
     {
-      label: t('Share'),
-      icon: <GroupSVG width={24} height={24} aria-hidden="true" />,
-      callback: () => {
-        setIsModalShareOpen(true);
-      },
-
-      testId: `docs-grid-actions-share-${doc.id}`,
-    },
-    {
       label: t('Move into a doc'),
       icon: <DocMoveInSVG width={24} height={24} aria-hidden="true" />,
       callback: () => {
@@ -129,13 +98,6 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
         });
       },
       showSeparator: true,
-    },
-    {
-      label: t('Leave'),
-      icon: <LeaveSVG width={24} height={24} aria-hidden="true" />,
-      callback: () => {
-        setIsModalLeaveOpen(true);
-      },
     },
     {
       label: t('Delete'),
@@ -181,24 +143,6 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
         <ModalRemoveDoc
           onClose={() => {
             setIsModalRemoveOpen(false);
-            restoreFocus();
-          }}
-          doc={doc}
-        />
-      )}
-      {isModalShareOpen && (
-        <DocShareModal
-          doc={doc}
-          onClose={() => {
-            setIsModalShareOpen(false);
-            restoreFocus();
-          }}
-        />
-      )}
-      {isModalLeaveOpen && (
-        <ConfirmationLeaveModal
-          onClose={() => {
-            setIsModalLeaveOpen(false);
             restoreFocus();
           }}
           doc={doc}

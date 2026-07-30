@@ -21,14 +21,6 @@ import { useResponsiveStore } from '@/stores';
 
 import { DocsGridItemDate, DocsGridItemTitle } from './DocsGridItem';
 
-const AlertModalRequestAccess = dynamic(
-  () =>
-    import('@/docs/doc-share/components/AlertModalRequestAccess').then(
-      (mod) => ({ default: mod.AlertModalRequestAccess }),
-    ),
-  { ssr: false },
-);
-
 const ModalConfirmationMoveDoc = dynamic(
   () =>
     import('./ModalConfimationMoveDoc').then((mod) => ({
@@ -96,7 +88,6 @@ export const DocMoveModal = ({
   const { untitledDocument } = useTrans();
   const docTargetTitle = docSelected?.title || untitledDocument;
   const modalConfirmation = useModal();
-  const modalRequest = useModal();
   const { mutateAsync: moveDoc } = useMoveDoc();
   const [search, setSearch] = useState('');
   const { isDesktop, isTablet, isMobile } = useResponsiveStore();
@@ -155,7 +146,6 @@ export const DocMoveModal = ({
               fullWidth
               onClick={() => {
                 if (!docSelected?.abilities.move) {
-                  modalRequest.open();
                   return;
                 }
 
@@ -290,19 +280,6 @@ export const DocMoveModal = ({
           onClose={modalConfirmation.onClose}
           onConfirm={handleMoveDoc}
           targetDocumentTitle={docTargetTitle}
-        />
-      )}
-      {modalRequest.isOpen && docSelected?.id && (
-        <AlertModalRequestAccess
-          docId={docSelected.id}
-          isOpen={modalRequest.isOpen}
-          onClose={modalRequest.onClose}
-          onConfirm={() => {
-            modalRequest.onClose();
-            onClose();
-          }}
-          targetDocumentTitle={docTargetTitle}
-          title={t('Move document')}
         />
       )}
     </>
