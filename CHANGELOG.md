@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) Add "Copy link to block" feature #2547
+
 ### Changed
 
 - ♿️(frontend) use anchor links for interlinking sub-documents #2391

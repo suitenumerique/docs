@@ -21,6 +21,7 @@ import TableHeaderColumnIcon from '@/icons/table-header-column.svg';
 import TableHeaderRowIcon from '@/icons/table-header-row.svg';
 import TrashIcon from '@/icons/trash.svg';
 
+import { LinkToBlockItem } from './LinkToBlockItem';
 import { TableHeaderSeparator } from './TableHeaderSeparator';
 
 const DocsDragHandleMenu = () => {
@@ -40,6 +41,7 @@ const DocsDragHandleMenu = () => {
         </Box>
       </BlockColorsItem>
       <HorizontalSeparator $margin={{ vertical: '3xs' }} />
+      <LinkToBlockItem />
       <PresentBlockItem />
       <TableHeaderSeparator />
       <TableRowHeaderItem>
