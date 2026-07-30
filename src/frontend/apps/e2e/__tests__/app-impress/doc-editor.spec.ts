@@ -23,11 +23,7 @@ test.describe('Doc Editor', () => {
   }) => {
     await createDoc(page, 'doc-toolbar', browserName, 1);
 
-    await verifyDocName(page, 'doc-toolbar');
-
     const editor = await writeInEditor({ page, text: 'test content' });
-
-    await page.waitForTimeout(1500);
 
     await editor
       .getByText('test content', {
@@ -103,6 +99,30 @@ test.describe('Doc Editor', () => {
     ).toBeVisible();
     await expect(
       toolbar.locator('button[data-test="downloadfile"]'),
+    ).toBeVisible();
+  });
+
+  test('it checks side menu buttons are displayed', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-side-menu', browserName, 1);
+
+    const { editor } = await openSuggestionMenu({ page, suggestion: 'Table' });
+
+    await editor.locator('.tableWrapper').first().hover();
+
+    await page.locator('.bn-side-menu > button').last().click();
+    await expect(page.getByRole('menuitem', { name: 'Colors' })).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Header row' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Header column' }),
+    ).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Copy link to block' }),
     ).toBeVisible();
   });
 
@@ -391,7 +411,7 @@ test.describe('Doc Editor', () => {
     await page.keyboard.press('Escape');
 
     await page.locator('.bn-side-menu > button').last().click();
-    await page.locator('.mantine-Menu-dropdown > button').last().click();
+    await page.getByRole('menuitem', { name: 'Color' }).click();
     await page.locator('.bn-color-picker-dropdown > button').last().click();
 
     await expect(
@@ -636,5 +656,46 @@ test.describe('Doc Editor', () => {
     await page.waitForTimeout(500);
 
     await expect(editor.getByText('Mobile Text')).toBeVisible();
+  });
+
+  test('it checks "Copy link to block" feature', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-scroll', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'First Block' });
+
+    for (let i = 0; i < 30; i++) {
+      await page.keyboard.press('Enter');
+    }
+
+    await writeInEditor({ page, text: 'My Block' });
+
+    await editor
+      .locator('.bn-block-outer')
+      .filter({ hasText: 'My Block' })
+      .first()
+      .hover();
+
+    await page.locator('.bn-side-menu > button').last().click();
+    await page.getByRole('menuitem', { name: 'Link to block' }).click();
+    await expect(page.getByText('Link Copied !')).toBeVisible();
+
+    const url = page.url();
+
+    const handle = await page.evaluateHandle(() =>
+      navigator.clipboard.readText(),
+    );
+    const clipboardContent = await handle.jsonValue();
+
+    await expect(editor.getByText('First Block')).not.toBeInViewport();
+    await page.goto(url);
+    await expect(editor.getByText('First Block')).toBeInViewport();
+    await expect(editor.getByText('My Block')).not.toBeInViewport();
+
+    await page.goto(clipboardContent);
+    await expect(editor.getByText('First Block')).not.toBeInViewport();
+    await expect(editor.getByText('My Block')).toBeInViewport();
   });
 });

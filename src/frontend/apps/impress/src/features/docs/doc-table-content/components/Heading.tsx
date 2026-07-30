@@ -3,11 +3,9 @@ import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { scrollBlockIntoView } from '@/docs/doc-editor/hook/useScrollToBlockAnchor';
 import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
-import { getMainContentElement } from '@/layouts/utils';
 import { useResponsiveStore } from '@/stores';
-
-const SCROLL_MARGIN_TOP = 50;
 
 const leftPaddingMap: { [key: number]: string } = {
   3: '1.5rem',
@@ -61,24 +59,8 @@ export const Heading = ({
 
         const blockEl = document.getElementById(headingId);
 
-        // Try to scroll the main content container instead of the block itself
-        // to avoid the block being hidden behind the header
-        const container = getMainContentElement();
-
-        if (blockEl && container) {
-          const top =
-            blockEl.getBoundingClientRect().top -
-            container.getBoundingClientRect().top +
-            container.scrollTop -
-            SCROLL_MARGIN_TOP;
-
-          container.scrollTo({ top, behavior: 'smooth' });
-        } else {
-          blockEl?.scrollIntoView({
-            behavior: 'smooth',
-            inline: 'start',
-            block: 'start',
-          });
+        if (blockEl) {
+          scrollBlockIntoView(blockEl);
         }
       }}
       $radius="var(--c--globals--spacings--st)"
