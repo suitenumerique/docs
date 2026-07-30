@@ -22,7 +22,7 @@ services:
   mailcatcher:
     image: sj26/mailcatcher:latest
     ports:
-      - "1081:1080"
+      - "1082:1080"
 
   minio:
     user: ${DOCKER_USER:-1000}
@@ -31,8 +31,8 @@ services:
       - MINIO_ROOT_USER=impress
       - MINIO_ROOT_PASSWORD=password
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9002:9000"
+      - "9003:9001"
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 1s
@@ -73,7 +73,7 @@ services:
       - env.d/development/postgresql
       - env.d/development/postgresql.local
     ports:
-      - "8071:8000"
+      - "8072:8000"
     networks:
       default: {}
       lasuite:
@@ -118,7 +118,7 @@ services:
   nginx:
     image: nginx:1.25
     ports:
-      - "8083:8083"
+      - "8084:8083"
     networks:
       default: {}
       lasuite:
@@ -129,21 +129,14 @@ services:
     depends_on:
       app-dev:
         condition: service_started
-      keycloak:
-        condition: service_healthy
-        restart: true
 
   nginx-frontend:
     image: nginx:1.25
     ports:
-      - "3000:3000"
+      - "3001:3000"
     volumes:
       - ./src/frontend/apps/impress/conf/default.conf:/etc/nginx/conf.d/impress.conf
       - ./src/frontend/apps/impress/out:/app
-    depends_on:
-      keycloak:
-        condition: service_healthy
-        restart: true
 
   frontend-development:
     user: "${DOCKER_USER:-1000}"
@@ -152,16 +145,18 @@ services:
       dockerfile: ./src/frontend/Dockerfile
       target: impress-dev
       args:
-        API_ORIGIN: "http://localhost:8071"
+        API_ORIGIN: "http://localhost:8072"
         PUBLISH_AS_MIT: "false"
         SW_DEACTIVATED: "true"
     image: impress:frontend-development
+    environment:
+      - NEXT_PUBLIC_API_ORIGIN=http://localhost:8072
     volumes:
       - ./src/frontend:/home/frontend
       - /home/frontend/node_modules
       - /home/frontend/apps/impress/node_modules
     ports:
-      - "3000:3000"
+      - "3001:3000"
 
   crowdin:
     image: crowdin/cli:3.16.0
@@ -193,7 +188,7 @@ services:
       - env.d/development/common
       - env.d/development/common.local
     ports:
-      - "4444:4444"
+      - "4445:4444"
     volumes:
       - ./src/frontend/:/home/frontend
       - /home/frontend/node_modules
@@ -252,7 +247,7 @@ services:
       timeout: 2s
       retries: 300
     ports:
-      - "8080:8080"
+      - "8082:8080"
     depends_on:
       kc_postgresql:
         condition: service_healthy
