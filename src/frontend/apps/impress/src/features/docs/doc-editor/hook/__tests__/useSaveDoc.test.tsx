@@ -20,6 +20,9 @@ vi.mock('@/docs/doc-management', async () => ({
   useUpdateDoc: (
     await vi.importActual('@/docs/doc-management/api/useUpdateDoc')
   ).useUpdateDoc,
+  // useSaveDoc reads `encryptionTransition` from the provider store; no
+  // transition is the default (normal save path these tests exercise).
+  useProviderStore: () => ({ encryptionTransition: null }),
 }));
 
 describe('useSaveDoc', () => {
@@ -132,9 +135,12 @@ describe('useSaveDoc', () => {
     const docId = 'test-doc-id';
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 
-    const { unmount } = renderHook(() => useSaveDoc(docId, yDoc, true, false, null), {
-      wrapper: AppWrapper,
-    });
+    const { unmount } = renderHook(
+      () => useSaveDoc(docId, yDoc, true, false, null),
+      {
+        wrapper: AppWrapper,
+      },
+    );
 
     unmount();
 

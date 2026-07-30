@@ -27,7 +27,7 @@ export function useEncryption(
   } | null>(null);
   const [error, setError] = useState<EncryptionError>(null);
 
-  const enableEncryption: boolean = true; // TODO: this could be toggled for instances not needing encryption to save some requests
+  const enableEncryption = true; // TODO: this could be toggled for instances not needing encryption to save some requests
 
   useEffect(() => {
     let cancelled = false;
@@ -39,7 +39,7 @@ export function useEncryption(
         setSettings(null);
         setError(null);
         return;
-      } else if (enableEncryption === false) {
+      } else if (!enableEncryption) {
         setLoading(false);
         setSettings(null);
         setError(null);
@@ -99,7 +99,7 @@ export function useEncryption(
       }
     }
 
-    initEncryption();
+    void initEncryption();
 
     return () => {
       cancelled = true;

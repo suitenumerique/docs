@@ -3,6 +3,11 @@ import docsPlugin from 'eslint-plugin-docs';
 
 const eslintConfig = defineConfig([
   {
+    // Verbatim vendored copy of the encryption service's generated SDK
+    // declaration — never hand-edited, so never linted.
+    ignores: ['src/features/docs/doc-collaboration/vault/client-sdk.d.ts'],
+  },
+  {
     plugins: {
       docs: docsPlugin,
     },

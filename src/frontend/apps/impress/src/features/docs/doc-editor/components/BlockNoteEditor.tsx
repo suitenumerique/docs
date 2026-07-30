@@ -19,8 +19,8 @@ import type { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
-import { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import { useCunninghamTheme } from '@/cunningham';
+import { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import {
   Doc,
   SwitchableProvider,
@@ -41,9 +41,9 @@ import { DocsBlockNoteEditor } from '../types';
 import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
+import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { EncryptedDocBanner } from './EncryptedDocBanner';
 import { EncryptionProvider } from './EncryptionProvider';
-import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { cssComments, useComments } from './comments/';
 import {
   AccessibleImageBlock,
@@ -119,8 +119,12 @@ export const BlockNoteEditor = ({
     lang = 'en';
   }
 
-  const encryptedSymmetricKey = documentEncryptionSettings?.encryptedSymmetricKey;
-  const { uploadFile, errorAttachment } = useUploadFile(doc.id, encryptedSymmetricKey);
+  const encryptedSymmetricKey =
+    documentEncryptionSettings?.encryptedSymmetricKey;
+  const { uploadFile, errorAttachment } = useUploadFile(
+    doc.id,
+    encryptedSymmetricKey,
+  );
 
   const collabName = user?.full_name || user?.email;
   const cursorName = collabName || t('Anonymous');
@@ -248,7 +252,10 @@ export const BlockNoteEditor = ({
   }, [setEditor, editor]);
 
   return (
-    <EncryptionProvider encryptedSymmetricKey={encryptedSymmetricKey}>
+    <EncryptionProvider
+      encryptedSymmetricKey={encryptedSymmetricKey}
+      keyVersion={documentEncryptionSettings?.keyVersion}
+    >
       <EncryptedDocBanner />
       <Box
         ref={refEditorContainer}

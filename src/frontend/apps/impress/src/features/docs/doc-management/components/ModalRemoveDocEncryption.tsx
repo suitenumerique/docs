@@ -12,6 +12,8 @@ import * as Y from 'yjs';
 
 import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
 import { createDocAttachment } from '@/docs/doc-editor/api';
+import { useAuth } from '@/features/auth';
+import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
 import {
   Doc,
   EncryptionTransitionEvent,
@@ -21,7 +23,6 @@ import {
   useProviderStore,
   useRemoveDocEncryption,
 } from '@/features/docs/doc-management';
-import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
 import { useKeyboardAction } from '@/hooks';
 
 /**
@@ -32,6 +33,7 @@ const decryptRemoteAttachments = async (
   docId: string,
   vaultClient: VaultClient,
   encryptedSymmetricKey: ArrayBuffer,
+  keyVersion: number,
 ): Promise<Record<string, string>> => {
   const attachmentKeysAndMetadata = extractAttachmentKeysAndMetadata(yDoc);
 
@@ -57,6 +59,7 @@ const decryptRemoteAttachments = async (
     const { data: decryptedBuffer } = await vaultClient.decryptWithKey(
       encryptedBuffer,
       encryptedSymmetricKey,
+      keyVersion,
     );
 
     const fileName = oldAttachmentMetadata.name ?? 'file';
@@ -113,6 +116,7 @@ export const ModalRemoveDocEncryption = ({
   const { provider, notifyOthers, startEncryptionTransition } =
     useProviderStore();
   const { client: vaultClient } = useVaultClient();
+  const { user } = useAuth();
 
   const [isPending, setIsPending] = useState(false);
 
@@ -151,6 +155,9 @@ export const ModalRemoveDocEncryption = ({
         doc.id,
         vaultClient,
         encryptedSymmetricKey,
+        (user?.suite_user_id
+          ? doc.accesses_versions_per_user?.[user.suite_user_id]
+          : undefined) ?? 1,
       );
 
       const ongoingDocState = Y.encodeStateAsUpdate(ongoingDoc);
@@ -184,7 +191,11 @@ export const ModalRemoveDocEncryption = ({
       size={ModalSize.MEDIUM}
       rightActions={
         <>
-          <Button variant="secondary" onClick={handleClose} disabled={isPending}>
+          <Button
+            variant="secondary"
+            onClick={handleClose}
+            disabled={isPending}
+          >
             {t('Cancel')}
           </Button>
           <Button

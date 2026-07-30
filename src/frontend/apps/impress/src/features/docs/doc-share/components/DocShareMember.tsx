@@ -25,7 +25,6 @@ type Props = {
   isInherited?: boolean;
   suffix?: string;
   onSuffixClick?: () => void;
-  fingerprintKey?: string | null;
 };
 export const DocShareMemberItem = ({
   doc,
@@ -33,7 +32,6 @@ export const DocShareMemberItem = ({
   isInherited = false,
   suffix,
   onSuffixClick,
-  fingerprintKey,
 }: Props) => {
   const { t } = useTranslation();
   const { isLastOwner } = useWhoAmI(access);
@@ -79,7 +77,6 @@ export const DocShareMemberItem = ({
         user={access.user}
         suffix={suffix}
         onSuffixClick={onSuffixClick}
-        fingerprintKey={fingerprintKey}
         right={
           <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
             <DocRoleDropdown
@@ -147,7 +144,7 @@ export const QuickSearchGroupMember = ({
           const hasMismatch = uid ? keyMismatchUserIds?.has(uid) : false;
           const hasNoEncryptionKey =
             doc.is_encrypted &&
-            (!uid || !doc.accesses_fingerprints_per_user?.[uid]);
+            (!uid || !doc.accesses_versions_per_user?.[uid]);
 
           let suffix: string | undefined;
           if (hasMismatch) {
@@ -164,12 +161,7 @@ export const QuickSearchGroupMember = ({
               access={access}
               suffix={suffix}
               onSuffixClick={
-                hasMismatch && uid
-                  ? () => setMismatchUserId(uid)
-                  : undefined
-              }
-              fingerprintKey={
-                uid ? doc.accesses_fingerprints_per_user?.[uid] : undefined
+                hasMismatch && uid ? () => setMismatchUserId(uid) : undefined
               }
             />
           );

@@ -30,6 +30,7 @@ export interface UseCollaborationStore {
     encryptionOptions?: {
       vaultClient: VaultClient;
       encryptedSymmetricKey: ArrayBuffer;
+      keyVersion: number;
     },
   ) => SwitchableProvider;
   destroyProvider: () => void;
@@ -103,8 +104,9 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       //
 
       const AdaptedEncryptedWebSocket = createAdaptedEncryptedWebsocketClass({
-        vaultClient: encryptionOptions!.vaultClient,
-        encryptedSymmetricKey: encryptionOptions!.encryptedSymmetricKey,
+        vaultClient: encryptionOptions.vaultClient,
+        encryptedSymmetricKey: encryptionOptions.encryptedSymmetricKey,
+        keyVersion: encryptionOptions.keyVersion,
         onSystemMessage: (message) => {
           if (message === 'system:authenticated') {
             set({ isReady: true, isConnected: true });
@@ -117,7 +119,9 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
           // text — the SDK guarantees `code === 'WRONG_SECRET_KEY'`
           // for the AEAD-verification failure branch (libsodium's
           // "wrong secret key for the given ciphertext").
-          if ((err as VaultError | null | undefined)?.code === 'WRONG_SECRET_KEY') {
+          if (
+            (err as VaultError | null | undefined)?.code === 'WRONG_SECRET_KEY'
+          ) {
             set({ decryptionFailed: true });
           }
         },

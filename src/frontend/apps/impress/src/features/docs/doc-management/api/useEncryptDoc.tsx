@@ -11,7 +11,7 @@ interface EncryptDocProps {
   docId: string;
   content: Uint8Array<ArrayBufferLike>;
   encryptedSymmetricKeyPerUser: Record<string, string | null>;
-  encryptionPublicKeyFingerprintPerUser: Record<string, string | null>;
+  encryptionPublicKeyVersionPerUser: Record<string, number | null>;
   attachmentKeyMapping?: Record<string, string>;
 }
 
@@ -24,8 +24,8 @@ export const encryptDoc = async ({
     body: JSON.stringify({
       content: toBase64(params.content),
       encryptedSymmetricKeyPerUser: params.encryptedSymmetricKeyPerUser,
-      encryptionPublicKeyFingerprintPerUser:
-        params.encryptionPublicKeyFingerprintPerUser,
+      encryptionPublicKeyVersionPerUser:
+        params.encryptionPublicKeyVersionPerUser,
       attachmentKeyMapping: params.attachmentKeyMapping || {},
     }),
   });

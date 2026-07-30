@@ -76,7 +76,7 @@ export interface Doc {
   user_role: Role;
   encrypted_document_symmetric_key_for_user?: string;
   accesses_user_ids?: string[];
-  accesses_fingerprints_per_user?: Record<string, string>;
+  accesses_versions_per_user?: Record<string, number>;
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;

@@ -80,7 +80,7 @@ export const DocsGrid = ({
     });
   }, [data?.pages]);
 
-  const { encryptionLoading, encryptionSettings } = useUserEncryption();
+  const { encryptionLoading } = useUserEncryption();
 
   const loading = isFetching || isLoading || encryptionLoading;
   const hasDocs = data?.pages.some((page) => page.results.length > 0);

@@ -53,15 +53,14 @@ export function usePublicKeyRegistry(
     }
 
     let cancelled = false;
+    const accesses = accessesPublicKeysPerUser;
 
     async function checkKeys() {
       try {
         const db = await getEncryptionDB();
         const newMismatches: PublicKeyMismatch[] = [];
 
-        for (const [userId, currentKey] of Object.entries(
-          accessesPublicKeysPerUser!,
-        )) {
+        for (const [userId, currentKey] of Object.entries(accesses)) {
           // Skip the current user — they know about their own key changes
           if (currentUserId && userId === currentUserId) {
             // Still store the key so it stays up to date locally
@@ -95,7 +94,7 @@ export function usePublicKeyRegistry(
     }
 
     setLoading(true);
-    checkKeys();
+    void checkKeys();
 
     return () => {
       cancelled = true;

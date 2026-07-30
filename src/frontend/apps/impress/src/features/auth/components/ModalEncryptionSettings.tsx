@@ -20,7 +20,6 @@ interface ModalEncryptionSettingsProps {
 export const ModalEncryptionSettings = ({
   isOpen,
   onClose,
-  onRequestReOnboard,
 }: ModalEncryptionSettingsProps) => {
   const { client: vaultClient, refreshKeyState } = useVaultClient();
   const { refreshEncryption } = useUserEncryption();
@@ -39,16 +38,18 @@ export const ModalEncryptionSettings = ({
 
   // Listen for interface close and key changes
   useEffect(() => {
-    if (!vaultClient) return;
+    if (!vaultClient) {
+      return;
+    }
 
     const handleClosed = () => {
       setSettingsOpened(false);
-      refreshKeyState().then(() => refreshEncryption());
+      void refreshKeyState().then(() => refreshEncryption());
       onClose();
     };
 
     const handleKeysDestroyed = () => {
-      refreshKeyState().then(() => refreshEncryption());
+      void refreshKeyState().then(() => refreshEncryption());
     };
 
     vaultClient.on('interface:closed', handleClosed);

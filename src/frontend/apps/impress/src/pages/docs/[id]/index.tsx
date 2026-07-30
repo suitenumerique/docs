@@ -1,17 +1,14 @@
-import { TreeProvider } from '@gouvfr-lasuite/ui-kit';
+import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Spinner, TreeProvider } from '@gouvfr-lasuite/ui-kit';
 import { useQueryClient } from '@tanstack/react-query';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@gouvfr-lasuite/cunningham-react';
-import { Spinner } from '@gouvfr-lasuite/ui-kit';
-
 import { Box, Icon, Loading, StyledLink, Text, TextErrors } from '@/components';
 import { DEFAULT_QUERY_RETRY } from '@/core';
 import { DocEditor } from '@/docs/doc-editor';
-import { KeyMismatchPanel } from '@/features/docs/doc-management/components/KeyMismatchPanel';
 import {
   Doc,
   DocPage403,
@@ -27,6 +24,7 @@ import {
   useDocumentEncryption,
   useUserEncryption,
 } from '@/features/docs/doc-collaboration';
+import { KeyMismatchPanel } from '@/features/docs/doc-management/components/KeyMismatchPanel';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
@@ -102,7 +100,7 @@ const DocPage = ({ id }: DocProps) => {
     },
   );
 
-  const { authenticated } = useAuth();
+  const { authenticated, user } = useAuth();
   const [doc, setDoc] = useState<Doc>();
   const { encryptionLoading, encryptionError } = useUserEncryption();
   const {
@@ -112,6 +110,9 @@ const DocPage = ({ id }: DocProps) => {
   } = useDocumentEncryption(
     doc?.is_encrypted,
     doc?.encrypted_document_symmetric_key_for_user,
+    user?.suite_user_id
+      ? doc?.accesses_versions_per_user?.[user.suite_user_id]
+      : undefined,
   );
   const { setCurrentDoc } = useDocStore();
   const { addTask } = useBroadcastStore();

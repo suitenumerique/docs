@@ -45,8 +45,9 @@ export const useCollaboration = (
         if (initialDocState) {
           // Decrypt initial document content via vault — pure ArrayBuffer
           const { data: decryptedBuffer } = await vaultClient.decryptWithKey(
-            initialDocState.buffer as ArrayBuffer,
+            initialDocState.buffer,
             documentEncryptionSettings.encryptedSymmetricKey,
+            documentEncryptionSettings.keyVersion,
           );
 
           decryptedState = Buffer.from(decryptedBuffer);
@@ -60,6 +61,7 @@ export const useCollaboration = (
             vaultClient,
             encryptedSymmetricKey:
               documentEncryptionSettings.encryptedSymmetricKey,
+            keyVersion: documentEncryptionSettings.keyVersion,
           },
         );
 

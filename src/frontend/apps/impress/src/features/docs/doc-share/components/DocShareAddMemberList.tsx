@@ -9,11 +9,14 @@ import { useTranslation } from 'react-i18next';
 import { APIError } from '@/api';
 import { Box, Card } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { toBase64 } from '@/features/docs/doc-editor';
 import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import { Doc, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
-import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
+import {
+  fetchRegisteredKeys,
+  useVaultClient,
+} from '@/features/docs/doc-collaboration/vault';
+import { toBase64 } from '@/features/docs/doc-editor';
 
 import { useCreateDocAccess, useCreateDocInvitation } from '../api';
 import { OptionType } from '../types';
@@ -92,15 +95,21 @@ export const DocShareAddMemberList = ({
 
     // Fetch all public keys in a single request before processing users
     let publicKeysMap: Record<string, ArrayBuffer> = {};
+    let keyVersionsMap: Record<string, number> = {};
 
     if (doc.is_encrypted && documentEncryptionSettings && vaultClient) {
       const memberUserIds = selectedUsers
         .filter((user) => user.id !== user.email && user.suite_user_id)
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         .map((user) => user.suite_user_id!);
 
       if (memberUserIds.length > 0) {
-        const { publicKeys } = await vaultClient.fetchPublicKeys(memberUserIds);
+        const { publicKeys, versions } = await fetchRegisteredKeys(
+          vaultClient,
+          memberUserIds,
+        );
         publicKeysMap = publicKeys;
+        keyVersionsMap = versions;
       }
     }
 
@@ -139,15 +148,22 @@ export const DocShareAddMemberList = ({
 
       // For encrypted docs, re-wrap the symmetric key for the new member via vault
       let memberEncryptedSymmetricKey: string | null = null;
-      let encryptionPublicKeyFingerprint: string | null = null;
+      let encryptionPublicKeyVersion: number | null = null;
 
       if (doc.is_encrypted && documentEncryptionSettings && vaultClient) {
-        const userPublicKey = user.suite_user_id ? publicKeysMap[user.suite_user_id] : undefined;
+        const userPublicKey = user.suite_user_id
+          ? publicKeysMap[user.suite_user_id]
+          : undefined;
 
         if (userPublicKey && user.suite_user_id) {
+          // Pass a labeled recipient map (sub → {email, name}): the vault
+          // resolves + trust-checks the key itself (binding + TOFU); the label
+          // is display-only, shown if the trust modal needs a decision.
           const { encryptedKeys } = await vaultClient.shareKeys(
             documentEncryptionSettings.encryptedSymmetricKey,
-            { [user.suite_user_id]: userPublicKey },
+            {
+              [user.suite_user_id]: { email: user.email, name: user.full_name },
+            },
           );
 
           const wrappedKey = encryptedKeys[user.suite_user_id];
@@ -155,9 +171,10 @@ export const DocShareAddMemberList = ({
             memberEncryptedSymmetricKey = toBase64(new Uint8Array(wrappedKey));
           }
 
-          // Store the recipient's public key fingerprint at share time
-          encryptionPublicKeyFingerprint =
-            await vaultClient.computeKeyFingerprint(userPublicKey);
+          // Store the recipient's public key version at share time so a
+          // later version bump signals the access needs re-encryption
+          encryptionPublicKeyVersion =
+            keyVersionsMap[user.suite_user_id] ?? null;
         }
       }
 
@@ -165,7 +182,7 @@ export const DocShareAddMemberList = ({
         ...payload,
         memberId: user.id,
         memberEncryptedSymmetricKey,
-        encryptionPublicKeyFingerprint,
+        encryptionPublicKeyVersion,
       });
     });
 

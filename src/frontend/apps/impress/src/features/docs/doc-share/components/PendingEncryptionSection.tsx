@@ -3,10 +3,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Icon, Text } from '@/components';
-import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
+import type { DocumentEncryptionSettings } from '@/features/docs/doc-collaboration/hook/useDocumentEncryption';
+import {
+  fetchRegisteredKeys,
+  useVaultClient,
+} from '@/features/docs/doc-collaboration/vault';
 import { toBase64 } from '@/features/docs/doc-editor';
 import type { Access, Doc } from '@/features/docs/doc-management';
-import type { DocumentEncryptionSettings } from '@/features/docs/doc-collaboration/hook/useDocumentEncryption';
 
 import { useAcceptEncryptionAccess } from '../api/useAcceptEncryptionAccess';
 
@@ -76,10 +79,11 @@ export const PendingEncryptionSection = ({
       setProbing(false);
       return;
     }
-    vaultClient
-      .fetchPublicKeys(subs)
+    fetchRegisteredKeys(vaultClient, subs)
       .then(({ publicKeys }) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         const next: Record<string, boolean> = {};
         for (const sub of subs) {
           next[sub] = !!publicKeys[sub];
@@ -90,7 +94,9 @@ export const PendingEncryptionSection = ({
         /* leave empty — fall back to "waiting for their onboarding" */
       })
       .finally(() => {
-        if (!cancelled) setProbing(false);
+        if (!cancelled) {
+          setProbing(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -99,11 +105,16 @@ export const PendingEncryptionSection = ({
     // unrelated access array identity changes.
   }, [pendingSubsSignature, vaultClient]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (pending.length === 0) return null;
+  if (pending.length === 0) {
+    return null;
+  }
 
   const handleAccept = async (access: Access) => {
-    const sub = access.user?.suite_user_id;
-    if (!sub || !vaultClient || !documentEncryptionSettings) return;
+    const recipient = access.user;
+    const sub = recipient?.suite_user_id;
+    if (!sub || !recipient || !vaultClient || !documentEncryptionSettings) {
+      return;
+    }
     setInFlight((prev) => new Set(prev).add(access.id));
     setErrorByAccessId((prev) => {
       const copy = { ...prev };
@@ -111,7 +122,9 @@ export const PendingEncryptionSection = ({
       return copy;
     });
     try {
-      const { publicKeys } = await vaultClient.fetchPublicKeys([sub]);
+      const { publicKeys, versions } = await fetchRegisteredKeys(vaultClient, [
+        sub,
+      ]);
       const userPublicKey = publicKeys[sub];
       if (!userPublicKey) {
         setHasPublicKeyBySub((m) => ({ ...m, [sub]: false }));
@@ -119,22 +132,24 @@ export const PendingEncryptionSection = ({
           t("This user still hasn't completed their encryption onboarding."),
         );
       }
+      // The vault resolves + trust-checks the recipient key (binding + TOFU);
+      // the fetched userPublicKey above only gates on completed onboarding. The
+      // label (email/name) is display-only, shown if the trust modal opens.
       const { encryptedKeys } = await vaultClient.shareKeys(
         documentEncryptionSettings.encryptedSymmetricKey,
-        { [sub]: userPublicKey },
+        { [sub]: { email: recipient.email, name: recipient.full_name } },
       );
       const wrappedKey = encryptedKeys[sub];
       if (!wrappedKey) {
         throw new Error(t('Failed to wrap the document key for this user.'));
       }
-      const fingerprint = await vaultClient.computeKeyFingerprint(userPublicKey);
       await acceptMutation({
         docId: doc.id,
         accessId: access.id,
         encrypted_document_symmetric_key_for_user: toBase64(
           new Uint8Array(wrappedKey),
         ),
-        encryption_public_key_fingerprint: fingerprint,
+        encryption_public_key_version: versions[sub],
       });
     } catch (err) {
       setErrorByAccessId((prev) => ({

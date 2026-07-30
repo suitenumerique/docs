@@ -7,10 +7,10 @@
  * so only the first message incurs the hybrid decapsulation cost.
  */
 
-
 export class EncryptedWebSocket extends WebSocket {
   protected readonly vaultClient!: VaultClient;
   protected readonly encryptedSymmetricKey!: ArrayBuffer;
+  protected readonly keyVersion!: number;
   protected readonly onSystemMessage?: (message: string) => void;
   protected readonly onDecryptError?: (err: unknown) => void;
 
@@ -26,12 +26,11 @@ export class EncryptedWebSocket extends WebSocket {
     ): void {
       if (type === 'message') {
         const wrappedListener: typeof listener = async (event) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const messageEvent = event as any;
+          const messageEvent = event as MessageEvent;
 
           // System messages (strings) bypass encryption
           if (typeof messageEvent.data === 'string') {
-            this.onSystemMessage?.(messageEvent.data as string);
+            this.onSystemMessage?.(messageEvent.data);
 
             return;
           }
@@ -46,8 +45,9 @@ export class EncryptedWebSocket extends WebSocket {
             // Decrypt directly with ArrayBuffer — no base64 conversion
             const { data: decryptedBuffer } =
               await this.vaultClient.decryptWithKey(
-                messageEvent.data as ArrayBuffer,
+                messageEvent.data,
                 this.encryptedSymmetricKey,
+                this.keyVersion,
               );
 
             const decryptedData = new Uint8Array(decryptedBuffer);
@@ -83,8 +83,8 @@ export class EncryptedWebSocket extends WebSocket {
       get() {
         return explicitlySetListener;
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-      set(handler: ((handlerEvent: MessageEvent) => any) | null) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mirrors lib.dom WebSocket.onmessage signature (=> any)
+      set(_handler: ((handlerEvent: MessageEvent) => any) | null) {
         explicitlySetListener = null;
 
         throw new Error(
@@ -101,10 +101,7 @@ export class EncryptedWebSocket extends WebSocket {
   send(message: Uint8Array<ArrayBuffer>) {
     // Encrypt directly with ArrayBuffer — no base64 conversion
     this.vaultClient
-      .encryptWithKey(
-        message.buffer as ArrayBuffer,
-        this.encryptedSymmetricKey,
-      )
+      .encryptWithKey(message.buffer, this.encryptedSymmetricKey)
       .then(({ encryptedData }) => {
         super.send(new Uint8Array(encryptedData));
       })
@@ -117,12 +114,14 @@ export class EncryptedWebSocket extends WebSocket {
 export function createAdaptedEncryptedWebsocketClass(options: {
   vaultClient: VaultClient;
   encryptedSymmetricKey: ArrayBuffer;
+  keyVersion: number;
   onSystemMessage?: (message: string) => void;
   onDecryptError?: (err: unknown) => void;
 }) {
   return class extends EncryptedWebSocket {
     protected readonly vaultClient = options.vaultClient;
     protected readonly encryptedSymmetricKey = options.encryptedSymmetricKey;
+    protected readonly keyVersion = options.keyVersion;
     protected readonly onSystemMessage = options.onSystemMessage;
     protected readonly onDecryptError = options.onDecryptError;
   };

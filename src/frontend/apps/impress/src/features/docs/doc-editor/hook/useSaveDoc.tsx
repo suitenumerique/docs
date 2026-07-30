@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import * as Y from 'yjs';
 
 import { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
-import { useUpdateDoc, useProviderStore } from '@/docs/doc-management/';
+import { useProviderStore, useUpdateDoc } from '@/docs/doc-management/';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
 import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
 import { isFirefox } from '@/utils/userAgent';

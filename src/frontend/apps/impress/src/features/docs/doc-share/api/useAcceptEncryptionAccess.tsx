@@ -9,7 +9,7 @@ interface AcceptEncryptionAccessParams {
   docId: Doc['id'];
   accessId: string;
   encrypted_document_symmetric_key_for_user: string;
-  encryption_public_key_fingerprint: string;
+  encryption_public_key_version: number;
 }
 
 /**
@@ -19,13 +19,13 @@ interface AcceptEncryptionAccessParams {
  * wrapped symmetric key on the document) re-wraps it for a user whose
  * access row was created pending (they had no public key at invite
  * time). Flips `encrypted_document_symmetric_key_for_user` from NULL
- * to the supplied wrapped key and stores the current fingerprint.
+ * to the supplied wrapped key and stores the current key version.
  */
 export const acceptEncryptionAccess = async ({
   docId,
   accessId,
   encrypted_document_symmetric_key_for_user,
-  encryption_public_key_fingerprint,
+  encryption_public_key_version,
 }: AcceptEncryptionAccessParams): Promise<void> => {
   const response = await fetchAPI(
     `documents/${docId}/accesses/${accessId}/encryption-key/`,
@@ -33,7 +33,7 @@ export const acceptEncryptionAccess = async ({
       method: 'PATCH',
       body: JSON.stringify({
         encrypted_document_symmetric_key_for_user,
-        encryption_public_key_fingerprint,
+        encryption_public_key_version,
       }),
     },
   );

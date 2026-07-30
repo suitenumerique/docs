@@ -45,7 +45,6 @@ import {
   QuickSearchGroupAccessRequest,
 } from './DocShareAccessRequest';
 import { DocShareAddMemberList } from './DocShareAddMemberList';
-import { PendingEncryptionSection } from './PendingEncryptionSection';
 import {
   DocShareModalInviteUserRow,
   QuickSearchGroupInvitation,
@@ -53,6 +52,7 @@ import {
 import { QuickSearchGroupMember } from './DocShareMember';
 import { DocShareModalFooter } from './DocShareModalFooter';
 import { ModalKeyMismatch } from './ModalKeyMismatch';
+import { PendingEncryptionSection } from './PendingEncryptionSection';
 
 const ShareModalStyle = createGlobalStyle`
   .--docs--doc-share-modal [cmdk-item] {
@@ -94,6 +94,9 @@ export const DocShareModal = ({
   } = useDocumentEncryption(
     needsDerivation ? doc.is_encrypted : undefined,
     needsDerivation ? doc.encrypted_document_symmetric_key_for_user : undefined,
+    needsDerivation && user?.suite_user_id
+      ? doc.accesses_versions_per_user?.[user.suite_user_id]
+      : undefined,
   );
   const effectiveEncryptionSettings =
     documentEncryptionSettings ?? derivedEncryptionSettings ?? null;
@@ -479,7 +482,11 @@ const QuickSearchInviteInputSection = ({
 
   const handleSelect = useCallback(
     (user: User) => {
-      if (isEncrypted && (!user.suite_user_id || !doc.accesses_fingerprints_per_user?.[user.suite_user_id])) {
+      if (
+        isEncrypted &&
+        (!user.suite_user_id ||
+          !doc.accesses_versions_per_user?.[user.suite_user_id])
+      ) {
         setShowNoKeyModal(true);
         return;
       }
@@ -489,7 +496,7 @@ const QuickSearchInviteInputSection = ({
       }
       onSelect(user);
     },
-    [isEncrypted, doc.accesses_fingerprints_per_user, keyMismatchUserIds, onSelect],
+    [isEncrypted, doc.accesses_versions_per_user, keyMismatchUserIds, onSelect],
   );
 
   const searchUserData: QuickSearchData<User> = useMemo(() => {
@@ -529,12 +536,16 @@ const QuickSearchInviteInputSection = ({
       if (user.suite_user_id && keyMismatchUserIds?.has(user.suite_user_id)) {
         return t('DIFFERENT PUBLIC KEY, PLEASE VERIFY');
       }
-      if (isEncrypted && (!user.suite_user_id || !doc.accesses_fingerprints_per_user?.[user.suite_user_id])) {
+      if (
+        isEncrypted &&
+        (!user.suite_user_id ||
+          !doc.accesses_versions_per_user?.[user.suite_user_id])
+      ) {
         return t(`(encryption not enabled)`);
       }
       return undefined;
     },
-    [isEncrypted, doc.accesses_fingerprints_per_user, keyMismatchUserIds, t],
+    [isEncrypted, doc.accesses_versions_per_user, keyMismatchUserIds, t],
   );
 
   return (
@@ -549,7 +560,6 @@ const QuickSearchInviteInputSection = ({
           <DocShareModalInviteUserRow
             user={user}
             suffix={getUserSuffix(user)}
-            fingerprintKey={user.suite_user_id ? doc.accesses_fingerprints_per_user?.[user.suite_user_id] : undefined}
           />
         )}
       />
@@ -614,9 +624,12 @@ const QuickSearchInviteInputSection = ({
               onAcceptKey={
                 acceptNewKey
                   ? () => {
-                      void acceptNewKey(mismatchUser.suite_user_id!).then(() => {
-                        onSelect(mismatchUser);
-                      });
+                      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                      void acceptNewKey(mismatchUser.suite_user_id!).then(
+                        () => {
+                          onSelect(mismatchUser);
+                        },
+                      );
                     }
                   : undefined
               }

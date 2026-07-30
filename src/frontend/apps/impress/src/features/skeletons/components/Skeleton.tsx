@@ -20,7 +20,7 @@ export const Skeleton = ({ children }: PropsWithChildren) => {
   const { isSkeletonVisible } = useSkeletonStore();
   const { colorsTokens } = useCunninghamTheme();
   const [isVisible, setIsVisible] = useState(isSkeletonVisible);
-  const [isFadingOut, setIsFadingOut] = useState(true);
+  const [isFadingOut] = useState(true);
   const timeoutVisibleRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {

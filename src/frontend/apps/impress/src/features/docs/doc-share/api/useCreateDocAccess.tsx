@@ -21,7 +21,7 @@ interface CreateDocAccessParams {
   docId: Doc['id'];
   memberId: User['id'];
   memberEncryptedSymmetricKey: string | null;
-  encryptionPublicKeyFingerprint?: string | null;
+  encryptionPublicKeyVersion?: number | null;
 }
 
 export const createDocAccess = async ({
@@ -29,7 +29,7 @@ export const createDocAccess = async ({
   role,
   docId,
   memberEncryptedSymmetricKey,
-  encryptionPublicKeyFingerprint,
+  encryptionPublicKeyVersion,
 }: CreateDocAccessParams): Promise<Access> => {
   const response = await fetchAPI(`documents/${docId}/accesses/`, {
     method: 'POST',
@@ -37,8 +37,8 @@ export const createDocAccess = async ({
       user_id: memberId,
       role,
       encrypted_document_symmetric_key_for_user: memberEncryptedSymmetricKey,
-      ...(encryptionPublicKeyFingerprint && {
-        encryption_public_key_fingerprint: encryptionPublicKeyFingerprint,
+      ...(encryptionPublicKeyVersion != null && {
+        encryption_public_key_version: encryptionPublicKeyVersion,
       }),
     }),
   });

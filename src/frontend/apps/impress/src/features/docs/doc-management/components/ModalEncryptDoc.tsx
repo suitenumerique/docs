@@ -6,16 +6,20 @@ import {
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
+import { Spinner } from '@gouvfr-lasuite/ui-kit';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { Box, ButtonCloseModal, Icon, Text, TextErrors } from '@/components';
-import { toBase64 } from '@/features/docs/doc-editor';
 import { useUserEncryption } from '@/docs/doc-collaboration';
-import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
 import { createDocAttachment } from '@/docs/doc-editor/api';
 import { useAuth } from '@/features/auth';
+import {
+  fetchRegisteredKeys,
+  useVaultClient,
+} from '@/features/docs/doc-collaboration/vault';
+import { toBase64 } from '@/features/docs/doc-editor';
 import {
   Doc,
   EncryptionTransitionEvent,
@@ -30,7 +34,6 @@ import {
 import { useDocAccesses } from '@/features/docs/doc-share/api/useDocAccesses';
 import { useDocInvitations } from '@/features/docs/doc-share/api/useDocInvitations';
 import { useKeyboardAction } from '@/hooks';
-import { Spinner } from '@gouvfr-lasuite/ui-kit';
 
 /**
  * encrypt existing unencrypted attachments and return:
@@ -155,19 +158,32 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
   const hasPendingInvitations = !!invitationsData && invitationsData.count > 0;
 
   // Fetch public keys from the encryption service to check who has encryption enabled
-  const [publicKeysMap, setPublicKeysMap] = useState<Record<string, ArrayBuffer>>({});
+  const [publicKeysMap, setPublicKeysMap] = useState<
+    Record<string, ArrayBuffer>
+  >({});
+  const [keyVersionsMap, setKeyVersionsMap] = useState<Record<string, number>>(
+    {},
+  );
 
   useEffect(() => {
-    if (!accesses || !vaultClient) return;
+    if (!accesses || !vaultClient) {
+      return;
+    }
 
     const userIds = accesses
       .filter((a) => a.user?.suite_user_id)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       .map((a) => a.user.suite_user_id!);
 
-    if (userIds.length === 0) return;
+    if (userIds.length === 0) {
+      return;
+    }
 
-    vaultClient.fetchPublicKeys(userIds)
-      .then(({ publicKeys }) => setPublicKeysMap(publicKeys))
+    fetchRegisteredKeys(vaultClient, userIds)
+      .then(({ publicKeys, versions }) => {
+        setPublicKeysMap(publicKeys);
+        setKeyVersionsMap(versions);
+      })
       .catch(() => {});
   }, [accesses, vaultClient]);
 
@@ -177,9 +193,22 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
     }
 
     return accesses.filter(
-      (access) => access.user?.suite_user_id && !publicKeysMap[access.user.suite_user_id],
+      (access) =>
+        access.user?.suite_user_id && !publicKeysMap[access.user.suite_user_id],
     );
   }, [accesses, publicKeysMap]);
+
+  // The current user is the one performing the encryption — never surface them
+  // in the "haven't completed onboarding" summary, even if their own key has
+  // not yet propagated to the directory. The backend write path still relies on
+  // `membersWithoutKey` above.
+  const othersWithoutKey = useMemo(
+    () =>
+      membersWithoutKey.filter(
+        (access) => access.user?.suite_user_id !== user?.suite_user_id,
+      ),
+    [membersWithoutKey, user?.suite_user_id],
+  );
 
   const hasEncryptionKeys = !!encryptionSettings;
 
@@ -192,8 +221,7 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
     accesses === undefined || accesses.length === 0
       ? true
       : accesses.some(
-          (a) =>
-            a.user?.suite_user_id && !!publicKeysMap[a.user.suite_user_id],
+          (a) => a.user?.suite_user_id && !!publicKeysMap[a.user.suite_user_id],
         );
 
   const canEncrypt =
@@ -210,7 +238,14 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
   };
 
   const handleEncrypt = async () => {
-    if (!provider || !user || isPending || !canEncrypt || !encryptionSettings || !vaultClient) {
+    if (
+      !provider ||
+      !user ||
+      isPending ||
+      !canEncrypt ||
+      !encryptionSettings ||
+      !vaultClient
+    ) {
       return;
     }
 
@@ -220,7 +255,9 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
       notifyOthers(EncryptionTransitionEvent.ENCRYPTION_STARTED);
 
       if (Object.keys(publicKeysMap).length === 0) {
-        throw new Error('No public keys available. All members must have encryption enabled.');
+        throw new Error(
+          'No public keys available. All members must have encryption enabled.',
+        );
       }
 
       // Clone the Yjs document for encryption
@@ -229,11 +266,27 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
 
       const ongoingDocState = Y.encodeStateAsUpdate(ongoingDoc);
 
-      // Encrypt document content via vault — pure ArrayBuffer
+      // Encrypt document content via vault — pure ArrayBuffer. Pass a labeled
+      // recipient map (sub → {email, name}) for every member that has a
+      // published key: the vault resolves + trust-checks each key itself
+      // (binding + TOFU) before wrapping, and the labels are display-only,
+      // surfaced if the trust modal needs a decision. Emails are joined back
+      // from `accesses` (publicKeysMap only carries sub → key).
+      const recipients: Record<string, { email: string; name?: string }> = {};
+      for (const access of accesses ?? []) {
+        const sub = access.user?.suite_user_id;
+        if (sub && publicKeysMap[sub]) {
+          recipients[sub] = {
+            email: access.user.email,
+            name: access.user.full_name,
+          };
+        }
+      }
+
       const { encryptedContent: encryptedContentBuffer, encryptedKeys } =
         await vaultClient.encryptWithoutKey(
           ongoingDocState.buffer as ArrayBuffer,
-          publicKeysMap,
+          recipients,
         );
 
       // Contract with /encrypt/: every user on the access list must
@@ -252,31 +305,25 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
         }
       }
 
-      // Matched fingerprint map — same set of users, same cardinality.
+      // Matched version map — same set of users, same cardinality.
       // Stored on each DocumentAccess row so the key-mismatch panel can
-      // later show users which historical key the doc was encrypted for.
-      const encryptionPublicKeyFingerprintPerUser: Record<
-        string,
-        string | null
-      > = {};
-      for (const [uid, publicKey] of Object.entries(publicKeysMap)) {
-        try {
-          encryptionPublicKeyFingerprintPerUser[uid] =
-            await vaultClient.computeKeyFingerprint(publicKey);
-        } catch (err) {
-          console.warn('[encrypt] computeKeyFingerprint failed for', uid, err);
-          encryptionPublicKeyFingerprintPerUser[uid] = null;
-        }
+      // later detect key rotation (current version !== stored version).
+      const encryptionPublicKeyVersionPerUser: Record<string, number | null> =
+        {};
+      for (const uid of Object.keys(publicKeysMap)) {
+        encryptionPublicKeyVersionPerUser[uid] = keyVersionsMap[uid] ?? null;
       }
       for (const access of membersWithoutKey) {
         const sub = access.user?.suite_user_id;
-        if (sub && !(sub in encryptionPublicKeyFingerprintPerUser)) {
-          encryptionPublicKeyFingerprintPerUser[sub] = null;
+        if (sub && !(sub in encryptionPublicKeyVersionPerUser)) {
+          encryptionPublicKeyVersionPerUser[sub] = null;
         }
       }
 
       // Get the current user's encrypted key for attachment encryption
-      const currentUserEncryptedKey = user.suite_user_id ? encryptedKeys[user.suite_user_id] : undefined;
+      const currentUserEncryptedKey = user.suite_user_id
+        ? encryptedKeys[user.suite_user_id]
+        : undefined;
 
       // Encrypt existing attachments using the same symmetric key via vault
       let attachmentKeyMapping: Record<string, string> = {};
@@ -298,7 +345,7 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
         docId: doc.id,
         content: encryptedContent,
         encryptedSymmetricKeyPerUser,
-        encryptionPublicKeyFingerprintPerUser,
+        encryptionPublicKeyVersionPerUser,
         attachmentKeyMapping,
       });
 
@@ -470,27 +517,27 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
                 <Box $direction="row" $align="center" $gap="xs">
                   <Icon
                     iconName={
-                      membersWithoutKey.length === 0
+                      othersWithoutKey.length === 0
                         ? 'check_circle'
                         : 'hourglass_empty'
                     }
                     $size="sm"
                     $theme={
-                      membersWithoutKey.length === 0 ? 'success' : 'warning'
+                      othersWithoutKey.length === 0 ? 'success' : 'warning'
                     }
                   />
                   <Text $size="sm">
-                    {membersWithoutKey.length === 0
+                    {othersWithoutKey.length === 0
                       ? t('All members have encryption enabled')
                       : t(
                           '{{count}} member(s) haven’t completed encryption onboarding yet. They will be added as pending and won’t be able to decrypt the document until another validated collaborator accepts them from the share dialog.',
-                          { count: membersWithoutKey.length },
+                          { count: othersWithoutKey.length },
                         )}
                   </Text>
                 </Box>
-                {membersWithoutKey.length > 0 && (
+                {othersWithoutKey.length > 0 && (
                   <Box $margin={{ left: 'sm' }} $gap="3xs">
-                    {membersWithoutKey.map((access) => (
+                    {othersWithoutKey.map((access) => (
                       <Text key={access.id} $size="xs" $variation="secondary">
                         {access.user.full_name || access.user.email}
                       </Text>

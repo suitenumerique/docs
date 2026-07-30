@@ -219,9 +219,13 @@ const ImageBlockComponent = ({
   const showEncryptedPlaceholder =
     isEncrypted && (showClickPlaceholder || hasError) && !resolvedUrl;
 
+  // ResizableFileBlockWrapper's props type is internal to @blocknote/react and not exported.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const wrapperProps = { editor, block, ...rest } as any;
+
   return (
     <ResizableFileBlockWrapper
-      {...({ editor, block, ...rest } as any)}
+      {...wrapperProps}
       buttonIcon={
         <Icon iconName="image" $size="24px" $css="line-height: normal;" />
       }
@@ -286,9 +290,15 @@ export const AccessibleImageBlock = createReactBlockSpec(
     meta: {
       fileBlockAccept: ['image/*'],
     },
-    render: (props) => <ImageBlockComponent {...(props as any)} />,
+    render: (props) => (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      <ImageBlockComponent {...(props as any)} />
+    ),
     parse: imageParse(config),
-    toExternalHTML: (props) => <ImageToExternalHTML {...(props as any)} />,
+    toExternalHTML: (props) => (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      <ImageToExternalHTML {...(props as any)} />
+    ),
     runsBefore: ['file'],
   }),
 );

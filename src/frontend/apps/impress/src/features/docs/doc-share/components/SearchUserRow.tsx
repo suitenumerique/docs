@@ -1,13 +1,9 @@
-import { Badge } from '@gouvfr-lasuite/ui-kit';
-import { useTranslation } from 'react-i18next';
-
 import { Box, Text } from '@/components';
 import {
   QuickSearchItemContent,
   QuickSearchItemContentProps,
 } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
-import { useKeyFingerprint } from '@/docs/doc-collaboration';
 import { User, UserAvatar } from '@/features/auth';
 
 type Props = {
@@ -17,7 +13,6 @@ type Props = {
   isInvitation?: boolean;
   suffix?: string;
   onSuffixClick?: () => void;
-  fingerprintKey?: string | null;
 };
 
 export const SearchUserRow = ({
@@ -27,12 +22,9 @@ export const SearchUserRow = ({
   isInvitation = false,
   suffix,
   onSuffixClick,
-  fingerprintKey,
 }: Props) => {
   const hasFullName = !!user.full_name;
-  const { t } = useTranslation();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const fingerprint = useKeyFingerprint(fingerprintKey);
 
   return (
     <QuickSearchItemContent
@@ -80,30 +72,6 @@ export const SearchUserRow = ({
               <Text $size="xs" $margin={{ top: '-2px' }} $variation="secondary">
                 {user.email}
               </Text>
-            )}
-            {fingerprint && (
-              <Badge
-                style={{ width: 'fit-content', gap: '0.3rem', margin: '5px 0' }}
-              >
-                <Text
-                  $size="xs"
-                  $weight="600"
-                  $variation="secondary"
-                  style={{ fontSize: '10px' }}
-                >
-                  {t('Fingerprint')}{' '}
-                </Text>
-                <Text
-                  $size="xs"
-                  style={{
-                    fontFamily: 'monospace',
-                    letterSpacing: '0.05em',
-                    fontSize: '10px',
-                  }}
-                >
-                  {fingerprint}
-                </Text>
-              </Badge>
             )}
           </Box>
         </Box>

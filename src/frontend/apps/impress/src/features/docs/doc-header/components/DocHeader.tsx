@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 
 import { Box, HorizontalSeparator } from '@/components';
-import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import { useCunninghamTheme } from '@/cunningham';
+import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import {
   Doc,
   LinkReach,

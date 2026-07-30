@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Icon, Text } from '@/components';
-import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
 import { useAuth } from '@/features/auth';
+import {
+  fetchRegisteredKeys,
+  useVaultClient,
+} from '@/features/docs/doc-collaboration/vault';
 
 import type { Doc } from '../types';
 
@@ -20,16 +23,18 @@ import type { Doc } from '../types';
 export const isWrongSecretKeyError = (
   err: Error | null | undefined,
 ): boolean => {
-  if (!err) return false;
+  if (!err) {
+    return false;
+  }
   return (err as VaultError).code === 'WRONG_SECRET_KEY';
 };
 
 interface Props {
   /**
-   * The doc — used to read the share-time fingerprint from
-   * `doc.accesses_fingerprints_per_user[currentUser.suite_user_id]`.
+   * The doc — used to read the share-time encryption key version from
+   * `doc.accesses_versions_per_user[currentUser.suite_user_id]`.
    * Docs exposes this as a per-user map on the document. (We may
-   * later collapse it to a single `encryption_public_key_fingerprint_for_user`
+   * later collapse it to a single `encryption_public_key_version_for_user`
    * scalar once we take the same "current user only" approach Drive
    * does, but keeping it as a map for now matches the existing API.)
    */
@@ -39,49 +44,40 @@ interface Props {
 /**
  * Friendly panel shown when the page / websocket surfaces a "wrong
  * secret key" decryption failure. Explains the key rotation, shows the
- * share-time fingerprint (from the doc's fingerprint map) AND the
- * user's current key fingerprint so whoever re-shares can verify
- * they're wrapping against the key the user actually holds now.
+ * share-time key version (from the doc's version map) AND the user's
+ * current key version so whoever re-shares can see the access was
+ * wrapped for an older key and needs re-encryption.
  */
 export const KeyMismatchPanel = ({ doc }: Props) => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { client: vaultClient } = useVaultClient();
-  const [currentFingerprint, setCurrentFingerprint] = useState<string | null>(
-    null,
-  );
+  const [currentVersion, setCurrentVersion] = useState<number | null>(null);
 
-  const shareTimeFingerprint = user?.suite_user_id
-    ? (doc.accesses_fingerprints_per_user?.[user.suite_user_id] ?? null)
+  const shareTimeVersion = user?.suite_user_id
+    ? (doc.accesses_versions_per_user?.[user.suite_user_id] ?? null)
     : null;
 
   useEffect(() => {
-    if (!vaultClient) return;
+    if (!vaultClient || !user?.suite_user_id) {
+      return;
+    }
+    const sub = user.suite_user_id;
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
-        const { publicKey } = await vaultClient.getPublicKey();
-        const raw = await vaultClient.computeKeyFingerprint(publicKey);
-        const formatted = vaultClient.formatFingerprint(raw);
-        if (!cancelled) setCurrentFingerprint(formatted);
+        const { versions } = await fetchRegisteredKeys(vaultClient, [sub]);
+        if (!cancelled) {
+          setCurrentVersion(versions[sub] ?? null);
+        }
       } catch {
-        // Ignore — we just won't render the fingerprint row.
+        // Ignore — we just won't render the version row.
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [vaultClient]);
-
-  const formattedShareTime = (() => {
-    if (!shareTimeFingerprint) return null;
-    if (!vaultClient) return shareTimeFingerprint;
-    try {
-      return vaultClient.formatFingerprint(shareTimeFingerprint);
-    } catch {
-      return shareTimeFingerprint;
-    }
-  })();
+  }, [vaultClient, user?.suite_user_id]);
 
   return (
     <Box $align="center" $margin="auto" $gap="md" $padding="2rem">
@@ -92,15 +88,15 @@ export const KeyMismatchPanel = ({ doc }: Props) => {
       <Box $maxWidth="500px" $gap="sm">
         <Text $variation="secondary" $textAlign="center">
           {t(
-            "The document was encrypted for you at a time when you were using a different encryption key — possibly before you reset your keys or switched device without restoring a backup. Your current key can no longer decrypt it. Ask an owner or administrator of this document to remove you from the access list and add you back so it gets re-encrypted for your current key.",
+            'The document was encrypted for you at a time when you were using a different encryption key — possibly before you reset your keys or switched device without restoring a backup. Your current key can no longer decrypt it. Ask an owner or administrator of this document to remove you from the access list and add you back so it gets re-encrypted for your current key.',
           )}
         </Text>
       </Box>
-      {(formattedShareTime || currentFingerprint) && (
+      {(shareTimeVersion !== null || currentVersion !== null) && (
         <Box $gap="2xs" $maxWidth="500px" $align="center">
-          {formattedShareTime && (
+          {shareTimeVersion !== null && (
             <Text $variation="secondary" $size="sm" $textAlign="center">
-              {t('Fingerprint at the time it was shared with you:')}{' '}
+              {t('Encryption key version at the time it was shared with you:')}{' '}
               <Text
                 as="span"
                 $css={`
@@ -110,13 +106,13 @@ export const KeyMismatchPanel = ({ doc }: Props) => {
                   border-radius: 3px;
                 `}
               >
-                {formattedShareTime}
+                {shareTimeVersion}
               </Text>
             </Text>
           )}
-          {currentFingerprint && (
+          {currentVersion !== null && (
             <Text $variation="secondary" $size="sm" $textAlign="center">
-              {t('Your current key fingerprint:')}{' '}
+              {t('Your current encryption key version:')}{' '}
               <Text
                 as="span"
                 $css={`
@@ -126,7 +122,7 @@ export const KeyMismatchPanel = ({ doc }: Props) => {
                   border-radius: 3px;
                 `}
               >
-                {currentFingerprint}
+                {currentVersion}
               </Text>
             </Text>
           )}

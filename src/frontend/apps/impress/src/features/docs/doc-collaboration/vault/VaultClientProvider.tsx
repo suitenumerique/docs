@@ -19,15 +19,13 @@ import {
   useRef,
   useState,
 } from 'react';
-
 import { useTranslation } from 'react-i18next';
 
 import { useCunninghamTheme } from '@/cunningham';
 import { useAuth } from '@/features/auth';
 
 // Environment configuration
-const VAULT_URL =
-  process.env.NEXT_PUBLIC_VAULT_URL ?? 'http://localhost:7201';
+const VAULT_URL = process.env.NEXT_PUBLIC_VAULT_URL ?? 'http://localhost:7201';
 const INTERFACE_URL =
   process.env.NEXT_PUBLIC_INTERFACE_URL ?? 'http://localhost:7202';
 
@@ -111,7 +109,9 @@ export function VaultClientProvider({
 
   // Load script + initialize VaultClient once
   useEffect(() => {
-    if (initRef.current) return;
+    if (initRef.current) {
+      return;
+    }
     initRef.current = true;
 
     let destroyed = false;
@@ -120,7 +120,9 @@ export function VaultClientProvider({
       try {
         await loadClientScript();
 
-        if (destroyed) return;
+        if (destroyed) {
+          return;
+        }
 
         const client = new window.EncryptionClient.VaultClient({
           vaultUrl: VAULT_URL,
@@ -185,6 +187,9 @@ export function VaultClientProvider({
         clientRef.current = null;
       }
     };
+    // One-time init: theme and language are read from the first render only,
+    // re-initializing the client on those changes is intentionally avoided.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Set auth context whenever user changes or client finishes initializing
@@ -202,12 +207,15 @@ export function VaultClientProvider({
     }
 
     let cancelled = false;
+    const suiteUserId = user.suite_user_id;
 
     async function setupAuth() {
-      if (cancelled || !client) return;
+      if (cancelled || !client) {
+        return;
+      }
 
       client.setAuthContext({
-        suiteUserId: user!.suite_user_id!,
+        suiteUserId,
       });
 
       setIsLoading(true);
@@ -239,7 +247,9 @@ export function VaultClientProvider({
   const refreshKeyState = useCallback(async () => {
     const client = clientRef.current;
 
-    if (!client) return;
+    if (!client) {
+      return;
+    }
 
     try {
       const { hasKeys: exists } = await client.hasKeys();

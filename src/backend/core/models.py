@@ -285,15 +285,14 @@ class BaseAccess(BaseModel):
         blank=True,
         help_text=_("Encrypted symmetric key for this document, specific to this user."),
     )
-    encryption_public_key_fingerprint = models.CharField(
-        _("encryption public key fingerprint"),
-        max_length=16,
+    encryption_public_key_version = models.PositiveIntegerField(
+        _("encryption public key version"),
         null=True,
         blank=True,
         help_text=_(
-            "Fingerprint of the user's public key at the time of sharing. "
-            "Used to detect key changes — if the user's current public key "
-            "fingerprint differs from this value, the access needs re-encryption."
+            "Version of the user's encryption public key at the time of sharing. "
+            "Used to detect key changes — if the user's current public key version "
+            "differs from this value, the access needs re-encryption."
         ),
     )
 
@@ -751,22 +750,22 @@ class Document(MP_Node, BaseModel):
         )
 
     @property
-    def accesses_fingerprints_per_user(self):
+    def accesses_versions_per_user(self):
         """
-        Return the fingerprint of each user's public key at the time of sharing.
+        Return the version of each user's public key at the time of sharing.
         This allows the frontend to detect key changes by comparing the
-        fingerprint stored at share time with the current public key fingerprint.
+        version stored at share time with the current public key version.
         """
         accesses = (
             DocumentAccess.objects
-            .filter(document=self, user__isnull=False, encryption_public_key_fingerprint__isnull=False)
-            .values_list('user__sub', 'encryption_public_key_fingerprint')
+            .filter(document=self, user__isnull=False, encryption_public_key_version__isnull=False)
+            .values_list('user__sub', 'encryption_public_key_version')
         )
 
         return {
-            str(sub): fingerprint
-            for sub, fingerprint in accesses
-            if fingerprint
+            str(sub): version
+            for sub, version in accesses
+            if version is not None
         }
 
     def get_abilities(self, user):

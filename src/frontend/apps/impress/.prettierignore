@@ -1,3 +1,4 @@
 next-env.d.ts
 service-worker.js
 public/assets/fonts/*
+src/features/docs/doc-collaboration/vault/client-sdk.d.ts

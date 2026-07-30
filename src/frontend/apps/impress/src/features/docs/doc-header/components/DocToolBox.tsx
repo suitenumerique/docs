@@ -14,6 +14,11 @@ import {
   IconOptions,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import {
+  usePublicKeyRegistry,
+  useUserEncryption,
+} from '@/docs/doc-collaboration';
+import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import Export from '@/docs/doc-export/';
 import {
   Doc,
@@ -31,11 +36,6 @@ import {
   useDocUtils,
   useDuplicateDoc,
 } from '@/docs/doc-management';
-import {
-  usePublicKeyRegistry,
-  useUserEncryption,
-} from '@/docs/doc-collaboration';
-import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import { DocShareModal } from '@/docs/doc-share';
 import {
   KEY_LIST_DOC_VERSIONS,
@@ -340,7 +340,9 @@ export const DocToolBox = ({
         documentEncryptionSettings?.encryptedSymmetricKey && (
           <ModalRemoveDocEncryption
             doc={doc}
-            encryptedSymmetricKey={documentEncryptionSettings.encryptedSymmetricKey}
+            encryptedSymmetricKey={
+              documentEncryptionSettings.encryptedSymmetricKey
+            }
             onClose={() => setIsModalRemoveEncryptionOpen(false)}
           />
         )}

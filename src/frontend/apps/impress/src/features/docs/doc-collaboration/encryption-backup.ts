@@ -40,8 +40,15 @@ export async function exportPublicKeyAsBase64(
 
 // Derive a public JWK from a private JWK by removing private fields.
 export function derivePublicJwkFromPrivate(privateJwk: JsonWebKey): JsonWebKey {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { d, p, q, dp, dq, qi, ...publicJwk } = privateJwk;
+  const {
+    d: _d,
+    p: _p,
+    q: _q,
+    dp: _dp,
+    dq: _dq,
+    qi: _qi,
+    ...publicJwk
+  } = privateJwk;
 
   return { ...publicJwk, key_ops: ['encrypt'] };
 }

@@ -61,11 +61,13 @@ const EncryptionContext = createContext<EncryptionContextValue>(DEFAULT_VALUE);
 
 interface EncryptionProviderProps {
   encryptedSymmetricKey: ArrayBuffer | undefined;
+  keyVersion: number | undefined;
   children: ReactNode;
 }
 
 export const EncryptionProvider = ({
   encryptedSymmetricKey,
+  keyVersion,
   children,
 }: EncryptionProviderProps) => {
   const { client: vaultClient } = useVaultClient();
@@ -111,6 +113,7 @@ export const EncryptionProvider = ({
       const { data: decryptedBuffer } = await vaultClient.decryptWithKey(
         encryptedBuffer,
         encryptedSymmetricKey,
+        keyVersion ?? 1,
       );
 
       const ext = url.split('.').pop()?.toLowerCase() || '';
@@ -122,15 +125,15 @@ export const EncryptionProvider = ({
 
       return blobUrl;
     },
-    [encryptedSymmetricKey, vaultClient],
+    [encryptedSymmetricKey, keyVersion, vaultClient],
   );
 
   useEffect(() => {
+    const blobUrlCache = blobUrlCacheRef.current;
+
     return () => {
-      blobUrlCacheRef.current.forEach((blobUrl) =>
-        URL.revokeObjectURL(blobUrl),
-      );
-      blobUrlCacheRef.current.clear();
+      blobUrlCache.forEach((blobUrl) => URL.revokeObjectURL(blobUrl));
+      blobUrlCache.clear();
     };
   }, [encryptedSymmetricKey]);
 

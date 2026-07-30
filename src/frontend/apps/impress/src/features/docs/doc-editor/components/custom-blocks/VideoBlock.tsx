@@ -48,9 +48,13 @@ const VideoBlockComponent = ({
     resolvedUrl,
   } = useDecryptMedia(block.props.url);
 
+  // ResizableFileBlockWrapper's props type is internal to @blocknote/react and not exported.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const wrapperProps = { editor, block, ...rest } as any;
+
   return (
     <ResizableFileBlockWrapper
-      {...({ editor, block, ...rest } as any)}
+      {...wrapperProps}
       buttonIcon={
         <Icon iconName="videocam" $size="24px" $css="line-height: normal;" />
       }
@@ -100,9 +104,15 @@ export const VideoBlock = createReactBlockSpec(
     meta: {
       fileBlockAccept: ['video/*'],
     },
-    render: (props) => <VideoBlockComponent {...(props as any)} />,
+    render: (props) => (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      <VideoBlockComponent {...(props as any)} />
+    ),
     parse: videoParse(config),
-    toExternalHTML: (props) => <VideoToExternalHTML {...(props as any)} />,
+    toExternalHTML: (props) => (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      <VideoToExternalHTML {...(props as any)} />
+    ),
     runsBefore: ['file'],
   }),
 );

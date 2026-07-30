@@ -45,9 +45,13 @@ const AudioBlockComponent = ({
     resolvedUrl,
   } = useDecryptMedia(block.props.url);
 
+  // FileBlockWrapper's props type is internal to @blocknote/react and not exported.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const wrapperProps = { editor, block, ...rest } as any;
+
   return (
     <FileBlockWrapper
-      {...({ editor, block, ...rest } as any)}
+      {...wrapperProps}
       buttonIcon={
         <Icon iconName="audiotrack" $size="24px" $css="line-height: normal;" />
       }
@@ -97,9 +101,15 @@ export const AudioBlock = createReactBlockSpec(
     meta: {
       fileBlockAccept: ['audio/*'],
     },
-    render: (props) => <AudioBlockComponent {...(props as any)} />,
+    render: (props) => (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      <AudioBlockComponent {...(props as any)} />
+    ),
     parse: audioParse(config),
-    toExternalHTML: (props) => <AudioToExternalHTML {...(props as any)} />,
+    toExternalHTML: (props) => (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      <AudioToExternalHTML {...(props as any)} />
+    ),
     runsBefore: ['file'],
   }),
 );

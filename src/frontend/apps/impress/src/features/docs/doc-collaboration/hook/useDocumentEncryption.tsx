@@ -21,6 +21,14 @@ export interface DocumentEncryptionSettings {
    * Pass this to VaultClient.encryptWithKey() / decryptWithKey().
    */
   encryptedSymmetricKey: ArrayBuffer;
+  /**
+   * The current user's encryption-key VERSION this wrapped symmetric key was
+   * produced against (the share-time version stored per access). Passed as the
+   * `keyVersion` argument to VaultClient.decryptWithKey() so the vault selects
+   * the matching private key. Same source KeyMismatchPanel reads:
+   * `doc.accesses_versions_per_user[user.suite_user_id]`.
+   */
+  keyVersion: number;
 }
 
 /** Convert a base64 string to ArrayBuffer */
@@ -32,12 +40,13 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
     bytes[i] = binary.charCodeAt(i);
   }
 
-  return bytes.buffer as ArrayBuffer;
+  return bytes.buffer;
 }
 
 export function useDocumentEncryption(
   isDocumentEncrypted: boolean | undefined,
   userEncryptedSymmetricKeyBase64: string | undefined,
+  keyVersion: number | undefined,
 ): {
   documentEncryptionLoading: boolean;
   documentEncryptionSettings: DocumentEncryptionSettings | null;
@@ -49,7 +58,9 @@ export function useDocumentEncryption(
 
   // Convert the base64 key from the API to ArrayBuffer (memoized)
   const encryptedSymmetricKey = useMemo(() => {
-    if (!userEncryptedSymmetricKeyBase64) return null;
+    if (!userEncryptedSymmetricKeyBase64) {
+      return null;
+    }
 
     try {
       return base64ToArrayBuffer(userEncryptedSymmetricKeyBase64);
@@ -59,10 +70,15 @@ export function useDocumentEncryption(
   }, [userEncryptedSymmetricKeyBase64]);
 
   const settings = useMemo<DocumentEncryptionSettings | null>(() => {
-    if (!encryptedSymmetricKey) return null;
+    if (!encryptedSymmetricKey) {
+      return null;
+    }
 
-    return { encryptedSymmetricKey };
-  }, [encryptedSymmetricKey]);
+    return {
+      encryptedSymmetricKey,
+      keyVersion: keyVersion ?? 1,
+    };
+  }, [encryptedSymmetricKey, keyVersion]);
 
   useEffect(() => {
     if (!encryptionLoading && !encryptionSettings) {

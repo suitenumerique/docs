@@ -73,7 +73,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
     abilities = serializers.SerializerMethodField(read_only=True)
     deleted_at = serializers.SerializerMethodField(read_only=True)
     accesses_user_ids = serializers.SerializerMethodField(read_only=True)
-    accesses_fingerprints_per_user = serializers.SerializerMethodField(read_only=True)
+    accesses_versions_per_user = serializers.SerializerMethodField(read_only=True)
     encrypted_document_symmetric_key_for_user = serializers.SerializerMethodField(
         read_only=True
     )
@@ -86,7 +86,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "abilities",
-            "accesses_fingerprints_per_user",
+            "accesses_versions_per_user",
             "accesses_user_ids",
             "ancestors_link_reach",
             "ancestors_link_role",
@@ -178,14 +178,14 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             return None
         return [str(uid) for uid in instance.accesses_user_ids]
 
-    def get_accesses_fingerprints_per_user(self, instance):
-        """Return fingerprints of users' public keys at share time."""
+    def get_accesses_versions_per_user(self, instance):
+        """Return versions of users' public keys at share time."""
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return None
         if not instance.is_encrypted:
             return None
-        return instance.accesses_fingerprints_per_user
+        return instance.accesses_versions_per_user
 
     def get_encrypted_document_symmetric_key_for_user(self, instance):
         """Return the encrypted symmetric key for the current user."""
@@ -248,7 +248,7 @@ class DocumentSerializer(ListDocumentSerializer):
         fields = [
             "id",
             "abilities",
-            "accesses_fingerprints_per_user",
+            "accesses_versions_per_user",
             "accesses_user_ids",
             "ancestors_link_reach",
             "ancestors_link_role",
@@ -442,8 +442,8 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
         required=False, allow_blank=True, write_only=True
     )
     # TODO: REQUIRED!!!
-    encryption_public_key_fingerprint = serializers.CharField(
-        required=False, allow_blank=True, max_length=16
+    encryption_public_key_version = serializers.IntegerField(
+        required=False, allow_null=True, min_value=1
     )
     is_pending_encryption = serializers.SerializerMethodField(read_only=True)
 
@@ -461,7 +461,7 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "max_ancestors_role",
             "max_role",
             "encrypted_document_symmetric_key_for_user",
-            "encryption_public_key_fingerprint",
+            "encryption_public_key_version",
             "is_pending_encryption",
         ]
         read_only_fields = [
@@ -1055,23 +1055,21 @@ class EncryptDocumentSerializer(serializers.Serializer):
     )
     # Required: matched to the wrapped-key map. Every user sub present
     # in `encryptedSymmetricKeyPerUser` must also appear here with the
-    # fingerprint of the public key used to wrap their copy (or null
+    # version of the public key used to wrap their copy (or null
     # for pending users with no public key yet). Stored on the access
-    # row verbatim so clients can later tell which key each user's
-    # wrapped key was produced for — used by the key-mismatch panel
-    # to display "Fingerprint at the time it was shared with you".
+    # row verbatim so clients can later detect when a user's key has
+    # rotated: if the current public key version differs from this
+    # stored value, the access needs re-encryption.
     #
     # Not security-sensitive in the crypto sense — the actual wrap is
-    # the wrapped key itself. The fingerprint is a display hint; a
+    # the wrapped key itself. The version is a staleness marker; a
     # malicious client could send wrong values but the worst it
     # achieves is confusing the user whose client was lying.
-    encryptionPublicKeyFingerprintPerUser = serializers.DictField(
-        child=serializers.CharField(
-            allow_null=True, allow_blank=True, max_length=16
-        ),
+    encryptionPublicKeyVersionPerUser = serializers.DictField(
+        child=serializers.IntegerField(allow_null=True, min_value=1),
         required=True,
         help_text=(
-            "Mapping of user OIDC sub → fingerprint of their public key "
+            "Mapping of user OIDC sub → version of their public key "
             "at encryption time. Must cover the same set of users as "
             "`encryptedSymmetricKeyPerUser`; null is valid for pending "
             "users."
@@ -1104,10 +1102,10 @@ class AcceptEncryptionAccessSerializer(serializers.Serializer):
             "pending → validated. To revert, delete the access row."
         ),
     )
-    encryption_public_key_fingerprint = serializers.CharField(
+    encryption_public_key_version = serializers.IntegerField(
         required=True,
-        allow_blank=False,
-        max_length=16,
+        allow_null=False,
+        min_value=1,
     )
 
 

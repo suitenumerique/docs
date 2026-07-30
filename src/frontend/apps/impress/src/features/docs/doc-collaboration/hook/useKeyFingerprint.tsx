@@ -21,7 +21,7 @@ export function useKeyFingerprint(
 
     let cancelled = false;
     const raw = Uint8Array.from(atob(base64Key), (c) => c.charCodeAt(0));
-    vaultClient.computeKeyFingerprint(raw.buffer).then((fp) => {
+    void vaultClient.computeKeyFingerprint(raw.buffer).then((fp) => {
       if (!cancelled) {
         setFingerprint(vaultClient.formatFingerprint(fp));
       }

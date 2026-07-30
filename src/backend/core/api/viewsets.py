@@ -2122,20 +2122,20 @@ class DocumentViewSet(
                 'provide a wrapped key for your own user.'
             })
 
-        # Per-user fingerprint map — required, keyed on the same user
+        # Per-user version map — required, keyed on the same user
         # subs as the wrapped-key map. Stored verbatim on the access
-        # row so clients can later tell which key each user's wrapped
-        # key was produced for.
-        fingerprint_per_user = serializer.validated_data[
-            'encryptionPublicKeyFingerprintPerUser'
+        # row so clients can later detect when a user's key has rotated
+        # (current version != stored version ⇒ needs re-encryption).
+        version_per_user = serializer.validated_data[
+            'encryptionPublicKeyVersionPerUser'
         ]
-        fingerprint_subs = set(fingerprint_per_user.keys())
-        if fingerprint_subs != provided_user_ids:
+        version_subs = set(version_per_user.keys())
+        if version_subs != provided_user_ids:
             raise drf.exceptions.ValidationError({
-                'encryptionPublicKeyFingerprintPerUser':
+                'encryptionPublicKeyVersionPerUser':
                 'Must cover the same set of users as encryptedSymmetricKeyPerUser. '
-                f'Missing: {provided_user_ids - fingerprint_subs}. '
-                f'Extra: {fingerprint_subs - provided_user_ids}.'
+                f'Missing: {provided_user_ids - version_subs}. '
+                f'Extra: {version_subs - provided_user_ids}.'
             })
 
         # Remove old unencrypted attachment keys from the allowed list.
@@ -2166,7 +2166,7 @@ class DocumentViewSet(
 
             transaction.on_commit(_cleanup_old_attachments)
 
-        # Store the encrypted symmetric keys + fingerprints in
+        # Store the encrypted symmetric keys + versions in
         # DocumentAccess for each user. Keys are keyed by the user's
         # OIDC `sub`, so look up by user__sub.
         for sub, encrypted_key in encryptedSymmetricKeyPerUser.items():
@@ -2175,8 +2175,8 @@ class DocumentViewSet(
                     document=document, user__sub=sub,
                 )
                 access.encrypted_document_symmetric_key_for_user = encrypted_key
-                access.encryption_public_key_fingerprint = (
-                    fingerprint_per_user.get(sub) or None
+                access.encryption_public_key_version = (
+                    version_per_user.get(sub)
                 )
                 access.save()
             except models.DocumentAccess.DoesNotExist:
@@ -2579,13 +2579,13 @@ class DocumentAccessViewSet(
                 "encrypted_document_symmetric_key_for_user"
             ]
         )
-        access.encryption_public_key_fingerprint = (
-            serializer.validated_data["encryption_public_key_fingerprint"]
+        access.encryption_public_key_version = (
+            serializer.validated_data["encryption_public_key_version"]
         )
         access.save(
             update_fields=[
                 "encrypted_document_symmetric_key_for_user",
-                "encryption_public_key_fingerprint",
+                "encryption_public_key_version",
             ]
         )
 

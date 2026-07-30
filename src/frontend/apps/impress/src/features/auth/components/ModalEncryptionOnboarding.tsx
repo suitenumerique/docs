@@ -30,7 +30,12 @@ export const ModalEncryptionOnboarding = ({
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!isOpen || !vaultClient || !containerEl || onboardingOpenedRef.current) {
+    if (
+      !isOpen ||
+      !vaultClient ||
+      !containerEl ||
+      onboardingOpenedRef.current
+    ) {
       return;
     }
 
@@ -39,7 +44,9 @@ export const ModalEncryptionOnboarding = ({
   }, [isOpen, vaultClient, containerEl]);
 
   useEffect(() => {
-    if (!vaultClient) return;
+    if (!vaultClient) {
+      return;
+    }
 
     const handleComplete = async () => {
       // The encryption service registered the public key on its central server.
