@@ -10,7 +10,8 @@
     "dev": "nodemon --config nodemon.json",
     "start": "node ./dist/start-server.js",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "mcp-inspector": "npx @modelcontextprotocol/inspector --config mcp-inspector.config.json"
   },
   "engines": {
     "node": ">=22"
