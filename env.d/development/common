@@ -52,13 +52,20 @@ OIDC_REDIRECT_ALLOWED_HOSTS="localhost:8083,localhost:3000"
 OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
 
 # Resource Server Backend
-OIDC_OP_URL=http://localhost:8083/realms/docs
-OIDC_OP_INTROSPECTION_ENDPOINT = http://nginx:8083/realms/docs/protocol/openid-connect/token/introspect
+# Also validates tokens the MCP server forwards from its callers (see core/mcp_api and
+# documentation/mcp_server.md): the user's Keycloak token is introspected here with
+# OIDC_RS_CLIENT_ID/SECRET (the `docs-api` confidential client) as credentials.
+# OIDC_RS_AUDIENCE_CLAIM stays at its "client_id" default: it's process-wide (shared with
+# the disabled external_api feature), and new resource-server callers just get added to
+# OIDC_RS_ALLOWED_AUDIENCES. For a forwarded token that client_id is the public client the
+# user authenticated as (docs-mcp-client).
+OIDC_OP_URL=http://localhost:8083/realms/impress
+OIDC_OP_INTROSPECTION_ENDPOINT=http://nginx:8083/realms/impress/protocol/openid-connect/token/introspect
 OIDC_RESOURCE_SERVER_ENABLED=False
-OIDC_RS_CLIENT_ID=docs
+OIDC_RS_CLIENT_ID=docs-api
 OIDC_RS_CLIENT_SECRET=ThisIsAnExampleKeyForDevPurposeOnly
-OIDC_RS_AUDIENCE_CLAIM="client_id"  # The claim used to identify the audience
-OIDC_RS_ALLOWED_AUDIENCES=""
+OIDC_RS_ALLOWED_AUDIENCES=docs-mcp-client
+OIDC_RS_SCOPES=docs:documents:search,docs:documents:read,docs:documents:create
 
 # Store OIDC tokens in the session. Needed by search/ endpoint.
 # OIDC_STORE_ACCESS_TOKEN=True
