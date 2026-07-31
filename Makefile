@@ -258,6 +258,7 @@ run-backend: ## Start only the backend application and all needed services
 	@$(MAKE) create-docker-network
 	@$(MAKE) data/jwt/private.pem
 	@$(MAKE) data/jwt/yhub-private.pem
+	@$(COMPOSE) up -d --force-recreate --renew-anon-volumes kc_postgresql keycloak
 	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider-development-converter
