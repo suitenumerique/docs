@@ -1,0 +1,19 @@
+# docs-mcp: remote MCP server for Docs.
+# See documentation/mcp_server.md.
+
+MCP_HOST=0.0.0.0
+MCP_PORT=4455
+MCP_RESOURCE_URL=http://localhost:4455/mcp
+
+# Keycloak: KEYCLOAK_ISSUER is the externally-visible issuer (used to validate the `iss` claim
+# and in metadata); the *_URL vars are the network-reachable endpoints from inside Docker.
+# This server only reads Keycloak's JWKS and discovery document — it holds no credentials and
+# performs no token exchange; it forwards the caller's access token to Django as-is.
+KEYCLOAK_ISSUER=http://localhost:8083/realms/impress
+KEYCLOAK_JWKS_URL=http://nginx:8083/realms/impress/protocol/openid-connect/certs
+KEYCLOAK_DISCOVERY_URL=http://nginx:8083/realms/impress/.well-known/openid-configuration
+
+# Django is reached directly (not through nginx, which only proxies to Keycloak on :8083).
+DOCS_API_URL=http://app-dev:8000
+
+MCP_AUDIENCE=docs-mcp
