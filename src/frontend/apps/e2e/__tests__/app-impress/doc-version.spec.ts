@@ -19,7 +19,7 @@ test.describe('Doc Version', () => {
 
     // Initially, there is no version
     await page.getByLabel('Open the document options').click();
-    await page.getByRole('menuitem', { name: 'Version history' }).click();
+    await page.getByRole('menuitem', { name: 'History' }).click();
     await expect(page.getByText('History', { exact: true })).toBeVisible();
 
     const modal = page.getByRole('dialog', { name: 'Version history' });
@@ -64,7 +64,7 @@ test.describe('Doc Version', () => {
     ).toBeVisible();
 
     await page.getByLabel('Open the document options').click();
-    await page.getByRole('menuitem', { name: 'Version history' }).click();
+    await page.getByRole('menuitem', { name: 'History' }).click();
 
     await expect(panel).toBeVisible();
     await expect(page.getByText('History', { exact: true })).toBeVisible();
@@ -114,9 +114,7 @@ test.describe('Doc Version', () => {
     await verifyDocName(page, 'Mocked document');
 
     await page.getByLabel('Open the document options').click();
-    await expect(
-      page.getByRole('menuitem', { name: 'Version history' }),
-    ).toBeHidden();
+    await expect(page.getByRole('menuitem', { name: 'History' })).toBeHidden();
   });
 
   test('it restores the doc version', async ({ page, browserName }) => {
@@ -151,7 +149,7 @@ test.describe('Doc Version', () => {
     await expect(thread).toBeHidden();
 
     await page.getByLabel('Open the document options').click();
-    await page.getByRole('menuitem', { name: 'Version history' }).click();
+    await page.getByRole('menuitem', { name: 'History' }).click();
 
     const modal = page.getByRole('dialog', { name: 'Version history' });
     const panel = modal.getByLabel('Version list');

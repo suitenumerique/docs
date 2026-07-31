@@ -1,11 +1,11 @@
 import { Box } from '@/components';
 import { CardFloatingBar, FloatingBar } from '@/components/FloatingBar';
+import { DocToolBox } from '@/docs/doc-management/components/DocToolBox';
 import { useDocStore } from '@/docs/doc-management/stores/useDocStore';
-import { DocShareButton } from '@/features/docs/doc-share/components/DocShareButton';
+import { DocShareButton } from '@/docs/doc-share/components/DocShareButton';
 import { RightPanelCollapseButton } from '@/features/right-panel/components/RightPanelCollapseButton';
 
 import { DocLeftPanelCollapseButton } from './DocLeftPanelCollapseButton';
-import { DocToolBox } from './DocToolBox';
 
 export const DocFloatingBar = () => {
   const { currentDoc } = useDocStore();
