@@ -6,7 +6,20 @@ import Document, {
   NextScript,
 } from 'next/document';
 
+import { THEME_MODE_STORAGE_KEY } from '../cunningham/useCunninghamTheme';
 import { fallbackLng } from '../i18n/config';
+
+// Runs before hydration to set the Cunningham theme class on <html>, so the
+// correct colour scheme paints on first frame (no flash). Mirrors the mode
+// resolution in useCunninghamTheme (light->`default`, dark->`dark`).
+const THEME_INIT_SCRIPT = `(function(){try{
+var m=localStorage.getItem('${THEME_MODE_STORAGE_KEY}')||'system';
+var dark=m==='dark'||(m==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+var t=dark?'dark':'default';
+var r=document.documentElement;
+r.classList.forEach(function(c){if(c.indexOf('cunningham-theme--')===0){r.classList.remove(c);}});
+r.classList.add('cunningham-theme--'+t);
+}catch(e){}})();`;
 
 class MyDocument extends Document<{ locale: string }> {
   static async getInitialProps(ctx: DocumentContext) {
@@ -19,8 +32,10 @@ class MyDocument extends Document<{ locale: string }> {
 
   render() {
     return (
-      <Html lang={this.props.locale}>
-        <Head />
+      <Html lang={this.props.locale} suppressHydrationWarning>
+        <Head>
+          <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        </Head>
         <body>
           <Main />
           <NextScript />
