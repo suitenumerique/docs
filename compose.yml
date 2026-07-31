@@ -214,6 +214,29 @@ services:
       y-provider-development:
         condition: service_started
 
+  mcp-development:
+    user: ${DOCKER_USER:-1000}
+    build:
+      context: .
+      dockerfile: ./src/frontend/servers/mcp/Dockerfile
+      target: mcp-development
+    image: impress:mcp-development
+    restart: unless-stopped
+    env_file:
+      - env.d/development/mcp
+      - env.d/development/mcp.local
+    ports:
+      - "4455:4455"
+    volumes:
+      - ./src/frontend/:/home/frontend
+      - /home/frontend/node_modules
+      - /home/frontend/servers/mcp/node_modules
+    depends_on:
+      app-dev:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
+
   kc_postgresql:
     image: postgres:14.3
     healthcheck:

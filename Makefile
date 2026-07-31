@@ -78,6 +78,7 @@ create-env-local-files:
 	@touch env.d/development/postgresql.local
 	@touch env.d/development/kc_auth.local
 	@touch env.d/development/kc_postgresql.local
+	@touch env.d/development/mcp.local
 .PHONY: create-env-local-files
 
 generate-secret-keys:
@@ -191,6 +192,7 @@ build: cache ?=
 build: ## build the project containers
 	@$(MAKE) build-backend cache=$(cache)
 	@$(MAKE) build-yjs-provider cache=$(cache)
+	@$(MAKE) build-mcp cache=$(cache)
 	@$(MAKE) build-frontend cache=$(cache)
 .PHONY: build
 
@@ -208,6 +210,11 @@ build-frontend: cache ?=
 build-frontend: ## build the frontend container
 	@$(COMPOSE) build frontend-development $(cache)
 .PHONY: build-frontend
+
+build-mcp: cache ?=
+build-mcp: ## build the mcp container
+	@$(COMPOSE) build mcp-development $(cache)
+.PHONY: build-mcp
 
 build-e2e: cache ?=
 build-e2e: ## build the e2e container
@@ -234,6 +241,7 @@ run-backend: ## Start only the backend application and all needed services
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider-development
 	@$(COMPOSE) up --force-recreate -d y-provider-development-converter
+	@$(COMPOSE) up --force-recreate -d mcp-development
 	@$(COMPOSE) up --force-recreate -d nginx
 .PHONY: run-backend
 

@@ -1,0 +1,66 @@
+FROM node:22-alpine AS base
+
+# Upgrade system packages to install security updates
+RUN apk update && \
+  apk upgrade && \
+  rm -rf /var/cache/apk/*
+
+FROM base AS mcp-deps
+
+WORKDIR /home/frontend/
+
+COPY ./src/frontend/package.json ./package.json
+COPY ./src/frontend/yarn.lock ./yarn.lock
+COPY ./src/frontend/servers/mcp/package.json ./servers/mcp/package.json
+COPY ./src/frontend/packages/eslint-plugin-docs/package.json ./packages/eslint-plugin-docs/package.json
+
+RUN yarn install
+
+COPY ./src/frontend/packages/eslint-plugin-docs ./packages/eslint-plugin-docs
+COPY ./src/frontend/servers/mcp ./servers/mcp
+
+FROM mcp-deps AS mcp-development
+
+WORKDIR /home/frontend/servers/mcp
+
+EXPOSE 4455
+
+CMD [ "yarn", "dev" ]
+
+FROM mcp-deps AS mcp-builder
+
+WORKDIR /home/frontend/servers/mcp
+RUN yarn build
+
+FROM base AS mcp
+
+WORKDIR /home/frontend/
+
+COPY ./src/frontend/package.json ./package.json
+COPY ./src/frontend/yarn.lock ./yarn.lock
+COPY ./src/frontend/servers/mcp/package.json ./servers/mcp/package.json
+
+WORKDIR /home/frontend/servers/mcp
+
+COPY --from=mcp-builder \
+    /home/frontend/servers/mcp/dist \
+    ./dist
+
+RUN NODE_ENV=production yarn install --frozen-lockfile
+
+# Remove npm, contains CVE related to cross-spawn and we don't use it.
+RUN rm -rf /usr/local/bin/npm /usr/local/lib/node_modules/npm
+
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+
+# Un-privileged user running the application
+ARG DOCKER_USER
+USER ${DOCKER_USER}
+
+# Copy entrypoint
+COPY ./docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
+ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
+
+EXPOSE 4455
+
+CMD ["yarn", "start"]
