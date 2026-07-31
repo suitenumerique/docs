@@ -19,6 +19,7 @@ and this project adheres to
 - ⚡️(frontend) replace onboarding assets with webm and webp #2569
 - 💄(frontend) use the same highlight color for cells and moves #2575
 - ⚡️(backend) optimize media_auth endpoint
+- 🚸(frontend) print from document options menu #2550
 
 ### Fixed
 

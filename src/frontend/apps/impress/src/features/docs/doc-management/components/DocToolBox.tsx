@@ -18,12 +18,14 @@ import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
 import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
 import LinkIcon from '@/assets/icons/ui-kit/link.svg';
 import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
+import PrintIcon from '@/assets/icons/ui-kit/print.svg';
 import SharedIcon from '@/assets/icons/ui-kit/shared.svg';
 import DeleteIcon from '@/assets/icons/ui-kit/trash.svg';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useAuth } from '@/features/auth';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
+import { printDocumentWithStyles } from '../../doc-export/utils_print';
 import {
   KEY_DOC,
   KEY_LIST_DOC,
@@ -153,6 +155,15 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         setIsModalExportOpen(true);
       },
       isHidden: !ModalExport,
+    },
+    {
+      label: t('Print', {
+        description: 'Dropdown menu item to print the document',
+      }),
+      icon: <PrintIcon width={18} height={18} aria-hidden="true" />,
+      callback: () => {
+        printDocumentWithStyles();
+      },
     },
     { type: 'separator' },
     {
