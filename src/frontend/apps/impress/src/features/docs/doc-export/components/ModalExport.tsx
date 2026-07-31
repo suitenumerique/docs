@@ -40,14 +40,12 @@ import {
   generateHtmlDocument,
   improveHtmlAccessibility,
 } from '../utils_html';
-import { printDocumentWithStyles } from '../utils_print';
 
 enum DocDownloadFormat {
   HTML = 'html',
   PDF = 'pdf',
   DOCX = 'docx',
   ODT = 'odt',
-  PRINT = 'print',
 }
 
 interface ModalExportProps {
@@ -82,17 +80,11 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     { label: t('Docx'), value: DocDownloadFormat.DOCX },
     { label: t('ODT'), value: DocDownloadFormat.ODT },
     { label: t('HTML'), value: DocDownloadFormat.HTML },
-    { label: t('Print'), value: DocDownloadFormat.PRINT },
   ];
 
   const formatLabels = Object.fromEntries(
     formatOptions.map((opt) => [opt.value, opt.label]),
   );
-
-  const downloadButtonAriaLabel =
-    format === DocDownloadFormat.PRINT
-      ? t('Print')
-      : t('Download {{format}}', { format: formatLabels[format] });
 
   async function onSubmit() {
     if (!editor) {
@@ -101,14 +93,6 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     }
 
     setIsExporting(true);
-
-    // Handle print separately as it doesn't download a file
-    if (format === DocDownloadFormat.PRINT) {
-      printDocumentWithStyles();
-      setIsExporting(false);
-      onClose();
-      return;
-    }
 
     const filename = (doc.title || untitledDocument)
       .toLowerCase()
@@ -250,13 +234,15 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           </Button>
           <Button
             data-testid="doc-export-download-button"
-            aria-label={downloadButtonAriaLabel}
+            aria-label={t('Download {{format}}', {
+              format: formatLabels[format],
+            })}
             variant="primary"
             fullWidth
             onClick={() => void onSubmit()}
             disabled={isExporting}
           >
-            {format === DocDownloadFormat.PRINT ? t('Print') : t('Download')}
+            {t('Download')}
           </Button>
         </>
       }
@@ -295,7 +281,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           id="modal-export-description"
         >
           {t(
-            'Export your document to print or download in .docx, .odt, .pdf or .html(zip) format.',
+            'Export your document to download in .docx, .odt, .pdf or .html(zip) format.',
           )}
         </Text>
         <Box ref={selectRef}>
