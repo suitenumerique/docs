@@ -10,6 +10,7 @@ and this project adheres to
 
 - ♿️(frontend) restore skip to content link after header redesign #2510
 - 🌐(i18n) rename cn_CN to zh_CN, add eo_PL and zh_TW locales #2486
+- ✨(frontend) add word count to doc header toolbox #2549
 
 ### Fixed
 

@@ -7,7 +7,7 @@ import {
 import { Present } from '@gouvfr-lasuite/ui-kit/icons';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import AddLinkSVG from '@/assets/icons/ui-kit/add_link.svg';
@@ -21,6 +21,8 @@ import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
 import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
 import MarkdownCopySVG from '@/assets/icons/ui-kit/markdown_copy.svg';
 import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
+import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
+import { getWordCount } from '@/docs/doc-editor/utils';
 import {
   Doc,
   KEY_DOC,
@@ -102,17 +104,23 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
 
+  const { editor } = useEditorStore();
+  const wordCount = useMemo(
+    () => (openDropdown ? getWordCount(editor) : 0),
+    [openDropdown, editor],
+  );
+
   const { restoreFocus, addLastFocus } = useFocusStore();
   const { isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
-  // Deep-link (#2397) and slide/URL sync live in PresenterRoot; here we only
-  // trigger the manual "Present" action.
+
   const openPresenter = usePresenterStore((state) => state.open);
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: (data) => {
       void router.push(`/docs/${data.id}`);
     },
   });
+
   const removeFavoriteDoc = useDeleteFavoriteDoc({
     listInvalidQueries: [KEY_LIST_DOC, KEY_DOC, KEY_LIST_FAVORITE_DOC],
   });
@@ -221,6 +229,17 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         setIsModalRemoveOpen(true);
       },
       isHidden: !doc.abilities.destroy,
+    },
+    {
+      type: 'separator',
+    },
+    {
+      label: '',
+      subText: t('Word count: {{count}} words', {
+        count: wordCount,
+        description:
+          'In the document options menu, showing the number of words in the document.',
+      }),
     },
   ];
 
