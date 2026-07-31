@@ -47,6 +47,7 @@ and this project adheres to
 - ✨(collaboration) add an admin reset-connections endpoint on yhub
 - ✨(collaboration) add a create-ydoc endpoint on yhub
 - 🔧(backend) fine tune redis cache options
+- ✨(mcp) add the docs-mcp server #2646
 - ✨(collaboration) soft-migrate legacy S3 documents into yhub
 - ✨(collaboration) replay legacy s3 version history into yhub
 - ✨(backend) add a service to call the yhub REST API
