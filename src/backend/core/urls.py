@@ -9,6 +9,7 @@ from rest_framework.routers import DefaultRouter
 
 from core.api import viewsets
 from core.external_api import viewsets as external_api_viewsets
+from core.mcp_api.urls import urlpatterns as mcp_api_urls
 
 # - Main endpoints
 router = DefaultRouter()
@@ -66,6 +67,7 @@ urlpatterns = [
             [
                 *router.urls,
                 *oidc_urls,
+                *mcp_api_urls,
                 re_path(
                     r"^documents/(?P<resource_id>[0-9a-z-]*)/",
                     include(document_related_router.urls),

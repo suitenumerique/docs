@@ -819,6 +819,16 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # MCP API
+
+    # MCP_READ_CONTENT_MAX_CHARS is the maximum number of characters
+    # that can be read from a document by the MCP API.
+    MCP_READ_CONTENT_MAX_CHARS = values.PositiveIntegerValue(
+        default=20000,
+        environ_name="MCP_READ_CONTENT_MAX_CHARS",
+        environ_prefix=None,
+    )
+
     # External API Configuration
     # Configure available routes and actions for external_api endpoints
     EXTERNAL_API = values.DictValue(
