@@ -30,7 +30,7 @@ test.describe('Doc Export', () => {
     await expect(page.getByTestId('modal-export-title')).toBeVisible();
     await expect(
       page.getByText(
-        'Export your document to download in .docx, .odt, .pdf or .html(zip) format.',
+        'Export your document to download in .pdf, .docx, .odt or .html(zip) format.',
       ),
     ).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Format' })).toBeVisible();
