@@ -69,6 +69,8 @@ test.describe('Doc Header', () => {
   }) => {
     await createDoc(page, 'doc-update', browserName, 1);
 
+    await writeInEditor({ page, text: 'Hello Content' });
+
     const card = page.getByLabel(
       'It is the card information about the document.',
     );
@@ -93,6 +95,7 @@ test.describe('Doc Header', () => {
     await expect(
       page.getByRole('menuitem', { name: 'Download' }),
     ).toBeVisible();
+    await expect(page.getByText('Word count: 2 words').first()).toBeVisible();
   });
 
   test('it updates the title doc and check the broadcast', async ({

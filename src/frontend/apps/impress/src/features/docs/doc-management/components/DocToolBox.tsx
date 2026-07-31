@@ -5,11 +5,16 @@ import {
   useTreeContext,
 } from '@gouvfr-lasuite/ui-components';
 import { Present } from '@gouvfr-lasuite/ui-components/icons';
+import { announce } from '@react-aria/live-announcer';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Text } from '@/components/Text';
+import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
+import { getWordCount } from '@/docs/doc-editor/utils';
+import { printDocumentWithStyles } from '@/docs/doc-export/utils_print';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useAuth } from '@/features/auth';
 import ContentCopyIcon from '@/icons/copy.svg';
@@ -25,7 +30,6 @@ import StarIcon from '@/icons/star.svg';
 import DeleteIcon from '@/icons/trash.svg';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
-import { printDocumentWithStyles } from '../../doc-export/utils_print';
 import {
   KEY_DOC,
   KEY_LIST_DOC,
@@ -96,15 +100,34 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
 
+  const { editor } = useEditorStore();
+  const wordCountLabel = useMemo(() => {
+    if (openDropdown) {
+      return t('Word count: {{count}} words', {
+        count: getWordCount(editor),
+        description:
+          'In the document options menu, showing the number of words in the document.',
+      });
+    }
+  }, [editor, openDropdown, t]);
+
+  useEffect(() => {
+    if (wordCountLabel) {
+      announce(wordCountLabel, 'polite');
+    }
+  }, [wordCountLabel]);
+
   const { restoreFocus, addLastFocus } = useFocusStore();
   const { isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
+
   const openPresenter = usePresenterStore((state) => state.open);
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: (data) => {
       void router.push(`/docs/${data.id}`);
     },
   });
+
   const removeFavoriteDoc = useDeleteFavoriteDoc({
     listInvalidQueries: [KEY_LIST_DOC, KEY_DOC, KEY_LIST_FAVORITE_DOC],
   });
@@ -232,6 +255,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       },
       isHidden: !doc.abilities.destroy,
     },
+    {
+      type: 'separator',
+    },
   ];
 
   return (
@@ -241,6 +267,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         isOpen={openDropdown}
         shouldCloseOnInteractOutside={() => true}
         onOpenChange={setOpenDropdown}
+        bottomMessage={
+          wordCountLabel && <Text $variation="tertiary">{wordCountLabel}</Text>
+        }
       >
         <Button
           aria-label={t('Open the document options')}

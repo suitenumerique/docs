@@ -887,6 +887,9 @@
       "Shared with {{count}} users_many": "Shared with {{count}} users",
       "Shared with {{count}} users_one": "Shared with {{count}} user",
       "Shared with {{count}} users_other": "Shared with {{count}} users",
+      "Word count: {{count}} words_one": "Word count: {{count}} word",
+      "Word count: {{count}} words_many": "Word count: {{count}} words",
+      "Word count: {{count}} words_other": "Word count: {{count}} words",
       "days_many": "days",
       "days_one": "day",
       "days_other": "days"

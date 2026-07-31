@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) Add "Copy link to block" feature #2547
+- ✨(frontend) add word count to doc header toolbox #2549
 
 ### Changed
 
