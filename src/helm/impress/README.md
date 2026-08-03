@@ -306,8 +306,8 @@
 | Name                                               | Description                                                     | Value                   |
 | -------------------------------------------------- | --------------------------------------------------------------- | ----------------------- |
 | `docSpec.enabled`                                  | Enable docSpec deployment                                       | `false`                 |
-| `docSpec.image.repository`                         | Repository to use to pull docSpec container image               | `ghcr.io/docspecio/api` |
-| `docSpec.image.tag`                                | docSpec container tag                                           | `2.6.3`                 |
+| `docSpec.image.repository`                         | Repository to use to pull docSpec container image               | `ghcr.io/docspec/api`   |
+| `docSpec.image.tag`                                | docSpec container tag                                           | `1.21.4`                |
 | `docSpec.image.pullPolicy`                         | docSpec container image pull policy                             | `IfNotPresent`          |
 | `docSpec.command`                                  | Override the docSpec container command                          | `[]`                    |
 | `docSpec.args`                                     | Override the docSpec container args                             | `[]`                    |
@@ -319,7 +319,7 @@
 | `docSpec.envVars`                                  | Configure docSpec container environment variables               | `{}`                    |
 | `docSpec.service.type`                             | docSpec Service type                                            | `ClusterIP`             |
 | `docSpec.service.port`                             | docSpec Service listening port                                  | `4000`                  |
-| `docSpec.service.targetPort`                       | docSpec container listening port                                | `4000`                  |
+| `docSpec.service.targetPort`                       | docSpec container listening port                                | `3000`                  |
 | `docSpec.probes.liveness.path`                     | Configure path for docSpec HTTP liveness probe                  | `/health`               |
 | `docSpec.probes.readiness.path`                    | Configure path for docSpec HTTP readiness probe                 | `/health`               |
 | `docSpec.resources`                                | docSpec resources                                               | `{}`                    |
