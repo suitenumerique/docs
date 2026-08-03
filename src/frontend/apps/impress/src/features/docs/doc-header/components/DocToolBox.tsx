@@ -72,16 +72,13 @@ const ConfirmationLeaveModal = dynamic(
   { ssr: false },
 );
 
-const ModalExport =
-  process.env.NEXT_PUBLIC_PUBLISH_AS_MIT === 'false'
-    ? dynamic(
-        () =>
-          import('@/docs/doc-export/components/ModalExport').then((mod) => ({
-            default: mod.ModalExport,
-          })),
-        { ssr: false },
-      )
-    : null;
+const ModalExport = dynamic(
+  () =>
+    import('@/docs/doc-export/components/ModalExport').then((mod) => ({
+      default: mod.ModalExport,
+    })),
+  { ssr: false },
+);
 
 interface DocToolBoxProps {
   doc: Doc;
@@ -167,7 +164,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       callback: () => {
         setIsModalExportOpen(true);
       },
-      isHidden: !ModalExport,
     },
     {
       label: t('Copy as {{format}}', { format: 'Markdown' }),
@@ -247,7 +243,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         />
       </DropdownMenu>
 
-      {isModalExportOpen && ModalExport && (
+      {isModalExportOpen && (
         <ModalExport
           onClose={() => {
             setIsModalExportOpen(false);

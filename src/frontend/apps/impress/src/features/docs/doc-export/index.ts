@@ -6,14 +6,4 @@
 export * from './api';
 export * from './utils';
 export * from './utils_html';
-
-import * as ModalExport from './components/ModalExport';
-
-let modulesExport = undefined;
-if (process.env.NEXT_PUBLIC_PUBLISH_AS_MIT === 'false') {
-  modulesExport = {
-    ...ModalExport,
-  };
-}
-
-export default modulesExport;
+export * from './components';
