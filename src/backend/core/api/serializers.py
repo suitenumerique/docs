@@ -453,6 +453,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
     language = serializers.ChoiceField(
         required=False, choices=lazy(lambda: settings.LANGUAGES, tuple)()
     )
+    send_notification_email = serializers.BooleanField(required=False, default=True)
     # Invitation
     message = serializers.CharField(required=False)
     subject = serializers.CharField(required=False)
@@ -520,7 +521,8 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
         document.content = document_content
         document.save()
 
-        self._send_email_notification(document, validated_data, email, language)
+        if validated_data.get("send_notification_email", True):
+            self._send_email_notification(document, validated_data, email, language)
         return document
 
     def _send_email_notification(self, document, validated_data, email, language):

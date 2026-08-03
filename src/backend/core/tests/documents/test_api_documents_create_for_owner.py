@@ -312,6 +312,33 @@ def test_api_documents_create_for_owner_new_user(mock_convert_md):
     assert document.creator == user
 
 
+@override_settings(SERVER_TO_SERVER_API_TOKENS=["DummyToken"])
+def test_api_documents_create_for_owner_without_notification_email(mock_convert_md):
+    """The caller can disable the notification email when creating the document."""
+    data = {
+        "title": "My Document",
+        "content": "Document content",
+        "sub": "123",
+        "email": "john.doe@example.com",
+        "send_notification_email": False,
+    }
+
+    response = APIClient().post(
+        "/api/v1.0/documents/create-for-owner/",
+        data,
+        format="json",
+        HTTP_AUTHORIZATION="Bearer DummyToken",
+    )
+
+    assert response.status_code == 201
+    assert mock_convert_md.called is True
+    assert Document.objects.exists()
+    assert Invitation.objects.filter(
+        email="john.doe@example.com", role="owner"
+    ).exists()
+    assert len(mail.outbox) == 0
+
+
 @override_settings(
     SERVER_TO_SERVER_API_TOKENS=["DummyToken"],
     OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION=True,
