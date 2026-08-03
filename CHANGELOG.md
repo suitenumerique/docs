@@ -21,6 +21,8 @@ and this project adheres to
 - 🚚(project) switch docspec image to ghcr.io/docspec/api #2553
 - 🚚(global) move favorite documents API endpoint 
   to `/documents/favorites/` #2540
+- ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub
+- 💥(y-provider) y-provider becomes converter-only
 
 ### Fixed
 
