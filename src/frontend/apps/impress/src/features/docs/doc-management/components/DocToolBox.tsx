@@ -21,11 +21,15 @@ import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
 import PrintIcon from '@/assets/icons/ui-kit/print.svg';
 import SharedIcon from '@/assets/icons/ui-kit/shared.svg';
 import DeleteIcon from '@/assets/icons/ui-kit/trash.svg';
+import { printDocumentWithStyles } from '@/docs/doc-export/utils_print';
+import { DocMoveModal } from '@/docs/doc-management/components/DocMoveModal';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
+import { useDetachDoc } from '@/docs/doc-tree/api/useDetach';
 import { useAuth } from '@/features/auth';
+import DocMoveInIcon from '@/icons/doc-move-in.svg';
+import DocMoveOutIcon from '@/icons/doc-move-out.svg';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
-import { printDocumentWithStyles } from '../../doc-export/utils_print';
 import {
   KEY_DOC,
   KEY_LIST_DOC,
@@ -35,7 +39,7 @@ import {
   useDuplicateDoc,
 } from '../api';
 import { useCopyDocLink } from '../hooks';
-import { Doc } from '../types';
+import { Doc, Role } from '../types';
 
 const ModalRemoveDoc = dynamic(
   () =>
@@ -88,7 +92,7 @@ interface DocToolBoxProps {
 
 export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
-  const treeContext = useTreeContext<Doc>();
+  const treeContext = useTreeContext<Doc | null>();
   const router = useRouter();
   const isTopParent = doc.id === treeContext?.root?.id; // it can be a child but not for the current user
   const { authenticated } = useAuth();
@@ -98,6 +102,8 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const [isModalShareOpen, setIsModalShareOpen] = useState(false);
   const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
+  const [isModalMoveOpen, setIsModalMoveOpen] = useState(false);
+  const { mutate: detachDoc } = useDetachDoc();
 
   const { restoreFocus, addLastFocus } = useFocusStore();
   const { isMobile } = useResponsiveStore();
@@ -197,6 +203,40 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         });
       },
       isHidden: !doc.abilities.duplicate,
+    },
+    {
+      label: t('Move to my docs'),
+      isHidden: isTopParent || doc.user_role !== Role.OWNER,
+      icon: <DocMoveOutIcon width={18} height={18} aria-hidden="true" />,
+      callback: () => {
+        if (!treeContext?.root) {
+          return;
+        }
+
+        detachDoc(
+          { documentId: doc.id, rootId: treeContext.root.id },
+          {
+            onSuccess: () => {
+              if (treeContext.root) {
+                treeContext.treeData.setSelectedNode(treeContext.root);
+                void router.push(`/docs/${treeContext.root.id}`).then(() => {
+                  setTimeout(() => {
+                    treeContext?.treeData.deleteNode(doc.id);
+                  }, 100);
+                });
+              }
+            },
+          },
+        );
+      },
+    },
+    {
+      label: t('Move into a doc'),
+      icon: <DocMoveInIcon width={18} height={18} aria-hidden="true" />,
+      callback: () => {
+        setIsModalMoveOpen(true);
+      },
+      isHidden: !doc.abilities.move,
     },
     { type: 'separator' },
     {
@@ -320,6 +360,17 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             restoreFocus();
           }}
           doc={doc}
+        />
+      )}
+      {isModalMoveOpen && (
+        <DocMoveModal
+          doc={doc}
+          onClose={() => {
+            setIsModalMoveOpen(false);
+            restoreFocus();
+          }}
+          isOpen={isModalMoveOpen}
+          onAfterMove={() => treeContext?.setRoot(null)}
         />
       )}
     </>

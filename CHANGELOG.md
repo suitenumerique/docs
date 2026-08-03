@@ -16,6 +16,7 @@ and this project adheres to
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
 - 🚸(frontend) print from document options menu #2550
+- 🚚(frontend) add doc move to doc options #2555
 
 ### Fixed
 

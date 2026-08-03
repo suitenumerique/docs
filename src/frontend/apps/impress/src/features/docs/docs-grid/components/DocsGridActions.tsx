@@ -13,7 +13,7 @@ import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
 import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
 import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
 import {
-  Doc,
+  type Doc,
   KEY_LIST_DOC,
   KEY_LIST_FAVORITE_DOC,
   useCreateFavoriteDoc,
@@ -21,10 +21,9 @@ import {
   useDuplicateDoc,
   useTrans,
 } from '@/docs/doc-management';
+import { DocMoveModal } from '@/docs/doc-management/components/DocMoveModal';
 import { focusMainContentStart } from '@/layouts/utils';
 import { useFocusStore } from '@/stores';
-
-import { DocMoveModal } from './DocMoveModal';
 
 const DocShareModal = dynamic(
   () =>
