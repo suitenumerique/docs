@@ -145,10 +145,10 @@
     "logo": {},
     "icon": {
       "src": "/assets/icon-docs.svg",
-      "width": 36,
-      "height": 42,
+      "width": 40,
+      "height": 40,
       "style": {
-        "width": "36px",
+        "width": "40px",
         "height": "auto"
       },
       "alt": "",

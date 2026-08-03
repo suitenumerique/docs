@@ -285,7 +285,7 @@ test.describe('Left panel responsive', () => {
     await page.setViewportSize({ width: 900, height: 1200 });
     await page.goto('/');
 
-    await expect(page.getByRole('link', { name: 'All docs' })).toBeInViewport();
+    await expect(page.getByRole('link', { name: 'Recent' })).toBeInViewport();
     await expect(newDocButton).toBeInViewport();
     await expect(userMenu).toBeInViewport();
     await expect(header.getByLabel('Toggle left panel')).toBeVisible();

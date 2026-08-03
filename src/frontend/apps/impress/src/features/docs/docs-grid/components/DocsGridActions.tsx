@@ -4,14 +4,6 @@ import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import ContentCopySVG from '@/assets/icons/ui-kit/content_copy.svg';
-import DeleteSVG from '@/assets/icons/ui-kit/delete.svg';
-import DocMoveInSVG from '@/assets/icons/ui-kit/doc-move-in.svg';
-import GroupSVG from '@/assets/icons/ui-kit/group.svg';
-import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
-import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
-import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
-import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
 import {
   Doc,
   KEY_LIST_DOC,
@@ -21,6 +13,14 @@ import {
   useDuplicateDoc,
   useTrans,
 } from '@/docs/doc-management';
+import ContentCopyIcon from '@/icons/content_copy.svg';
+import DeleteIcon from '@/icons/delete.svg';
+import DocMoveInIcon from '@/icons/doc-move-in.svg';
+import GroupIcon from '@/icons/group.svg';
+import LeaveIcon from '@/icons/leave.svg';
+import MoreIcon from '@/icons/more_horiz.svg';
+import StarSlashIcon from '@/icons/star-slash.svg';
+import StarIcon from '@/icons/star.svg';
 import { focusMainContentStart } from '@/layouts/utils';
 import { useFocusStore } from '@/stores';
 
@@ -83,11 +83,11 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
 
   const options: DropdownMenuItem[] = [
     {
-      label: doc.is_favorite ? t('Unpin') : t('Pin'),
+      label: doc.is_favorite ? t('Unstar') : t('Star'),
       icon: doc.is_favorite ? (
-        <KeepOffSVG width={24} height={24} aria-hidden="true" />
+        <StarSlashIcon width={24} height={24} aria-hidden="true" />
       ) : (
-        <KeepSVG width={24} height={24} aria-hidden="true" />
+        <StarIcon width={24} height={24} aria-hidden="true" />
       ),
       callback: () => {
         if (doc.is_favorite) {
@@ -96,12 +96,12 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
           makeFavoriteDoc.mutate({ id: doc.id });
         }
       },
-      testId: `docs-grid-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+      testId: `docs-grid-actions-${doc.is_favorite ? 'unstar' : 'star'}-${doc.id}`,
       showSeparator: true,
     },
     {
       label: t('Share'),
-      icon: <GroupSVG width={24} height={24} aria-hidden="true" />,
+      icon: <GroupIcon width={24} height={24} aria-hidden="true" />,
       callback: () => {
         setIsModalShareOpen(true);
       },
@@ -110,7 +110,7 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
     },
     {
       label: t('Move into a doc'),
-      icon: <DocMoveInSVG width={24} height={24} aria-hidden="true" />,
+      icon: <DocMoveInIcon width={24} height={24} aria-hidden="true" />,
       callback: () => {
         setIsModalMoveOpen(true);
       },
@@ -119,7 +119,7 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
     },
     {
       label: t('Duplicate'),
-      icon: <ContentCopySVG width={24} height={24} aria-hidden="true" />,
+      icon: <ContentCopyIcon width={24} height={24} aria-hidden="true" />,
       isDisabled: !doc.abilities.duplicate,
       callback: () => {
         duplicateDoc({
@@ -132,14 +132,14 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
     },
     {
       label: t('Leave'),
-      icon: <LeaveSVG width={24} height={24} aria-hidden="true" />,
+      icon: <LeaveIcon width={24} height={24} aria-hidden="true" />,
       callback: () => {
         setIsModalLeaveOpen(true);
       },
     },
     {
       label: t('Delete'),
-      icon: <DeleteSVG width={24} height={24} aria-hidden="true" />,
+      icon: <DeleteIcon width={24} height={24} aria-hidden="true" />,
       callback: () => {
         setIsModalRemoveOpen(true);
       },
@@ -165,7 +165,7 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
             },
           )}
           size="small"
-          icon={<MoreSVG width={16} height={16} aria-hidden="true" />}
+          icon={<MoreIcon width={16} height={16} aria-hidden="true" />}
           color="neutral"
           variant="tertiary"
           onClick={(e) => {

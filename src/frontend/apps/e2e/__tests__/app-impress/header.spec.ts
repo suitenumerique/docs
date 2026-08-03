@@ -19,7 +19,7 @@ test.describe('Header', () => {
     // Clicking moves focus to the page heading
     await skipLink.click();
     const pageHeading = page.getByRole('heading', {
-      name: 'All docs',
+      name: 'Recent',
       level: 2,
     });
     await expect(pageHeading).toBeFocused();

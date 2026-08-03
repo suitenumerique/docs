@@ -4,11 +4,16 @@ import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
 
-import AllDocs from '@/assets/icons/doc-all.svg';
-import { Box, Card, Icon, Text } from '@/components';
+import { Box, Card, Text } from '@/components';
 import { useInfiniteDocs } from '@/docs/doc-management/api/useDocs';
+import { useInfiniteDocsFavorite } from '@/docs/doc-management/api/useDocsFavorite';
 import { useImport } from '@/docs/doc-management/hooks/useImport';
 import { DocDefaultFilter } from '@/docs/doc-management/types';
+import ClockIcon from '@/icons/clock.svg';
+import SharedIcon from '@/icons/shared.svg';
+import StarIcon from '@/icons/star.svg';
+import TrashIcon from '@/icons/trash.svg';
+import UserIcon from '@/icons/user.svg';
 import { useResponsiveStore } from '@/stores';
 
 import { useInfiniteDocsTrashbin } from '../api';
@@ -177,16 +182,19 @@ const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
 
-  let title = t('All docs');
-  let icon = <Icon icon={<AllDocs width={24} height={24} />} />;
+  let title = t('Recent');
+  let icon = <ClockIcon width={24} height={24} aria-hidden="true" />;
   if (target === DocDefaultFilter.MY_DOCS) {
-    icon = <Icon iconName="lock" />;
+    icon = <UserIcon width={24} height={24} aria-hidden="true" />;
     title = t('My docs');
   } else if (target === DocDefaultFilter.SHARED_WITH_ME) {
-    icon = <Icon iconName="group" />;
+    icon = <SharedIcon width={24} height={24} aria-hidden="true" />;
     title = t('Shared with me');
+  } else if (target === DocDefaultFilter.STARRED) {
+    icon = <StarIcon width={24} height={24} aria-hidden="true" />;
+    title = t('Starred');
   } else if (target === DocDefaultFilter.TRASHBIN) {
-    icon = <Icon iconName="delete" />;
+    icon = <TrashIcon width={24} height={24} aria-hidden="true" />;
     title = t('Trashbin');
   }
 
@@ -223,6 +231,15 @@ const useDocsQuery = (target: DocDefaultFilter) => {
     },
   );
 
+  const favoriteQuery = useInfiniteDocsFavorite(
+    {
+      page: 1,
+    },
+    {
+      enabled: target === DocDefaultFilter.STARRED,
+    },
+  );
+
   const docsQuery = useInfiniteDocs(
     {
       page: 1,
@@ -232,9 +249,18 @@ const useDocsQuery = (target: DocDefaultFilter) => {
         }),
     },
     {
-      enabled: target !== DocDefaultFilter.TRASHBIN,
+      enabled:
+        target !== DocDefaultFilter.TRASHBIN &&
+        target !== DocDefaultFilter.STARRED,
     },
   );
 
-  return target === DocDefaultFilter.TRASHBIN ? trashbinQuery : docsQuery;
+  switch (target) {
+    case DocDefaultFilter.TRASHBIN:
+      return trashbinQuery;
+    case DocDefaultFilter.STARRED:
+      return favoriteQuery;
+    default:
+      return docsQuery;
+  }
 };

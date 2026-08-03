@@ -81,7 +81,7 @@ test.describe('Doc Trashbin', () => {
     await clickInGridMenu(page, row2, 'Restore');
 
     await expect(row2.getByText(title2)).toBeHidden();
-    await page.getByRole('link', { name: 'All docs' }).click();
+    await page.getByRole('link', { name: 'Recent' }).click();
     const row2Restored = await getGridRow(page, title2);
     await expect(row2Restored.getByText(title2)).toBeVisible();
     await row2Restored.getByRole('link', { name: /Open document/ }).click();

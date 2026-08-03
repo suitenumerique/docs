@@ -28,7 +28,6 @@ export const DocSearchItem = ({ doc }: DocSearchItemProps) => {
               <SimpleDocItem
                 doc={doc}
                 showDate
-                isPinned={doc.is_favorite}
                 breadcrumb={filter === 'all' ? doc.parent?.title : undefined}
               />
             </Box>

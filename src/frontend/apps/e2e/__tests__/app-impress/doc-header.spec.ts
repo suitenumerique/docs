@@ -560,46 +560,22 @@ test.describe('Doc Header', () => {
     expect(clipboardContent.trim()).toMatch(url);
   });
 
-  test('it pins a document', async ({ page, browserName }) => {
-    const [docTitle] = await createDoc(page, `Pin doc`, browserName);
+  test('it stars a document', async ({ page, browserName }) => {
+    await createDoc(page, `Star doc`, browserName);
 
+    // Star
     await page
       .getByRole('button', { name: 'Open the document options' })
       .click();
+    await page.getByRole('menuitem', { name: 'Star' }).click();
+    await expect(page.getByText('This document is starred')).toBeVisible();
 
-    // Pin
-    await page.getByRole('menuitem', { name: 'Pin' }).click();
+    // UnStar
     await page
       .getByRole('button', { name: 'Open the document options' })
       .click();
-    await expect(page.getByText('Unpin')).toBeVisible();
-
-    await page.goto('/');
-
-    const row = await getGridRow(page, docTitle);
-
-    // Check is pinned
-    await expect(row.getByTestId('doc-pinned-icon')).toBeVisible();
-    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
-
-    await row.getByText(docTitle).click();
-    await page
-      .getByRole('button', { name: 'Open the document options' })
-      .click();
-
-    // Unpin
-    await page.getByRole('menuitem', { name: 'Unpin' }).click();
-    await page
-      .getByRole('button', { name: 'Open the document options' })
-      .click();
-    await expect(page.getByRole('menuitem', { name: 'Pin' })).toBeVisible();
-
-    await page.goto('/');
-
-    // Check is unpinned
-    await expect(row.getByTestId('doc-pinned-icon')).toBeHidden();
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
+    await page.getByRole('menuitem', { name: 'Unstar' }).click();
+    await expect(page.getByText('This document is starred')).toBeHidden();
   });
 
   test('it duplicates a document', async ({ page, browserName }) => {
