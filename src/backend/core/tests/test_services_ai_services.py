@@ -10,7 +10,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test.utils import override_settings
 
 import pytest
-from mistralai import Mistral
+from mistralai.client import Mistral
 from openai import OpenAI, OpenAIError
 from pydantic_ai.models.mistral import MistralModel
 from pydantic_ai.models.openai import OpenAIChatModel
