@@ -2,102 +2,39 @@
 
 from logging import getLogger
 
-from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
-
-import requests
-
-from core import models
-
 logger = getLogger(__name__)
 
 
 class CollaborationService:
     """Service class for Collaboration related operations."""
 
-    def __init__(self):
-        """Ensure that the collaboration configuration is set properly."""
-        if settings.COLLABORATION_API_URL is None:
-            raise ImproperlyConfigured("Collaboration configuration not set")
-
     def reset_connections(self, document_id, user_id=None):
         """
         Reset the connections of a document and all its descendants in the
         collaboration server.
 
-        Resetting a connection means that the user will be disconnected and will
-        have to reconnect to the collaboration server, with updated rights.
+        TODO(yhub): yhub exposes no kick API, so this is a no-op. The regression
+        is stronger than losing the hocuspocus disconnect: a revoked user keeps
+        their already-authorized websocket until it closes on its own, and the
+        edits they push in the meantime are durably persisted and re-served by
+        yhub (hocuspocus lost them with the room). Until yhub grows a kick API,
+        the manual remediation is yhub's rollback endpoint — per document:
+        `POST /rollback/{org}/{docid}` with a lib0-encoded body containing
+        `{"by": "<userid>"}` (see yhub API.md "Rollback"), authenticated as a
+        user with update ability on the document.
         """
-        try:
-            document = models.Document.objects.get(pk=document_id)
-        except models.Document.DoesNotExist:
-            logger.error("Document %s does not exists anymore", document_id)
-            return
+        logger.info(
+            "reset_connections is a no-op (no yhub kick API), document %s, user %s",
+            document_id,
+            user_id,
+        )
 
-        documents = models.Document.objects.filter(
-            path__startswith=document.path, depth__gte=document.depth
-        ).order_by("path")
-
-        for doc in documents:
-            try:
-                self._reset_connection(doc.id, user_id)
-            except requests.HTTPError:
-                logger.error("impossible to reset connections for document %s", doc.id)
-
-    def _reset_connection(self, room, user_id=None):
-        """
-        Reset connections of a single room in the collaboration server.
-        """
-        endpoint = "reset-connections"
-
-        # room is necessary as a parameter, it is easier to stick to the
-        # same pod thanks to a parameter
-        endpoint_url = f"{settings.COLLABORATION_API_URL}{endpoint}/?room={room}"
-
-        # Note: Collaboration microservice accepts only raw token, which is not recommended
-        headers = {"Authorization": settings.COLLABORATION_SERVER_SECRET}
-        if user_id:
-            headers["X-User-Id"] = user_id
-
-        try:
-            response = requests.post(endpoint_url, headers=headers, timeout=10)
-        except requests.RequestException as e:
-            raise requests.HTTPError("Failed to notify WebSocket server.") from e
-
-        if response.status_code != 200:
-            raise requests.HTTPError(
-                f"Failed to notify WebSocket server. Status code: {response.status_code}, "
-                f"Response: {response.text}"
-            )
-
+    # pylint: disable=unused-argument
     def get_document_connection_info(self, room, session_key):
         """
         Get the connection info for a document.
+
+        TODO(yhub): yhub exposes no connection-info API, so pretend nobody is
+        connected. Callers fall back to the cache-lock no-websocket path.
         """
-        endpoint = "get-connections"
-        querystring = {
-            "room": room,
-            "sessionKey": session_key,
-        }
-        endpoint_url = f"{settings.COLLABORATION_API_URL}{endpoint}/"
-
-        headers = {"Authorization": settings.COLLABORATION_SERVER_SECRET}
-
-        try:
-            response = requests.get(
-                endpoint_url, headers=headers, params=querystring, timeout=10
-            )
-        except requests.RequestException as e:
-            raise requests.HTTPError("Failed to get document connection info.") from e
-
-        if response.status_code == 200:
-            result = response.json()
-            return result.get("count", 0), result.get("exists", False)
-
-        if response.status_code == 404:
-            return 0, False
-
-        raise requests.HTTPError(
-            f"Failed to get document connection info. Status code: {response.status_code}, "
-            f"Response: {response.text}"
-        )
+        return 0, False

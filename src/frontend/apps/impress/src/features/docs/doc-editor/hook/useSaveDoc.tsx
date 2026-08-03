@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 
 import { useDocContentUpdate } from '@/docs/doc-management/api/useDocContentUpdate';
@@ -49,22 +50,19 @@ export const useSaveDoc = (docId: string, yDoc: Y.Doc) => {
     ) => {
       /**
        * When the AI edit the doc transaction.local is false,
-       * so we check if the origin constructor to know where
+       * so we check the transaction origin to know where
        * the transaction comes from.
-       * "PluginKey" constructor comes from the current user, but transaction.local is more reliable
-       * "HocuspocusProvider" constructor comes from other users from the collaboration server,
-       * it seems quite reliable too.
-       * The AI constructor name seems to not be reliable enough, but by deduction if it's not local
+       * "PluginKey" origin comes from the current user, but transaction.local is more reliable
+       * Updates from other users are applied by the collaboration server with
+       * the provider instance as origin, it seems quite reliable too.
+       * The AI origin seems to not be reliable enough, but by deduction if it's not local
        * and not from other users, it has to be from the AI.
        *
        * TODO: see if we can get the local changes from the AI
        */
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const transactionOrigin = transaction?.origin?.constructor?.name;
-      const PROVIDER_ORIGIN_CONSTRUCTOR = 'HocuspocusProvider';
-
       const isAIChange =
-        !transaction.local && transactionOrigin !== PROVIDER_ORIGIN_CONSTRUCTOR;
+        !transaction.local &&
+        !(transaction.origin instanceof WebsocketProvider);
 
       /**
        * notifySubscribers generate a transaction that can be
