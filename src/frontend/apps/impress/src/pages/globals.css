@@ -24,6 +24,12 @@ body > #__next > .c__app > div:has(> .c__loader) {
   box-sizing: border-box;
 }
 
+*:focus-visible {
+  outline: 2px solid var(--c--globals--colors--brand-400);
+  outline-offset: calc(-1 * var(--c--globals--spacings--4xs));
+  border-radius: var(--c--globals--spacings--2xs);
+}
+
 main ::-webkit-scrollbar,
 .ReactModalPortal ::-webkit-scrollbar {
   width: 20px;

@@ -1,15 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import ArrowSVG from '@/assets/icons/ui-kit/arrow-corner-down-right.svg';
-import { Box, Text } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
+import { Box, Icon, Text } from '@/components';
 import { useDate } from '@/hooks/useDate';
+import DocsIcon from '@/icons/Docs.svg';
+import SubdocsIcon from '@/icons/Subdocs.svg';
+import ArrowIcon from '@/icons/arrow-corner-down-right.svg';
+import PinnedIcon from '@/icons/pinned.svg';
 import { useResponsiveStore } from '@/stores';
 
-import ChildDocument from '../assets/child-document.svg';
-import PinnedDocumentIcon from '../assets/pinned-document.svg';
-import SimpleFileIcon from '../assets/simple-document.svg';
 import { useDocUtils, useTrans } from '../hooks';
 import { Doc } from '../types';
 
@@ -39,7 +38,6 @@ export const SimpleDocItem = ({
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
   const { isSmallMobile } = useResponsiveStore();
-  const { spacingsTokens } = useCunninghamTheme();
   const { untitledDocument } = useTrans();
   const { isChild } = useDocUtils(doc);
   const { relativeDate, formatDate } = useDate();
@@ -55,45 +53,66 @@ export const SimpleDocItem = ({
   return (
     <Box
       $direction="row"
-      $gap={spacingsTokens.sm}
+      $gap={isSmallMobile ? 'xs' : 'sm'}
       $overflow="auto"
       $width="100%"
       className="--docs--simple-doc-item"
       aria-label={itemAriaLabel}
     >
-      <Box
-        $direction="row"
-        $align="center"
-        $css={css`
-          background-color: transparent;
-          filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.05));
-        `}
-        $padding={`${spacingsTokens['3xs']} 0`}
-        data-testid={isPinned ? `doc-pinned-${doc.id}` : undefined}
-        aria-hidden="true"
-      >
-        {isPinned ? (
-          <PinnedDocumentIcon
+      {isPinned ? (
+        <Box
+          $position="relative"
+          data-testid={isPinned ? `doc-pinned-${doc.id}` : undefined}
+        >
+          <Icon
+            icon={
+              <DocsIcon
+                width={isSmallMobile ? '35px' : '40px'}
+                height={isSmallMobile ? '35px' : '40px'}
+                aria-hidden="true"
+                data-testid="doc-simple-icon"
+                color="var(--c--contextuals--content--semantic--info--tertiary)"
+              />
+            }
+            $shrink="0"
+          />
+
+          <PinnedIcon
+            width="16px"
+            height="16px"
+            style={{ position: 'absolute', top: 0, right: 0 }}
             aria-hidden="true"
             data-testid="doc-pinned-icon"
             color="var(--c--contextuals--content--semantic--info--tertiary)"
           />
-        ) : isChild ? (
-          <ChildDocument
-            aria-hidden="true"
-            data-testid="doc-child-icon"
-            color="var(--c--contextuals--content--semantic--info--tertiary)"
-          />
-        ) : (
-          <SimpleFileIcon
-            width="32px"
-            height="32px"
-            aria-hidden="true"
-            data-testid="doc-simple-icon"
-            color="var(--c--contextuals--content--semantic--info--tertiary)"
-          />
-        )}
-      </Box>
+        </Box>
+      ) : isChild ? (
+        <Icon
+          icon={
+            <SubdocsIcon
+              width={isSmallMobile ? '35px' : '40px'}
+              height={isSmallMobile ? '35px' : '40px'}
+              aria-hidden="true"
+              data-testid="doc-child-icon"
+              color="var(--c--contextuals--content--semantic--info--tertiary)"
+            />
+          }
+          $shrink="0"
+        />
+      ) : (
+        <Icon
+          icon={
+            <DocsIcon
+              width={isSmallMobile ? '35px' : '40px'}
+              height={isSmallMobile ? '35px' : '40px'}
+              aria-hidden="true"
+              data-testid="doc-simple-icon"
+              color="var(--c--contextuals--content--semantic--info--tertiary)"
+            />
+          }
+          $shrink="0"
+        />
+      )}
       <Box $justify="center" $overflow="auto" $gap="4xs">
         <Text
           $size="sm"
@@ -113,7 +132,7 @@ export const SimpleDocItem = ({
           >
             {breadcrumb && (
               <Box $direction="row" $align="center" $gap="3xs">
-                <ArrowSVG
+                <ArrowIcon
                   width="16px"
                   height="16px"
                   aria-hidden="true"
