@@ -19,7 +19,6 @@ import HistorySVG from '@/assets/icons/ui-kit/history.svg';
 import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
 import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
 import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
-import MarkdownCopySVG from '@/assets/icons/ui-kit/markdown_copy.svg';
 import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
 import {
   Doc,
@@ -35,8 +34,6 @@ import {
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useAuth } from '@/features/auth';
 import { useFocusStore, useResponsiveStore } from '@/stores';
-
-import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
 
 const ModalRemoveDoc = dynamic(
   () =>
@@ -94,7 +91,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { isTopRoot } = useDocUtils(doc);
   const isTopParent = doc.id === treeContext?.root?.id; // it can be a child but not for the current user
   const { authenticated } = useAuth();
-  const copyCurrentEditorToClipboard = useCopyCurrentEditorToClipboard();
   const [openDropdown, setOpenDropdown] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
@@ -168,14 +164,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         setIsModalExportOpen(true);
       },
       isHidden: !ModalExport,
-    },
-    {
-      label: t('Copy as {{format}}', { format: 'Markdown' }),
-      icon: <MarkdownCopySVG width={24} height={24} aria-hidden="true" />,
-      callback: () => {
-        void copyCurrentEditorToClipboard('markdown');
-      },
-      showSeparator: isMobile || !doc.abilities.versions_list,
     },
     {
       label: t('Version history'),
