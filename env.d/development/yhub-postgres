@@ -1,0 +1,4 @@
+# Postgresql db container configuration for the collaboration server (yhub).
+POSTGRES_DB=yhub
+POSTGRES_USER=yhub
+POSTGRES_PASSWORD=pass

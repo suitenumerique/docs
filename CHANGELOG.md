@@ -15,6 +15,11 @@ and this project adheres to
 - ✨(frontend) warn before uploading an attachment over the size limit #2577
 - ✨(frontend) add keyboard shortcut to open presentation mode #2697
 
+### Changed
+
+- ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub
+- 💥(y-provider) y-provider becomes converter-only
+
 ### Fixed
 
 - 🐛(frontend) clear callout background on Backspace #2052
