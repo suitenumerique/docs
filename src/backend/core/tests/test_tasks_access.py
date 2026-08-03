@@ -5,10 +5,6 @@ core.tasks.access module.
 
 from unittest import mock
 
-from django.core.exceptions import ImproperlyConfigured
-
-import pytest
-
 from core.tasks.access import reset_service_connections_in_cascade
 
 
@@ -33,16 +29,3 @@ def test_reset_service_connections_defaults_user_id_to_none(mock_service):
     mock_service.return_value.reset_connections.assert_called_once_with(
         "document-id", None
     )
-
-
-@mock.patch(
-    "core.tasks.access.CollaborationService",
-    side_effect=ImproperlyConfigured("Collaboration configuration not set"),
-)
-def test_reset_service_connections_propagates_improperly_configured(mock_service):  # pylint: disable=unused-argument
-    """
-    If the collaboration service is not configured, instantiating it raises
-    ImproperlyConfigured, which should propagate out of the task.
-    """
-    with pytest.raises(ImproperlyConfigured):
-        reset_service_connections_in_cascade("document-id")

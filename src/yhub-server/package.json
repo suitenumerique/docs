@@ -1,0 +1,14 @@
+{
+  "name": "yhub-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@y/hub": "0.3.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -53,6 +53,14 @@ and this project adheres to
 - 🐛(backend) handle object storage metadata keys case-insensitively #2576
 - 🐛(keycloak) fix database env variables in the self-hosting example #2572
 - 🐛(helm) show the database error while jobs wait for it to be ready #2578
+- ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub:
+  the dev stack gains dedicated valkey and postgres services for yhub, and
+  the kick (reset-connections) and get-connections APIs have no yhub
+  equivalent yet — they are deferred with TODO(yhub) stubs
+- 💥(y-provider) the published `lasuite/impress-y-provider` image becomes
+  converter-only and no longer serves `/collaboration/ws/`; deployments using
+  the existing helm values lose collaboration until the helm chart routes
+  collaboration to yhub (follow-up)
 
 ## [v5.4.1] - 2026-07-09
 
