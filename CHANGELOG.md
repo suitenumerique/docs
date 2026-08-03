@@ -13,6 +13,8 @@ and this project adheres to
 ### Changed
 
 - ⬆️(backend) upgrade celery to version 5.6.3
+- ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub
+- 💥(y-provider) y-provider becomes converter-only
 
 ### Fixed
 

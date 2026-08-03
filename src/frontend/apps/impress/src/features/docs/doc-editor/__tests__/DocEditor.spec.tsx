@@ -28,8 +28,8 @@ vi.mock('../../doc-management', async () => {
     useIsCollaborativeEditable: () => ({ isEditable: true, isLoading: false }),
     useProviderStore: () => ({
       provider: {
-        configuration: { name: 'test-doc-id' },
-        document: {
+        roomname: 'test-doc-id',
+        doc: {
           getXmlFragment: () => null,
         },
       },
