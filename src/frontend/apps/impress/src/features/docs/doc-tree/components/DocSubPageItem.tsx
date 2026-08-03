@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Icon, StyledLink, Text } from '@/components';
+import { Box, StyledLink, Text } from '@/components';
 import {
   Doc,
   DocIcon,
@@ -294,14 +294,6 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
           <Text $css={ItemTextCss} $size="sm">
             {displayTitle}
           </Text>
-          {doc.nb_accesses_direct >= 1 && (
-            <Icon
-              variant="filled"
-              iconName="group"
-              $size="md"
-              aria-label={t('Shared with others')}
-            />
-          )}
         </Box>
         <Box
           $direction="row"

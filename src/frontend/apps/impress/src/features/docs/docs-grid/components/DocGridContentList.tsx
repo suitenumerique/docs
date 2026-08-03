@@ -24,9 +24,11 @@ import { DocsGridItem } from './DocsGridItem';
 
 const ModalConfirmationMoveDoc = dynamic(
   () =>
-    import('./ModalConfimationMoveDoc').then((mod) => ({
-      default: mod.ModalConfirmationMoveDoc,
-    })),
+    import('@/docs/doc-management/components/ModalConfimationMoveDoc').then(
+      (mod) => ({
+        default: mod.ModalConfirmationMoveDoc,
+      }),
+    ),
   { ssr: false },
 );
 

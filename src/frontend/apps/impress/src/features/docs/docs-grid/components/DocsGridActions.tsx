@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Icon } from '@/components/Icon';
 import {
-  Doc,
+  type Doc,
   KEY_LIST_DOC,
   KEY_LIST_FAVORITE_DOC,
   useCreateFavoriteDoc,
@@ -31,9 +31,15 @@ import StarIcon from '@/icons/star.svg';
 import { focusMainContentStart } from '@/layouts/utils';
 import { useFocusStore } from '@/stores';
 
-import { KEY_LIST_DOC_TRASHBIN } from '../api/useDocsTrashbin';
+import { KEY_LIST_DOC_TRASHBIN } from '../api';
 
-import { DocMoveModal } from './DocMoveModal';
+const DocMoveModal = dynamic(
+  () =>
+    import('@/docs/doc-management/components/DocMoveModal').then((mod) => ({
+      default: mod.DocMoveModal,
+    })),
+  { ssr: false },
+);
 
 const DocShareModal = dynamic(
   () =>

@@ -17,9 +17,11 @@ import { Box, ButtonCloseModal, Text } from '@/components';
 import { QuickSearch } from '@/components/quick-search';
 import { Doc, useMoveDoc, useTrans } from '@/docs/doc-management';
 import { DocSearchContent } from '@/docs/doc-search';
+import {
+  DocsGridItemDate,
+  DocsGridItemTitle,
+} from '@/docs/docs-grid/components/DocsGridItem';
 import { useResponsiveStore } from '@/stores';
-
-import { DocsGridItemDate, DocsGridItemTitle } from './DocsGridItem';
 
 const AlertModalRequestAccess = dynamic(
   () =>
@@ -83,12 +85,14 @@ type DocMoveModalGlobalProps = {
   doc: Doc;
   isOpen: boolean;
   onClose: () => void;
+  onAfterMove?: () => void;
 };
 
 export const DocMoveModal = ({
   doc,
   isOpen,
   onClose,
+  onAfterMove,
 }: DocMoveModalGlobalProps) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -120,10 +124,8 @@ export const DocMoveModal = ({
       position: TreeViewMoveModeEnum.FIRST_CHILD,
     })
       .then(() => {
-        toast(
-          t(`The document has been moved successfully.`),
-          VariantType.SUCCESS,
-        );
+        onClose();
+        onAfterMove?.();
       })
       .catch(() => {
         toast(

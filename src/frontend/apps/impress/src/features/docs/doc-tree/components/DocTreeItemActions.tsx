@@ -25,9 +25,9 @@ import {
   useDocTitleUpdate,
 } from '@/docs/doc-management';
 import { useDuplicateDoc } from '@/docs/doc-management/api';
+import DocMoveOutIcon from '@/icons/doc-move-out.svg';
 
 import { useDetachDoc } from '../api/useDetach';
-import MoveDocIcon from '../assets/doc-extract-bold.svg';
 
 type DocTreeItemActionsProps = {
   doc: Doc;
@@ -122,13 +122,12 @@ export const DocTreeItemActions = ({
             label: t('Move to my docs'),
             isDisabled: doc.user_role !== Role.OWNER,
             icon: (
-              <Box
-                $css={css`
-                  transform: scale(0.8);
-                `}
-              >
-                <MoveDocIcon />
-              </Box>
+              <DocMoveOutIcon
+                width={24}
+                height={24}
+                aria-hidden="true"
+                color="var(--c--contextuals--content--semantic--neutral--primary)"
+              />
             ),
             callback: handleDetachDoc,
           },

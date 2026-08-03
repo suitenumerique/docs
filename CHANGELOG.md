@@ -18,6 +18,7 @@ and this project adheres to
 - ✨(frontend) reset side panel state between documents #2583
 - ♿️(frontend) announce search loading state for screen readers #2526
 - ♻️(frontend) change favorite to star #2539
+- 🚚(frontend) add doc move to doc options #2555
 
 ### Fixed
 
