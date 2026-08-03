@@ -3,7 +3,6 @@
 from django.core.cache import cache
 
 import pytest
-import responses
 from rest_framework.test import APIClient
 
 from core import factories
@@ -11,22 +10,13 @@ from core import factories
 pytestmark = pytest.mark.django_db
 
 
-@responses.activate
 @pytest.mark.parametrize("ws_not_connected_ready_only", [True, False])
 @pytest.mark.parametrize("role", ["editor", "reader"])
 def test_api_documents_can_edit_anonymous(settings, ws_not_connected_ready_only, role):
     """Anonymous users can edit documents when link_role is editor."""
     document = factories.DocumentFactory(link_reach="public", link_role=role)
     client = APIClient()
-    session_key = client.session.session_key
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
     settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = ws_not_connected_ready_only
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 0, "exists": False})
 
     response = client.get(f"/api/v1.0/documents/{document.id!s}/can-edit/")
 
@@ -35,10 +25,8 @@ def test_api_documents_can_edit_anonymous(settings, ws_not_connected_ready_only,
     else:
         assert response.status_code == 200
         assert response.json() == {"can_edit": True}
-        assert ws_resp.call_count == (1 if ws_not_connected_ready_only else 0)
 
 
-@responses.activate
 @pytest.mark.parametrize("ws_not_connected_ready_only", [True, False])
 def test_api_documents_can_edit_authenticated_no_websocket(
     settings, ws_not_connected_ready_only
@@ -50,19 +38,10 @@ def test_api_documents_can_edit_authenticated_no_websocket(
     user = factories.UserFactory(with_owned_document=True)
     client = APIClient()
     client.force_login(user)
-    session_key = client.session.session_key
 
     document = factories.DocumentFactory(users=[(user, "editor")])
 
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
     settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = ws_not_connected_ready_only
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-
-    ws_resp = responses.get(endpoint_url, json={"count": 0, "exists": False})
 
     assert cache.get(f"docs:no-websocket:{document.id}") is None
 
@@ -72,10 +51,8 @@ def test_api_documents_can_edit_authenticated_no_websocket(
     assert response.status_code == 200
 
     assert response.json() == {"can_edit": True}
-    assert ws_resp.call_count == (1 if ws_not_connected_ready_only else 0)
 
 
-@responses.activate
 def test_api_documents_can_edit_authenticated_no_websocket_user_already_editing(
     settings,
 ):
@@ -86,18 +63,10 @@ def test_api_documents_can_edit_authenticated_no_websocket_user_already_editing(
     user = factories.UserFactory(with_owned_document=True)
     client = APIClient()
     client.force_login(user)
-    session_key = client.session.session_key
 
     document = factories.DocumentFactory(users=[(user, "editor")])
 
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
     settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 0, "exists": False})
 
     cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
 
@@ -107,45 +76,13 @@ def test_api_documents_can_edit_authenticated_no_websocket_user_already_editing(
     assert response.status_code == 200
     assert response.json() == {"can_edit": False}
 
-    assert ws_resp.call_count == 1
+
+# TODO(yhub): removed test_api_documents_can_edit_no_websocket_other_user_connected_to_websocket
+# here. yhub has no connection-info API: get_document_connection_info is stubbed to report
+# nobody connected, so another user connected to the websocket can no longer block edition.
+# Re-add the test once yhub exposes a connection-info API.
 
 
-@responses.activate
-def test_api_documents_can_edit_no_websocket_other_user_connected_to_websocket(
-    settings,
-):
-    """
-    A user not connected to the websocket and another user is connected to the websocket,
-    the document can not be updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 3, "exists": False})
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-
-    response = client.get(
-        f"/api/v1.0/documents/{document.id!s}/can-edit/",
-    )
-    assert response.status_code == 200
-    assert response.json() == {"can_edit": False}
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
 def test_api_documents_can_edit_user_connected_to_websocket(settings):
     """
     A user connected to the websocket, the document can be updated.
@@ -153,18 +90,10 @@ def test_api_documents_can_edit_user_connected_to_websocket(settings):
     user = factories.UserFactory(with_owned_document=True)
     client = APIClient()
     client.force_login(user)
-    session_key = client.session.session_key
 
     document = factories.DocumentFactory(users=[(user, "editor")])
 
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
     settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 3, "exists": True})
 
     assert cache.get(f"docs:no-websocket:{document.id}") is None
 
@@ -174,10 +103,8 @@ def test_api_documents_can_edit_user_connected_to_websocket(settings):
     assert response.status_code == 200
     assert response.json() == {"can_edit": True}
     assert cache.get(f"docs:no-websocket:{document.id}") is None
-    assert ws_resp.call_count == 1
 
 
-@responses.activate
 def test_api_documents_can_edit_websocket_server_unreachable_fallback_to_no_websocket(
     settings,
 ):
@@ -188,18 +115,10 @@ def test_api_documents_can_edit_websocket_server_unreachable_fallback_to_no_webs
     user = factories.UserFactory(with_owned_document=True)
     client = APIClient()
     client.force_login(user)
-    session_key = client.session.session_key
 
     document = factories.DocumentFactory(users=[(user, "editor")])
 
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
     settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=500)
 
     assert cache.get(f"docs:no-websocket:{document.id}") is None
 
@@ -209,10 +128,7 @@ def test_api_documents_can_edit_websocket_server_unreachable_fallback_to_no_webs
     assert response.status_code == 200
     assert response.json() == {"can_edit": True}
 
-    assert ws_resp.call_count == 1
 
-
-@responses.activate
 def test_api_documents_can_edit_websocket_server_unreachable_fallback_to_no_websocket_other_users(
     settings,
 ):
@@ -223,18 +139,10 @@ def test_api_documents_can_edit_websocket_server_unreachable_fallback_to_no_webs
     user = factories.UserFactory(with_owned_document=True)
     client = APIClient()
     client.force_login(user)
-    session_key = client.session.session_key
 
     document = factories.DocumentFactory(users=[(user, "editor")])
 
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
     settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=500)
 
     cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
 
@@ -245,10 +153,8 @@ def test_api_documents_can_edit_websocket_server_unreachable_fallback_to_no_webs
     assert response.json() == {"can_edit": False}
 
     assert cache.get(f"docs:no-websocket:{document.id}") == "other_session_key"
-    assert ws_resp.call_count == 1
 
 
-@responses.activate
 def test_api_documents_can_edit_websocket_server_room_not_found(
     settings,
 ):
@@ -259,18 +165,10 @@ def test_api_documents_can_edit_websocket_server_room_not_found(
     user = factories.UserFactory(with_owned_document=True)
     client = APIClient()
     client.force_login(user)
-    session_key = client.session.session_key
 
     document = factories.DocumentFactory(users=[(user, "editor")])
 
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
     settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=404)
 
     assert cache.get(f"docs:no-websocket:{document.id}") is None
 
@@ -280,10 +178,7 @@ def test_api_documents_can_edit_websocket_server_room_not_found(
     assert response.status_code == 200
     assert response.json() == {"can_edit": True}
 
-    assert ws_resp.call_count == 1
 
-
-@responses.activate
 def test_api_documents_can_edit_websocket_server_room_not_found_other_already_editing(
     settings,
 ):
@@ -294,18 +189,10 @@ def test_api_documents_can_edit_websocket_server_room_not_found_other_already_ed
     user = factories.UserFactory(with_owned_document=True)
     client = APIClient()
     client.force_login(user)
-    session_key = client.session.session_key
 
     document = factories.DocumentFactory(users=[(user, "editor")])
 
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
     settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=404)
 
     cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
 
@@ -314,5 +201,3 @@ def test_api_documents_can_edit_websocket_server_room_not_found_other_already_ed
     )
     assert response.status_code == 200
     assert response.json() == {"can_edit": False}
-
-    assert ws_resp.call_count == 1

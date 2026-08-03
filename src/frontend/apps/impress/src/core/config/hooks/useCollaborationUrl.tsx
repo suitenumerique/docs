@@ -7,11 +7,11 @@ export const useCollaborationUrl = (room?: string) => {
     return;
   }
 
-  const base =
+  // The room is appended to the base URL by the provider (y-websocket)
+  return (
     conf?.COLLABORATION_WS_URL ||
     (typeof window !== 'undefined'
-      ? `wss://${window.location.host}/collaboration/ws/`
-      : '');
-
-  return `${base}?room=${room}`;
+      ? `wss://${window.location.host}/ws/docs`
+      : '')
+  );
 };
