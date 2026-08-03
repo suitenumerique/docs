@@ -15,6 +15,7 @@ and this project adheres to
 
 - ⬆️(backend) upgrade celery to version 5.6.3
 - ⚡️(backend) stop using LEFT(value, LENGTH(path)) in sql queries
+- 🚚(project) switch docspec image to ghcr.io/docspec/api #2553
 
 ### Fixed
 

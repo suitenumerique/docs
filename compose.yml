@@ -259,9 +259,9 @@ services:
         restart: true
 
   docspec:
-    image: ghcr.io/docspecio/api:3.0.1
+    image: ghcr.io/docspec/api:1.21.4
     ports:
-      - "4000:4000"
+      - "4000:3000"
 
 networks:
   lasuite:
