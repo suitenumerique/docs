@@ -1,5 +1,13 @@
 """Clean a document by resetting it (keeping its title) and deleting all descendants."""
 
+# TODO(yhub): this sandbox reset no longer erases the document content. It purges
+# the S3 versions, but yhub durably retains the Yjs document in its own Postgres
+# and re-serves it on the next websocket connect (CRDT merge with the empty
+# seed resurrects the purged content). yhub has no delete API; until it grows
+# one, the interim remediation is to run, against yhub's stores:
+#   DELETE FROM yhub_ydoc_v1 WHERE org='docs' AND docid='<document_id>';
+# and drop the `yhub:room:docs:<document_id>:*` redis keys.
+
 import logging
 
 from django.conf import settings
