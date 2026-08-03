@@ -82,9 +82,9 @@ test.describe('Config', () => {
       .click();
 
     const webSocket = await page.waitForEvent('websocket', (webSocket) => {
-      return webSocket.url().includes(`${process.env.COLLABORATION_WS_URL}`);
+      return webSocket.url().includes(`${process.env.COLLABORATION_WS_URL}/`);
     });
-    expect(webSocket.url()).toContain(`${process.env.COLLABORATION_WS_URL}`);
+    expect(webSocket.url()).toContain(`${process.env.COLLABORATION_WS_URL}/`);
   });
 
   test('it checks FRONTEND_CSS_URL config', async ({ page }) => {
