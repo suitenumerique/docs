@@ -10,6 +10,11 @@ and this project adheres to
 
 - ✨(frontend) export presenter slides as PDF #2487
 
+### Changed
+
+- ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub
+- 💥(y-provider) y-provider becomes converter-only
+
 ### Fixed
 
 - 🐛(frontend) hide Leave in the doc menu when not logged in #2626

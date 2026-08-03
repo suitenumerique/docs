@@ -49,6 +49,7 @@
     "sharp": "0.35.3",
     "typescript": "6.0.3",
     "wrap-ansi": "10.0.1",
+    "y-protocols": "1.0.7",
     "yjs": "13.6.32"
   },
   "packageManager": "yarn@1.22.22"

@@ -30,13 +30,13 @@ export function useComments(
         canComment,
         config?.REACTIONS_MAX_PER_COMMENT ?? 0,
       ),
-      provider?.document,
+      provider?.doc,
     );
   }, [
     docId,
     canComment,
     provider?.awareness,
-    provider?.document,
+    provider?.doc,
     user?.full_name,
     config?.REACTIONS_MAX_PER_COMMENT,
   ]);

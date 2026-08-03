@@ -47,6 +47,9 @@ env.d/terraform
 compose.override.yml
 docker/auth/*.local
 
+# yhub server local install
+src/yhub-server/node_modules/
+
 # npm
 node_modules
 

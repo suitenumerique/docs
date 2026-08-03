@@ -6,4 +6,5 @@ FRONTEND_HOST=frontend
 YPROVIDER_HOST=y-provider
 BUCKET_NAME=docs-media-storage
 REALM_NAME=docs
+# TODO(yhub): route is /ws/docs once prod ingress is migrated
 #COLLABORATION_WS_URL=wss://${DOCS_HOST}/collaboration/ws/

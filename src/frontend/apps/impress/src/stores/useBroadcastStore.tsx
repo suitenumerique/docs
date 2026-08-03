@@ -1,4 +1,4 @@
-import { HocuspocusProvider } from '@hocuspocus/provider';
+import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 import { create } from 'zustand';
 
@@ -6,10 +6,10 @@ interface BroadcastState {
   addTask: (taskLabel: string, action: () => void) => void;
   broadcast: (taskLabel: string) => void;
   cleanupBroadcast: () => void;
-  getBroadcastProvider: () => HocuspocusProvider | undefined;
-  handleProviderSync: () => void;
-  provider?: HocuspocusProvider;
-  setBroadcastProvider: (provider: HocuspocusProvider) => void;
+  getBroadcastProvider: () => WebsocketProvider | undefined;
+  handleProviderSync: (isSynced: boolean) => void;
+  provider?: WebsocketProvider;
+  setBroadcastProvider: (provider: WebsocketProvider) => void;
   setTask: (
     taskLabel: string,
     task: Y.Array<string>,
@@ -34,13 +34,18 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
     // Clean up old provider listeners
     const oldProvider = get().provider;
     if (oldProvider) {
-      oldProvider.off('synced', get().handleProviderSync);
+      oldProvider.off('sync', get().handleProviderSync);
     }
 
-    provider.on('synced', get().handleProviderSync);
+    provider.on('sync', get().handleProviderSync);
     set({ provider });
   },
-  handleProviderSync: () => {
+  handleProviderSync: (isSynced) => {
+    // 'sync' fires on both edges; only re-register the tasks once synced
+    if (!isSynced) {
+      return;
+    }
+
     const tasks = get().tasks;
     Object.entries(tasks).forEach(([taskLabel, { action }]) => {
       get().addTask(taskLabel, action);
@@ -61,10 +66,16 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
       return;
     }
 
-    const task = provider.document.getArray<string>(taskLabel);
+    const task = provider.doc.getArray<string>(taskLabel);
     get().setTask(taskLabel, task, action);
   },
   setTask: (taskLabel: string, task: Y.Array<string>, action: () => void) => {
+    // Unobserve the previous observer to avoid leaking one per re-registration
+    const previousTask = get().tasks[taskLabel];
+    if (previousTask) {
+      previousTask.task.unobserve(previousTask.observer);
+    }
+
     let isInitializing = true;
     const observer = (
       _event: Y.YArrayEvent<string>,
@@ -102,7 +113,7 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
   cleanupBroadcast: () => {
     const provider = get().provider;
     if (provider) {
-      provider.off('synced', get().handleProviderSync);
+      provider.off('sync', get().handleProviderSync);
     }
 
     // Unobserve all document-specific tasks
