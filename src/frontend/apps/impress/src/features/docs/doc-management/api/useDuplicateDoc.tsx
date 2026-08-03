@@ -70,14 +70,12 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
     mutationFn: async (variables) => {
       // Save the document if we can first, to ensure the latest state is duplicated
       const canSave =
-        variables.canSave &&
-        provider &&
-        provider.document.guid === variables.docId;
+        variables.canSave && provider && provider.doc.guid === variables.docId;
 
       if (canSave) {
         await updateDocContent({
           id: variables.docId,
-          content: toBase64(Y.encodeStateAsUpdate(provider.document)),
+          content: toBase64(Y.encodeStateAsUpdate(provider.doc)),
         });
       }
 

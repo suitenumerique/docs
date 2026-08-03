@@ -512,9 +512,13 @@ class Base(Configuration):
     SENTRY_DSN = values.Value(None, environ_name="SENTRY_DSN", environ_prefix=None)
 
     # Collaboration
+    # TODO(yhub): unused since the yhub migration — yhub has no management API
+    # (reset-connections / get-connections). Kept until a yhub kick and
+    # connection-info API exist and CollaborationService is reinstated.
     COLLABORATION_API_URL = values.Value(
         None, environ_name="COLLABORATION_API_URL", environ_prefix=None
     )
+    # TODO(yhub): unused since the yhub migration, see COLLABORATION_API_URL.
     COLLABORATION_SERVER_SECRET = SecretFileValue(
         None, environ_name="COLLABORATION_SERVER_SECRET", environ_prefix=None
     )

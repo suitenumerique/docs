@@ -46,6 +46,7 @@
     "serialize-javascript": "7.0.7",
     "typescript": "6.0.3",
     "wrap-ansi": "10.0.0",
+    "y-protocols": "1.0.7",
     "yjs": "13.6.31"
   },
   "packageManager": "yarn@1.22.22"

@@ -181,7 +181,7 @@ services:
     volumes:
       - ".:/app"
 
-  y-provider-development:
+  y-provider-development-converter:
     user: ${DOCKER_USER:-1000}
     build:
       context: .
@@ -192,27 +192,66 @@ services:
     env_file:
       - env.d/development/common
       - env.d/development/common.local
-    ports:
-      - "4444:4444"
     volumes:
       - ./src/frontend/:/home/frontend
       - /home/frontend/node_modules
       - /home/frontend/servers/y-provider/node_modules
 
-  y-provider-development-converter:
+  yhub-valkey:
+    image: valkey/valkey:alpine
+    # volatile-lru per yhub DEPLOYMENT.md; AOF because valkey is the authoritative store
+    # for updates the worker hasn't persisted yet (up to taskDebounce+minMessageLifetime)
+    command: ["valkey-server", "--maxmemory-policy", "volatile-lru",
+              "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - yhub-valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 1s
+      timeout: 2s
+      retries: 60
+
+  yhub-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: yhub
+      POSTGRES_PASSWORD: yhub
+      POSTGRES_DB: yhub
+    volumes:
+      - yhub-pgdata:/var/lib/postgresql/data
+      # NOTE: initdb.d only runs on a FRESH volume; schema changes need `podman volume rm`
+      - ./docker/files/yhub/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yhub"]
+      interval: 1s
+      timeout: 2s
+      retries: 60
+    # no published port (Django's postgres already publishes)
+
+  yhub:
     user: ${DOCKER_USER:-1000}
-    image: impress:y-provider-development
-    restart: unless-stopped
+    build:
+      context: ./src/yhub-server
+      dockerfile: Dockerfile
+      target: yhub
+    image: impress:yhub
+    environment:
+      HOME: /tmp # same reason as node-based services above (unmapped uid)
+      PORT: 3002
+      REDIS: redis://yhub-valkey:6379
+      POSTGRES: postgres://yhub:yhub@yhub-postgres:5432/yhub
+      REDIS_PREFIX: yhub
     env_file:
       - env.d/development/common
       - env.d/development/common.local
-    volumes:
-      - ./src/frontend/:/home/frontend
-      - /home/frontend/node_modules
-      - /home/frontend/servers/y-provider/node_modules
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
     depends_on:
-      y-provider-development:
-        condition: service_started
+      yhub-valkey:
+        condition: service_healthy
+      yhub-postgres:
+        condition: service_healthy
 
   kc_postgresql:
     image: postgres:14.3
@@ -268,3 +307,7 @@ networks:
     name: lasuite-network
     driver: bridge
     external: true
+
+volumes:
+  yhub-pgdata: {}
+  yhub-valkey-data: {}

@@ -190,6 +190,7 @@ bootstrap-e2e: \
 build: cache ?=
 build: ## build the project containers
 	@$(MAKE) build-backend cache=$(cache)
+	@$(MAKE) build-yhub cache=$(cache)
 	@$(MAKE) build-yjs-provider cache=$(cache)
 	@$(MAKE) build-frontend cache=$(cache)
 .PHONY: build
@@ -199,9 +200,14 @@ build-backend: ## build the app-dev container
 	@$(COMPOSE) build app-dev $(cache)
 .PHONY: build-backend
 
+build-yhub: cache ?=
+build-yhub: ## build the yhub collaboration server container
+	@$(COMPOSE) build yhub $(cache)
+.PHONY: build-yhub
+
 build-yjs-provider: cache ?=
 build-yjs-provider: ## build the y-provider container
-	@$(COMPOSE) build y-provider-development $(cache)
+	@$(COMPOSE) build y-provider-development-converter $(cache)
 .PHONY: build-yjs-provider
 
 build-frontend: cache ?=
@@ -212,8 +218,9 @@ build-frontend: ## build the frontend container
 build-e2e: cache ?=
 build-e2e: ## build the e2e container
 	@$(MAKE) build-backend cache=$(cache)
+	@$(MAKE) build-yhub cache=$(cache)
 	@$(COMPOSE_E2E) build frontend $(cache)
-	@$(COMPOSE_E2E) build y-provider $(cache)
+	@$(COMPOSE_E2E) build y-provider-converter $(cache)
 .PHONY: build-e2e
 
 nginx-frontend: ## build the nginx-frontend container
@@ -232,8 +239,8 @@ run-backend: ## Start only the backend application and all needed services
 	@$(MAKE) create-docker-network
 	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
-	@$(COMPOSE) up --force-recreate -d y-provider-development
 	@$(COMPOSE) up --force-recreate -d y-provider-development-converter
+	@$(COMPOSE) up --force-recreate -d yhub
 	@$(COMPOSE) up --force-recreate -d nginx
 .PHONY: run-backend
 
@@ -246,9 +253,7 @@ run:
 run-e2e: ## start the e2e server
 run-e2e:
 	@$(MAKE) run-backend
-	@$(COMPOSE_E2E) stop y-provider-development
 	@$(COMPOSE_E2E) up --force-recreate -d frontend
-	@$(COMPOSE_E2E) up --force-recreate -d y-provider
 	@$(COMPOSE_E2E) up --force-recreate -d y-provider-converter
 .PHONY: run-e2e
 
