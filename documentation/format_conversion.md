@@ -8,20 +8,23 @@ To make it work, some configuration should be made and another service enabled i
 
 The first configuration to make is related to converting a docs in multiple format. This will be used by the `formatted-content` endpoint (`/api/v1.0/documents/{document_id}/formatted-content/?content_format=(json|html|markdown)`).
 This service is also used by the `create-for-owner` endpoint and in the import of markdown file.
-To configure it, use this environment variables in the Django service:
+To configure it, use this environment variable in the Django service:
 
 ```yaml
 Y_PROVIDER_API_BASE_URL: http://{y-provider-service}:443/api/
-Y_PROVIDER_API_KEY: a-shared-private-key-with-y-provider
 ```
 
 For the `Y_PROVIDER_API_BASE_URL`, it can be the FQDN of your docs instance if you have configured a reverse proxy in front of the y-provider service and created a route to the `/api` for this service. It can also be the internal `y-provider` service url if Django can access it directly. In the case you deploy in a Kubernetes cluster, you can use the `y-provider` service url. We prefer the usage of internal url.
 
-You also have to add an environment variable in your `y-provider` configuration, to share the same `Y_PROVIDER_API_KEY`:
+Requests to the y-provider service are authenticated with a short-lived admin JWT that Django signs itself (see `core.services.jwt_services.JWTService`), instead of a shared secret. The y-provider service verifies the signature against the public key Django publishes on its JWKS endpoint (`/api/v1.0/jwks`), so there is nothing to configure on the Django side beyond `JWT_PRIVATE_KEY` (see the JWT section of [env.md](env.md)).
+
+On the `y-provider` side, point it at the Django backend so it can fetch the JWKS:
 
 ```yaml
-Y_PROVIDER_API_KEY: a-shared-private-key-with-y-provider
+COLLABORATION_BACKEND_BASE_URL: http://{django-service}:8000
 ```
+
+The JWKS url defaults to `{COLLABORATION_BACKEND_BASE_URL}/api/v1.0/jwks`; override it with `JWKS_URL` if Django is not reachable at that base url from the y-provider service.
 
 ### Splitting conversion service
 
