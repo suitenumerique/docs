@@ -11,6 +11,7 @@ and this project adheres to
 - ✨(frontend) export presenter slides as PDF #2487
 - ✨(backend) add a service generating cached RS256 JWT tokens
 - ✨(backend) publish the JWT public key on a JWKS endpoint
+- 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
 
 ### Changed
 
