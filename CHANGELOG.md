@@ -11,6 +11,7 @@ and this project adheres to
 - ✨(frontend) Add "Copy link to block" feature #2547
 - ✨(frontend) add word count to doc header toolbox #2549
 - ✨(frontend) add find and replace feature to the editor #2570
+- ✨(backend) add a service generating cached RS256 JWT tokens
 
 ### Changed
 
@@ -29,6 +30,28 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) Add "Copy link to block" feature #2547
+- ✨(frontend) add word count to doc header toolbox #2549
+- ✨(frontend) add find and replace feature to the editor #2570
+
+### Changed
+
+- ♿️(frontend) use anchor links for interlinking sub-documents #2391
+- ✨(frontend) reset side panel state between documents #2583
+- ♿️(frontend) announce search loading state for screen readers #2526
+- ♻️(frontend) change favorite to star #2539
+- 🚚(frontend) add doc move to doc options #2555
+
+### Fixed
+
+- 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
+- 📄(frontend) allowed partially export when MIT #2551
+
+## [v5.5.0] - 2026-08-24
+
+### Added
+
+- ✨(backend) add a service generating cached RS256 JWT tokens
 - ♿️(frontend) restore skip to content link after header redesign #2510
 - 🌐(i18n) rename cn_CN to zh_CN, add eo_PL and zh_TW locales #2486
 - ✨(backend) conditional email notification in server to server api #2554
