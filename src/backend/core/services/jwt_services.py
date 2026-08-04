@@ -171,3 +171,13 @@ class JWTService:
         cache.set(cache_key, token, self.lifetime)
 
         return token
+
+    def get_admin_token(self, claims=None):
+        """
+        Return a token with the `admin: true` claim.
+
+        Extra claims can be injected alongside it. They cannot turn the "admin"
+        claim off: a token issued by this method always grants admin.
+        """
+
+        return self.get_token({**(claims or {}), "admin": True})
