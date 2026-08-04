@@ -227,8 +227,10 @@ NAME                                       READY   STATUS    RESTARTS   AGE
 cicap-dev-backend-cicap-xxxxx-xxxxx        1/1     Running   0          10s
 ```
 
-Wait for the pod to be ready (ClamAV loads its virus database on startup, this
-can take a minute). From here the important information you will need are:
+Wait for the pod to be ready. On the first start the clamd sidecar
+downloads the ClamAV virus database, which takes a few minutes and requires
+access to `database.clamav.net`. From here the important information you will
+need are:
 
 ```yaml
 MALWARE_DETECTION_BACKEND: lasuite.malware_detection.backends.icap.ICAPBackend
