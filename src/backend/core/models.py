@@ -1064,7 +1064,7 @@ class Document(MP_Node, BaseModel):
         if self._content is None and self.id:
             try:
                 response = self.get_content_response()
-            except (FileNotFoundError, ClientError):
+            except FileNotFoundError, ClientError:
                 pass
             else:
                 self._content = response["Body"].read().decode("utf-8")
@@ -2101,7 +2101,7 @@ class Invitation(BaseModel):
                     roles = self.document.accesses.filter(
                         models.Q(user=user) | models.Q(team__in=teams),
                     ).values_list("role", flat=True)
-                except (self._meta.model.DoesNotExist, IndexError):
+                except self._meta.model.DoesNotExist, IndexError:
                     roles = []
 
         is_admin_or_owner = bool(

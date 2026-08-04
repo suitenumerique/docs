@@ -186,7 +186,7 @@ class BaseDocumentIndexer(ABC):
         """
 
     # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def search(  # noqa : PLR0913
+    def search(  # noqa : PLR0913, PLR0917
         self,
         q: str,
         token: str,
@@ -248,7 +248,7 @@ class FindDocumentIndexer(BaseDocumentIndexer):
     """
 
     # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def search(  # noqa : PLR0913
+    def search(  # noqa : PLR0913, PLR0917
         self,
         q: str,
         token: str,

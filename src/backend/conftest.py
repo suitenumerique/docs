@@ -110,7 +110,7 @@ def pytest_sessionstart(session):
             len(_PRE_EXISTING_OBJECTS),
             bucket_name,
         )
-    except Exception:  # pylint: disable=broad-except  # noqa: BLE001
+    except Exception:  # pylint: disable=broad-except
         # MinIO may be unreachable (e.g. storage-less unit runs): disable cleanup.
         _PRE_EXISTING_OBJECTS = None
         logger.warning(
@@ -155,5 +155,5 @@ def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argumen
             deleted,
             bucket_name,
         )
-    except Exception:  # pylint: disable=broad-except  # noqa: BLE001
+    except Exception:  # pylint: disable=broad-except
         logger.warning("S3 test cleanup failed", exc_info=True)

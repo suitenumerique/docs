@@ -46,7 +46,7 @@ def _process_row(row, job, counters):
     for inactive_email in inactive_emails:
         try:
             validate_email(inactive_email)
-        except (ValidationError, ValueError):
+        except ValidationError, ValueError:
             job.send_reconciliation_error_email(
                 recipient_email=active_email, other_email=inactive_email
             )

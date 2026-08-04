@@ -883,7 +883,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
     ],
 )
 # pylint: disable=too-many-arguments, too-many-positional-arguments
-def test_models_documents_get_abilities_children_destroy(  # noqa: PLR0913
+def test_models_documents_get_abilities_children_destroy(  # noqa: PLR0913, PLR0917
     is_authenticated,
     is_creator,
     role,

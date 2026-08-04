@@ -46,7 +46,7 @@ def get_release():
         with open(os.path.join(BASE_DIR, "pyproject.toml"), "rb") as f:
             pyproject_data = tomllib.load(f)
         return pyproject_data["project"]["version"]
-    except (FileNotFoundError, KeyError):
+    except FileNotFoundError, KeyError:
         return "NA"  # Default: not available
 
 
