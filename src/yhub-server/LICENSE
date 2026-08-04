@@ -1,0 +1,37 @@
+License notice for the src/yhub-server directory
+================================================
+
+The source code in this directory is, like the rest of this repository,
+released under the MIT License (see the LICENSE file at the repository root,
+Copyright (c) 2023 Direction Interministérielle du Numérique - Gouvernement
+Français).
+
+Dependency on AGPL-licensed code
+--------------------------------
+
+However, the code in this directory (in particular `server.js`) depends on
+and runs in the same process as the `@y/hub` package ("yhub"), which is
+licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) — or,
+alternatively, under a proprietary license available from its author.
+
+Unless you have obtained such a proprietary license for yhub, the combined
+work formed by yhub together with the code in this directory is governed by
+the terms of the AGPL-3.0. This means in particular:
+
+- If you modify the code in this directory and run the resulting server for
+  users over a network, or distribute it, you must license your
+  modifications under the AGPL-3.0 or an AGPL-compatible license and make
+  the corresponding source available (AGPL-3.0, section 13).
+- The MIT license of the files in this directory is compatible with this
+  obligation: MIT-licensed code may be incorporated into an AGPL-licensed
+  combined work.
+
+Scope
+-----
+
+This notice applies only to this directory. The rest of the La Suite Docs
+software (the Django backend, the frontend, and all other components in this
+repository) does not link against yhub and communicates with it exclusively
+through network requests (REST/HTTP and WebSocket). It therefore does not
+form a combined work with yhub and remains governed solely by the MIT
+License at the repository root.
