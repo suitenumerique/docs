@@ -540,6 +540,23 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # JWT
+    # RSA private key (PEM) used to sign the tokens issued by
+    # core.services.jwt_services.JWTService. Prefer the JWT_PRIVATE_KEY_FILE
+    # environment variable, a PEM does not fit well in an environment variable.
+    JWT_PRIVATE_KEY = SecretFileValue(
+        None,
+        environ_name="JWT_PRIVATE_KEY",
+        environ_prefix=None,
+    )
+    # Lifetime, in seconds, of the tokens issued by the JWT service. It is both
+    # the "exp" claim horizon and the cache timeout of the generated tokens.
+    JWT_TOKEN_LIFETIME = values.IntegerValue(
+        default=3600,
+        environ_name="JWT_TOKEN_LIFETIME",
+        environ_prefix=None,
+    )
+
     # Frontend
     FRONTEND_THEME = values.Value(
         None, environ_name="FRONTEND_THEME", environ_prefix=None
