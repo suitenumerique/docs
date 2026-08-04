@@ -16,6 +16,13 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+- The JWKS of the resource server moved from `/api/{version}/jwks` to
+  `/external_api/{version}/jwks`, alongside the rest of the resource server
+  endpoints. `/api/{version}/jwks` now publishes the public key validating the
+  tokens Docs issues to call external services. If you enabled the resource
+  server (`OIDC_RESOURCE_SERVER_ENABLED`), update the JWKS URI declared to your
+  OIDC provider accordingly.
+
 ### [5.0.0] - 2026-04-30
 
 We made several changes around document content management leading to several breaking changes in the API.
