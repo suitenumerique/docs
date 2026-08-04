@@ -4,7 +4,6 @@ Test document accesses API endpoints for users in impress's core app.
 # pylint: disable=too-many-lines
 
 import random
-from contextlib import contextmanager
 from unittest import mock
 from uuid import uuid4
 
@@ -17,25 +16,6 @@ from core.tests.conftest import TEAM, USER, VIA
 from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture(name="mock_reset_connections")
-def mock_reset_connections_fixture():
-    """
-    Provide a context manager that patches the ``reset_service_connections_in_cascade``
-    Celery task and asserts its ``delay`` method is called exactly once for the given
-    document and user when leaving the context.
-    """
-
-    @contextmanager
-    def _mock_reset_connections(document_id, user_id=None):
-        with mock.patch(
-            "core.api.viewsets.reset_service_connections_in_cascade.delay"
-        ) as mock_delay:
-            yield mock_delay
-            mock_delay.assert_called_once_with(str(document_id), user_id)
-
-    return _mock_reset_connections
 
 
 def test_api_document_accesses_list_anonymous():
@@ -754,7 +734,6 @@ def test_api_document_accesses_update_administrator_except_owner(
     create_for,
     via,
     mock_user_teams,
-    mock_reset_connections,
 ):
     """
     A user who is a direct administrator in a document should be allowed to update a user
@@ -793,13 +772,12 @@ def test_api_document_accesses_update_administrator_except_owner(
 
     for field, value in new_values.items():
         new_data = {**old_values, field: value}
-        with mock_reset_connections(document.id, str(access.user_id)):
-            response = client.put(
-                f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-                data=new_data,
-                format="json",
-            )
-            assert response.status_code == 200
+        response = client.put(
+            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+            data=new_data,
+            format="json",
+        )
+        assert response.status_code == 200
 
         access.refresh_from_db()
         updated_values = serializers.DocumentAccessSerializer(instance=access).data
@@ -864,7 +842,6 @@ def test_api_document_accesses_update_administrator_from_owner(via, mock_user_te
 def test_api_document_accesses_update_administrator_to_owner(
     via,
     mock_user_teams,
-    mock_reset_connections,
 ):
     """
     A user who is an administrator in a document, should not be allowed to update
@@ -912,13 +889,12 @@ def test_api_document_accesses_update_administrator_to_owner(
 
             assert response.status_code == 403
         else:
-            with mock_reset_connections(document.id, str(access.user_id)):
-                response = client.put(
-                    f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-                    data=new_data,
-                    format="json",
-                )
-                assert response.status_code == 200
+            response = client.put(
+                f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+                data=new_data,
+                format="json",
+            )
+            assert response.status_code == 200
 
         access.refresh_from_db()
         updated_values = serializers.DocumentAccessSerializer(instance=access).data
@@ -931,7 +907,6 @@ def test_api_document_accesses_update_owner(
     create_for,
     via,
     mock_user_teams,
-    mock_reset_connections,
 ):
     """
     A user who is an owner in a document should be allowed to update
@@ -968,14 +943,13 @@ def test_api_document_accesses_update_owner(
 
     for field, value in new_values.items():
         new_data = {**old_values, field: value}
-        with mock_reset_connections(document.id, str(access.user_id)):
-            response = client.put(
-                f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-                data=new_data,
-                format="json",
-            )
+        response = client.put(
+            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+            data=new_data,
+            format="json",
+        )
 
-            assert response.status_code == 200
+        assert response.status_code == 200
 
         access.refresh_from_db()
         updated_values = serializers.DocumentAccessSerializer(instance=access).data
@@ -994,7 +968,6 @@ def test_api_document_accesses_update_owner(
 def test_api_document_accesses_update_owner_self_root(
     via,
     mock_user_teams,
-    mock_reset_connections,
 ):
     """
     A user who is owner of a document should be allowed to update
@@ -1033,30 +1006,27 @@ def test_api_document_accesses_update_owner_self_root(
     # Add another owner and it should now work
     factories.UserDocumentAccessFactory(document=document, role="owner")
 
-    user_id = str(access.user_id) if via == USER else None
-    with mock_reset_connections(document.id, user_id):
-        response = client.put(
-            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-            data={
-                **old_values,
-                "role": new_role,
-                "user_id": old_values.get("user", {}).get("id")
-                if old_values.get("user") is not None
-                else None,
-            },
-            format="json",
-        )
+    response = client.put(
+        f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+        data={
+            **old_values,
+            "role": new_role,
+            "user_id": old_values.get("user", {}).get("id")
+            if old_values.get("user") is not None
+            else None,
+        },
+        format="json",
+    )
 
-        assert response.status_code == 200
-        access.refresh_from_db()
-        assert access.role == new_role
+    assert response.status_code == 200
+    access.refresh_from_db()
+    assert access.role == new_role
 
 
 @pytest.mark.parametrize("via", VIA)
 def test_api_document_accesses_update_owner_self_child(
     via,
     mock_user_teams,
-    mock_reset_connections,
 ):
     """
     A user who is owner of a document should be allowed to update
@@ -1084,13 +1054,11 @@ def test_api_document_accesses_update_owner_self_child(
     old_values = serializers.DocumentAccessSerializer(instance=access).data
     new_role = random.choice(["administrator", "editor", "reader"])
 
-    user_id = str(access.user_id) if via == USER else None
-    with mock_reset_connections(document.id, user_id):
-        response = client.put(
-            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-            data={**old_values, "role": new_role},
-            format="json",
-        )
+    response = client.put(
+        f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+        data={**old_values, "role": new_role},
+        format="json",
+    )
 
     assert response.status_code == 200
     access.refresh_from_db()
@@ -1170,7 +1138,6 @@ def test_api_document_accesses_delete_reader_or_editor(via, role, mock_user_team
 def test_api_document_accesses_delete_administrators_except_owners(
     via,
     mock_user_teams,
-    mock_reset_connections,
 ):
     """
     Users who are administrators in a document should be allowed to delete an access
@@ -1199,14 +1166,13 @@ def test_api_document_accesses_delete_administrators_except_owners(
     assert models.DocumentAccess.objects.count() == 2
     assert models.DocumentAccess.objects.filter(user=access.user).exists()
 
-    with mock_reset_connections(document.id, str(access.user_id)):
-        with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
-            response = client.delete(
-                f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-            )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.delete(
+            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+        )
 
-        assert response.status_code == 204
-        assert models.DocumentAccess.objects.count() == 1
+    assert response.status_code == 204
+    assert models.DocumentAccess.objects.count() == 1
 
     # The access deletion should be tracked in PostHog
     mock_capture.assert_called_once_with(
@@ -1255,7 +1221,6 @@ def test_api_document_accesses_delete_administrator_on_owners(via, mock_user_tea
 def test_api_document_accesses_delete_owners(
     via,
     mock_user_teams,
-    mock_reset_connections,
 ):
     """
     Users should be able to delete the document access of another user
@@ -1280,11 +1245,10 @@ def test_api_document_accesses_delete_owners(
     assert models.DocumentAccess.objects.count() == 2
     assert models.DocumentAccess.objects.filter(user=access.user).exists()
 
-    with mock_reset_connections(document.id, str(access.user_id)):
-        with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
-            response = client.delete(
-                f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-            )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.delete(
+            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+        )
 
     assert response.status_code == 204
     assert models.DocumentAccess.objects.count() == 1
@@ -1327,9 +1291,7 @@ def test_api_document_accesses_delete_owners_last_owner_root(via, mock_user_team
     assert models.DocumentAccess.objects.count() == 2
 
 
-def test_api_document_accesses_delete_owners_last_owner_child_user(
-    mock_reset_connections,
-):
+def test_api_document_accesses_delete_owners_last_owner_child_user():
     """
     It should be possible to delete the last owner access from a document that is not a root.
     """
@@ -1345,10 +1307,9 @@ def test_api_document_accesses_delete_owners_last_owner_child_user(
     )
 
     assert models.DocumentAccess.objects.count() == 2
-    with mock_reset_connections(document.id, str(access.user_id)):
-        response = client.delete(
-            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-        )
+    response = client.delete(
+        f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+    )
 
     assert response.status_code == 204
     assert models.DocumentAccess.objects.count() == 1
@@ -1359,7 +1320,6 @@ def test_api_document_accesses_delete_owners_last_owner_child_user(
 )
 def test_api_document_accesses_delete_owners_last_owner_child_team(
     mock_user_teams,
-    mock_reset_connections,
 ):
     """
     It should be possible to delete the last owner access from a document that
@@ -1378,10 +1338,9 @@ def test_api_document_accesses_delete_owners_last_owner_child_team(
     )
 
     assert models.DocumentAccess.objects.count() == 2
-    with mock_reset_connections(document.id, str(access.user_id)):
-        response = client.delete(
-            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-        )
+    response = client.delete(
+        f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+    )
 
     assert response.status_code == 204
     assert models.DocumentAccess.objects.count() == 1

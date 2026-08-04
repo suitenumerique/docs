@@ -180,7 +180,6 @@ class DocumentLightSerializer(serializers.ModelSerializer):
 class DocumentSerializer(ListDocumentSerializer):
     """Serialize documents with all fields for display in detail views."""
 
-    websocket = serializers.BooleanField(required=False, write_only=True)
     file = serializers.FileField(
         required=False, write_only=True, allow_null=True, max_length=255
     )
@@ -210,7 +209,6 @@ class DocumentSerializer(ListDocumentSerializer):
             "title",
             "updated_at",
             "user_role",
-            "websocket",
         ]
         read_only_fields = [
             "id",
@@ -312,7 +310,6 @@ class DocumentContentSerializer(serializers.Serializer):
     """Serializer for updating only the raw content of a document stored in S3."""
 
     content = serializers.CharField(required=True)
-    websocket = serializers.BooleanField(required=False)
 
     def validate_content(self, value):
         """Validate the content field."""
