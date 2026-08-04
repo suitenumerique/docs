@@ -40,7 +40,7 @@
     "dompurify": "3.4.12",
     "eslint": "10.7.0",
     "js-yaml": "5.2.2",
-    "postcss": "8.5.19",
+    "postcss": "8.5.23",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "serialize-javascript": "7.0.7",
