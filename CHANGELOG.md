@@ -27,6 +27,8 @@ and this project adheres to
   the dev stack gains dedicated valkey and postgres services for yhub, and
   the kick (reset-connections) and get-connections APIs have no yhub
   equivalent yet — they are deferred with TODO(yhub) stubs
+- 🔥(backend) remove the unused `CollaborationService`
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
 - 💥(y-provider) the published `lasuite/impress-y-provider` image becomes
   converter-only and no longer serves `/collaboration/ws/`; deployments using
   the existing helm values lose collaboration until the helm chart routes
