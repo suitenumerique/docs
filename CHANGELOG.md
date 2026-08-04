@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a service generating cached RS256 JWT tokens
+- ✨(backend) publish the JWT public key on a JWKS endpoint
 - 🔧(backend) fine tune redis cache options
 
 ### Changed
@@ -16,6 +17,8 @@ and this project adheres to
 - ⬆️(backend) upgrade celery to version 5.6.3
 - ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub
 - 💥(y-provider) y-provider becomes converter-only
+- 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
+  `/external_api/{version}/jwks`
 
 ### Fixed
 

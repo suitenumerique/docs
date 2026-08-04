@@ -64,6 +64,10 @@ from core.services.converter_services import (
 from core.services.converter_services import (
     ValidationError as YProviderValidationError,
 )
+from core.services.jwt_services import (
+    ConfigurationError as JWTConfigurationError,
+)
+from core.services.jwt_services import JWTService
 from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,
@@ -3165,6 +3169,26 @@ class ConfigView(drf.views.APIView):
             )
 
         return theme_customization
+
+
+class JWKSView(drf.views.APIView):
+    """API ViewSet exposing the public key validating the tokens we issue."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        """
+        GET /api/v1.0/jwks
+            Return the JSON Web Key Set of the tokens issued by this service.
+        """
+        try:
+            jwks = JWTService().get_jwks()
+        except JWTConfigurationError:
+            logger.exception("Unable to publish the JWKS")
+            raise drf.exceptions.NotFound("No JWKS available.") from None
+
+        return drf.response.Response(jwks)
 
 
 class CommentViewSetMixin:
