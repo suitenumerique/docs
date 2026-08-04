@@ -1,0 +1,7 @@
+cicap:
+  enabled: true
+  name: cicap
+  #serviceNameOverride: cicap
+  image: opencloudeu/clamav-icap:latest
+  port: 1344
+  resources: {}

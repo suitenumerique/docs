@@ -212,6 +212,31 @@ redis-dev-backend-redis-68c9f66786-4dgxj   1/1     Running   0          4m21s
 
 ```
 
+### Find ICAP server connection values
+
+Docs can scan every uploaded file with an antivirus engine exposed through the
+Internet Content Adaptation Protocol (ICAP), see
+[malware detection](../malware_detection.md). For development, an ICAP server
+(c-icap with ClamAV) is provided by the dev dependencies chart, so you can
+install a local testing environment as follow:
+
+```
+$ helm install --repo https://suitenumerique.github.io/helm-dev-backend -f documentation/examples/helm/cicap.values.yaml cicap dev-backend
+$ kubectl get pods
+NAME                                       READY   STATUS    RESTARTS   AGE
+cicap-dev-backend-cicap-xxxxx-xxxxx        1/1     Running   0          10s
+```
+
+Wait for the pod to be ready (ClamAV loads its virus database on startup, this
+can take a minute). From here the important information you will need are:
+
+```yaml
+MALWARE_DETECTION_BACKEND: lasuite.malware_detection.backends.icap.ICAPBackend
+MALWARE_DETECTION_PARAMETERS: '{"server_address":"cicap-dev-backend-cicap","server_port":1344,"service":"avscan","callback_path":"core.malware_detection.malware_detection_callback"}'
+```
+
+You can find these values in **documentation/examples/helm/cicap.values.yaml**
+
 ## Deployment
 
 Now you are ready to deploy Docs without AI. AI requires more dependencies (OpenAI API). To deploy Docs you need to provide all previous information to the helm chart.
