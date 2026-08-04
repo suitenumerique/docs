@@ -9,6 +9,7 @@ from django.conf import settings
 import requests
 
 from core.services import mime_types
+from core.services.jwt_services import JWTService
 
 logger = logging.getLogger(__name__)
 
@@ -109,8 +110,7 @@ class YdocConverter:
     @property
     def auth_header(self):
         """Build microservice authentication header."""
-        # Note: Yprovider microservice accepts only raw token, which is not recommended
-        return f"Bearer {settings.Y_PROVIDER_API_KEY}"
+        return f"Bearer {JWTService().get_admin_token()}"
 
     def _request(self, url, data, content_type, accept):
         """Make a request to the Y-Provider API."""

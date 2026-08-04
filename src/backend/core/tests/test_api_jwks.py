@@ -6,11 +6,10 @@ from django.urls import resolve
 
 import jwt
 import pytest
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 from rest_framework.test import APIClient
 
 from core.services.jwt_services import JWTService
+from core.tests.utils.jwt import generate_key_pair
 from core.tests.utils.urls import reload_urls
 
 pytestmark = pytest.mark.django_db
@@ -18,23 +17,9 @@ pytestmark = pytest.mark.django_db
 # Private members of a RSA JWK, none of them may ever leak in the JWKS
 PRIVATE_JWK_MEMBERS = {"d", "p", "q", "dp", "dq", "qi", "oth"}
 
-
-def generate_private_key():
-    """Generate a PEM encoded RSA private key."""
-    return (
-        rsa.generate_private_key(public_exponent=65537, key_size=2048)
-        .private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        )
-        .decode("utf-8")
-    )
-
-
 # Generating RSA keys is expensive, do it once for the whole module
-PRIVATE_KEY = generate_private_key()
-OTHER_PRIVATE_KEY = generate_private_key()
+PRIVATE_KEY, _ = generate_key_pair()
+OTHER_PRIVATE_KEY, _ = generate_key_pair()
 
 
 @pytest.fixture(name="jwt_settings")
