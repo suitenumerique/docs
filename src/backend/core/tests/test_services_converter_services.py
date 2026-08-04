@@ -3,6 +3,7 @@
 from base64 import b64decode
 from unittest.mock import MagicMock, patch
 
+import jwt
 import pytest
 import requests
 
@@ -12,13 +13,28 @@ from core.services.converter_services import (
     ValidationError,
     YdocConverter,
 )
+from core.tests.utils.jwt import generate_key_pair
+
+# Generating an RSA key is expensive, do it once for the whole module
+PRIVATE_KEY, PUBLIC_KEY = generate_key_pair()
 
 
-def test_auth_header(settings):
-    """Test authentication header generation."""
-    settings.Y_PROVIDER_API_KEY = "test-key"
+@pytest.fixture(autouse=True)
+def jwt_settings(settings):
+    """Setup valid settings for the JWT service used to sign the auth header."""
+    settings.JWT_PRIVATE_KEY = PRIVATE_KEY
+    settings.JWT_TOKEN_LIFETIME = 3600
+
+
+def test_auth_header():
+    """The auth header carries an admin JWT signed with the configured key."""
     converter = YdocConverter()
-    assert converter.auth_header == "Bearer test-key"
+
+    scheme, token = converter.auth_header.split(" ")
+
+    assert scheme == "Bearer"
+    payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+    assert payload["admin"] is True
 
 
 def test_convert_empty_text():
@@ -63,12 +79,12 @@ def test_convert_full_integration(mock_post, settings):
     """Test full integration with all settings."""
 
     settings.Y_PROVIDER_API_BASE_URL = "http://test.com/"
-    settings.Y_PROVIDER_API_KEY = "test-key"
     settings.CONVERSION_API_ENDPOINT = "conversion-endpoint"
     settings.CONVERSION_API_TIMEOUT = 5
     settings.CONVERSION_API_CONTENT_FIELD = "content"
 
     converter = YdocConverter()
+    auth_header = converter.auth_header
 
     expected_content = b"converted content"
     mock_response = MagicMock()
@@ -83,7 +99,7 @@ def test_convert_full_integration(mock_post, settings):
         "http://test.com/conversion-endpoint/",
         data="test markdown",
         headers={
-            "Authorization": "Bearer test-key",
+            "Authorization": auth_header,
             "Content-Type": mime_types.MARKDOWN,
             "Accept": mime_types.YJS,
         },
@@ -96,12 +112,12 @@ def test_convert_full_integration(mock_post, settings):
 def test_convert_full_integration_with_specific_headers(mock_post, settings):
     """Test successful conversion with specific content type and accept headers."""
     settings.Y_PROVIDER_API_BASE_URL = "http://test.com/"
-    settings.Y_PROVIDER_API_KEY = "test-key"
     settings.CONVERSION_API_ENDPOINT = "conversion-endpoint"
     settings.CONVERSION_API_TIMEOUT = 5
     settings.CONVERSION_API_SECURE = False
 
     converter = YdocConverter()
+    auth_header = converter.auth_header
 
     expected_response = "# Test Document\n\nThis is test content."
     mock_response = MagicMock()
@@ -116,7 +132,7 @@ def test_convert_full_integration_with_specific_headers(mock_post, settings):
         "http://test.com/conversion-endpoint/",
         data=b"test_content",
         headers={
-            "Authorization": "Bearer test-key",
+            "Authorization": auth_header,
             "Content-Type": mime_types.YJS,
             "Accept": mime_types.MARKDOWN,
         },
