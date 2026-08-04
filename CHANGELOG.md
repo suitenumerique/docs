@@ -9,7 +9,8 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a service generating cached RS256 JWT tokens
-- - ✨(backend) publish the JWT public key on a JWKS endpoint
+- ✨(backend) publish the JWT public key on a JWKS endpoint
+- 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
 
 ## [v5.7.0] - 2026-09-15
 
