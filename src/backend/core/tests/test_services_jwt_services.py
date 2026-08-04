@@ -10,8 +10,6 @@ from django.core.cache import cache
 
 import jwt
 import pytest
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 from freezegun import freeze_time
 
 from core.services.jwt_services import (
@@ -19,26 +17,7 @@ from core.services.jwt_services import (
     JWTService,
     TokenGenerationError,
 )
-
-
-def generate_key_pair():
-    """Generate a PEM encoded RSA key pair to sign and verify test tokens."""
-    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    private_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption(),
-    ).decode("utf-8")
-    public_pem = (
-        private_key.public_key()
-        .public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
-        )
-        .decode("utf-8")
-    )
-    return private_pem, public_pem
-
+from core.tests.utils.jwt import generate_key_pair
 
 # Generating RSA keys is expensive, do it once for the whole module
 PRIVATE_KEY, PUBLIC_KEY = generate_key_pair()
