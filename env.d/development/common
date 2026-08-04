@@ -22,6 +22,11 @@ DJANGO_EMAIL_LOGO_IMG="http://localhost:3000/assets/logo-suite-numerique.png"
 DJANGO_EMAIL_PORT=1025
 DJANGO_EMAIL_URL_APP="http://localhost:3000"
 
+# JWT
+# The key itself is generated locally by "make generate-secret-keys", it is
+# never committed. A PEM does not fit in an env var, hence the _FILE variant.
+JWT_PRIVATE_KEY_FILE=/data/jwt/private.pem
+
 # Backend url
 IMPRESS_BASE_URL="http://localhost:8072"
 

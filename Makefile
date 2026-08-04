@@ -69,6 +69,11 @@ data/media:
 data/static:
 	@mkdir -p data/static
 
+# RSA key signing the JWT tokens the backend issues. Generated locally, never
+# committed: "data/" is gitignored. Regenerate it by deleting the file.
+data/jwt/private.pem:
+	@bin/generate-jwt-private-key.sh
+
 # -- Project
 
 create-env-local-files: ## create env.local files in env.d/development
@@ -81,7 +86,8 @@ create-env-local-files:
 .PHONY: create-env-local-files
 
 generate-secret-keys:
-generate-secret-keys: ## generate secret keys to be stored in common.local
+generate-secret-keys: ## generate the secret keys needed by the dev stack
+generate-secret-keys: data/jwt/private.pem
 	@bin/generate-oidc-store-refresh-token-key.sh
 .PHONY: generate-secret-keys
 
@@ -237,6 +243,7 @@ logs: ## display app-dev logs (follow mode)
 
 run-backend: ## Start only the backend application and all needed services
 	@$(MAKE) create-docker-network
+	@$(MAKE) data/jwt/private.pem
 	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider-development-converter
