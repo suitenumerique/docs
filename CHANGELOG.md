@@ -25,6 +25,11 @@ and this project adheres to
 - 🐛(frontend) hide Leave in the doc menu when not logged in #2626
 - 🐛(backend) allow to configure settings DATA_UPLOAD_MAX_MEMORY_SIZE
 
+### Removed
+
+- 🔥(backend) remove the unused `CollaborationService`
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
+
 ## [v5.6.0] - 2026-09-03
 
 ### Added

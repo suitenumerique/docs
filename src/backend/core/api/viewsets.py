@@ -53,7 +53,6 @@ from core.api.filters import remove_accents
 from core.services import mime_types
 from core.services.ai_services.blocknote import AIService
 from core.services.ai_services.legacy import get_legacy_ai_service
-from core.services.collaboration_services import CollaborationService
 from core.services.converter_services import (
     ConversionError,
     Converter,
@@ -72,7 +71,6 @@ from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,
 )
-from core.tasks.access import reset_service_connections_in_cascade
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.dicts import lowercase_keys
@@ -762,81 +760,6 @@ class DocumentViewSet(
         posthog_capture(
             PosthogEventName.DOC_DELETED, self.request.user, {}, document=instance
         )
-
-    def _can_user_edit_document(self, document_id, set_cache=False):
-        """Check if the user can edit the document."""
-        try:
-            count, exists = CollaborationService().get_document_connection_info(
-                document_id,
-                self.request.session.session_key,
-            )
-        except requests.HTTPError as e:
-            logger.exception("Failed to call collaboration server: %s", e)
-            count = 0
-            exists = False
-
-        if count == 0:
-            # Nobody is connected to the websocket server
-            logger.debug("update without connection found in the websocket server")
-            cache_key = f"docs:no-websocket:{document_id}"
-            current_editor = cache.get(cache_key)
-
-            if not current_editor:
-                if set_cache:
-                    cache.set(
-                        cache_key,
-                        self.request.session.session_key,
-                        settings.NO_WEBSOCKET_CACHE_TIMEOUT,
-                    )
-                return True
-
-            if current_editor != self.request.session.session_key:
-                return False
-
-            if set_cache:
-                cache.touch(cache_key, settings.NO_WEBSOCKET_CACHE_TIMEOUT)
-            return True
-
-        if exists:
-            # Current user is connected to the websocket server
-            logger.debug("session key found in the websocket server")
-            return True
-
-        logger.debug(
-            "Users connected to the websocket but current editor not connected to it. Can not edit."
-        )
-
-        return False
-
-    def perform_update(self, serializer):
-        """Check rules about collaboration."""
-        if (
-            not serializer.validated_data.get("websocket", False)
-            and settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY
-            and not self._can_user_edit_document(serializer.instance.id, set_cache=True)
-        ):
-            raise drf.exceptions.PermissionDenied(
-                "You are not allowed to edit this document."
-            )
-
-        return super().perform_update(serializer)
-
-    @drf.decorators.action(
-        detail=True,
-        methods=["get"],
-        url_path="can-edit",
-    )
-    def can_edit(self, request, *args, **kwargs):
-        """Check if the current user can edit the document."""
-        document = self.get_object()
-
-        can_edit = (
-            True
-            if not settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY
-            else self._can_user_edit_document(document.id)
-        )
-
-        return drf.response.Response({"can_edit": can_edit})
 
     @drf.decorators.action(
         detail=False,
@@ -1831,9 +1754,6 @@ class DocumentViewSet(
 
         serializer.save()
 
-        # Notify collaboration server about the link updated
-        reset_service_connections_in_cascade.delay(str(document.id))
-
         return drf.response.Response(serializer.data, status=drf.status.HTTP_200_OK)
 
     @drf.decorators.action(detail=True, methods=["post", "delete"], url_path="favorite")
@@ -2080,15 +2000,6 @@ class DocumentViewSet(
 
         serializer = serializers.DocumentContentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        if (
-            not serializer.validated_data.get("websocket", False)
-            and settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY
-            and not self._can_user_edit_document(document.id, set_cache=True)
-        ):
-            raise drf.exceptions.PermissionDenied(
-                "You are not allowed to edit this document."
-            )
 
         content = serializer.validated_data["content"]
         try:
@@ -2856,26 +2767,12 @@ class DocumentAccessViewSet(
                 or settings.LANGUAGE_CODE,
             )
 
-    def perform_update(self, serializer):
-        """Update an access to the document and notify the collaboration server."""
-        access = serializer.save()
-
-        access_user_id = None
-        if access.user:
-            access_user_id = str(access.user.id)
-
-        # Notify collaboration server about the access change
-        reset_service_connections_in_cascade.delay(
-            str(access.document.id), access_user_id
-        )
-
     def perform_destroy(self, instance):
-        """Delete an access to the document and notify the collaboration server."""
+        """Delete an access to the document."""
         # Snapshot the identifiers before deletion as Django resets the primary key
         # on the instance once it is deleted.
         access_id = str(instance.id)
         document_id = str(instance.document_id)
-        user_id = str(instance.user.id)
 
         instance.delete()
 
@@ -2884,9 +2781,6 @@ class DocumentAccessViewSet(
             self.request.user,
             {"access_id": access_id, "document_id": document_id},
         )
-
-        # Notify collaboration server about the access removed
-        reset_service_connections_in_cascade.delay(document_id, user_id)
 
 
 class InvitationViewset(
@@ -3105,7 +2999,6 @@ class ConfigView(drf.views.APIView):
             "AI_FEATURE_LEGACY_ENABLED",
             "API_USERS_SEARCH_QUERY_MIN_LENGTH",
             "COLLABORATION_WS_URL",
-            "COLLABORATION_WS_NOT_CONNECTED_READ_ONLY",
             "COLLABORATION_WS_INACTIVITY_TIMEOUT",
             "CONVERSION_FILE_EXTENSIONS_ALLOWED",
             "CONVERSION_FILE_MAX_SIZE",
