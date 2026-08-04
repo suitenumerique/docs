@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) add a service generating cached RS256 JWT tokens
+
 ## [v5.7.0] - 2026-09-15
 
 ### Added
