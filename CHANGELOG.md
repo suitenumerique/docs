@@ -46,6 +46,11 @@ and this project adheres to
 - 🐛(frontend) export any raster image supported by the browser to a PDF #2530
 - 🐛(frontend) fix find & replace crash when editor becomes read-only #2684
 
+### Removed
+
+- 🔥(backend) remove the unused `CollaborationService`
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
+
 ## [v5.6.1] - 2026-09-04
 
 ### Added
