@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a service generating cached RS256 JWT tokens
+- - ✨(backend) publish the JWT public key on a JWKS endpoint
 
 ## [v5.7.0] - 2026-09-15
 
@@ -27,6 +28,8 @@ and this project adheres to
   to `/documents/favorites/` #2540
 - ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub
 - 💥(y-provider) y-provider becomes converter-only
+- 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
+  `/external_api/{version}/jwks`
 
 ### Fixed
 
