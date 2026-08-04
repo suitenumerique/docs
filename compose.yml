@@ -82,6 +82,7 @@ services:
     volumes:
       - ./src/backend:/app
       - ./data/static:/data/static
+      - ./data/jwt:/data/jwt:ro
       - /app/.venv
     depends_on:
       postgresql:
@@ -111,6 +112,7 @@ services:
     volumes:
       - ./src/backend:/app
       - ./data/static:/data/static
+      - ./data/jwt:/data/jwt:ro
       - /app/.venv
     depends_on:
       - app-dev
