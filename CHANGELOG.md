@@ -9,12 +9,15 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a service generating cached RS256 JWT tokens
+- ✨(backend) publish the JWT public key on a JWKS endpoint
 - ♿️(frontend) restore skip to content link after header redesign #2510
 - 🌐(i18n) rename cn_CN to zh_CN, add eo_PL and zh_TW locales #2486
 - ✨(backend) conditional email notification in server to server api #2554
 
 ### Changed
 
+- 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
+  `/external_api/{version}/jwks`
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
 - 💄(frontend) use the same highlight color for cells and moves #2575
 

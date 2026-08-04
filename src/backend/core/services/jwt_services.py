@@ -1,5 +1,6 @@
 """JWT services."""
 
+import functools
 import hashlib
 import json
 import logging
@@ -10,6 +11,7 @@ from django.core.cache import cache
 from django.utils import timezone
 
 import jwt
+from joserfc.jwk import KeySet, RSAKey
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,33 @@ class ConfigurationError(JWTError):
 
 class TokenGenerationError(JWTError):
     """Raised when a token cannot be signed."""
+
+
+@functools.cache
+def import_private_key(private_key):
+    """
+    Import a PEM encoded RSA private key as a JWK.
+
+    The "kid" is the RFC 7638 thumbprint of the key, so it is stable across
+    restarts and changes on its own when the key is rotated. It is computed
+    from the public components only, which lets a consumer of the JWKS match
+    it against the "kid" advertised in the header of our tokens.
+
+    Parsing a RSA key is expensive, hence the cache. It is keyed on the PEM
+    itself so that rotating the key in the settings imports the new one.
+    """
+    try:
+        key = RSAKey.import_key(private_key)
+        return RSAKey.import_key(
+            private_key,
+            parameters={
+                "alg": ALGORITHM,
+                "use": "sig",
+                "kid": key.thumbprint(),
+            },
+        )
+    except (TypeError, ValueError) as err:
+        raise ConfigurationError("The JWT private key cannot be imported.") from err
 
 
 class JWTService:
@@ -56,6 +85,26 @@ class JWTService:
         """Return the token lifetime, in seconds."""
         return settings.JWT_TOKEN_LIFETIME
 
+    @property
+    def key(self):
+        """Return the signing key, as a JWK."""
+        return import_private_key(self.private_key)
+
+    @property
+    def kid(self):
+        """Return the identifier of the signing key, as advertised in the JWKS."""
+        return self.key.kid
+
+    def get_jwks(self):
+        """
+        Return the JSON Web Key Set publishing the public part of our key.
+
+        External services validating our tokens fetch it to get the public key
+        matching the "kid" of the token they received. It never exposes the
+        private components of the key.
+        """
+        return KeySet([self.key]).as_dict(private=False)
+
     def get_cache_key(self, claims):
         """
         Build the cache key identifying a token for the given claims.
@@ -80,7 +129,9 @@ class JWTService:
         Sign a new token embedding the given claims.
 
         The "iat" and "exp" claims are always set by the service, from the
-        configured lifetime, and take precedence over the caller's claims.
+        configured lifetime, and take precedence over the caller's claims. The
+        header carries the "kid" of the signing key, so that a service
+        validating the token can pick the matching key in our JWKS.
         """
         issued_at = timezone.now()
         payload = {
@@ -90,7 +141,12 @@ class JWTService:
         }
 
         try:
-            return jwt.encode(payload, self.private_key, algorithm=self.algorithm)
+            return jwt.encode(
+                payload,
+                self.private_key,
+                algorithm=self.algorithm,
+                headers={"kid": self.kid},
+            )
         except (jwt.PyJWTError, TypeError, ValueError) as err:
             logger.exception(
                 "Unable to sign a JWT token with algorithm %s", self.algorithm
