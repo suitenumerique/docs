@@ -6,7 +6,6 @@ import base64
 from functools import cache
 from uuid import uuid4
 
-from django.core.cache import cache as django_cache
 from django.core.files.storage import default_storage
 
 import pycrdt
@@ -101,7 +100,7 @@ def test_api_documents_content_update_success(role, via, mock_user_teams):
 
     response = client.patch(
         f"/api/v1.0/documents/{document.id!s}/content/",
-        {"content": get_sample_ydoc(), "websocket": True},
+        {"content": get_sample_ydoc()},
     )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -180,7 +179,7 @@ def test_api_documents_content_update_replaces_existing():
     new_content = get_sample_ydoc()
     response = client.patch(
         f"/api/v1.0/documents/{document.id!s}/content/",
-        {"content": new_content, "websocket": True},
+        {"content": new_content},
     )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -245,219 +244,12 @@ def test_api_documents_content_update_link_editor():
 
     response = client.patch(
         f"/api/v1.0/documents/{document.id!s}/content/",
-        {"content": get_sample_ydoc(), "websocket": True},
+        {"content": get_sample_ydoc()},
     )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
     assert get_s3_content(document) == get_sample_ydoc()
     assert models.Document.objects.filter(id=document.id).exists()
-
-
-def test_api_documents_content_update_authenticated_no_websocket(settings):
-    """
-    When a user updates the document content, not connected to the websocket and is the first
-    to update, the content should be updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-
-    assert django_cache.get(f"docs:no-websocket:{document.id}") is None
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/content/",
-        {"content": get_sample_ydoc(), "websocket": False},
-    )
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-    assert get_s3_content(document) == get_sample_ydoc()
-    assert django_cache.get(f"docs:no-websocket:{document.id}") == session_key
-
-
-def test_api_documents_content_update_authenticated_no_websocket_user_already_editing(
-    settings,
-):
-    """
-    When a user updates the document content, not connected to the websocket and another session
-    is already editing, the update should be denied.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-
-    django_cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/content/",
-        {"content": get_sample_ydoc(), "websocket": False},
-    )
-    assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.json() == {"detail": "You are not allowed to edit this document."}
-
-
-# TODO(yhub): removed
-# test_api_documents_content_update_no_websocket_other_user_connected_to_websocket
-# here. yhub has no connection-info API: get_document_connection_info is stubbed to report
-# nobody connected, so another user connected to the websocket can no longer block the update.
-# Re-add the test once yhub exposes a connection-info API.
-
-
-def test_api_documents_content_update_user_connected_to_websocket(settings):
-    """
-    When a user updates document content and is connected to the websocket,
-    the content should be updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-
-    assert django_cache.get(f"docs:no-websocket:{document.id}") is None
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/content/",
-        {"content": get_sample_ydoc(), "websocket": False},
-    )
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-    assert get_s3_content(document) == get_sample_ydoc()
-    # TODO(yhub): the stubbed connection info reports nobody connected, so the
-    # no-websocket cache lock is taken even though the user is connected.
-    assert django_cache.get(f"docs:no-websocket:{document.id}") == session_key
-
-
-def test_api_documents_content_update_websocket_server_unreachable_fallback_to_no_websocket(
-    settings,
-):
-    """
-    When the websocket server is unreachable, the content should be updated like if the user
-    was not connected to the websocket.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-
-    assert django_cache.get(f"docs:no-websocket:{document.id}") is None
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/content/",
-        {"content": get_sample_ydoc(), "websocket": False},
-    )
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-    assert get_s3_content(document) == get_sample_ydoc()
-    assert django_cache.get(f"docs:no-websocket:{document.id}") == session_key
-
-
-def test_api_content_update_websocket_server_unreachable_fallback_to_no_websocket_other_users(
-    settings,
-):
-    """
-    When the websocket server is unreachable, the behavior fallback to the no websocket one.
-    If another user is already editing, the content update should be denied.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-
-    django_cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/content/",
-        {"content": get_sample_ydoc(), "websocket": False},
-    )
-    assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert django_cache.get(f"docs:no-websocket:{document.id}") == "other_session_key"
-
-
-def test_api_content_update_websocket_server_room_not_found_fallback_to_no_websocket_other_users(
-    settings,
-):
-    """
-    When the WebSocket server does not have the room created, the logic should fallback to
-    no-WebSocket. If another user is already editing, the update must be denied.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-
-    django_cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/content/",
-        {"content": get_sample_ydoc(), "websocket": False},
-    )
-    assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert django_cache.get(f"docs:no-websocket:{document.id}") == "other_session_key"
-
-
-def test_api_documents_content_update_force_websocket_param_to_true(settings):
-    """
-    When the websocket parameter is set to true, the content should be updated without any check.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-
-    assert django_cache.get(f"docs:no-websocket:{document.id}") is None
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/content/",
-        {"content": get_sample_ydoc(), "websocket": True},
-    )
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-    assert get_s3_content(document) == get_sample_ydoc()
-    assert django_cache.get(f"docs:no-websocket:{document.id}") is None
-
-
-def test_api_documents_content_update_feature_flag_disabled(settings):
-    """
-    When the feature flag is disabled, the content should be updated without any check.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = False
-
-    assert django_cache.get(f"docs:no-websocket:{document.id}") is None
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/content/",
-        {"content": get_sample_ydoc(), "websocket": False},
-    )
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-    assert get_s3_content(document) == get_sample_ydoc()
-    assert django_cache.get(f"docs:no-websocket:{document.id}") is None
 
 
 def test_api_documents_content_upadte_invalid_yjs_doc():
@@ -473,10 +265,7 @@ def test_api_documents_content_upadte_invalid_yjs_doc():
 
     response = client.patch(
         f"/api/v1.0/documents/{document.id!s}/content/",
-        {
-            "content": base64.b64encode(b"invalid yjs").decode("utf-8"),
-            "websocket": True,
-        },
+        {"content": base64.b64encode(b"invalid yjs").decode("utf-8")},
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST

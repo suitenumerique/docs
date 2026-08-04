@@ -37,6 +37,11 @@ and this project adheres to
 - 🐛(docker) pull minio images from quay.io #2675
 - ♿️(frontend) restore presenter focus trapping after share links #2533
 
+### Removed
+
+- 🔥(backend) remove the unused `CollaborationService`
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
+
 ## [v5.6.1] - 2026-09-04
 
 ### Added
