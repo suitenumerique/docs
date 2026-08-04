@@ -13,7 +13,8 @@ and this project adheres to
 - ✨(backend) expose the attachment max size in the config endpoint #2577
 - ✨(frontend) warn before uploading an attachment over the size limit #2577
 - ✨(backend) add a service generating cached RS256 JWT tokens
-- - ✨(backend) publish the JWT public key on a JWKS endpoint
+- ✨(backend) publish the JWT public key on a JWKS endpoint
+- 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
 
 ### Changed
 
