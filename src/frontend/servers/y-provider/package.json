@@ -23,6 +23,7 @@
     "@tiptap/extensions": "*",
     "cors": "2.8.6",
     "express": "5.2.1",
+    "jose": "6.2.8",
     "yjs": "*"
   },
   "devDependencies": {
