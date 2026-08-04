@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(backend) add a service generating cached RS256 JWT tokens
 - 🔧(backend) fine tune redis cache options
 
 ### Changed
