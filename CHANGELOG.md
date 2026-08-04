@@ -15,11 +15,14 @@ and this project adheres to
 - ✨(frontend) warn before uploading an attachment over the size limit #2577
 - ✨(frontend) add keyboard shortcut to open presentation mode #2697
 - ✨(backend) add a service generating cached RS256 JWT tokens
+- - ✨(backend) publish the JWT public key on a JWKS endpoint
 
 ### Changed
 
 - ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub
 - 💥(y-provider) y-provider becomes converter-only
+- 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
+  `/external_api/{version}/jwks`
 
 ### Fixed
 
