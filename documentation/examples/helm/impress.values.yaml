@@ -15,7 +15,6 @@ image:
 backend:
   replicas: 1
   envVars:
-    COLLABORATION_SERVER_SECRET: my-secret
     DJANGO_CSRF_TRUSTED_ORIGINS: https://docs.127.0.0.1.nip.io
     DJANGO_CONFIGURATION: Feature
     DJANGO_ALLOWED_HOSTS: docs.127.0.0.1.nip.io
