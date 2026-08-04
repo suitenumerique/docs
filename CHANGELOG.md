@@ -27,6 +27,11 @@ and this project adheres to
 
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 
+### Removed
+
+- 🔥(backend) remove the unused `CollaborationService`
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
+
 ## [v5.7.0] - 2026-09-15
 
 ### Added
