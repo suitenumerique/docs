@@ -521,27 +521,8 @@ class Base(Configuration):
     SENTRY_DSN = values.Value(None, environ_name="SENTRY_DSN", environ_prefix=None)
 
     # Collaboration
-    # TODO(yhub): unused since the yhub migration — yhub has no management API
-    # (reset-connections / get-connections). Kept until a yhub kick and
-    # connection-info API exist and CollaborationService is reinstated.
-    COLLABORATION_API_URL = values.Value(
-        None, environ_name="COLLABORATION_API_URL", environ_prefix=None
-    )
-    # TODO(yhub): unused since the yhub migration, see COLLABORATION_API_URL.
-    COLLABORATION_SERVER_SECRET = SecretFileValue(
-        None, environ_name="COLLABORATION_SERVER_SECRET", environ_prefix=None
-    )
     COLLABORATION_WS_URL = values.Value(
         None, environ_name="COLLABORATION_WS_URL", environ_prefix=None
-    )
-    COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = values.BooleanValue(
-        default=values.BooleanValue(  # COLLABORATION_WS_NOT_CONNECTED_READY_ONLY compat
-            default=False,
-            environ_name="COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
-            environ_prefix=None,
-        ),
-        environ_name="COLLABORATION_WS_NOT_CONNECTED_READ_ONLY",
-        environ_prefix=None,
     )
     COLLABORATION_WS_INACTIVITY_TIMEOUT = values.IntegerValue(
         None,
@@ -989,12 +970,6 @@ class Base(Configuration):
     CONVERSION_API_SECURE = values.Value(
         default=False,
         environ_name="CONVERSION_API_SECURE",
-        environ_prefix=None,
-    )
-
-    NO_WEBSOCKET_CACHE_TIMEOUT = values.Value(
-        default=120,
-        environ_name="NO_WEBSOCKET_CACHE_TIMEOUT",
         environ_prefix=None,
     )
 
