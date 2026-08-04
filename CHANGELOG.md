@@ -12,6 +12,7 @@ and this project adheres to
 - 🐛(frontend) reduce PostHog volume from web vitals and opt_in spam #2701
 - ✨(backend) expose the attachment max size in the config endpoint #2577
 - ✨(frontend) warn before uploading an attachment over the size limit #2577
+- ✨(backend) add a service generating cached RS256 JWT tokens
 
 ### Changed
 
