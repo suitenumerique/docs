@@ -36,6 +36,11 @@ and this project adheres to
 
 - 💄(frontend) redesign 404 error standalone page #2696
 
+### Removed
+
+- 🔥(backend) remove the unused `CollaborationService`
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
+
 ## [v5.7.0] - 2026-09-15
 
 ### Added
