@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) export presenter slides as PDF #2487
+- ✨(backend) add a service generating cached RS256 JWT tokens
 
 ### Changed
 
