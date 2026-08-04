@@ -151,6 +151,36 @@ def test_get_token_caches_each_set_of_claims_separately():
 
 
 @pytest.mark.usefixtures("jwt_settings")
+def test_get_jwks_exposes_only_the_public_key():
+    """🔒 The JWKS must never carry the private components of the key."""
+    keys = JWTService().get_jwks()["keys"]
+
+    assert len(keys) == 1
+    assert set(keys[0]) == {"kty", "alg", "use", "kid", "n", "e"}
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_kid_is_stable_and_matches_the_signed_tokens():
+    """The "kid" identifies the key across the JWKS and the tokens."""
+    service = JWTService()
+
+    assert service.kid == JWTService().kid
+    assert (
+        jwt.get_unverified_header(service.get_token({"sub": "user-id"}))["kid"]
+        == service.kid
+    )
+
+
+def test_kid_changes_when_the_key_is_rotated(jwt_settings):
+    """A rotated key is a different key, hence a different "kid"."""
+    kid = JWTService().kid
+
+    jwt_settings.JWT_PRIVATE_KEY = OTHER_PRIVATE_KEY
+
+    assert JWTService().kid != kid
+
+
+@pytest.mark.usefixtures("jwt_settings")
 def test_get_token_ignores_the_claims_ordering():
     """Claims given in a different order hit the same cache entry."""
     service = JWTService()
@@ -200,8 +230,15 @@ def test_get_token_without_private_key(jwt_settings, private_key):
 
 
 def test_generate_token_with_an_invalid_private_key(jwt_settings):
-    """An unusable private key is reported as a token generation error."""
+    """An unusable private key is a configuration problem."""
     jwt_settings.JWT_PRIVATE_KEY = "not-a-pem-key"
 
-    with pytest.raises(TokenGenerationError, match="Unable to sign the JWT token"):
+    with pytest.raises(ConfigurationError, match="cannot be imported"):
         JWTService().generate_token({"sub": "user-id"})
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_generate_token_with_claims_that_cannot_be_serialized():
+    """Claims that cannot be encoded are reported as a generation error."""
+    with pytest.raises(TokenGenerationError, match="Unable to sign the JWT token"):
+        JWTService().generate_token({"sub": {"unserializable"}})
