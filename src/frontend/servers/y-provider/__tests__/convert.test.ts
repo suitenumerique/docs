@@ -17,6 +17,8 @@ vi.mock('../src/env', async (importOriginal) => {
   };
 });
 
+import { mockJwksEndpoint, signAdminToken } from './testUtils/adminJwt';
+
 import { docsBlockNoteSchema } from '@/blockSpecs';
 import { initApp } from '@/servers';
 
