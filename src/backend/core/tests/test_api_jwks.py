@@ -9,7 +9,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core.services.jwt_services import JWTService
-from core.tests.utils.jwt import generate_key_pair
+from core.tests.utils.jwt_helper import generate_key_pair
 from core.tests.utils.urls import reload_urls
 
 pytestmark = pytest.mark.django_db
