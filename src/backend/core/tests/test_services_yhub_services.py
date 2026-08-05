@@ -9,6 +9,7 @@ import pytest
 import requests
 
 from core.factories import UserFactory
+from core.services.jwt_services import Audiences
 from core.services.yhub_services import (
     APIError,
     ConfigurationError,
@@ -62,8 +63,11 @@ def test_auth_header():
     scheme, token = YHubService().auth_header.split(" ")
 
     assert scheme == "Bearer"
-    payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+    payload = jwt.decode(
+        token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+    )
     assert payload["admin"] is True
+    assert payload["aud"] == Audiences.YHUB
     assert "sub" not in payload
 
 
@@ -73,19 +77,25 @@ def test_auth_header_with_user():
 
     _scheme, token = YHubService(user=user).auth_header.split(" ")
 
-    payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+    payload = jwt.decode(
+        token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+    )
     assert payload["sub"] == str(user.pk)
     # naming a subject should not restrict what the call can do
     assert payload["admin"] is True
+    assert payload["aud"] == Audiences.YHUB
 
 
 def test_auth_header_with_anonymous_user():
     """An anonymous user is no subject, the token should not name one."""
     _scheme, token = YHubService(user=AnonymousUser()).auth_header.split(" ")
 
-    payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+    payload = jwt.decode(
+        token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+    )
     assert "sub" not in payload
     assert payload["admin"] is True
+    assert payload["aud"] == Audiences.YHUB
 
 
 @patch("requests.request")
