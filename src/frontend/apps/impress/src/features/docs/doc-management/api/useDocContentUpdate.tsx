@@ -9,7 +9,6 @@ import { APIError, errorCauses, fetchAPI } from '@/api';
 
 import { Doc } from '../types';
 
-import { KEY_CAN_EDIT } from './useDocCanEdit';
 import { KEY_DOC_CONTENT } from './useDocContent';
 
 export interface UpdateDocContentParams {
@@ -138,12 +137,6 @@ export function useDocContentUpdate(queryConfig?: UseDocContentUpdate) {
           previousContent,
         );
       }
-
-      // If error it means the user is probably not allowed to edit the doc
-      // so we invalidate the canEdit query to update the UI accordingly
-      void queryClient.invalidateQueries({
-        queryKey: [KEY_CAN_EDIT],
-      });
 
       if (queryConfig?.onError) {
         queryConfig.onError(error, variables, onMutateResult, context);
