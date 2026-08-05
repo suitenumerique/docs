@@ -71,6 +71,7 @@ from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,
 )
+from core.tasks.access import reset_service_connections_in_cascade
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.dicts import lowercase_keys
@@ -1754,6 +1755,9 @@ class DocumentViewSet(
 
         serializer.save()
 
+        # Notify collaboration server about the link updated
+        reset_service_connections_in_cascade.delay(str(document.id))
+
         return drf.response.Response(serializer.data, status=drf.status.HTTP_200_OK)
 
     @drf.decorators.action(detail=True, methods=["post", "delete"], url_path="favorite")
@@ -2767,12 +2771,28 @@ class DocumentAccessViewSet(
                 or settings.LANGUAGE_CODE,
             )
 
+    def perform_update(self, serializer):
+        """Update an access to the document and notify the collaboration server."""
+        access = serializer.save()
+
+        access_user_id = None
+        if access.user:
+            access_user_id = str(access.user.id)
+
+        # Notify collaboration server about the access change
+        reset_service_connections_in_cascade.delay(
+            str(access.document.id), access_user_id
+        )
+
     def perform_destroy(self, instance):
-        """Delete an access to the document."""
+        """Delete an access to the document and notify the collaboration server."""
         # Snapshot the identifiers before deletion as Django resets the primary key
         # on the instance once it is deleted.
         access_id = str(instance.id)
         document_id = str(instance.document_id)
+        # an access is granted either to a user or to a team, only a user has
+        # connections of their own to reset
+        user_id = str(instance.user.id) if instance.user else None
 
         instance.delete()
 
@@ -2781,6 +2801,9 @@ class DocumentAccessViewSet(
             self.request.user,
             {"access_id": access_id, "document_id": document_id},
         )
+
+        # Notify collaboration server about the access removed
+        reset_service_connections_in_cascade.delay(document_id, user_id)
 
 
 class InvitationViewset(
