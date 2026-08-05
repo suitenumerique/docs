@@ -93,6 +93,19 @@ class YHubService:
         return settings.YHUB_API_TIMEOUT
 
     @property
+    def user_id(self):
+        """
+        Return the id of the user a call is made on behalf of, if any.
+
+        It is the very id yhub knows a user by: the auth plugin resolves the
+        cookies of a websocket client to the same one.
+        """
+        if self.user is None or not self.user.is_authenticated:
+            return None
+
+        return str(self.user.pk)
+
+    @property
     def claims(self):
         """
         Build the claims naming who a request to the yhub API is made for.
@@ -102,10 +115,10 @@ class YHubService:
         rather than to the backend itself. A call made outside of a request,
         from a Celery task for instance, has no subject to name.
         """
-        if self.user is None or not self.user.is_authenticated:
+        if self.user_id is None:
             return {}
 
-        return {"sub": str(self.user.pk)}
+        return {"sub": self.user_id}
 
     @property
     def auth_header(self):
@@ -121,14 +134,24 @@ class YHubService:
         )
         return f"Bearer {token}"
 
-    def build_url(self, endpoint, document_id):
+    def build_url(self, endpoint, document):
         """Build the url of a document scoped endpoint of the yhub API."""
         return (
             f"{self.base_url}/{self.api_prefix}/{endpoint}/{self.api_version}"
-            f"/{self.org}/{document_id}"
+            f"/{self.org}/{document.id}"
         )
 
-    def request(self, method, url, params=None, data=None):
+    @staticmethod
+    def build_user_header(user_id):
+        """
+        Name a user to yhub, or nobody when there is no user to name.
+
+        yhub only reads this header from a call authenticated as admin, and
+        what it does with it depends on the endpoint it is sent to.
+        """
+        return {"X-User-Id": str(user_id)} if user_id else {}
+
+    def request(self, method, url, data=None, headers=None):
         """
         Send an authenticated request to the yhub API.
 
@@ -139,11 +162,11 @@ class YHubService:
             response = requests.request(
                 method,
                 url,
-                params=params,
                 data=data,
                 headers={
                     "Authorization": self.auth_header,
                     "Content-Type": "application/octet-stream",
+                    **(headers or {}),
                 },
                 timeout=self.timeout,
             )
@@ -166,3 +189,38 @@ class YHubService:
             )
 
         return response
+
+    def create_ydoc(self, document, update):
+        """
+        Seed the initial Yjs state of a document.
+
+        The body is the raw binary update, what pycrdt's `get_update()`
+        returns, and not the lib0 encoding the built-in `ydoc` endpoint speaks.
+        The content is attributed to the user the service is bound to, yhub
+        only takes our word for it because the token grants admin.
+
+        It is a strict create: yhub answers 409 when the document already has
+        content, 413 over 10MB and 400 on an update it cannot apply, all
+        reported as an `APIError` carrying the status.
+        """
+        return self.request(
+            "post",
+            self.build_url("create-ydoc", document),
+            data=update,
+            headers=self.build_user_header(self.user_id),
+        )
+
+    def reset_connections(self, document, user_id=None):
+        """
+        Re-check the access of the clients connected to a document.
+
+        yhub re-runs the authorization of the matching connections and closes
+        only the ones that lost their access, the others are left alone.
+        Naming a user restricts the re-check to their own connections, which is
+        what the change of a single access needs.
+        """
+        return self.request(
+            "post",
+            self.build_url("reset-connections", document),
+            headers=self.build_user_header(user_id),
+        )
