@@ -8,6 +8,13 @@ and this project adheres to
 
 ### Added
 
+- ✨(collaboration) add a create-ydoc endpoint on yhub:
+  `POST /collaboration/create-ydoc/v1/docs/{id}` seeds a document's initial
+  Yjs state from a raw binary update posted as `application/octet-stream`,
+  so the Django backend can create documents without speaking yhub's lib0
+  wire encoding. Strict create (409 when the document already has content),
+  initial content attributed to the optional `X-User-Id` header; guarded by
+  standard document write access (admin JWT or user session)
 - ✨(collaboration) add an admin reset-connections endpoint on yhub:
   `POST /collaboration/reset-connections/v1/docs/{id}` re-checks the
   authorization of the document's connected clients and disconnects (close
