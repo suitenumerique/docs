@@ -12,7 +12,7 @@ export const useCollaborationUrl = (room?: string) => {
     conf?.COLLABORATION_WS_URL ||
     (typeof window !== 'undefined'
       ? // TODO(yhub): no prod ingress route yet
-        `wss://${window.location.host}/ws/docs`
+        `wss://${window.location.host}/collaboration/ws/v1/docs`
       : '')
   );
 };
