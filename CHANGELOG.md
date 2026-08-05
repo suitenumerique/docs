@@ -12,7 +12,8 @@ and this project adheres to
 - ✨(backend) publish the JWT public key on a JWKS endpoint
 - 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
 - ✨(collaboration) add an admin reset-connections endpoint on yhub
-- ✨(collaboration) add a create-ydoc endpoint on yhu
+- ✨(collaboration) add a create-ydoc endpoint on yhub
+- ✨(collaboration) soft-migrate legacy S3 documents into yhub
 
 ## [v5.7.0] - 2026-09-15
 
