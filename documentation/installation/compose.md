@@ -93,7 +93,7 @@ If you are using an external service, you need to set `REDIS_URL` environment va
 
 The Y provider service enables collaboration through websockets.
 
-Generates a secure key for `Y_PROVIDER_API_KEY` and `COLLABORATION_SERVER_SECRET` in ``env.d/yprovider``. 
+Generates a secure key for `Y_PROVIDER_API_KEY` in ``env.d/yprovider``. 
 
 ### Docs
 
