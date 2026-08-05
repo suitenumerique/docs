@@ -1,5 +1,8 @@
 """Tests for link configuration of documents on API endpoint"""
 
+from contextlib import contextmanager
+from unittest import mock
+
 import pytest
 from rest_framework.test import APIClient
 
@@ -8,6 +11,25 @@ from core.api import serializers
 from core.tests.conftest import TEAM, USER, VIA
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture(name="mock_reset_connections")
+def mock_reset_connections_fixture():
+    """
+    Provide a context manager that patches the ``reset_service_connections_in_cascade``
+    Celery task and asserts its ``delay`` method is called exactly once for the given
+    document when leaving the context.
+    """
+
+    @contextmanager
+    def _mock_reset_connections(document_id):
+        with mock.patch(
+            "core.api.viewsets.reset_service_connections_in_cascade.delay"
+        ) as mock_delay:
+            yield mock_delay
+            mock_delay.assert_called_once_with(str(document_id))
+
+    return _mock_reset_connections
 
 
 @pytest.mark.parametrize("role", models.LinkRoleChoices.values)
@@ -119,6 +141,7 @@ def test_api_documents_link_configuration_update_authenticated_related_success(
     via,
     role,
     mock_user_teams,
+    mock_reset_connections,  # pylint: disable=redefined-outer-name
 ):
     """
     A user who is administrator or owner of a document should be allowed to update
@@ -148,17 +171,18 @@ def test_api_documents_link_configuration_update_authenticated_related_success(
         )
     ).data
 
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/link-configuration/",
-        new_document_values,
-        format="json",
-    )
-    assert response.status_code == 200
+    with mock_reset_connections(document.id):
+        response = client.put(
+            f"/api/v1.0/documents/{document.id!s}/link-configuration/",
+            new_document_values,
+            format="json",
+        )
+        assert response.status_code == 200
 
-    document = models.Document.objects.get(pk=document.pk)
-    document_values = serializers.LinkDocumentSerializer(instance=document).data
-    for key, value in document_values.items():
-        assert value == new_document_values[key]
+        document = models.Document.objects.get(pk=document.pk)
+        document_values = serializers.LinkDocumentSerializer(instance=document).data
+        for key, value in document_values.items():
+            assert value == new_document_values[key]
 
 
 def test_api_documents_link_configuration_update_role_restricted_forbidden():
@@ -230,7 +254,9 @@ def test_api_documents_link_configuration_update_link_reach_required():
     assert "This field is required" in response.json()["link_reach"][0]
 
 
-def test_api_documents_link_configuration_update_restricted_without_role_success():
+def test_api_documents_link_configuration_update_restricted_without_role_success(
+    mock_reset_connections,  # pylint: disable=redefined-outer-name
+):
     """
     Test that setting link_reach to restricted without specifying link_role succeeds.
     """
@@ -252,15 +278,16 @@ def test_api_documents_link_configuration_update_restricted_without_role_success
         "link_reach": models.LinkReachChoices.RESTRICTED,
     }
 
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/link-configuration/",
-        new_data,
-        format="json",
-    )
+    with mock_reset_connections(document.id):
+        response = client.put(
+            f"/api/v1.0/documents/{document.id!s}/link-configuration/",
+            new_data,
+            format="json",
+        )
 
-    assert response.status_code == 200
-    document.refresh_from_db()
-    assert document.link_reach == models.LinkReachChoices.RESTRICTED
+        assert response.status_code == 200
+        document.refresh_from_db()
+        assert document.link_reach == models.LinkReachChoices.RESTRICTED
 
 
 @pytest.mark.parametrize(
@@ -270,6 +297,7 @@ def test_api_documents_link_configuration_update_restricted_without_role_success
 def test_api_documents_link_configuration_update_non_restricted_with_valid_role_success(
     reach,
     role,
+    mock_reset_connections,  # pylint: disable=redefined-outer-name
 ):
     """
     Test that setting non-restricted link_reach with valid link_role succeeds.
@@ -292,16 +320,17 @@ def test_api_documents_link_configuration_update_non_restricted_with_valid_role_
         "link_role": role,
     }
 
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/link-configuration/",
-        new_data,
-        format="json",
-    )
+    with mock_reset_connections(document.id):
+        response = client.put(
+            f"/api/v1.0/documents/{document.id!s}/link-configuration/",
+            new_data,
+            format="json",
+        )
 
-    assert response.status_code == 200
-    document.refresh_from_db()
-    assert document.link_reach == reach
-    assert document.link_role == role
+        assert response.status_code == 200
+        document.refresh_from_db()
+        assert document.link_reach == reach
+        assert document.link_role == role
 
 
 def test_api_documents_link_configuration_update_with_ancestor_constraints():
