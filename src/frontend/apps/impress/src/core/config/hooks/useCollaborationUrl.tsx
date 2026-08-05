@@ -11,7 +11,7 @@ export const useCollaborationUrl = (room?: string) => {
   return (
     conf?.COLLABORATION_WS_URL ||
     (typeof window !== 'undefined'
-      ? `wss://${window.location.host}/ws/docs`
+      ? `wss://${window.location.host}/collaboration/ws/v1/docs`
       : '')
   );
 };
