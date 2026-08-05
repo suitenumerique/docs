@@ -9,14 +9,9 @@ from django.conf import settings
 import requests
 
 from core.services import mime_types
-from core.services.jwt_services import JWTService
+from core.services.jwt_services import Audiences, JWTService
 
 logger = logging.getLogger(__name__)
-
-# Audience of the admin token y-provider expects. Scoping the token to it
-# prevents an admin JWT issued for another backend service from being
-# replayed against y-provider.
-Y_CONVERTER_AUDIENCE = "y-converter"
 
 
 class ConversionError(Exception):
@@ -115,7 +110,7 @@ class YdocConverter:
     @property
     def auth_header(self):
         """Build microservice authentication header."""
-        token = JWTService().get_admin_token({"aud": Y_CONVERTER_AUDIENCE})
+        token = JWTService().get_admin_token(audience=Audiences.Y_CONVERTER)
         return f"Bearer {token}"
 
     def _request(self, url, data, content_type, accept):

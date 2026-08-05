@@ -13,6 +13,7 @@ import pytest
 from freezegun import freeze_time
 
 from core.services.jwt_services import (
+    Audiences,
     ConfigurationError,
     JWTService,
     TokenGenerationError,
@@ -132,30 +133,43 @@ def test_get_token_caches_each_set_of_claims_separately():
 @pytest.mark.usefixtures("jwt_settings")
 def test_get_admin_token_carries_the_admin_claim():
     """The admin token is a regular token carrying the "admin" claim."""
-    token = JWTService().get_admin_token()
+    token = JWTService().get_admin_token(audience=Audiences.YHUB)
 
-    payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+    payload = jwt.decode(
+        token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+    )
     assert payload["admin"] is True
+    assert payload["aud"] == Audiences.YHUB
 
 
 @pytest.mark.usefixtures("jwt_settings")
 def test_get_admin_token_embeds_the_extra_claims():
     """Extra claims are carried alongside the "admin" one."""
-    token = JWTService().get_admin_token({"sub": "user-id", "scope": "read"})
+    token = JWTService().get_admin_token(
+        audience=Audiences.YHUB, claims={"sub": "user-id", "scope": "read"}
+    )
 
-    payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+    payload = jwt.decode(
+        token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+    )
     assert payload["admin"] is True
     assert payload["sub"] == "user-id"
     assert payload["scope"] == "read"
+    assert payload["aud"] == Audiences.YHUB
 
 
 @pytest.mark.usefixtures("jwt_settings")
 def test_get_admin_token_extra_claims_cannot_turn_admin_off():
     """🔒 A token issued by get_admin_token always grants admin."""
-    token = JWTService().get_admin_token({"admin": False})
+    token = JWTService().get_admin_token(
+        audience=Audiences.YHUB, claims={"admin": False}
+    )
 
-    payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+    payload = jwt.decode(
+        token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+    )
     assert payload["admin"] is True
+    assert payload["aud"] == Audiences.YHUB
 
 
 @pytest.mark.usefixtures("jwt_settings")
@@ -163,13 +177,24 @@ def test_get_admin_token_caches_each_set_of_extra_claims_separately():
     """Two callers passing different extra claims get their own token."""
     service = JWTService()
 
-    first_token = service.get_admin_token({"sub": "user-id"})
-    second_token = service.get_admin_token({"sub": "other-user-id"})
+    first_token = service.get_admin_token(
+        audience=Audiences.YHUB, claims={"sub": "user-id"}
+    )
+    second_token = service.get_admin_token(
+        audience=Audiences.YHUB, claims={"sub": "other-user-id"}
+    )
 
     assert first_token != second_token
-    assert jwt.decode(first_token, PUBLIC_KEY, algorithms=["RS256"])["sub"] == "user-id"
     assert (
-        jwt.decode(second_token, PUBLIC_KEY, algorithms=["RS256"])["sub"]
+        jwt.decode(
+            first_token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+        )["sub"]
+        == "user-id"
+    )
+    assert (
+        jwt.decode(
+            second_token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+        )["sub"]
         == "other-user-id"
     )
 
@@ -179,7 +204,7 @@ def test_get_admin_token_does_not_mutate_the_given_claims():
     """The caller's dictionary is left untouched."""
     claims = {"sub": "user-id"}
 
-    JWTService().get_admin_token(claims)
+    JWTService().get_admin_token(audience=Audiences.YHUB, claims=claims)
 
     assert claims == {"sub": "user-id"}
 
@@ -189,10 +214,10 @@ def test_get_admin_token_reuses_the_cached_token():
     """The admin token is cached, like any other token."""
     service = JWTService()
 
-    token = service.get_admin_token()
+    token = service.get_admin_token(audience=Audiences.YHUB)
 
     with mock.patch("core.services.jwt_services.jwt.encode") as mock_encode:
-        assert service.get_admin_token() == token
+        assert service.get_admin_token(audience=Audiences.YHUB) == token
 
     mock_encode.assert_not_called()
 
@@ -205,7 +230,7 @@ def test_get_admin_token_is_not_served_to_a_non_admin_caller():
     """
     service = JWTService()
 
-    admin_token = service.get_admin_token()
+    admin_token = service.get_admin_token(audience=Audiences.YHUB)
     tokens = [
         service.get_token({"admin": False}),
         service.get_token({"sub": "user-id"}),
@@ -225,8 +250,10 @@ def test_get_admin_token_expires_like_any_other_token(jwt_settings):
 
     now = datetime(2026, 8, 4, 10, 0, 0, tzinfo=timezone.utc)
     with freeze_time(now):
-        token = JWTService().get_admin_token()
-        payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+        token = JWTService().get_admin_token(audience=Audiences.YHUB)
+        payload = jwt.decode(
+            token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+        )
 
     assert payload["exp"] == now.timestamp() + 120
 
