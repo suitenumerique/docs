@@ -528,6 +528,19 @@ class Base(Configuration):
         None, environ_name="COLLABORATION_API_URL", environ_prefix=None
     )
 
+    # yhub collaboration server, as reached by core.services.yhub_services
+    YHUB_API_BASE_URL = values.Value(
+        None, environ_name="YHUB_API_BASE_URL", environ_prefix=None
+    )
+    # The yhub organization our documents live in. It must match the YHUB_ORG
+    # of the yhub server, which rejects the rooms of any other organization.
+    YHUB_ORG = values.Value("docs", environ_name="YHUB_ORG", environ_prefix=None)
+    YHUB_API_TIMEOUT = values.IntegerValue(
+        default=30,
+        environ_name="YHUB_API_TIMEOUT",
+        environ_prefix=None,
+    )
+
     # JWT
     # RSA private key (PEM) used to sign the tokens issued by
     # core.services.jwt_services.JWTService. Prefer the JWT_PRIVATE_KEY_FILE
