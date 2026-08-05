@@ -17,7 +17,7 @@ from core.services.jwt_services import (
     JWTService,
     TokenGenerationError,
 )
-from core.tests.utils.jwt import generate_key_pair
+from core.tests.utils.jwt_helper import generate_key_pair
 
 # Generating RSA keys is expensive, do it once for the whole module
 PRIVATE_KEY, PUBLIC_KEY = generate_key_pair()
