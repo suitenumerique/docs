@@ -1,22 +1,12 @@
-import {
-  Button,
-  Modal,
-  ModalSize,
-  VariantType,
-  useToastProvider,
-} from '@gouvfr-lasuite/ui-components';
+import { Button, Modal, ModalSize } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
 import { Box, Text } from '@/components';
-import { useThreadStore } from '@/docs/doc-comments/stores/useThreadStore';
-import { Doc, base64ToYDoc, useProviderStore } from '@/docs/doc-management/';
-import { useDocContentUpdate } from '@/docs/doc-management/api/useDocContentUpdate';
+import { Doc } from '@/docs/doc-management/';
 
 import { useDocVersion } from '../api';
-import { KEY_LIST_DOC_VERSIONS } from '../api/useDocVersions';
 import { Versions } from '../types';
-import { revertUpdate } from '../utils';
 
 const ModalStyle = createGlobalStyle`
   .c__modal__title {
@@ -33,7 +23,7 @@ interface ModalConfirmationVersionProps {
 
 export const ModalConfirmationVersion = ({
   onClose,
-  onSuccess,
+  onSuccess: __onSuccess,
   docId,
   versionId,
 }: ModalConfirmationVersionProps) => {
@@ -42,29 +32,28 @@ export const ModalConfirmationVersion = ({
     versionId,
   });
   const { t } = useTranslation();
-  const { toast } = useToastProvider();
-  const { provider } = useProviderStore();
-  const { threadStore } = useThreadStore();
-  const { mutate: updateDocContent } = useDocContentUpdate({
-    listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
-    onSuccess: () => {
-      const onDisplaySuccess = () => {
-        toast(t('Version restored successfully'), VariantType.SUCCESS);
-        onSuccess();
-      };
 
-      if (!provider || !version?.content) {
-        onDisplaySuccess();
-        return;
-      }
+  // TODO(yhub) : Revert the doc to a previous state using Y.js / Yhub
+  // const { mutate: updateDocContent } = useDocContentUpdate({
+  //   listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
+  //   onSuccess: () => {
+  //     const onDisplaySuccess = () => {
+  //       toast(t('Version restored successfully'), VariantType.SUCCESS);
+  //       onSuccess();
+  //     };
 
-      revertUpdate(provider.doc, provider.doc, base64ToYDoc(version.content));
+  //     if (!provider || !version?.content) {
+  //       onDisplaySuccess();
+  //       return;
+  //     }
 
-      threadStore?.refreshThreads();
+  //     revertUpdate(provider.doc, provider.doc, base64ToYDoc(version.content));
 
-      onDisplaySuccess();
-    },
-  });
+  //     threadStore?.refreshThreads();
+
+  //     onDisplaySuccess();
+  //   },
+  // });
 
   if (!version) {
     return null;
@@ -95,11 +84,6 @@ export const ModalConfirmationVersion = ({
               if (!version?.content) {
                 return;
               }
-
-              updateDocContent({
-                id: docId,
-                content: version.content,
-              });
 
               onClose();
             }}
