@@ -12,6 +12,7 @@ and this project adheres to
 - ✨(backend) publish the JWT public key on a JWKS endpoint
 - 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
 - ✨(collaboration) add an admin reset-connections endpoint on yhub
+- ✨(collaboration) add a create-ydoc endpoint on yhub
 - 🔧(backend) fine tune redis cache options
 
 ### Changed

@@ -23,6 +23,15 @@ const Y_PROVIDER_API_KEY = secret('Y_PROVIDER_API_KEY', 'yprovider-api-key');
 const ORG = process.env.YHUB_ORG || 'docs';
 const UUID4 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+// an empty Yjs update (what `Y.encodeStateAsUpdate(new Y.Doc())` encodes to) —
+// hardcoded so we don't import @y/y for two bytes
+const EMPTY_YDOC = new Uint8Array([0, 0]);
+// uws buffers the whole body before the handler sees it, so this cap does not
+// bound upload memory — it bounds what a single create hands to a compute
+// worker and writes to the valkey stream as one message. Creates carry one
+// freshly-converted snapshot (typically KBs); anything bigger belongs on the
+// websocket path.
+const MAX_CREATE_BYTES = 10 * 1024 * 1024;
 
 // Public keys verifying the RS256 admin tokens Django issues (JWTService).
 // Lazily fetched on first use; jose caches the keys and refetches on unknown
@@ -166,6 +175,94 @@ const api = [
           users: userId ? [userId] : null,
         });
         return jsonResponse(200, { message: 'Connections reset' });
+      },
+    },
+  }),
+  // POST /collaboration/create-ydoc/v1/{org}/{docid} — create a document's
+  // initial Yjs state from a RAW binary update (`Y.encodeStateAsUpdate` /
+  // pycrdt `get_update()` output) posted as application/octet-stream. Unlike
+  // yhub's built-in `PATCH ydoc`, the body is not lib0-any encoded, so Django
+  // can call it with a plain `requests.post(url, data=raw_bytes)`. Strict
+  // create: 409 when the room already has content. Default access purpose:
+  // guarded like the built-in ydoc routes (write access on the doc — the
+  // admin JWT, or a user session with update ability).
+  createApiEndpoint('create-ydoc', {
+    post: {
+      handler: async (req) => {
+        if (req.org !== ORG) {
+          return jsonResponse(400, { error: 'Unknown org' });
+        }
+        if (!UUID4.test(req.docid)) {
+          return jsonResponse(400, { error: 'Room name is invalid' });
+        }
+        const body = await req.bytes();
+        // req.bytes() resolves to a Node Buffer, but the compute-task schema
+        // requires an exact Uint8Array (lib0 $constructedBy compares the
+        // constructor) — re-view the same bytes without copying
+        const update = new Uint8Array(
+          body.buffer,
+          body.byteOffset,
+          body.byteLength,
+        );
+        if (update.byteLength > MAX_CREATE_BYTES) {
+          // 413 is missing from yhub's status-line map, so the reason phrase
+          // is empty ("HTTP/1.1 413 ") — legal, and callers switch on the code
+          return jsonResponse(413, { error: 'Update too large' });
+        }
+        // <= 3 bytes is yhub's "no effective content" convention (an empty
+        // update encodes to 2 bytes) — reject before it reaches a worker
+        if (update.byteLength <= 3) {
+          return jsonResponse(400, { error: 'Empty update' });
+        }
+        // covers persisted state AND uncompacted stream messages. Not atomic
+        // with addMessage below (yhub has no atomic create): two concurrent
+        // creates can both pass — acceptable, Yjs merges both updates; worst
+        // case is a doubly-attributed first revision, never corruption.
+        const { gcDoc } = await req.yhub.getDoc(
+          req.room,
+          { gc: true, nongc: false },
+          { gcOnMerge: false },
+        );
+        if (gcDoc != null && gcDoc.byteLength > 3) {
+          return jsonResponse(409, { error: 'Document already exists' });
+        }
+        // attribute the initial content to the acting user when the caller
+        // names one, else to the caller's identity ('system' for admin tokens)
+        const userid = req.headers['x-user-id'] || req.authInfo.userid;
+        let result;
+        try {
+          // diffs the posted update against the (empty) current doc and
+          // stamps the attribution contentmap
+          result = await req.yhub.computePool.patchYdoc(
+            {
+              update,
+              currentDoc: gcDoc ?? EMPTY_YDOC,
+              userid,
+              customAttributions: [],
+            },
+            { room: req.room },
+          );
+        } catch {
+          // a malformed update makes the compute worker throw (yhub logs
+          // 'worker failed' and replaces the thread). The update is the only
+          // untrusted input here, so a rejection maps to 400; getDoc /
+          // addMessage failures stay generic 500s.
+          return jsonResponse(400, { error: 'Invalid Yjs update' });
+        }
+        if (result == null) {
+          // structurally valid but no effective content (e.g. delete-set
+          // only). A "successful" create that leaves the room nonexistent
+          // would lie to the caller — a later create would not 409.
+          return jsonResponse(400, { error: 'Empty update' });
+        }
+        // on a fresh room this creates the stream, schedules compaction, and
+        // fans out to any live subscribers — nothing else to do
+        await req.yhub.stream.addMessage(req.room, {
+          type: 'ydoc:update:v1',
+          contentmap: result.contentmap,
+          update: result.update,
+        });
+        return jsonResponse(201, { message: 'Document created' });
       },
     },
   }),
