@@ -12,6 +12,7 @@ and this project adheres to
 - ✨(backend) add a service generating cached RS256 JWT tokens
 - ✨(backend) publish the JWT public key on a JWKS endpoint
 - 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
+- ✨(collaboration) add an admin reset-connections endpoint on yhub
 
 ### Changed
 
