@@ -50,7 +50,6 @@ import { useAnalytics } from '@/libs/Analytics';
 import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
 import {
   useHeadings,
-  useSaveDoc,
   useScrollToBlockAnchor,
   useShortcuts,
   useUploadFile,
@@ -109,7 +108,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { setEditor } = useEditorStore();
   const { themeTokens } = useCunninghamTheme();
   const refEditorContainer = useRef<HTMLDivElement>(null);
-  useSaveDoc(doc.id, provider.doc);
 
   const { i18n, t } = useTranslation();
   const langLocalesBN =
