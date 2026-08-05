@@ -13,6 +13,7 @@ from core.services.converter_services import (
     ValidationError,
     YdocConverter,
 )
+from core.services.jwt_services import Audiences
 from core.tests.utils.jwt_helper import generate_key_pair
 
 # Generating an RSA key is expensive, do it once for the whole module
@@ -34,10 +35,10 @@ def test_auth_header():
 
     assert scheme == "Bearer"
     payload = jwt.decode(
-        token, PUBLIC_KEY, algorithms=["RS256"], audience="y-converter"
+        token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.Y_CONVERTER
     )
     assert payload["admin"] is True
-    assert payload["aud"] == "y-converter"
+    assert payload["aud"] == Audiences.Y_CONVERTER
 
 
 def test_convert_empty_text():
