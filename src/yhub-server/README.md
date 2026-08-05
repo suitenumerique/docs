@@ -20,6 +20,15 @@ It is not a fork of yhub — it is a thin wrapper (`server.js`) that:
   pending) — authenticated with an RS256 admin JWT issued by Django and
   verified against its JWKS (`/api/v1.0/jwks`); the `reset-connections`
   purpose is granted only to that admin token, never to regular users,
+- exposes `POST /collaboration/create-ydoc/v1/{org}/{docid}` (optional
+  `X-User-Id` header naming the user the initial content is attributed to),
+  which seeds a document's initial Yjs state from a raw binary update
+  (`Y.encodeStateAsUpdate` / pycrdt `get_update()` output posted as
+  `application/octet-stream` — no lib0 encoding, unlike yhub's built-in
+  `PATCH .../ydoc/`), so the Django backend can create documents
+  server-side. Strict create: 409 when the document already has content.
+  Guarded by standard document write access (the admin JWT, or a user
+  session with update ability),
 - mirrors the environment conventions used elsewhere in this repository
   (`*_FILE` secret indirection, `COLLABORATION_SERVER_ORIGIN` allowlist, …).
 
