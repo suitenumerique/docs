@@ -87,6 +87,7 @@ and this project adheres to
   `503` instead of denying access like a permission failure, so clients retry
   instead of giving up. The built-in endpoints can also answer JSON on
   `Accept: application/json`
+- ✨(backend) add a service to call the yhub REST API
 - ✨(backend) add a service generating cached RS256 JWT tokens
 - ✨(backend) publish the JWT public key on a JWKS endpoint
 - 🔧(dev) generate the JWT signing key when bootstrapping the dev stack

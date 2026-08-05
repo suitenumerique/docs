@@ -13,7 +13,7 @@ from core.services.converter_services import (
     ValidationError,
     YdocConverter,
 )
-from core.tests.utils.jwt import generate_key_pair
+from core.tests.utils.jwt_helper import generate_key_pair
 
 # Generating an RSA key is expensive, do it once for the whole module
 PRIVATE_KEY, PUBLIC_KEY = generate_key_pair()
