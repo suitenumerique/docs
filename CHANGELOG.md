@@ -26,6 +26,7 @@ and this project adheres to
   `/external_api/{version}/jwks`
 - 🔒️(collaboration) reject admin jwts not issued for the yhub audience
 - 🔧(collaboration) adapt docker stack for development purpose
+- ⏪️(backend) reintroduce the reset connection mechanism
 
 ### Fixed
 
