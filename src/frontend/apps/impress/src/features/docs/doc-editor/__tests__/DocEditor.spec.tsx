@@ -25,7 +25,6 @@ vi.mock('../../doc-management', async () => {
   const actual = await vi.importActual<any>('../../doc-management');
   return {
     ...actual,
-    useIsCollaborativeEditable: () => ({ isEditable: true, isLoading: false }),
     useProviderStore: () => ({
       provider: {
         roomname: 'test-doc-id',
