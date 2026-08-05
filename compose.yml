@@ -241,6 +241,9 @@ services:
       REDIS: redis://yhub-valkey:6379
       POSTGRES: postgres://yhub:pass@yhub-postgres:5432/yhub
       REDIS_PREFIX: yhub
+      # seed rooms from the legacy Django/S3 document store on first access —
+      # S3 endpoint/credentials come from env.d/development/common
+      SOFT_MIGRATION: "true"
     env_file:
       - env.d/development/common
       - env.d/development/common.local
@@ -251,6 +254,10 @@ services:
       yhub-valkey:
         condition: service_healthy
       yhub-postgres:
+        condition: service_healthy
+      # soft migration reads the legacy document store at startup traffic —
+      # starting before minio would cache 401s for the first accessed docs
+      minio:
         condition: service_healthy
 
   kc_postgresql:
