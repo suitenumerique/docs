@@ -6,7 +6,8 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@y/hub": "0.3.1"
+    "@y/hub": "0.4.0",
+    "jose": "6.2.8"
   },
   "engines": {
     "node": ">=22"
