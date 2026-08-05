@@ -18,6 +18,7 @@ import { httpSecurity } from '@/middlewares';
 import {
   mockJwksEndpoint,
   signAdminToken,
+  signAdminTokenForAudience,
   signAdminTokenWithWrongKey,
   signExpiredAdminToken,
   signToken,
@@ -77,6 +78,19 @@ describe('httpSecurity', () => {
 
   it('rejects an expired admin JWT', async () => {
     const token = await signExpiredAdminToken();
+
+    const response = await request(buildApp())
+      .get('/protected')
+      .set('authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(401);
+    expect(response.body).toStrictEqual({
+      error: 'Unauthorized: Invalid API Key',
+    });
+  });
+
+  it('rejects a valid admin JWT issued for another audience', async () => {
+    const token = await signAdminTokenForAudience('some-other-service');
 
     const response = await request(buildApp())
       .get('/protected')

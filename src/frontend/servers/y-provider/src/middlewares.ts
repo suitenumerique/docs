@@ -16,14 +16,21 @@ export const corsMiddleware = cors({
 // keeps them until their "kid" no longer matches a token, per jose's own policy.
 const jwks = createRemoteJWKSet(new URL(JWKS_URL));
 
+// Requiring this audience stops a valid admin JWT issued for another service
+// from being replayed against y-provider.
+const Y_CONVERTER_AUDIENCE = 'y-converter';
 export const JWT_ALGORITHM = 'RS256';
 
 /**
- * Verify that the given token is an admin JWT signed by the Django backend.
+ * Verify that the given token is an admin JWT signed by the Django backend
+ * for the y-converter audience.
  */
 const isValidAdminToken = async (token: string): Promise<boolean> => {
   try {
-    const { payload } = await jwtVerify(token, jwks, { algorithms: [JWT_ALGORITHM] });
+    const { payload } = await jwtVerify(token, jwks, {
+      algorithms: [JWT_ALGORITHM],
+      audience: Y_CONVERTER_AUDIENCE,
+    });
     return payload.admin === true;
   } catch {
     return false;

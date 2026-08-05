@@ -27,14 +27,17 @@ def jwt_settings(settings):
 
 
 def test_auth_header():
-    """The auth header carries an admin JWT signed with the configured key."""
+    """The auth header carries an admin JWT scoped to the y-converter audience."""
     converter = YdocConverter()
 
     scheme, token = converter.auth_header.split(" ")
 
     assert scheme == "Bearer"
-    payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+    payload = jwt.decode(
+        token, PUBLIC_KEY, algorithms=["RS256"], audience="y-converter"
+    )
     assert payload["admin"] is True
+    assert payload["aud"] == "y-converter"
 
 
 def test_convert_empty_text():
