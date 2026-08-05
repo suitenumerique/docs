@@ -14,6 +14,7 @@ and this project adheres to
 - 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
 - ✨(collaboration) add an admin reset-connections endpoint on yhub
 - ✨(collaboration) add a create-ydoc endpoint on yhub
+- ✨(collaboration) soft-migrate legacy S3 documents into yhub
 
 ### Changed
 
