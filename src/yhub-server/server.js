@@ -195,6 +195,13 @@ const api = [
         if (!UUID4.test(req.docid)) {
           return jsonResponse(400, { error: 'Room name is invalid' });
         }
+        if (req.branch !== 'main') {
+          // cookie users are main-only via getAccessType, but the admin
+          // token bypasses it — reject explicitly so an admin create can't
+          // seed an orphan non-main room (and dodge the 409 check, which is
+          // branch-scoped)
+          return jsonResponse(400, { error: 'Unknown branch' });
+        }
         const body = await req.bytes();
         // req.bytes() resolves to a Node Buffer, but the compute-task schema
         // requires an exact Uint8Array (lib0 $constructedBy compares the
@@ -216,8 +223,10 @@ const api = [
         }
         // covers persisted state AND uncompacted stream messages. Not atomic
         // with addMessage below (yhub has no atomic create): two concurrent
-        // creates can both pass — acceptable, Yjs merges both updates; worst
-        // case is a doubly-attributed first revision, never corruption.
+        // creates can both pass the check and their updates merge — with
+        // independently generated updates (fresh clientIDs) the seeded
+        // content then appears twice. Accepted: Django creates each doc
+        // once, and a duplicated seed is user-fixable, unlike corruption.
         const { gcDoc } = await req.yhub.getDoc(
           req.room,
           { gc: true, nongc: false },
@@ -226,9 +235,13 @@ const api = [
         if (gcDoc != null && gcDoc.byteLength > 3) {
           return jsonResponse(409, { error: 'Document already exists' });
         }
-        // attribute the initial content to the acting user when the caller
-        // names one, else to the caller's identity ('system' for admin tokens)
-        const userid = req.headers['x-user-id'] || req.authInfo.userid;
+        // Only the backend admin token may attribute the content to another
+        // user; regular callers always author as themselves — honoring a
+        // client-supplied header would let any editor forge the attribution
+        // history (the ws path likewise stamps the server-side identity).
+        const userid =
+          (req.authInfo.admin === true && req.headers['x-user-id']) ||
+          req.authInfo.userid;
         let result;
         try {
           // diffs the posted update against the (empty) current doc and
