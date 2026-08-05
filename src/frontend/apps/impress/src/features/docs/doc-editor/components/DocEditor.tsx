@@ -8,7 +8,6 @@ import {
   Doc,
   LinkReach,
   getDocLinkReach,
-  useIsCollaborativeEditable,
   useProviderStore,
 } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth/';
@@ -85,10 +84,8 @@ interface DocEditorProps {
 
 export const DocEditor = ({ doc }: DocEditorProps) => {
   useCollaboration(doc.id);
-  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
   const isDeletedDoc = !!doc.deleted_at;
-  const readOnly =
-    !doc.abilities.partial_update || !isEditable || isLoading || isDeletedDoc;
+  const readOnly = !doc.abilities.partial_update || isDeletedDoc;
   const { trackEvent } = useAnalytics();
   const [hasTracked, setHasTracked] = useState(false);
   const { authenticated } = useAuth();
