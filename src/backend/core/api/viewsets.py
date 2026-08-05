@@ -484,7 +484,7 @@ class DocumentViewSet(
     8. **Favorite**: Get list of favorite documents for a user. Mark or unmark
         a document as favorite.
         Examples:
-        - GET /documents/favorite_list/
+        - GET /documents/favorites/
         - POST, DELETE /documents/{id}/favorite/
 
     9. **Create for Owner**: Create a document via server-to-server on behalf of a user.
@@ -836,6 +836,7 @@ class DocumentViewSet(
         detail=False,
         methods=["get"],
         permission_classes=[permissions.IsAuthenticated],
+        url_path="favorites",
     )
     def favorite_list(self, request, *args, **kwargs):
         """Get list of favorite documents for the current user."""

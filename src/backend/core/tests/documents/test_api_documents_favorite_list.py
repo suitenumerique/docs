@@ -16,7 +16,7 @@ def test_api_document_favorite_list_anonymous():
     """Anonymous users should receive a 401 error."""
     client = APIClient()
 
-    response = client.get("/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorites/")
 
     assert response.status_code == 401
 
@@ -27,7 +27,7 @@ def test_api_document_favorite_list_authenticated_no_favorite():
     client = APIClient()
     client.force_login(user)
 
-    response = client.get("/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorites/")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -53,7 +53,7 @@ def test_api_document_favorite_list_authenticated_with_favorite():
         user=user, role=models.RoleChoices.READER, document__favorited_by=[user]
     ).document
 
-    response = client.get("/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorites/")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -107,7 +107,7 @@ def test_api_document_favorite_list_with_favorite_children():
     other_root = factories.DocumentFactory(creator=user, users=[user])
     factories.DocumentFactory.create_batch(2, parent=other_root)
 
-    response = client.get("/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorites/")
 
     assert response.status_code == 200
     assert response.json()["count"] == 3
@@ -149,7 +149,7 @@ def test_api_document_favorite_list_sorted_by_updated_at():
         updated_at=now + timedelta(seconds=3)
     )
 
-    response = client.get("/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorites/")
 
     assert response.status_code == 200
     assert response.json()["count"] == 3
@@ -176,7 +176,7 @@ def test_api_document_favorite_list_with_deleted_child():
 
     child1.delete()
 
-    response = client.get("/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorites/")
 
     assert response.status_code == 200
     assert response.json()["count"] == 2
