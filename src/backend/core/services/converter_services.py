@@ -13,6 +13,11 @@ from core.services.jwt_services import JWTService
 
 logger = logging.getLogger(__name__)
 
+# Audience of the admin token y-provider expects. Scoping the token to it
+# prevents an admin JWT issued for another backend service from being
+# replayed against y-provider.
+Y_CONVERTER_AUDIENCE = "y-converter"
+
 
 class ConversionError(Exception):
     """Base exception for conversion-related errors."""
@@ -110,7 +115,8 @@ class YdocConverter:
     @property
     def auth_header(self):
         """Build microservice authentication header."""
-        return f"Bearer {JWTService().get_admin_token()}"
+        token = JWTService().get_admin_token({"aud": Y_CONVERTER_AUDIENCE})
+        return f"Bearer {token}"
 
     def _request(self, url, data, content_type, accept):
         """Make a request to the Y-Provider API."""
