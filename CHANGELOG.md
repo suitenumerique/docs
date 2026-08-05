@@ -16,6 +16,7 @@ and this project adheres to
 - ✨(collaboration) add a create-ydoc endpoint on yhub
 - ✨(collaboration) soft-migrate legacy S3 documents into yhub
 - ✨(collaboration) replay legacy s3 version history into yhub
+- ✨(backend) add a service to call the yhub REST API
 
 ### Changed
 
