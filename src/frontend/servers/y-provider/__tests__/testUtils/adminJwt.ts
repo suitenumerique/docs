@@ -27,7 +27,12 @@ export const signToken = (claims: Record<string, unknown>) =>
     .setExpirationTime('1h')
     .sign(privateKey);
 
-export const signAdminToken = () => signToken({ admin: true });
+export const signAdminToken = () =>
+  signToken({ admin: true, aud: 'y-converter' });
+
+/** An admin token correctly signed but scoped to another service's audience. */
+export const signAdminTokenForAudience = (aud: string) =>
+  signToken({ admin: true, aud });
 
 /** An admin token signed correctly but already past its expiry. */
 export const signExpiredAdminToken = () =>
