@@ -6,6 +6,8 @@ because the resource server viewsets inherit from the api viewsets.
 
 """
 
+from unittest.mock import patch
+
 from django.test import override_settings
 
 import pytest
@@ -59,8 +61,9 @@ def test_external_api_documents_link_configuration_not_allowed(
         },
     },
 )
+@patch("core.api.viewsets.reset_service_connections_in_cascade.delay")
 def test_external_api_documents_link_configuration_can_be_allowed(
-    user_token, resource_server_backend, user_specific_sub
+    mock_reset, user_token, resource_server_backend, user_specific_sub
 ):
     """
     Connected users SHOULD be allowed to update the link configuration of a document
@@ -98,3 +101,6 @@ def test_external_api_documents_link_configuration_can_be_allowed(
     document.refresh_from_db()
     assert document.link_reach == models.LinkReachChoices.PUBLIC
     assert document.link_role == models.LinkRoleChoices.EDITOR
+
+    # the collaboration server should be notified through the Celery task
+    mock_reset.assert_called_once_with(str(document.id))
