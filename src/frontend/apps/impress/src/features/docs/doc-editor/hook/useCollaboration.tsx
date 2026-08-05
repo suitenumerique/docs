@@ -3,10 +3,6 @@ import { useEffect } from 'react';
 
 import { useCollaborationUrl, useConfig } from '@/core/config';
 import { KEY_DOC } from '@/docs/doc-management/api/useDoc';
-import {
-  KEY_DOC_CONTENT,
-  useDocContent,
-} from '@/docs/doc-management/api/useDocContent';
 import { useProviderStore } from '@/docs/doc-management/stores/useProviderStore';
 import { useIsOffline } from '@/features/service-worker/hooks/useOffline';
 import { useBroadcastStore } from '@/stores/useBroadcastStore';
@@ -33,13 +29,6 @@ export const useCollaboration = (room: string) => {
     resumeFromInactivity,
   } = useProviderStore();
   const isOffline = useIsOffline((state) => state.isOffline);
-  const { data: docContent } = useDocContent(
-    { id: room },
-    {
-      staleTime: 30000, // 30 seconds - We keep the data fresh as it is a highly collaborative page
-      queryKey: [KEY_DOC_CONTENT, { id: room }],
-    },
-  );
 
   /**
    * When offline, the WebSocket never connects so the provider would stay
@@ -89,20 +78,13 @@ export const useCollaboration = (room: string) => {
    * Set the provider when the collaboration URL and the document content are available.
    */
   useEffect(() => {
-    if (!room || !collaborationUrl || provider || docContent === undefined) {
+    if (!room || !collaborationUrl || provider) {
       return;
     }
 
-    const newProvider = createProvider(collaborationUrl, room, docContent);
+    const newProvider = createProvider(collaborationUrl, room);
     setBroadcastProvider(newProvider);
-  }, [
-    provider,
-    collaborationUrl,
-    createProvider,
-    docContent,
-    room,
-    setBroadcastProvider,
-  ]);
+  }, [provider, collaborationUrl, createProvider, room, setBroadcastProvider]);
 
   /**
    * Destroy the provider when the component is unmounted
