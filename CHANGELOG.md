@@ -30,6 +30,13 @@ and this project adheres to
   wire encoding. Strict create (409 when the document already has content),
   initial content attributed to the optional `X-User-Id` header; guarded by
   standard document write access (admin JWT or user session)
+- ✨(collaboration) soft-migrate legacy S3 documents into yhub on first access
+  (`SOFT_MIGRATION=true`): when yhub does not know a document yet, its legacy
+  snapshot (`{id}/file`, base64 Yjs update) is fetched from the Django S3
+  media bucket and seeded server-side (attributed to `system`) before the
+  connection is admitted. A missing S3 object means a brand-new document and
+  yields an empty room; any real S3/compute failure fails closed (opaque 401,
+  the client retries with backoff). Enabled in the dev stack via compose.yml
 
 ### Changed
 
