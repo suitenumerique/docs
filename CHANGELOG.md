@@ -23,6 +23,13 @@ and this project adheres to
   `/collaboration/ws/v1/docs`. All `/collaboration/` routes are meant to be
   publicly exposed except `reset-connections`, which stays backend-internal
   (admin JWT only)
+- ✨(collaboration) add a create-ydoc endpoint on yhub:
+  `POST /collaboration/create-ydoc/v1/docs/{id}` seeds a document's initial
+  Yjs state from a raw binary update posted as `application/octet-stream`,
+  so the Django backend can create documents without speaking yhub's lib0
+  wire encoding. Strict create (409 when the document already has content),
+  initial content attributed to the optional `X-User-Id` header; guarded by
+  standard document write access (admin JWT or user session)
 
 ### Changed
 
@@ -105,6 +112,110 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) Add "Copy link to block" feature #2547
+- ✨(frontend) add word count to doc header toolbox #2549
+- ✨(frontend) add find and replace feature to the editor #2570
+- ✨(backend) add a service generating cached RS256 JWT tokens
+- ✨(collaboration) add an admin reset-connections endpoint on yhub:
+  `POST /collaboration/reset-connections/v1/docs/{id}` re-checks the
+  authorization of the document's connected clients and disconnects (close
+  code 4401) only those whose access changed. Authenticated with the admin
+  JWT verified against the backend JWKS; not yet triggered by the backend on
+  permission changes (follow-up)
+- ⬆️(collaboration) upgrade yhub to 0.4.0 and serve all its routes under the
+  `/collaboration/` prefix (`server.apiPrefix`): the websocket moves to
+  `/collaboration/ws/v1/docs`. All `/collaboration/` routes are meant to be
+  publicly exposed except `reset-connections`, which stays backend-internal
+  (admin JWT only)
+
+### Changed
+
+- ♿️(frontend) use anchor links for interlinking sub-documents #2391
+- ✨(frontend) reset side panel state between documents #2583
+- ♿️(frontend) announce search loading state for screen readers #2526
+- ♻️(frontend) change favorite to star #2539
+- 🚚(frontend) add doc move to doc options #2555
+
+### Fixed
+
+- 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
+- 📄(frontend) allowed partially export when MIT #2551
+
+## [v5.5.0] - 2026-08-24
+
+### Added
+
+- ✨(frontend) Add "Copy link to block" feature #2547
+- ✨(frontend) add word count to doc header toolbox #2549
+- ✨(frontend) add find and replace feature to the editor #2570
+
+### Changed
+
+- ♿️(frontend) use anchor links for interlinking sub-documents #2391
+- ✨(frontend) reset side panel state between documents #2583
+- ♿️(frontend) announce search loading state for screen readers #2526
+- ♻️(frontend) change favorite to star #2539
+- 🚚(frontend) add doc move to doc options #2555
+
+### Fixed
+
+- 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
+- 📄(frontend) allowed partially export when MIT #2551
+
+## [v5.5.0] - 2026-08-24
+
+### Added
+
+- ✨(frontend) Add "Copy link to block" feature #2547
+- ✨(frontend) add word count to doc header toolbox #2549
+- ✨(frontend) add find and replace feature to the editor #2570
+- ✨(backend) add a service generating cached RS256 JWT tokens
+
+### Changed
+
+- ♿️(frontend) use anchor links for interlinking sub-documents #2391
+- ✨(frontend) reset side panel state between documents #2583
+- ♿️(frontend) announce search loading state for screen readers #2526
+- ♻️(frontend) change favorite to star #2539
+- 🚚(frontend) add doc move to doc options #2555
+
+### Fixed
+
+- 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
+- 📄(frontend) allowed partially export when MIT #2551
+
+## [v5.5.0] - 2026-08-24
+
+### Added
+
+- ✨(frontend) Add "Copy link to block" feature #2547
+- ✨(frontend) add word count to doc header toolbox #2549
+- ✨(frontend) add find and replace feature to the editor #2570
+
+### Changed
+
+- ♿️(frontend) use anchor links for interlinking sub-documents #2391
+- ✨(frontend) reset side panel state between documents #2583
+- ♿️(frontend) announce search loading state for screen readers #2526
+- ♻️(frontend) change favorite to star #2539
+- 🚚(frontend) add doc move to doc options #2555
+
+### Fixed
+
+- 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
+- 📄(frontend) allowed partially export when MIT #2551
+
+## [v5.5.0] - 2026-08-24
+
+### Added
+
+- ✨(collaboration) add a create-ydoc endpoint on yhub:
+  `POST /collaboration/create-ydoc/v1/docs/{id}` seeds a document's initial
+  Yjs state from a raw binary update posted as `application/octet-stream`,
+  so the Django backend can create documents without speaking yhub's lib0
+  wire encoding. Strict create (409 when the document already has content),
+  initial content attributed to the optional `X-User-Id` header; guarded by
+  standard document write access (admin JWT or user session)
 - ✨(collaboration) add an admin reset-connections endpoint on yhub:
   `POST /collaboration/reset-connections/v1/docs/{id}` re-checks the
   authorization of the document's connected clients and disconnects (close
