@@ -134,7 +134,6 @@ yProvider:
     COLLABORATION_BACKEND_BASE_URL: https://docs.127.0.0.1.nip.io
     COLLABORATION_LOGGING: true
     COLLABORATION_SERVER_ORIGIN: https://docs.127.0.0.1.nip.io
-    COLLABORATION_SERVER_SECRET: my-secret
 
 ingress:
   enabled: true
