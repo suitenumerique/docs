@@ -23,7 +23,7 @@ from django.conf import settings
 
 import requests
 
-from core.services.jwt_services import JWTService
+from core.services.jwt_services import Audiences, JWTService
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,10 @@ class YHubService:
         document without going through the abilities of a user. The subject it
         may carry is who the call is for, it never restricts what it can do.
         """
-        return f"Bearer {JWTService().get_admin_token(self.claims)}"
+        token = JWTService().get_admin_token(
+            audience=Audiences.YHUB, claims=self.claims
+        )
+        return f"Bearer {token}"
 
     def build_url(self, endpoint, document_id):
         """Build the url of a document scoped endpoint of the yhub API."""

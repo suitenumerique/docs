@@ -5,6 +5,7 @@ import hashlib
 import json
 import logging
 from datetime import timedelta
+from enum import StrEnum
 
 from django.conf import settings
 from django.core.cache import cache
@@ -17,6 +18,13 @@ logger = logging.getLogger(__name__)
 
 ALGORITHM = "RS256"
 CACHE_KEY_PREFIX = "jwt_token"
+
+
+class Audiences(StrEnum):
+    """Enum of the audiences we can use."""
+
+    Y_CONVERTER = "y-converter"
+    YHUB = "yhub"
 
 
 class JWTError(Exception):
@@ -172,12 +180,11 @@ class JWTService:
 
         return token
 
-    def get_admin_token(self, claims=None):
+    def get_admin_token(self, audience: Audiences, claims=None):
         """
         Return a token with the `admin: true` claim.
 
         Extra claims can be injected alongside it. They cannot turn the "admin"
         claim off: a token issued by this method always grants admin.
         """
-
-        return self.get_token({**(claims or {}), "admin": True})
+        return self.get_token({**(claims or {}), "admin": True, "aud": audience})
