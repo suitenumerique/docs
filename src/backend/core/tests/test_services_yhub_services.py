@@ -1,6 +1,7 @@
 """Test yhub services."""
 
 from unittest.mock import patch
+from uuid import uuid4
 
 from django.contrib.auth.models import AnonymousUser
 
@@ -8,6 +9,7 @@ import jwt
 import pytest
 import requests
 
+from core import models
 from core.factories import UserFactory
 from core.services.jwt_services import Audiences
 from core.services.yhub_services import (
@@ -20,6 +22,9 @@ from core.tests.utils.jwt_helper import generate_key_pair
 
 # Generating an RSA key is expensive, do it once for the whole module
 PRIVATE_KEY, PUBLIC_KEY = generate_key_pair()
+
+# the service only ever reads the id of the document, no need to save one
+DOCUMENT = models.Document(id=uuid4())
 
 
 @pytest.fixture(autouse=True)
@@ -50,12 +55,9 @@ def test_base_url_strips_trailing_slash(settings):
 
 def test_build_url():
     """A document scoped url should be mounted under the api prefix of yhub."""
-    url = YHubService().build_url("ydoc", "8c1c8c4d-4b02-4b0f-a0e9-e00cbd1a9a2f")
+    url = YHubService().build_url("ydoc", DOCUMENT)
 
-    assert url == (
-        "http://yhub:3002/collaboration/ydoc/v1/docs/"
-        "8c1c8c4d-4b02-4b0f-a0e9-e00cbd1a9a2f"
-    )
+    assert url == f"http://yhub:3002/collaboration/ydoc/v1/docs/{DOCUMENT.id!s}"
 
 
 def test_auth_header():
@@ -105,15 +107,19 @@ def test_request(mock_request):
     service = YHubService()
 
     response = service.request(
-        "get", service.build_url("ydoc", "doc-id"), params={"gc": "false"}
+        "post", service.build_url("ydoc", DOCUMENT), data=b"body"
     )
 
     assert response is mock_request.return_value
     args, kwargs = mock_request.call_args
-    assert args == ("get", "http://yhub:3002/collaboration/ydoc/v1/docs/doc-id")
-    assert kwargs["params"] == {"gc": "false"}
+    assert args == (
+        "post",
+        f"http://yhub:3002/collaboration/ydoc/v1/docs/{DOCUMENT.id!s}",
+    )
+    assert kwargs["data"] == b"body"
     assert kwargs["timeout"] == 30
     assert kwargs["headers"]["Authorization"].startswith("Bearer ")
+    assert kwargs["headers"]["Content-Type"] == "application/octet-stream"
 
 
 @patch("requests.request")
@@ -142,3 +148,77 @@ def test_request_error_status(mock_request):
         )
 
     assert excinfo.value.status_code == 403
+
+
+@patch("requests.request")
+def test_create_ydoc(mock_request):
+    """Should post the raw update, unencoded, to the create-ydoc endpoint."""
+    mock_request.return_value.ok = True
+    update = b"\x01\x02\x03\x04"
+
+    response = YHubService().create_ydoc(DOCUMENT, update)
+
+    assert response is mock_request.return_value
+    args, kwargs = mock_request.call_args
+    assert args == (
+        "post",
+        f"http://yhub:3002/collaboration/create-ydoc/v1/docs/{DOCUMENT.id!s}",
+    )
+    assert kwargs["data"] == update
+    # nobody to attribute the content to
+    assert "X-User-Id" not in kwargs["headers"]
+
+
+@patch("requests.request")
+def test_create_ydoc_attributes_the_content_to_the_user(mock_request):
+    """The content should be attributed to the user the service is bound to."""
+    mock_request.return_value.ok = True
+    user = UserFactory.build()
+
+    YHubService(user=user).create_ydoc(DOCUMENT, b"\x01\x02\x03\x04")
+
+    _args, kwargs = mock_request.call_args
+    assert kwargs["headers"]["X-User-Id"] == str(user.pk)
+
+
+@patch("requests.request")
+def test_create_ydoc_already_exists(mock_request):
+    """The strict create of yhub should surface as an APIError carrying the 409."""
+    mock_request.return_value.ok = False
+    mock_request.return_value.status_code = 409
+    mock_request.return_value.text = "Document already exists"
+
+    with pytest.raises(APIError) as excinfo:
+        YHubService().create_ydoc(DOCUMENT, b"\x01\x02\x03\x04")
+
+    assert excinfo.value.status_code == 409
+
+
+@patch("requests.request")
+def test_reset_connections(mock_request):
+    """Should ask yhub to re-check every connection of the document."""
+    mock_request.return_value.ok = True
+
+    response = YHubService().reset_connections(DOCUMENT)
+
+    assert response is mock_request.return_value
+    args, kwargs = mock_request.call_args
+    assert args == (
+        "post",
+        f"http://yhub:3002/collaboration/reset-connections/v1/docs/{DOCUMENT.id!s}",
+    )
+    # no user named: every connection of the document is re-checked
+    assert "X-User-Id" not in kwargs["headers"]
+
+
+@patch("requests.request")
+def test_reset_connections_of_a_single_user(mock_request):
+    """Naming a user should restrict the re-check to their own connections."""
+    mock_request.return_value.ok = True
+    user = UserFactory.build()
+
+    # the user whose access changed, not the one making the call
+    YHubService(user=UserFactory.build()).reset_connections(DOCUMENT, user.pk)
+
+    _args, kwargs = mock_request.call_args
+    assert kwargs["headers"]["X-User-Id"] == str(user.pk)
