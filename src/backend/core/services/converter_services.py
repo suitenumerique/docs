@@ -2,7 +2,6 @@
 
 import logging
 import typing
-from base64 import b64encode
 
 from django.conf import settings
 
@@ -137,7 +136,13 @@ class YdocConverter:
         return response
 
     def convert(self, data, content_type=mime_types.MARKDOWN, accept=mime_types.YJS):
-        """Convert a Markdown text into our internal format using an external microservice."""
+        """
+        Convert a Markdown text into our internal format using an external microservice.
+
+        A Yjs document is returned as the raw update the collaboration server
+        expects. It is base64 encoded only by the callers storing it in the
+        text content of a document.
+        """
 
         if not data:
             raise ValidationError("Input data cannot be empty")
@@ -146,7 +151,7 @@ class YdocConverter:
         try:
             response = self._request(url, data, content_type, accept)
             if accept == mime_types.YJS:
-                return b64encode(response.content).decode("utf-8")
+                return response.content
             if accept in {mime_types.MARKDOWN, "text/html"}:
                 return response.text
             if accept == mime_types.JSON:
