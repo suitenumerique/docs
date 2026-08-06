@@ -222,3 +222,29 @@ def test_reset_connections_of_a_single_user(mock_request):
 
     _args, kwargs = mock_request.call_args
     assert kwargs["headers"]["X-User-Id"] == str(user.pk)
+
+
+@patch("requests.request")
+def test_get_ydoc(mock_request):
+    """Should return the raw update the collaboration server holds."""
+    mock_request.return_value.ok = True
+    mock_request.return_value.content = b"\x01\x02raw yjs update"
+
+    update = YHubService().get_ydoc(DOCUMENT)
+
+    assert update == b"\x01\x02raw yjs update"
+    args, _kwargs = mock_request.call_args
+    assert args == (
+        "get",
+        f"http://yhub:3002/collaboration/get-ydoc/v1/docs/{DOCUMENT.id!s}",
+    )
+
+
+@patch("requests.request")
+def test_get_ydoc_without_content(mock_request):
+    """A document the collaboration server holds no content for should return None."""
+    mock_request.return_value.ok = True
+    # yhub answers 204 No Content, hence an empty body
+    mock_request.return_value.content = b""
+
+    assert YHubService().get_ydoc(DOCUMENT) is None
