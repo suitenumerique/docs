@@ -11,8 +11,28 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from core import factories
+from core.services.yhub_services import (
+    ServiceUnavailableError as YHubServiceUnavailableError,
+)
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture(autouse=True, name="mock_yhub")
+def mock_yhub_fixture():
+    """
+    The content of a document is held by the collaboration server.
+
+    It stands for a server holding the very content the factories gave the
+    documents, which is what an editor connected to it would have saved.
+    """
+
+    def get_ydoc(document):
+        return base64.b64decode(document.content) if document.content else None
+
+    with patch("core.api.viewsets.YHubService") as mock_service:
+        mock_service.return_value.get_ydoc.side_effect = get_ydoc
+        yield mock_service
 
 
 @pytest.mark.parametrize(
@@ -182,3 +202,46 @@ def test_api_documents_formatted_content_empty_document(mock_request):
     assert data["title"] == document.title
     assert data["content"] is None
     mock_request.assert_not_called()
+
+
+@patch("core.services.converter_services.YdocConverter.convert")
+def test_api_documents_formatted_content_from_collaboration_server(
+    mock_content, mock_yhub
+):
+    """The content converted is the one held by the collaboration server."""
+    document = factories.DocumentFactory(link_reach="public")
+    mock_content.return_value = {"some": "data"}
+    # what the collaboration server holds, edited since Django last saw it
+    mock_yhub.return_value.get_ydoc.side_effect = None
+    mock_yhub.return_value.get_ydoc.return_value = b"\x01\x02edited update"
+
+    response = APIClient().get(
+        f"/api/v1.0/documents/{document.id!s}/formatted-content/"
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    mock_yhub.return_value.get_ydoc.assert_called_once_with(document)
+    mock_content.assert_called_once_with(
+        b"\x01\x02edited update",
+        "application/vnd.yjs.doc",
+        "application/json",
+    )
+
+
+@patch("core.services.converter_services.YdocConverter.convert")
+def test_api_documents_formatted_content_collaboration_server_error(
+    mock_content, mock_yhub
+):
+    """A content the collaboration server cannot serve should answer a 500."""
+    document = factories.DocumentFactory(link_reach="public")
+    mock_yhub.return_value.get_ydoc.side_effect = YHubServiceUnavailableError(
+        "Failed to connect to the yhub service"
+    )
+
+    response = APIClient().get(
+        f"/api/v1.0/documents/{document.id!s}/formatted-content/"
+    )
+
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+    assert response.json() == {"error": "Failed to get document content"}
+    mock_content.assert_not_called()
