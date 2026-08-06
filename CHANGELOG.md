@@ -16,6 +16,7 @@ and this project adheres to
 - ✨(collaboration) soft-migrate legacy S3 documents into yhub
 - ✨(collaboration) replay legacy s3 version history into yhub
 - ✨(backend) add a service to call the yhub REST API
+- ✨(backend) call YHubService to seed initial document content
 - 🔧(backend) fine tune redis cache options
 
 ### Changed

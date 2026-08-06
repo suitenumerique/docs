@@ -276,7 +276,7 @@ def test_external_api_documents_create_with_markdown_file_success(
     settings.CONVERSION_UPLOAD_ENABLED = True
 
     # Mock the conversion
-    converted_yjs = "base64encodedyjscontent"
+    converted_yjs = b"\x01\x02raw yjs update"
     mock_convert.return_value = converted_yjs
 
     # Create a fake Markdown file
@@ -284,7 +284,10 @@ def test_external_api_documents_create_with_markdown_file_success(
     file = BytesIO(file_content)
     file.name = "readme.md"
 
-    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+    with (
+        patch("core.api.viewsets.posthog_capture") as mock_capture,
+        patch("core.api.viewsets.YHubService") as mock_yhub,
+    ):
         response = client.post(
             "/external_api/v1.0/documents/",
             {
@@ -299,8 +302,12 @@ def test_external_api_documents_create_with_markdown_file_success(
     document = models.Document.objects.get(id=data["id"])
 
     assert document.title == "readme.md"
-    assert document.content == converted_yjs
+    # the content is saved by the collaboration server, not by Django
+    assert document.content is None
     assert document.accesses.filter(role="owner", user=user_specific_sub).exists()
+
+    mock_yhub.assert_called_once_with(user=user_specific_sub)
+    mock_yhub.return_value.create_ydoc.assert_called_once_with(document, converted_yjs)
 
     # Verify the converter was called correctly
     mock_convert.assert_called_once_with(

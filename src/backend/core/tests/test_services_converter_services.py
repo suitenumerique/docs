@@ -1,6 +1,5 @@
 """Test y-provider services."""
 
-from base64 import b64decode
 from unittest.mock import MagicMock, patch
 
 import jwt
@@ -97,7 +96,8 @@ def test_convert_full_integration(mock_post, settings):
 
     result = converter.convert("test markdown")
 
-    assert b64decode(result) == expected_content
+    # the raw update is returned
+    assert result == expected_content
 
     mock_post.assert_called_once_with(
         "http://test.com/conversion-endpoint/",
