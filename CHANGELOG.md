@@ -19,6 +19,7 @@ and this project adheres to
 - ✨(backend) add a service to call the yhub REST API
 - ✨(backend) call YHubService to seed initial document content
 - ✨(collaboration) add a get-ydoc endpoint on yhub
+- ✨(backend) duplicate a document through the collaboration server
 
 ### Changed
 
