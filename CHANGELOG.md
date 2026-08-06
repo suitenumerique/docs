@@ -20,6 +20,7 @@ and this project adheres to
 - ✨(backend) call YHubService to seed initial document content
 - ✨(collaboration) add a get-ydoc endpoint on yhub
 - ✨(backend) duplicate a document through the collaboration server
+- ✨(backend) serve `documents/{id}/formatted-content/` from yhub
 
 ### Changed
 

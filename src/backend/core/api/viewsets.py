@@ -2,7 +2,6 @@
 
 # pylint: disable=too-many-lines
 
-import base64
 import ipaddress
 import json
 import logging
@@ -2437,15 +2436,24 @@ class DocumentViewSet(
                 "Invalid format. Must be one of: json, markdown, html"
             )
 
-        # Get the base64 content from the document
+        # Get the content from the collaboration server, it is the source of
+        # truth for it
+        try:
+            update = YHubService(user=request.user).get_ydoc(document)
+        except YHubError as e:
+            logger.error("Error getting content for document %s: %s", pk, e)
+            return drf_response.Response(
+                {"error": "Failed to get document content"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
         content = None
-        base64_content = document.content
-        if base64_content is not None:
+        if update is not None:
             # Convert using the y-provider service
             try:
                 yprovider = Converter()
                 result = yprovider.convert(
-                    base64.b64decode(base64_content),
+                    update,
                     mime_types.YJS,
                     {
                         "markdown": mime_types.MARKDOWN,
