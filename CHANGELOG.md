@@ -22,6 +22,7 @@ and this project adheres to
 - 💥(y-provider) y-provider becomes converter-only
 - 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
   `/external_api/{version}/jwks`
+- 🔒️(collaboration) reject admin jwts not issued for the yhub audience
 
 ### Fixed
 
