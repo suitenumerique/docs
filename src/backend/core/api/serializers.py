@@ -7,6 +7,7 @@ from base64 import b64decode
 from os.path import splitext
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Q
 from django.utils.functional import lazy
 from django.utils.text import slugify
@@ -23,6 +24,7 @@ from core.services.converter_services import (
     ConversionError,
     Converter,
 )
+from core.services.yhub_services import YHubError, YHubService
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.treebeard import create_tree_node_with_retry
 
@@ -482,12 +484,37 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 {"content": ["Could not convert content"]}
             ) from err
 
-        document = create_tree_node_with_retry(
-            lambda: models.Document.add_root(
-                title=validated_data["title"],
-                creator=user,
+        with transaction.atomic():
+            document = create_tree_node_with_retry(
+                lambda: models.Document.add_root(
+                    title=validated_data["title"],
+                    creator=user,
+                )
             )
-        )
+
+            if user:
+                # Associate the document with the pre-existing user
+                models.DocumentAccess.objects.create(
+                    document=document,
+                    role=models.RoleChoices.OWNER,
+                    user=user,
+                )
+            else:
+                # The user doesn't exist in our database: we need to invite him/her
+                models.Invitation.objects.create(
+                    document=document,
+                    email=email,
+                    role=models.RoleChoices.OWNER,
+                )
+
+            # the accesses exist by now, so the owner has access to the very
+            # first version of the document the collaboration server saves
+            try:
+                YHubService(user=user).create_ydoc(document, document_content)
+            except YHubError as err:
+                raise serializers.ValidationError(
+                    {"content": ["Could not save the document content"]}
+                ) from err
 
         posthog_capture(PosthogEventName.DOC_CREATED, user, {}, document=document)
         posthog_capture(
@@ -499,24 +526,6 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
             },
             document=document,
         )
-
-        if user:
-            # Associate the document with the pre-existing user
-            models.DocumentAccess.objects.create(
-                document=document,
-                role=models.RoleChoices.OWNER,
-                user=user,
-            )
-        else:
-            # The user doesn't exist in our database: we need to invite him/her
-            models.Invitation.objects.create(
-                document=document,
-                email=email,
-                role=models.RoleChoices.OWNER,
-            )
-
-        document.content = document_content
-        document.save()
 
         if validated_data.get("send_notification_email", True):
             self._send_email_notification(document, validated_data, email, language)
