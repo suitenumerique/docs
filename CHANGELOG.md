@@ -17,6 +17,7 @@ and this project adheres to
 - ✨(collaboration) replay legacy s3 version history into yhub
 - ✨(backend) add a service to call the yhub REST API
 - ✨(backend) call YHubService to seed initial document content
+- ✨(collaboration) add a get-ydoc endpoint on yhub
 - 🔧(backend) fine tune redis cache options
 
 ### Changed
