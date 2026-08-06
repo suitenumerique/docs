@@ -9,14 +9,18 @@ from bs4 import BeautifulSoup
 from core import enums
 
 
+def yjs_to_xml(update):
+    """Extract xml from a raw yjs update."""
+
+    doc = pycrdt.Doc()
+    doc.apply_update(update)
+    return str(doc.get("document-store", type=pycrdt.XmlFragment))
+
+
 def base64_yjs_to_xml(base64_string):
     """Extract xml from base64 yjs document."""
 
-    decoded_bytes = base64.b64decode(base64_string)
-
-    doc = pycrdt.Doc()
-    doc.apply_update(decoded_bytes)
-    return str(doc.get("document-store", type=pycrdt.XmlFragment))
+    return yjs_to_xml(base64.b64decode(base64_string))
 
 
 def base64_yjs_to_text(base64_string):
@@ -34,3 +38,11 @@ def extract_attachments(content):
 
     xml_content = base64_yjs_to_xml(content)
     return re.findall(enums.MEDIA_STORAGE_URL_EXTRACT, xml_content)
+
+
+def extract_attachments_from_update(update):
+    """Helper method to extract media paths from a raw yjs update."""
+    if not update:
+        return []
+
+    return re.findall(enums.MEDIA_STORAGE_URL_EXTRACT, yjs_to_xml(update))

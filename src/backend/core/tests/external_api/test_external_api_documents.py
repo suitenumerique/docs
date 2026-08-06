@@ -429,9 +429,12 @@ def test_external_api_documents_duplicate_allowed(
         role=models.RoleChoices.OWNER,
     )
 
-    response = client.post(
-        f"/external_api/v1.0/documents/{document.id!s}/duplicate/",
-    )
+    with patch("core.api.viewsets.YHubService") as mock_yhub:
+        # the collaboration server holds no content for this document
+        mock_yhub.return_value.get_ydoc.return_value = None
+        response = client.post(
+            f"/external_api/v1.0/documents/{document.id!s}/duplicate/",
+        )
 
     assert response.status_code == 201
 

@@ -81,7 +81,7 @@ from core.utils.s3 import get_s3_client
 from core.utils.s3_response_stream import content_stream
 from core.utils.treebeard import create_tree_node_with_retry
 from core.utils.users import users_sharing_documents_with
-from core.utils.yjs import extract_attachments
+from core.utils.yjs import extract_attachments, extract_attachments_from_update
 
 from ..enums import FeatureFlag, SearchType
 from . import permissions, serializers, utils
@@ -757,6 +757,45 @@ class DocumentViewSet(
                 {"file": ["Could not save the imported file content"]}
             ) from err
 
+    def _get_collaboration_document(self, document):
+        """
+        Return the content of a document, as held by the collaboration server.
+
+        It is the source of truth for the content, the one Django may still
+        store is ignored. A document it holds nothing for has no content to
+        copy, it answers None.
+        """
+        try:
+            return YHubService(user=self.request.user).get_ydoc(document)
+        except YHubError as err:
+            logger.error(
+                "could not fetch the content of document %s with error: %s",
+                document.id,
+                err,
+            )
+            raise drf.exceptions.APIException(
+                "Failed to fetch the document content"
+            ) from err
+
+    def _copy_collaboration_document(self, document, update):
+        """
+        Seed a duplicated document with the content of the one it copies.
+
+        The duplicate is worthless without it, so a failure is reported to the
+        caller rather than leaving an empty copy behind.
+        """
+        try:
+            YHubService(user=self.request.user).create_ydoc(document, update)
+        except YHubError as err:
+            logger.error(
+                "could not copy the content into document %s with error: %s",
+                document.id,
+                err,
+            )
+            raise drf.exceptions.APIException(
+                "Failed to duplicate the document content"
+            ) from err
+
     def perform_create(self, serializer):
         """Set the current user as creator and owner of the newly created object."""
 
@@ -1286,11 +1325,12 @@ class DocumentViewSet(
         serializer.is_valid(raise_exception=True)
         user = request.user
 
-        duplicated_document = self._duplicate_document(
-            document_to_duplicate=document_to_duplicate,
-            serializer=serializer,
-            user=user,
-        )
+        with transaction.atomic():
+            duplicated_document = self._duplicate_document(
+                document_to_duplicate=document_to_duplicate,
+                serializer=serializer,
+                user=user,
+            )
 
         posthog_capture(
             PosthogEventName.DOC_DUPLICATED,
@@ -1332,7 +1372,9 @@ class DocumentViewSet(
         user_role = document_to_duplicate.get_role(user)
         is_owner_or_admin = user_role in models.PRIVILEGED_ROLES
 
-        base64_yjs_content = document_to_duplicate.content or ""
+        # The collaboration server holds the content, the duplicate is seeded
+        # with it once it exists
+        ydoc_update = self._get_collaboration_document(document_to_duplicate)
 
         # Duplicate the document instance
         link_kwargs = (
@@ -1343,7 +1385,7 @@ class DocumentViewSet(
             if with_accesses
             else {}
         )
-        extracted_attachments = set(extract_attachments(document_to_duplicate.content))
+        extracted_attachments = set(extract_attachments_from_update(ydoc_update))
         attachments = list(
             extracted_attachments & set(document_to_duplicate.attachments)
         )
@@ -1352,7 +1394,6 @@ class DocumentViewSet(
         if new_parent is not None:
             duplicated_document = new_parent.add_child(
                 title=title,
-                content=base64_yjs_content,
                 attachments=attachments,
                 duplicated_from=document_to_duplicate,
                 creator=user,
@@ -1384,7 +1425,6 @@ class DocumentViewSet(
             duplicated_document = models.Document.add_root(
                 creator=user,
                 title=title,
-                content=base64_yjs_content,
                 attachments=attachments,
                 duplicated_from=document_to_duplicate,
                 **link_kwargs,
@@ -1398,7 +1438,6 @@ class DocumentViewSet(
             duplicated_document = document_to_duplicate.add_sibling(
                 "last-sibling",
                 title=title,
-                content=base64_yjs_content,
                 attachments=attachments,
                 duplicated_from=document_to_duplicate,
                 creator=user,
@@ -1434,6 +1473,11 @@ class DocumentViewSet(
 
                 # Bulk create all the duplicated accesses
                 models.DocumentAccess.objects.bulk_create(accesses_to_create)
+
+        # the accesses exist by now, so the content is only served to the users
+        # the duplicate is meant for
+        if ydoc_update:
+            self._copy_collaboration_document(duplicated_document, ydoc_update)
 
         if with_descendants:
             for child in document_to_duplicate.get_children().filter(
