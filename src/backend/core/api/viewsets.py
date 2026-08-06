@@ -3,14 +3,12 @@
 # pylint: disable=too-many-lines
 
 import base64
-import datetime as dt
 import ipaddress
 import json
 import logging
 import socket
 import uuid
 from collections import defaultdict
-from io import BytesIO
 from urllib.parse import unquote, urlencode, urlparse
 
 from django.conf import settings
@@ -20,7 +18,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import URLValidator
-from django.db import DatabaseError, connection, transaction
+from django.db import DatabaseError, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Greatest, Left, Length
@@ -36,7 +34,6 @@ import requests
 import rest_framework as drf
 import waffle
 from botocore.exceptions import ClientError
-from botocore.response import StreamingBody
 from csp.constants import NONE
 from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
@@ -76,10 +73,9 @@ from core.tasks.access import reset_service_connections_in_cascade
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.paths import filter_descendants
-from core.utils.s3_response_stream import content_stream
 from core.utils.treebeard import create_tree_node_with_retry
 from core.utils.users import users_sharing_documents_with
-from core.utils.yjs import extract_attachments, extract_attachments_from_update
+from core.utils.yjs import extract_attachments_from_update
 
 from ..enums import FeatureFlag, SearchType
 from . import permissions, serializers, utils
@@ -2052,156 +2048,6 @@ class DocumentViewSet(
         request = utils.generate_s3_authorization_headers(key)
 
         return drf.response.Response("authorized", headers=request.headers, status=200)
-
-    @drf.decorators.action(detail=True, methods=["patch"])
-    def content(self, request, *args, **kwargs):
-        """Update the raw Yjs content of a document stored in S3."""
-        document = self.get_object()
-
-        serializer = serializers.DocumentContentSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        content = serializer.validated_data["content"]
-        try:
-            extracted_attachments = set(extract_attachments(content))
-        except ValueError:
-            return drf_response.Response(
-                "invalid yjs document", status=status.HTTP_400_BAD_REQUEST
-            )
-
-        existing_attachments = set(document.attachments or [])
-        new_attachments = extracted_attachments - existing_attachments
-
-        # Ensure we update attachments the request user is allowed to read
-        if new_attachments:
-            attachments_documents = (
-                models.Document.objects.filter(
-                    attachments__overlap=list(new_attachments)
-                )
-                .only("path", "attachments")
-                .order_by("path")
-            )
-
-            user = self.request.user
-            readable_per_se_paths = (
-                models.Document.objects.readable_per_se(user)
-                .order_by("path")
-                .values_list("path", flat=True)
-            )
-            readable_attachments_paths = filter_descendants(
-                [doc.path for doc in attachments_documents],
-                readable_per_se_paths,
-                skip_sorting=True,
-            )
-
-            readable_attachments = set()
-            for attachments_document in attachments_documents:
-                if attachments_document.path not in readable_attachments_paths:
-                    continue
-                readable_attachments.update(
-                    set(attachments_document.attachments) & new_attachments
-                )
-
-            # Update attachments with readable keys
-            document.attachments = list(existing_attachments | readable_attachments)
-        document.content = content
-        document.save()
-        cache.delete(utils.get_content_metadata_cache_key(document.id))
-
-        return drf_response.Response(status=status.HTTP_204_NO_CONTENT)
-
-    @content.mapping.get
-    def content_retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve the raw content file from s3 and stream it.
-
-        We implement a HTTP cache based on the ETag and LastModified headers.
-        The ETag and LastModified are retrieved in the S3 get_object operation to be consistent with
-        the content Body retrieved at the same time. These metadata are saved in cache for
-        future requests.
-        We check in the request if the ETag is present in the If-None-Match header and if it's the
-        same as the one from the S3 get_object, we return a 304 response.
-        If the ETag is not present or not the same, we do the same check based on the LastModified
-        value if present in the If-Modified-Since header.
-        """
-        document = self.get_object()
-        # The S3 call to fetch the document can take time and the database
-        # connection is useless in this process. Hence we are closing it now
-        # to prevent having a massive number of database connections during
-        # the web-socket re-connection burst.
-        connection.close()
-
-        if_none_match, if_modified_since_dt = utils.parse_http_conditional_headers(
-            request
-        )
-
-        # First check if a cache is existing to return earlier a 304 without reaching s3
-        # if etag or last_modified have not changed.
-        cache_key = utils.get_content_metadata_cache_key(document.id)
-        if content_metadata := cache.get(cache_key):
-            if (if_none_match and if_none_match == content_metadata.get("etag")) or (
-                if_modified_since_dt
-                and dt.datetime.fromisoformat(content_metadata.get("last_modified"))
-                <= if_modified_since_dt
-            ):
-                return drf_response.Response(status=status.HTTP_304_NOT_MODIFIED)
-
-        # Prepare get_object S3 operation. The get_object manages ETag and last_modified
-        # headers will raise a 304 client error if one of them matches the value existing in
-        # S3.
-        get_object_kwargs = {
-            "Bucket": default_storage.bucket_name,
-            "Key": document.file_key,
-        }
-        if if_none_match:
-            get_object_kwargs["IfNoneMatch"] = if_none_match
-        if if_modified_since_dt:
-            get_object_kwargs["IfModifiedSince"] = if_modified_since_dt
-
-        try:
-            s3_response = default_storage.connection.meta.client.get_object(
-                **get_object_kwargs
-            )
-        except ClientError as exc:
-            code = exc.response["Error"]["Code"]
-            match code:
-                case "304" | "PreconditionFailed" | "NotModified":
-                    return drf_response.Response(status=status.HTTP_304_NOT_MODIFIED)
-                case "NoSuchKey" | "404":
-                    return StreamingHttpResponse(
-                        content_stream(StreamingBody(BytesIO(b""), content_length=0)),
-                        content_type="text/plain",
-                        status=200,
-                    )
-                case _:
-                    raise
-
-        last_modified = s3_response["LastModified"]
-        etag = s3_response["ETag"]
-        size = s3_response["ContentLength"]
-
-        # Refresh the metadata cache
-        cache.set(
-            cache_key,
-            {
-                "last_modified": last_modified.isoformat(),
-                "etag": etag,
-            },
-            settings.CONTENT_METADATA_CACHE_TIMEOUT,
-        )
-
-        response = StreamingHttpResponse(
-            streaming_content=content_stream(s3_response["Body"]),
-            content_type="text/plain",
-            status=status.HTTP_200_OK,
-        )
-
-        response["Content-Length"] = size
-        response["ETag"] = etag
-        response["Last-Modified"] = last_modified.strftime("%a, %d %b %Y %H:%M:%S %Z")
-        response["Cache-Control"] = "private, no-cache"
-
-        return response
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="media-check")
     def media_check(self, request, *args, **kwargs):

@@ -115,6 +115,7 @@ and this project adheres to
   pending). The get-connections API is dropped for good: its only consumer
   was the removed can-edit mechanism, so it is not needed anymore
 - 🔥(backend) remove the unused `CollaborationService`
+- 💥(backend) remove the `documents/{id}/content/` endpoint
 - 💥(backend) remove the `documents/{id}/can-edit/` endpoint
 - 💥(y-provider) the published `lasuite/impress-y-provider` image becomes
   converter-only and no longer serves `/collaboration/ws/`; deployments using
