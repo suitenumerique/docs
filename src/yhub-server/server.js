@@ -22,6 +22,12 @@ const allowedOrigins = (
 ).split(',');
 const Y_PROVIDER_API_KEY = secret('Y_PROVIDER_API_KEY', 'yprovider-api-key');
 const ORG = process.env.YHUB_ORG || 'docs';
+// Requiring this audience stops a valid admin JWT that Django issued for
+// another service (today: the y-converter token in converter_services.py,
+// which is handed to the converter process) from being replayed against yhub.
+// Hardcoded, like y-provider's Y_CONVERTER_AUDIENCE: both ends of a two-party
+// contract, so an env var would only add a way to misconfigure it into a 401.
+const YHUB_AUDIENCE = 'yhub';
 // lowercase only (no /i): Django serializes UUIDs lowercase, while yhub rooms
 // and S3 keys are case-sensitive strings — accepting case variants would let a
 // client open a parallel room for the same document (and, with soft migration,
@@ -407,6 +413,7 @@ const auth = createAuthPlugin({
         // silently dropped as a 401.
         const { payload } = await jwtVerify(token, JWKS, {
           algorithms: ['RS256'],
+          audience: YHUB_AUDIENCE,
           clockTolerance: 5,
         });
         // admin tokens act as the "system" user (no per-user admin identities yet)
@@ -414,7 +421,9 @@ const auth = createAuthPlugin({
           ? { userid: 'system', admin: true }
           : null;
       } catch {
-        return null; // bad signature / expired / JWKS unreachable — fail closed
+        // bad signature / expired / wrong (or missing) audience / JWKS
+        // unreachable — fail closed
+        return null;
       }
     }
     if (gcOff) return null; // full-history connections: not for Docs users
