@@ -16,6 +16,15 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+- The endpoint `/api/v1.0/documents/{document_id}/content/`, added in 5.0.0, is
+  removed, both its `GET` and its `PATCH`. The content of a document is now
+  saved and served by the collaboration server, the editor exchanging it over
+  the websocket, so nothing reads or writes it through the API anymore. If you
+  integrate with Docs, stop calling this endpoint: the `content_patch` and
+  `content_retrieve` abilities disappear from the document payload along with
+  it. `/api/v1.0/documents/{document_id}/formatted-content/` is not affected.
+  The `CONTENT_METADATA_CACHE_TIMEOUT` setting only tuned the cache of the
+  removed `GET` and is no longer read, you can drop it from your configuration.
 - The JWKS of the resource server moved from `/api/{version}/jwks` to
   `/external_api/{version}/jwks`, alongside the rest of the resource server
   endpoints. `/api/{version}/jwks` now publishes the public key validating the
