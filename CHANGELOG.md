@@ -87,6 +87,7 @@ and this project adheres to
   `503` instead of denying access like a permission failure, so clients retry
   instead of giving up. The built-in endpoints can also answer JSON on
   `Accept: application/json`
+- ✨(collaboration) add a get-ydoc endpoint on yhub
 - ✨(backend) call YHubService to seed initial document content
 - ✨(backend) reset the yhub connections of a document and its descendants
   when an access or the link configuration changes
