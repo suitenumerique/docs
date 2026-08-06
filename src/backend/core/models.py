@@ -1397,8 +1397,6 @@ class Document(MP_Node, BaseModel):
             "collaboration_auth": can_get,
             "comment": can_comment,
             "formatted_content": can_get,
-            "content_patch": can_update,
-            "content_retrieve": retrieve,
             "cors_proxy": can_get,
             "descendants": can_get,
             "destroy": can_destroy,

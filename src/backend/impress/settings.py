@@ -1132,10 +1132,6 @@ class Base(Configuration):
         ),
     }
 
-    CONTENT_METADATA_CACHE_TIMEOUT = values.IntegerValue(
-        60 * 60 * 24, environ_name="CONTENT_METADATA_CACHE_TIMEOUT", environ_prefix=None
-    )
-
     TREEBEARD_PATH_COMPUTE_RETRY_MAX_ATTEMPTS = values.IntegerValue(
         10,
         environ_name="TREEBEARD_PATH_COMPUTE_RETRY_MAX_ATTEMPTS",
