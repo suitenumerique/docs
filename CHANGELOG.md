@@ -56,9 +56,11 @@ and this project adheres to
 - 🐛(y-provider) fix sentry init #2579
 - 🐛(helm) show the database error while jobs wait for it to be ready #2578
 - ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub:
-  the dev stack gains dedicated valkey and postgres services for yhub, and
-  the kick (reset-connections) and get-connections APIs have no yhub
-  equivalent yet — they are deferred with TODO(yhub) stubs
+  the dev stack gains dedicated valkey and postgres services for yhub. The
+  kick flow is deferred with TODO(yhub) stubs (the reset-connections
+  endpoint added above is its server-side replacement, backend wiring
+  pending). The get-connections API is dropped for good: its only consumer
+  was the removed can-edit mechanism, so it is not needed anymore
 - 🔥(backend) remove the unused `CollaborationService`
 - 💥(backend) remove the `documents/{id}/can-edit/` endpoint
 - 💥(y-provider) the published `lasuite/impress-y-provider` image becomes
