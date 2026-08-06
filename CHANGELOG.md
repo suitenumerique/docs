@@ -40,6 +40,7 @@ and this project adheres to
 
 - 🔥(backend) remove the unused `CollaborationService`
 - 💥(backend) remove the `documents/{id}/can-edit/` endpoint
+- 💥(backend) remove the `documents/{id}/content/` endpoint
 
 ## [v5.6.0] - 2026-09-03
 
