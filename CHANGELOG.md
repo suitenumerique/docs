@@ -49,9 +49,11 @@ and this project adheres to
   `/external_api/{version}/jwks`
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
 - ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub:
-  the dev stack gains dedicated valkey and postgres services for yhub, and
-  the kick (reset-connections) and get-connections APIs have no yhub
-  equivalent yet — they are deferred with TODO(yhub) stubs
+  the dev stack gains dedicated valkey and postgres services for yhub. The
+  kick flow is deferred with TODO(yhub) stubs (the reset-connections
+  endpoint added above is its server-side replacement, backend wiring
+  pending). The get-connections API is dropped for good: its only consumer
+  was the removed can-edit mechanism, so it is not needed anymore
 - 🔥(backend) remove the unused `CollaborationService`
 - 💥(backend) remove the `documents/{id}/can-edit/` endpoint
 - 💥(y-provider) the published `lasuite/impress-y-provider` image becomes
