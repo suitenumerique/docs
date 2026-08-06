@@ -21,12 +21,15 @@ and this project adheres to
   so the Django backend can create documents without speaking yhub's lib0
   wire encoding. Strict create (409 when the document already has content),
   initial content attributed to the optional `X-User-Id` header; guarded by
-  standard document write access (admin JWT or user session)
+  standard document write access (the `aud: "yhub"` admin JWT, or a user
+  session with update ability)
 - ✨(collaboration) add an admin reset-connections endpoint on yhub:
   `POST /collaboration/reset-connections/v1/docs/{id}` re-checks the
   authorization of the document's connected clients and disconnects (close
-  code 4401) only those whose access changed. Authenticated with the admin
-  JWT verified against the backend JWKS; not yet triggered by the backend on
+  code 4401) only those whose access changed. Authenticated with an admin JWT
+  verified against the backend JWKS and required to carry `aud: "yhub"`, so
+  an admin token Django issued for another service (e.g. the `y-converter`
+  one) cannot be replayed here; not yet triggered by the backend on
   permission changes (follow-up)
 - ⬆️(collaboration) upgrade yhub to 0.4.0 and serve all its routes under the
   `/collaboration/` prefix (`server.apiPrefix`): the websocket moves to
