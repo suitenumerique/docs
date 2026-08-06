@@ -71,6 +71,7 @@ from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,
 )
+from core.services.yhub_services import YHubError, YHubService
 from core.tasks.access import reset_service_connections_in_cascade
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils.analytics import PosthogEventName, posthog_capture
@@ -694,8 +695,13 @@ class DocumentViewSet(
         """
         Check if a file has been uploaded with a doc or a children is created.
         If a file is present and the conversion upload enabled, the file is converted
-        using the converter service and the validated_data in the serializer are filled
-        with the converted file and the file name.
+        using the converter service and the title in the serializer is filled with
+        the file name.
+
+        Return the converted content, as a raw Yjs update the collaboration
+        server can be seeded with, or None when no file was uploaded. The
+        content itself is not stored by Django, it is saved by the
+        collaboration server.
         """
         uploaded_file = serializer.validated_data.pop("file", None)
 
@@ -704,49 +710,72 @@ class DocumentViewSet(
                 {"file": ["file upload is not allowed"]}
             )
 
-        # If a file is uploaded, convert it to Yjs format and set as content
-        if uploaded_file:
-            try:
-                file_content = uploaded_file.read()
+        if not uploaded_file:
+            return None
 
-                converter = Converter()
-                converted_content = converter.convert(
-                    file_content,
-                    content_type=uploaded_file.content_type,
-                    accept=mime_types.YJS,
-                )
-                serializer.validated_data["content"] = converted_content
-                serializer.validated_data["title"] = uploaded_file.name
-                logger.info("conversion ended successfully")
+        # If a file is uploaded, convert it to Yjs format
+        try:
+            file_content = uploaded_file.read()
 
-                posthog_capture(
-                    PosthogEventName.DOC_IMPORTED,
-                    self.request.user,
-                    {"content_type": uploaded_file.content_type},
-                )
-            except ConversionError as err:
-                logger.error("could not convert file content with error: %s", err)
-                raise drf.exceptions.ValidationError(
-                    {"file": ["Could not convert file content"]}
-                ) from err
+            converter = Converter()
+            converted_content = converter.convert(
+                file_content,
+                content_type=uploaded_file.content_type,
+                accept=mime_types.YJS,
+            )
+            serializer.validated_data["title"] = uploaded_file.name
+            logger.info("conversion ended successfully")
+
+            posthog_capture(
+                PosthogEventName.DOC_IMPORTED,
+                self.request.user,
+                {"content_type": uploaded_file.content_type},
+            )
+        except ConversionError as err:
+            logger.error("could not convert file content with error: %s", err)
+            raise drf.exceptions.ValidationError(
+                {"file": ["Could not convert file content"]}
+            ) from err
+
+        return converted_content
+
+    def _create_collaboration_document(self, document, update):
+        """
+        Seed a freshly created document with the content it was imported from.
+
+        The collaboration server owns the content from there on, so a failure
+        here leaves a document that lost what was uploaded: it is reported to
+        the caller, who is left to create it again.
+        """
+        try:
+            YHubService(user=self.request.user).create_ydoc(document, update)
+        except YHubError as err:
+            logger.error("could not save the imported content with error: %s", err)
+            raise drf.exceptions.ValidationError(
+                {"file": ["Could not save the imported file content"]}
+            ) from err
 
     def perform_create(self, serializer):
         """Set the current user as creator and owner of the newly created object."""
 
-        self._apply_uploaded_file_conversion(serializer)
+        update = self._apply_uploaded_file_conversion(serializer)
 
-        obj = create_tree_node_with_retry(
-            lambda: models.Document.add_root(
-                creator=self.request.user,
-                **serializer.validated_data,
+        with transaction.atomic():
+            obj = create_tree_node_with_retry(
+                lambda: models.Document.add_root(
+                    creator=self.request.user,
+                    **serializer.validated_data,
+                )
             )
-        )
-        serializer.instance = obj
-        models.DocumentAccess.objects.create(
-            document=obj,
-            user=self.request.user,
-            role=models.RoleChoices.OWNER,
-        )
+            serializer.instance = obj
+            models.DocumentAccess.objects.create(
+                document=obj,
+                user=self.request.user,
+                role=models.RoleChoices.OWNER,
+            )
+
+            if update is not None:
+                self._create_collaboration_document(obj, update)
 
         posthog_capture(
             PosthogEventName.DOC_CREATED, self.request.user, {}, document=obj
@@ -1019,14 +1048,18 @@ class DocumentViewSet(
             )
             serializer.is_valid(raise_exception=True)
 
-            self._apply_uploaded_file_conversion(serializer)
+            update = self._apply_uploaded_file_conversion(serializer)
 
-            child_document = create_tree_node_with_retry(
-                lambda: document.add_child(
-                    creator=request.user,
-                    **serializer.validated_data,
+            with transaction.atomic():
+                child_document = create_tree_node_with_retry(
+                    lambda: document.add_child(
+                        creator=request.user,
+                        **serializer.validated_data,
+                    )
                 )
-            )
+
+                if update is not None:
+                    self._create_collaboration_document(child_document, update)
 
             # Set the created instance to the serializer
             serializer.instance = child_document
