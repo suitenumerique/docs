@@ -98,6 +98,7 @@ and this project adheres to
   instead of giving up. The built-in endpoints can also answer JSON on
   `Accept: application/json`
 - ✨(collaboration) add a get-ydoc endpoint on yhub
+- ✨(backend) duplicate a document through the collaboration server
 - ✨(backend) call YHubService to seed initial document content
 - ✨(backend) reset the yhub connections of a document and its descendants
   when an access or the link configuration changes
