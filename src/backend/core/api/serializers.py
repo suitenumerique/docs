@@ -1,9 +1,7 @@
 """Client serializers for the impress core app."""
 # pylint: disable=too-many-lines
 
-import binascii
 import mimetypes
-from base64 import b64decode
 from os.path import splitext
 
 from django.conf import settings
@@ -306,33 +304,6 @@ class SearchDocumentSerializer(ListDocumentSerializer):
         model = models.Document
         fields = ListDocumentSerializer.Meta.fields + ["parent"]
         read_only_fields = ListDocumentSerializer.Meta.read_only_fields + ["parent"]
-
-
-class DocumentContentSerializer(serializers.Serializer):
-    """Serializer for updating only the raw content of a document stored in S3."""
-
-    content = serializers.CharField(required=True)
-
-    def validate_content(self, value):
-        """Validate the content field."""
-        try:
-            b64decode(value, validate=True)
-        except binascii.Error as err:
-            raise serializers.ValidationError("Invalid base64 content.") from err
-
-        return value
-
-    def update(self, instance, validated_data):
-        """
-        This serializer does not support updates.
-        """
-        raise NotImplementedError("Update is not supported for this serializer.")
-
-    def create(self, validated_data):
-        """
-        This serializer does not support create.
-        """
-        raise NotImplementedError("Create is not supported for this serializer.")
 
 
 class DocumentAccessSerializer(serializers.ModelSerializer):
