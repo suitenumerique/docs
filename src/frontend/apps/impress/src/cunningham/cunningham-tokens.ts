@@ -664,6 +664,11 @@ export const tokens = {
           'header--weight': '500',
           'body--background-color-hover': '#F0F0F3',
         },
+        'forms-fileuploader': {
+          'border-style': 'solid',
+          'border-radius': '4px',
+          'border-width': '1px',
+        },
         'forms-checkbox': { 'font-size': '0.875rem' },
         'forms-input': {
           'border-radius': '4px',
@@ -1968,6 +1973,11 @@ export const tokens = {
           'header--size': '12px',
           'header--weight': '500',
           'body--background-color-hover': '#F0F0F3',
+        },
+        'forms-fileuploader': {
+          'border-style': 'solid',
+          'border-radius': '4px',
+          'border-width': '1px',
         },
         'forms-checkbox': { 'font-size': '0.875rem' },
         'forms-input': {

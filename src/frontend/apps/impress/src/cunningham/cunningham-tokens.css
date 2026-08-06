@@ -849,6 +849,9 @@
   --c--components--datagrid--body--background-color-hover: var(
     --c--contextuals--background--semantic--neutral--tertiary
   );
+  --c--components--forms-fileuploader--border-style: solid;
+  --c--components--forms-fileuploader--border-radius: 4px;
+  --c--components--forms-fileuploader--border-width: 1px;
   --c--components--forms-checkbox--font-size: var(
     --c--globals--font--sizes--sm
   );
@@ -2553,6 +2556,9 @@
   --c--components--datagrid--body--background-color-hover: var(
     --c--contextuals--background--semantic--neutral--tertiary
   );
+  --c--components--forms-fileuploader--border-style: solid;
+  --c--components--forms-fileuploader--border-radius: 4px;
+  --c--components--forms-fileuploader--border-width: 1px;
   --c--components--forms-checkbox--font-size: var(
     --c--globals--font--sizes--sm
   );
