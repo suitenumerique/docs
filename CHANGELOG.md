@@ -13,6 +13,7 @@ and this project adheres to
 - 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
 - ✨(collaboration) add an admin reset-connections endpoint on yhub
 - ✨(collaboration) add a create-ydoc endpoint on yhub
+- 🔧(backend) fine tune redis cache options
 - ✨(collaboration) soft-migrate legacy S3 documents into yhub
 - ✨(collaboration) replay legacy s3 version history into yhub
 - ✨(backend) add a service to call the yhub REST API
@@ -20,6 +21,7 @@ and this project adheres to
 - ✨(collaboration) add a get-ydoc endpoint on yhub
 - 🔧(backend) fine tune redis cache options
 - ✨(frontend) make the full last-update date available #1215
+- ✨(backend) duplicate a document through the collaboration server
 
 ### Changed
 
