@@ -22,6 +22,7 @@ and this project adheres to
 - 🔧(backend) fine tune redis cache options
 - ✨(frontend) make the full last-update date available #1215
 - ✨(backend) duplicate a document through the collaboration server
+- ✨(backend) serve `documents/{id}/formatted-content/` from yhub
 
 ### Changed
 
