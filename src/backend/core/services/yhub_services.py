@@ -190,6 +190,19 @@ class YHubService:
 
         return response
 
+    def get_ydoc(self, document):
+        """
+        Return the current Yjs state of a document, None when it has none.
+
+        The raw update is what `create_ydoc` takes, so the state of a document
+        can be copied into another one. The built-in `ydoc` endpoint is not
+        used, it answers the lib0 encoding of an envelope rather than the
+        update itself.
+        """
+        response = self.request("get", self.build_url("get-ydoc", document))
+
+        return response.content or None
+
     def create_ydoc(self, document, update):
         """
         Seed the initial Yjs state of a document.
