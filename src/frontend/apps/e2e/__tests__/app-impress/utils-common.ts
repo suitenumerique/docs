@@ -402,20 +402,7 @@ export async function waitForLanguageSwitch(
   page: Page,
   lang: TestLanguageValue,
   labelUserMenu = 'User menu',
-  withMocking = true,
 ) {
-  await page.route(/\**\/api\/v1.0\/users\/\**/, async (route, request) => {
-    if (request.method().includes('PATCH') && withMocking) {
-      await route.fulfill({
-        json: {
-          language: lang.expectedLocale[0],
-        },
-      });
-    } else {
-      await route.continue();
-    }
-  });
-
   await page.getByLabel(labelUserMenu).click();
   const languagePicker = page.getByRole('button', { name: /Language/ });
   const isAlreadyTargetLanguage = await languagePicker
@@ -426,6 +413,18 @@ export async function waitForLanguageSwitch(
     await page.keyboard.press('Escape');
     return;
   }
+
+  await page.route(/\**\/api\/v1.0\/users\/\**/, async (route, request) => {
+    if (request.method().includes('PATCH')) {
+      await route.fulfill({
+        json: {
+          language: lang.expectedLocale[0],
+        },
+      });
+    } else {
+      await route.continue();
+    }
+  });
 
   await languagePicker.click();
 

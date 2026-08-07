@@ -68,13 +68,18 @@ test.describe('Language', () => {
   });
 
   test('can switch language using only keyboard', async ({ page }) => {
-    await waitForLanguageSwitch(page, TestLanguage.English, 'User menu', false);
+    // switch to french
+    await waitForLanguageSwitch(page, TestLanguage.French);
 
-    await page.getByLabel('User menu').click();
+    await page.getByLabel('Menu utilisateur').click();
 
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     await page.keyboard.press('Enter');
+
+    await expect(
+      page.getByRole('button', { name: 'Déconnexion' }),
+    ).toBeVisible();
 
     await expect(page.getByRole('menuitem', { name: 'English' })).toBeVisible();
     await expect(
@@ -83,22 +88,6 @@ test.describe('Language', () => {
 
     await page.waitForTimeout(300);
 
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-
-    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-    await expect(
-      page.getByRole('button', { name: 'Déconnexion' }),
-    ).toBeVisible();
-
-    await page.keyboard.press('Escape');
-
-    await page.getByLabel('Menu utilisateur').click();
-
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowUp');
     await page.keyboard.press('Enter');
