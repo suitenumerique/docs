@@ -13,6 +13,10 @@ update), `rollback`, `prune`, `changeset` and `activity`, all at `v1`. yhub also
 accepts a `branch` query parameter, but our auth plugin only ever grants access
 to the `main` branch, so this service never sends it.
 
+A few routes are about the server itself rather than about a document, and
+carry no room: `/{prefix}/jwks/{version}` publishes the public keys validating
+the tokens yhub signs to call us back.
+
 This service only owns the transport for now, the endpoints are added as we
 need them.
 """
@@ -23,7 +27,7 @@ from django.conf import settings
 
 import requests
 
-from core.services.jwt_services import Audiences, JWTService
+from core.services.jwt_services import Audiences, JWKSClient, JWTService
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +137,22 @@ class YHubService:
             audience=Audiences.YHUB, claims=self.claims
         )
         return f"Bearer {token}"
+
+    @property
+    def jwks_url(self):
+        """Return the url yhub publishes its public keys at."""
+        return f"{self.base_url}/{self.api_prefix}/jwks/{self.api_version}"
+
+    @property
+    def jwks(self):
+        """
+        Return the client of the keys validating the tokens yhub signs.
+
+        The mirror of the JWKS we publish for the tokens we sign to call it:
+        neither side holds a copy of the key of the other, so either can roll
+        its own without the other being reconfigured.
+        """
+        return JWKSClient(self.jwks_url)
 
     def build_url(self, endpoint, document):
         """Build the url of a document scoped endpoint of the yhub API."""
