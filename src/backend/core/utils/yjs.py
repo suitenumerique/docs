@@ -23,12 +23,17 @@ def base64_yjs_to_xml(base64_string):
     return yjs_to_xml(base64.b64decode(base64_string))
 
 
+def yjs_to_text(update):
+    """Extract text from a raw yjs update."""
+
+    soup = BeautifulSoup(yjs_to_xml(update), "lxml-xml")
+    return soup.get_text(separator=" ", strip=True)
+
+
 def base64_yjs_to_text(base64_string):
     """Extract text from base64 yjs document."""
 
-    blocknote_structure = base64_yjs_to_xml(base64_string)
-    soup = BeautifulSoup(blocknote_structure, "lxml-xml")
-    return soup.get_text(separator=" ", strip=True)
+    return yjs_to_text(base64.b64decode(base64_string))
 
 
 def extract_attachments(content):

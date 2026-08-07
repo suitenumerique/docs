@@ -14,9 +14,10 @@ import requests
 
 from core import models
 from core.enums import SearchType
+from core.services.yhub_services import YHubError, YHubService
 from core.utils.dicts import get_value_by_pattern
 from core.utils.paths import get_ancestor_to_descendants_map
-from core.utils.yjs import base64_yjs_to_text
+from core.utils.yjs import yjs_to_text
 
 logger = logging.getLogger(__name__)
 
@@ -157,11 +158,27 @@ class BaseDocumentIndexer(ABC):
             last_id = documents_batch[-1].id
             accesses_by_document_path = get_batch_accesses_by_users_and_teams(doc_paths)
 
-            serialized_batch = [
-                self.serialize_document(document, accesses_by_document_path)
-                for document in documents_batch
-                if document.content or document.title
-            ]
+            serialized_batch = []
+            for document in documents_batch:
+                try:
+                    content = self.get_document_content(document)
+                except YHubError:
+                    # A document whose content we could not read is left alone:
+                    # pushing it with an empty content would erase what the
+                    # search backend knows of it over a transient failure.
+                    logger.exception(
+                        "Document %s was not indexed, its content could not be "
+                        "read from the collaboration server",
+                        document.pk,
+                    )
+                    continue
+
+                if content or document.title:
+                    serialized_batch.append(
+                        self.serialize_document(
+                            document, content, accesses_by_document_path
+                        )
+                    )
 
             if serialized_batch:
                 self.push(serialized_batch)
@@ -169,10 +186,26 @@ class BaseDocumentIndexer(ABC):
 
         return count
 
+    @staticmethod
+    def get_document_content(document):
+        """
+        Return the text of a document, as the collaboration server has it.
+
+        The collaboration server owns the content of the documents, so it is
+        read from there and never from the database. A document it holds no
+        content for has none, and is indexed on its metadata alone.
+        """
+        update = YHubService().get_ydoc(document)
+
+        return yjs_to_text(update) if update else ""
+
     @abstractmethod
-    def serialize_document(self, document, accesses):
+    def serialize_document(self, document, content, accesses):
         """
         Convert a Document instance to a JSON-serializable format for indexing.
+
+        The content is passed in rather than read from the document: it is
+        fetched once, from the collaboration server, by `index`.
 
         Must be implemented by subclasses.
         """
@@ -308,25 +341,25 @@ class FindDocumentIndexer(BaseDocumentIndexer):
             return source["title"]
         return ""
 
-    def serialize_document(self, document, accesses):
+    def serialize_document(self, document, content, accesses):
         """
         Convert a Document to the JSON format expected by La Suite Find.
 
         Args:
             document (Document): The document instance.
+            content (str): The text of the document, as read from the
+                collaboration server.
             accesses (dict): Mapping of document ID to user/team access.
 
         Returns:
             dict: A JSON-serializable dictionary.
         """
         doc_path = document.path
-        doc_content = document.content
-        text_content = base64_yjs_to_text(doc_content) if doc_content else ""
 
         return {
             "id": str(document.id),
             "title": document.title or "",
-            "content": text_content,
+            "content": content,
             "depth": document.depth,
             "path": document.path,
             "numchild": document.numchild,
@@ -335,7 +368,7 @@ class FindDocumentIndexer(BaseDocumentIndexer):
             "users": list(accesses.get(doc_path, {}).get("users", set())),
             "groups": list(accesses.get(doc_path, {}).get("teams", set())),
             "reach": document.computed_link_reach,
-            "size": len(text_content.encode("utf-8")),
+            "size": len(content.encode("utf-8")),
             "is_active": not bool(document.ancestors_deleted_at),
         }
 

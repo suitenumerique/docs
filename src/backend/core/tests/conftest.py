@@ -9,6 +9,7 @@ import pytest
 import responses
 
 from core import factories
+from core.services.yhub_services import YHubService
 from core.tests.utils.urls import reload_urls
 
 USER = "user"
@@ -35,6 +36,11 @@ def mock_user_teams():
 def indexer_settings_fixture(settings):
     """
     Setup valid settings for the document indexer. Clear the indexer cache.
+
+    The indexer reads the content of a document from the collaboration server,
+    which is faked here: it serves what the factories wrote in the database, so
+    a document built with `content=""` is one the collaboration server holds no
+    content for.
     """
 
     # pylint: disable-next=import-outside-toplevel
@@ -50,7 +56,14 @@ def indexer_settings_fixture(settings):
     settings.SEARCH_URL = "http://localhost:8081/api/v1.0/documents/search/"
     settings.SEARCH_INDEXER_COUNTDOWN = 1
 
-    yield settings
+    def get_ydoc(_service, document):
+        """Answer the raw update the collaboration server would serve."""
+        return base64.b64decode(document.content) if document.content else None
+
+    with mock.patch.object(
+        YHubService, "get_ydoc", autospec=True, side_effect=get_ydoc
+    ):
+        yield settings
 
     # clear cache to prevent issues with other tests
     get_document_indexer.cache_clear()

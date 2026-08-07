@@ -12,6 +12,11 @@ import pytest
 
 from core import factories
 from core.services.search_indexers import FindDocumentIndexer
+from core.utils.yjs import base64_yjs_to_text
+
+# what the fake collaboration server of the indexer_settings fixture serves
+# for a document created with the content of the factory
+CONTENT = base64_yjs_to_text(factories.YDOC_HELLO_WORLD_BASE64)
 
 
 @pytest.mark.django_db
@@ -46,8 +51,8 @@ def test_index():
 
         assert sorted(push_call_args[0], key=itemgetter("id")) == sorted(
             [
-                indexer.serialize_document(doc, accesses),
-                indexer.serialize_document(no_title_doc, accesses),
+                indexer.serialize_document(doc, CONTENT, accesses),
+                indexer.serialize_document(no_title_doc, CONTENT, accesses),
             ],
             key=itemgetter("id"),
         )

@@ -1,5 +1,6 @@
 """Tests for Documents search indexers"""
 
+from base64 import b64decode
 from functools import partial
 from json import dumps as json_dumps
 from unittest.mock import patch
@@ -19,6 +20,7 @@ from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,
 )
+from core.services.yhub_services import ServiceUnavailableError, YHubService
 from core.utils.yjs import base64_yjs_to_text
 
 pytestmark = pytest.mark.django_db
@@ -27,7 +29,7 @@ pytestmark = pytest.mark.django_db
 class FakeDocumentIndexer(BaseDocumentIndexer):
     """Fake indexer for test purpose"""
 
-    def serialize_document(self, document, accesses):
+    def serialize_document(self, document, content, accesses):
         return {}
 
     def push(self, data):
@@ -190,7 +192,9 @@ def test_services_search_indexers_serialize_document_returns_expected_json():
     }
 
     indexer = FindDocumentIndexer()
-    result = indexer.serialize_document(document, accesses)
+    # the content is read from the collaboration server and passed in, the
+    # serialization never reaches for it itself
+    result = indexer.serialize_document(document, "Hello world", accesses)
 
     assert set(result.pop("users")) == {str(user_a.sub), str(user_b.sub)}
     assert set(result.pop("groups")) == {"team1", "team2"}
@@ -200,11 +204,11 @@ def test_services_search_indexers_serialize_document_returns_expected_json():
         "depth": 1,
         "path": document.path,
         "numchild": 1,
-        "content": base64_yjs_to_text(document.content),
+        "content": "Hello world",
         "created_at": document.created_at.isoformat(),
         "updated_at": document.updated_at.isoformat(),
         "reach": document.link_reach,
-        "size": 13,
+        "size": 11,
         "is_active": True,
     }
 
@@ -219,7 +223,7 @@ def test_services_search_indexers_serialize_document_deleted():
     document.refresh_from_db()
 
     indexer = FindDocumentIndexer()
-    result = indexer.serialize_document(document, {})
+    result = indexer.serialize_document(document, "", {})
 
     assert result["is_active"] is False
 
@@ -230,7 +234,7 @@ def test_services_search_indexers_serialize_document_empty():
     document = factories.DocumentFactory(content="", title=None)
 
     indexer = FindDocumentIndexer()
-    result = indexer.serialize_document(document, {})
+    result = indexer.serialize_document(document, "", {})
 
     assert result["content"] == ""
     assert result["title"] == ""
@@ -332,6 +336,48 @@ def test_services_search_indexers_batch_size_argument(mock_push):
 
     # Make sure all 5 documents were indexed
     assert seen_doc_ids == {str(d.id) for d in documents}
+
+
+@patch.object(FindDocumentIndexer, "push")
+@pytest.mark.usefixtures("indexer_settings")
+def test_services_search_indexers_index_the_content_of_the_collaboration_server(
+    mock_push,
+):
+    """The indexed content is the one the collaboration server holds."""
+    document = factories.DocumentFactory()
+
+    assert FindDocumentIndexer().index() == 1
+
+    indexed = mock_push.call_args[0][0][0]
+    assert indexed["id"] == str(document.id)
+    assert indexed["content"] == base64_yjs_to_text(factories.YDOC_HELLO_WORLD_BASE64)
+
+
+@patch.object(FindDocumentIndexer, "push")
+@pytest.mark.usefixtures("indexer_settings")
+def test_services_search_indexers_skip_documents_the_content_of_which_is_unreadable(
+    mock_push,
+):
+    """
+    A document whose content cannot be read is left out of the batch.
+
+    Indexing it with an empty content would erase what the search backend knows
+    of it, on nothing more than a collaboration server hiccup.
+    """
+    unreadable, readable = factories.DocumentFactory.create_batch(2)
+
+    def get_ydoc(_service, document):
+        if document.pk == unreadable.pk:
+            raise ServiceUnavailableError("yhub is unreachable")
+        return b64decode(document.content)
+
+    # a plain replacement: the indexer_settings fixture already serves the
+    # content of the documents, this test needs one of them to fail
+    with patch.object(YHubService, "get_ydoc", get_ydoc):
+        assert FindDocumentIndexer().index() == 1
+
+    results = {doc["id"] for doc in mock_push.call_args[0][0]}
+    assert results == {str(readable.id)}
 
 
 @patch.object(FindDocumentIndexer, "push")
