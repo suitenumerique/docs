@@ -4,6 +4,7 @@ Tests for Documents API endpoint in impress's core app: content updated
 
 from datetime import datetime, timedelta
 from datetime import timezone as tz
+from unittest import mock
 from uuid import uuid4
 
 import jwt
@@ -15,7 +16,9 @@ from rest_framework.test import APIClient
 from core import factories
 from core.authentication import CollaborationServerAuthentication
 from core.models import Document
+from core.services.search_indexers import FindDocumentIndexer
 from core.tests.utils.jwt_helper import build_jwks, generate_key_pair, key_id
+from core.utils.yjs import base64_yjs_to_text
 
 pytestmark = pytest.mark.django_db
 
@@ -34,9 +37,9 @@ def yhub_jwks_fixture(settings):
     """
     settings.YHUB_API_BASE_URL = "http://yhub:3002"
 
-    with responses.RequestsMock(assert_all_requests_are_fired=False) as mock:
-        mock.get(JWKS_URL, json=build_jwks(PUBLIC_KEY))
-        yield mock
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as jwks:
+        jwks.get(JWKS_URL, json=build_jwks(PUBLIC_KEY))
+        yield jwks
 
 
 def collaboration_token(private_key=PRIVATE_KEY, public_key=PUBLIC_KEY, **claims):
@@ -235,6 +238,42 @@ def test_api_documents_content_updated():
     # the document itself is left alone
     assert document.created_at == datetime(2026, 8, 1, 12, 0, 0, tzinfo=tz.utc)
     assert document.title == "my document"
+
+
+@pytest.mark.usefixtures("indexer_settings")
+def test_api_documents_content_updated_indexes_the_document():
+    """
+    The content changed on the collaboration server: the search index follows.
+
+    Nothing else refreshes it anymore, the content does not go through Django.
+    """
+    document = factories.DocumentFactory(title="my document")
+
+    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
+        response = APIClient().post(
+            f"/api/v1.0/documents/{document.id!s}/content-updated/",
+            HTTP_AUTHORIZATION=f"Bearer {collaboration_token()}",
+        )
+
+    assert response.status_code == 204
+    # the task reads the content back from the collaboration server
+    indexed = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
+    assert indexed[str(document.id)]["content"] == base64_yjs_to_text(
+        factories.YDOC_HELLO_WORLD_BASE64
+    )
+
+
+@pytest.mark.usefixtures("indexer_settings")
+def test_api_documents_content_updated_does_not_index_when_the_document_is_unknown():
+    """A document that does not exist is not worth an indexation task."""
+    with mock.patch("core.api.viewsets.trigger_batch_document_indexer") as mock_trigger:
+        response = APIClient().post(
+            f"/api/v1.0/documents/{uuid4()!s}/content-updated/",
+            HTTP_AUTHORIZATION=f"Bearer {collaboration_token()}",
+        )
+
+    assert response.status_code == 404
+    mock_trigger.assert_not_called()
 
 
 def test_api_documents_content_updated_restricted_document():

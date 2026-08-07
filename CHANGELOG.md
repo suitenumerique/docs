@@ -150,6 +150,14 @@ and this project adheres to
   endpoint added above is its server-side replacement, backend wiring
   pending). The get-connections API is dropped for good: its only consumer
   was the removed can-edit mechanism, so it is not needed anymore
+- ♻️(backend) index the content of a document as the collaboration server has
+  it: the search indexer reads it with `YHubService`, and the indexation of an
+  edited document is triggered by the `content-updated` call the collaboration
+  server makes — nothing else sees the content change anymore. It is queued as
+  a celery task, throttled like the other updates, so no indexation ever runs
+  in the process serving the request. A document whose content cannot be read
+  is left out of the batch rather than indexed empty, which would have erased
+  it from the search backend
 - 🔥(backend) remove the unused `CollaborationService`
 - 💥(backend) remove the `documents/{id}/content/` endpoint
 - 💥(backend) remove the `documents/{id}/can-edit/` endpoint
