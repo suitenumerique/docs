@@ -13,8 +13,32 @@ from django.test.utils import override_settings
 import pytest
 
 from core import factories, models
+from core.services.yhub_services import ServiceUnavailableError, YHubService
 
 pytestmark = pytest.mark.django_db
+
+# what the collaboration server serves for the onboarding template
+TEMPLATE_UPDATE = b"\x01\x02the content of the template"
+
+
+@pytest.fixture(name="collaboration_server", autouse=True)
+def collaboration_server_fixture():
+    """
+    Serve the content of the onboarding template, and take the copies.
+
+    The sandbox is duplicated through the collaboration server, which owns the
+    content of the documents; every test creating a user goes through it as
+    soon as USER_ONBOARDING_SANDBOX_DOCUMENT is set.
+    """
+    with (
+        patch.object(
+            YHubService, "get_ydoc", autospec=True, return_value=TEMPLATE_UPDATE
+        ) as mock_get_ydoc,
+        patch.object(YHubService, "create_ydoc", autospec=True) as mock_create_ydoc,
+    ):
+        # autospec, so the calls carry the service itself: who it acts for is
+        # what the collaboration server attributes the content to
+        yield mock_get_ydoc, mock_create_ydoc
 
 
 def test_models_users_str():
@@ -281,6 +305,93 @@ def test_models_users_duplicate_onboarding_sandbox_document_with_invalid_templat
 
     sandbox_docs = models.Document.objects.filter(creator=user)
     assert sandbox_docs.count() == 0
+
+
+def test_models_users_duplicate_onboarding_sandbox_document_copies_the_content(
+    collaboration_server,
+):
+    """
+    The content of the sandbox is the one the collaboration server holds for
+    the template, copied under the identity of the user it is created for.
+    """
+    mock_get_ydoc, mock_create_ydoc = collaboration_server
+    template_document = factories.DocumentFactory(title="Getting started with Docs")
+
+    with override_settings(USER_ONBOARDING_SANDBOX_DOCUMENT=str(template_document.id)):
+        user = factories.UserFactory()
+
+    sandbox_document = models.Document.objects.get(
+        creator=user, title="Getting started with Docs"
+    )
+
+    # read from the template, written to the sandbox
+    _service, read_document = mock_get_ydoc.call_args[0]
+    service, written_document, update = mock_create_ydoc.call_args[0]
+
+    assert read_document.id == template_document.id
+    assert written_document.id == sandbox_document.id
+    assert update == TEMPLATE_UPDATE
+    # the service acts for the new user: the content is attributed to them, and
+    # not to the backend itself
+    assert service.user == user
+
+
+def test_models_users_duplicate_onboarding_sandbox_document_empty_template(
+    collaboration_server,
+):
+    """A template the collaboration server holds no content for yields an empty sandbox."""
+    mock_get_ydoc, mock_create_ydoc = collaboration_server
+    mock_get_ydoc.return_value = None
+    template_document = factories.DocumentFactory(title="Getting started with Docs")
+
+    with override_settings(USER_ONBOARDING_SANDBOX_DOCUMENT=str(template_document.id)):
+        user = factories.UserFactory()
+
+    assert models.Document.objects.filter(
+        creator=user, title="Getting started with Docs"
+    ).exists()
+    mock_create_ydoc.assert_not_called()
+
+
+def test_models_users_duplicate_onboarding_sandbox_document_unreadable_template(
+    collaboration_server,
+):
+    """
+    A signup is not failed over a collaboration server that cannot be reached.
+
+    The sandbox is skipped instead, as it is when its template does not exist.
+    """
+    mock_get_ydoc, _mock_create_ydoc = collaboration_server
+    mock_get_ydoc.side_effect = ServiceUnavailableError("yhub is unreachable")
+    template_document = factories.DocumentFactory(title="Getting started with Docs")
+
+    with override_settings(USER_ONBOARDING_SANDBOX_DOCUMENT=str(template_document.id)):
+        user = factories.UserFactory()
+
+    assert user.pk is not None
+    assert not models.Document.objects.filter(creator=user).exists()
+    assert not models.DocumentAccess.objects.filter(user=user).exists()
+
+
+def test_models_users_duplicate_onboarding_sandbox_document_content_not_copied(
+    collaboration_server,
+):
+    """
+    A sandbox whose content could not be copied is not left behind.
+
+    An empty document titled after the template would be more confusing than
+    no document at all.
+    """
+    _mock_get_ydoc, mock_create_ydoc = collaboration_server
+    mock_create_ydoc.side_effect = ServiceUnavailableError("yhub is unreachable")
+    template_document = factories.DocumentFactory(title="Getting started with Docs")
+
+    with override_settings(USER_ONBOARDING_SANDBOX_DOCUMENT=str(template_document.id)):
+        user = factories.UserFactory()
+
+    assert user.pk is not None
+    assert not models.Document.objects.filter(creator=user).exists()
+    assert not models.DocumentAccess.objects.filter(user=user).exists()
 
 
 def test_models_users_duplicate_onboarding_sandbox_document_creates_unique_sandbox_per_user():
