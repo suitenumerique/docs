@@ -69,9 +69,14 @@ data/media:
 data/static:
 	@mkdir -p data/static
 
-# RSA key signing the JWT tokens the backend issues. Generated locally, never
-# committed: "data/" is gitignored. Regenerate it by deleting the file.
+# RSA keys signing the JWT tokens the services issue: one for the backend, one
+# for the collaboration server. Generated locally, never committed: "data/" is
+# gitignored. Regenerate one by deleting the file. Both are listed, so a stack
+# set up before the collaboration server had a key of its own gets it too.
 data/jwt/private.pem:
+	@bin/generate-jwt-private-key.sh
+
+data/jwt/yhub-private.pem:
 	@bin/generate-jwt-private-key.sh
 
 # -- Project
@@ -87,7 +92,7 @@ create-env-local-files:
 
 generate-secret-keys:
 generate-secret-keys: ## generate the secret keys needed by the dev stack
-generate-secret-keys: data/jwt/private.pem
+generate-secret-keys: data/jwt/private.pem data/jwt/yhub-private.pem
 	@bin/generate-oidc-store-refresh-token-key.sh
 .PHONY: generate-secret-keys
 
