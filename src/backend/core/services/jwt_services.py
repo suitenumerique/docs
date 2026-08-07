@@ -12,12 +12,24 @@ from django.core.cache import cache
 from django.utils import timezone
 
 import jwt
+import requests
 from joserfc.jwk import KeySet, RSAKey
 
 logger = logging.getLogger(__name__)
 
 ALGORITHM = "RS256"
 CACHE_KEY_PREFIX = "jwt_token"
+JWKS_CACHE_KEY_PREFIX = "jwks"
+# How long a fetched JWKS is served from the cache before being fetched again.
+JWKS_CACHE_TIMEOUT = 300
+# Minimum delay, in seconds, between two fetches of the same JWKS. A token
+# names the key that signed it and anybody can name one that does not exist, so
+# the refresh a rotation needs is rate limited: an unknown key costs at most one
+# fetch per window, not one per request.
+JWKS_REFRESH_COOLDOWN = 30
+# Timeout, in seconds, of the fetch of a JWKS. Short: it happens while
+# authenticating a request.
+JWKS_FETCH_TIMEOUT = 10
 
 
 class Audiences(StrEnum):
@@ -37,6 +49,10 @@ class ConfigurationError(JWTError):
 
 class TokenGenerationError(JWTError):
     """Raised when a token cannot be signed."""
+
+
+class JWKSError(JWTError):
+    """Raised when the keys validating the tokens of a service cannot be used."""
 
 
 @functools.cache
@@ -64,6 +80,98 @@ def import_private_key(private_key):
         )
     except (TypeError, ValueError) as err:
         raise ConfigurationError("The JWT private key cannot be imported.") from err
+
+
+@functools.cache
+def import_jwks(jwks):
+    """
+    Import a JSON Web Key Set, as published by the service issuing the tokens.
+
+    Importing keys is expensive, hence the cache. It is keyed on the document
+    itself, so a service publishing a new key gets it imported instead of the
+    previous set being served forever.
+    """
+    try:
+        return jwt.PyJWKSet.from_json(jwks)
+    # a JWKS is fetched from another service: anything malformed in it, from
+    # the JSON to the key material, must surface as a JWKS error
+    except (jwt.PyJWTError, AttributeError, TypeError, ValueError) as err:
+        raise JWKSError("The JWKS cannot be imported.") from err
+
+
+class JWKSClient:
+    """
+    Client of the JSON Web Key Set a service publishes to let us verify the
+    tokens it signs.
+
+    Fetching and importing the keys on every token would be wasteful, so the
+    document is cached — in the Django cache, hence shared by our processes —
+    and its import memoized. The service can still roll its key without
+    anything changing here: a token signed by a key we do not know refreshes
+    the set.
+    """
+
+    def __init__(self, url, timeout=JWKS_FETCH_TIMEOUT):
+        """Bind the client to the url a service publishes its keys at."""
+        self.url = url
+        self.timeout = timeout
+
+    @property
+    def cache_key(self):
+        """Build the cache key holding the document published at our url."""
+        digest = hashlib.sha256(self.url.encode("utf-8")).hexdigest()
+        return f"{JWKS_CACHE_KEY_PREFIX}:{digest}"
+
+    def fetch(self):
+        """Fetch the published document and cache it, as published."""
+        try:
+            response = requests.get(self.url, timeout=self.timeout)
+            response.raise_for_status()
+        except requests.RequestException as err:
+            logger.exception("Unable to fetch the JWKS at %s", self.url)
+            raise JWKSError(f"Unable to fetch the JWKS at {self.url}") from err
+
+        cache.set(self.cache_key, response.text, JWKS_CACHE_TIMEOUT)
+
+        return response.text
+
+    def get_keys(self, refresh=False):
+        """Return the published keys, from the cache unless a refresh is asked."""
+        jwks = None if refresh else cache.get(self.cache_key)
+        if jwks is None:
+            jwks = self.fetch()
+
+        return import_jwks(jwks)
+
+    def get_signing_key(self, token):
+        """
+        Return the key a token was signed with, among the published ones.
+
+        The header of the token names it, which is what makes a rotation
+        transparent: a key we do not know yet is looked for again in a freshly
+        fetched set. That name is not authenticated though, so the refresh is
+        rate limited, and a token naming a key nobody published is refused.
+        """
+        try:
+            kid = jwt.get_unverified_header(token)["kid"]
+        except (jwt.PyJWTError, KeyError) as err:
+            raise JWKSError("The token does not name the key that signed it.") from err
+
+        try:
+            return self.get_keys()[kid]
+        except KeyError:
+            pass
+
+        # `add` only succeeds for the first caller of the cooldown window,
+        # whichever process it runs in
+        if not cache.add(f"{self.cache_key}:refresh", True, JWKS_REFRESH_COOLDOWN):
+            raise JWKSError(f'The JWKS at {self.url} has no key "{kid}".')
+
+        logger.info('Unknown key "%s", refreshing the JWKS at %s', kid, self.url)
+        try:
+            return self.get_keys(refresh=True)[kid]
+        except KeyError as err:
+            raise JWKSError(f'The JWKS at {self.url} has no key "{kid}".') from err
 
 
 class JWTService:

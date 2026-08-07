@@ -39,14 +39,30 @@ It is not a fork of yhub — it is a thin wrapper:
 - exposes `POST /collaboration/migrate/v1/{org}/{docid}`, which replays a
   document's **full** legacy version history out of the S3 media bucket (see
   "Full migration" below) — admin JWT only, like `reset-connections`,
+- exposes `GET /collaboration/get-ydoc/v1/{org}/{docid}`, the read counterpart
+  of `create-ydoc`: the current state of a document as a raw binary update
+  (204 when it has no content), which the Django backend reads to export or
+  duplicate a document. Guarded by standard document read access,
+- notifies the Django backend on
+  `POST /api/v1.0/documents/{id}/content-updated/` whenever the worker
+  persists new content for a document, so that lists ordered by `updated_at`
+  follow the edits made here. Signed with an RS256 JWT of our own
+  (`YHUB_JWT_PRIVATE_KEY`, `aud: "docs-backend"`, one minute), best effort: a
+  notification the backend refuses or never receives is logged and dropped,
+- publishes the public half of that key on `GET /collaboration/jwks/v1`, where
+  the backend reads it. The exact mirror of the JWKS the backend publishes for
+  its own tokens: neither side is configured with a copy of the key of the
+  other, so either can roll its key on its own. Served unauthenticated, as any
+  JWKS is,
 - mirrors the environment conventions used elsewhere in this repository
   (`*_FILE` secret indirection, `COLLABORATION_SERVER_ORIGIN` allowlist, …).
 
 Public exposure: route the whole `/collaboration/` prefix to this server —
 the websocket and the built-in document APIs (`ydoc`, `rollback`, `prune`,
 `changeset`, `activity`) are all guarded by the same cookie-based document
-authorization and are meant to be reachable by browsers. The one exception
-is `/collaboration/reset-connections/` and `/collaboration/migrate/`, which are
+authorization and are meant to be reachable by browsers, as is
+`/collaboration/jwks/v1`, which carries public keys and nothing else. The one
+exception is `/collaboration/reset-connections/` and `/collaboration/migrate/`, which are
 backend-internal and should not be routed through the public ingress.
 
 ## Container image

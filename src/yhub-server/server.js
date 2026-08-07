@@ -1,12 +1,22 @@
-import { createHash } from 'node:crypto';
+import { createHash, createPublicKey, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
 import {
   apiError,
   createApiEndpoint,
   createAuthPlugin,
   createYHub,
+  logger,
 } from '@y/hub';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import {
+  calculateJwkThumbprint,
+  createRemoteJWKSet,
+  exportJWK,
+  importPKCS8,
+  jwtVerify,
+  SignJWT,
+} from 'jose';
+import { Client as S3Client } from 'minio';
 
 import { secret } from './env.js';
 // legacy Django/S3 document store — see migration.js and README.md
@@ -29,6 +39,13 @@ const allowedOrigins = (
 ).split(',');
 const Y_PROVIDER_API_KEY = secret('Y_PROVIDER_API_KEY', 'yprovider-api-key');
 const ORG = process.env.YHUB_ORG || 'docs';
+// Segment every route is mounted under (`server.apiPrefix` below), matching the
+// URL scheme Docs already routes to the collaboration server. Hardcoded like
+// the audiences: the backend builds its urls with the same prefix.
+const API_PREFIX = 'collaboration';
+// Path the JWKS endpoint declared in `api` is mounted at. readAuthInfo reads
+// the raw request, without any route context, hence the duplication.
+const JWKS_PATH = `/${API_PREFIX}/jwks/v1`;
 // Requiring this audience stops a valid admin JWT that Django issued for
 // another service (today: the y-converter token in converter_services.py,
 // which is handed to the converter process) from being replayed against yhub.
@@ -50,6 +67,77 @@ const EMPTY_YDOC = new Uint8Array([0, 0]);
 // freshly-converted snapshot (typically KBs); anything bigger belongs on the
 // websocket path.
 const MAX_CREATE_BYTES = 10 * 1024 * 1024;
+
+const touchLog = logger.child({ module: 'updated-at-notifier' });
+
+const BACKEND_NOTIFY_TIMEOUT_MS = 5000;
+// Audience of the tokens the backend accepts from us. It must match the one
+// its CollaborationServerAuthentication requires, a token minted for anything
+// else is refused there.
+const BACKEND_AUDIENCE = 'docs-backend';
+const BACKEND_TOKEN_LIFETIME_S = 60;
+// Renew this long before expiry so a token never dies in flight.
+const BACKEND_TOKEN_MARGIN_MS = 10000;
+
+// We sign the calls we make to the backend, the mirror of the admin JWT it
+// signs to call us: no long-lived shared secret, only our private key here and
+// its public half published on the JWKS endpoint below.
+const YHUB_JWT_PRIVATE_KEY = secret('YHUB_JWT_PRIVATE_KEY', '');
+const backendSigningKey = YHUB_JWT_PRIVATE_KEY
+  ? await importPKCS8(YHUB_JWT_PRIVATE_KEY, 'RS256')
+  : null;
+
+if (backendSigningKey == null) {
+  // not fatal, documents keep being served — only their `updated_at` freezes
+  touchLog.warn(
+    'YHUB_JWT_PRIVATE_KEY is empty, the backend will not be notified of content updates',
+  );
+}
+
+// The public half of the signing key, as published on the JWKS endpoint. Its
+// "kid" is the RFC 7638 thumbprint of the key: computed from the public
+// components only, it is stable across restarts and changes on its own when
+// the key is rolled. Every token we sign carries it, which is how the backend
+// picks the matching key — and how it knows to fetch the set again when it
+// does not know the key yet, so rolling this key needs no change on its side.
+const backendPublicJwk =
+  backendSigningKey == null
+    ? null
+    : await (async () => {
+        // derived from the PEM rather than exported from `backendSigningKey`:
+        // exporting a private key as a JWK would carry its private components
+        const jwk = await exportJWK(createPublicKey(YHUB_JWT_PRIVATE_KEY));
+        return {
+          ...jwk,
+          alg: 'RS256',
+          use: 'sig',
+          kid: await calculateJwkThumbprint(jwk),
+        };
+      })();
+
+/**
+ * @type {{ token: string, expiresAt: number } | null}
+ */
+let backendToken = null;
+
+// The token carries no per-document claim, so one is reused until it is about
+// to expire rather than signing on every notification.
+const getBackendToken = async () => {
+  const now = Date.now();
+  if (backendToken != null && backendToken.expiresAt - BACKEND_TOKEN_MARGIN_MS > now) {
+    return backendToken.token;
+  }
+  const token = await new SignJWT({})
+    // the "kid" names the key in our JWKS the backend must verify it with
+    .setProtectedHeader({ alg: 'RS256', kid: backendPublicJwk.kid })
+    .setIssuer('yhub')
+    .setAudience(BACKEND_AUDIENCE)
+    .setIssuedAt()
+    .setExpirationTime(`${BACKEND_TOKEN_LIFETIME_S}s`)
+    .sign(backendSigningKey);
+  backendToken = { token, expiresAt: now + BACKEND_TOKEN_LIFETIME_S * 1000 };
+  return token;
+};
 
 // Public keys verifying the RS256 admin tokens Django issues (JWTService).
 // Lazily fetched on first use; jose caches the keys and refetches on unknown
@@ -110,10 +198,19 @@ const seedFromLegacyStore = async (room) => {
 const auth = createAuthPlugin({
   // uws req is only valid synchronously — read headers AND query before first await.
   async readAuthInfo(req) {
+    const url = req.getUrl();
     const authorization = req.getHeader('authorization');
     const cookie = req.getHeader('cookie');
     const origin = req.getHeader('origin');
     const gcOff = req.getQuery('gc') === 'false';
+    // The JWKS holds public keys and nothing else, and the backend must be
+    // able to fetch it before it can authenticate anything we send it — so it
+    // is served to anyone, as the backend serves its own. This identity is
+    // granted the 'jwks' purpose and nothing else (getGlobalAccessType), and
+    // the check is on the exact path of that one route.
+    if (url === JWKS_PATH) {
+      return { userid: 'anonymous' };
+    }
     if (authorization !== '') {
       // backend-to-server call: RS256 JWT signed by Django, verified against
       // its JWKS. A browser cannot attach an Authorization header to a ws
@@ -182,6 +279,10 @@ const auth = createAuthPlugin({
         .slice(0, 16);
       return { userid: `anon:${anon}`, cookie, origin };
     }
+  },
+  // Authorizes the global-scoped endpoints, of which the JWKS is the only one.
+  async getGlobalAccessType(authInfo, purpose) {
+    return purpose === 'jwks' ? 'r' : null;
   },
   async getAccessType(authInfo, { org, docid, branch }, purpose) {
     if (authInfo.admin === true) {
@@ -254,6 +355,24 @@ const jsonResponse = (status, body) =>
   });
 
 const api = [
+  // GET /collaboration/jwks/v1 — the public keys verifying the tokens we sign
+  // to call the backend, in the JSON Web Key Set format (RFC 7517). Global
+  // scope: it is about this server, not about a document, so the route carries
+  // no org and no docid. The counterpart of the backend's own /api/v1.0/jwks,
+  // which we read above to verify its tokens: neither side stores a copy of
+  // the other's key, so either can be rolled without the other being changed.
+  createApiEndpoint('jwks', {
+    scope: 'global',
+    accessPurpose: 'jwks',
+    get: {
+      // an empty set when no key is configured: honest, and the backend
+      // refuses our (equally absent) tokens rather than trusting anything
+      handler: () =>
+        jsonResponse(200, {
+          keys: backendPublicJwk == null ? [] : [backendPublicJwk],
+        }),
+    },
+  }),
   // POST /collaboration/reset-connections/v1/{org}/{docid} — replaces
   // y-provider's /collaboration/api/reset-connections/?room=. Doc-scoped, so
   // the room comes from the path; access is gated to the admin token via the
@@ -475,8 +594,46 @@ const api = [
   }),
 ];
 
-// referenced by getAccessType above — safe: auth callbacks only fire once the
-// server is up, i.e. after this assignment
+// Django orders the document lists by `updated_at` and no edit goes through it
+// anymore, so it is told here that a document moved on.
+const touchDocument = async (docid) => {
+  if (backendSigningKey == null) return;
+  try {
+    const res = await fetch(
+      `${COLLABORATION_BACKEND_BASE_URL}/api/v1.0/documents/${docid}/content-updated/`,
+      {
+        method: 'POST',
+        headers: { authorization: `Bearer ${await getBackendToken()}` },
+        signal: AbortSignal.timeout(BACKEND_NOTIFY_TIMEOUT_MS),
+      },
+    );
+    if (!res.ok) {
+      touchLog.warn({ docid, status: res.status }, 'backend refused the notification');
+    }
+  } catch (err) {
+    // best effort: a lost notification only leaves `updated_at` behind until
+    // the document is edited again, it must never fail a compaction
+    touchLog.warn({ err, docid }, 'could not notify the backend');
+  }
+};
+
+// `docUpdate` is the worker event for "this compaction found new content": the
+// task returns before it when it has nothing to persist, so the awareness-only
+// traffic of someone merely opening a document never reaches it. Since yhub
+// 0.5.0 it is handed the room of the task alongside the merged document.
+const workerEvents = {
+  docUpdate: ({ room }) => {
+    // Django knows the documents of this org, on the main branch, by their uuid
+    if (room.org !== ORG || room.branch !== 'main' || !UUID4.test(room.docid)) {
+      return;
+    }
+    // deliberately not awaited: a slow backend must not hold the worker
+    touchDocument(room.docid);
+  },
+};
+
+// the instance is referenced by the soft-migration helpers above — safe: auth
+// callbacks only fire once the server is up, i.e. after this assignment
 const yhub = await createYHub({
   redis: {
     url: REDIS,
@@ -486,12 +643,8 @@ const yhub = await createYHub({
   },
   postgres: POSTGRES,
   persistence: [], // blobs live in yhub's postgres
-  // apiPrefix mounts every route — built-ins, reset-connections, and the
-  // websocket (/collaboration/ws/v1/{org}/{docid}) — under /collaboration/,
-  // matching the URL scheme Docs already routes to the collaboration server.
-  server: { port: PORT, auth, api, apiPrefix: 'collaboration' },
-  worker: { taskConcurrency: 5 },
-  // TODO(yhub): worker.events.docUpdate could push snapshots to Django and replace the
-  // client useSaveDoc PATCH flow. No longer blocked upstream — yhub 0.5.0 adds `room`
-  // to the event payload, which was the missing piece.
+  // apiPrefix mounts every route — built-ins, our custom endpoints, and the
+  // websocket (/collaboration/ws/v1/{org}/{docid}) — under /collaboration/.
+  server: { port: PORT, auth, api, apiPrefix: API_PREFIX },
+  worker: { taskConcurrency: 5, events: workerEvents },
 });
