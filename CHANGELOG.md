@@ -134,6 +134,11 @@ and this project adheres to
   in the process serving the request. A document whose content cannot be read
   is left out of the batch rather than indexed empty, which would have erased
   it from the search backend
+- ♻️(backend) duplicate the onboarding sandbox document through the
+  collaboration server: its content is read from there and copied under the
+  identity of the user the sandbox is created for. A collaboration server that
+  cannot be reached skips the sandbox, as a missing template already did, and
+  never fails the signup
 - 🔥(backend) remove the unused `CollaborationService`
 - 💥(backend) remove the `documents/{id}/content/` endpoint
 - 💥(backend) remove the `documents/{id}/can-edit/` endpoint
