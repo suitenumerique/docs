@@ -11,10 +11,26 @@ and this project adheres to
 - ✨(collaboration) soft-migrate legacy S3 documents into yhub on first access
   (`SOFT_MIGRATION=true`): when yhub does not know a document yet, its legacy
   snapshot (`{id}/file`, base64 Yjs update) is fetched from the Django S3
-  media bucket and seeded server-side (attributed to `system`) before the
-  connection is admitted. A missing S3 object means a brand-new document and
-  yields an empty room; any real S3/compute failure fails closed (opaque 401,
-  the client retries with backoff). Enabled in the dev stack via compose.yml
+  media bucket and seeded server-side (attributed to `system`, with no
+  timestamp — a lazy seed is not an editing event, and stamping one would
+  collide with the real per-version times the migrate endpoint writes) before
+  the connection is admitted. A missing S3 object means a brand-new document and
+  yields an empty room; any real S3/compute failure fails closed, as a
+  permanent `403` for a corrupt or oversized object and a retryable `503` for
+  timeouts and network errors. Enabled in the dev stack via compose.yml
+- ✨(collaboration) add a migrate endpoint on yhub:
+  `POST /collaboration/migrate/v1/docs/{id}` replays a document's **full**
+  legacy version history from the versioned S3 media bucket into a
+  `gc: false` Yjs document, crediting each S3 version with its own S3
+  timestamp — so `activity?group=false` reports the same timeline as the
+  backend's `/documents/{id}/versions/`, instead of the single
+  migration-time change the
+  lazy soft migration leaves behind. Purely additive: the result is stored as
+  one new row at clock `0`, so nothing existing is deleted and the next
+  compaction merges it like any other row. Idempotent by construction (the
+  clock-`0` insert is `ON CONFLICT DO NOTHING`, and migrated ids are recorded
+  in a valkey set), lock-free, admin JWT only, and the intended way to backfill
+  the corpus before `SOFT_MIGRATION` is turned off
 - ✨(collaboration) add a create-ydoc endpoint on yhub:
   `POST /collaboration/create-ydoc/v1/docs/{id}` seeds a document's initial
   Yjs state from a raw binary update posted as `application/octet-stream`,
@@ -31,11 +47,16 @@ and this project adheres to
   an admin token Django issued for another service (e.g. the `y-converter`
   one) cannot be replayed here; not yet triggered by the backend on
   permission changes (follow-up)
-- ⬆️(collaboration) upgrade yhub to 0.4.0 and serve all its routes under the
+- ⬆️(collaboration) upgrade yhub to 0.5.0 and serve all its routes under the
   `/collaboration/` prefix (`server.apiPrefix`): the websocket moves to
   `/collaboration/ws/v1/docs`. All `/collaboration/` routes are meant to be
-  publicly exposed except `reset-connections`, which stays backend-internal
-  (admin JWT only)
+  publicly exposed except `reset-connections` and `migrate`, which stay
+  backend-internal (admin JWT only). Following 0.5.0's error semantics
+  (`4xx` permanent, `5xx`/`429` retryable), the auth plugin now reports a
+  temporarily unreachable Django backend, JWKS endpoint or legacy S3 store as
+  `503` instead of denying access like a permission failure, so clients retry
+  instead of giving up. The built-in endpoints can also answer JSON on
+  `Accept: application/json`
 - ✨(backend) add a service generating cached RS256 JWT tokens
 - ✨(backend) publish the JWT public key on a JWKS endpoint
 - 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
