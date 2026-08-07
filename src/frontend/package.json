@@ -44,6 +44,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "serialize-javascript": "7.0.7",
+    "sharp": "0.35.0",
     "typescript": "6.0.3",
     "wrap-ansi": "10.0.0",
     "yjs": "13.6.31"
