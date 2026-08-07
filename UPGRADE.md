@@ -31,6 +31,28 @@ the following command inside your docker container:
   tokens Docs issues to call external services. If you enabled the resource
   server (`OIDC_RESOURCE_SERVER_ENABLED`), update the JWKS URI declared to your
   OIDC provider accordingly.
+- ⚠️ The collaboration server now calls the backend on its own, to declare that
+  a document was edited, and signs those calls: **it needs an RSA private key
+  of its own**, which it had not before. Generate one and give it to the
+  collaboration server in `YHUB_JWT_PRIVATE_KEY`, or in a file
+  `YHUB_JWT_PRIVATE_KEY_FILE` points at:
+
+  ```bash
+  openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out yhub-private.pem
+  ```
+
+  There is nothing to configure on the backend side: it reads the public half
+  from the JWKS the collaboration server publishes on `/collaboration/jwks/v1`,
+  which it fetches over `YHUB_API_BASE_URL` — so the two only need to reach
+  each other, and this key can be rolled without the backend being touched.
+  Do not share the backend key (`JWT_PRIVATE_KEY`) with it: each service signs
+  with a key of its own.
+
+  Without this key the collaboration server keeps serving documents, and warns
+  at startup that it will not notify the backend: the `updated_at` of a document
+  then stops following the edits made in the editor, and the lists ordered by it
+  drift out of date. In a development environment,
+  `make generate-secret-keys` creates the key in `data/jwt/`.
 
 ### [5.0.0] - 2026-04-30
 

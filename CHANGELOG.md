@@ -23,6 +23,7 @@ and this project adheres to
 - ✨(frontend) make the full last-update date available #1215
 - ✨(backend) duplicate a document through the collaboration server
 - ✨(backend) serve `documents/{id}/formatted-content/` from yhub
+- ✨(collaboration) notify the backend when the worker persists new content
 
 ### Changed
 
