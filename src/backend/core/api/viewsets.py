@@ -934,6 +934,37 @@ class DocumentViewSet(
             {"id": str(document.id)}, status=status.HTTP_201_CREATED
         )
 
+    @drf.decorators.action(
+        authentication_classes=[authentication.CollaborationServerAuthentication],
+        detail=True,
+        methods=["post"],
+        permission_classes=[],
+        url_path="content-updated",
+    )
+    def content_updated(self, request, *args, **kwargs):
+        """
+        Record that the collaboration server saved a new content for a document.
+
+        The content of a document does not go through Django anymore, so nothing
+        would refresh its "updated_at" as it is edited and the lists ordered by
+        it would freeze. The collaboration server calls this once it persisted
+        the changes of a document, at most once per debounce window.
+
+        The update is written without going through the model, saving it would
+        trigger a re-indexing of a content Django did not see change.
+        """
+        try:
+            document_id = uuid.UUID(kwargs["pk"])
+        except ValueError as err:
+            raise Http404 from err
+
+        if not models.Document.objects.filter(pk=document_id).update(
+            updated_at=timezone.now()
+        ):
+            raise Http404
+
+        return drf_response.Response(status=status.HTTP_204_NO_CONTENT)
+
     @drf.decorators.action(detail=True, methods=["post"])
     @transaction.atomic
     def move(self, request, *args, **kwargs):

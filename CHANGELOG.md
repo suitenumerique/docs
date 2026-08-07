@@ -97,6 +97,17 @@ and this project adheres to
   `503` instead of denying access like a permission failure, so clients retry
   instead of giving up. The built-in endpoints can also answer JSON on
   `Accept: application/json`
+- ✨(collaboration) notify the backend when the worker persists new content for
+  a document, so the lists ordered by `updated_at` follow the edits made on the
+  collaboration server. The backend serves it on
+  `POST /api/v1.0/documents/{id}/content-updated/`, authenticated with a short
+  lived RS256 JWT the collaboration server signs (`aud: "docs-backend"`) and
+  the backend verifies against the JWKS the collaboration server publishes on
+  `/collaboration/jwks/v1` — the mirror of the admin token the backend signs to
+  call it, so no long lived secret is shared and either side can roll its key
+  on its own
+- 🔧(dev) generate the JWT signing key of the collaboration server when
+  bootstrapping the dev stack, alongside the backend one
 - ✨(collaboration) add a get-ydoc endpoint on yhub
 - ✨(backend) serve `documents/{id}/formatted-content/` from yhub
 - ✨(backend) duplicate a document through the collaboration server
