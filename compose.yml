@@ -248,9 +248,13 @@ services:
       # seed rooms from the legacy Django/S3 document store on first access —
       # S3 endpoint/credentials come from env.d/development/common
       SOFT_MIGRATION: "true"
+      # signs the calls made to the backend, which holds the public half
+      YHUB_JWT_PRIVATE_KEY_FILE: /data/jwt/yhub-private.pem
     env_file:
       - env.d/development/common
       - env.d/development/common.local
+    volumes:
+      - ./data/jwt:/data/jwt:ro
     restart: unless-stopped
     ports:
       - "3002:3002"
