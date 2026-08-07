@@ -40,6 +40,7 @@ from core.choices import (
     RoleChoices,
     get_equivalent_link_definition,
 )
+from core.services.yhub_services import YHubError, YHubService
 from core.utils.treebeard import create_tree_node_with_retry
 from core.validators import sub_validator
 
@@ -314,6 +315,10 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         """
         If the user is new and there is a sandbox document configured,
         duplicate the sandbox document for the user
+
+        The content of the template is read from the collaboration server, which
+        owns it, and seeded into the copy under the identity of the user: the
+        sandbox is theirs from its very first revision.
         """
         if settings.USER_ONBOARDING_SANDBOX_DOCUMENT:
             sandbox_id = settings.USER_ONBOARDING_SANDBOX_DOCUMENT
@@ -325,19 +330,36 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
                     sandbox_id,
                 )
                 return
-            with transaction.atomic():
-                sandbox_document = create_tree_node_with_retry(
-                    lambda: Document.add_root(
-                        title=template_document.title,
-                        content=template_document.content,
-                        attachments=template_document.attachments,
-                        duplicated_from=template_document,
-                        creator=self,
-                    )
-                )
 
-                DocumentAccess.objects.create(
-                    user=self, document=sandbox_document, role=RoleChoices.OWNER
+            service = YHubService(user=self)
+            try:
+                # a template the collaboration server holds nothing for is an
+                # empty template: the sandbox is created, empty as well
+                ydoc_update = service.get_ydoc(template_document)
+
+                with transaction.atomic():
+                    sandbox_document = create_tree_node_with_retry(
+                        lambda: Document.add_root(
+                            title=template_document.title,
+                            attachments=template_document.attachments,
+                            duplicated_from=template_document,
+                            creator=self,
+                        )
+                    )
+
+                    DocumentAccess.objects.create(
+                        user=self, document=sandbox_document, role=RoleChoices.OWNER
+                    )
+
+                    if ydoc_update:
+                        service.create_ydoc(sandbox_document, ydoc_update)
+            except YHubError:
+                # Onboarding is not worth failing a signup for, and a sandbox
+                # the content of which could not be copied is not one we want
+                # to leave behind: the transaction takes it back.
+                logger.exception(
+                    "Onboarding sandbox document with id %s could not be copied. Skipping.",
+                    sandbox_id,
                 )
 
     def _convert_valid_invitations(self):
