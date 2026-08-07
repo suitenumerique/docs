@@ -60,6 +60,14 @@ def test_build_url():
     assert url == f"http://yhub:3002/collaboration/ydoc/v1/docs/{DOCUMENT.id!s}"
 
 
+def test_jwks_url():
+    """The keys validating what yhub signs should be read from yhub itself."""
+    service = YHubService()
+
+    assert service.jwks_url == "http://yhub:3002/collaboration/jwks/v1"
+    assert service.jwks.url == service.jwks_url
+
+
 def test_auth_header():
     """The auth header should carry an admin JWT signed with the configured key."""
     scheme, token = YHubService().auth_header.split(" ")

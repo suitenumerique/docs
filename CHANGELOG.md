@@ -21,6 +21,7 @@ and this project adheres to
 - ✨(collaboration) add a get-ydoc endpoint on yhub
 - ✨(backend) duplicate a document through the collaboration server
 - ✨(backend) serve `documents/{id}/formatted-content/` from yhub
+- ✨(collaboration) notify the backend when the worker persists new content
 
 ### Changed
 
