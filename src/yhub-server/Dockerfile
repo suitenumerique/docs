@@ -6,7 +6,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY server.js ./
+# server.js, migration.js, env.js — glob so a new module cannot be forgotten
+COPY *.js ./
 
 EXPOSE 3002
 
