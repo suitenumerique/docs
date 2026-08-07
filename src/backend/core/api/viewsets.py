@@ -70,6 +70,7 @@ from core.services.search_indexers import (
 from core.services.yhub_services import YHubError, YHubService
 from core.tasks.access import reset_service_connections_in_cascade
 from core.tasks.mail import send_ask_for_access_mail
+from core.tasks.search import trigger_batch_document_indexer
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.paths import filter_descendants
 from core.utils.treebeard import create_tree_node_with_retry
@@ -948,18 +949,27 @@ class DocumentViewSet(
         it would freeze. The collaboration server calls this once it persisted
         the changes of a document, at most once per debounce window.
 
-        The update is written without going through the model, saving it would
-        trigger a re-indexing of a content Django did not see change.
+        The new content is then read back from the collaboration server to
+        refresh the search index, in a task: this call is on the path of a
+        worker persisting a document, it only records what happened.
+
+        The update is written without going through the model: saving it would
+        index the document a second time, through the post_save signal.
         """
         try:
             document_id = uuid.UUID(kwargs["pk"])
         except ValueError as err:
             raise Http404 from err
 
+        updated_at = timezone.now()
         if not models.Document.objects.filter(pk=document_id).update(
-            updated_at=timezone.now()
+            updated_at=updated_at
         ):
             raise Http404
+
+        # Throttled like any other change: the collaboration server calls this
+        # once per debounce window, for as long as a document is being edited.
+        trigger_batch_document_indexer(document_id, updated_at)
 
         return drf_response.Response(status=status.HTTP_204_NO_CONTENT)
 
