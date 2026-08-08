@@ -52,6 +52,19 @@ interface Doc {
   };
 }
 
+/**
+ * In production the backend sets SECURE_SSL_REDIRECT and only trusts
+ * X-Forwarded-Proto to tell whether TLS was terminated upstream. This call is
+ * internal, so when COLLABORATION_BACKEND_BASE_URL points at the backend
+ * directly it never crosses the reverse proxy: nothing sets the header, Django
+ * answers a 301 to https://<host>:<port>, and the client then speaks TLS to a
+ * port that serves plain HTTP.
+ *
+ * Always send https: it is the safe default given the current Production
+ * settings. Relaying the client's own X-Forwarded-Proto would let a client
+ * that sends X-Forwarded-Proto: http on its WebSocket upgrade force a 301 and
+ * break its own connection — a vector this fix has no reason to introduce.
+ */
 async function fetch<T>(
   path: string,
   requestHeaders: IncomingHttpHeaders,
@@ -63,6 +76,7 @@ async function fetch<T>(
         cookie: requestHeaders['cookie'],
         origin: requestHeaders['origin'],
         'X-Y-Provider-Key': Y_PROVIDER_API_KEY,
+        'X-Forwarded-Proto': 'https',
       },
     },
   );

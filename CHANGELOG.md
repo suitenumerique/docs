@@ -14,6 +14,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(y-provider) send X-Forwarded-Proto on internal backend calls #2541
 - 🐛(frontend) redirect homepage to login when homepage feat is disabled #2521
 - 🐛(backend) ignore CSPs for API docs in development
 
