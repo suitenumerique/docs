@@ -16,6 +16,7 @@ and this project adheres to
 
 - 🐛(frontend) redirect homepage to login when homepage feat is disabled #2521
 - 🐛(backend) ignore CSPs for API docs in development
+- 🐛(frontend) export images embedded with a relative url #2573
 
 ### Changed
 

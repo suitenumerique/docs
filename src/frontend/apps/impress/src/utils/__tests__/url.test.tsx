@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { isSafeUrl } from '@/utils/url';
+import {
+  isDataUrl,
+  isLocalDevOrigin,
+  isSafeUrl,
+  isSameOrigin,
+} from '@/utils/url';
 
 describe('isSafeUrl', () => {
   // XSS Attacks
@@ -108,5 +113,91 @@ describe('isSafeUrl', () => {
         expect(isSafeUrl(url)).toBe(true);
       });
     });
+  });
+});
+
+describe('isSameOrigin', () => {
+  it('returns true for a relative URL', () => {
+    expect(isSameOrigin('/media/image.png')).toBe(true);
+  });
+
+  it('returns true for an absolute same-origin URL', () => {
+    expect(isSameOrigin(`${window.location.origin}/media/image.png`)).toBe(
+      true,
+    );
+  });
+
+  it('returns false for a cross-origin URL', () => {
+    expect(isSameOrigin('https://example.com/image.png')).toBe(false);
+  });
+
+  it('returns false for a localhost URL on a different port', () => {
+    // window.location is http://localhost:3000 in this test environment.
+    // A different port is a different origin, full stop: the local-dev
+    // convenience lives in isLocalDevOrigin, not here.
+    expect(isSameOrigin('http://localhost:8083/media/image.png')).toBe(false);
+  });
+
+  it('returns false for a cross-origin URL that merely contains the current hostname', () => {
+    expect(
+      isSameOrigin(`https://example.com/?redirect=${window.location.hostname}`),
+    ).toBe(false);
+  });
+
+  it('returns false for an unparsable URL', () => {
+    expect(isSameOrigin('http://')).toBe(false);
+  });
+});
+
+describe('isLocalDevOrigin', () => {
+  it('returns true for a localhost URL on a different port, same protocol', () => {
+    // window.location is http://localhost:3000 in this test environment,
+    // matching a local dev setup where the frontend, API and media server
+    // run on different ports of the same host.
+    expect(isLocalDevOrigin('http://localhost:8083/media/image.png')).toBe(
+      true,
+    );
+  });
+
+  it('returns false for a localhost URL with a mismatched protocol', () => {
+    // Guards against an https page silently falling back to plain http,
+    // which browsers block as mixed content anyway.
+    expect(isLocalDevOrigin('https://localhost:8083/media/image.png')).toBe(
+      false,
+    );
+  });
+
+  it('returns false for a non-localhost URL on a different port', () => {
+    expect(isLocalDevOrigin('http://example.com:8083/media/image.png')).toBe(
+      false,
+    );
+  });
+
+  it('returns false for an unparsable URL', () => {
+    expect(isLocalDevOrigin('http://')).toBe(false);
+  });
+});
+
+describe('isDataUrl', () => {
+  it('returns true for a data URL', () => {
+    expect(isDataUrl('data:image/png;base64,iVBORw0KGgo=')).toBe(true);
+  });
+
+  it('returns true for a data URL with an uppercase scheme', () => {
+    expect(isDataUrl('DATA:image/png;base64,iVBORw0KGgo=')).toBe(true);
+  });
+
+  it('returns true for a data URL that is not base64 encoded', () => {
+    expect(
+      isDataUrl('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>'),
+    ).toBe(true);
+  });
+
+  it('returns false for a non-data URL', () => {
+    expect(isDataUrl('https://example.com/image.png')).toBe(false);
+  });
+
+  it('returns false for an unparsable URL', () => {
+    expect(isDataUrl('http://')).toBe(false);
   });
 });
