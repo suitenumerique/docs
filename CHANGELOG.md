@@ -20,6 +20,7 @@ and this project adheres to
 ### Changed
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
+- 🚚(project) switch docspec image to ghcr.io/docspec/api #2553
 
 ## [v5.4.1] - 2026-07-09
 

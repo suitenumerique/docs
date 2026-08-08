@@ -837,9 +837,9 @@ docSpec:
   ## @param docSpec.image.tag docSpec container tag
   ## @param docSpec.image.pullPolicy docSpec container image pull policy
   image:
-    repository: ghcr.io/docspecio/api
+    repository: ghcr.io/docspec/api
     pullPolicy: IfNotPresent
-    tag: "3.0.1"
+    tag: "1.21.4"
 
   ## @param docSpec.command Override the docSpec container command
   command: []
@@ -880,7 +880,7 @@ docSpec:
   service:
     type: ClusterIP
     port: 4000
-    targetPort: 4000
+    targetPort: 3000
 
   ## @param docSpec.probes.liveness.path Configure path for docSpec HTTP liveness probe
   ## @param docSpec.probes.readiness.path Configure path for docSpec HTTP readiness probe
