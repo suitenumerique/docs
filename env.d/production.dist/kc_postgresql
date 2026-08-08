@@ -7,7 +7,7 @@ PGDATA=/var/lib/postgresql/data/pgdata
 # Keycloak postgresql configuration
 KC_DB=postgres
 KC_DB_SCHEMA=public
-KC_DB_HOST=postgresql
-KC_DB_NAME=${POSTGRES_DB}
-KC_DB_USER=${POSTGRES_USER}
+KC_DB_URL_HOST=kc_postgresql
+KC_DB_URL_DATABASE=${POSTGRES_DB}
+KC_DB_USERNAME=${POSTGRES_USER}
 KC_DB_PASSWORD=${POSTGRES_PASSWORD}
