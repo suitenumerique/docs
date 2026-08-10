@@ -1,6 +1,5 @@
 """Tests for Documents search indexers"""
 
-from base64 import b64decode
 from functools import partial
 from json import dumps as json_dumps
 from unittest.mock import patch
@@ -231,7 +230,7 @@ def test_services_search_indexers_serialize_document_deleted():
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_serialize_document_empty():
     """Empty documents returns empty content in the serialized json."""
-    document = factories.DocumentFactory(content="", title=None)
+    document = factories.DocumentFactory(title=None)
 
     indexer = FindDocumentIndexer()
     result = indexer.serialize_document(document, "", {})
@@ -366,14 +365,14 @@ def test_services_search_indexers_skip_documents_the_content_of_which_is_unreada
     """
     unreadable, readable = factories.DocumentFactory.create_batch(2)
 
-    def get_ydoc(_service, document):
+    def get_ydoc(document):
         if document.pk == unreadable.pk:
             raise ServiceUnavailableError("yhub is unreachable")
-        return b64decode(document.content)
+        return factories.YDOC_HELLO_WORLD_UPDATE
 
-    # a plain replacement: the indexer_settings fixture already serves the
-    # content of the documents, this test needs one of them to fail
-    with patch.object(YHubService, "get_ydoc", get_ydoc):
+    # the indexer_settings fixture serves content for every document, this
+    # test needs one of them to fail
+    with patch.object(YHubService, "get_ydoc", side_effect=get_ydoc):
         assert FindDocumentIndexer().index() == 1
 
     results = {doc["id"] for doc in mock_push.call_args[0][0]}
@@ -388,11 +387,18 @@ def test_services_search_indexers_ignore_empty_documents(mock_push):
     and only the access data relevant to each batch should be used.
     """
     document = factories.DocumentFactory()
-    factories.DocumentFactory(content="", title="")
+    empty = factories.DocumentFactory(title="")
     empty_title = factories.DocumentFactory(title="")
-    empty_content = factories.DocumentFactory(content="")
+    empty_content = factories.DocumentFactory()
 
-    assert FindDocumentIndexer().index() == 3
+    # a document with no content is one the collaboration server holds none for
+    def get_ydoc(doc):
+        if doc.pk in (empty.pk, empty_content.pk):
+            return None
+        return factories.YDOC_HELLO_WORLD_UPDATE
+
+    with patch.object(YHubService, "get_ydoc", side_effect=get_ydoc):
+        assert FindDocumentIndexer().index() == 3
 
     assert mock_push.call_count == 1
 
@@ -417,10 +423,18 @@ def test_services_search_indexers_skip_empty_batches(mock_push, indexer_settings
 
     document = factories.DocumentFactory()
 
-    # Only empty docs
-    factories.DocumentFactory.create_batch(5, content="", title="")
+    # Only empty docs: no title, and no content in the collaboration server
+    empty = factories.DocumentFactory.create_batch(5, title="")
+    empty_ids = {doc.pk for doc in empty}
 
-    assert FindDocumentIndexer().index() == 1
+    with patch.object(
+        YHubService,
+        "get_ydoc",
+        side_effect=lambda doc: (
+            None if doc.pk in empty_ids else factories.YDOC_HELLO_WORLD_UPDATE
+        ),
+    ):
+        assert FindDocumentIndexer().index() == 1
     assert mock_push.call_count == 1
 
     results = [doc["id"] for doc in mock_push.call_args[0][0]]
