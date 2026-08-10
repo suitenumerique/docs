@@ -938,7 +938,7 @@ def test_models_documents_get_versions_slice_pagination(settings):
     settings.DOCUMENT_VERSIONS_PAGE_SIZE = 4
 
     # Create a document with 7 versions
-    document = factories.DocumentFactory()
+    document = factories.DocumentFactory(content=factories.YDOC_HELLO_WORLD_BASE64)
     for i in range(6):
         document.content = f"bar{i:d}"
         document.save()
@@ -997,7 +997,7 @@ def test_models_documents_get_versions_slice_min_datetime():
 
 def test_models_documents_version_duplicate():
     """A new version should be created in object storage only if the content has changed."""
-    document = factories.DocumentFactory()
+    document = factories.DocumentFactory(content=factories.YDOC_HELLO_WORLD_BASE64)
 
     file_key = str(document.pk)
     response = default_storage.connection.meta.client.list_object_versions(
