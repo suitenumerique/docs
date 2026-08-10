@@ -9,9 +9,21 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.factories import YDOC_HELLO_WORLD_BASE64
 from core.tests.conftest import TEAM, USER, VIA
 
 pytestmark = pytest.mark.django_db
+
+
+def create_document(**kwargs):
+    """
+    Create a document holding content in the legacy object storage.
+
+    Versions are the versions of that object, so these tests are the ones still
+    about it: the factories give a document no content anymore, the
+    collaboration server holds it.
+    """
+    return factories.DocumentFactory(content=YDOC_HELLO_WORLD_BASE64, **kwargs)
 
 
 @pytest.mark.parametrize("reach", models.LinkReachChoices.values)
@@ -21,7 +33,7 @@ def test_api_document_versions_list_anonymous(role, reach):
     Anonymous users should not be allowed to list document versions for a document
     whatever the reach and role.
     """
-    document = factories.DocumentFactory(link_role=role, link_reach=reach)
+    document = create_document(link_role=role, link_reach=reach)
 
     # Accesses and traces for other users should not interfere
     factories.UserDocumentAccessFactory(document=document)
@@ -44,7 +56,7 @@ def test_api_document_versions_list_authenticated_unrelated(reach):
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(link_reach=reach)
+    document = create_document(link_reach=reach)
     factories.UserDocumentAccessFactory.create_batch(3, document=document)
 
     # The versions of another document to which the user is related should not be listed either
@@ -70,7 +82,7 @@ def test_api_document_versions_list_authenticated_related_success(via, mock_user
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    document = create_document()
     if via == USER:
         models.DocumentAccess.objects.create(
             document=document,
@@ -125,7 +137,7 @@ def test_api_document_versions_list_authenticated_related_pagination(
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    document = create_document()
     for i in range(3):
         document.content = f"before {i:d}"
         document.save()
@@ -199,9 +211,9 @@ def test_api_document_versions_list_authenticated_related_pagination_parent(
     client = APIClient()
     client.force_login(user)
 
-    grand_parent = factories.DocumentFactory()
-    parent = factories.DocumentFactory(parent=grand_parent)
-    document = factories.DocumentFactory(parent=parent)
+    grand_parent = create_document()
+    parent = create_document(parent=grand_parent)
+    document = create_document(parent=parent)
     for i in range(3):
         document.content = f"before {i:d}"
         document.save()
@@ -270,7 +282,7 @@ def test_api_document_versions_list_exceeds_max_page_size():
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(users=[user])
+    document = create_document(users=[user])
     document.content = "version 2"
     document.save()
 
@@ -288,7 +300,7 @@ def test_api_document_versions_retrieve_anonymous(reach):
     Anonymous users should not be allowed to find specific versions for a document with
     restricted or authenticated link reach.
     """
-    document = factories.DocumentFactory(link_reach=reach)
+    document = create_document(link_reach=reach)
     document.content = "new content"
     document.save()
 
@@ -314,7 +326,7 @@ def test_api_document_versions_retrieve_authenticated_unrelated(reach):
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(link_reach=reach)
+    document = create_document(link_reach=reach)
     document.content = "new content"
     document.save()
 
@@ -340,7 +352,7 @@ def test_api_document_versions_retrieve_authenticated_related(via, mock_user_tea
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    document = create_document()
     document.content = "new content"
     document.save()
 
@@ -406,9 +418,9 @@ def test_api_document_versions_retrieve_authenticated_related_parent(
     client = APIClient()
     client.force_login(user)
 
-    grand_parent = factories.DocumentFactory()
-    parent = factories.DocumentFactory(parent=grand_parent)
-    document = factories.DocumentFactory(parent=parent)
+    grand_parent = create_document()
+    parent = create_document(parent=grand_parent)
+    document = create_document(parent=parent)
     document.content = "new content"
     document.save()
 
@@ -462,7 +474,7 @@ def test_api_document_versions_retrieve_authenticated_related_parent(
 
 def test_api_document_versions_create_anonymous():
     """Anonymous users should not be allowed to create document versions."""
-    document = factories.DocumentFactory()
+    document = create_document()
 
     response = APIClient().post(
         f"/api/v1.0/documents/{document.id!s}/versions/",
@@ -484,7 +496,7 @@ def test_api_document_versions_create_authenticated_unrelated():
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    document = create_document()
 
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/versions/",
@@ -506,7 +518,7 @@ def test_api_document_versions_create_authenticated_related(via, mock_user_teams
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    document = create_document()
     if via == USER:
         factories.UserDocumentAccessFactory(document=document, user=user)
     elif via == TEAM:
@@ -524,8 +536,10 @@ def test_api_document_versions_create_authenticated_related(via, mock_user_teams
 
 def test_api_document_versions_update_anonymous():
     """Anonymous users should not be allowed to update a document version."""
-    access = factories.UserDocumentAccessFactory()
-    document = access.document
+    document = create_document()
+    factories.UserDocumentAccessFactory(document=document)
+    # a second version of the object: the first one is the latest, which the
+    # listing excludes
     document.content = "new content"
     document.save()
 
@@ -550,8 +564,10 @@ def test_api_document_versions_update_authenticated_unrelated():
     client = APIClient()
     client.force_login(user)
 
-    access = factories.UserDocumentAccessFactory()
-    document = access.document
+    document = create_document()
+    factories.UserDocumentAccessFactory(document=document)
+    # a second version of the object: the first one is the latest, which the
+    # listing excludes
     document.content = "new content"
     document.save()
 
@@ -559,7 +575,7 @@ def test_api_document_versions_update_authenticated_unrelated():
     version_id = document.get_versions_slice()["versions"][0]["version_id"]
 
     response = client.put(
-        f"/api/v1.0/documents/{access.document_id!s}/versions/{version_id:s}/",
+        f"/api/v1.0/documents/{document.id!s}/versions/{version_id:s}/",
         {"foo": "bar"},
         format="json",
     )
@@ -577,7 +593,7 @@ def test_api_document_versions_update_authenticated_related(via, mock_user_teams
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    document = create_document()
 
     if via == USER:
         factories.UserDocumentAccessFactory(document=document, user=user)
@@ -630,7 +646,7 @@ def test_api_document_versions_delete_authenticated(reach):
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(link_reach=reach)
+    document = create_document(link_reach=reach)
     document.content = "new content"
     document.save()
 
@@ -655,7 +671,7 @@ def test_api_document_versions_delete_reader_or_editor(via, role, mock_user_team
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    document = create_document()
     if via == USER:
         factories.UserDocumentAccessFactory(document=document, user=user, role=role)
     elif via == TEAM:
@@ -692,7 +708,7 @@ def test_api_document_versions_delete_administrator_or_owner(via, mock_user_team
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    document = create_document()
     role = random.choice(["administrator", "owner"])
     if via == USER:
         factories.UserDocumentAccessFactory(document=document, user=user, role=role)
