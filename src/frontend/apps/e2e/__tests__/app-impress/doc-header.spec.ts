@@ -480,46 +480,6 @@ test.describe('Doc Header', () => {
     ).toBeHidden();
   });
 
-  test('It checks the copy as Markdown button', async ({
-    page,
-    browserName,
-  }) => {
-    test.skip(
-      browserName === 'webkit',
-      'navigator.clipboard is not working with webkit and playwright',
-    );
-
-    // create page and navigate to it
-    await page
-      .getByRole('link', {
-        name: 'New',
-        exact: true,
-      })
-      .click();
-
-    // Add dummy content to the doc
-    const editor = page.locator('.ProseMirror');
-    const docFirstBlock = editor.locator('.bn-block-content').first();
-    await docFirstBlock.click();
-    await page.keyboard.type('# Hello World', { delay: 100 });
-    const docFirstBlockContent = docFirstBlock.locator('h1');
-    await expect(docFirstBlockContent).toHaveText('Hello World');
-
-    // Copy content to clipboard
-    await page.getByLabel('Open the document options').click();
-    await page.getByRole('menuitem', { name: 'Copy as Markdown' }).click();
-    await expect(
-      page.getByText('Copied as Markdown to clipboard'),
-    ).toBeVisible();
-
-    // Test that clipboard is in Markdown format
-    const handle = await page.evaluateHandle(() =>
-      navigator.clipboard.readText(),
-    );
-    const clipboardContent = await handle.jsonValue();
-    expect(clipboardContent.trim()).toBe('# Hello World');
-  });
-
   test('it checks the copy link button', async ({ page, browserName }) => {
     test.skip(
       browserName === 'webkit',

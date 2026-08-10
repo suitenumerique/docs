@@ -10,33 +10,32 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import AddLinkSVG from '@/assets/icons/ui-kit/add_link.svg';
-import ContentCopySVG from '@/assets/icons/ui-kit/content_copy.svg';
-import DeleteSVG from '@/assets/icons/ui-kit/delete.svg';
+import ContentCopyIcon from '@/assets/icons/ui-kit/copy.svg';
 import DownloadSVG from '@/assets/icons/ui-kit/download.svg';
-import SharedSVG from '@/assets/icons/ui-kit/group.svg';
 import HistorySVG from '@/assets/icons/ui-kit/history.svg';
 import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
 import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
 import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
-import MarkdownCopySVG from '@/assets/icons/ui-kit/markdown_copy.svg';
+import LinkIcon from '@/assets/icons/ui-kit/link.svg';
 import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
-import {
-  Doc,
-  KEY_DOC,
-  KEY_LIST_DOC,
-  KEY_LIST_FAVORITE_DOC,
-  useCopyDocLink,
-  useCreateFavoriteDoc,
-  useDeleteFavoriteDoc,
-  useDocUtils,
-  useDuplicateDoc,
-} from '@/docs/doc-management';
+import PrintIcon from '@/assets/icons/ui-kit/print.svg';
+import SharedIcon from '@/assets/icons/ui-kit/shared.svg';
+import DeleteIcon from '@/assets/icons/ui-kit/trash.svg';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useAuth } from '@/features/auth';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
-import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
+import { printDocumentWithStyles } from '../../doc-export/utils_print';
+import {
+  KEY_DOC,
+  KEY_LIST_DOC,
+  KEY_LIST_FAVORITE_DOC,
+  useCreateFavoriteDoc,
+  useDeleteFavoriteDoc,
+  useDuplicateDoc,
+} from '../api';
+import { useCopyDocLink } from '../hooks';
+import { Doc } from '../types';
 
 const ModalRemoveDoc = dynamic(
   () =>
@@ -91,10 +90,8 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
   const treeContext = useTreeContext<Doc>();
   const router = useRouter();
-  const { isTopRoot } = useDocUtils(doc);
   const isTopParent = doc.id === treeContext?.root?.id; // it can be a child but not for the current user
   const { authenticated } = useAuth();
-  const copyCurrentEditorToClipboard = useCopyCurrentEditorToClipboard();
   const [openDropdown, setOpenDropdown] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
@@ -105,8 +102,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { restoreFocus, addLastFocus } = useFocusStore();
   const { isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
-  // Deep-link (#2397) and slide/URL sync live in PresenterRoot; here we only
-  // trigger the manual "Present" action.
   const openPresenter = usePresenterStore((state) => state.open);
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: (data) => {
@@ -122,11 +117,61 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
 
   const options: DropdownMenuItem[] = [
     {
+      label: t('Copy link', {
+        description: 'Dropdown menu item to copy the document link',
+      }),
+      icon: <LinkIcon width={18} height={18} aria-hidden="true" />,
+      callback: copyDocLink,
+    },
+    {
+      label: t('Share', {
+        description: 'Dropdown menu item to share the document',
+      }),
+      icon: <SharedIcon width={18} height={18} aria-hidden="true" />,
+      callback: () => {
+        setIsModalShareOpen(true);
+      },
+      isHidden: !authenticated,
+    },
+    { type: 'separator' },
+    {
+      label: t('Present', {
+        description:
+          'Dropdown menu item to open the document in presentation mode',
+      }),
+      icon: <Present width={18} height={18} aria-hidden="true" />,
+      callback: () => {
+        openPresenter(0);
+      },
+      isHidden: Boolean(doc.deleted_at) || isMobile,
+      testId: `docs-actions-present-${doc.id}`,
+    },
+    {
+      label: t('Download', {
+        description: 'Dropdown menu item to download the document',
+      }),
+      icon: <DownloadSVG width={18} height={18} aria-hidden="true" />,
+      callback: () => {
+        setIsModalExportOpen(true);
+      },
+      isHidden: !ModalExport,
+    },
+    {
+      label: t('Print', {
+        description: 'Dropdown menu item to print the document',
+      }),
+      icon: <PrintIcon width={18} height={18} aria-hidden="true" />,
+      callback: () => {
+        printDocumentWithStyles();
+      },
+    },
+    { type: 'separator' },
+    {
       label: doc.is_favorite ? t('Unpin') : t('Pin'),
       icon: doc.is_favorite ? (
-        <KeepOffSVG width={24} height={24} aria-hidden="true" />
+        <KeepOffSVG width={18} height={18} aria-hidden="true" />
       ) : (
-        <KeepSVG width={24} height={24} aria-hidden="true" />
+        <KeepSVG width={18} height={18} aria-hidden="true" />
       ),
       callback: () => {
         if (doc.is_favorite) {
@@ -138,58 +183,11 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       isHidden: !doc.abilities.favorite,
       testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
     },
-    { type: 'separator' },
     {
-      label: t('Present'),
-      icon: <Present width={24} height={24} aria-hidden="true" />,
-      callback: () => {
-        openPresenter(0);
-      },
-      isHidden: Boolean(doc.deleted_at) || isMobile,
-      testId: `docs-actions-present-${doc.id}`,
-    },
-    {
-      label: t('Copy link'),
-      icon: <AddLinkSVG width={24} height={24} aria-hidden="true" />,
-      callback: copyDocLink,
-    },
-    {
-      label: t('Share'),
-      icon: <SharedSVG width={24} height={24} aria-hidden="true" />,
-      callback: () => {
-        setIsModalShareOpen(true);
-      },
-      isHidden: !isTopRoot || !authenticated,
-    },
-    {
-      label: t('Download'),
-      icon: <DownloadSVG width={24} height={24} aria-hidden="true" />,
-      callback: () => {
-        setIsModalExportOpen(true);
-      },
-      isHidden: !ModalExport,
-    },
-    {
-      label: t('Copy as {{format}}', { format: 'Markdown' }),
-      icon: <MarkdownCopySVG width={24} height={24} aria-hidden="true" />,
-      callback: () => {
-        void copyCurrentEditorToClipboard('markdown');
-      },
-      showSeparator: isMobile || !doc.abilities.versions_list,
-    },
-    {
-      label: t('Version history'),
-      icon: <HistorySVG width={24} height={24} aria-hidden="true" />,
-      isDisabled: !doc.abilities.versions_list,
-      callback: () => {
-        setIsModalHistoryOpen(true);
-      },
-      isHidden: isMobile || !doc.abilities.versions_list,
-      showSeparator: true,
-    },
-    {
-      label: t('Duplicate'),
-      icon: <ContentCopySVG width={24} height={24} aria-hidden="true" />,
+      label: t('Duplicate', {
+        description: 'Dropdown menu item to duplicate the document',
+      }),
+      icon: <ContentCopyIcon width={18} height={18} aria-hidden="true" />,
       isDisabled: !doc.abilities.duplicate,
       callback: () => {
         duplicateDoc({
@@ -199,11 +197,25 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         });
       },
       isHidden: !doc.abilities.duplicate,
+    },
+    { type: 'separator' },
+    {
+      label: t('History', {
+        description: 'Dropdown menu item to view the document history',
+      }),
+      icon: <HistorySVG width={18} height={18} aria-hidden="true" />,
+      isDisabled: !doc.abilities.versions_list,
+      callback: () => {
+        setIsModalHistoryOpen(true);
+      },
+      isHidden: isMobile || !doc.abilities.versions_list,
       showSeparator: true,
     },
     {
-      label: t('Leave'),
-      icon: <LeaveSVG width={24} height={24} aria-hidden="true" />,
+      label: t('Leave', {
+        description: 'Dropdown menu item to leave the document',
+      }),
+      icon: <LeaveSVG width={18} height={18} aria-hidden="true" />,
       callback: () => {
         setIsModalLeaveOpen(true);
       },
@@ -215,8 +227,10 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       isHidden: !isTopParent,
     },
     {
-      label: t('Delete'),
-      icon: <DeleteSVG width={24} height={24} aria-hidden="true" />,
+      label: t('Delete', {
+        description: 'Dropdown menu item to delete the document',
+      }),
+      icon: <DeleteIcon width={18} height={18} aria-hidden="true" />,
       callback: () => {
         setIsModalRemoveOpen(true);
       },
