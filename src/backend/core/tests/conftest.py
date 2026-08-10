@@ -32,15 +32,32 @@ def mock_user_teams():
         yield mock_teams
 
 
+@pytest.fixture(name="yhub_content")
+def yhub_content_fixture():
+    """
+    Serve the content of every document, as the collaboration server does.
+
+    It owns the content: a document built by the factories has none in the
+    database, and what it holds is whatever this fake answers for it. The mock
+    is yielded, so a test can serve another document (`return_value`), none at
+    all (`return_value = None`) or a different one per document
+    (`side_effect`).
+    """
+    with mock.patch.object(
+        YHubService, "get_ydoc", return_value=factories.YDOC_HELLO_WORLD_UPDATE
+    ) as mock_get_ydoc:
+        yield mock_get_ydoc
+
+
 @pytest.fixture(name="indexer_settings")
 def indexer_settings_fixture(settings):
     """
     Setup valid settings for the document indexer. Clear the indexer cache.
 
     The indexer reads the content of a document from the collaboration server,
-    which is faked here: it serves what the factories wrote in the database, so
-    a document built with `content=""` is one the collaboration server holds no
-    content for.
+    which is faked here: it holds the same content for every document, and a
+    test wanting one without content answers `None` for it (see the
+    `yhub_content` fixture, this is the same fake).
     """
 
     # pylint: disable-next=import-outside-toplevel
@@ -56,12 +73,8 @@ def indexer_settings_fixture(settings):
     settings.SEARCH_URL = "http://localhost:8081/api/v1.0/documents/search/"
     settings.SEARCH_INDEXER_COUNTDOWN = 1
 
-    def get_ydoc(_service, document):
-        """Answer the raw update the collaboration server would serve."""
-        return base64.b64decode(document.content) if document.content else None
-
     with mock.patch.object(
-        YHubService, "get_ydoc", autospec=True, side_effect=get_ydoc
+        YHubService, "get_ydoc", return_value=factories.YDOC_HELLO_WORLD_UPDATE
     ):
         yield settings
 
