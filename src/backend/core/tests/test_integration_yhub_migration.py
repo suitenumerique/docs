@@ -31,10 +31,8 @@ from django.core.files.storage import default_storage
 import pytest
 import requests
 
-from core.services.jwt_services import JWTService
+from core.services.jwt_services import Audiences, JWTService
 
-# yhub verifies that its own name is the audience of the token (server.js)
-YHUB_AUDIENCE = "yhub"
 # the org yhub is configured with; documents live under /docs/{docid}
 YHUB_ORG = "docs"
 TIMEOUT = 10
@@ -80,7 +78,8 @@ def admin_headers_fixture(settings):  # pylint: disable=redefined-outer-name
     """
     if not settings.JWT_PRIVATE_KEY:
         pytest.skip("JWT_PRIVATE_KEY is not configured")
-    token = JWTService().get_admin_token({"aud": YHUB_AUDIENCE})
+    # yhub verifies that its own name is the audience of the token (server.js)
+    token = JWTService().get_admin_token(Audiences.YHUB)
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -330,7 +329,11 @@ def test_integration_yhub_full_migration_is_idempotent(admin_headers):
 
     again = _migrate(docid, admin_headers)
     assert again.status_code == 200
-    assert again.json() == {"message": "Already migrated", "migrated": False}
+    assert again.json() == {
+        "status": "already",
+        "message": "Already migrated",
+        "migrated": False,
+    }
 
     forced = _migrate(docid, admin_headers, force="true")
     assert forced.json()["migrated"] is True
