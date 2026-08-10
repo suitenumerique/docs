@@ -2133,3 +2133,66 @@ class Invitation(BaseModel):
             "partial_update": is_admin_or_owner,
             "retrieve": is_admin_or_owner,
         }
+
+
+class DocumentMigrationStatus(models.TextChoices):
+    """What became of a document handed to the collaboration server to migrate."""
+
+    MIGRATED = "ok", _("Migrated")
+    ALREADY = "already", _("Already migrated")
+    EMPTY = "empty", _("Nothing in the object storage")
+    NOTHING = "nothing", _("No readable version")
+    FAILED = "failed", _("Failed")
+
+
+class DocumentMigration(models.Model):
+    """
+    What the collaboration server did with the legacy content of a document.
+
+    The ledger of the backfill: the collaboration server keeps its own set of
+    the documents it migrated, but only of those it actually wrote history for.
+    A document it found nothing for is not in it and would be handed over again
+    on every run, and a valkey configured to evict would lose the set entirely.
+    This table is what the command reads to know what is left to do, and what
+    an operator reads to know how it went.
+    """
+
+    document = models.OneToOneField(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="migration",
+        primary_key=True,
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=DocumentMigrationStatus.choices,
+        verbose_name=_("status"),
+    )
+    versions = models.PositiveIntegerField(default=0, verbose_name=_("versions"))
+    applied = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("applied"),
+        help_text=_("versions that added content, one activity entry each"),
+    )
+    skipped = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("skipped"),
+        help_text=_("versions that could not be read"),
+    )
+    dropped = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("dropped"),
+        help_text=_("versions older than the ones the server replays"),
+    )
+    duration_ms = models.PositiveIntegerField(default=0, verbose_name=_("duration"))
+    error = models.TextField(blank=True, default="", verbose_name=_("error"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("updated on"))
+
+    class Meta:
+        db_table = "impress_document_migration"
+        verbose_name = _("Document migration")
+        verbose_name_plural = _("Document migrations")
+        indexes = [models.Index(fields=["status"])]
+
+    def __str__(self):
+        return f"{self.document_id!s}: {self.status:s}"

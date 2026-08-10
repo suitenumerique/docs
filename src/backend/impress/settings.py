@@ -540,6 +540,14 @@ class Base(Configuration):
         environ_name="YHUB_API_TIMEOUT",
         environ_prefix=None,
     )
+    # Replaying the legacy history of a document reads every one of its S3
+    # versions, so it is the one call that can take minutes. Timing it out does
+    # not stop the collaboration server, it only loses the answer.
+    YHUB_MIGRATION_TIMEOUT = values.IntegerValue(
+        default=600,
+        environ_name="YHUB_MIGRATION_TIMEOUT",
+        environ_prefix=None,
+    )
 
     # JWT
     # RSA private key (PEM) used to sign the tokens issued by
