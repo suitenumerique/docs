@@ -581,11 +581,17 @@ def test_external_api_documents_trashbin_not_allowed(
     assert response.status_code == 403
 
 
-def test_external_api_documents_create_for_owner_not_allowed():
+def test_external_api_documents_create_for_owner_not_allowed(
+    resource_server_backend_conf,
+):
     """
     Authenticated users SHOULD NOT be allowed to call create documents
     on behalf of other users.
     This API endpoint is reserved for server-to-server calls.
+
+    The route only exists when the resource server is enabled, hence the
+    fixture: the endpoint answering 401 is what this asserts, not the
+    `/external_api/` prefix being routed at all.
     """
     user = factories.UserFactory()
 
