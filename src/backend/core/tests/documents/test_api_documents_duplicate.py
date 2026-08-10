@@ -2,7 +2,6 @@
 Test file uploads API endpoint for users in impress's core app.
 """
 
-import base64
 import uuid
 from io import BytesIO
 from unittest import mock
@@ -19,6 +18,7 @@ from freezegun import freeze_time
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.factories import YDOC_HELLO_WORLD_UPDATE
 from core.services.yhub_services import (
     ServiceUnavailableError as YHubServiceUnavailableError,
 )
@@ -31,15 +31,19 @@ def mock_yhub_fixture():
     """
     The content of a document is held by the collaboration server.
 
-    It stands for a server holding the very content the factories gave the
-    documents, which is what an editor connected to it would have saved.
+    It stands for a server holding content for every document, which is what an
+    editor connected to it would have saved; the database holds none of it. A
+    test caring about the content of a given document declares it in
+    `mock_yhub.contents`, keyed by document id.
     """
+    contents = {}
 
     def get_ydoc(document):
-        return base64.b64decode(document.content) if document.content else None
+        return contents.get(document.id, YDOC_HELLO_WORLD_UPDATE)
 
     with mock.patch("core.api.viewsets.YHubService") as mock_service:
         mock_service.return_value.get_ydoc.side_effect = get_ydoc
+        mock_service.contents = contents
         yield mock_service
 
 
@@ -119,17 +123,16 @@ def test_api_documents_duplicate_success(index, mock_yhub):
     )
     ydoc["document-store"] = fragment
     update = ydoc.get_update()
-    base64_content = base64.b64encode(update).decode("utf-8")
 
     # Create documents
     document = factories.DocumentFactory(
         id=document_ids[index],
-        content=base64_content,
         link_reach="restricted",
         users=[user, factories.UserFactory()],
         title="document with an image",
         attachments=[key for key, _ in image_refs],
     )
+    mock_yhub.contents[document.id] = update
     factories.DocumentFactory(id=document_ids[(index + 1) % 3])
     # Don't create document for third ID to check that it doesn't impact access to attachments
 
@@ -144,7 +147,7 @@ def test_api_documents_duplicate_success(index, mock_yhub):
     # the content is copied through the collaboration server
     assert duplicated_document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
-        duplicated_document, base64.b64decode(document.content)
+        duplicated_document, update
     )
     assert duplicated_document.creator == user
     assert duplicated_document.link_reach == "restricted"
@@ -247,7 +250,7 @@ def test_api_documents_duplicate_with_accesses_admin(role, mock_yhub):
     # the content is copied through the collaboration server
     assert duplicated_document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
-        duplicated_document, base64.b64decode(document.content)
+        duplicated_document, YDOC_HELLO_WORLD_UPDATE
     )
     assert duplicated_document.link_reach == document.link_reach
     assert duplicated_document.link_role == document.link_role
@@ -306,7 +309,7 @@ def test_api_documents_duplicate_with_accesses_non_admin(role, mock_yhub):
     # the content is copied through the collaboration server
     assert duplicated_document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
-        duplicated_document, base64.b64decode(document.content)
+        duplicated_document, YDOC_HELLO_WORLD_UPDATE
     )
     assert duplicated_document.link_reach == document.link_reach
     assert duplicated_document.link_role == document.link_role
@@ -358,7 +361,7 @@ def test_api_documents_duplicate_non_root_document(role, mock_yhub):
     # the content is copied through the collaboration server
     assert duplicated_document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
-        duplicated_document, base64.b64decode(child.content)
+        duplicated_document, YDOC_HELLO_WORLD_UPDATE
     )
     assert duplicated_document.link_reach == child.link_reach
     assert duplicated_document.link_role == child.link_role
@@ -576,16 +579,15 @@ def test_api_documents_duplicate_with_descendants_and_attachments(mock_yhub):
         ]
     )
     ydoc["document-store"] = fragment
-    update = ydoc.get_update()
-    root_content = base64.b64encode(update).decode("utf-8")
+    root_update = ydoc.get_update()
 
     root = factories.DocumentFactory(
         id=root_id,
         users=[(user, "owner")],
         title="Root with Image",
-        content=root_content,
         attachments=[image_key_root],
     )
+    mock_yhub.contents[root.id] = root_update
 
     # Create child with different attachment
     ydoc_child = pycrdt.Doc()
@@ -595,17 +597,16 @@ def test_api_documents_duplicate_with_descendants_and_attachments(mock_yhub):
         ]
     )
     ydoc_child["document-store"] = fragment_child
-    update_child = ydoc_child.get_update()
-    child_content = base64.b64encode(update_child).decode("utf-8")
+    child_update = ydoc_child.get_update()
 
     # child
-    factories.DocumentFactory(
+    child = factories.DocumentFactory(
         id=child_id,
         parent=root,
         title="Child with Image",
-        content=child_content,
         attachments=[image_key_child],
     )
+    mock_yhub.contents[child.id] = child_update
 
     # Duplicate with descendants
     with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
@@ -638,8 +639,8 @@ def test_api_documents_duplicate_with_descendants_and_attachments(mock_yhub):
     assert duplicated_root.content is None
     assert dup_child.content is None
     assert mock_yhub.return_value.create_ydoc.call_args_list == [
-        mock.call(duplicated_root, base64.b64decode(root_content)),
-        mock.call(dup_child, base64.b64decode(child_content)),
+        mock.call(duplicated_root, root_update),
+        mock.call(dup_child, child_update),
     ]
 
 
