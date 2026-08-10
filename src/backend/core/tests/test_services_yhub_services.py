@@ -1,5 +1,6 @@
 """Test yhub services."""
 
+from base64 import b64encode
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -127,7 +128,8 @@ def test_request(mock_request):
     assert kwargs["data"] == b"body"
     assert kwargs["timeout"] == 30
     assert kwargs["headers"]["Authorization"].startswith("Bearer ")
-    assert kwargs["headers"]["Content-Type"] == "application/octet-stream"
+    # asked of every endpoint: yhub answers its lib0 encoding otherwise
+    assert kwargs["headers"]["Accept"] == "application/json"
 
 
 @patch("requests.request")
@@ -236,23 +238,67 @@ def test_reset_connections_of_a_single_user(mock_request):
 def test_get_ydoc(mock_request):
     """Should return the raw update the collaboration server holds."""
     mock_request.return_value.ok = True
-    mock_request.return_value.content = b"\x01\x02raw yjs update"
+    mock_request.return_value.json.return_value = {
+        "doc": b64encode(b"\x01\x02raw yjs update").decode()
+    }
 
     update = YHubService().get_ydoc(DOCUMENT)
 
     assert update == b"\x01\x02raw yjs update"
-    args, _kwargs = mock_request.call_args
+    args, kwargs = mock_request.call_args
+    # the built-in endpoint, which answers the update base64 encoded in json
     assert args == (
         "get",
-        f"http://yhub:3002/collaboration/get-ydoc/v1/docs/{DOCUMENT.id!s}",
+        f"http://yhub:3002/collaboration/ydoc/v1/docs/{DOCUMENT.id!s}",
     )
+    assert kwargs["headers"]["Accept"] == "application/json"
 
 
 @patch("requests.request")
 def test_get_ydoc_without_content(mock_request):
     """A document the collaboration server holds no content for should return None."""
     mock_request.return_value.ok = True
-    # yhub answers 204 No Content, hence an empty body
-    mock_request.return_value.content = b""
+    # a room with no content answers the encoding of an empty document
+    mock_request.return_value.json.return_value = {
+        "doc": b64encode(b"\x00\x00").decode()
+    }
 
     assert YHubService().get_ydoc(DOCUMENT) is None
+
+
+@patch("requests.request")
+def test_get_ydoc_unreadable_answer(mock_request):
+    """An answer we cannot read a document out of should raise, never look empty."""
+    mock_request.return_value.ok = True
+    mock_request.return_value.json.return_value = {"unexpected": "payload"}
+
+    with pytest.raises(APIError):
+        YHubService().get_ydoc(DOCUMENT)
+
+
+@patch("requests.request")
+def test_request_error_reports_what_yhub_said(mock_request):
+    """The message yhub puts in its json error should travel with the status."""
+    mock_request.return_value.ok = False
+    mock_request.return_value.status_code = 409
+    mock_request.return_value.text = '{"error": "Document already exists"}'
+    mock_request.return_value.json.return_value = {"error": "Document already exists"}
+
+    with pytest.raises(APIError, match="Document already exists") as excinfo:
+        YHubService().create_ydoc(DOCUMENT, b"\x01\x02update")
+
+    assert excinfo.value.status_code == 409
+
+
+@patch("requests.request")
+def test_request_error_without_json_body(mock_request):
+    """An error from something else on the way should be reported all the same."""
+    mock_request.return_value.ok = False
+    mock_request.return_value.status_code = 502
+    mock_request.return_value.text = "<html>Bad Gateway</html>"
+    mock_request.return_value.json.side_effect = ValueError("not json")
+
+    with pytest.raises(APIError, match="answered 502") as excinfo:
+        YHubService().get_ydoc(DOCUMENT)
+
+    assert excinfo.value.status_code == 502

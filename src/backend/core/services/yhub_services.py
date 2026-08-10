@@ -13,6 +13,12 @@ update), `rollback`, `prune`, `changeset` and `activity`, all at `v1`. yhub also
 accepts a `branch` query parameter, but our auth plugin only ever grants access
 to the `main` branch, so this service never sends it.
 
+Since yhub 0.5.0 those endpoints answer JSON to a request asking for it, with
+the binary fields base64 encoded, so this service sends `Accept:
+application/json` and reads them without a lib0 decoder. Their errors come back
+the same way, as a JSON `{"error": ...}` this service reports along with the
+status.
+
 A few routes are about the server itself rather than about a document, and
 carry no room: `/{prefix}/jwks/{version}` publishes the public keys validating
 the tokens yhub signs to call us back.
@@ -21,6 +27,7 @@ This service only owns the transport for now, the endpoints are added as we
 need them.
 """
 
+import base64
 import logging
 
 from django.conf import settings
@@ -71,6 +78,11 @@ class YHubService:
 
     # Version of the endpoints we call, the one all the built-ins are at.
     api_version = "v1"
+
+    # A Yjs update carrying no content encodes to 2 bytes, and yhub reads
+    # anything up to 3 as an empty document. `ydoc` answers the encoding of an
+    # empty document for a room it holds nothing for, never an empty body.
+    empty_update_max_bytes = 3
 
     def __init__(self, user=None):
         """Bind the service to the user a call is made on behalf of, if any."""
@@ -173,7 +185,7 @@ class YHubService:
 
     def request(self, method, url, data=None, headers=None):
         """
-        Send an authenticated request to the yhub API.
+        Send an authenticated request to the yhub API, asking it for JSON.
 
         Return the raw response, it is up to the caller to decode its body: the
         endpoints do not all answer with the same payload.
@@ -185,7 +197,8 @@ class YHubService:
                 data=data,
                 headers={
                     "Authorization": self.auth_header,
-                    "Content-Type": "application/octet-stream",
+                    # what makes yhub answer JSON rather than its lib0 encoding
+                    "Accept": "application/json",
                     **(headers or {}),
                 },
                 timeout=self.timeout,
@@ -203,44 +216,73 @@ class YHubService:
                 response.status_code,
                 response.text[:200] if response.text else "empty",
             )
+            detail = self.json_body(response).get("error")
             raise APIError(
-                f"The yhub API answered {response.status_code} on {url}",
+                f"The yhub API answered {response.status_code} on {url}"
+                + (f": {detail}" if detail else ""),
                 status_code=response.status_code,
             )
 
         return response
+
+    @staticmethod
+    def json_body(response):
+        """
+        Return the JSON body of a response, an empty dict when it has none.
+
+        yhub reports its errors as `{"error": ...}` and its endpoints answer
+        JSON, but a failure can also come from something else on the way (a
+        proxy, a gateway): what it says is a bonus, never something to fail on.
+        """
+        try:
+            body = response.json()
+        except ValueError:
+            return {}
+
+        return body if isinstance(body, dict) else {}
 
     def get_ydoc(self, document):
         """
         Return the current Yjs state of a document, None when it has none.
 
         The raw update is what `create_ydoc` takes, so the state of a document
-        can be copied into another one. The built-in `ydoc` endpoint is not
-        used, it answers the lib0 encoding of an envelope rather than the
-        update itself.
+        can be copied into another one. The built-in `ydoc` endpoint answers
+        `{"doc": ...}`, the update base64 encoded, and the encoding of an empty
+        document for a room it holds no content for.
         """
-        response = self.request("get", self.build_url("get-ydoc", document))
+        response = self.request("get", self.build_url("ydoc", document))
 
-        return response.content or None
+        try:
+            update = base64.b64decode(self.json_body(response)["doc"])
+        except (KeyError, TypeError, ValueError) as err:
+            raise APIError(
+                f"The yhub API answered no readable document on {response.url}"
+            ) from err
+
+        return update if len(update) > self.empty_update_max_bytes else None
 
     def create_ydoc(self, document, update):
         """
         Seed the initial Yjs state of a document.
 
         The body is the raw binary update, what pycrdt's `get_update()`
-        returns, and not the lib0 encoding the built-in `ydoc` endpoint speaks.
-        The content is attributed to the user the service is bound to, yhub
-        only takes our word for it because the token grants admin.
+        returns. This is not the built-in `ydoc` endpoint, which would take the
+        same update base64 encoded but knows nothing of the two things this one
+        is for: it is a strict create, and it attributes the content to the
+        user the service is bound to rather than to the backend calling it.
 
-        It is a strict create: yhub answers 409 when the document already has
-        content, 413 over 10MB and 400 on an update it cannot apply, all
-        reported as an `APIError` carrying the status.
+        yhub answers 409 when the document already has content, 413 over 10MB
+        and 400 on an update it cannot apply, all reported as an `APIError`
+        carrying the status.
         """
         return self.request(
             "post",
             self.build_url("create-ydoc", document),
             data=update,
-            headers=self.build_user_header(self.user_id),
+            headers={
+                "Content-Type": "application/octet-stream",
+                **self.build_user_header(self.user_id),
+            },
         )
 
     def reset_connections(self, document, user_id=None):
