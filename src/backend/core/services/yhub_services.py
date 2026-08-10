@@ -183,12 +183,14 @@ class YHubService:
         """
         return {"X-User-Id": str(user_id)} if user_id else {}
 
-    def request(self, method, url, data=None, headers=None):
+    # pylint: disable-next=too-many-arguments
+    def request(self, method, url, *, data=None, headers=None, timeout=None):
         """
         Send an authenticated request to the yhub API, asking it for JSON.
 
         Return the raw response, it is up to the caller to decode its body: the
-        endpoints do not all answer with the same payload.
+        endpoints do not all answer with the same payload. An endpoint doing
+        more than answering a document passes its own timeout.
         """
         try:
             response = requests.request(
@@ -201,7 +203,7 @@ class YHubService:
                     "Accept": "application/json",
                     **(headers or {}),
                 },
-                timeout=self.timeout,
+                timeout=timeout or self.timeout,
             )
         except requests.RequestException as err:
             logger.exception("yhub service error: url=%s", url)
@@ -284,6 +286,34 @@ class YHubService:
                 **self.build_user_header(self.user_id),
             },
         )
+
+    def migrate(self, document, force=False):
+        """
+        Replay the legacy version history of a document into the collaboration server.
+
+        The content of the documents used to live in our object storage, one
+        version of `{id}/file` per save. yhub reads them all back and rebuilds
+        the history with the timestamps of those versions, which is what makes
+        its activity line up with the versions we report.
+
+        Answers what became of the document: `ok` when this call wrote its
+        history, `already` when a previous one did, `empty` when there is
+        nothing in the object storage (a document born in yhub) and `nothing`
+        when none of its versions could be read. All four are terminal, only a
+        failure to reach yhub raises.
+
+        Forcing a document that is already migrated attributes its content a
+        second time: it is for a document whose yhub state was wiped, never for
+        a retry.
+        """
+        url = self.build_url("migrate", document)
+        response = self.request(
+            "post",
+            f"{url}?force=true" if force else url,
+            timeout=settings.YHUB_MIGRATION_TIMEOUT,
+        )
+
+        return self.json_body(response)
 
     def reset_connections(self, document, user_id=None):
         """
