@@ -97,6 +97,13 @@ and this project adheres to
   `503` instead of denying access like a permission failure, so clients retry
   instead of giving up. The built-in endpoints can also answer JSON on
   `Accept: application/json`
+- ✨(backend) add a `migrate_documents` command replaying the legacy content of
+  the documents into the collaboration server, one call to its migrate endpoint
+  per document. Resumable and safe to re-run: what became of every document is
+  recorded (`impress_document_migration`), a server that is unwell is retried
+  with a backoff and a document it refuses is left for a later run
+  (`--retry-failed`). Bounded by `--concurrency`, `--rate` and `--limit`, most
+  recently edited documents first
 - ✨(collaboration) notify the backend when the worker persists new content for
   a document, so the lists ordered by `updated_at` follow the edits made on the
   collaboration server. The backend serves it on

@@ -429,31 +429,22 @@ const api = [
         const { status, ...stats } = await fullMigrate(req.yhub, req.room, {
           force: req.query.force === 'true',
         });
-        if (status === 'already') {
-          return jsonResponse(200, {
-            message: 'Already migrated',
-            migrated: false,
-          });
-        }
-        if (status === 'empty') {
-          // brand-new documents never had a legacy object; nothing to replay
-          // and nothing wrong — a backfill driver treats this as done
-          return jsonResponse(200, {
-            message: 'No legacy document in s3',
-            migrated: false,
-            ...stats,
-          });
-        }
-        if (status === 'nothing') {
-          return jsonResponse(200, {
-            message: 'No usable content in the legacy versions',
-            migrated: false,
-            ...stats,
-          });
-        }
+        // `status` is what a backfill driver records per document: 'ok',
+        // 'already', 'empty' (no legacy object — a brand-new document) or
+        // 'nothing' (versions exist, none readable). All four are done, hence
+        // one 2xx; `message` says the same thing to a human, `migrated`
+        // whether this call is the one that wrote the history.
+        const messages = {
+          already: 'Already migrated',
+          empty: 'No legacy document in s3',
+          nothing: 'No usable content in the legacy versions',
+          ok: 'Migration completed',
+        };
+
         return jsonResponse(200, {
-          message: 'Migration completed',
-          migrated: true,
+          status,
+          message: messages[status],
+          migrated: status === 'ok',
           ...stats,
         });
       },

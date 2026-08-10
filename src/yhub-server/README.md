@@ -292,8 +292,12 @@ Guarantees:
 - **More than 500 versions**: only the newest 500 are replayed and the rest fold
   into the first replayed version, reported as `dropped`.
 
-Response (200): `{ migrated, versions, applied, skipped, dropped, bytes,
-durationMs }`.
+Response (200): `{ status, message, migrated, versions, applied, skipped,
+dropped, bytes, durationMs }`. `status` is the machine-readable outcome a
+backfill driver records — `ok`, `already`, `empty` (no legacy object, a
+brand-new document) or `nothing` (versions exist, none readable) — all of them
+done, which is why they share one 2xx. `migrated` says whether this very call
+wrote the history.
 
 Caveats:
 
