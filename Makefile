@@ -107,7 +107,6 @@ pre-bootstrap: \
 post-bootstrap: \
 	migrate \
 	migrate-yhub \
-	demo \
 	back-i18n-compile \
 	mails-install \
 	mails-build
@@ -187,6 +186,7 @@ bootstrap: \
 	build \
 	post-bootstrap \
 	run \
+	demo \
 	post-beautiful-bootstrap
 .PHONY: bootstrap
 
@@ -195,7 +195,8 @@ bootstrap-e2e: \
 	pre-bootstrap \
 	build-e2e \
 	post-bootstrap \
-	run-e2e
+	run-e2e \
+	demo
 .PHONY: bootstrap-e2e
 
 # -- Docker/compose
@@ -281,6 +282,8 @@ stop: ## stop the development server using Docker
 # -- Backend
 
 demo: ## flush db then create a demo for load testing purpose
+	@echo "$(BOLD)Waiting for the backend and the collaboration server (yhub)$(RESET)"
+	@$(COMPOSE) up -d --wait app-dev yhub
 	@$(MAKE) resetdb
 	@$(MANAGE) create_demo
 .PHONY: demo
