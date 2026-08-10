@@ -31,18 +31,17 @@ It is not a fork of yhub — it is a thin wrapper:
   `X-User-Id` header naming the user the initial content is attributed to),
   which seeds a document's initial Yjs state from a raw binary update
   (`Y.encodeStateAsUpdate` / pycrdt `get_update()` output posted as
-  `application/octet-stream` — no lib0 encoding, unlike yhub's built-in
-  `PATCH .../ydoc/`), so the Django backend can create documents
-  server-side. Strict create: 409 when the document already has content.
-  Guarded by standard document write access (the admin JWT, or a user
-  session with update ability),
+  `application/octet-stream`), so the Django backend can create documents
+  server-side. The built-in `PATCH .../ydoc/` takes the same update, but this
+  one is a **strict create** — 409 when the document already has content — and
+  it credits the content to `X-User-Id` instead of to the caller. Guarded by
+  standard document write access (the admin JWT, or a user session with update
+  ability). Reading needs neither, and goes through the built-in `GET
+  .../ydoc/`, which since 0.5.0 answers JSON (the update base64 encoded) to a
+  request sending `Accept: application/json`,
 - exposes `POST /collaboration/migrate/v1/{org}/{docid}`, which replays a
   document's **full** legacy version history out of the S3 media bucket (see
   "Full migration" below) — admin JWT only, like `reset-connections`,
-- exposes `GET /collaboration/get-ydoc/v1/{org}/{docid}`, the read counterpart
-  of `create-ydoc`: the current state of a document as a raw binary update
-  (204 when it has no content), which the Django backend reads to export or
-  duplicate a document. Guarded by standard document read access,
 - notifies the Django backend on
   `POST /api/v1.0/documents/{id}/content-updated/` whenever the worker
   persists new content for a document, so that lists ordered by `updated_at`
