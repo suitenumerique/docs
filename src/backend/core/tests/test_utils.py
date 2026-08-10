@@ -9,7 +9,7 @@ import pycrdt
 import pytest
 
 from core import factories
-from core.utils.dicts import get_value_by_pattern
+from core.utils.dicts import get_value_by_pattern, lowercase_keys
 from core.utils.paths import get_ancestor_to_descendants_map
 from core.utils.users import (
     get_users_sharing_documents_with_cache_key,
@@ -251,3 +251,35 @@ def test_utils_get_value_by_pattern_no_match():
     result = get_value_by_pattern(data, r"^title\.")
 
     assert result == []
+
+
+def test_utils_lowercase_keys_empty():
+    """Test that an empty dictionary is returned untouched."""
+    assert lowercase_keys({}) == {}
+
+
+def test_utils_lowercase_keys_mixed_case():
+    """Test that keys are lowercased while values are left untouched."""
+    data = {"Owner": "42", "STATUS": "Ready", "is_unsafe": "true"}
+
+    assert lowercase_keys(data) == {
+        "owner": "42",
+        "status": "Ready",
+        "is_unsafe": "true",
+    }
+
+
+def test_utils_lowercase_keys_collision():
+    """Test that keys differing only by their case are collapsed into a single one."""
+    data = {"Status": "processing", "status": "ready"}
+    result = lowercase_keys(data)
+
+    assert result == {"status": "ready"}
+
+
+def test_utils_lowercase_keys_does_not_mutate_source():
+    """Test that the source dictionary is left untouched."""
+    data = {"Status": "processing"}
+    lowercase_keys(data)
+
+    assert data == {"Status": "processing"}

@@ -71,6 +71,7 @@ from core.services.search_indexers import (
 from core.tasks.access import reset_service_connections_in_cascade
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils.analytics import PosthogEventName, posthog_capture
+from core.utils.dicts import lowercase_keys
 from core.utils.paths import filter_descendants
 from core.utils.s3_response_stream import content_stream
 from core.utils.treebeard import create_tree_node_with_retry
@@ -1884,7 +1885,7 @@ class DocumentViewSet(
         extra_args = {
             "Metadata": {
                 "owner": str(request.user.id),
-                "status": enums.DocumentAttachmentStatus.PROCESSING,
+                "status": enums.DocumentAttachmentStatus.PROCESSING.value,
             },
             "ContentType": serializer.validated_data["content_type"],
         }
@@ -2034,7 +2035,7 @@ class DocumentViewSet(
             head_resp = s3_client.head_object(Bucket=bucket_name, Key=key)
         except ClientError as err:
             raise drf.exceptions.PermissionDenied() from err
-        metadata = head_resp.get("Metadata", {})
+        metadata = lowercase_keys(head_resp.get("Metadata", {}))
         # In order to be compatible with existing upload without `status` metadata,
         # we consider them as ready.
         if (
@@ -2238,7 +2239,7 @@ class DocumentViewSet(
                 {"detail": "Media not found"},
                 status=drf.status.HTTP_404_NOT_FOUND,
             )
-        metadata = head_resp.get("Metadata", {})
+        metadata = lowercase_keys(head_resp.get("Metadata", {}))
 
         body = {
             "status": metadata.get("status", enums.DocumentAttachmentStatus.PROCESSING),

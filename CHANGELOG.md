@@ -24,6 +24,7 @@ and this project adheres to
 - 🐛(backend) ignore CSPs for API docs in development
 - 🐛(frontend) export images embedded with a relative url #2573
 - 🐛(y-provider) fix sentry init #2579
+- 🐛(backend) handle object storage metadata keys case-insensitively #2576
 - 🐛(keycloak) fix database env variables in the self-hosting example #2572
 - 🐛(helm) show the database error while jobs wait for it to be ready #2578
 
