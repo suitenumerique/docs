@@ -81,6 +81,8 @@ COLLABORATION_BACKEND_BASE_URL=http://app-dev:8000
 COLLABORATION_SERVER_ORIGIN=http://localhost:3000
 COLLABORATION_WS_URL=ws://localhost:3002/collaboration/ws/v1/docs
 COLLABORATION_WS_INACTIVITY_TIMEOUT=15 # Seconds
+# server-to-server, reached with an admin JWT (aud: yhub)
+COLLABORATION_API_URL=http://yhub:3002/collaboration
 
 DJANGO_SERVER_TO_SERVER_API_TOKENS=server-api-token
 Y_PROVIDER_API_BASE_URL=http://y-provider-development-converter:4444/api/

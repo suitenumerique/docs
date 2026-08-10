@@ -59,7 +59,9 @@ bucket, as UTF-8 text that is the base64 encoding of a raw Yjs update, at key
 `{document-uuid}/file`. With `SOFT_MIGRATION=true`, this server migrates those
 documents into yhub lazily, on first access:
 
-1. After a user's document authorization succeeds, the auth plugin checks
+1. After a caller's document authorization succeeds — a user's, or the
+   backend's own admin JWT, so a server-side read never sees an *empty*
+   document where legacy content exists — the auth plugin checks
    whether yhub already has content for the room — the migrated set written by
    the full migration (below), then a bare postgres `SELECT` (persisted rows),
    then the valkey stream (uncompacted `ydoc:update:v1` messages), then the
@@ -94,16 +96,35 @@ Guarantees and failure behavior:
 - **Missing S3 object is not an error** — that is the brand-new-document case
   (Django writes no object until the first content save); the room simply
   starts empty.
-- **Everything else fails closed**, and says whether it is worth retrying
-  (yhub 0.5.0 error semantics): an oversized or corrupt legacy object will fail
-  the same way forever, so the connection is denied `403`; network errors,
-  timeouts and momentary seed backpressure answer `503`, which clients retry
-  with backoff. Either way a `soft-migration` error is logged. A cached failure
-  verdict prevents retry storms from hammering S3 — permanent failures
-  (corrupt/oversized objects) for 5 minutes, transient ones (network errors,
-  timeouts) for 15 seconds, and per-replica seed backpressure (more than 20
-  concurrent seeds) is denied without caching so the client's next retry goes
-  through.
+- **Seeding never decides access** — the backend's answer does. What a failure
+  changes is only what the room contains, and the two kinds are treated
+  differently (yhub 0.5.0 error semantics):
+  - **The legacy object cannot be migrated** — it does not decode, or it
+    exceeds the size we will load. Retrying cannot change that, and nobody can
+    repair the object from the outside, so refusing would make the document
+    permanently unopenable. It opens as a *new* document instead. The cause is
+    logged once per attempt (`seed.failed`, with the bucket, key and stack) and
+    every subsequent access logs a `seed.skipped` warning, because the caller
+    is now editing beside legacy content that stayed behind in S3.
+  - **Everything else** — network error, timeout, seed backpressure, and every
+    way S3 can refuse (`AccessDenied` on a rotated key, `NoSuchBucket` on a
+    misconfigured name, a region redirect). The same request later may well
+    succeed, so it answers `503` and clients retry with backoff.
+
+  The split is deliberately asymmetric: only a failure raised while
+  *interpreting bytes we already hold* counts as permanent, and it is marked as
+  such at the throw site. Everything else is retryable by default. An allowlist
+  of retryable errors would have to enumerate every way the store can say no,
+  and each case it missed would be read as "this document has no content" and
+  open the room empty over content that is alive in S3 — one misscoped
+  credential would fork the corpus. Guessing wrong this way costs a retry;
+  guessing wrong the other way costs the document.
+
+  A cached failure verdict prevents retry storms from hammering S3 — permanent
+  failures (corrupt/oversized objects) for 5 minutes, transient ones (network
+  errors, timeouts) for 15 seconds, and per-replica seed backpressure (more
+  than 20 concurrent seeds) is not cached at all, so the client's next retry
+  goes through.
 - **Seeding is idempotent**: the legacy S3 snapshots are frozen (the
   frontend no longer PATCHes content snapshots to Django) and share one Yjs
   lineage with everything in yhub, so duplicate or concurrent seeds merge as
