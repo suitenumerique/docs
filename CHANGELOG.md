@@ -108,7 +108,6 @@ and this project adheres to
   on its own
 - 🔧(dev) generate the JWT signing key of the collaboration server when
   bootstrapping the dev stack, alongside the backend one
-- ✨(collaboration) add a get-ydoc endpoint on yhub
 - ✨(backend) serve `documents/{id}/formatted-content/` from yhub
 - ✨(backend) duplicate a document through the collaboration server
 - ✨(backend) call YHubService to seed initial document content
@@ -163,6 +162,11 @@ and this project adheres to
   identity of the user the sandbox is created for. A collaboration server that
   cannot be reached skips the sandbox, as a missing template already did, and
   never fails the signup
+- ♻️(backend) read the content of a document from the built-in `ydoc` endpoint
+  of the collaboration server: `YHubService` asks for JSON, which yhub speaks
+  since 0.5.0, so the custom `get-ydoc` endpoint it used to need is gone.
+  `create-ydoc` stays, no built-in offers what it does — a strict create, and
+  content credited to the user rather than to the backend
 - 🔥(backend) remove the unused `CollaborationService`
 - 💥(backend) remove the `documents/{id}/content/` endpoint
 - 💥(backend) remove the `documents/{id}/can-edit/` endpoint
