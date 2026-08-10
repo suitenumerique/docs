@@ -205,6 +205,44 @@ def test_create_ydoc_already_exists(mock_request):
 
 
 @patch("requests.request")
+def test_migrate(mock_request):
+    """Should ask yhub to replay the legacy history, and answer what it did."""
+    mock_request.return_value.ok = True
+    mock_request.return_value.json.return_value = {
+        "status": "ok",
+        "message": "Migration completed",
+        "migrated": True,
+        "versions": 12,
+        "applied": 9,
+        "durationMs": 1234,
+    }
+
+    result = YHubService().migrate(DOCUMENT)
+
+    assert result["status"] == "ok"
+    assert result["applied"] == 9
+    args, kwargs = mock_request.call_args
+    assert args == (
+        "post",
+        f"http://yhub:3002/collaboration/migrate/v1/docs/{DOCUMENT.id!s}",
+    )
+    # reading every version of a document takes longer than any other call
+    assert kwargs["timeout"] == 600
+
+
+@patch("requests.request")
+def test_migrate_forced(mock_request):
+    """Forcing a document that is already migrated should be asked for explicitly."""
+    mock_request.return_value.ok = True
+    mock_request.return_value.json.return_value = {"status": "ok"}
+
+    YHubService().migrate(DOCUMENT, force=True)
+
+    args, _kwargs = mock_request.call_args
+    assert args[1].endswith("?force=true")
+
+
+@patch("requests.request")
 def test_reset_connections(mock_request):
     """Should ask yhub to re-check every connection of the document."""
     mock_request.return_value.ok = True
