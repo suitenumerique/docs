@@ -1,12 +1,12 @@
 # ruff: noqa: S311, S106
 """create_demo management command"""
 
-import base64
 import logging
 import math
 import random
 import time
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from uuid import uuid4
 
 from django import db
@@ -17,6 +17,7 @@ import pycrdt
 from faker import Faker
 
 from core import models
+from core.services.yhub_services import YHubError, YHubService
 
 from demo import defaults
 
@@ -31,14 +32,101 @@ def random_true_with_probability(probability):
     return random.random() < probability
 
 
-def get_ydoc_for_text(text):
-    """Return a ydoc from plain text for demo purposes."""
+# The collaboration server is a service of its own: seeding a corpus one
+# document at a time would make the demo wait on the network for most of its
+# run, so a few seeds are in flight at once.
+SEED_CONCURRENCY = 10
+
+
+def create_block(kind, text, **attributes):
+    """
+    Build a BlockNote block, inside the container the editor addresses it by.
+
+    Every block lives in a `blockContainer` carrying its id and its colors:
+    that is the structure the editor writes, and the one the exports and the
+    search indexer read back.
+    """
+    block = pycrdt.XmlElement(
+        kind, {"textAlignment": "left", **attributes}, [pycrdt.XmlText(text)]
+    )
+
+    return pycrdt.XmlElement(
+        "blockContainer",
+        {"id": str(uuid4()), "textColor": "default", "backgroundColor": "default"},
+        [block],
+    )
+
+
+def create_section_blocks(writer):
+    """Return the blocks of one section: a title, some prose, sometimes a list."""
+    blocks = [create_block("heading", writer.sentence(nb_words=4).rstrip("."), level=2)]
+    blocks += [
+        create_block("paragraph", writer.paragraph(nb_sentences=random.randint(3, 8)))
+        for _ in range(random.randint(1, 3))
+    ]
+
+    if random_true_with_probability(0.4):
+        kind = random.choice(["bulletListItem", "numberedListItem"])
+        blocks += [
+            create_block(kind, writer.sentence(nb_words=random.randint(4, 10)))
+            for _ in range(random.randint(2, 5))
+        ]
+
+    if random_true_with_probability(0.2):
+        blocks.append(create_block("quote", writer.sentence(nb_words=12)))
+
+    return blocks
+
+
+def get_ydoc_for_document(title):
+    """
+    Return the raw Yjs update of a document that reads like a real one.
+
+    Faker writes the prose and the sections, in the structure BlockNote stores,
+    so a demo document is something to render, to export and to index rather
+    than the one line it used to be. A single language per document: the corpus
+    is multilingual, the documents are not.
+    """
+    writer = fake[random.choice(fake.locales)]
+
+    blocks = [create_block("heading", title, level=1)]
+    for _ in range(random.randint(2, 5)):
+        blocks.extend(create_section_blocks(writer))
+
     ydoc = pycrdt.Doc()
-    paragraph = pycrdt.XmlElement("p", {}, [pycrdt.XmlText(text)])
-    fragment = pycrdt.XmlFragment([paragraph])
-    ydoc["document-store"] = fragment
-    update = ydoc.get_update()
-    return base64.b64encode(update).decode("utf-8")
+    ydoc["document-store"] = pycrdt.XmlFragment(
+        [pycrdt.XmlElement("blockGroup", {}, blocks)]
+    )
+
+    return ydoc.get_update()
+
+
+def seed_contents(stdout, contents):
+    """
+    Seed the content of the demo documents in the collaboration server.
+
+    It owns the content of the documents, so a demo document without content
+    there is an empty document — the object storage Django used to write it to
+    is not read by anything anymore.
+    """
+    service = YHubService()
+
+    with ThreadPoolExecutor(max_workers=SEED_CONCURRENCY) as pool:
+        seeds = {
+            pool.submit(service.create_ydoc, document, update): document
+            for document, update in contents
+        }
+        for seed in as_completed(seeds):
+            try:
+                seed.result()
+            except YHubError as err:
+                # nothing to fall back on: the demo would build a corpus of
+                # empty documents and look like it worked
+                raise CommandError(
+                    f"Could not seed the content of document {seeds[seed].id}: {err}. "
+                    "Is the collaboration server running?"
+                ) from err
+            stdout.write(".", ending="")
 
 
 class BulkQueue:
@@ -150,6 +238,7 @@ def create_demo(stdout):
     users_ids = list(models.User.objects.values_list("id", flat=True))
 
     with Timeit(stdout, "Creating documents"):
+        contents = []
         for i in range(defaults.NB_OBJECTS["docs"]):
             # pylint: disable=protected-access
             key = models.Document._int2str(i)  # noqa: SLF001
@@ -165,10 +254,15 @@ def create_demo(stdout):
                 if random_true_with_probability(0.5)
                 else random.choice(models.LinkReachChoices.values),
             )
-            document.save_content(get_ydoc_for_text(f"Content for {title:s}"))
+            contents.append((document, get_ydoc_for_document(title)))
             queue.push(document)
 
         queue.flush()
+
+    # after the flush: a room seeded for a document the database ended up
+    # without would be content nothing points to
+    with Timeit(stdout, "Seeding document contents"):
+        seed_contents(stdout, contents)
 
     with Timeit(stdout, "Creating docs accesses"):
         docs_ids = list(models.Document.objects.values_list("id", flat=True))
