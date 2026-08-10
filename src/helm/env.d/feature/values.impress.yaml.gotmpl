@@ -82,9 +82,12 @@ backend:
       - "/bin/sh"
       - "-c"
       - |
-        while ! python manage.py check --database default > /dev/null 2>&1
+        attempt=0
+        until output=$(python manage.py check --database default 2>&1)
         do
-          echo "Database not ready"
+          attempt=$((attempt + 1))
+          echo "Database check failed (attempt $attempt), retrying in 2s:"
+          echo "$output"
           sleep 2
         done
 
@@ -105,9 +108,12 @@ backend:
       - "/bin/sh"
       - "-c"
       - |
-        while ! python manage.py check --database default > /dev/null 2>&1
+        attempt=0
+        until output=$(python manage.py check --database default 2>&1)
         do
-          echo "Database not ready"
+          attempt=$((attempt + 1))
+          echo "Database check failed (attempt $attempt), retrying in 2s:"
+          echo "$output"
           sleep 2
         done
 

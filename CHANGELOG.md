@@ -23,6 +23,7 @@ and this project adheres to
 - 🐛(backend) ignore CSPs for API docs in development
 - 🐛(frontend) export images embedded with a relative url #2573
 - 🐛(y-provider) fix sentry init #2579
+- 🐛(helm) show the database error while jobs wait for it to be ready #2578
 
 ## [v5.4.1] - 2026-07-09
 
