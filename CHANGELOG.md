@@ -143,6 +143,11 @@ and this project adheres to
   since 0.5.0, so the custom `get-ydoc` endpoint it used to need is gone.
   `create-ydoc` stays, no built-in offers what it does — a strict create, and
   content credited to the user rather than to the backend
+- ♻️(backend) seed the content of the demo documents in the collaboration
+  server: `create_demo` no longer writes it to the object storage, which
+  nothing reads anymore, and fails with an explicit message when the
+  collaboration server is not running rather than building a corpus of
+  documents that would open empty
 - 🔥(backend) remove the unused `CollaborationService`
 - 💥(backend) remove the `documents/{id}/content/` endpoint
 - 💥(backend) remove the `documents/{id}/can-edit/` endpoint
