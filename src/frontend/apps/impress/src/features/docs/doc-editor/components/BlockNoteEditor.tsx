@@ -196,6 +196,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         },
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
+      dropCursor: {
+        color: 'var(--c--contextuals--background--semantic--brand--tertiary)',
+      },
       dictionary: {
         ...localesBN[langLocalesBN as keyof typeof localesBN],
         ...(localesBNMultiColumn && {

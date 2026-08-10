@@ -150,6 +150,19 @@ export const DocsEditorStyle = createGlobalStyle`
     }
 
     /**
+    * Tables
+    */
+    .ProseMirror .selectedCell:after {
+      background: var(--c--contextuals--background--semantic--brand--tertiary);
+      mix-blend-mode: multiply;
+    }
+    .bn-table-drop-cursor, .ProseMirror .column-resize-handle {
+      background-color: var(
+        --c--contextuals--background--semantic--brand--tertiary
+      );
+    }
+
+    /**
     * Divider
     */
     .bn-block-content[data-content-type='divider'] {

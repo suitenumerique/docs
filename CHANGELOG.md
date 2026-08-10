@@ -15,6 +15,7 @@ and this project adheres to
 ### Changed
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
+- 💄(frontend) use the same highlight color for cells and moves #2575
 
 ### Fixed
 
