@@ -459,45 +459,18 @@ const api = [
       },
     },
   }),
-  // GET /collaboration/get-ydoc/v1/{org}/{docid} — the current state of a
-  // document as a RAW binary update (`Y.encodeStateAsUpdate` output), the read
-  // counterpart of create-ydoc: yhub's built-in `GET ydoc` answers a lib0-any
-  // encoded `{ doc, awareness }` envelope Django cannot decode. Answers 204
-  // when the room holds no content. Default access purpose: guarded like the
-  // built-in ydoc routes (read access on the doc — the admin JWT, or a user
-  // session able to retrieve it).
-  createApiEndpoint('get-ydoc', {
-    get: {
-      handler: async (req) => {
-        if (req.org !== ORG) {
-          return jsonResponse(400, { error: 'Unknown org' });
-        }
-        if (!UUID4.test(req.docid)) {
-          return jsonResponse(400, { error: 'Room name is invalid' });
-        }
-        const { gcDoc } = await req.yhub.getDoc(
-          req.room,
-          { gc: true, nongc: false },
-          { gcOnMerge: false },
-        );
-        // <= 3 bytes is yhub's "no effective content" convention (an empty
-        // update encodes to 2 bytes) — nothing to copy. `null` answers 204.
-        if (gcDoc == null || gcDoc.byteLength <= 3) {
-          return null;
-        }
-        // a Uint8Array is served as application/octet-stream, untouched
-        return gcDoc;
-      },
-    },
-  }),
   // POST /collaboration/create-ydoc/v1/{org}/{docid} — create a document's
   // initial Yjs state from a RAW binary update (`Y.encodeStateAsUpdate` /
-  // pycrdt `get_update()` output) posted as application/octet-stream. Unlike
-  // yhub's built-in `PATCH ydoc`, the body is not lib0-any encoded, so Django
-  // can call it with a plain `requests.post(url, data=raw_bytes)`. Strict
-  // create: 409 when the room already has content. Default access purpose:
-  // guarded like the built-in ydoc routes (write access on the doc — the
-  // admin JWT, or a user session with update ability).
+  // pycrdt `get_update()` output) posted as application/octet-stream.
+  //
+  // The built-in `PATCH ydoc` takes the same update (base64, in a json body
+  // since 0.5.0) but neither of the two things this endpoint exists for: it is
+  // a strict create, answering 409 when the room already has content, and it
+  // attributes the content to the user named in `X-User-Id` rather than to the
+  // backend making the call. Reads have no such needs and use the built-in
+  // `GET ydoc`. Default access purpose: guarded like the built-in ydoc routes
+  // (write access on the doc — the admin JWT, or a user session with update
+  // ability).
   createApiEndpoint('create-ydoc', {
     post: {
       handler: async (req) => {
