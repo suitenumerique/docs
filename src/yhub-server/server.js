@@ -13,8 +13,9 @@ import { secret } from './env.js';
 import {
   SOFT_MIGRATION,
   fullMigrate,
-  isTransientFailure,
+  isPermanentFailure,
   maybeMigrate,
+  migrationLog,
 } from './migration.js';
 
 const PORT = Number(process.env.PORT || 3002);
@@ -71,6 +72,39 @@ const backendFetch = async (path, { cookie, origin }) => {
     throw err;
   }
   return res.json();
+};
+
+// First access to a room yhub does not know: seed it from the legacy Django S3
+// store before admitting the caller. Awaited inside the upgrade handler, so the
+// post-upgrade initial sync (which merges postgres and the stream from clock 0)
+// is guaranteed to include the seed.
+//
+// Seeding never decides whether the caller may read the document — that is the
+// backend's answer alone. There are two ways this ends other than a seed:
+//
+//   the legacy object cannot be migrated (it does not decode, or it is bigger
+//     than we will load) — retrying will not change that, so the room opens as
+//     a new document. Refusing instead would lock a document nobody can repair
+//     from the outside. Logged per access, because the caller is now editing
+//     alongside legacy content that stayed behind in S3.
+//   the legacy store could not be reached (timeout, network, backpressure) —
+//     the same request later may well succeed, so it answers 503 rather than
+//     silently starting an empty document on top of content that exists.
+const seedFromLegacyStore = async (room) => {
+  try {
+    // `yhub` is declared at the bottom of this file — safe: auth callbacks only
+    // fire once the server is up, i.e. after that assignment
+    await maybeMigrate(yhub, room);
+  } catch (err) {
+    if (!isPermanentFailure(err)) {
+      throw apiError(503, 'Legacy document store is unavailable');
+    }
+    // why it failed was logged once, at the attempt, inside maybeMigrate
+    migrationLog.warn(
+      { event: 'seed.skipped', docid: room.docid, err: err?.message },
+      'admitting caller to a document that could not be migrated; it opens as new',
+    );
+  }
 };
 
 const auth = createAuthPlugin({
@@ -150,10 +184,35 @@ const auth = createAuthPlugin({
     }
   },
   async getAccessType(authInfo, { org, docid, branch }, purpose) {
-    if (authInfo.admin === true) return 'rw'; // Django's admin token: full access
+    if (authInfo.admin === true) {
+      // Django's admin token: full access. It still goes through the legacy
+      // seed, on the same terms as a user (default purpose only, so a
+      // `migrate` call is not seeded out from under fullMigrate). Without it a
+      // backend read of an unmigrated document would answer with an *empty*
+      // doc, and a create-ydoc against one would write a second lineage next
+      // to the legacy content the first user access is about to seed in.
+      // Access itself is never in question here — the token already granted it.
+      // The same org/branch fence the user path applies below. The admin token
+      // is the only identity that can name an arbitrary org or branch, and the
+      // legacy store is branchless — `{docid}/file` *is* main — so seeding any
+      // other room would write main's content into an orphan room, and the
+      // per-docid verdict cache would then report that docid as done and leave
+      // the real room empty.
+      if (
+        SOFT_MIGRATION &&
+        purpose == null &&
+        org === ORG &&
+        branch === 'main' &&
+        UUID4.test(docid)
+      ) {
+        await seedFromLegacyStore({ org, docid, branch });
+      }
+      return 'rw';
+    }
     // Regular users only get access for the default purpose — custom-endpoint
-    // purposes (reset-connections) are backend-internal. Loose != on purpose:
-    // ws upgrades and rechecks pass undefined, built-in rest endpoints null.
+    // purposes (reset-connections, migrate) are backend-internal. Loose != on
+    // purpose: ws upgrades and rechecks pass undefined, built-in rest
+    // endpoints null.
     if (
       org !== ORG ||
       branch !== 'main' ||
@@ -177,29 +236,10 @@ const auth = createAuthPlugin({
     if (!doc.abilities?.retrieve) {
       return null;
     }
+    // the backend has already decided the caller may read this document; the
+    // seed only decides what is in it
     if (SOFT_MIGRATION) {
-      // First access to a room yhub does not know: seed it from the legacy
-      // Django S3 store before admitting the connection. Awaited inside the
-      // upgrade handler, so the post-upgrade initial sync (which merges
-      // postgres and the stream from clock 0) is guaranteed to include the
-      // seed. Runs only for authorized readers. A missing S3 object is the
-      // brand-new-document case and allows an empty room; a real S3/compute
-      // failure denies access, either way already logged (once per attempt)
-      // inside maybeMigrate.
-      try {
-        // `yhub` is declared at the bottom of this file — safe: auth callbacks
-        // only fire once the server is up, i.e. after that assignment
-        await maybeMigrate(yhub, { org, docid, branch });
-      } catch (err) {
-        // A corrupt or oversized legacy object will fail the same way forever,
-        // so that denial is permanent (403). An S3 timeout, a network blip or
-        // momentary seed backpressure will not — 503 tells the caller to come
-        // back rather than to treat the document as unreadable.
-        if (isTransientFailure(err)) {
-          throw apiError(503, 'Legacy document store is unavailable');
-        }
-        return null;
-      }
+      await seedFromLegacyStore({ org, docid, branch });
     }
     return doc.abilities.update ? 'rw' : 'r';
   },
