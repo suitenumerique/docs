@@ -8,6 +8,11 @@ and this project adheres to
 
 ### Added
 
+- ✅(collaboration) add integration tests covering both legacy migrations,
+  running against a real yhub: CI now starts the collaboration server and a
+  valkey alongside the backend test job. They skip themselves when nothing
+  answers on `COLLABORATION_API_URL`, so a `make test` without the dev stack
+  still passes
 - ✨(collaboration) soft-migrate legacy S3 documents into yhub on first access
   (`SOFT_MIGRATION=true`): when yhub does not know a document yet, its legacy
   snapshot (`{id}/file`, base64 Yjs update) is fetched from the Django S3
@@ -15,9 +20,16 @@ and this project adheres to
   timestamp — a lazy seed is not an editing event, and stamping one would
   collide with the real per-version times the migrate endpoint writes) before
   the connection is admitted. A missing S3 object means a brand-new document and
-  yields an empty room; any real S3/compute failure fails closed, as a
-  permanent `403` for a corrupt or oversized object and a retryable `503` for
-  timeouts and network errors. Enabled in the dev stack via compose.yml
+  yields an empty room. Seeding never decides access: a legacy object that
+  cannot be migrated (undecodable or oversized) opens as a new document, logged
+  per access, since no retry could fix it and refusing would make the document
+  permanently unopenable. Every other failure — an unreachable store, but also
+  any refusal from S3 such as `AccessDenied` on a rotated key or a wrong bucket
+  name — answers a retryable `503`, so an empty document is never started on
+  top of content that exists.
+  Backend reads carrying the admin JWT are seeded too, so a server-side read of
+  an unmigrated document never answers with an empty one. Enabled in the dev
+  stack via compose.yml
 - ✨(collaboration) add a migrate endpoint on yhub:
   `POST /collaboration/migrate/v1/docs/{id}` replays a document's **full**
   legacy version history from the versioned S3 media bucket into a

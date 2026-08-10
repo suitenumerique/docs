@@ -128,6 +128,13 @@ jobs:
         # needed because the postgres container does not provide a healthcheck
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
+      # message stream for the collaboration server (see the yhub steps below)
+      valkey:
+        image: valkey/valkey:alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd "valkey-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+
     env:
       DJANGO_CONFIGURATION: Test
       DJANGO_SETTINGS_MODULE: impress.settings
@@ -142,6 +149,12 @@ jobs:
       AWS_S3_ENDPOINT_URL: http://localhost:9000
       AWS_S3_ACCESS_KEY_ID: impress
       AWS_S3_SECRET_ACCESS_KEY: password
+      # Collaboration server. The integration tests reach it over this url and
+      # skip themselves when nothing answers; yhub reads the JWKS back from the
+      # django server started alongside it, so both sides must share
+      # JWT_PRIVATE_KEY_FILE.
+      COLLABORATION_API_URL: http://localhost:3002/collaboration
+      JWT_PRIVATE_KEY_FILE: ${{ github.workspace }}/data/jwt/private.pem
 
     steps:
       - name: Checkout repository
@@ -203,8 +216,61 @@ jobs:
           sudo apt-get install -y gettext pandoc shared-mime-info
           sudo wget https://raw.githubusercontent.com/suitenumerique/django-lasuite/refs/heads/main/assets/conf/mime.types -O /etc/mime.types
 
+      # --- collaboration server -------------------------------------------
+      # The yhub integration tests drive a real collaboration server: it reads
+      # legacy documents out of MinIO and reads this backend's JWKS back to
+      # verify the admin token the tests mint, so the two must share the
+      # signing key. Tests skip themselves when nothing answers on
+      # COLLABORATION_API_URL.
+      - name: Generate the JWT signing key
+        working-directory: .
+        run: bin/generate-jwt-private-key.sh
+
+      - name: Create the collaboration server database
+        run: |
+          PGPASSWORD=pass psql -h localhost -U dinum -d impress \
+            -c 'CREATE DATABASE yhub'
+          PGPASSWORD=pass psql -h localhost -U dinum -d yhub \
+            -f ../../docker/files/yhub/initdb/01-yhub.sql
+
       - name: Generate a MO file from strings extracted from the project
         run: uv run python manage.py compilemessages
 
+      - name: Set up Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "22.x"
+
+      - name: Install the collaboration server
+        working-directory: src/yhub-server
+        run: npm ci --omit=dev
+
+      - name: Start the backend for the collaboration server to authenticate against
+        env:
+          DJANGO_ALLOWED_HOSTS: "*"
+        run: |
+          nohup uv run python manage.py runserver 0.0.0.0:8000 --noreload \
+            > /tmp/backend.log 2>&1 &
+          dockerize -wait http://localhost:8000/api/v1.0/jwks -timeout 60s
+
+      - name: Start the collaboration server
+        working-directory: src/yhub-server
+        env:
+          PORT: 3002
+          REDIS: redis://localhost:6379
+          POSTGRES: postgres://dinum:pass@localhost:5432/yhub
+          REDIS_PREFIX: yhub
+          COLLABORATION_BACKEND_BASE_URL: http://localhost:8000
+          COLLABORATION_SERVER_ORIGIN: http://localhost:3000
+          AWS_STORAGE_BUCKET_NAME: impress-media-storage
+          SOFT_MIGRATION: "true"
+        run: |
+          nohup node server.js > /tmp/yhub.log 2>&1 &
+          dockerize -wait tcp://localhost:3002 -timeout 30s
+
       - name: Run tests
         run: uv run pytest -n 2
+
+      - name: Collaboration server logs
+        if: failure()
+        run: cat /tmp/yhub.log /tmp/backend.log
