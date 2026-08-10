@@ -10,7 +10,7 @@ import responses
 
 from core import factories
 from core.services.yhub_services import YHubService
-from core.tests.utils.urls import reload_urls
+from core.tests.utils.urls import reload_urls, restore_urls
 
 USER = "user"
 TEAM = "team"
@@ -21,6 +21,25 @@ VIA = [USER, TEAM]
 def clear_cache():
     """Fixture to clear the cache before each test."""
     cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def restore_urlconf():
+    """
+    Put the URLs back after a test that reloaded them.
+
+    Reloading is how a test makes the resource server routes appear or checks
+    that they are absent, but the URLconf belongs to the process: without this,
+    a test asserting a 404 on `/external_api/` and one asserting a 401 pass or
+    fail depending on which ran first in their worker.
+
+    Autouse and asking for nothing, so it is set up before the `settings`
+    fixture and torn down after it: the reload then sees the settings of the
+    project, not the ones of the test.
+    """
+    yield
+
+    restore_urls()
 
 
 @pytest.fixture
