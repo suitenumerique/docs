@@ -91,7 +91,9 @@ const s3 = SOFT_MIGRATION
       });
     })()
   : null;
-const migrationLog = logger.child({ module: 'soft-migration' });
+// exported so the auth path can report, under the same module name, that it
+// admitted a caller to a document it could not migrate
+export const migrationLog = logger.child({ module: 'soft-migration' });
 
 // Both keys are derived from the prefix yhub itself resolved, so they cannot
 // drift from the room keys, and both sit outside its scanned `:room:*` pattern.
@@ -118,10 +120,10 @@ const fetchLegacyDoc = async (docid, versionId = null) => {
   // stream once reading, so a stalled transfer cannot hold the ws upgrade
   const timeout = new Promise((_, reject) => {
     const timer = setTimeout(() => {
+      // unmarked, so it counts as retryable: a slow S3 may recover
       const err = new Error(
         `s3 fetch timed out after ${S3_FETCH_TIMEOUT_MS}ms`,
       );
-      err.transient = true; // a slow S3 may recover — cache the failure briefly
       stream?.destroy(err);
       reject(err);
     }, S3_FETCH_TIMEOUT_MS);
@@ -159,11 +161,11 @@ const fetchLegacyDoc = async (docid, versionId = null) => {
         stream.on('data', (chunk) => {
           received += chunk.byteLength;
           if (received > MAX_LEGACY_B64_BYTES) {
-            stream.destroy(
-              new Error(
-                `legacy object exceeds the ${MAX_LEGACY_B64_BYTES}B cap`,
-              ),
+            const err = new Error(
+              `legacy object exceeds the ${MAX_LEGACY_B64_BYTES}B cap`,
             );
+            err.permanent = true; // the object will be this big next time too
+            stream.destroy(err);
             return;
           }
           chunks.push(chunk);
@@ -175,9 +177,11 @@ const fetchLegacyDoc = async (docid, versionId = null) => {
     ]);
     const decoded = Buffer.from(body.toString('utf8'), 'base64');
     if (decoded.byteLength > MAX_LEGACY_BYTES) {
-      throw new Error(
+      const err = new Error(
         `decoded legacy update (${decoded.byteLength}B) exceeds the ${MAX_LEGACY_BYTES}B cap`,
       );
+      err.permanent = true; // the object will be this big next time too
+      throw err;
     }
     // compute-task schema requires an exact Uint8Array (lib0 compares the
     // constructor) — re-view the Buffer without copying
@@ -205,7 +209,6 @@ const listLegacyVersions = async (docid) => {
       const err = new Error(
         `s3 version listing timed out after ${S3_LIST_TIMEOUT_MS}ms`,
       );
-      err.transient = true;
       stream.destroy(err);
     }, S3_LIST_TIMEOUT_MS);
     stream.on('data', (obj) => {
@@ -265,26 +268,17 @@ const VERDICT_TTL_MS = { exists: 600000, empty: 60000, failed: 300000 };
 // transient failures (network blips, timeouts, S3 restarting) are cached just
 // long enough to blunt a retry storm without turning a hiccup into a lockout
 const TRANSIENT_TTL_MS = 15000;
-const TRANSIENT_CODES = new Set([
-  'ECONNREFUSED',
-  'ECONNRESET',
-  'ETIMEDOUT',
-  'EHOSTUNREACH',
-  'ENETUNREACH',
-  'ENOTFOUND',
-  'EAI_AGAIN',
-  'EPIPE',
-]);
-// Will this failure plausibly resolve on its own? Callers use it twice: to pick
-// the verdict TTL below, and — in server.js — to decide whether a denied
-// connection reports a permanent 403 or a retryable 503. `noCache` is the
-// per-replica seed backpressure, transient by construction (a slot frees up
-// within seconds).
-export const isTransientFailure = (err) =>
-  err?.transient === true ||
-  err?.noCache === true ||
-  TRANSIENT_CODES.has(err?.code) ||
-  TRANSIENT_CODES.has(err?.cause?.code);
+// Is this legacy object beyond saving, as opposed to merely out of reach right
+// now? Only a failure raised while *interpreting* bytes we already hold
+// qualifies: the object does not decode, or it is larger than we will load.
+// Those are marked at the throw site, and nothing else counts — an allowlist
+// of retryable errors would have to enumerate every way S3 can say no
+// (AccessDenied on a rotated key, NoSuchBucket on a misconfigured name, a
+// region redirect), and each one it missed would be read as "this document has
+// no content" and open the room empty over content that is alive in S3.
+// Guessing wrong in this direction costs a retry; guessing wrong in the other
+// costs the document.
+export const isPermanentFailure = (err) => err?.permanent === true;
 const VERDICT_CACHE_MAX = 50000;
 const verdicts = new Map(); // docid -> { verdict, error, expires }
 const rememberVerdict = (
@@ -358,6 +352,16 @@ const migrate = async (yhub, room) => {
         );
         return 'empty';
       }
+      // Decode before writing anything: a legacy object that is not a valid
+      // Yjs update fails here, on this thread, and is the one failure we know
+      // no retry can fix — so it is marked as such.
+      let contentids;
+      try {
+        contentids = Y.createContentIdsFromUpdate(update);
+      } catch (err) {
+        err.permanent = true;
+        throw err;
+      }
       await yhub.stream.addMessage(room, {
         type: 'ydoc:update:v1',
         // Deliberately no insertAt/deleteAt. A lazy seed is not an editing
@@ -368,12 +372,9 @@ const migrate = async (yhub, room) => {
         // whichever the row order happened to put last. Content seeded this way
         // carries an author but no timestamp, so it produces no activity entry
         // until fullMigrate supplies the history.
-        //
-        // Reading the ids also validates the update: a corrupt legacy object
-        // throws here, on this thread, before anything reaches the stream.
         contentmap: Y.encodeContentMap(
           Y.createContentMapFromContentIds(
-            Y.createContentIdsFromUpdate(update),
+            contentids,
             [
               Y.createContentAttribute('insert', 'system'),
               Y.createContentAttribute('insert:migration', 's3'),
@@ -428,22 +429,31 @@ export const maybeMigrate = async (yhub, room) => {
       .then(
         (verdict) => rememberVerdict(room.docid, verdict),
         (err) => {
-          // logged here (once per attempt) rather than per denied connection:
-          // cached failures deny without new logs until the verdict expires
+          // The one place the *cause* is recorded, once per attempt rather
+          // than per access: a cached verdict re-raises this error without
+          // logging again until it expires.
+          const permanent = isPermanentFailure(err);
           migrationLog.error(
-            { event: 'seed.failed', err, docid: room.docid },
-            'soft migration failed; denying access',
+            {
+              event: 'seed.failed',
+              err,
+              docid: room.docid,
+              permanent,
+              bucket: AWS_STORAGE_BUCKET_NAME,
+              key: `${room.docid}/file`,
+            },
+            permanent
+              ? 'soft migration is not possible for this legacy object'
+              : 'soft migration failed; the caller is asked to retry',
           );
           if (err?.noCache !== true) {
-            // transient failures get a short TTL so a hiccup cannot lock a
-            // doc out for the full poison-object window
+            // a retryable failure is remembered only briefly, so a hiccup
+            // cannot lock a document out for the full poison-object window
             rememberVerdict(
               room.docid,
               'failed',
               err,
-              isTransientFailure(err)
-                ? TRANSIENT_TTL_MS
-                : VERDICT_TTL_MS.failed,
+              permanent ? VERDICT_TTL_MS.failed : TRANSIENT_TTL_MS,
             );
           }
           throw err;
