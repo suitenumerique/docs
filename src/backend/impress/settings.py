@@ -529,6 +529,13 @@ class Base(Configuration):
         environ_name="COLLABORATION_WS_INACTIVITY_TIMEOUT",
         environ_prefix=None,
     )
+    # Base url of the collaboration server's REST api, including its route
+    # prefix (e.g. "http://yhub:3002/collaboration"). Server-to-server only:
+    # used with an admin JWT to migrate legacy documents and, later, to kick
+    # connections when permissions change.
+    COLLABORATION_API_URL = values.Value(
+        None, environ_name="COLLABORATION_API_URL", environ_prefix=None
+    )
 
     # JWT
     # RSA private key (PEM) used to sign the tokens issued by
