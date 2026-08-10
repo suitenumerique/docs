@@ -61,6 +61,7 @@ def test_api_config(is_authenticated):
         "CONVERSION_FILE_EXTENSIONS_ALLOWED": [".docx", ".md"],
         "CONVERSION_FILE_MAX_SIZE": 20971520,
         "CONVERSION_UPLOAD_ENABLED": False,
+        "DOCUMENT_IMAGE_MAX_SIZE": 10485760,
         "ENVIRONMENT": "test",
         "FRONTEND_CSS_URL": "http://testcss/",
         "FRONTEND_HOMEPAGE_FEATURE_ENABLED": True,

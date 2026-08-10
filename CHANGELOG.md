@@ -10,6 +10,8 @@ and this project adheres to
 
 - ✨(helm) allow disallowing search engine indexing per instance #2694
 - 🐛(frontend) reduce PostHog volume from web vitals and opt_in spam #2701
+- ✨(backend) expose the attachment max size in the config endpoint #2577
+- ✨(frontend) warn before uploading an attachment over the size limit #2577
 
 ### Fixed
 
