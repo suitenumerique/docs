@@ -11,6 +11,7 @@ and this project adheres to
 - ♿️(frontend) restore skip to content link after header redesign #2510
 - 🌐(i18n) rename cn_CN to zh_CN, add eo_PL and zh_TW locales #2486
 - ✨(backend) conditional email notification in server to server api #2554
+- ✨(backend) expose the attachment max size in the config endpoint #2577
 
 ### Changed
 
@@ -23,6 +24,7 @@ and this project adheres to
 - 🐛(backend) ignore CSPs for API docs in development
 - 🐛(frontend) export images embedded with a relative url #2573
 - 🐛(y-provider) fix sentry init #2579
+- 🐛(frontend) warn before uploading an attachment over the size limit #2577
 
 ## [v5.4.1] - 2026-07-09
 

@@ -35,6 +35,19 @@ describe('utils', () => {
       expect(result.cause).toBeUndefined();
       expect(result.data).toBeUndefined();
     });
+
+    it('returns undefined causes if the body is not JSON', async () => {
+      // A proxy answering before the API does, with an HTML error page
+      const mockResponse = {
+        status: 413,
+        json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+      } as unknown as Response;
+
+      const result = await errorCauses(mockResponse);
+
+      expect(result.status).toBe(413);
+      expect(result.cause).toBeUndefined();
+    });
   });
 
   describe('getCSRFToken', () => {
