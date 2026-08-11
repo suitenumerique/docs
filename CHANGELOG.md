@@ -12,15 +12,16 @@ and this project adheres to
 - 🌐(i18n) rename cn_CN to zh_CN, add eo_PL and zh_TW locales #2486
 - ✨(backend) conditional email notification in server to server api #2554
 
+### Changed
+
+- ♿️(frontend) use semantic `<dl>` structure in document info card #2379
+
 ### Fixed
 
 - 🐛(frontend) redirect homepage to login when homepage feat is disabled #2521
 - 🐛(backend) ignore CSPs for API docs in development
 - 🐛(frontend) export images embedded with a relative url #2573
-
-### Changed
-
-- ♿️(frontend) use semantic `<dl>` structure in document info card #2379
+- 🐛(y-provider) fix sentry init #2579
 
 ## [v5.4.1] - 2026-07-09
 

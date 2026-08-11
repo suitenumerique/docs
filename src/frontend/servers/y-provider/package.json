@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "dev": "cross-env COLLABORATION_LOGGING=true && nodemon --config nodemon.json",
-    "start": "node ./dist/start-server.js",
+    "start": "node --import ./dist/services/sentry.js ./dist/start-server.js",
     "lint": "eslint",
     "test": "vitest"
   },

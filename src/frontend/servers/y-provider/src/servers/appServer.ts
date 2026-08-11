@@ -13,8 +13,6 @@ import { corsMiddleware, httpSecurity, wsSecurity } from '@/middlewares';
 import { routes } from '@/routes';
 import { logger } from '@/utils';
 
-import '../services/sentry';
-
 /**
  * init the collaboration server.
  *
