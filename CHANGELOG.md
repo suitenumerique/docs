@@ -15,6 +15,7 @@ and this project adheres to
 ### Changed
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
+- ♿️(frontend) restore presenter focus trapping after share links #2533
 
 ### Fixed
 
