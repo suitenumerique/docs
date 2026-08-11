@@ -18,6 +18,7 @@ import {
   useCreateBlockNote,
 } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
+import { FindAndReplace } from '@tiptap/extension-find-and-replace';
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +33,7 @@ import {
   useCommentSidebarStore,
   useComments,
 } from '@/docs/doc-comments';
+import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
 import { Doc } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
@@ -230,6 +232,13 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         CommentsExtension({ threadStore, resolveUsers }),
         ...(aiExtension ? [aiExtension] : []),
       ],
+      _tiptapOptions: {
+        extensions: [
+          FindAndReplace.configure({
+            injectCSS: false,
+          }),
+        ],
+      },
       visualMedia: {
         image: {
           maxWidth: 760,
@@ -279,6 +288,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         canSeeComment={canSeeComment}
         currentUserAvatarUrl={currentUserAvatarUrl}
       />
+      <DocsFindReplaceStyle />
       {errorAttachment && (
         <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
           <TextErrors

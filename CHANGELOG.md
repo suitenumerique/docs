@@ -11,16 +11,17 @@ and this project adheres to
 - ♿️(frontend) restore skip to content link after header redesign #2510
 - 🌐(i18n) rename cn_CN to zh_CN, add eo_PL and zh_TW locales #2486
 - ✨(backend) conditional email notification in server to server api #2554
-
-### Fixed
-
-- 🐛(frontend) redirect homepage to login when homepage feat is disabled #2521
-- 🐛(backend) ignore CSPs for API docs in development
-- 🐛(frontend) export images embedded with a relative url #2573
+- ✨(frontend) add find and replace feature to the editor #2570
 
 ### Changed
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
+
+### Fixed
+
+- 🐛(frontend) redirect homepage to login when homepage feat is disabled #2521
+- 🐛(backend) ignore CSPs for API docs in development #2538
+- 🐛(frontend) export images embedded with a relative url #2573
 
 ## [v5.4.1] - 2026-07-09
 
