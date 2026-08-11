@@ -2,6 +2,8 @@ import { announce } from '@react-aria/live-announcer';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useFindReplaceShortcut } from '@/docs/doc-find-replace/hooks/useFindReplaceShortcut';
+
 import { DocsBlockNoteEditor } from '../types';
 
 const getFormattingShortcutLabel = (
@@ -53,6 +55,7 @@ export const useShortcuts = (
   el: HTMLDivElement | null,
 ) => {
   const { t } = useTranslation();
+  useFindReplaceShortcut(editor);
 
   const handleFormattingShortcut = useCallback(
     (event: KeyboardEvent) => {

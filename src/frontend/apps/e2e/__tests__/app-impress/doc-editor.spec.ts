@@ -602,13 +602,7 @@ test.describe('Doc Editor', () => {
     page,
     browserName,
   }) => {
-    const [docTitle] = await createDoc(
-      page,
-      'doc-viewport-test',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, docTitle);
+    await createDoc(page, 'doc-viewport-test', browserName, 1);
 
     const editor = await writeInEditor({
       page,
@@ -636,5 +630,58 @@ test.describe('Doc Editor', () => {
     await page.waitForTimeout(500);
 
     await expect(editor.getByText('Mobile Text')).toBeVisible();
+  });
+
+  test('it searches and replaces occurrences', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-search-replace', browserName);
+
+    const editor = await writeInEditor({
+      page,
+      text: 'World',
+    });
+
+    await writeInEditor({
+      page,
+      text: 'Hello World - Hello World',
+    });
+
+    // Open the find and replace panel
+    await page.keyboard.press('Control+f');
+
+    // Search for "Hello" and check that the occurrences are highlighted
+    await page.getByRole('textbox', { name: 'Find in document' }).fill('Hello');
+    await expect(page.getByText('1 / 2')).toBeVisible();
+    await expect(
+      editor
+        .locator('.find-and-replace-result-current')
+        .first()
+        .getByText('Hello'),
+    ).toBeVisible();
+    await expect(editor.locator('.find-and-replace-result')).toHaveCount(2);
+
+    await page.getByRole('button', { name: 'Next match' }).click();
+    await expect(page.getByText('2 / 2')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    // Select World then press Ctrl+f to check if the selected text is prefilled in the find input
+    await page.getByText('World').first().selectText();
+    await page.keyboard.press('Control+f');
+    await expect(
+      page.getByRole('textbox', { name: 'Find in document' }),
+    ).toHaveValue('World');
+
+    // Replace occurrences
+    await page.getByRole('button', { name: 'Next match' }).click();
+    await page.getByRole('button', { name: 'Toggle replace' }).click();
+    await page.getByRole('textbox', { name: 'Replace with' }).fill('Docs');
+    await page.getByRole('button', { name: 'Replace', exact: true }).click();
+    await expect(editor.getByText('Hello Docs - Hello World')).toBeVisible();
+    await page.getByRole('button', { name: 'Replace all' }).click();
+    await expect(editor.getByText('Docs', { exact: true })).toBeVisible();
+    await expect(editor.getByText('Hello Docs - Hello Docs')).toBeVisible();
   });
 });
