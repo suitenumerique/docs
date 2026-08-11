@@ -46,7 +46,7 @@ const SkeletonEditorHeader = () => {
 
   return (
     <Box
-      $padding={{ horizontal: isDesktop ? '54px' : 'base', top: '55px' }}
+      $padding={{ horizontal: isDesktop ? '54px' : 'base', top: '24px' }}
       className="--docs--doc-editor-header-skeleton"
       $width="100%"
       $gap="base"
@@ -99,8 +99,6 @@ export const SkeletonEditorCore = ({
   $css,
   ...props
 }: SkeletonEditorCoreProps) => {
-  const { isDesktop } = useResponsiveStore();
-
   return (
     <Box
       $direction="row"
@@ -112,7 +110,7 @@ export const SkeletonEditorCore = ({
       <Box
         $position="relative"
         $width="100%"
-        $padding={{ horizontal: isDesktop ? '54px' : 'base', top: 'md' }}
+        $padding={{ horizontal: '54px', top: '45px' }}
         $flex="1"
         $css={css`
           ${$css}
