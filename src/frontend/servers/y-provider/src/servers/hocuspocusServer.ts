@@ -3,6 +3,7 @@ import {
   Document,
   MessageReceiver,
   MessageType,
+  OutgoingMessage,
   Server,
 } from '@hocuspocus/server';
 import { validate as uuidValidate, version as uuidVersion } from 'uuid';
@@ -27,6 +28,16 @@ MessageReceiver.prototype.apply = function (
     this.message.decoder.pos = startPos;
 
     if (type === MessageType.Awareness) {
+      /*
+       * Never apply/broadcast the update, but echo an empty one back to the
+       * sender so it doesn't sit silent and trip the client's 30s
+       * reconnect-on-no-message watchdog (close code 1005).
+       */
+      connection.send(
+        new OutgoingMessage(document.name)
+          .createAwarenessUpdateMessage(document.awareness, [])
+          .toUint8Array(),
+      );
       return type;
     }
   }
