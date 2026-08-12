@@ -42,6 +42,10 @@ It is not a fork of yhub — it is a thin wrapper:
 - exposes `POST /collaboration/migrate/v1/{org}/{docid}`, which replays a
   document's **full** legacy version history out of the S3 media bucket (see
   "Full migration" below) — admin JWT only, like `reset-connections`,
+- exposes `POST /collaboration/restore-ydoc/v1/{org}/{docid}`, which undoes the
+  deletion of a document — admin JWT only, like `reset-connections`. Deleting
+  one needs nothing custom, the built-in `DELETE .../ydoc/` does it (see
+  "Deletion" below); restoring has no built-in route,
 - notifies the Django backend on
   `POST /api/v1.0/documents/{id}/content-updated/` whenever the worker
   persists new content for a document, so that lists ordered by `updated_at`
@@ -61,8 +65,9 @@ the websocket and the built-in document APIs (`ydoc`, `rollback`, `prune`,
 `changeset`, `activity`) are all guarded by the same cookie-based document
 authorization and are meant to be reachable by browsers, as is
 `/collaboration/jwks/v1`, which carries public keys and nothing else. The one
-exception is `/collaboration/reset-connections/` and `/collaboration/migrate/`, which are
-backend-internal and should not be routed through the public ingress.
+exception is `/collaboration/reset-connections/`, `/collaboration/migrate/` and
+`/collaboration/restore-ydoc/`, which are backend-internal and should not be
+routed through the public ingress.
 
 ## Container image
 
@@ -112,6 +117,34 @@ From the repository root, `make migrate-yhub` runs it against the dev stack —
 the counterpart of `make migrate` for the Django database. `make bootstrap`
 already includes it, so a fresh checkout needs nothing extra; an upgrade is
 `make migrate-yhub` and restart the service.
+
+## Deletion
+
+The content of a document lives here, so deleting one in Docs has to be said
+here too — otherwise the clients already connected keep editing it and the
+content outlives the document. The backend does that from
+`sync_service_deletions_in_cascade`, which walks the deleted subtree and tells
+this server what became of each of its documents.
+
+Deleting is `DELETE /collaboration/ydoc/v1/{org}/{docid}`, built into yhub
+0.6.0. It is a **soft** deletion: the deletion is recorded, the clients editing
+the document are disconnected (websocket close code 4404) and every route
+answers 404 for it (`{"code": "doc-deleted"}`, which a document that was never
+written does not — that one answers an empty document), but its content is left
+untouched. Deleting twice keeps the date of the first deletion.
+
+Restoring is the custom `POST /collaboration/restore-ydoc/v1/{org}/{docid}`
+above: yhub 0.6.0 has no built-in route for it. The content was never touched,
+so the document comes back with its whole history. Restoring one that is not
+deleted answers 200 and changes nothing, which is what lets the backend restore
+a subtree without asking what became of each document in it.
+
+Erasing the content for good is a third operation (`YHub.deleteDoc(room, {
+hard: true })`), reachable from inside this process only — yhub deliberately
+keeps it off the REST API. Nothing here calls it: Docs never erases a document
+either, a soft-deleted one simply stops being restorable after
+`TRASHBIN_CUTOFF_DAYS`. Note that a hard deletion is final for that room — the
+docid can never be written again, and `restore-ydoc` answers 409 for it.
 
 ## Soft migration (`SOFT_MIGRATION=true`)
 
