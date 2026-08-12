@@ -148,3 +148,32 @@ def test_api_documents_delete_authenticated_owner(via, mock_user_teams):
         {},
         document=document,
     )
+
+
+def test_api_documents_delete_reports_the_deletion_to_the_collaboration_server(
+    django_capture_on_commit_callbacks,
+):
+    """
+    Deleting a document should tell the collaboration server, which holds its
+    content and would otherwise go on serving it to the clients editing it.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(users=[(user, "owner")])
+    child = factories.DocumentFactory(parent=document)
+
+    client = APIClient()
+    client.force_login(user)
+
+    # the report is made once the deletion is committed: the task reads it back
+    with (
+        mock.patch("core.tasks.documents.YHubService") as mock_service,
+        django_capture_on_commit_callbacks(execute=True),
+    ):
+        response = client.delete(f"/api/v1.0/documents/{document.id!s}/")
+
+    assert response.status_code == 204
+    # the subtree goes with it
+    assert mock_service.return_value.delete_ydoc.call_args_list == [
+        mock.call(document),
+        mock.call(child),
+    ]

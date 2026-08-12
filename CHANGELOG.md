@@ -8,6 +8,19 @@ and this project adheres to
 
 ### Added
 
+- ✨(collaboration) delete a document on the collaboration server when it is
+  deleted in Docs, and restore it when it comes back out of the trashbin. The
+  content lives there now, so until it was told, the clients already editing a
+  deleted document went on editing it and its content outlived it. Both go
+  through `sync_service_deletions_in_cascade`, which walks the deleted subtree
+  and reports what each of its documents is now — a restored document only
+  brings back the part of its subtree that was deleted with it. Deleting uses
+  yhub's built-in `DELETE .../ydoc/` (a soft deletion: connected clients are
+  disconnected with the close code 4404 and every route answers 404, the
+  content is left untouched), restoring the new backend-internal
+  `POST /collaboration/restore-ydoc/v1/{org}/{docid}`, since yhub 0.6.0 has no
+  built-in route for it. Erasing the content for good stays out of reach, as it
+  is in Docs: a document that is no longer restorable is not erased either
 - ⬆️(collaboration) upgrade yhub to 0.6.0, which needs a schema change: a
   `yhub_ydoc_tombstones_v1` table (it adds document deletion) and four
   `*_is_reference` markers on `yhub_ydoc_v1`. Neither is optional — every
