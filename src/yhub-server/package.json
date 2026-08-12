@@ -6,7 +6,7 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@y/hub": "0.5.0",
+    "@y/hub": "0.6.0",
     "@y/y": "14.0.0-rc.24",
     "jose": "6.2.8",
     "minio": "8.0.7"
