@@ -226,13 +226,6 @@ jobs:
         working-directory: .
         run: bin/generate-jwt-private-key.sh
 
-      - name: Create the collaboration server database
-        run: |
-          PGPASSWORD=pass psql -h localhost -U dinum -d impress \
-            -c 'CREATE DATABASE yhub'
-          PGPASSWORD=pass psql -h localhost -U dinum -d yhub \
-            -f ../../docker/files/yhub/initdb/01-yhub.sql
-
       - name: Generate a MO file from strings extracted from the project
         run: uv run python manage.py compilemessages
 
@@ -244,6 +237,14 @@ jobs:
       - name: Install the collaboration server
         working-directory: src/yhub-server
         run: npm ci --omit=dev
+
+      # yhub ships its own DDL and creates the database as well, so this needs
+      # the dependencies installed above — hence its place after them
+      - name: Create the collaboration server database
+        working-directory: src/yhub-server
+        env:
+          POSTGRES: postgres://dinum:pass@localhost:5432/yhub
+        run: npm run init-db
 
       - name: Start the backend for the collaboration server to authenticate against
         env:
