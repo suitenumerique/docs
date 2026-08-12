@@ -243,6 +243,54 @@ def test_migrate_forced(mock_request):
 
 
 @patch("requests.request")
+def test_delete_ydoc(mock_request):
+    """Should ask yhub to delete the document, on its built-in endpoint."""
+    mock_request.return_value.ok = True
+
+    response = YHubService().delete_ydoc(DOCUMENT)
+
+    assert response is mock_request.return_value
+    args, _kwargs = mock_request.call_args
+    assert args == (
+        "delete",
+        f"http://yhub:3002/collaboration/ydoc/v1/docs/{DOCUMENT.id!s}",
+    )
+
+
+@patch("requests.request")
+def test_restore_ydoc(mock_request):
+    """Should ask yhub to bring the document back, on our own endpoint."""
+    mock_request.return_value.ok = True
+
+    response = YHubService().restore_ydoc(DOCUMENT)
+
+    assert response is mock_request.return_value
+    args, _kwargs = mock_request.call_args
+    # yhub has a built-in route to delete a document but none to restore one
+    assert args == (
+        "post",
+        f"http://yhub:3002/collaboration/restore-ydoc/v1/docs/{DOCUMENT.id!s}",
+    )
+
+
+@patch("requests.request")
+def test_restore_ydoc_erased_content(mock_request):
+    """A document whose content was erased should report the conflict it is."""
+    mock_request.return_value.ok = False
+    mock_request.return_value.status_code = 409
+    mock_request.return_value.text = '{"error": "Document content was erased"}'
+    mock_request.return_value.json.return_value = {
+        "error": "Document content was erased"
+    }
+
+    with pytest.raises(APIError) as excinfo:
+        YHubService().restore_ydoc(DOCUMENT)
+
+    assert excinfo.value.status_code == 409
+    assert "Document content was erased" in str(excinfo.value)
+
+
+@patch("requests.request")
 def test_reset_connections(mock_request):
     """Should ask yhub to re-check every connection of the document."""
     mock_request.return_value.ok = True

@@ -9,7 +9,8 @@ Every route is mounted under the `apiPrefix` yhub is configured with, and a
 room is addressed as `/{prefix}/{endpoint}/{version}/{org}/{docid}`, where `org`
 is the yhub organization Docs runs under and `docid` the document id. The
 built-in endpoints are `ydoc` (get the state of a document, patch it with a Yjs
-update), `rollback`, `prune`, `changeset` and `activity`, all at `v1`. yhub also
+update, delete it), `rollback`, `prune`, `changeset` and `activity`, all at
+`v1`. yhub also
 accepts a `branch` query parameter, but our auth plugin only ever grants access
 to the `main` branch, so this service never sends it.
 
@@ -286,6 +287,38 @@ class YHubService:
                 **self.build_user_header(self.user_id),
             },
         )
+
+    def delete_ydoc(self, document):
+        """
+        Delete a document on the collaboration server.
+
+        This is what stops the clients editing a deleted document: they are
+        disconnected, and the collaboration server answers 404 for it from then
+        on. The deletion is a soft one, its content is left untouched and
+        `restore_ydoc` brings the document back whole. Erasing the content for
+        good is a separate, irreversible operation that yhub deliberately does
+        not expose over its REST API.
+
+        Idempotent, and never refused: deleting a document twice keeps the date
+        of the first deletion, and a document the collaboration server holds
+        nothing for is recorded as deleted all the same.
+        """
+        return self.request("delete", self.build_url("ydoc", document))
+
+    def restore_ydoc(self, document):
+        """
+        Undo the deletion of a document on the collaboration server.
+
+        Its content was never touched, so it comes back with its whole history.
+        A document that is not deleted is left alone rather than refused, which
+        is what lets a restored subtree be reported without asking what became
+        of each of its documents.
+
+        yhub answers 409 for a document whose content was erased — there is
+        nothing left to bring back — reported as an `APIError` carrying the
+        status.
+        """
+        return self.request("post", self.build_url("restore-ydoc", document))
 
     def migrate(self, document, force=False):
         """
