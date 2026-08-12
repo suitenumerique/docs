@@ -274,6 +274,24 @@ def test_restore_ydoc(mock_request):
 
 
 @patch("requests.request")
+def test_reset_ydoc(mock_request):
+    """Should ask yhub to erase the content of the document."""
+    mock_request.return_value.ok = True
+    user = UserFactory.build()
+
+    response = YHubService(user=user).reset_ydoc(DOCUMENT)
+
+    assert response is mock_request.return_value
+    args, kwargs = mock_request.call_args
+    assert args == (
+        "post",
+        f"http://yhub:3002/collaboration/reset-ydoc/v1/docs/{DOCUMENT.id!s}",
+    )
+    # who erased the content, for the record yhub keeps of the deletion it does
+    assert kwargs["headers"]["X-User-Id"] == str(user.pk)
+
+
+@patch("requests.request")
 def test_restore_ydoc_erased_content(mock_request):
     """A document whose content was erased should report the conflict it is."""
     mock_request.return_value.ok = False
