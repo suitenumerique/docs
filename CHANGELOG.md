@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- 💄(frontend) redesign 404 error standalone page #2696
 - ✨(frontend) duplicate with subdocuments #2584
 - ✨(helm) allow disallowing search engine indexing per instance #2694
 - 🐛(frontend) reduce PostHog volume from web vitals and opt_in spam #2701
@@ -28,6 +29,7 @@ and this project adheres to
 - ✨(backend) duplicate a document through the collaboration server
 - ✨(backend) serve `documents/{id}/formatted-content/` from yhub
 - ✨(collaboration) notify the backend when the worker persists new content
+- 🐛(frontend) stop reconnecting to the websocket based on the status code
 
 ### Changed
 
@@ -45,10 +47,6 @@ and this project adheres to
 
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 - 🐛(frontend) fix redirect after deleting a document #2706
-
-### Changed
-
-- 💄(frontend) redesign 404 error standalone page #2696
 
 ### Removed
 
