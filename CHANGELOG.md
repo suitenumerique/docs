@@ -138,6 +138,10 @@ and this project adheres to
   converter-only and no longer serves `/collaboration/ws/`; deployments using
   the existing helm values lose collaboration until the helm chart routes
   collaboration to yhub (follow-up)
+- 🔧(collaboration) split the yhub image into a development and a production
+  stage, like the other services: the dev stack now bind-mounts
+  `src/yhub-server` and runs the server through nodemon, so editing a source
+  file restarts it instead of needing `make build-yhub`
 
 ## [v5.4.1] - 2026-07-09
 
