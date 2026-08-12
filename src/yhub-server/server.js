@@ -61,6 +61,9 @@ const UUID4 =
 // an empty Yjs update (what `Y.encodeStateAsUpdate(new Y.Doc())` encodes to) —
 // hardcoded so we don't import @y/y for two bytes
 const EMPTY_YDOC = new Uint8Array([0, 0]);
+// yhub's "no effective content" convention: an empty update encodes to 2 bytes,
+// and anything up to 3 is read as an empty document
+const EMPTY_UPDATE_MAX_BYTES = 3;
 // uws buffers the whole body before the handler sees it, so this cap does not
 // bound upload memory — it bounds what a single create hands to a compute
 // worker and writes to the valkey stream as one message. Creates carry one
@@ -69,6 +72,7 @@ const EMPTY_YDOC = new Uint8Array([0, 0]);
 const MAX_CREATE_BYTES = 10 * 1024 * 1024;
 
 const touchLog = logger.child({ module: 'updated-at-notifier' });
+const resetLog = logger.child({ module: 'reset-ydoc' });
 
 const BACKEND_NOTIFY_TIMEOUT_MS = 5000;
 // Audience of the tokens the backend accepts from us. It must match the one
@@ -354,6 +358,36 @@ const jsonResponse = (status, body) =>
     headers: { 'content-type': 'application/json' },
   });
 
+// Does the room hold anything? Covers persisted rows and the messages still on
+// the stream, which is what makes it an answer about the content rather than
+// about the storage.
+const hasContent = async (yhub, room) => {
+  const { gcDoc } = await yhub.getDoc(
+    room,
+    { gc: true, nongc: false },
+    { gcOnMerge: false },
+  );
+  return gcDoc != null && gcDoc.byteLength > EMPTY_UPDATE_MAX_BYTES;
+};
+
+// Erase every trace of a room's content and leave it writable again.
+//
+// The erasure is yhub's hard deletion: it clears the stream, disconnects the
+// editors and drops every row and asset, irreversibly. Its tombstone is also
+// the barrier that stops a compaction still in flight from writing the content
+// back — every `store` is refused while it is there, and the purge runs behind
+// it — so the room is only made writable again, by dropping the tombstone,
+// once there is nothing left to write back.
+//
+// Dropping the tombstone is what makes this a reset rather than a deletion:
+// yhub has no such operation, a hard deletion is final for the room and even
+// `restoreDoc` refuses it. Here the document id belongs to a Django document
+// that goes on living, so the room has to be usable again.
+const eraseContent = async (yhub, room, by) => {
+  await yhub.deleteDoc(room, { hard: true, by });
+  await yhub.persistence.deleteTombstone(room);
+};
+
 const api = [
   // GET /collaboration/jwks/v1 — the public keys verifying the tokens we sign
   // to call the backend, in the JSON Web Key Set format (RFC 7517). Global
@@ -493,9 +527,9 @@ const api = [
           // ("HTTP/1.1 413 ") — legal, and callers switch on the code
           return jsonResponse(413, { error: 'Update too large' });
         }
-        // <= 3 bytes is yhub's "no effective content" convention (an empty
-        // update encodes to 2 bytes) — reject before it reaches a worker
-        if (update.byteLength <= 3) {
+        // yhub's "no effective content" convention — reject before it reaches
+        // a worker
+        if (update.byteLength <= EMPTY_UPDATE_MAX_BYTES) {
           return jsonResponse(400, { error: 'Empty update' });
         }
         // covers persisted state AND uncompacted stream messages. Not atomic
@@ -509,7 +543,7 @@ const api = [
           { gc: true, nongc: false },
           { gcOnMerge: false },
         );
-        if (gcDoc != null && gcDoc.byteLength > 3) {
+        if (gcDoc != null && gcDoc.byteLength > EMPTY_UPDATE_MAX_BYTES) {
           return jsonResponse(409, { error: 'Document already exists' });
         }
         // Only the backend admin token may attribute the content to another
@@ -600,6 +634,61 @@ const api = [
           message: 'Document restored',
           restored: true,
         });
+      },
+    },
+  }),
+  // POST /collaboration/reset-ydoc/v1/{org}/{docid} — erase the content of a
+  // document and leave the room usable, as if it had never been written.
+  //
+  // What the backend's `clean_document` command needs to reset the onboarding
+  // sandbox: the Django document keeps its id and goes on being edited, so
+  // deleting the room is not an option — a hard deletion is final and even a
+  // soft one would answer 404 for a document that still exists. Backend-internal
+  // and admin-only, like the deletions it is built on: this destroys content
+  // with no way back.
+  createApiEndpoint('reset-ydoc', {
+    accessPurpose: 'reset',
+    post: {
+      handler: async (req) => {
+        if (req.org !== ORG) {
+          return jsonResponse(400, { error: 'Unknown org' });
+        }
+        if (!UUID4.test(req.docid)) {
+          return jsonResponse(400, { error: 'Room name is invalid' });
+        }
+        if (req.branch !== 'main') {
+          return jsonResponse(400, { error: 'Unknown branch' });
+        }
+        const by = req.headers['x-user-id'] || req.authInfo.userid;
+        // Nothing compacts this room while the erasure runs: this drops the
+        // task already waiting for it and refuses to enqueue another, which
+        // leaves one writer to race with — a task a worker had claimed before
+        // this call. The tombstone barrier covers it right up to the moment
+        // the room is made writable again, so it can only land after that,
+        // and the second pass below is what picks it up.
+        await req.yhub.stream.disableCompaction(req.room);
+        try {
+          await eraseContent(req.yhub, req.room, by);
+          if (await hasContent(req.yhub, req.room)) {
+            resetLog.warn(
+              { docid: req.docid },
+              'content came back while it was being erased, erasing again',
+            );
+            await eraseContent(req.yhub, req.room, by);
+            if (await hasContent(req.yhub, req.room)) {
+              // saying it is erased when it is not is the one answer this
+              // endpoint must never give
+              return jsonResponse(500, {
+                error: 'Document content came back after being erased',
+              });
+            }
+          }
+        } finally {
+          // even on failure: leaving compaction off would freeze the room for
+          // every later edit, a worse state than the one we came to fix
+          await req.yhub.stream.enableCompaction(req.room);
+        }
+        return jsonResponse(200, { message: 'Document content erased' });
       },
     },
   }),

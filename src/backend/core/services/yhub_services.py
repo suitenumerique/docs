@@ -320,6 +320,25 @@ class YHubService:
         """
         return self.request("post", self.build_url("restore-ydoc", document))
 
+    def reset_ydoc(self, document):
+        """
+        Erase the content of a document on the collaboration server.
+
+        The document itself stays: its room is emptied and left usable, as if
+        it had never been written. This is what resetting a document means once
+        the content lives there — deleting the room would answer 404 for a
+        document that goes on existing.
+
+        Irreversible, and it is meant to be: the editors are disconnected and
+        the content is gone from the collaboration server for good, history
+        included. Only the backend can ask for it.
+        """
+        return self.request(
+            "post",
+            self.build_url("reset-ydoc", document),
+            headers=self.build_user_header(self.user_id),
+        )
+
     def migrate(self, document, force=False):
         """
         Replay the legacy version history of a document into the collaboration server.
