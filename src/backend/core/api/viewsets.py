@@ -8,6 +8,7 @@ import logging
 import socket
 import uuid
 from collections import defaultdict
+from functools import partial
 from urllib.parse import unquote, urlencode, urlparse
 
 from django.conf import settings
@@ -69,6 +70,7 @@ from core.services.search_indexers import (
 )
 from core.services.yhub_services import YHubError, YHubService
 from core.tasks.access import reset_service_connections_in_cascade
+from core.tasks.documents import sync_service_deletions_in_cascade
 from core.tasks.mail import send_ask_for_access_mail
 from core.tasks.search import trigger_batch_document_indexer
 from core.utils.analytics import PosthogEventName, posthog_capture
@@ -822,6 +824,14 @@ class DocumentViewSet(
         """Override to implement a soft delete instead of dumping the record in database."""
         instance.soft_delete()
 
+        # the collaboration server holds the content: until it is told, it goes
+        # on serving the document to the clients editing it. On commit, because
+        # the task reads back what was just written to know what to report — it
+        # would find the document alive and restore it instead
+        transaction.on_commit(
+            partial(sync_service_deletions_in_cascade.delay, str(instance.id))
+        )
+
         posthog_capture(
             PosthogEventName.DOC_DELETED, self.request.user, {}, document=instance
         )
@@ -1103,6 +1113,13 @@ class DocumentViewSet(
             document.restore()
         except RuntimeError as err:
             raise drf.exceptions.ValidationError({"detail": str(err)}) from err
+
+        # the counterpart of the deletion: the same walk puts back the content
+        # of the documents that came back with this one, and it reads the
+        # restored state back, hence on commit as well
+        transaction.on_commit(
+            partial(sync_service_deletions_in_cascade.delay, str(document.id))
+        )
 
         return drf_response.Response(
             {"detail": "Document has been successfully restored."},
