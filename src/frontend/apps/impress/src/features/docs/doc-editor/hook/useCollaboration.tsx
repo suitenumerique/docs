@@ -25,6 +25,8 @@ export const useCollaboration = (room: string) => {
     isReady,
     hasLostConnection,
     resetLostConnection,
+    isPermanentlyClosed,
+    reconnect,
     pauseForInactivity,
     resumeFromInactivity,
   } = useProviderStore();
@@ -45,9 +47,6 @@ export const useCollaboration = (room: string) => {
    * When the provider detects a lost connection, we invalidate the document query to trigger a refetch.
    * Because it can be because the user has access to the document that are modified
    * (e.g., permissions changed, document deleted, user removed)
-   * TODO(yhub): this invalidation used to ride on the server-side kick
-   * (reset-connections); without a kick API a permission change no longer
-   * triggers a refetch until the connection drops for another reason.
    */
   useEffect(() => {
     if (hasLostConnection && room) {
@@ -57,6 +56,33 @@ export const useCollaboration = (room: string) => {
       resetLostConnection();
     }
   }, [hasLostConnection, room, queryClient, resetLostConnection]);
+
+  /**
+   * The collaboration server refused the connection for good and the retry loop
+   * stopped, so nothing will ask again on its own: this refetch is what asks.
+   *
+   * A refusal says the answer changed, not what it changed to. The document may
+   * be gone, our access to it revoked, or merely upgraded from reader to editor
+   * — the last one has to reconnect to carry the new rights. So the connection
+   * comes back only when the document does, and stays closed otherwise, where
+   * the query error puts the page in charge of telling the user why.
+   */
+  useEffect(() => {
+    if (!isPermanentlyClosed || !room) {
+      return;
+    }
+
+    void queryClient
+      .invalidateQueries({ queryKey: [KEY_DOC, { id: room }] })
+      .then(() => {
+        if (
+          queryClient.getQueryState([KEY_DOC, { id: room }])?.status ===
+          'success'
+        ) {
+          reconnect();
+        }
+      });
+  }, [isPermanentlyClosed, room, queryClient, reconnect]);
 
   /**
    * We add a broadcast task to reset the query cache
