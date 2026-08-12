@@ -21,6 +21,18 @@ and this project adheres to
 
 ### Added
 
+- ✨(collaboration) erase the content of a document on the collaboration server
+  when `clean_document` resets it. The command cleared the database and the
+  object storage, but the content lives on the collaboration server now: it kept
+  serving the document the reset was supposed to erase, and the manual
+  remediation was to run SQL against yhub's own database. It goes through the
+  new backend-internal `POST /collaboration/reset-ydoc/v1/{org}/{docid}`, which
+  hard-deletes the room and then drops the deletion record so it stays usable —
+  the document keeps its id and goes on being edited, which is why neither of
+  yhub's deletions fits on its own. The documents it could not erase are named
+  on stderr: their content is still served, and the reset is not done until they
+  are dealt with. Note that erasing the room does not erase the copy each editor
+  holds — reset a document when nobody is editing it
 - ✨(collaboration) delete a document on the collaboration server when it is
   deleted in Docs, and restore it when it comes back out of the trashbin. The
   content lives there now, so until it was told, the clients already editing a

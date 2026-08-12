@@ -46,6 +46,9 @@ It is not a fork of yhub — it is a thin wrapper:
   deletion of a document — admin JWT only, like `reset-connections`. Deleting
   one needs nothing custom, the built-in `DELETE .../ydoc/` does it (see
   "Deletion" below); restoring has no built-in route,
+- exposes `POST /collaboration/reset-ydoc/v1/{org}/{docid}`, which erases the
+  content of a document and leaves its room usable — admin JWT only, and
+  irreversible (see "Deletion" below),
 - notifies the Django backend on
   `POST /api/v1.0/documents/{id}/content-updated/` whenever the worker
   persists new content for a document, so that lists ordered by `updated_at`
@@ -65,9 +68,9 @@ the websocket and the built-in document APIs (`ydoc`, `rollback`, `prune`,
 `changeset`, `activity`) are all guarded by the same cookie-based document
 authorization and are meant to be reachable by browsers, as is
 `/collaboration/jwks/v1`, which carries public keys and nothing else. The one
-exception is `/collaboration/reset-connections/`, `/collaboration/migrate/` and
-`/collaboration/restore-ydoc/`, which are backend-internal and should not be
-routed through the public ingress.
+exception is `/collaboration/reset-connections/`, `/collaboration/migrate/`,
+`/collaboration/restore-ydoc/` and `/collaboration/reset-ydoc/`, which are
+backend-internal and should not be routed through the public ingress.
 
 ## Container image
 
@@ -141,10 +144,45 @@ a subtree without asking what became of each document in it.
 
 Erasing the content for good is a third operation (`YHub.deleteDoc(room, {
 hard: true })`), reachable from inside this process only — yhub deliberately
-keeps it off the REST API. Nothing here calls it: Docs never erases a document
-either, a soft-deleted one simply stops being restorable after
-`TRASHBIN_CUTOFF_DAYS`. Note that a hard deletion is final for that room — the
+keeps it off the REST API. It is not what deleting a document in Docs does: a
+soft-deleted one simply stops being restorable after `TRASHBIN_CUTOFF_DAYS`,
+and its content is kept. Note that a hard deletion is final for that room — the
 docid can never be written again, and `restore-ydoc` answers 409 for it.
+
+### Resetting (`POST /collaboration/reset-ydoc/v1/{org}/{docid}`)
+
+One caller does erase content: the backend's `clean_document` command, which
+resets the onboarding sandbox. It empties a document rather than deleting it —
+the Django document keeps its id and goes on being edited — so neither deletion
+fits: a soft one answers 404 for a document that still exists, and a hard one is
+final for the room.
+
+This endpoint hard-deletes and then drops the deletion record, which is what
+leaves the room writable again. That order matters: the record is also the
+barrier that refuses every write while the erasure runs, so a compaction that
+was already merging cannot put the content back. Compaction is disabled for the
+room around the whole sequence, and the content is read back afterwards — if it
+reappeared, the erasure runs once more, and the endpoint answers 500 rather than
+report an erasure it did not achieve.
+
+Irreversible, admin JWT only, and backend-internal.
+
+**Erasing a room does not erase the copies of it.** The editors are disconnected
+(close code 4404), but a Yjs client holds the whole document in memory: one that
+reconnects with its copy syncs it back into the empty room, and the content is
+returned. The room accepting writes again is what makes this a reset rather than
+a deletion, so the room itself cannot refuse them.
+
+Connected clients could be dealt with, and deliberately are not: broadcasting an
+update that deletes everything, before the kick, empties them for good — a Yjs
+client with garbage collection on (what an editor runs, Docs refuses `gc=false`
+connections to users) drops the deleted content rather than keeping it as
+history, so it has nothing left to push back. What that does not cover is a
+client that was offline or backgrounded at that moment, which comes back with
+its copy intact either way.
+
+So: reset a document when nobody is editing it, and have anyone who was reload
+the page.
 
 ## Soft migration (`SOFT_MIGRATION=true`)
 
