@@ -52,6 +52,25 @@ backend-internal and should not be routed through the public ingress.
 The `Dockerfile` builds the container image used by the `yhub` service in
 `compose.yml`.
 
+## Database schema (`npm run init-db`)
+
+yhub never runs DDL from the server or the worker, so the schema is created by
+the script it ships (`node_modules/@y/hub/bin/init-db.js`), wrapped here as
+`npm run init-db`. It reads `POSTGRES` from the environment, creates the
+database when it does not exist, then every table and index the **installed**
+yhub version needs. It is idempotent, so re-running it is always safe.
+
+Run it whenever `@y/hub` is upgraded — releases that add a table or a column
+say so in their changelog, and the server fails on every document read until
+the DDL is applied (`relation "yhub_ydoc_tombstones_v1" does not exist`, for
+instance). Nothing in this repository copies the schema, so an upgrade is
+`package.json` plus this script and nothing else.
+
+From the repository root, `make migrate-yhub` runs it against the dev stack —
+the counterpart of `make migrate` for the Django database. `make bootstrap`
+already includes it, so a fresh checkout needs nothing extra; an upgrade is
+`make migrate-yhub` and restart the service.
+
 ## Soft migration (`SOFT_MIGRATION=true`)
 
 Documents were historically stored by the Django backend in the S3 media
