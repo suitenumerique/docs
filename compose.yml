@@ -237,8 +237,8 @@ services:
     build:
       context: ./src/yhub-server
       dockerfile: Dockerfile
-      target: yhub
-    image: impress:yhub
+      target: yhub-development
+    image: impress:yhub-development
     environment:
       HOME: /tmp # same reason as node-based services above (unmapped uid)
       PORT: 3002
@@ -263,6 +263,12 @@ services:
       # starting before minio would cache 401s for the first accessed docs
       minio:
         condition: service_healthy
+    volumes:
+      # editing a source file restarts the server (nodemon), no rebuild
+      - ./src/yhub-server:/app
+      # node_modules is installed in the image, not in the source tree: keep
+      # the bind mount above from hiding it
+      - /app/node_modules
 
   kc_postgresql:
     image: postgres:14.3
