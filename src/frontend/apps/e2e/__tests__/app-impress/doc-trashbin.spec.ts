@@ -38,9 +38,14 @@ test.describe('Doc Trashbin', () => {
     await expect(row1.getByText(title1)).toBeHidden();
 
     const row2 = await getGridRow(page, title2);
+    await clickInGridMenu(page, row2, 'Pin');
+    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
+    await expect(leftPanelFavorites.getByText(title2)).toBeVisible();
+
     await clickInGridMenu(page, row2, 'Delete');
     await page.getByRole('button', { name: 'Delete document' }).click();
     await expect(row2.getByText(title2)).toBeHidden();
+    await expect(leftPanelFavorites.getByText(title2)).toBeHidden();
 
     await page.getByRole('link', { name: 'Trashbin' }).click();
 
@@ -81,6 +86,7 @@ test.describe('Doc Trashbin', () => {
     await clickInGridMenu(page, row2, 'Restore');
 
     await expect(row2.getByText(title2)).toBeHidden();
+    await expect(leftPanelFavorites.getByText(title2)).toBeVisible();
     await page.getByRole('link', { name: 'All docs' }).click();
     const row2Restored = await getGridRow(page, title2);
     await expect(row2Restored.getByText(title2)).toBeVisible();
@@ -127,11 +133,19 @@ test.describe('Doc Trashbin', () => {
     await navigateToPageFromTree({ page, title: subDocName });
     await verifyDocName(page, subDocName);
 
+    await clickInEditorMenu(page, 'Pin');
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
+    await expect(leftPanelFavorites.getByText(subDocName)).toBeVisible();
+    await leftPanelFavorites.getByText(subDocName).click();
+    await verifyDocName(page, subDocName);
+
     await clickInEditorMenu(page, 'Delete');
     await page.getByRole('button', { name: 'Delete document' }).click();
     await verifyDocName(page, topParent);
 
     await page.getByRole('button', { name: 'Back to homepage' }).click();
+    await expect(leftPanelFavorites.getByText(subDocName)).toBeHidden();
     await page.getByRole('link', { name: 'Trashbin' }).click();
 
     let row;
@@ -179,5 +193,7 @@ test.describe('Doc Trashbin', () => {
     );
     await expect(page.getByRole('button', { name: 'Share' })).toBeEnabled();
     await expect(docTree.getByText(topParent)).toBeVisible();
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+    await expect(leftPanelFavorites.getByText(subDocName)).toBeVisible();
   });
 });

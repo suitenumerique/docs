@@ -12,6 +12,7 @@ import {
   Doc,
   KEY_DOC,
   KEY_LIST_DOC,
+  KEY_LIST_FAVORITE_DOC,
   useRestoreDoc,
 } from '@/docs/doc-management';
 import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid';
@@ -22,7 +23,12 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
   const treeContext = useTreeContext<Doc>();
   const { spacingsTokens } = useCunninghamTheme();
   const { mutate: restoreDoc, error } = useRestoreDoc({
-    listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_DOC_TRASHBIN, KEY_DOC],
+    listInvalidQueries: [
+      KEY_LIST_DOC,
+      KEY_LIST_DOC_TRASHBIN,
+      KEY_DOC,
+      KEY_LIST_FAVORITE_DOC,
+    ],
     options: {
       onSuccess: (_data) => {
         // It will force the tree to be reloaded
