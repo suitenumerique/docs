@@ -101,6 +101,7 @@ pre-bootstrap: \
 
 post-bootstrap: \
 	migrate \
+	migrate-yhub \
 	demo \
 	back-i18n-compile \
 	mails-install \
@@ -331,6 +332,20 @@ migrate:  ## run django migrations for the impress project.
 	@$(COMPOSE) up -d postgresql
 	@$(MANAGE) migrate
 .PHONY: migrate
+
+# Runs the DDL script yhub ships (`bin/init-db.js`, wrapped as `npm run
+# init-db`): it creates the yhub database when missing, then every table the
+# installed @y/hub version needs. yhub never runs DDL from the server or the
+# worker, so this is what applies a schema change after an upgrade.
+# Both stores are started because the script also creates the valkey worker
+# stream and connects to it whenever REDIS is set. Re-running is safe and
+# expected; on an existing stream it logs a harmless `BUSYGROUP` error and
+# still exits 0, since the server creates that stream at startup anyway.
+migrate-yhub:  ## create or upgrade the collaboration server (yhub) schema.
+	@echo "$(BOLD)Running yhub migrations$(RESET)"
+	@$(COMPOSE) up -d yhub-postgres yhub-valkey
+	@$(COMPOSE_RUN) --no-deps yhub npm run init-db
+.PHONY: migrate-yhub
 
 superuser: ## Create an admin superuser with password "admin"
 	@echo "$(BOLD)Creating a Django superuser$(RESET)"

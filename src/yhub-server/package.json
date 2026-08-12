@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "init-db": "node node_modules/@y/hub/bin/init-db.js"
   },
   "dependencies": {
     "@y/hub": "0.6.0",
