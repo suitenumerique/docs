@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "dev": "nodemon --delay 1 server.js",
     "init-db": "node node_modules/@y/hub/bin/init-db.js"
   },
   "dependencies": {
@@ -11,6 +12,9 @@
     "@y/y": "14.0.0-rc.24",
     "jose": "6.2.8",
     "minio": "8.0.7"
+  },
+  "devDependencies": {
+    "nodemon": "3.1.14"
   },
   "engines": {
     "node": ">=22"
