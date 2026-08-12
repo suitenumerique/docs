@@ -6,6 +6,19 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) stop reconnecting to the collaboration server when it has refused
+  the connection for good. Close codes 4400-4499 are a refusal, not a lost
+  socket — the document was deleted (4404) or the access of this connection
+  changed (4401) — and retrying only asked the same question again, twice a
+  minute, for as long as the tab stayed open. The editor now stops and refetches
+  the document instead: it reconnects when the document is still there (an
+  access upgraded from reader to editor is a refusal too, and has to reconnect
+  to carry its new rights) and stays closed when it is not, where the page
+  already tells the user what happened. Everything else — a dropped socket, a
+  restart, an unreachable server — keeps its retry loop untouched
+
 ### Added
 
 - ✨(collaboration) delete a document on the collaboration server when it is
