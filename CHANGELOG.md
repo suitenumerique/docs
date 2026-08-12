@@ -24,6 +24,7 @@ and this project adheres to
 - 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
   `/external_api/{version}/jwks`
 - 🔒️(collaboration) reject admin jwts not issued for the yhub audience
+- 🔧(collaboration) adapt docker stack for development purpose
 
 ### Fixed
 
