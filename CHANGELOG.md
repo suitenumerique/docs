@@ -8,6 +8,24 @@ and this project adheres to
 
 ### Added
 
+- ⬆️(collaboration) upgrade yhub to 0.6.0, which needs a schema change: a
+  `yhub_ydoc_tombstones_v1` table (it adds document deletion) and four
+  `*_is_reference` markers on `yhub_ydoc_v1`. Neither is optional — every
+  document read joins the tombstone table, so without them yhub answers
+  `relation "yhub_ydoc_tombstones_v1" does not exist`. Existing rows read as
+  "may be a reference", exactly as before the markers existed, so there is no
+  backfill and no downtime beyond applying the DDL
+- 🔧(collaboration) let yhub own its schema: `npm run init-db` in
+  `src/yhub-server` runs the DDL script yhub ships (`bin/init-db.js`), which
+  creates the database when missing and every table the installed version
+  needs. It replaces the copy of the schema we kept in
+  `docker/files/yhub/initdb/`, which only replayed on a fresh postgres volume —
+  so an upgrade that added a table silently skipped an existing database, and
+  the copy had to be updated by hand on every upgrade. `make migrate-yhub` runs
+  it against the dev stack, the counterpart of `make migrate` for the Django
+  database, and is part of `make bootstrap`; CI runs the same script instead of
+  applying the SQL by hand. It is the only thing that runs DDL — the server and
+  the worker never do — and it is idempotent, so re-running it is always safe
 - ✅(collaboration) add integration tests covering both legacy migrations,
   running against a real yhub: CI now starts the collaboration server and a
   valkey alongside the backend test job. They skip themselves when nothing
