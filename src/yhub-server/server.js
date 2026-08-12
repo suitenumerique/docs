@@ -556,6 +556,53 @@ const api = [
       },
     },
   }),
+  // POST /collaboration/restore-ydoc/v1/{org}/{docid} — undo the deletion of a
+  // document, putting back what `DELETE .../ydoc/` took away.
+  //
+  // Deleting has a built-in route, restoring does not: yhub 0.6.0 exposes
+  // `restoreDoc` to the process embedding it and nothing else. Backend-internal
+  // like reset-connections and migrate, gated to the admin token by the
+  // 'restore' purpose — a document leaves the trashbin because the backend
+  // says so, never because an editor asked.
+  createApiEndpoint('restore-ydoc', {
+    accessPurpose: 'restore',
+    post: {
+      handler: async (req) => {
+        if (req.org !== ORG) {
+          return jsonResponse(400, { error: 'Unknown org' });
+        }
+        if (!UUID4.test(req.docid)) {
+          return jsonResponse(400, { error: 'Room name is invalid' });
+        }
+        if (req.branch !== 'main') {
+          // as in create-ydoc: the admin token is not fenced to main by
+          // getAccessType, and a deletion is recorded per branch
+          return jsonResponse(400, { error: 'Unknown branch' });
+        }
+        // read the deletion before undoing it: `restoreDoc` throws a plain
+        // Error for a document whose content was erased, and that is a
+        // conflict to report as one — catching around the call would turn
+        // every failure alike, a database outage included, into the same answer
+        const tombstone = await req.yhub.persistence.retrieveTombstone(req.room);
+        if (tombstone == null) {
+          // not an error: the backend restores a whole subtree, of which only
+          // the part that was deleted with it has anything to put back
+          return jsonResponse(200, {
+            message: 'Document is not deleted',
+            restored: false,
+          });
+        }
+        if (tombstone.hard || tombstone.purgedAt != null) {
+          return jsonResponse(409, { error: 'Document content was erased' });
+        }
+        await req.yhub.restoreDoc(req.room);
+        return jsonResponse(200, {
+          message: 'Document restored',
+          restored: true,
+        });
+      },
+    },
+  }),
 ];
 
 // Django orders the document lists by `updated_at` and no edit goes through it
