@@ -49,8 +49,35 @@ authorization and are meant to be reachable by browsers. The one exception
 is `/collaboration/reset-connections/` and `/collaboration/migrate/`, which are
 backend-internal and should not be routed through the public ingress.
 
-The `Dockerfile` builds the container image used by the `yhub` service in
-`compose.yml`.
+## Container image
+
+The `Dockerfile` has two final stages, like the other services of this
+repository:
+
+- `yhub-development` — what the `yhub` service of `compose.yml` builds. It
+  installs the dev dependencies and starts the server through `npm run dev`
+  (nodemon), and compose bind-mounts `src/yhub-server` over `/app`: **editing
+  `server.js`, `migration.js` or `env.js` restarts the server, no rebuild**.
+  Watch it happen with `docker compose logs -f yhub`. A syntax error stops at
+  `app crashed - waiting for file changes` and the next save starts the server
+  again,
+- `yhub` — the production image: production dependencies only, `node
+  server.js`, sources baked in.
+
+nodemon rather than node's own `--watch`: the latter watches inodes, so it
+stops seeing a file as soon as it is replaced by a rename — which is what `git
+checkout` and most editors do when saving. The one-second `--delay` debounces
+partial writes, so a branch switch restarts the server once, after the files
+have settled.
+
+Only source edits are picked up live. A dependency change (`package.json`) is a
+rebuild, and `node_modules` lives in an anonymous volume that survives a plain
+recreate, so it needs renewing:
+
+```
+make build-yhub
+docker compose up -d --force-recreate --renew-anon-volumes yhub
+```
 
 ## Database schema (`npm run init-db`)
 
