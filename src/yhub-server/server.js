@@ -43,9 +43,20 @@ const ORG = process.env.YHUB_ORG || 'docs';
 // URL scheme Docs already routes to the collaboration server. Hardcoded like
 // the audiences: the backend builds its urls with the same prefix.
 const API_PREFIX = 'collaboration';
-// Path the JWKS endpoint declared in `api` is mounted at. readAuthInfo reads
-// the raw request, without any route context, hence the duplication.
-const JWKS_PATH = `/${API_PREFIX}/jwks/v1`;
+// Paths of the routes declared in `api` that are served to anyone: the JWKS,
+// which carries public keys and which the backend must read before it can
+// authenticate anything we send it, and the two probes, which kubernetes calls
+// with no cookie and no token. readAuthInfo reads the raw request, without any
+// route context, hence the duplication of the paths here.
+const PUBLIC_PATHS = new Set([
+  `/${API_PREFIX}/jwks/v1`,
+  `/${API_PREFIX}/ping/v1`,
+  `/${API_PREFIX}/ready/v1`,
+]);
+// What the readiness check gives a store before reporting it unreachable. Short
+// on purpose: the point of the probe is to answer, and answering "not ready"
+// early is more useful than holding the connection until kubelet times out.
+const READINESS_TIMEOUT_MS = 2000;
 // Requiring this audience stops a valid admin JWT that Django issued for
 // another service (today: the y-converter token in converter_services.py,
 // which is handed to the converter process) from being replayed against yhub.
@@ -207,12 +218,10 @@ const auth = createAuthPlugin({
     const cookie = req.getHeader('cookie');
     const origin = req.getHeader('origin');
     const gcOff = req.getQuery('gc') === 'false';
-    // The JWKS holds public keys and nothing else, and the backend must be
-    // able to fetch it before it can authenticate anything we send it — so it
-    // is served to anyone, as the backend serves its own. This identity is
-    // granted the 'jwks' purpose and nothing else (getGlobalAccessType), and
-    // the check is on the exact path of that one route.
-    if (url === JWKS_PATH) {
+    // The JWKS and the probes are served to anyone (see PUBLIC_PATHS). This
+    // identity is granted their purposes and nothing else
+    // (getGlobalAccessType), and the check is on their exact paths.
+    if (PUBLIC_PATHS.has(url)) {
       return { userid: 'anonymous' };
     }
     if (authorization !== '') {
@@ -284,9 +293,12 @@ const auth = createAuthPlugin({
       return { userid: `anon:${anon}`, cookie, origin };
     }
   },
-  // Authorizes the global-scoped endpoints, of which the JWKS is the only one.
+  // Authorizes the global-scoped endpoints: the JWKS and the two probes, all
+  // of them read-only and public. Anything else is refused here.
   async getGlobalAccessType(authInfo, purpose) {
-    return purpose === 'jwks' ? 'r' : null;
+    return purpose === 'jwks' || purpose === 'ping' || purpose === 'ready'
+      ? 'r'
+      : null;
   },
   async getAccessType(authInfo, { org, docid, branch }, purpose) {
     if (authInfo.admin === true) {
@@ -388,7 +400,70 @@ const eraseContent = async (yhub, room, by) => {
   await yhub.persistence.deleteTombstone(room);
 };
 
+const readyLog = logger.child({ module: 'readiness' });
+
+// One readiness check: is that store answering? The error never leaves the
+// server — the route is unauthenticated, and a postgres client is happy to put
+// its connection string, password included, in the message it raises.
+const checkStore = async (name, probe) => {
+  let timer;
+  try {
+    await Promise.race([
+      probe(),
+      new Promise((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`no answer in ${READINESS_TIMEOUT_MS}ms`)),
+          READINESS_TIMEOUT_MS,
+        );
+      }),
+    ]);
+    return [name, 'ok'];
+  } catch (err) {
+    readyLog.warn({ store: name, err: err?.message }, 'store is unreachable');
+    return [name, 'unreachable'];
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
 const api = [
+  // GET /collaboration/ping/v1 — liveness. It answers, therefore the http
+  // channel and the event loop are alive, which is all a liveness probe should
+  // ever conclude: touching redis or postgres here would restart a server that
+  // holds perfectly good websocket connections every time a store blinks.
+  createApiEndpoint('ping', {
+    scope: 'global',
+    accessPurpose: 'ping',
+    get: {
+      handler: () => jsonResponse(200, { status: 'pong' }),
+    },
+  }),
+  // GET /collaboration/ready/v1 — readiness. The two stores this server cannot
+  // serve a single document without: the postgres holding the persisted state
+  // and the redis carrying the updates between replicas. Answering 503 takes
+  // this pod out of the service endpoints and leaves the others serving, which
+  // is the whole difference with the liveness probe above.
+  createApiEndpoint('ready', {
+    scope: 'global',
+    accessPurpose: 'ready',
+    get: {
+      handler: async (req) => {
+        // both at once: a probe is not the place to add the latency of one
+        // store to the latency of the other
+        const checks = Object.fromEntries(
+          await Promise.all([
+            checkStore('postgres', () => req.yhub.persistence.sql`SELECT 1`),
+            checkStore('redis', () => req.yhub.stream.redis.ping()),
+          ]),
+        );
+        const ready = Object.values(checks).every((state) => state === 'ok');
+        return jsonResponse(ready ? 200 : 503, {
+          status: ready ? 'ready' : 'unready',
+          checks,
+        });
+      },
+    },
+  }),
   // GET /collaboration/jwks/v1 — the public keys verifying the tokens we sign
   // to call the backend, in the JSON Web Key Set format (RFC 7517). Global
   // scope: it is about this server, not about a document, so the route carries
