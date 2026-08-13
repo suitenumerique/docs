@@ -1,0 +1,63 @@
+{{- if and .Values.jwtKeys.enabled .Values.jwtKeys.rbac.create (not .Values.jwtKeys.existingSecret) -}}
+{{- $component := "jwt-keys" -}}
+{{- $name := include "impress.jwtKeys.serviceAccountName" . -}}
+# The generating job is the only thing in this release allowed to touch the
+# secret holding the keys, and all it is allowed to do is read whether it
+# exists and create it — not read its content back, not replace it, not delete
+# it. The services themselves get the keys through a volume, so they need no
+# access to the kubernetes API at all.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    # The same wave as the job that runs under it. An earlier wave looks safer
+    # and is not: argocd only moves to the next wave once the current one is
+    # healthy, and a ServiceAccount has no health of its own to report. Within
+    # a wave it applies by kind, and accounts, roles and bindings all come
+    # before jobs — which is the ordering actually needed here.
+    argocd.argoproj.io/sync-wave: "-2"
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+rules:
+  # creating cannot be restricted to a name, kubernetes has no such rule
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  # reading can, and is restricted to the one secret — to its existence really,
+  # the job never looks at what it holds
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames:
+      - {{ include "impress.jwtKeys.secretName" . | quote }}
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ .Release.Namespace | quote }}
+{{- end }}
