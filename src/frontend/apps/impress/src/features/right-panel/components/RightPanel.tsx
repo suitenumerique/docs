@@ -23,6 +23,13 @@ export const RightPanel = () => {
     isReady && provider && provider?.configuration.name === doc?.id;
   const { restoreFocus } = useFocusStore();
 
+  /** Side panel must be explicitly opened for each document. */
+  useEffect(() => {
+    return () => {
+      setIsPanelOpen(false);
+    };
+  }, [doc?.id, setIsPanelOpen]);
+
   /**
    * Keep rendering the last active panel during the close animation,
    * so the content doesn't vanish before the panel finishes sliding out.

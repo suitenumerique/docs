@@ -23,10 +23,17 @@ interface CommentSideBarProps {
 
 export const CommentSideBar = ({ onClose }: CommentSideBarProps) => {
   const { t } = useTranslation();
-  const { setThreadsSidebarTarget, filter, setFilter } =
+  const { setThreadsSidebarTarget, filter, setFilter, resetFilter } =
     useCommentSidebarStore();
   const portalRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+
+  /** Reset the filter when the comment sidebar is closed */
+  useEffect(() => {
+    return () => {
+      resetFilter();
+    };
+  }, [resetFilter]);
 
   useEffect(() => {
     if (portalRef.current) {
