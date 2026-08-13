@@ -928,10 +928,46 @@ yhub:
   args: []
 
   ## @param yhub.replicas Amount of yhub replicas
-  ## Every replica also runs a worker (redis consumer groups hand each task to
-  ## one of them), and clients editing the same document need not land on the
-  ## same pod: updates travel through redis.
+  ## Clients editing the same document need not land on the same pod: updates
+  ## travel through redis. Each replica also runs a worker unless the worker is
+  ## deployed apart, see below.
   replicas: 3
+
+  ## @param yhub.worker.enabled Deploy the worker apart from the server, each scaling on its own
+  ## @param yhub.worker.replicas Amount of yhub worker replicas
+  ## @param yhub.worker.resources Resource requirements for the yhub worker container, the server ones when empty
+  ## @param yhub.worker.podAnnotations Annotations to add to the yhub worker Pod, the server ones when empty
+  ## @param yhub.worker.dpAnnotations Annotations to add to the yhub worker Deployment, the server ones when empty
+  ## @param yhub.worker.nodeSelector Node selector for the yhub worker Pod, the server one when empty
+  ## @param yhub.worker.tolerations Tolerations for the yhub worker Pod, the server ones when empty
+  ## @param yhub.worker.affinity Affinity for the yhub worker Pod, the server one when empty
+  ## @param yhub.worker.terminationGracePeriodSeconds Grace period given to a worker pod to finish its task, the server one when empty
+  ## @param yhub.worker.pdb.enabled Enable pdb on the yhub worker
+  ## @skip yhub.worker.envVars Environment variables of the worker only, on top of yhub.envVars
+  ##
+  ## yhub is two halves sharing nothing but redis and postgres: the server
+  ## holds the websockets and serves the routes, the worker drains the stream
+  ## into postgres. One process runs both by default. Enabling this splits them
+  ## into two deployments — `YHUB_ROLE=server` and `YHUB_ROLE=worker`, the only
+  ## difference between them — so the server scales with the connected editors
+  ## and the worker with the write throughput.
+  ##
+  ## The worker binds nothing: no service, no ingress, and no probes to give it
+  ## (its liveness is its process). Everything not named here is the server's:
+  ## same image, same envVars, same secrets, same volumes.
+  worker:
+    enabled: false
+    replicas: 1
+    envVars: {}
+    resources: {}
+    podAnnotations: {}
+    dpAnnotations: {}
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    terminationGracePeriodSeconds: null
+    pdb:
+      enabled: true
 
   ## @param yhub.shareProcessNamespace Enable share process namespace between containers
   shareProcessNamespace: false

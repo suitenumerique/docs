@@ -89,6 +89,36 @@ probes are not worth publishing either — kubelet calls them from inside — an
 the helm chart's ingress lists what it routes rather than what it hides, so
 they stay in-cluster on their own.
 
+## Roles (`YHUB_ROLE`)
+
+yhub is two halves that share the two stores and nothing else — no in-process
+state, no ordering between them:
+
+- the **server** accepts the websocket connections, serves the routes above,
+  and writes every update to the redis stream,
+- the **worker** claims tasks from that stream, merges the updates and stores
+  the result in postgres, then trims what it persisted.
+
+One process runs both, which is the default and what `YHUB_ROLE` unset means.
+Setting it splits them, so each can be scaled on its own — the server with the
+connected editors, the worker with the write throughput:
+
+| `YHUB_ROLE` | websocket + routes | drains the stream |
+| ----------- | ------------------ | ----------------- |
+| unset, `all` | yes | yes |
+| `server`     | yes | no  |
+| `worker`     | no  | yes |
+
+A `worker` process binds no port: no probes to give it and no service to put in
+front of it. A `server` process claims no task, so a deployment of servers
+alone accepts edits and never persists them — the two halves are split
+together or not at all. Any other value is refused at startup rather than
+guessed.
+
+Redis consumer groups hand each task to exactly one worker, so the number of
+workers is a throughput knob and nothing else: no leader, no partitioning, no
+coordination between them.
+
 ## Container image
 
 The `Dockerfile` has two final stages, like the other services of this
