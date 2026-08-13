@@ -139,6 +139,15 @@ and this project adheres to
   and rolling the keys is deleting the secret and letting the next run create
   it again. `jwtKeys.existingSecret` points at keys of your own instead, and
   skips both the job and its rights
+- ✨(collaboration) serve two probes on yhub: `GET /collaboration/ping/v1`
+  answers `pong` without touching a store — being answered is what a liveness
+  check should conclude, and restarting a server over a store it cannot reach
+  would drop the websockets it serves — and `GET /collaboration/ready/v1` asks
+  postgres and redis in parallel, answering `503` with the offending one marked
+  unreachable so the pod leaves the service endpoints while its siblings keep
+  serving. Both unauthenticated, like the JWKS; neither names the error in its
+  body, which a postgres client would gladly fill with its connection string.
+  The helm probes point at them
 - ✨(helm) deploy the collaboration server: the chart gains a `yhub` deployment,
   its service, and the job running the `init-db` script that creates and
   upgrades its schema — next to the backend migrate job, retrying while the
