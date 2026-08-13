@@ -1,0 +1,153 @@
+{{- if and .Values.jwtKeys.enabled (not .Values.jwtKeys.existingSecret) -}}
+{{- $fullName := include "impress.fullname" . -}}
+{{- $component := "jwt-keys" -}}
+{{- $secretName := include "impress.jwtKeys.secretName" . -}}
+# Generates the RSA keys the services sign the calls they make to each other
+# with: one for the backend (the tokens Django issues to the collaboration
+# server and the converter), one for the collaboration server (the calls it
+# makes back to Django). Only the private halves are written — each service
+# publishes the public half of its own key on its JWKS endpoint, where the
+# other one reads it, so no key is ever copied from one side to the other.
+#
+# Two steps, two images: openssl writes the keys in a volume the pod throws
+# away, then kubectl hands them to the secret the services mount. They only
+# ever exist in that pod and in the secret.
+#
+# Idempotent, and deliberately so: the secret is left alone when it is already
+# there, which is what makes it safe to re-run on every sync. Rolling the keys
+# is deleting the secret and letting the next run create it again — both
+# services follow, they pick the verification key by its "kid" and re-fetch the
+# set when they meet one they do not know.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $fullName }}-jwt-keys
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
+    # after the service account it runs as, before anything mounting the secret
+    argocd.argoproj.io/sync-wave: "-2"
+  {{- with .Values.jwtKeys.job.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+spec:
+  ttlSecondsAfterFinished: {{ .Values.jwtKeys.job.ttlSecondsAfterFinished }}
+  backoffLimit: {{ .Values.jwtKeys.job.backoffLimit }}
+  template:
+    metadata:
+      {{- with .Values.jwtKeys.job.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "impress.common.selectorLabels" (list . $component) | nindent 8 }}
+    spec:
+      {{- if $.Values.image.credentials }}
+      imagePullSecrets:
+        - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
+      {{- end}}
+      serviceAccountName: {{ include "impress.jwtKeys.serviceAccountName" . }}
+      {{- with .Values.jwtKeys.job.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: {{ .Values.jwtKeys.job.restartPolicy }}
+      initContainers:
+        - name: generate
+          image: "{{ .Values.jwtKeys.image.repository }}:{{ .Values.jwtKeys.image.tag }}"
+          imagePullPolicy: {{ .Values.jwtKeys.image.pullPolicy }}
+          {{- if .Values.jwtKeys.job.generateCommand }}
+          command:
+            {{- toYaml .Values.jwtKeys.job.generateCommand | nindent 12 }}
+          {{- else }}
+          # `command` rather than `args`: the image entrypoint is openssl
+          # itself. The keys are the ones `bin/generate-jwt-private-key.sh`
+          # writes for the compose stack, same command — PKCS#8 RSA, the format
+          # both the backend and the collaboration server read.
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+
+              for name in {{ .Values.jwtKeys.backendKeyFilename | quote }} {{ .Values.jwtKeys.yhubKeyFilename | quote }}; do
+                  openssl genpkey -algorithm RSA \
+                      -pkeyopt rsa_keygen_bits:{{ .Values.jwtKeys.keySize }} \
+                      -out "/keys/$name"
+                  echo "$name generated"
+              done
+          {{- end }}
+          {{- with .Values.jwtKeys.job.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jwtKeys.job.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: keys
+              mountPath: /keys
+      containers:
+        - name: publish
+          image: "{{ .Values.jwtKeys.kubectlImage.repository }}:{{ .Values.jwtKeys.kubectlImage.tag }}"
+          imagePullPolicy: {{ .Values.jwtKeys.kubectlImage.pullPolicy }}
+          {{- if .Values.jwtKeys.job.publishCommand }}
+          command:
+            {{- toYaml .Values.jwtKeys.job.publishCommand | nindent 12 }}
+          {{- else }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+
+              # the keys generated above are dropped on the floor when the
+              # secret is already there: they are new ones, and replacing the
+              # live pair is a decision, never a side effect of a sync
+              if kubectl get secret {{ $secretName | quote }} >/dev/null 2>&1; then
+                  echo "secret {{ $secretName }} already exists, keeping the keys it holds"
+                  exit 0
+              fi
+
+              kubectl create secret generic {{ $secretName | quote }} \
+                  --from-file={{ .Values.jwtKeys.backendKeyFilename }}=/keys/{{ .Values.jwtKeys.backendKeyFilename }} \
+                  --from-file={{ .Values.jwtKeys.yhubKeyFilename }}=/keys/{{ .Values.jwtKeys.yhubKeyFilename }}
+              echo "secret {{ $secretName }} created"
+          {{- end }}
+          {{- with .Values.jwtKeys.job.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jwtKeys.job.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jwtKeys.job.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: keys
+              mountPath: /keys
+              readOnly: true
+      {{- with .Values.jwtKeys.job.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.jwtKeys.job.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.jwtKeys.job.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        # the keys live here for the lifetime of this pod and nowhere else
+        - name: keys
+          emptyDir:
+            medium: Memory
+{{- end }}
