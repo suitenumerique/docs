@@ -154,6 +154,16 @@ and this project adheres to
   and rolling the keys is deleting the secret and letting the next run create
   it again. `jwtKeys.existingSecret` points at keys of your own instead, and
   skips both the job and its rights
+- ✨(collaboration) split the yhub server and worker with `YHUB_ROLE`: unset (or
+  `all`) runs both halves in one process as before, `server` holds the
+  websockets and the routes without claiming a task, `worker` drains the redis
+  stream into postgres without binding a port. They share the two stores and
+  nothing else, so each scales on what drives it — connected editors on one
+  side, write throughput on the other. Any other value is refused at startup.
+  In the helm chart, `yhub.worker.enabled` turns the single deployment into
+  two, sets the variable on each, and gives the worker no service and no probes
+  since it binds nothing; everything not named under `yhub.worker` is the
+  server's
 - ✨(collaboration) serve two probes on yhub: `GET /collaboration/ping/v1`
   answers `pong` without touching a store — being answered is what a liveness
   check should conclude, and restarting a server over a store it cannot reach
