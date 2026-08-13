@@ -630,13 +630,13 @@ test.describe('Doc Comments Side Panel', () => {
     const elCommentsSidePanel = page.getByLabel('Comments side panel');
     await expect(elCommentsSidePanel).toBeVisible();
 
-    await createRootSubPage(
+    const { name: childDocName } = await createRootSubPage(
       page,
       browserName,
       'comment-doc-panel-switch-child',
     );
 
-    await verifyDocName(page, 'comment-doc-panel-switch-child');
+    await verifyDocName(page, childDocName);
     await expect(elCommentsSidePanel).toBeHidden();
   });
 });
