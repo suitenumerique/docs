@@ -12,6 +12,9 @@ and this project adheres to
 - ✨(frontend) reset side panel state between documents #2583
 - ♿️(frontend) announce search loading state for screen readers #2526
 
+### Fixed
+
+- 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
 
 ## [v5.5.0] - 2026-08-24
 
