@@ -26,33 +26,17 @@ COLLABORATION_BACKEND_BASE_URL: http://{django-service}:8000
 
 The JWKS url defaults to `{COLLABORATION_BACKEND_BASE_URL}/api/v1.0/jwks`; override it with `JWKS_URL` if Django is not reachable at that base url from the y-provider service.
 
-### Splitting conversion service
+### One service, not two anymore
 
-The conversion service is present in the `y-provider` server. The same server used to manage websockets. You can split in one side the websocket server and in an other side the converter service.
-This feature is only available in our helm chart, if you are deploying an other way you can take example of what is made to implement it.
-The idea is to deploy twice the `y-provider` server, one dedicated for websockets and one dedicated to the conversion.
+The `y-provider` server used to serve the websockets as well, which is why it could be deployed twice — one release for the collaboration, one for the conversion (`yProvider.converter`). The collaboration is served by [yhub](collaboration.md) now, so the conversion is all that is left: the `y-provider` service **is** the converter, and the `yProvider.converter` values are gone.
 
-In the helm chart, you can use this value that will do the job for you:
+A deployment coming from a chart older than this one has one thing to change, the url the backend calls, which loses its suffix:
 
 ```yaml
-yProvider:
-  converter:
-    enabled: true
-```
-
-Every parameter in the `yProvider` key can be overridden in the `yProvider.converter` key.
-
-Once enabled, you have to enable the `Y_PROVIDER_API_BASE_URL` with the url of the newly created service, it is the same as before with `-converter` at the end.
-If before it was
-
-```yaml
-Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
-```
-
-now it is
-
-```yaml
+# before
 Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider-converter:443/api/
+# now
+Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
 ```
 
 ## Docspec configuration

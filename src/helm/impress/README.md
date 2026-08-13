@@ -38,7 +38,6 @@
 | `ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/enable-websocket`   |                                                                            | `true`                                                             |
 | `ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-read-timeout` |                                                                            | `86400`                                                            |
 | `ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-send-timeout` |                                                                            | `86400`                                                            |
-| `ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/upstream-hash-by`   |                                                                            | `$arg_room`                                                        |
 | `ingressRedirects.enabled`                                                          | whether to enable the Ingress Redirects or not                             | `false`                                                            |
 | `ingressRedirects.className`                                                        | IngressClass to use for the Ingress Redirects                              | `nil`                                                              |
 | `ingressRedirects.host`                                                             | Host for the Ingress Redirects                                             | `impress.example.com`                                              |
@@ -51,13 +50,13 @@
 | `ingressCollaborationApi.className`                                                 | IngressClass to use for the Ingress                                        | `nil`                                                              |
 | `ingressCollaborationApi.host`                                                      | Host for the Ingress                                                       | `impress.example.com`                                              |
 | `ingressCollaborationApi.path`                                                      | Path to use for the Ingress                                                | `/collaboration/api/`                                              |
+| `ingressCollaborationApi.paths`                                                     | Paths to route to the collaboration server, one rule each                  | `["/collaboration/ydoc/","/collaboration/jwks/"]`                  |
 | `ingressCollaborationApi.hosts`                                                     | Additional host to configure for the Ingress                               | `[]`                                                               |
 | `ingressCollaborationApi.tls.enabled`                                               | Whether to enable TLS for the Ingress                                      | `true`                                                             |
 | `ingressCollaborationApi.tls.secretName`                                            | Secret name for TLS config                                                 | `nil`                                                              |
 | `ingressCollaborationApi.tls.additional[].secretName`                               | Secret name for additional TLS config                                      |                                                                    |
 | `ingressCollaborationApi.tls.additional[].hosts[]`                                  | Hosts for additional TLS config                                            |                                                                    |
 | `ingressCollaborationApi.customBackends`                                            | Add custom backends to ingress                                             | `[]`                                                               |
-| `ingressCollaborationApi.annotations.nginx.ingress.kubernetes.io/upstream-hash-by`  |                                                                            | `$arg_room`                                                        |
 | `ingressAdmin.enabled`                                                              | whether to enable the Ingress or not                                       | `false`                                                            |
 | `ingressAdmin.className`                                                            | IngressClass to use for the Ingress                                        | `nil`                                                              |
 | `ingressAdmin.host`                                                                 | Host for the Ingress                                                       | `impress.example.com`                                              |
@@ -301,13 +300,122 @@
 | `yProvider.pdb.enabled`                                 | Enable pdb on yProvider                                                              | `true`                       |
 | `yProvider.serviceAccountName`                          | Optional service account name to use for yProvider pods                              | `nil`                        |
 
+### JWT signing keys
+
+| Name                                                   | Description                                                                          | Value                |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------ | -------------------- |
+| `jwtKeys.enabled`                                      | Generate the JWT signing keys of the services on the cluster                         | `false`              |
+| `jwtKeys.existingSecret`                               | Secret already holding the keys, generated in a secret of the chart's own when empty | `nil`                |
+| `jwtKeys.mountPath`                                    | Path the keys are mounted at, in every service reading them                          | `/data/jwt`          |
+| `jwtKeys.backendKeyFilename`                           | Name of the key signing the tokens the backend issues                                | `private.pem`        |
+| `jwtKeys.yhubKeyFilename`                              | Name of the key signing the calls the collaboration server makes to the backend      | `yhub-private.pem`   |
+| `jwtKeys.keySize`                                      | Size, in bits, of the generated RSA keys                                             | `2048`               |
+| `jwtKeys.rbac.create`                                  | Create the service account and the role the job needs to create the secret           | `true`               |
+| `jwtKeys.image.repository`                             | Repository to use to pull the image generating the keys                              | `alpine/openssl`     |
+| `jwtKeys.image.tag`                                    | Tag of the image generating the keys                                                 | `3.5.7`              |
+| `jwtKeys.image.pullPolicy`                             | Pull policy of the image generating the keys                                         | `IfNotPresent`       |
+| `jwtKeys.kubectlImage.repository`                      | Repository to use to pull the image handing the keys to the secret                   | `dtzar/helm-kubectl` |
+| `jwtKeys.kubectlImage.tag`                             | Tag of the image handing the keys to the secret                                      | `3.16.2`             |
+| `jwtKeys.kubectlImage.pullPolicy`                      | Pull policy of the image handing the keys to the secret                              | `IfNotPresent`       |
+| `jwtKeys.job.podSecurityContext`                       | Pod security context of the generating job                                           | `{}`                 |
+| `jwtKeys.job.securityContext.allowPrivilegeEscalation` | Whether to allow privilege escalation for the job containers                         | `false`              |
+| `jwtKeys.job.securityContext.capabilities.drop`        | List of capabilities to drop for the job containers                                  | `["ALL"]`            |
+| `jwtKeys.job.securityContext.runAsNonRoot`             | Whether to run the job containers as a non-root user                                 | `true`               |
+| `jwtKeys.job.securityContext.runAsUser`                | User the job containers run as, their images declaring none                          | `1000`               |
+| `jwtKeys.job.securityContext.runAsGroup`               | Group the job containers run as                                                      | `1000`               |
+| `jwtKeys.job.securityContext.seccompProfile.type`      | Seccomp profile type for the job containers                                          | `RuntimeDefault`     |
+| `jwtKeys.job.restartPolicy`                            | Restart policy of the generating job                                                 | `Never`              |
+| `jwtKeys.job.backoffLimit`                             | Numbers of generating job retries                                                    | `2`                  |
+| `jwtKeys.job.ttlSecondsAfterFinished`                  | Period to wait before removing the generating job                                    | `30`                 |
+| `jwtKeys.job.generateCommand`                          | Override the command generating the keys                                             | `[]`                 |
+| `jwtKeys.job.publishCommand`                           | Override the command creating the secret from the generated keys                     | `[]`                 |
+| `jwtKeys.job.annotations`                              | Annotations to add to the generating job                                             | `{}`                 |
+| `jwtKeys.job.podAnnotations`                           | Annotations to add to the generating job Pod                                         | `{}`                 |
+| `jwtKeys.job.resources`                                | Resource requirements for the job containers                                         | `{}`                 |
+| `jwtKeys.job.nodeSelector`                             | Node selector for the generating job Pod                                             | `{}`                 |
+| `jwtKeys.job.tolerations`                              | Tolerations for the generating job Pod                                               | `[]`                 |
+| `jwtKeys.job.affinity`                                 | Affinity for the generating job Pod                                                  | `{}`                 |
+| `jwtKeys.job.serviceAccountName`                       | Service account of the generating job Pod, the one created above when empty          | `nil`                |
+
+### yhub
+
+| Name                                               | Description                                                                                                   | Value                    |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `yhub.enabled`                                     | Enable the yhub collaboration server, its service and its init-db job                                         | `true`                   |
+| `yhub.image.repository`                            | Repository to use to pull the yhub container image                                                            | `lasuite/impress-yhub`   |
+| `yhub.image.tag`                                   | yhub container tag                                                                                            | `latest`                 |
+| `yhub.image.pullPolicy`                            | yhub container image pull policy                                                                              | `IfNotPresent`           |
+| `yhub.command`                                     | Override the yhub container command                                                                           | `[]`                     |
+| `yhub.args`                                        | Override the yhub container args                                                                              | `[]`                     |
+| `yhub.replicas`                                    | Amount of yhub replicas                                                                                       | `3`                      |
+| `yhub.shareProcessNamespace`                       | Enable share process namespace between containers                                                             | `false`                  |
+| `yhub.sidecars`                                    | Add sidecars containers to yhub deployment                                                                    | `[]`                     |
+| `yhub.terminationGracePeriodSeconds`               | Grace period given to a yhub pod to drain before it is killed                                                 | `60`                     |
+| `yhub.securityContext.allowPrivilegeEscalation`    | Whether to allow privilege escalation for the yhub container                                                  | `false`                  |
+| `yhub.securityContext.capabilities.drop`           | List of capabilities to drop for the yhub container                                                           | `["ALL"]`                |
+| `yhub.securityContext.runAsNonRoot`                | Whether to run the yhub container as a non-root user                                                          | `true`                   |
+| `yhub.securityContext.runAsUser`                   | User the yhub container runs as                                                                               | `1000`                   |
+| `yhub.securityContext.runAsGroup`                  | Group the yhub container runs as                                                                              | `1000`                   |
+| `yhub.securityContext.seccompProfile.type`         | Seccomp profile type for the yhub container                                                                   | `RuntimeDefault`         |
+| `yhub.envVars`                                     | Configure yhub container environment variables                                                                | `undefined`              |
+| `yhub.envVars.REDIS`                               | Required, redis/valkey url holding the live document state (e.g. redis://valkey:6379/0)                       |                          |
+| `yhub.envVars.POSTGRES`                            | Required, url of the yhub database, created by the init-db job (e.g. postgres://user:pass@postgres:5432/yhub) |                          |
+| `yhub.envVars.REDIS_PREFIX`                        | Namespace of the redis keys, when the instance is shared (default: yhub)                                      |                          |
+| `yhub.envVars.COLLABORATION_BACKEND_BASE_URL`      | Base url of the Docs backend, which yhub asks about users and document access rights                          |                          |
+| `yhub.envVars.COLLABORATION_SERVER_ORIGIN`         | Comma separated list of the origins allowed to open a websocket                                               |                          |
+| `yhub.envVars.YHUB_JWT_PRIVATE_KEY_FILE`           | Path to the RSA private key (PEM) yhub signs its calls to the backend with, mounted from a secret             |                          |
+| `yhub.envVars.SOFT_MIGRATION`                      | Set to "true" to seed rooms from the legacy Django/S3 document store on first access                          |                          |
+| `yhub.envVars.BY_VALUE`                            | Example environment variable by setting value directly                                                        |                          |
+| `yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.name` | Name of a ConfigMap when configuring env vars from a ConfigMap                                                |                          |
+| `yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.key`  | Key within a ConfigMap when configuring env vars from a ConfigMap                                             |                          |
+| `yhub.envVars.FROM_SECRET.secretKeyRef.name`       | Name of a Secret when configuring env vars from a Secret                                                      |                          |
+| `yhub.envVars.FROM_SECRET.secretKeyRef.key`        | Key within a Secret when configuring env vars from a Secret                                                   |                          |
+| `yhub.podAnnotations`                              | Annotations to add to the yhub Pod                                                                            | `{}`                     |
+| `yhub.dpAnnotations`                               | Annotations to add to the yhub Deployment                                                                     | `{}`                     |
+| `yhub.initDbJobAnnotations`                        | Annotations for the yhub init-db job                                                                          | `{}`                     |
+| `yhub.jobs.ttlSecondsAfterFinished`                | Period to wait before removing the init-db job                                                                | `30`                     |
+| `yhub.jobs.backoffLimit`                           | Numbers of init-db job retries                                                                                | `2`                      |
+| `yhub.initDb.enabled`                              | Run the job creating and upgrading the yhub schema                                                            | `true`                   |
+| `yhub.initDb.command`                              | Override the command creating and upgrading the yhub schema                                                   | `[]`                     |
+| `yhub.initDb.retries`                              | How many times the schema script is retried while the postgres server does not answer                         | `60`                     |
+| `yhub.initDb.retryDelaySeconds`                    | Seconds between two attempts                                                                                  | `5`                      |
+| `yhub.initDb.restartPolicy`                        | Restart policy of the init-db job                                                                             | `Never`                  |
+| `yhub.service.type`                                | yhub Service type                                                                                             | `ClusterIP`              |
+| `yhub.service.port`                                | yhub Service listening port                                                                                   | `443`                    |
+| `yhub.service.targetPort`                          | yhub container listening port                                                                                 | `3002`                   |
+| `yhub.service.annotations`                         | Annotations to add to the yhub Service                                                                        | `{}`                     |
+| `yhub.probes.liveness.path`                        | Configure path for yhub HTTP liveness probe                                                                   | `/collaboration/jwks/v1` |
+| `yhub.probes.liveness.initialDelaySeconds`         | Configure initial delay for yhub liveness probe                                                               | `10`                     |
+| `yhub.probes.readiness.path`                       | Configure path for yhub HTTP readiness probe                                                                  | `/collaboration/jwks/v1` |
+| `yhub.probes.readiness.initialDelaySeconds`        | Configure initial delay for yhub readiness probe                                                              | `5`                      |
+| `yhub.probes.liveness.targetPort`                  | Configure port for yhub HTTP liveness probe                                                                   |                          |
+| `yhub.probes.liveness.timeoutSeconds`              | Configure timeout for yhub liveness probe                                                                     |                          |
+| `yhub.probes.readiness.targetPort`                 | Configure port for yhub HTTP readiness probe                                                                  |                          |
+| `yhub.probes.readiness.timeoutSeconds`             | Configure timeout for yhub readiness probe                                                                    |                          |
+| `yhub.probes.startup.path`                         | Configure path for yhub HTTP startup probe                                                                    |                          |
+| `yhub.probes.startup.targetPort`                   | Configure port for yhub HTTP startup probe                                                                    |                          |
+| `yhub.probes.startup.initialDelaySeconds`          | Configure initial delay for yhub startup probe                                                                |                          |
+| `yhub.probes.startup.timeoutSeconds`               | Configure timeout for yhub startup probe                                                                      |                          |
+| `yhub.resources`                                   | Resource requirements for the yhub container                                                                  | `{}`                     |
+| `yhub.nodeSelector`                                | Node selector for the yhub Pod                                                                                | `{}`                     |
+| `yhub.tolerations`                                 | Tolerations for the yhub Pod                                                                                  | `[]`                     |
+| `yhub.affinity`                                    | Affinity for the yhub Pod                                                                                     | `{}`                     |
+| `yhub.persistence`                                 | Additional volumes to create and mount on the yhub. Used for debugging purposes                               | `{}`                     |
+| `yhub.persistence.volume-name.size`                | Size of the additional volume                                                                                 |                          |
+| `yhub.persistence.volume-name.type`                | Type of the additional volume, persistentVolumeClaim or emptyDir                                              |                          |
+| `yhub.persistence.volume-name.mountPath`           | Path where the volume should be mounted to                                                                    |                          |
+| `yhub.extraVolumeMounts`                           | Additional volumes to mount on the yhub. Mounted on the init-db job too                                       | `[]`                     |
+| `yhub.extraVolumes`                                | Additional volumes to mount on the yhub. Mounted on the init-db job too                                       | `[]`                     |
+| `yhub.pdb.enabled`                                 | Enable pdb on yhub                                                                                            | `true`                   |
+| `yhub.serviceAccountName`                          | Optional service account name to use for yhub pods                                                            | `nil`                    |
+
 ### docSpec
 
 | Name                                               | Description                                                     | Value                   |
 | -------------------------------------------------- | --------------------------------------------------------------- | ----------------------- |
 | `docSpec.enabled`                                  | Enable docSpec deployment                                       | `false`                 |
 | `docSpec.image.repository`                         | Repository to use to pull docSpec container image               | `ghcr.io/docspecio/api` |
-| `docSpec.image.tag`                                | docSpec container tag                                           | `2.6.3`                 |
+| `docSpec.image.tag`                                | docSpec container tag                                           | `3.0.1`                 |
 | `docSpec.image.pullPolicy`                         | docSpec container image pull policy                             | `IfNotPresent`          |
 | `docSpec.command`                                  | Override the docSpec container command                          | `[]`                    |
 | `docSpec.args`                                     | Override the docSpec container args                             | `[]`                    |

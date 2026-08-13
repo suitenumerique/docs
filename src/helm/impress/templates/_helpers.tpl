@@ -187,22 +187,87 @@ Requires top level scope
 {{- end }}
 
 {{/*
-Full name for the yProvider converter
-
-Requires top level scope
-*/}}
-{{- define "impress.yProvider.converter.fullname" -}}
-{{ include "impress.yProvider.fullname" . }}-converter
-{{- end }}
-
-
-{{/*
 Full name for the docSpec
 
 Requires top level scope
 */}}
 {{- define "impress.docSpec.fullname" -}}
 {{ include "impress.fullname" . }}-docspec
+{{- end }}
+
+{{/*
+Full name for the yhub collaboration server
+
+Requires top level scope
+*/}}
+{{- define "impress.yhub.fullname" -}}
+{{ include "impress.fullname" . }}-yhub
+{{- end }}
+
+{{/*
+JWT signing keys — the RSA keys the services sign the calls they make to each
+other with. The jwt-keys job generates them once into a secret every service
+mounts read-only, so no key is ever templated into a manifest, written in a
+values file, or kept anywhere the services themselves can write.
+
+Requires top level scope
+*/}}
+{{- define "impress.jwtKeys.secretName" -}}
+{{- .Values.jwtKeys.existingSecret | default (printf "%s-jwt-keys" (include "impress.fullname" .)) -}}
+{{- end }}
+
+{{- define "impress.jwtKeys.serviceAccountName" -}}
+{{- .Values.jwtKeys.job.serviceAccountName | default (printf "%s-jwt-keys" (include "impress.fullname" .)) -}}
+{{- end }}
+
+{{- define "impress.jwtKeys.backendPath" -}}
+{{ .Values.jwtKeys.mountPath }}/{{ .Values.jwtKeys.backendKeyFilename }}
+{{- end }}
+
+{{- define "impress.jwtKeys.yhubPath" -}}
+{{ .Values.jwtKeys.mountPath }}/{{ .Values.jwtKeys.yhubKeyFilename }}
+{{- end }}
+
+{{/*
+The volume holding the keys. A pod referencing a secret that does not exist yet
+stays in ContainerCreating and mounts it as soon as the job creates it, so
+nothing else is needed to order the two.
+
+Requires top level scope
+*/}}
+{{- define "impress.jwtKeys.volume" -}}
+- name: jwt-keys
+  secret:
+    secretName: {{ include "impress.jwtKeys.secretName" . }}
+    # read-only for everyone, as the files the job generates are
+    defaultMode: 0444
+{{- end }}
+
+{{- define "impress.jwtKeys.volumeMount" -}}
+- name: jwt-keys
+  mountPath: {{ .Values.jwtKeys.mountPath }}
+  readOnly: true
+{{- end }}
+
+{{/*
+`*_FILE` environment variables pointing at the keys, added only when the
+deployment did not set them by hand — configuring a key of your own stays
+possible, and wins.
+
+Requires top level scope
+*/}}
+{{- define "impress.jwtKeys.backendEnv" -}}
+{{- if not (hasKey (.Values.backend.envVars | default dict) "JWT_PRIVATE_KEY_FILE") }}
+- name: "JWT_PRIVATE_KEY_FILE"
+  value: {{ include "impress.jwtKeys.backendPath" . | quote }}
+{{- end }}
+{{- end }}
+
+{{- define "impress.jwtKeys.yhubEnv" -}}
+{{- if not (hasKey (.Values.yhub.envVars | default dict) "YHUB_JWT_PRIVATE_KEY_FILE") }}
+- name: "YHUB_JWT_PRIVATE_KEY_FILE"
+  value: {{ include "impress.jwtKeys.yhubPath" . | quote }}
+{{- end }}
 {{- end }}
 
 

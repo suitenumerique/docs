@@ -85,7 +85,15 @@ repository:
   `app crashed - waiting for file changes` and the next save starts the server
   again,
 - `yhub` — the production image: production dependencies only, `node
-  server.js`, sources baked in.
+  server.js`, sources baked in, and the un-privileged user and the entrypoint
+  the other services use (kubernetes runs the pod with `runAsNonRoot`).
+
+Both are built **from the repository root**, like every other image here — the
+entrypoint they share lives outside this directory:
+
+```
+docker build -f src/yhub-server/Dockerfile --target yhub .
+```
 
 nodemon rather than node's own `--watch`: the latter watches inodes, so it
 stops seeing a file as soon as it is replaced by a rename — which is what `git
