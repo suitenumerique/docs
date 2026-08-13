@@ -7,7 +7,7 @@ metadata:
   name: {{ $fullName }}
   namespace: {{ .Release.Namespace | quote }}
   annotations:
-    {{- with .Values.backend.dpAnnotations }}
+    {{- with .Values.yProvider.dpAnnotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
   labels:
