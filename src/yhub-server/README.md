@@ -60,6 +60,20 @@ It is not a fork of yhub — it is a thin wrapper:
   its own tokens: neither side is configured with a copy of the key of the
   other, so either can roll its key on its own. Served unauthenticated, as any
   JWKS is,
+- answers two probes, unauthenticated like the JWKS and deliberately asking
+  different questions:
+  - `GET /collaboration/ping/v1` → `200 {"status":"pong"}` without touching
+    anything. Being answered at all proves the http channel and the event loop
+    are alive, which is as far as a **liveness** check should go: restarting a
+    server over a store it cannot reach would drop the websockets it is
+    serving perfectly well,
+  - `GET /collaboration/ready/v1` → `200 {"status":"ready","checks":{…}}`, or
+    `503` with the offending store marked `unreachable`, after asking postgres
+    (`SELECT 1`) and redis (`PING`) in parallel, each with a two second
+    budget. A **readiness** failure takes the pod out of the service endpoints
+    and leaves its siblings serving. The body names the store but never the
+    error: the route is public, and a postgres client will happily put its
+    connection string in the message it raises — that goes to the log instead,
 - mirrors the environment conventions used elsewhere in this repository
   (`*_FILE` secret indirection, `COLLABORATION_SERVER_ORIGIN` allowlist, …).
 
@@ -70,7 +84,10 @@ authorization and are meant to be reachable by browsers, as is
 `/collaboration/jwks/v1`, which carries public keys and nothing else. The one
 exception is `/collaboration/reset-connections/`, `/collaboration/migrate/`,
 `/collaboration/restore-ydoc/` and `/collaboration/reset-ydoc/`, which are
-backend-internal and should not be routed through the public ingress.
+backend-internal and should not be routed through the public ingress. The two
+probes are not worth publishing either — kubelet calls them from inside — and
+the helm chart's ingress lists what it routes rather than what it hides, so
+they stay in-cluster on their own.
 
 ## Container image
 

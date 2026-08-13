@@ -1036,27 +1036,38 @@ yhub:
 
   ## @param yhub.probes.liveness.path Configure path for yhub HTTP liveness probe
   ## @param yhub.probes.liveness.initialDelaySeconds Configure initial delay for yhub liveness probe
+  ## @param yhub.probes.liveness.timeoutSeconds Configure timeout for yhub liveness probe
   ## @param yhub.probes.readiness.path Configure path for yhub HTTP readiness probe
   ## @param yhub.probes.readiness.initialDelaySeconds Configure initial delay for yhub readiness probe
+  ## @param yhub.probes.readiness.timeoutSeconds Configure timeout for yhub readiness probe
   ## @extra yhub.probes.liveness.targetPort Configure port for yhub HTTP liveness probe
-  ## @extra yhub.probes.liveness.timeoutSeconds Configure timeout for yhub liveness probe
   ## @extra yhub.probes.readiness.targetPort Configure port for yhub HTTP readiness probe
-  ## @extra yhub.probes.readiness.timeoutSeconds Configure timeout for yhub readiness probe
   ## @extra yhub.probes.startup.path Configure path for yhub HTTP startup probe
   ## @extra yhub.probes.startup.targetPort Configure port for yhub HTTP startup probe
   ## @extra yhub.probes.startup.initialDelaySeconds Configure initial delay for yhub startup probe
   ## @extra yhub.probes.startup.timeoutSeconds Configure timeout for yhub startup probe
   ##
-  ## The JWKS route is the only one yhub serves unauthenticated: it answers 200
-  ## with the public keys it signs its calls to the backend with (an empty set
-  ## when no key is configured), and reads neither redis nor postgres.
+  ## Two routes yhub serves unauthenticated, and they answer different
+  ## questions on purpose:
+  ##
+  ## - `ping` returns 200 without touching anything. Being answered at all is
+  ##   the proof the http channel and the event loop are alive, which is as far
+  ##   as a liveness probe should ever go: restarting a server over a store it
+  ##   does not reach would drop the websockets it is happily serving.
+  ## - `ready` asks postgres and redis whether they answer, and returns 503
+  ##   when either does not. That takes the pod out of the service endpoints
+  ##   and leaves its siblings serving, which is what readiness is for. Its
+  ##   timeout is above the two seconds the server itself gives each store, so
+  ##   an unreachable one is reported rather than cut off.
   probes:
     liveness:
-      path: /collaboration/jwks/v1
+      path: /collaboration/ping/v1
       initialDelaySeconds: 10
+      timeoutSeconds: 2
     readiness:
-      path: /collaboration/jwks/v1
+      path: /collaboration/ready/v1
       initialDelaySeconds: 5
+      timeoutSeconds: 3
 
   ## @param yhub.resources Resource requirements for the yhub container
   resources: {}
