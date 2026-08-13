@@ -42,8 +42,21 @@ docker_build(
     ]
 )
 
+docker_build(
+    'localhost:5001/impress-yhub:latest',
+    context='..',
+    dockerfile='../src/yhub-server/Dockerfile',
+    only=['./src/yhub-server', './docker', './.dockerignore'],
+    target = 'yhub',
+    build_args={'DOCKER_USER': '1000:1000'},
+    live_update=[
+        sync('../src/yhub-server', '/app'),
+    ]
+)
+
 k8s_resource('impress-docs-backend-migrate', resource_deps=['dev-backend-postgres'])
 k8s_resource('impress-docs-backend-createsuperuser', resource_deps=['impress-docs-backend-migrate'])
+k8s_resource('impress-docs-yhub-init-db', resource_deps=['dev-backend-postgres'])
 k8s_resource('dev-backend-keycloak', resource_deps=['dev-backend-keycloak-pg'])
 k8s_resource('impress-docs-backend', resource_deps=['impress-docs-backend-migrate', 'dev-backend-redis', 'dev-backend-keycloak', 'dev-backend-postgres', 'dev-backend-minio:statefulset'])
 k8s_yaml(local('cd ../src/helm && helmfile -n impress -e dev template .'))
