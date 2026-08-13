@@ -197,7 +197,11 @@ jwtKeys:
   enabled: true
 
 yhub:
-  replicas: 1
+  replicas: 3
+
+  worker:
+    enabled: true
+    replicas: 2
 
   image:
     repository: localhost:5001/impress-yhub

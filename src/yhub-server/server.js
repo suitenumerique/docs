@@ -39,6 +39,24 @@ const allowedOrigins = (
 ).split(',');
 const Y_PROVIDER_API_KEY = secret('Y_PROVIDER_API_KEY', 'yprovider-api-key');
 const ORG = process.env.YHUB_ORG || 'docs';
+// Which halves of yhub this process runs. The server accepts the websocket
+// connections and serves the REST routes; the worker drains the redis stream
+// into postgres. They share the two stores and nothing else — no in-process
+// state, no ordering between them — so one process can run both (the default)
+// or a deployment can split them and scale each on its own: the server with
+// the connected editors, the worker with the write throughput.
+//
+// A stream is only drained by the workers that are running: a deployment of
+// `server` alone keeps accepting edits and never persists them, so the two
+// halves are split together or not at all.
+const ROLE = process.env.YHUB_ROLE || 'all';
+if (!['all', 'server', 'worker'].includes(ROLE)) {
+  throw new Error(
+    `YHUB_ROLE must be one of "all", "server" or "worker" (got "${ROLE}")`,
+  );
+}
+const RUNS_SERVER = ROLE !== 'worker';
+const RUNS_WORKER = ROLE !== 'server';
 // Segment every route is mounted under (`server.apiPrefix` below), matching the
 // URL scheme Docs already routes to the collaboration server. Hardcoded like
 // the audiences: the backend builds its urls with the same prefix.
@@ -818,8 +836,19 @@ const yhub = await createYHub({
   },
   postgres: POSTGRES,
   persistence: [], // blobs live in yhub's postgres
+  // Both halves are declared, and YHUB_ROLE decides which are built: a null
+  // server binds no port at all (a `worker` pod has no http surface, hence no
+  // probes and no service in front of it), a null worker claims no task.
+  //
   // apiPrefix mounts every route — built-ins, our custom endpoints, and the
   // websocket (/collaboration/ws/v1/{org}/{docid}) — under /collaboration/.
-  server: { port: PORT, auth, api, apiPrefix: API_PREFIX },
-  worker: { taskConcurrency: 5, events: workerEvents },
+  server: RUNS_SERVER
+    ? { port: PORT, auth, api, apiPrefix: API_PREFIX }
+    : null,
+  worker: RUNS_WORKER ? { taskConcurrency: 5, events: workerEvents } : null,
 });
+
+logger.info(
+  { role: ROLE, server: RUNS_SERVER, worker: RUNS_WORKER },
+  'yhub role',
+);
