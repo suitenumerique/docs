@@ -1,27 +1,37 @@
-{{- if .Values.yhub.enabled -}}
-{{- $envVars := include "impress.common.env" (list . .Values.yhub) -}}
-{{- $fullName := include "impress.yhub.fullname" . -}}
-{{- $component := "yhub" -}}
+{{- if and .Values.yhub.enabled .Values.yhub.worker.enabled -}}
+{{- $envVars := include "impress.yhub.worker.env" (list . .Values.yhub) -}}
+{{- $fullName := include "impress.yhub.worker.fullname" . -}}
+{{- $component := "yhub-worker" -}}
+{{- $worker := .Values.yhub.worker -}}
+# The half of yhub that drains the redis stream into postgres, deployed apart
+# from the one serving the websockets (YHUB_ROLE). It scales on the write
+# throughput rather than on the connected editors, and redis consumer groups
+# hand each task to exactly one of these pods.
+#
+# No service, no ports and no probes: a worker binds nothing, it claims tasks.
+# Its health is its process being alive — the task loop logs and backs off on
+# error rather than dying, so a pod that stopped working is one that exited,
+# and kubelet restarts it.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $fullName }}
   namespace: {{ .Release.Namespace | quote }}
   annotations:
-    {{- with .Values.yhub.dpAnnotations }}
+    {{- with ($worker.dpAnnotations | default .Values.yhub.dpAnnotations) }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
   labels:
     {{- include "impress.common.labels" (list . $component) | nindent 4 }}
 spec:
-  replicas: {{ .Values.yhub.replicas }}
+  replicas: {{ $worker.replicas }}
   selector:
     matchLabels:
       {{- include "impress.common.selectorLabels" (list . $component) | nindent 6 }}
   template:
     metadata:
       annotations:
-        {{- with .Values.yhub.podAnnotations }}
+        {{- with ($worker.podAnnotations | default .Values.yhub.podAnnotations) }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
@@ -35,10 +45,9 @@ spec:
       serviceAccountName: {{ .Values.yhub.serviceAccountName }}
       {{- end }}
       shareProcessNamespace: {{ .Values.yhub.shareProcessNamespace }}
-      # a websocket connection is dropped when the pod goes away, and the client
-      # reconnects to another one — but the updates it sent are only in redis
-      # until a worker persists them, so leave the embedded worker time to drain
-      terminationGracePeriodSeconds: {{ .Values.yhub.terminationGracePeriodSeconds }}
+      # a task claimed by a pod that goes away is redelivered to another one,
+      # but letting the current one finish saves that round trip
+      terminationGracePeriodSeconds: {{ $worker.terminationGracePeriodSeconds | default .Values.yhub.terminationGracePeriodSeconds }}
       containers:
         {{- with .Values.yhub.sidecars }}
           {{- toYaml . | nindent 8 }}
@@ -54,7 +63,7 @@ spec:
           args:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- $roleEnv := include "impress.yhub.roleEnv" (dict "root" . "role" "server") }}
+          {{- $roleEnv := include "impress.yhub.roleEnv" (dict "root" . "role" "worker") }}
           {{- if or $envVars .Values.jwtKeys.enabled $roleEnv }}
           env:
             {{- $envVars | indent 12 }}
@@ -71,23 +80,7 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.yhub.service.targetPort }}
-              protocol: TCP
-          {{- if .Values.yhub.probes.liveness }}
-          livenessProbe:
-            {{- include "impress.probes.abstract" (merge .Values.yhub.probes.liveness (dict "targetPort" .Values.yhub.service.targetPort )) | nindent 12 }}
-          {{- end }}
-          {{- if .Values.yhub.probes.readiness }}
-          readinessProbe:
-            {{- include "impress.probes.abstract" (merge .Values.yhub.probes.readiness (dict "targetPort" .Values.yhub.service.targetPort )) | nindent 12 }}
-          {{- end }}
-          {{- if .Values.yhub.probes.startup }}
-          startupProbe:
-            {{- include "impress.probes.abstract" (merge .Values.yhub.probes.startup (dict "targetPort" .Values.yhub.service.targetPort )) | nindent 12 }}
-          {{- end }}
-          {{- with .Values.yhub.resources }}
+          {{- with ($worker.resources | default .Values.yhub.resources) }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -100,25 +93,21 @@ spec:
               mountPath: {{ $value.path }}
               subPath: content
             {{- end }}
-            {{- range $name, $volume := .Values.yhub.persistence }}
-            - name: "{{ $name }}"
-              mountPath: "{{ $volume.mountPath }}"
-            {{- end }}
             {{- range .Values.yhub.extraVolumeMounts }}
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
               subPath: {{ .subPath | default "" }}
               readOnly: {{ .readOnly }}
             {{- end }}
-      {{- with .Values.yhub.nodeSelector }}
+      {{- with ($worker.nodeSelector | default .Values.yhub.nodeSelector) }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.yhub.affinity }}
+      {{- with ($worker.affinity | default .Values.yhub.affinity) }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.yhub.tolerations }}
+      {{- with ($worker.tolerations | default .Values.yhub.tolerations) }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -130,15 +119,6 @@ spec:
         - name: "files-{{ $index }}"
           configMap:
             name: "{{ include "impress.fullname" $ }}-files-{{ $index }}"
-        {{- end }}
-        {{- range $name, $volume := .Values.yhub.persistence }}
-        - name: "{{ $name }}"
-          {{- if eq $volume.type "emptyDir" }}
-          emptyDir: {}
-          {{- else }}
-          persistentVolumeClaim:
-            claimName: "{{ $fullName }}-{{ $name }}"
-          {{- end }}
         {{- end }}
         {{- range .Values.yhub.extraVolumes }}
         - name: {{ .name }}
@@ -165,7 +145,7 @@ spec:
           {{- end }}
         {{- end }}
 ---
-{{ if .Values.yhub.pdb.enabled }}
+{{ if $worker.pdb.enabled }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:

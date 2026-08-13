@@ -205,6 +205,42 @@ Requires top level scope
 {{- end }}
 
 {{/*
+Full name for the yhub worker, when it is deployed apart from the server
+
+Requires top level scope
+*/}}
+{{- define "impress.yhub.worker.fullname" -}}
+{{ include "impress.yhub.fullname" . }}-worker
+{{- end }}
+
+{{/*
+yhub worker env vars - combines common yhub.envVars with yhub.worker.envVars
+*/}}
+{{- define "impress.yhub.worker.env" -}}
+{{- $topLevelScope := index . 0 -}}
+{{- $workerScope := index . 1 -}}
+{{- include "impress.env.transformDict" $workerScope.envVars -}}
+{{- include "impress.env.transformDict" (($workerScope.worker | default dict).envVars | default dict) -}}
+{{- end }}
+
+{{/*
+The role a yhub pod runs, as an environment variable. Only when the worker is
+deployed apart: a single deployment runs both halves, which is what yhub does
+when the variable is absent. Skipped when the deployment names the role itself,
+in either env map — an explicit value wins, as everywhere else here.
+
+Usage: {{ include "impress.yhub.roleEnv" (dict "root" $ "role" "server") }}
+*/}}
+{{- define "impress.yhub.roleEnv" -}}
+{{- $root := .root -}}
+{{- $named := merge (dict) (($root.Values.yhub.worker | default dict).envVars | default dict) ($root.Values.yhub.envVars | default dict) -}}
+{{- if and $root.Values.yhub.worker.enabled (not (hasKey $named "YHUB_ROLE")) }}
+- name: "YHUB_ROLE"
+  value: {{ .role | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
 JWT signing keys — the RSA keys the services sign the calls they make to each
 other with. The jwt-keys job generates them once into a secret every service
 mounts read-only, so no key is ever templated into a manifest, written in a
