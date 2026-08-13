@@ -1,0 +1,148 @@
+{{- if and .Values.yhub.enabled .Values.yhub.initDb.enabled -}}
+{{- $envVars := include "impress.common.env" (list . .Values.yhub) -}}
+{{- $fullName := include "impress.yhub.fullname" . -}}
+{{- $component := "yhub" -}}
+# yhub never runs DDL from the server or the worker: the schema is created by
+# the script it ships, which creates the database when it is missing and every
+# table the installed version needs. It is idempotent, and it has to run again
+# on every yhub upgrade that adds a table — the counterpart of the backend
+# migrate job, hence the same Replace=true so a re-sync re-runs it.
+#
+# No sync wave, again like the backend migrate job: it runs in the default one,
+# alongside it, and waits for its database the way that one waits for Django's.
+# An earlier wave only moved it ahead of the postgres it needs.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $fullName }}-init-db
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
+  {{- with .Values.yhub.initDbJobAnnotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+spec:
+  ttlSecondsAfterFinished: {{ .Values.yhub.jobs.ttlSecondsAfterFinished }}
+  backoffLimit: {{ .Values.yhub.jobs.backoffLimit }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.yhub.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "impress.common.selectorLabels" (list . $component) | nindent 8 }}
+    spec:
+      {{- if $.Values.image.credentials }}
+      imagePullSecrets:
+        - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
+      {{- end}}
+      {{- if .Values.yhub.serviceAccountName }}
+      serviceAccountName: {{ .Values.yhub.serviceAccountName }}
+      {{- end }}
+      shareProcessNamespace: {{ .Values.yhub.shareProcessNamespace }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ (.Values.yhub.image | default dict).repository | default .Values.image.repository }}:{{ (.Values.yhub.image | default dict).tag | default .Values.image.tag }}"
+          imagePullPolicy: {{ (.Values.yhub.image | default dict).pullPolicy | default .Values.image.pullPolicy }}
+          {{- if .Values.yhub.initDb.command }}
+          command:
+            {{- toYaml .Values.yhub.initDb.command | nindent 12 }}
+          {{- else }}
+          # The script yhub ships, wrapped as `npm run init-db`, retried until
+          # the postgres server answers: nothing here creates it, and a chart
+          # sync does not wait for whatever does. Retrying the whole script
+          # rather than probing the port first — it is idempotent, so a run
+          # against a database that is up but incomplete is a no-op, and no
+          # postgres client has to be present in the image to ask.
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -u
+
+              attempt=1
+              until node node_modules/@y/hub/bin/init-db.js; do
+                  if [ "$attempt" -ge {{ .Values.yhub.initDb.retries }} ]; then
+                      echo "database still unreachable after $attempt attempts, giving up"
+                      exit 1
+                  fi
+                  echo "database not ready, retrying in {{ .Values.yhub.initDb.retryDelaySeconds }}s ($attempt/{{ .Values.yhub.initDb.retries }})"
+                  attempt=$((attempt + 1))
+                  sleep {{ .Values.yhub.initDb.retryDelaySeconds }}
+              done
+          {{- end }}
+          {{- if $envVars}}
+          env:
+            {{- $envVars | indent 12 }}
+          {{- end }}
+          {{- if .Values.yhub.envFrom }}
+          envFrom:
+            {{- toYaml .Values.yhub.envFrom | nindent 12 }}
+          {{- end }}
+          {{- with .Values.yhub.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.yhub.initDb.resources | default .Values.yhub.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- range $index, $value := .Values.mountFiles }}
+            - name: "files-{{ $index }}"
+              mountPath: {{ $value.path }}
+              subPath: content
+            {{- end }}
+            {{- range .Values.yhub.extraVolumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath | default "" }}
+              readOnly: {{ .readOnly }}
+            {{- end }}
+      {{- with .Values.yhub.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.yhub.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.yhub.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: {{ .Values.yhub.initDb.restartPolicy }}
+      volumes:
+        {{- range $index, $value := .Values.mountFiles }}
+        - name: "files-{{ $index }}"
+          configMap:
+            name: "{{ include "impress.fullname" $ }}-files-{{ $index }}"
+        {{- end }}
+        {{- range .Values.yhub.extraVolumes }}
+        - name: {{ .name }}
+          {{- if .existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .existingClaim }}
+          {{- else if .secret }}
+          secret:
+            {{ toYaml .secret | nindent 12 }}
+          {{- else if .hostPath }}
+          hostPath:
+            {{ toYaml .hostPath | nindent 12 }}
+          {{- else if .csi }}
+          csi:
+            {{- toYaml .csi | nindent 12 }}
+          {{- else if .configMap }}
+          configMap:
+            {{- toYaml .configMap | nindent 12 }}
+          {{- else if .emptyDir }}
+          emptyDir:
+            {{- toYaml .emptyDir | nindent 12 }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
+{{- end }}
