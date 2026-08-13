@@ -348,6 +348,16 @@
 | `yhub.command`                                     | Override the yhub container command                                                                           | `[]`                      |
 | `yhub.args`                                        | Override the yhub container args                                                                              | `[]`                      |
 | `yhub.replicas`                                    | Amount of yhub replicas                                                                                       | `3`                       |
+| `yhub.worker.enabled`                              | Deploy the worker apart from the server, each scaling on its own                                              | `false`                   |
+| `yhub.worker.replicas`                             | Amount of yhub worker replicas                                                                                | `1`                       |
+| `yhub.worker.resources`                            | Resource requirements for the yhub worker container, the server ones when empty                               | `{}`                      |
+| `yhub.worker.podAnnotations`                       | Annotations to add to the yhub worker Pod, the server ones when empty                                         | `{}`                      |
+| `yhub.worker.dpAnnotations`                        | Annotations to add to the yhub worker Deployment, the server ones when empty                                  | `{}`                      |
+| `yhub.worker.nodeSelector`                         | Node selector for the yhub worker Pod, the server one when empty                                              | `{}`                      |
+| `yhub.worker.tolerations`                          | Tolerations for the yhub worker Pod, the server ones when empty                                               | `[]`                      |
+| `yhub.worker.affinity`                             | Affinity for the yhub worker Pod, the server one when empty                                                   | `{}`                      |
+| `yhub.worker.terminationGracePeriodSeconds`        | Grace period given to a worker pod to finish its task, the server one when empty                              | `nil`                     |
+| `yhub.worker.pdb.enabled`                          | Enable pdb on the yhub worker                                                                                 | `true`                    |
 | `yhub.shareProcessNamespace`                       | Enable share process namespace between containers                                                             | `false`                   |
 | `yhub.sidecars`                                    | Add sidecars containers to yhub deployment                                                                    | `[]`                      |
 | `yhub.terminationGracePeriodSeconds`               | Grace period given to a yhub pod to drain before it is killed                                                 | `60`                      |
