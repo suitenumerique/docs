@@ -226,6 +226,7 @@ impress-docs-backend-8494fb797d-8k8wt         1/1     Running   0          6m45s
 impress-docs-celery-worker-764b5dd98f-9qd6v   1/1     Running   0          6m45s
 impress-docs-frontend-5b69b65cc4-s8pps        1/1     Running   0          6m45s
 impress-docs-y-provider-5fc7ccd8cc-6ttrf      1/1     Running   0          6m45s
+impress-docs-yhub-6d84f9b7c5-2xqzp            1/1     Running   0          6m45s
 keycloak-dev-backend-keycloak-0               1/1     Running   0          24m
 keycloak-dev-backend-keycloak-pg-0            1/1     Running   0          24m
 minio-dev-backend-minio-0                     1/1     Running   0          8m24s

@@ -67,7 +67,9 @@ backend:
     AWS_STORAGE_BUCKET_NAME: docs-media-storage
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
     USER_RECONCILIATION_FORM_URL: https://docs.127.0.0.1.nip.io
-    Y_PROVIDER_API_BASE_URL: http://impress-y-provider:443/api/
+    # the collaboration server, reached in-cluster
+    YHUB_API_BASE_URL: http://impress-docs-yhub:443
+    Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
     Y_PROVIDER_API_KEY: my-secret
     CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"
   migrate:
@@ -133,6 +135,26 @@ yProvider:
   envVars:
     COLLABORATION_BACKEND_BASE_URL: https://docs.127.0.0.1.nip.io
     COLLABORATION_LOGGING: true
+    COLLABORATION_SERVER_ORIGIN: https://docs.127.0.0.1.nip.io
+
+# The collaboration server: it serves everything under /collaboration/, the
+# websocket included. It keeps the live state of a document in redis and
+# persists it to a PostgreSQL database of its own, created by the init-db job
+# the chart ships — give the user in POSTGRES the right to create it, or create
+# the database yourself beforehand.
+yhub:
+  replicas: 1
+
+  image:
+    repository: lasuite/impress-yhub
+    pullPolicy: Always
+    tag: "latest"
+
+  envVars:
+    POSTGRES: postgres://dinum:pass@postgresql-dev-backend-postgres:5432/yhub
+    REDIS: redis://user:pass@redis-dev-backend-redis:6379/2
+    REDIS_PREFIX: yhub
+    COLLABORATION_BACKEND_BASE_URL: https://docs.127.0.0.1.nip.io
     COLLABORATION_SERVER_ORIGIN: https://docs.127.0.0.1.nip.io
 
 ingress:

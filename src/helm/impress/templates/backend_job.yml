@@ -44,9 +44,12 @@ spec:
           args:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if $envVars}}
+          {{- if or $envVars .Values.jwtKeys.enabled }}
           env:
             {{- $envVars | indent 12 }}
+            {{- if .Values.jwtKeys.enabled }}
+            {{- include "impress.jwtKeys.backendEnv" . | nindent 12 }}
+            {{- end }}
           {{- end }}
           {{- if .Values.backend.envFrom }}
           envFrom:
@@ -61,6 +64,9 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
+            {{- if .Values.jwtKeys.enabled }}
+            {{- include "impress.jwtKeys.volumeMount" . | nindent 12 }}
+            {{- end }}
             {{- range $index, $value := .Values.mountFiles }}
             - name: "files-{{ $index }}"
               mountPath: {{ $value.path }}
@@ -90,6 +96,9 @@ spec:
       {{- end }}
       restartPolicy: {{ .Values.backend.job.restartPolicy }}
       volumes:
+        {{- if .Values.jwtKeys.enabled }}
+        {{- include "impress.jwtKeys.volume" . | nindent 8 }}
+        {{- end }}
         {{- range $index, $value := .Values.mountFiles }}
         - name: "files-{{ $index }}"
           configMap:

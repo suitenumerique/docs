@@ -1,25 +1,27 @@
-{{- $envVars := include "impress.common.env" (list . .Values.backend) -}}
-{{- $fullName := include "impress.backend.fullname" . -}}
-{{- $component := "backend" -}}
-apiVersion: batch/v1
-kind: Job
+{{- if .Values.yhub.enabled -}}
+{{- $envVars := include "impress.common.env" (list . .Values.yhub) -}}
+{{- $fullName := include "impress.yhub.fullname" . -}}
+{{- $component := "yhub" -}}
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: {{ $fullName }}-migrate
+  name: {{ $fullName }}
   namespace: {{ .Release.Namespace | quote }}
   annotations:
-    argocd.argoproj.io/sync-options: Replace=true,Force=true
-  {{- with .Values.backend.migrateJobAnnotations }}
+    {{- with .Values.yhub.dpAnnotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
   labels:
     {{- include "impress.common.labels" (list . $component) | nindent 4 }}
 spec:
-  ttlSecondsAfterFinished: {{ .Values.backend.jobs.ttlSecondsAfterFinished }}
-  backoffLimit: {{ .Values.backend.jobs.backoffLimit }}
+  replicas: {{ .Values.yhub.replicas }}
+  selector:
+    matchLabels:
+      {{- include "impress.common.selectorLabels" (list . $component) | nindent 6 }}
   template:
     metadata:
       annotations:
-        {{- with .Values.backend.podAnnotations }}
+        {{- with .Values.yhub.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
@@ -29,22 +31,26 @@ spec:
       imagePullSecrets:
         - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
       {{- end}}
-      {{- if .Values.backend.serviceAccountName }}
-      serviceAccountName: {{ .Values.backend.serviceAccountName }}
+      {{- if .Values.yhub.serviceAccountName }}
+      serviceAccountName: {{ .Values.yhub.serviceAccountName }}
       {{- end }}
-      shareProcessNamespace: {{ .Values.backend.shareProcessNamespace }}
+      shareProcessNamespace: {{ .Values.yhub.shareProcessNamespace }}
+      # a websocket connection is dropped when the pod goes away, and the client
+      # reconnects to another one — but the updates it sent are only in redis
+      # until a worker persists them, so leave the embedded worker time to drain
+      terminationGracePeriodSeconds: {{ .Values.yhub.terminationGracePeriodSeconds }}
       containers:
-        {{- with .Values.backend.sidecars }}
+        {{- with .Values.yhub.sidecars }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
         - name: {{ .Chart.Name }}
-          image: "{{ (.Values.backend.image | default dict).repository | default .Values.image.repository }}:{{ (.Values.backend.image | default dict).tag | default .Values.image.tag }}"
-          imagePullPolicy: {{ (.Values.backend.image | default dict).pullPolicy | default .Values.image.pullPolicy }}
-          {{- with .Values.backend.migrate.command }}
+          image: "{{ (.Values.yhub.image | default dict).repository | default .Values.image.repository }}:{{ (.Values.yhub.image | default dict).tag | default .Values.image.tag }}"
+          imagePullPolicy: {{ (.Values.yhub.image | default dict).pullPolicy | default .Values.image.pullPolicy }}
+          {{- with .Values.yhub.command }}
           command:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.backend.args }}
+          {{- with .Values.yhub.args }}
           args:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -52,18 +58,34 @@ spec:
           env:
             {{- $envVars | indent 12 }}
             {{- if .Values.jwtKeys.enabled }}
-            {{- include "impress.jwtKeys.backendEnv" . | nindent 12 }}
+            {{- include "impress.jwtKeys.yhubEnv" . | nindent 12 }}
             {{- end }}
           {{- end }}
-          {{- if .Values.backend.envFrom }}
+          {{- if .Values.yhub.envFrom }}
           envFrom:
-            {{- toYaml .Values.backend.envFrom | nindent 12 }}
+            {{- toYaml .Values.yhub.envFrom | nindent 12 }}
           {{- end }}
-          {{- with .Values.backend.securityContext }}
+          {{- with .Values.yhub.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.backend.resources }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.yhub.service.targetPort }}
+              protocol: TCP
+          {{- if .Values.yhub.probes.liveness }}
+          livenessProbe:
+            {{- include "impress.probes.abstract" (merge .Values.yhub.probes.liveness (dict "targetPort" .Values.yhub.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.yhub.probes.readiness }}
+          readinessProbe:
+            {{- include "impress.probes.abstract" (merge .Values.yhub.probes.readiness (dict "targetPort" .Values.yhub.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.yhub.probes.startup }}
+          startupProbe:
+            {{- include "impress.probes.abstract" (merge .Values.yhub.probes.startup (dict "targetPort" .Values.yhub.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- with .Values.yhub.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -76,29 +98,28 @@ spec:
               mountPath: {{ $value.path }}
               subPath: content
             {{- end }}
-            {{- range $name, $volume := .Values.backend.persistence }}
+            {{- range $name, $volume := .Values.yhub.persistence }}
             - name: "{{ $name }}"
               mountPath: "{{ $volume.mountPath }}"
             {{- end }}
-            {{- range .Values.backend.extraVolumeMounts }}
+            {{- range .Values.yhub.extraVolumeMounts }}
             - name: {{ .name }}
               mountPath: {{ .mountPath }}
               subPath: {{ .subPath | default "" }}
               readOnly: {{ .readOnly }}
             {{- end }}
-      {{- with .Values.backend.nodeSelector }}
+      {{- with .Values.yhub.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.backend.affinity }}
+      {{- with .Values.yhub.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.backend.tolerations }}
+      {{- with .Values.yhub.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      restartPolicy: {{ .Values.backend.migrate.restartPolicy }}
       volumes:
         {{- if .Values.jwtKeys.enabled }}
         {{- include "impress.jwtKeys.volume" . | nindent 8 }}
@@ -108,7 +129,7 @@ spec:
           configMap:
             name: "{{ include "impress.fullname" $ }}-files-{{ $index }}"
         {{- end }}
-        {{- range $name, $volume := .Values.backend.persistence }}
+        {{- range $name, $volume := .Values.yhub.persistence }}
         - name: "{{ $name }}"
           {{- if eq $volume.type "emptyDir" }}
           emptyDir: {}
@@ -117,11 +138,14 @@ spec:
             claimName: "{{ $fullName }}-{{ $name }}"
           {{- end }}
         {{- end }}
-        {{- range .Values.backend.extraVolumes }}
+        {{- range .Values.yhub.extraVolumes }}
         - name: {{ .name }}
           {{- if .existingClaim }}
           persistentVolumeClaim:
             claimName: {{ .existingClaim }}
+          {{- else if .secret }}
+          secret:
+            {{ toYaml .secret | nindent 12 }}
           {{- else if .hostPath }}
           hostPath:
             {{ toYaml .hostPath | nindent 12 }}
@@ -138,3 +162,17 @@ spec:
           emptyDir: {}
           {{- end }}
         {{- end }}
+---
+{{ if .Values.yhub.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      {{- include "impress.common.selectorLabels" (list . $component) | nindent 6 }}
+{{ end }}
+{{- end }}

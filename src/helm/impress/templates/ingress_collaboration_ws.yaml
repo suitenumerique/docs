@@ -53,12 +53,12 @@ spec:
             backend:
               {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
               service:
-                name: {{ include "impress.yProvider.fullname" . }}
+                name: {{ include "impress.yhub.fullname" . }}
                 port:
-                  number: {{ .Values.yProvider.service.port }}
+                  number: {{ .Values.yhub.service.port }}
               {{- else }}
-              serviceName: {{ include "impress.yProvider.fullname" . }}
-              servicePort: {{ .Values.yProvider.service.port }}
+              serviceName: {{ include "impress.yhub.fullname" . }}
+              servicePort: {{ .Values.yhub.service.port }}
             {{- end }}
           {{- with .Values.ingressCollaborationWS.customBackends }}
             {{- toYaml . | nindent 10 }}
