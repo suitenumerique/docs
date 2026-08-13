@@ -20,6 +20,7 @@ import {
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import { PresenterRoot } from '@/features/docs/doc-presenter';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
+import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 import { DocEditorSkeleton, useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
@@ -104,11 +105,17 @@ const DocPage = ({ id }: DocProps) => {
 
   const [doc, setDoc] = useState<Doc>();
   const { setCurrentDoc } = useDocStore();
+  const { setIsPanelOpen } = useRightPanelStore();
   const queryClient = useQueryClient();
   const { replace, asPath } = useRouter();
   const { t } = useTranslation();
   const { authenticated } = useAuth();
   const { untitledDocument } = useTrans();
+
+  /** A side panel must be explicitly opened for each document. */
+  useEffect(() => {
+    setIsPanelOpen(false);
+  }, [id, setIsPanelOpen]);
 
   /**
    * Show skeleton when loading a document

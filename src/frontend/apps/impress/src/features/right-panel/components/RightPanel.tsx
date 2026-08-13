@@ -4,6 +4,7 @@ import { css } from 'styled-components';
 
 import { Box } from '@/components';
 import { CommentSideBar } from '@/features/docs/doc-comments/components/CommentSideBar';
+import { useCommentSidebarStore } from '@/features/docs/doc-comments/stores/useCommentSidebarStore';
 import { useDocStore, useProviderStore } from '@/features/docs/doc-management';
 import { TableContentSideBar } from '@/features/docs/doc-table-content/components/TableContentSideBar';
 import { useFocusStore, useResponsiveStore } from '@/stores';
@@ -17,11 +18,19 @@ export const RightPanel = () => {
   const { t } = useTranslation();
   const { currentDoc: doc } = useDocStore();
   const { setIsPanelOpen, isPanelOpen, activePanel } = useRightPanelStore();
+  const { resetFilter: resetCommentFilter } = useCommentSidebarStore();
   const { isMobile } = useResponsiveStore();
   const { provider, isReady } = useProviderStore();
   const isProviderReady =
     isReady && provider && provider?.configuration.name === doc?.id;
   const { restoreFocus } = useFocusStore();
+
+  /** Reset document-specific panel options after every close. */
+  useEffect(() => {
+    if (!isPanelOpen) {
+      resetCommentFilter();
+    }
+  }, [isPanelOpen, resetCommentFilter]);
 
   /**
    * Keep rendering the last active panel during the close animation,
