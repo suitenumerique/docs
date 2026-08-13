@@ -1,0 +1,124 @@
+{{- if .Values.jwtKeys.enabled -}}
+{{- $fullName := include "impress.fullname" . -}}
+{{- $component := "jwt-keys" -}}
+# Generates the RSA keys the services sign the calls they make to each other
+# with: one for the backend (the tokens Django issues to the collaboration
+# server and the converter), one for the collaboration server (the calls it
+# makes back to Django). Only the private halves are written — each service
+# publishes the public half of its own key on its JWKS endpoint, where the
+# other one reads it, so no key is ever copied from one side to the other.
+#
+# Idempotent, and deliberately so: an existing key is kept, which is what makes
+# it safe to re-run on every sync. Rolling a key is deleting it from the volume
+# and letting the next run generate a new one — both services follow, they pick
+# the verification key by its "kid" and re-fetch the set when they meet a new
+# one.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $fullName }}-jwt-keys
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
+    # after the claim, before anything reading the keys
+    argocd.argoproj.io/sync-wave: "-2"
+  {{- with .Values.jwtKeys.job.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+spec:
+  ttlSecondsAfterFinished: {{ .Values.jwtKeys.job.ttlSecondsAfterFinished }}
+  backoffLimit: {{ .Values.jwtKeys.job.backoffLimit }}
+  template:
+    metadata:
+      {{- with .Values.jwtKeys.job.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "impress.common.selectorLabels" (list . $component) | nindent 8 }}
+    spec:
+      {{- if $.Values.image.credentials }}
+      imagePullSecrets:
+        - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
+      {{- end}}
+      {{- if .Values.jwtKeys.job.serviceAccountName }}
+      serviceAccountName: {{ .Values.jwtKeys.job.serviceAccountName }}
+      {{- end }}
+      # the volume of a freshly provisioned claim belongs to root:root, and the
+      # container is run un-privileged below: without an fsGroup it has nowhere
+      # to write the keys
+      {{- with .Values.jwtKeys.job.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: {{ .Values.jwtKeys.job.restartPolicy }}
+      containers:
+        - name: jwt-keys
+          image: "{{ (.Values.jwtKeys.image | default dict).repository | default .Values.image.repository }}:{{ (.Values.jwtKeys.image | default dict).tag | default .Values.image.tag }}"
+          imagePullPolicy: {{ (.Values.jwtKeys.image | default dict).pullPolicy | default .Values.image.pullPolicy }}
+          {{- with .Values.jwtKeys.job.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if not .Values.jwtKeys.job.command }}
+          # `command` rather than `args`: the image entrypoint is openssl itself.
+          # The keys are the ones `bin/generate-jwt-private-key.sh` writes for
+          # the compose stack, same command — PKCS#8 RSA, the format both the
+          # backend and the collaboration server read.
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+
+              for path in {{ include "impress.jwtKeys.backendPath" . | quote }} {{ include "impress.jwtKeys.yhubPath" . | quote }}; do
+                  if [ -f "$path" ]; then
+                      echo "$path already exists, keeping it"
+                      continue
+                  fi
+                  openssl genpkey -algorithm RSA \
+                      -pkeyopt rsa_keygen_bits:{{ .Values.jwtKeys.keySize }} \
+                      -out "$path.tmp"
+                  # read-only for everyone: the services read it under user ids
+                  # of their own, and nothing is ever to write it again
+                  chmod 444 "$path.tmp"
+                  # a rename, so a reader never sees a half written key
+                  mv "$path.tmp" "$path"
+                  echo "$path generated"
+              done
+          {{- end }}
+          {{- with .Values.jwtKeys.job.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jwtKeys.job.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.jwtKeys.job.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            # the one place the volume is mounted writable
+            - name: jwt-keys
+              mountPath: {{ .Values.jwtKeys.mountPath }}
+      {{- with .Values.jwtKeys.job.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.jwtKeys.job.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.jwtKeys.job.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: jwt-keys
+          persistentVolumeClaim:
+            claimName: {{ include "impress.jwtKeys.claimName" . }}
+{{- end }}

@@ -34,6 +34,15 @@ spec:
       serviceAccountName: {{ .Values.backend.serviceAccountName }}
       {{- end }}
       shareProcessNamespace: {{ .Values.backend.shareProcessNamespace }}
+      {{- if .Values.jwtKeys.enabled }}
+      initContainers:
+        {{- include "impress.jwtKeys.initContainer" (dict
+              "root" .
+              "image" (printf "%s:%s" ((.Values.backend.image | default dict).repository | default .Values.image.repository) ((.Values.backend.image | default dict).tag | default .Values.image.tag))
+              "pullPolicy" ((.Values.backend.image | default dict).pullPolicy | default .Values.image.pullPolicy)
+              "files" (list (include "impress.jwtKeys.backendPath" .))
+            ) | nindent 8 }}
+      {{- end }}
       containers:
         {{- with .Values.backend.sidecars }}
           {{- toYaml . | nindent 8 }}
@@ -49,9 +58,12 @@ spec:
           args:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if $envVars}}
+          {{- if or $envVars .Values.jwtKeys.enabled }}
           env:
             {{- $envVars | indent 12 }}
+            {{- if .Values.jwtKeys.enabled }}
+            {{- include "impress.jwtKeys.backendEnv" . | nindent 12 }}
+            {{- end }}
           {{- end }}
           {{- $envFrom := concat (.Values.backend.envFrom | default list) (.Values.backend.celery.envFrom | default list) }}
           {{- if $envFrom }}
@@ -83,6 +95,9 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
+            {{- if .Values.jwtKeys.enabled }}
+            {{- include "impress.jwtKeys.volumeMount" . | nindent 12 }}
+            {{- end }}
             {{- range $index, $value := .Values.mountFiles }}
             - name: "files-{{ $index }}"
               mountPath: {{ $value.path }}
@@ -116,6 +131,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        {{- if .Values.jwtKeys.enabled }}
+        {{- include "impress.jwtKeys.volume" . | nindent 8 }}
+        {{- end }}
         {{- range $index, $value := .Values.mountFiles }}
         - name: "files-{{ $index }}"
           configMap:

@@ -235,8 +235,8 @@ services:
   yhub:
     user: ${DOCKER_USER:-1000}
     build:
-      context: ./src/yhub-server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./src/yhub-server/Dockerfile
       target: yhub-development
     image: impress:yhub-development
     environment:
@@ -255,6 +255,11 @@ services:
       - env.d/development/common.local
     volumes:
       - ./data/jwt:/data/jwt:ro
+      # editing a source file restarts the server (nodemon), no rebuild
+      - ./src/yhub-server:/app
+      # node_modules is installed in the image, not in the source tree: keep
+      # the bind mount above from hiding it
+      - /app/node_modules
     restart: unless-stopped
     ports:
       - "3002:3002"
@@ -267,12 +272,6 @@ services:
       # starting before minio would cache 401s for the first accessed docs
       minio:
         condition: service_healthy
-    volumes:
-      # editing a source file restarts the server (nodemon), no rebuild
-      - ./src/yhub-server:/app
-      # node_modules is installed in the image, not in the source tree: keep
-      # the bind mount above from hiding it
-      - /app/node_modules
 
   kc_postgresql:
     image: postgres:14.3

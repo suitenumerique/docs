@@ -29,6 +29,15 @@ items:
                 - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
               {{- end}}
               shareProcessNamespace: {{ $.Values.backend.shareProcessNamespace }}
+              {{- if $.Values.jwtKeys.enabled }}
+              initContainers:
+                {{- include "impress.jwtKeys.initContainer" (dict
+                      "root" $
+                      "image" (printf "%s:%s" (($.Values.backend.image | default dict).repository | default $.Values.image.repository) (($.Values.backend.image | default dict).tag | default $.Values.image.tag))
+                      "pullPolicy" (($.Values.backend.image | default dict).pullPolicy | default $.Values.image.pullPolicy)
+                      "files" (list (include "impress.jwtKeys.backendPath" $))
+                    ) | nindent 16 }}
+              {{- end }}
               containers:
                 {{- with $.Values.backend.sidecars }}
                   {{- toYaml . | nindent 18 }}
@@ -38,9 +47,12 @@ items:
                   imagePullPolicy: {{ ($.Values.backend.image | default dict).pullPolicy | default $.Values.image.pullPolicy }}
                   args:
                     {{- toYaml .command | nindent 22 }}
-                  {{- if $envVars}}
+                  {{- if or $envVars $.Values.jwtKeys.enabled }}
                   env:
                     {{- $envVars | indent 22 }}
+                    {{- if $.Values.jwtKeys.enabled }}
+                    {{- include "impress.jwtKeys.backendEnv" $ | nindent 22 }}
+                    {{- end }}
                   {{- end }}
                   {{- if $.Values.backend.envFrom }}
                   envFrom:
@@ -55,6 +67,9 @@ items:
                     {{- toYaml . | nindent 22 }}
                   {{- end }}
                   volumeMounts:
+                    {{- if $.Values.jwtKeys.enabled }}
+                    {{- include "impress.jwtKeys.volumeMount" $ | nindent 20 }}
+                    {{- end }}
                     {{- range $index, $value := $.Values.mountFiles }}
                     - name: "files-{{ $index }}"
                       mountPath: {{ $value.path }}
@@ -72,6 +87,9 @@ items:
                     {{- end }}
               restartPolicy: {{ .restartPolicy | default "Never" }}
               volumes:
+                {{- if $.Values.jwtKeys.enabled }}
+                {{- include "impress.jwtKeys.volume" $ | nindent 16 }}
+                {{- end }}
                 {{- range $index, $value := $.Values.mountFiles }}
                 - name: "files-{{ $index }}"
                   configMap:

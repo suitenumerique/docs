@@ -78,12 +78,14 @@ ingressCollaborationWS:
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/enable-websocket
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-read-timeout
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-send-timeout
-  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/upstream-hash-by
+  ##
+  ## No upstream-hash-by: yhub passes updates between its replicas through
+  ## redis, so two clients editing the same document may land on different
+  ## pods — where the y-provider it replaces needed a room to stay on one.
   annotations:
     nginx.ingress.kubernetes.io/enable-websocket: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
-    nginx.ingress.kubernetes.io/upstream-hash-by: $arg_room
 
 ## @param ingressRedirects.enabled whether to enable the Ingress Redirects or not
 ## @param ingressRedirects.className IngressClass to use for the Ingress Redirects
@@ -112,7 +114,22 @@ ingressCollaborationApi:
   enabled: false
   className: null
   host: impress.example.com
+  ## Only used when `paths` below is empty
   path: /collaboration/api/
+  ## @param ingressCollaborationApi.paths Paths to route to the collaboration server, one rule each
+  ##
+  ## The routes yhub serves to browsers, guarded by the same document
+  ## authorization as the websocket. Everything it serves that is not listed
+  ## here stays in-cluster — `create-ydoc`, `reset-connections`, `migrate`,
+  ## `restore-ydoc` and `reset-ydoc` are called by the backend only, and
+  ## publishing them would put document deletion and the legacy migration one
+  ## request away from the internet.
+  ##
+  ## `jwks` is public on purpose: it carries the public halves of the keys
+  ## yhub signs with, and nothing else.
+  paths:
+    - /collaboration/ydoc/
+    - /collaboration/jwks/
   ## @param ingressCollaborationApi.hosts Additional host to configure for the Ingress
   hosts: []
   #  - chart-example.local
@@ -129,9 +146,10 @@ ingressCollaborationApi:
   ## @param ingressCollaborationApi.customBackends Add custom backends to ingress
   customBackends: []
 
-  ## @param ingressCollaborationApi.annotations.nginx.ingress.kubernetes.io/upstream-hash-by
-  annotations:
-    nginx.ingress.kubernetes.io/upstream-hash-by: $arg_room
+  ## @skip ingressCollaborationApi.annotations
+  ## Same as ingressCollaborationWS: no upstream-hash-by, any yhub replica
+  ## answers for any document.
+  annotations: {}
 
 ## @param ingressAdmin.enabled whether to enable the Ingress or not
 ## @param ingressAdmin.className IngressClass to use for the Ingress
@@ -637,7 +655,11 @@ posthog:
     annotations: {}
 
 ## @section yProvider
-
+##
+## The conversion service, and nothing else since the collaboration moved to
+## yhub: this deployment *is* the converter the backend calls on
+## `Y_PROVIDER_API_BASE_URL`, so there is no separate converter release to
+## enable anymore.
 yProvider:
   ## @param yProvider.image.repository Repository to use to pull impress's yProvider container image
   ## @param yProvider.image.tag impress's yProvider container tag
@@ -646,77 +668,6 @@ yProvider:
     repository: lasuite/impress-y-provider
     pullPolicy: IfNotPresent
     tag: "latest"
-
-  converter:
-    ## @param yProvider.converter.enabled Enable the yProvider converter deployment and service
-    enabled: false
-
-    ## @param yProvider.converter.replicas Amount of yProvider replicas
-    replicas: 3
-
-    ## @param yProvider.converter.resources Resource requirements for the yProvider container
-    resources: {}
-
-    ## @param yProvider.converter.service.type yProvider converter Service type
-    ## @param yProvider.converter.service.port yProvider converter Service listening port
-    ## @param yProvider.converter.service.targetPort yProvider converter container listening port
-    ## @param yProvider.converter.service.annotations Annotations to add to the yProvider converter Service
-    service: {}
-
-    ## @param yProvider.converter.command Override the yProvider converter container command
-    command: []
-
-    ## @param yProvider.converter.args Override the yProvider converter container args
-    args: []
-
-    ## @param yProvider.converter.shareProcessNamespace Enable share process namespace between containers
-    shareProcessNamespace: false
-
-    ## @param yProvider.converter.sidecars Add sidecars containers to yProvider converter deployment
-    sidecars: []
-
-    ## @skip yProvider.converter.securityContext
-    securityContext: {}
-
-    ## @skip yProvider.converter.envVars
-    envVars: {}
-
-    ## @skip yProvider.converter.envFrom
-    envFrom: []
-
-    ## @param yProvider.converter.podAnnotations Annotations to add to the yProvider converter Pod
-    podAnnotations: {}
-
-    ## @param yProvider.converter.dpAnnotations Annotations to add to the yProvider converter Deployment
-    dpAnnotations: {}
-
-    ## @skip yProvider.converter.probes
-    probes: {}
-
-    ## @param yProvider.converter.nodeSelector Node selector for the yProvider converter Pod
-    nodeSelector: {}
-
-    ## @param yProvider.converter.tolerations Tolerations for the yProvider converter Pod
-    tolerations: []
-
-    ## @param yProvider.converter.affinity Affinity for the yProvider converter Pod
-    affinity: {}
-
-    ## @param yProvider.converter.persistence Additional volumes to create and mount on the yProvider converter
-    persistence: {}
-
-    ## @param yProvider.converter.extraVolumeMounts Additional volumes to mount on the yProvider converter
-    extraVolumeMounts: []
-
-    ## @param yProvider.converter.extraVolumes Additional volumes to mount on the yProvider converter
-    extraVolumes: []
-
-    ## @param yProvider.converter.pdb.enabled Enable pdb on yProvider converter
-    pdb:
-      enabled: true
-
-    ## @param yProvider.converter.serviceAccountName Optional service account name to use for yProvider converter pods
-    serviceAccountName: null
 
   ## @param yProvider.command Override the yProvider container command
   command: []
@@ -826,6 +777,302 @@ yProvider:
     enabled: true
 
   ## @param yProvider.serviceAccountName Optional service account name to use for yProvider pods
+  serviceAccountName: null
+
+## @section JWT signing keys
+##
+## The services do not share a secret: each signs the calls it makes to the
+## others with an RSA key of its own and publishes the public half on its JWKS
+## endpoint, where the others read it. Enabling this generates those keys on
+## the cluster — a job writes them once into a volume every service mounts
+## read-only, and keeps them on the next run — and points the backend and the
+## collaboration server at them. Nothing is templated into a manifest, stored
+## in a values file or read back from the kubernetes API.
+##
+## The volume is mounted by every backend pod and by the collaboration server,
+## which are spread over several nodes as soon as they have replicas: the
+## storage class backing it must support ReadWriteMany. On a single node
+## cluster, `accessModes: [ReadWriteOnce]` does just as well.
+##
+## Leave it disabled to keep providing the keys yourself, through
+## `backend.envVars.JWT_PRIVATE_KEY_FILE` and
+## `yhub.envVars.YHUB_JWT_PRIVATE_KEY_FILE` and volumes of your own — both are
+## left untouched when they are set by hand, enabled or not.
+jwtKeys:
+  ## @param jwtKeys.enabled Generate the JWT signing keys of the services on the cluster
+  enabled: false
+
+  ## @param jwtKeys.mountPath Path the keys are mounted at, in every service reading them
+  mountPath: /data/jwt
+
+  ## @param jwtKeys.backendKeyFilename Name of the key signing the tokens the backend issues
+  backendKeyFilename: private.pem
+
+  ## @param jwtKeys.yhubKeyFilename Name of the key signing the calls the collaboration server makes to the backend
+  yhubKeyFilename: yhub-private.pem
+
+  ## @param jwtKeys.keySize Size, in bits, of the generated RSA keys
+  keySize: 2048
+
+  ## @param jwtKeys.image.repository Repository to use to pull the image generating the keys
+  ## @param jwtKeys.image.tag Tag of the image generating the keys
+  ## @param jwtKeys.image.pullPolicy Pull policy of the image generating the keys
+  ##
+  ## openssl and a shell, nothing else. Its entrypoint is openssl itself, which
+  ## the job replaces by the script generating both keys.
+  image:
+    repository: alpine/openssl
+    pullPolicy: IfNotPresent
+    tag: "3.5.7"
+
+  ## @param jwtKeys.securityContext.allowPrivilegeEscalation Whether to allow privilege escalation for the containers waiting for the keys
+  ## @param jwtKeys.securityContext.capabilities.drop List of capabilities to drop for the containers waiting for the keys
+  ## @param jwtKeys.securityContext.runAsNonRoot Whether to run the containers waiting for the keys as a non-root user
+  ## @param jwtKeys.securityContext.seccompProfile.type Seccomp profile type for the containers waiting for the keys
+  ##
+  ## Applies to the init containers waiting for the keys, which run the image of
+  ## the service they belong to, under the user that image declares.
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+
+  ## @param jwtKeys.persistence.existingClaim Claim holding the keys, generated in a claim of the chart's own when empty
+  ## @param jwtKeys.persistence.size Size of the claim holding the keys, two RSA keys and nothing else
+  ## @param jwtKeys.persistence.storageClass Storage class of the claim holding the keys, the cluster default when empty
+  ## @param jwtKeys.persistence.accessModes Access modes of the claim holding the keys
+  ## @param jwtKeys.persistence.annotations Annotations to add to the claim holding the keys
+  persistence:
+    existingClaim: null
+    size: 8Mi
+    storageClass: null
+    accessModes:
+      - ReadWriteMany
+    annotations: {}
+
+  ## @param jwtKeys.job.podSecurityContext.fsGroup Group given ownership of the volume, so the generating container can write the keys in it
+  ## @param jwtKeys.job.securityContext.allowPrivilegeEscalation Whether to allow privilege escalation for the generating container
+  ## @param jwtKeys.job.securityContext.capabilities.drop List of capabilities to drop for the generating container
+  ## @param jwtKeys.job.securityContext.runAsNonRoot Whether to run the generating container as a non-root user
+  ## @param jwtKeys.job.securityContext.runAsUser User the generating container runs as, the openssl image declaring none
+  ## @param jwtKeys.job.securityContext.runAsGroup Group the generating container runs as
+  ## @param jwtKeys.job.securityContext.seccompProfile.type Seccomp profile type for the generating container
+  ## @param jwtKeys.job.restartPolicy Restart policy of the generating job
+  ## @param jwtKeys.job.backoffLimit Numbers of generating job retries
+  ## @param jwtKeys.job.ttlSecondsAfterFinished Period to wait before removing the generating job
+  ## @param jwtKeys.job.command Override the command generating the keys
+  ## @param jwtKeys.job.annotations Annotations to add to the generating job
+  ## @param jwtKeys.job.podAnnotations Annotations to add to the generating job Pod
+  ## @param jwtKeys.job.resources Resource requirements for the generating container
+  ## @param jwtKeys.job.nodeSelector Node selector for the generating job Pod
+  ## @param jwtKeys.job.tolerations Tolerations for the generating job Pod
+  ## @param jwtKeys.job.affinity Affinity for the generating job Pod
+  ## @param jwtKeys.job.serviceAccountName Optional service account name to use for the generating job Pod
+  ## @skip jwtKeys.job.env
+  job:
+    # the volume of a freshly provisioned claim belongs to root:root, so the
+    # group below is what lets the un-privileged user underneath write the keys
+    podSecurityContext:
+      fsGroup: 1000
+    # the openssl image runs as root and declares no user of its own, so this
+    # one is named here rather than inherited — kubernetes refuses to start a
+    # container asking for runAsNonRoot without knowing which user to run as
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - "ALL"
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    restartPolicy: Never
+    backoffLimit: 2
+    ttlSecondsAfterFinished: 30
+    command: []
+    annotations: {}
+    podAnnotations: {}
+    resources: {}
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    serviceAccountName: null
+    env: []
+
+## @section yhub
+##
+## The collaboration server: it serves the whole /collaboration/ prefix, the
+## websocket included, and replaces the y-provider on that role. It keeps the
+## live state of a document in redis/valkey and persists it to its own
+## PostgreSQL database, so it needs both — set `yhub.envVars.REDIS` and
+## `yhub.envVars.POSTGRES`, there is nothing sensible to default them to.
+## Disabling it sends the /collaboration/ ingresses back to the y-provider.
+yhub:
+  ## @param yhub.enabled Enable the yhub collaboration server, its service and its init-db job
+  enabled: true
+
+  ## @param yhub.image.repository Repository to use to pull the yhub container image
+  ## @param yhub.image.tag yhub container tag
+  ## @param yhub.image.pullPolicy yhub container image pull policy
+  image:
+    repository: lasuite/impress-yhub
+    pullPolicy: IfNotPresent
+    tag: "latest"
+
+  ## @param yhub.command Override the yhub container command
+  command: []
+
+  ## @param yhub.args Override the yhub container args
+  args: []
+
+  ## @param yhub.replicas Amount of yhub replicas
+  ## Every replica also runs a worker (redis consumer groups hand each task to
+  ## one of them), and clients editing the same document need not land on the
+  ## same pod: updates travel through redis.
+  replicas: 3
+
+  ## @param yhub.shareProcessNamespace Enable share process namespace between containers
+  shareProcessNamespace: false
+
+  ## @param yhub.sidecars Add sidecars containers to yhub deployment
+  sidecars: []
+
+  ## @param yhub.terminationGracePeriodSeconds Grace period given to a yhub pod to drain before it is killed
+  terminationGracePeriodSeconds: 60
+
+  ## @param yhub.securityContext.allowPrivilegeEscalation Whether to allow privilege escalation for the yhub container
+  ## @param yhub.securityContext.capabilities.drop List of capabilities to drop for the yhub container
+  ## @param yhub.securityContext.runAsNonRoot Whether to run the yhub container as a non-root user
+  ## @param yhub.securityContext.seccompProfile.type Seccomp profile type for the yhub container
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+
+  ## @param yhub.envVars Configure yhub container environment variables
+  ## @extra yhub.envVars.REDIS Required, redis/valkey url holding the live document state (e.g. redis://valkey:6379/0)
+  ## @extra yhub.envVars.POSTGRES Required, url of the yhub database, created by the init-db job (e.g. postgres://user:pass@postgres:5432/yhub)
+  ## @extra yhub.envVars.REDIS_PREFIX Namespace of the redis keys, when the instance is shared (default: yhub)
+  ## @extra yhub.envVars.COLLABORATION_BACKEND_BASE_URL Base url of the Docs backend, which yhub asks about users and document access rights
+  ## @extra yhub.envVars.COLLABORATION_SERVER_ORIGIN Comma separated list of the origins allowed to open a websocket
+  ## @extra yhub.envVars.YHUB_JWT_PRIVATE_KEY_FILE Path to the RSA private key (PEM) yhub signs its calls to the backend with, mounted from a secret
+  ## @extra yhub.envVars.SOFT_MIGRATION Set to "true" to seed rooms from the legacy Django/S3 document store on first access
+  ## @extra yhub.envVars.BY_VALUE Example environment variable by setting value directly
+  ## @extra yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.name Name of a ConfigMap when configuring env vars from a ConfigMap
+  ## @extra yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.key Key within a ConfigMap when configuring env vars from a ConfigMap
+  ## @extra yhub.envVars.FROM_SECRET.secretKeyRef.name Name of a Secret when configuring env vars from a Secret
+  ## @extra yhub.envVars.FROM_SECRET.secretKeyRef.key Key within a Secret when configuring env vars from a Secret
+  ## @skip yhub.envVars
+  envVars:
+    <<: *commonEnvVars
+
+  ## @skip yhub.envFrom List of environment variables taken from Secrets or configMaps
+  envFrom: []
+  # envFrom:
+  #   - secret:
+  #       name: super-secret-user-credentials
+  #   - configMapRef:
+  #       name: my-environment-variables
+
+  ## @param yhub.podAnnotations Annotations to add to the yhub Pod
+  podAnnotations: {}
+
+  ## @param yhub.dpAnnotations Annotations to add to the yhub Deployment
+  dpAnnotations: {}
+
+  ## @param yhub.initDbJobAnnotations Annotations for the yhub init-db job
+  initDbJobAnnotations: {}
+
+  ## @param yhub.jobs.ttlSecondsAfterFinished Period to wait before removing the init-db job
+  ## @param yhub.jobs.backoffLimit Numbers of init-db job retries
+  jobs:
+    ttlSecondsAfterFinished: 30
+    backoffLimit: 2
+
+  ## @param yhub.initDb.enabled Run the job creating and upgrading the yhub schema
+  ## @param yhub.initDb.command Command creating and upgrading the yhub schema, what `npm run init-db` runs
+  ## @param yhub.initDb.restartPolicy Restart policy of the init-db job
+  ## @skip yhub.initDb.resources Resource requirements for the init-db container, defaults to yhub.resources
+  initDb:
+    enabled: true
+    command:
+      - "node"
+      - "node_modules/@y/hub/bin/init-db.js"
+    restartPolicy: Never
+    resources: {}
+
+  ## @param yhub.service.type yhub Service type
+  ## @param yhub.service.port yhub Service listening port
+  ## @param yhub.service.targetPort yhub container listening port
+  ## @param yhub.service.annotations Annotations to add to the yhub Service
+  service:
+    type: ClusterIP
+    port: 443
+    targetPort: 3002
+    annotations: {}
+
+  ## @param yhub.probes.liveness.path Configure path for yhub HTTP liveness probe
+  ## @param yhub.probes.liveness.initialDelaySeconds Configure initial delay for yhub liveness probe
+  ## @param yhub.probes.readiness.path Configure path for yhub HTTP readiness probe
+  ## @param yhub.probes.readiness.initialDelaySeconds Configure initial delay for yhub readiness probe
+  ## @extra yhub.probes.liveness.targetPort Configure port for yhub HTTP liveness probe
+  ## @extra yhub.probes.liveness.timeoutSeconds Configure timeout for yhub liveness probe
+  ## @extra yhub.probes.readiness.targetPort Configure port for yhub HTTP readiness probe
+  ## @extra yhub.probes.readiness.timeoutSeconds Configure timeout for yhub readiness probe
+  ## @extra yhub.probes.startup.path Configure path for yhub HTTP startup probe
+  ## @extra yhub.probes.startup.targetPort Configure port for yhub HTTP startup probe
+  ## @extra yhub.probes.startup.initialDelaySeconds Configure initial delay for yhub startup probe
+  ## @extra yhub.probes.startup.timeoutSeconds Configure timeout for yhub startup probe
+  ##
+  ## The JWKS route is the only one yhub serves unauthenticated: it answers 200
+  ## with the public keys it signs its calls to the backend with (an empty set
+  ## when no key is configured), and reads neither redis nor postgres.
+  probes:
+    liveness:
+      path: /collaboration/jwks/v1
+      initialDelaySeconds: 10
+    readiness:
+      path: /collaboration/jwks/v1
+      initialDelaySeconds: 5
+
+  ## @param yhub.resources Resource requirements for the yhub container
+  resources: {}
+
+  ## @param yhub.nodeSelector Node selector for the yhub Pod
+  nodeSelector: {}
+
+  ## @param yhub.tolerations Tolerations for the yhub Pod
+  tolerations: []
+
+  ## @param yhub.affinity Affinity for the yhub Pod
+  affinity: {}
+
+  ## @param yhub.persistence Additional volumes to create and mount on the yhub. Used for debugging purposes
+  ## @extra yhub.persistence.volume-name.size Size of the additional volume
+  ## @extra yhub.persistence.volume-name.type Type of the additional volume, persistentVolumeClaim or emptyDir
+  ## @extra yhub.persistence.volume-name.mountPath Path where the volume should be mounted to
+  persistence: {}
+
+  ## @param yhub.extraVolumeMounts Additional volumes to mount on the yhub. Mounted on the init-db job too
+  extraVolumeMounts: []
+
+  ## @param yhub.extraVolumes Additional volumes to mount on the yhub. Mounted on the init-db job too
+  extraVolumes: []
+
+  ## @param yhub.pdb.enabled Enable pdb on yhub
+  pdb:
+    enabled: true
+
+  ## @param yhub.serviceAccountName Optional service account name to use for yhub pods
   serviceAccountName: null
 
 ## @section docSpec

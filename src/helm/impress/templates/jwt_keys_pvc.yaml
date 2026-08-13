@@ -1,0 +1,32 @@
+{{- if and .Values.jwtKeys.enabled (not .Values.jwtKeys.persistence.existingClaim) -}}
+{{- $component := "jwt-keys" -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "impress.jwtKeys.claimName" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    # the keys outlive the release: uninstalling and installing again keeps the
+    # identity of the services rather than silently rolling both keys. Delete
+    # the claim by hand to roll them.
+    helm.sh/resource-policy: keep
+    # before everything else, the generating job included
+    argocd.argoproj.io/sync-wave: "-3"
+    {{- with .Values.jwtKeys.persistence.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+spec:
+  # every service mounts it read-only, so all but the generating job read it at
+  # the same time — on more than one node as soon as a deployment has replicas
+  # spread around, which is what makes ReadWriteMany the default here
+  accessModes:
+    {{- toYaml .Values.jwtKeys.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.jwtKeys.persistence.size | quote }}
+  {{- if .Values.jwtKeys.persistence.storageClass }}
+  storageClassName: {{ .Values.jwtKeys.persistence.storageClass | quote }}
+  {{- end }}
+{{- end }}

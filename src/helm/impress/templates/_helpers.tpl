@@ -187,22 +187,110 @@ Requires top level scope
 {{- end }}
 
 {{/*
-Full name for the yProvider converter
-
-Requires top level scope
-*/}}
-{{- define "impress.yProvider.converter.fullname" -}}
-{{ include "impress.yProvider.fullname" . }}-converter
-{{- end }}
-
-
-{{/*
 Full name for the docSpec
 
 Requires top level scope
 */}}
 {{- define "impress.docSpec.fullname" -}}
 {{ include "impress.fullname" . }}-docspec
+{{- end }}
+
+{{/*
+Full name for the yhub collaboration server
+
+Requires top level scope
+*/}}
+{{- define "impress.yhub.fullname" -}}
+{{ include "impress.fullname" . }}-yhub
+{{- end }}
+
+{{/*
+JWT signing keys — the RSA keys the services sign the calls they make to each
+other with. They are generated once by the jwt-keys job into a volume every
+service mounts read-only, so no key is ever templated, stored in a values file
+or read from the kubernetes API.
+
+Requires top level scope
+*/}}
+{{- define "impress.jwtKeys.claimName" -}}
+{{- .Values.jwtKeys.persistence.existingClaim | default (printf "%s-jwt-keys" (include "impress.fullname" .)) -}}
+{{- end }}
+
+{{- define "impress.jwtKeys.backendPath" -}}
+{{ .Values.jwtKeys.mountPath }}/{{ .Values.jwtKeys.backendKeyFilename }}
+{{- end }}
+
+{{- define "impress.jwtKeys.yhubPath" -}}
+{{ .Values.jwtKeys.mountPath }}/{{ .Values.jwtKeys.yhubKeyFilename }}
+{{- end }}
+
+{{/*
+The volume holding the keys. readOnly on the volume itself, not only on the
+mount: nothing but the generating job is allowed to write there.
+
+Requires top level scope
+*/}}
+{{- define "impress.jwtKeys.volume" -}}
+- name: jwt-keys
+  persistentVolumeClaim:
+    claimName: {{ include "impress.jwtKeys.claimName" . }}
+    readOnly: true
+{{- end }}
+
+{{- define "impress.jwtKeys.volumeMount" -}}
+- name: jwt-keys
+  mountPath: {{ .Values.jwtKeys.mountPath }}
+  readOnly: true
+{{- end }}
+
+{{/*
+Init container waiting for the keys to be there. The generating job runs in an
+earlier sync wave, but nothing orders the two under a plain `helm install` —
+waiting here beats crash-looping, and it fails loudly (Init state) rather than
+silently when the job never ran.
+
+Usage: {{ include "impress.jwtKeys.initContainer" (dict "root" $ "image" $image "pullPolicy" $pullPolicy "files" (list "/data/jwt/private.pem")) }}
+*/}}
+{{- define "impress.jwtKeys.initContainer" -}}
+{{- $root := .root -}}
+- name: wait-for-jwt-keys
+  image: {{ .image | quote }}
+  imagePullPolicy: {{ .pullPolicy }}
+  command:
+    - /bin/sh
+    - -c
+    - |
+      until {{ range $index, $file := .files }}{{ if $index }} && {{ end }}[ -r "{{ $file }}" ]{{ end }}; do
+        echo "waiting for the JWT signing keys to be generated..."
+        sleep 2
+      done
+  {{- with $root.Values.jwtKeys.securityContext }}
+  securityContext:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  volumeMounts:
+    {{- include "impress.jwtKeys.volumeMount" $root | nindent 4 }}
+{{- end }}
+
+{{/*
+`*_FILE` environment variables pointing at the keys, added only when the
+deployment did not set them by hand — configuring a key of your own stays
+possible, and wins.
+
+Requires top level scope
+*/}}
+{{- define "impress.jwtKeys.backendEnv" -}}
+{{- if not (hasKey (.Values.backend.envVars | default dict) "JWT_PRIVATE_KEY_FILE") }}
+- name: "JWT_PRIVATE_KEY_FILE"
+  value: {{ include "impress.jwtKeys.backendPath" . | quote }}
+{{- end }}
+{{- end }}
+
+{{- define "impress.jwtKeys.yhubEnv" -}}
+{{- if not (hasKey (.Values.yhub.envVars | default dict) "YHUB_JWT_PRIVATE_KEY_FILE") }}
+- name: "YHUB_JWT_PRIVATE_KEY_FILE"
+  value: {{ include "impress.jwtKeys.yhubPath" . | quote }}
+{{- end }}
 {{- end }}
 
 

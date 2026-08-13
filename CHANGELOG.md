@@ -143,6 +143,22 @@ and this project adheres to
   on its own
 - 🔧(dev) generate the JWT signing key of the collaboration server when
   bootstrapping the dev stack, alongside the backend one
+- ✨(helm) generate the JWT signing keys of the services on the cluster
+  (`jwtKeys.enabled`, off by default): a job writes the backend and the
+  collaboration server keys, once, into a volume both mount read-only, and sets
+  the `*_FILE` variables pointing at them. No key is templated into a manifest,
+  kept in a values file or read back from the kubernetes API, and nothing but
+  that job is granted a write to the volume. Idempotent — an existing key is
+  kept, so it re-runs on every sync, and rolling a key is deleting it and
+  letting the next run write a new one. The volume is mounted by every backend
+  pod and by the collaboration server, so its storage class must support
+  `ReadWriteMany` unless the cluster has a single node
+- ✨(helm) deploy the collaboration server: the chart gains a `yhub` deployment,
+  its service, and the job running the `init-db` script that creates and
+  upgrades its schema (an ArgoCD sync wave before the deployment, since a
+  document read fails until it has run). Configured under the `yhub` values
+  key, where `REDIS` and `POSTGRES` are required and have no default; the image
+  is published as `lasuite/impress-yhub`
 - ✨(backend) serve `documents/{id}/formatted-content/` from yhub
 - ✨(backend) duplicate a document through the collaboration server
 - ✨(backend) call YHubService to seed initial document content
@@ -197,13 +213,31 @@ and this project adheres to
 - 💥(backend) remove the `documents/{id}/content/` endpoint
 - 💥(backend) remove the `documents/{id}/can-edit/` endpoint
 - 💥(y-provider) the published `lasuite/impress-y-provider` image becomes
-  converter-only and no longer serves `/collaboration/ws/`; deployments using
-  the existing helm values lose collaboration until the helm chart routes
-  collaboration to yhub (follow-up)
+  converter-only and no longer serves `/collaboration/ws/`
+- 💥(helm) route `/collaboration/` to yhub instead of the y-provider: both
+  collaboration ingresses now point at the yhub service, and
+  `ingressCollaborationApi` serves the routes yhub exposes to browsers
+  (`ingressCollaborationApi.paths`, one ingress rule each) instead of the
+  single `/collaboration/api/` path — what is not listed stays in-cluster, so
+  `create-ydoc`, `reset-connections`, `migrate`, `restore-ydoc` and
+  `reset-ydoc` are not published. The `upstream-hash-by: $arg_room` annotation
+  is dropped: yhub replicas exchange updates through redis, so a room needs no
+  sticky upstream — and hashing on a query argument its urls do not carry would
+  pin every connection to a single pod
+- 💥(helm) drop the `yProvider.converter` values, its deployment and its
+  service: the y-provider serves nothing but the conversion API since the
+  collaboration moved to yhub, so the `yProvider` release *is* the converter
+  and there is no second one to enable. Deployments that had it on lose the
+  `-converter` suffix on the url the backend calls —
+  `Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/` — and
+  `yProvider.converter.*` values are now ignored, their `yProvider.*`
+  counterparts taking over
 - 🔧(collaboration) split the yhub image into a development and a production
   stage, like the other services: the dev stack now bind-mounts
   `src/yhub-server` and runs the server through nodemon, so editing a source
-  file restarts it instead of needing `make build-yhub`
+  file restarts it instead of needing `make build-yhub`. The production stage
+  gains the un-privileged user and the entrypoint the other images have, and
+  both are now built from the repository root like the rest of them
 
 ## [v5.4.1] - 2026-07-09
 

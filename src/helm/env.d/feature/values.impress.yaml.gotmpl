@@ -71,7 +71,10 @@ backend:
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
     DOCSPEC_API_URL: http://impress-docs-docspec:4000/conversion
     USER_RECONCILIATION_FORM_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
-    Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider-converter:443/api/
+    # the collaboration server, reached in-cluster: the backend reads and
+    # writes document content there, and fetches its JWKS from the same host
+    YHUB_API_BASE_URL: http://impress-docs-yhub:443
+    Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
     Y_PROVIDER_API_KEY: my-secret
     CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"
   migrate:
@@ -131,11 +134,6 @@ frontend:
     tag: *tag
 
 yProvider:
-
-  converter:
-    enabled: true
-    replicas: 1
-
   replicas: 1
 
   image:
@@ -146,6 +144,33 @@ yProvider:
   envVars:
     COLLABORATION_BACKEND_BASE_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     COLLABORATION_LOGGING: true
+    COLLABORATION_SERVER_ORIGIN: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
+    NODE_OPTIONS: "--max-old-space-size=1024"
+
+# The keys the backend and the collaboration server sign the calls they make to
+# each other with, generated on the cluster by a job and mounted read-only in
+# both. ReadWriteOnce because the preview cluster has a single node.
+jwtKeys:
+  enabled: true
+  persistence:
+    accessModes:
+      - ReadWriteOnce
+
+yhub:
+  replicas: 1
+
+  image:
+    repository: lasuite/impress-yhub
+    pullPolicy: Always
+    tag: *tag
+
+  envVars:
+    # its own logical database on the dev-backend postgres, created by the
+    # init-db job; redis /2, the backend cache and celery live in /1
+    POSTGRES: postgres://dinum:pass@dev-backend-postgres:5432/yhub
+    REDIS: redis://user:pass@dev-backend-redis:6379/2
+    REDIS_PREFIX: yhub
+    COLLABORATION_BACKEND_BASE_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     COLLABORATION_SERVER_ORIGIN: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     NODE_OPTIONS: "--max-old-space-size=1024"
 
@@ -176,7 +201,7 @@ ingressCollaborationWS:
   host: {{ .Values.feature }}-docs.{{ .Values.domain }}
 
 ingressCollaborationApi:
-  enabled: true
+  enabled: false
   host: {{ .Values.feature }}-docs.{{ .Values.domain }}
 
 ingressAdmin:
