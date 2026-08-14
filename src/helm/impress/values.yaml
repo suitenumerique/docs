@@ -1014,6 +1014,8 @@ yhub:
   ## @extra yhub.envVars.COLLABORATION_SERVER_ORIGIN Comma separated list of the origins allowed to open a websocket
   ## @extra yhub.envVars.YHUB_JWT_PRIVATE_KEY_FILE Path to the RSA private key (PEM) yhub signs its calls to the backend with, mounted from a secret
   ## @extra yhub.envVars.YHUB_TASK_CONCURRENCY Tasks one worker process claims at once, times the replicas running a worker (default: 5)
+  ## @extra yhub.envVars.YHUB_TASK_DEBOUNCE_MS How long an update waits on the redis stream before a worker persists it, in ms (default: 10000)
+  ## @extra yhub.envVars.YHUB_MIN_MESSAGE_LIFETIME_MS How long persisted updates stay replayable from redis, in ms (default: 60000)
   ## @extra yhub.envVars.SOFT_MIGRATION Set to "true" to seed rooms from the legacy Django/S3 document store on first access
   ## @extra yhub.envVars.BY_VALUE Example environment variable by setting value directly
   ## @extra yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.name Name of a ConfigMap when configuring env vars from a ConfigMap
