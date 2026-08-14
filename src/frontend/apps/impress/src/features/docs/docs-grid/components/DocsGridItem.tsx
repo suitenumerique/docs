@@ -37,7 +37,7 @@ export const DocsGridItem = ({
 
   const { t } = useTranslation();
   const { isSmallMobile, isLargeScreen } = useResponsiveStore();
-  const dateToDisplay = useDateToDisplay(doc, isInTrashbin);
+  const { dateToDisplay } = useDateToDisplay(doc, isInTrashbin);
   const { openPanel } = useLeftPanelStore();
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -247,6 +247,7 @@ const useDateToDisplay = (doc: Doc, isInTrashbin: boolean) => {
   const { relativeDate, calculateDaysLeft } = useDate();
 
   let dateToDisplay = relativeDate(doc.updated_at);
+  let isRelativeDate = true;
 
   if (isInTrashbin && config?.TRASHBIN_CUTOFF_DAYS && doc.deleted_at) {
     const daysLeft = calculateDaysLeft(
@@ -255,9 +256,10 @@ const useDateToDisplay = (doc: Doc, isInTrashbin: boolean) => {
     );
 
     dateToDisplay = `${daysLeft} ${t('days', { count: daysLeft })}`;
+    isRelativeDate = false;
   }
 
-  return dateToDisplay;
+  return { dateToDisplay, isRelativeDate };
 };
 
 export const DocsGridItemDate = ({
@@ -267,7 +269,8 @@ export const DocsGridItemDate = ({
   doc: Doc;
   isInTrashbin: boolean;
 }) => {
-  const dateToDisplay = useDateToDisplay(doc, isInTrashbin);
+  const { dateToDisplay, isRelativeDate } = useDateToDisplay(doc, isInTrashbin);
+  const { formatDate } = useDate();
 
   return (
     <Text
@@ -277,7 +280,13 @@ export const DocsGridItemDate = ({
       $variation="primary"
       $shrink="0"
     >
-      {dateToDisplay}
+      {isRelativeDate ? (
+        <Tooltip content={formatDate(doc.updated_at)} placement="top">
+          <time dateTime={doc.updated_at}>{dateToDisplay}</time>
+        </Tooltip>
+      ) : (
+        dateToDisplay
+      )}
     </Text>
   );
 };

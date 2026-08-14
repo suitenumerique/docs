@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - 🔧(backend) fine tune redis cache options
+- ✨(frontend) make the full last-update date available #1215
 
 ### Changed
 
