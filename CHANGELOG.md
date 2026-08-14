@@ -77,7 +77,7 @@ and this project adheres to
   collide with the real per-version times the migrate endpoint writes) before
   the connection is admitted. A missing S3 object means a brand-new document and
   yields an empty room. Seeding never decides access: a legacy object that
-  cannot be migrated (undecodable or oversized) opens as a new document, logged
+  cannot be migrated (it does not decode) opens as a new document, logged
   per access, since no retry could fix it and refusing would make the document
   permanently unopenable. Every other failure — an unreachable store, but also
   any refusal from S3 such as `AccessDenied` on a rotated key or a wrong bucket
@@ -88,10 +88,14 @@ and this project adheres to
   stack through `env.d/development/yhub`, the collaboration server's own
   environment file. The bucket it reads is configured under `LEGACY_S3_*`
   (`_ENDPOINT_URL`, `_ACCESS_KEY_ID`, `_SECRET_ACCESS_KEY`, `_REGION_NAME`,
-  `_BUCKET_NAME`), a set of its own and not the backend's `AWS_S3_*`: this is
-  the bucket the collaboration server migrates *out of*, while the one it will
-  persist *into* when the yhub S3 persistence plugin is enabled is a separate
-  bucket that may well sit on another provider with credentials of its own
+  `_BUCKET_NAME`, `_SIGNATURE_VERSION`), a set of its own and not the backend's
+  `AWS_S3_*`: this is the bucket the collaboration server migrates *out of*,
+  while the one it will persist *into* when the yhub S3 persistence plugin is
+  enabled is a separate bucket that may well sit on another provider with
+  credentials of its own. It is read with the AWS SDK for JavaScript v3, whose
+  signature version is configurable (`s3v4` by default, as in Django) because a
+  provider expecting another one answers 403, which reads exactly like wrong
+  credentials
 - ✨(collaboration) add a migrate endpoint on yhub:
   `POST /collaboration/migrate/v1/docs/{id}` replays a document's **full**
   legacy version history from the versioned S3 media bucket into a
