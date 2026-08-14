@@ -402,6 +402,78 @@ test.describe('Doc grid move', () => {
 
     await cleanup();
   });
+
+  test('it drags a doc from the grid onto a pinned doc in the left panel', async ({
+    page,
+    browserName,
+  }) => {
+    await page.goto('/');
+
+    // Create source doc (to be dragged)
+    const [sourceTitle] = await createDoc(page, 'Source doc', browserName, 1);
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+
+    // Create target doc and pin it
+    const [targetTitle] = await createDoc(page, 'Target doc', browserName, 1);
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+
+    const targetRow = await getGridRow(page, targetTitle);
+    await targetRow
+      .getByRole('button', { name: /Open the menu of actions/ })
+      .click();
+    await page.getByRole('menuitem', { name: 'Pin' }).click();
+
+    // Confirm the target doc is now pinned in the left panel
+    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
+    await expect(leftPanelFavorites.getByText(targetTitle)).toBeVisible();
+
+    // Locate source in grid and target in favorites panel
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(docsGrid).toBeVisible();
+    await expect(page.getByTestId('grid-loader')).toBeHidden();
+
+    const sourceRow = await getGridRow(page, sourceTitle);
+    const sourceBox = await sourceRow.boundingBox();
+    const targetFavoriteItem = leftPanelFavorites
+      .getByRole('link', { name: new RegExp(targetTitle) })
+      .first();
+    const targetBox = await targetFavoriteItem.boundingBox();
+
+    expect(sourceBox).toBeDefined();
+    expect(targetBox).toBeDefined();
+
+    if (!sourceBox || !targetBox) {
+      throw new Error('Unable to determine element positions');
+    }
+
+    // Drag source doc from grid onto target in the favorites panel
+    await page.mouse.move(
+      sourceBox.x + sourceBox.width / 2,
+      sourceBox.y + sourceBox.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      targetBox.x + targetBox.width / 2,
+      targetBox.y + targetBox.height / 2,
+      { steps: 15 },
+    );
+
+    const dragOverlay = page.getByTestId('drag-doc-overlay');
+    await expect(dragOverlay).toBeVisible();
+    await expect(dragOverlay).toHaveText(sourceTitle);
+
+    await page.mouse.up();
+
+    // Source doc should no longer appear in the root grid
+    await expect(docsGrid.getByText(sourceTitle)).toBeHidden();
+
+    // Navigate into the target doc and verify source is now a sub-page
+    await targetRow.getByRole('link').first().click();
+    await verifyDocName(page, targetTitle);
+
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree.getByText(sourceTitle)).toBeVisible();
+  });
 });
 
 test.describe('Doc grid dnd mobile', () => {

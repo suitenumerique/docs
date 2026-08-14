@@ -35,15 +35,25 @@ export function useDragAndDrop(onDrag: (data: DocDragEndData) => void) {
 
   const handleDragStart = (e: DragStartEvent) => {
     document.body.style.cursor = 'grabbing';
+    document.body.classList.add('is-dnd-dragging');
     if (e.active.data.current) {
       setSelectedDoc(e.active.data.current as Doc);
     }
   };
 
-  const handleDragEnd = (e: DragEndEvent) => {
+  const resetDrag = () => {
     setSelectedDoc(undefined);
     setCanDrop(undefined);
     document.body.style.cursor = 'default';
+    document.body.classList.remove('is-dnd-dragging');
+  };
+
+  const handleDragCancel = () => {
+    resetDrag();
+  };
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    resetDrag();
     if (!canDrag || !canDrop) {
       return;
     }
@@ -75,6 +85,7 @@ export function useDragAndDrop(onDrag: (data: DocDragEndData) => void) {
     sensors,
     handleDragStart,
     handleDragEnd,
+    handleDragCancel,
     updateCanDrop,
   };
 }

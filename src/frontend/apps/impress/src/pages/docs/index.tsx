@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { DocDefaultFilter, useTrans } from '@/docs/doc-management';
 import { DocsGrid } from '@/docs/docs-grid';
+import { DocDndProvider } from '@/features/docs/DocDndContext';
 import { HeaderFloatingBar } from '@/features/header/components/HeaderFloatingBar';
 import { MainLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
@@ -36,13 +37,15 @@ const Page: NextPageWithLayout = () => {
 
 Page.getLayout = function getLayout(page: ReactElement) {
   return (
-    <MainLayout
-      propsContent={{
-        $background: 'var(--c--contextuals--background--surface--tertiary)',
-      }}
-    >
-      {page}
-    </MainLayout>
+    <DocDndProvider>
+      <MainLayout
+        propsContent={{
+          $background: 'var(--c--contextuals--background--surface--tertiary)',
+        }}
+      >
+        {page}
+      </MainLayout>
+    </DocDndProvider>
   );
 };
 
