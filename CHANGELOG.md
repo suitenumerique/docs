@@ -19,6 +19,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
 - 🐛(frontend) refresh pins after document deletion and restoration
 - 🐛(frontend) redirect homepage to login when homepage feat is disabled #2521
 - 🐛(backend) ignore CSPs for API docs in development

@@ -255,6 +255,10 @@ export const DocsCommentsStyle = createGlobalStyle<{
         }
       }
 
+      &:has(> .bn-comment-editor + .bn-comment-actions-wrapper) {
+        overflow: visible;
+      }
+
       // Actions button send comment
       .bn-thread-composer .bn-comment-actions-wrapper,
       &:not(.selected) .bn-comment-actions-wrapper {

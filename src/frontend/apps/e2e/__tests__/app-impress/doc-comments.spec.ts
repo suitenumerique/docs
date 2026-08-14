@@ -205,7 +205,20 @@ test.describe('Doc Comments', () => {
     await editor.getByText('Hello').selectText();
     await page.getByRole('button', { name: 'Add comment' }).click();
 
-    await thread.getByRole('paragraph').first().fill('This is a new comment');
+    // The composer of a new thread must not clip its formatting toolbar
+    await expect(thread).toHaveCSS('overflow', 'visible');
+
+    // Write the new comment and select it to reveal the formatting toolbar
+    const newComment = thread.getByRole('paragraph').first();
+    await newComment.fill('This is a new comment');
+    await newComment.selectText();
+
+    const boldButton = thread.locator(
+      '.bn-formatting-toolbar button[data-test="bold"]',
+    );
+    await expect(boldButton).toBeVisible();
+    await boldButton.click();
+
     await thread.locator('[data-test="save"]').click();
     await expect(editor.getByText('Hello')).toHaveClass('bn-thread-mark');
 
@@ -216,6 +229,13 @@ test.describe('Doc Comments', () => {
 
     await editor.first().click();
     await editor.getByText('Hello').click();
+
+    // The saved comment keeps the formatting applied in the composer
+    await expect(
+      thread
+        .locator('.bn-editor[contenteditable="false"] strong')
+        .getByText('This is a new comment'),
+    ).toBeVisible();
 
     await thread.getByText('This is a new comment').first().hover();
     await thread.locator('[data-test="moreactions"]').first().click();
