@@ -1,4 +1,6 @@
+import { Tooltip } from '@gouvfr-lasuite/cunningham-react';
 import { t } from 'i18next';
+import { ComponentPropsWithoutRef, forwardRef } from 'react';
 
 import PublicSVG from '@/assets/icons/ui-kit/public.svg';
 import ProtedtedSVG from '@/assets/icons/ui-kit/vpn_lock.svg';
@@ -21,10 +23,11 @@ interface DocHeaderInfoProps {
 export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
   const { transRole } = useTrans();
   const { isEditable } = useIsCollaborativeEditable(doc);
-  const { relativeDate, calculateDaysLeft } = useDate();
+  const { relativeDate, formatDate, calculateDaysLeft } = useDate();
   const { data: config } = useConfig();
 
   const relativeOnly = relativeDate(doc.updated_at);
+  const fullDate = formatDate(doc.updated_at);
 
   const trashbinCutoff = config?.TRASHBIN_CUTOFF_DAYS;
 
@@ -62,12 +65,37 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
         {dateLabel}
         &nbsp;
       </Text>
-      <Text as="dd" $variation="tertiary" $size="s" $margin="0">
-        {dateValue}
+      <Text
+        as="dd"
+        $variation="tertiary"
+        $size="s"
+        $direction="row"
+        $align="center"
+        $margin="0"
+      >
+        {trashbinCutoff && doc.deleted_at ? (
+          dateValue
+        ) : (
+          <Tooltip content={fullDate} placement="top">
+            <FocusableTime
+              dateTime={doc.updated_at}
+              aria-label={`${relativeOnly}. ${fullDate}`}
+            >
+              {relativeOnly}
+            </FocusableTime>
+          </Tooltip>
+        )}
       </Text>
     </Box>
   );
 };
+
+const FocusableTime = forwardRef<
+  HTMLTimeElement,
+  ComponentPropsWithoutRef<'time'>
+>((props, ref) => <time {...props} ref={ref} tabIndex={0} />);
+
+FocusableTime.displayName = 'FocusableTime';
 
 const VisibilityDoc = ({ doc }: { doc: Doc }) => {
   const docIsPublic = getDocLinkReach(doc) === LinkReach.PUBLIC;

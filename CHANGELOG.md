@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) make the full last-update date available #1215
 - ♿️(frontend) restore skip to content link after header redesign #2510
 - 🌐(i18n) rename cn_CN to zh_CN, add eo_PL and zh_TW locales #2486
 - ✨(backend) conditional email notification in server to server api #2554
