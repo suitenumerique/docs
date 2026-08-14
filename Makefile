@@ -88,6 +88,7 @@ create-env-local-files:
 	@touch env.d/development/postgresql.local
 	@touch env.d/development/kc_auth.local
 	@touch env.d/development/kc_postgresql.local
+	@touch env.d/development/yhub.local
 .PHONY: create-env-local-files
 
 generate-secret-keys:
