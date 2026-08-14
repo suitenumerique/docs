@@ -1,9 +1,11 @@
 """Unit tests for the `migrate_documents` command."""
 
+import uuid
 from io import StringIO
 from unittest import mock
 
 from django.core.management import call_command
+from django.core.management.base import CommandError
 
 import pytest
 
@@ -167,3 +169,47 @@ def test_commands_migrate_documents_dry_run(collaboration_server):
     assert "2 documents to migrate" in output
     collaboration_server.assert_not_called()
     assert not models.DocumentMigration.objects.exists()
+
+
+def test_commands_migrate_documents_document_id(collaboration_server):
+    """Naming a document should hand over that one and leave the corpus alone."""
+    factories.DocumentFactory.create_batch(3)
+    document = factories.DocumentFactory()
+
+    output = run_command(document_id=document.pk)
+
+    assert collaboration_server.call_count == 1
+    assert collaboration_server.call_args[0][0].pk == document.pk
+    assert models.DocumentMigration.objects.get().document_id == document.pk
+    assert "ok=1" in output
+
+
+def test_commands_migrate_documents_document_id_already_migrated(
+    collaboration_server,
+):
+    """
+    A document already recorded as done should be handed over again when named.
+
+    Asking for a document by its id is an instruction, not a filter over what is
+    left to do: the collaboration server answers "already" when it has nothing
+    to replay, which is the answer the run records.
+    """
+    document = factories.DocumentFactory()
+    run_command()
+    collaboration_server.return_value = migrated(status="already")
+
+    run_command(document_id=document.pk)
+
+    assert collaboration_server.call_count == 2
+    assert (
+        models.DocumentMigration.objects.get(document=document).status
+        == models.DocumentMigrationStatus.ALREADY
+    )
+
+
+def test_commands_migrate_documents_document_id_unknown(collaboration_server):
+    """An id that is no document should stop the command, not migrate nothing."""
+    with pytest.raises(CommandError, match="No document with id"):
+        run_command(document_id=uuid.uuid4())
+
+    collaboration_server.assert_not_called()
