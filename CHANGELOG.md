@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) preserve page titles when adding an emoji #2586
+
 ## [v5.6.1] - 2026-09-04
 
 ### Added
