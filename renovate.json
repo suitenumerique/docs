@@ -20,12 +20,6 @@
       "allowedVersions": "<6.0.0"
     },
     {
-      "groupName": "allowed pylint versions",
-      "matchManagers": ["pep621"],
-      "matchPackageNames": ["pylint"],
-      "allowedVersions": "<4.0.0"
-    },
-    {
       "groupName": "allowed django versions",
       "matchManagers": ["pep621"],
       "matchPackageNames": ["django"],
@@ -36,12 +30,6 @@
       "matchManagers": ["pep621"],
       "matchPackageNames": ["celery"],
       "allowedVersions": "<5.6.0"
-    },
-    {
-      "groupName": "allowed pydantic-ai-slim versions",
-      "matchManagers": ["pep621"],
-      "matchPackageNames": ["pydantic-ai-slim"],
-      "allowedVersions": "<1.59.0"
     },
     {
       "groupName": "allowed langfuse versions",

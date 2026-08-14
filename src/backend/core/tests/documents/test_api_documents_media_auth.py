@@ -3,6 +3,7 @@ Test media-auth authorization API endpoint in docs core app.
 """
 
 from io import BytesIO
+from unittest.mock import patch
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -367,6 +368,34 @@ def test_api_documents_media_auth_not_ready_status():
     )
 
     assert response.status_code == 403
+
+
+def test_api_documents_media_auth_uppercase_status_metadata():
+    """
+    Object storage metadata keys are case insensitive, and some S3 implementations give them
+    back capitalized. A ready attachment should still be served in that case.
+    """
+    document_id = uuid4()
+    filename = f"{uuid4()!s}.jpg"
+    key = f"{document_id!s}/attachments/{filename:s}"
+
+    factories.DocumentFactory(id=document_id, link_reach="public", attachments=[key])
+
+    head_resp = {
+        "ContentType": "text/plain",
+        "Metadata": {"Status": DocumentAttachmentStatus.READY.value},
+    }
+
+    original_url = f"http://localhost/media/{key:s}"
+    with patch.object(
+        default_storage.connection.meta.client, "head_object", return_value=head_resp
+    ):
+        response = APIClient().get(
+            "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=original_url
+        )
+
+    assert response.status_code == 200
+    assert "AWS4-HMAC-SHA256 Credential=" in response["Authorization"]
 
 
 def test_api_documents_media_auth_missing_status_metadata(settings):

@@ -1,6 +1,7 @@
 """Test the "media_check" endpoint."""
 
 from io import BytesIO
+from unittest.mock import patch
 from uuid import uuid4
 
 from django.core.files.storage import default_storage
@@ -109,6 +110,39 @@ def test_api_documents_media_check_anonymous_public_document_ready():
     response = client.get(
         f"/api/v1.0/documents/{document.id!s}/media-check/", {"key": key}
     )
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": DocumentAttachmentStatus.READY,
+        "file": f"/media/{key:s}",
+    }
+
+
+def test_api_documents_media_check_uppercase_status_metadata():
+    """
+    Object storage metadata keys are case insensitive, and some S3 implementations give them
+    back capitalized. The "media_check" endpoint should still report the attachment as ready.
+    """
+    document = factories.DocumentFactory(link_reach="public")
+
+    filename = f"{uuid4()!s}.jpg"
+    key = f"{document.id!s}/attachments/{filename:s}"
+    document.attachments = [key]
+    document.save(update_fields=["attachments"])
+
+    head_resp = {
+        "ContentType": "text/plain",
+        "Metadata": {"Status": DocumentAttachmentStatus.READY.value},
+    }
+
+    client = APIClient()
+
+    with patch.object(
+        default_storage.connection.meta.client, "head_object", return_value=head_resp
+    ):
+        response = client.get(
+            f"/api/v1.0/documents/{document.id!s}/media-check/", {"key": key}
+        )
+
     assert response.status_code == 200
     assert response.json() == {
         "status": DocumentAttachmentStatus.READY,

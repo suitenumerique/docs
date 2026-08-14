@@ -9,7 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from langfuse import get_client, observe
 from langfuse.openai import OpenAI as OpenAI_Langfuse
-from mistralai import Mistral
+from mistralai.client import Mistral
 
 from core import enums
 

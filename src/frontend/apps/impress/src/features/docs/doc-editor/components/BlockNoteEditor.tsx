@@ -51,6 +51,7 @@ import { DocsBlockNoteEditor } from '../types';
 import { randomColor, sanitizeColor } from '../utils';
 
 import BlockNoteAI from './AI';
+import { BlockNoteSideMenu } from './BlockNoteSideMenu';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { CalloutBlock, PdfBlock, UploadLoaderBlock } from './custom-blocks';
@@ -195,6 +196,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         },
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
+      dropCursor: {
+        color: 'var(--c--contextuals--background--semantic--brand--tertiary)',
+      },
       dictionary: {
         ...localesBN[langLocalesBN as keyof typeof localesBN],
         ...(localesBNMultiColumn && {
@@ -292,6 +296,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         editor={editor}
         formattingToolbar={false}
         slashMenu={false}
+        sideMenu={false}
         theme="light"
         comments={false}
         aria-label={t('Document editor')}
@@ -303,6 +308,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         )}
         <BlockNoteSuggestionMenu aiAllowed={aiBlockNoteAllowed} />
         <BlockNoteToolbar aiAllowed={aiBlockNoteAllowed} />
+        <BlockNoteSideMenu />
         {showComments && <FloatingComposerController />}
         {showComments && !isCommentSideBarOpen && <FloatingThreadController />}
         {threadsSidebarTarget &&

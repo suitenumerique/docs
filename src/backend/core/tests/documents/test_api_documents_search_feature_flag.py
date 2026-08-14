@@ -42,7 +42,7 @@ pytestmark = pytest.mark.django_db
 )
 @pytest.mark.usefixtures("indexer_settings")
 # pylint: disable=too-many-arguments, too-many-positional-arguments
-def test_api_documents_search_success(  # noqa : PLR0913
+def test_api_documents_search_success(  # noqa : PLR0913, PLR0917
     mock_search_using_indexer,
     mock_search_using_database,
     activated_flags,

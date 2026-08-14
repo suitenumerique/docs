@@ -146,6 +146,13 @@ test.describe('Document grid item options', () => {
 
     await expect(page.getByText(docTitle)).toBeVisible();
     const row = await getGridRow(page, docTitle);
+
+    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
+    await page.getByRole('menuitem', { name: 'Pin' }).click();
+
+    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
+    await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
+
     await row.getByRole('button', { name: /Open the menu of actions/ }).click();
 
     await page.getByRole('menuitem', { name: 'Delete' }).click();
@@ -164,7 +171,10 @@ test.describe('Document grid item options', () => {
       page.getByText('The document has been deleted.'),
     ).toBeVisible();
 
-    await expect(page.getByText(docTitle)).toBeHidden();
+    await expect(
+      page.getByLabel('Documents grid').getByText(docTitle),
+    ).toBeHidden();
+    await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
   });
 
   test('it checks the leave feature', async ({ page, browserName }) => {

@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuOption, Icon } from '@/components';
 import {
   Doc,
   KEY_LIST_DOC,
+  KEY_LIST_FAVORITE_DOC,
   useRestoreDoc,
   useTrans,
 } from '@/docs/doc-management';
@@ -26,7 +27,11 @@ export const DocsGridTrashbinActions = ({
   const { untitledDocument } = useTrans();
   const { toast } = useToastProvider();
   const { mutate: restoreDoc, error } = useRestoreDoc({
-    listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_DOC_TRASHBIN],
+    listInvalidQueries: [
+      KEY_LIST_DOC,
+      KEY_LIST_DOC_TRASHBIN,
+      KEY_LIST_FAVORITE_DOC,
+    ],
     options: {
       onSuccess: (_data) => {
         toast(t('The document has been restored.'), VariantType.SUCCESS, {

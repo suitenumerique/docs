@@ -15,6 +15,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from langfuse import get_client
 from pydantic_ai import Agent, DeferredToolRequests
+from pydantic_ai.capabilities import Instrumentation
 from pydantic_ai.models.mistral import MistralModel
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.mistral import MistralProvider
@@ -23,7 +24,7 @@ from pydantic_ai.tools import ToolDefinition
 from pydantic_ai.toolsets.external import ExternalToolset
 from pydantic_ai.ui import SSE_CONTENT_TYPE
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
-from pydantic_ai.ui.vercel_ai.request_types import RequestData, TextUIPart, UIMessage
+from pydantic_ai.ui.vercel_ai.request_types import TextUIPart, UIMessage
 from rest_framework.request import Request
 
 log = logging.getLogger(__name__)
@@ -174,7 +175,7 @@ class AIService:
                                 "MUST issue operations against the selection):"
                             ),
                         ),
-                        TextUIPart(text=json.dumps(blocks)),
+                        TextUIPart(text=json.dumps(blocks, ensure_ascii=False)),
                     ]
                 else:
                     text = (
@@ -197,7 +198,7 @@ class AIService:
                         )
                     parts = [
                         TextUIPart(text=text),
-                        TextUIPart(text=json.dumps(blocks)),
+                        TextUIPart(text=json.dumps(blocks, ensure_ascii=False)),
                     ]
 
                 result.append(
@@ -237,41 +238,29 @@ class AIService:
         ]
         return ExternalToolset(tool_defs)
 
-    def _harden_messages(
-        self, run_input: RequestData, tool_definitions: Dict[str, Any]
-    ):
-        """
-        Harden messages if applyDocumentOperations tool is used.
-        We would like the system_prompt property in the Agent initialization
-        but for UI adapter, like vercel, the agent is ignoring it
-        see https://github.com/pydantic/pydantic-ai/issues/3315
+    @staticmethod
+    def build_instructions(tool_definitions: Dict[str, Any]) -> str | None:
+        """Harden the prompt if the applyDocumentOperations tool is used.
 
-        We have to inject it in the run_input.messages if needed.
+        The prompt has to be owned by the server: `VercelAIAdapter` runs with
+        `manage_system_prompt="server"` and strips every system prompt submitted by
+        the frontend, so injecting it into `run_input.messages` would be silently
+        dropped. Agent instructions are injected on each model request whatever the
+        `manage_system_prompt` mode is.
         """
-        for name, _defn in tool_definitions.items():
-            if name == "applyDocumentOperations":
-                run_input.messages.insert(
-                    0,
-                    UIMessage(
-                        id="system-force-tool-usage",
-                        role="system",
-                        parts=[TextUIPart(text=BLOCKNOTE_TOOL_STRICT_PROMPT)],
-                    ),
-                )
-                return
+        if "applyDocumentOperations" in tool_definitions:
+            return BLOCKNOTE_TOOL_STRICT_PROMPT
+
+        return None
 
     def _build_async_stream(self, request: Request) -> AsyncIterator[str]:
         """Build the async stream from the AI provider."""
-        instrument_enabled = settings.LANGFUSE_PUBLIC_KEY is not None
+        capabilities = None
 
-        if instrument_enabled:
+        if settings.LANGFUSE_PUBLIC_KEY is not None:
             langfuse = get_client()
             langfuse.auth_check()
-            Agent.instrument_all()
-
-        agent = Agent(
-            configure_pydantic_model_provider(), instrument=instrument_enabled
-        )
+            capabilities = [Instrumentation()]
 
         accept = request.META.get("HTTP_ACCEPT", SSE_CONTENT_TYPE)
 
@@ -290,8 +279,13 @@ class AIService:
             self.tool_definitions_to_toolset(raw_tool_defs) if raw_tool_defs else None
         )
 
-        if raw_tool_defs:
-            self._harden_messages(run_input, raw_tool_defs)
+        agent = Agent(
+            configure_pydantic_model_provider(),
+            instructions=self.build_instructions(raw_tool_defs)
+            if raw_tool_defs
+            else None,
+            capabilities=capabilities,
+        )
 
         adapter = VercelAIAdapter(
             agent=agent,

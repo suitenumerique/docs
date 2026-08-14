@@ -1,5 +1,6 @@
 import { UserMenu } from '@gouvfr-lasuite/ui-kit';
 import { useTranslation } from 'react-i18next';
+import { createGlobalStyle } from 'styled-components';
 
 import { Box, SeparatedSection } from '@/components';
 import { Waffle } from '@/components/Waffle';
@@ -8,6 +9,12 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { gotoLogout } from '@/features/auth/utils';
 import { HelpMenu } from '@/features/help';
 import { LanguagePicker } from '@/features/language/components/LanguagePicker';
+
+const LeftPanelFooterGlobalStyle = createGlobalStyle`
+  .user-menu__actions .c__language-picker{
+    width: auto;
+  }
+`;
 
 export const LeftPanelFooter = () => {
   const { t } = useTranslation();
@@ -20,6 +27,7 @@ export const LeftPanelFooter = () => {
 
   return (
     <SeparatedSection showSeparator="top" $margin={{ top: 'auto' }}>
+      <LeftPanelFooterGlobalStyle />
       <Box
         $padding={{ horizontal: 'sm' }}
         $justify="space-between"
