@@ -909,6 +909,13 @@ jwtKeys:
 ## PostgreSQL database, so it needs both — set `yhub.envVars.REDIS` and
 ## `yhub.envVars.POSTGRES`, there is nothing sensible to default them to.
 ## Disabling it sends the /collaboration/ ingresses back to the y-provider.
+##
+## Turning on `SOFT_MIGRATION` adds a bucket to that list, the legacy Django
+## media one it reads old documents out of. It is configured under
+## `LEGACY_S3_*` rather than the backend's `AWS_S3_*`: the two are read by
+## different processes, may be different buckets on different providers, and
+## the collaboration server is meant to gain a bucket of its own — the S3
+## persistence plugin, once it is enabled — without either being ambiguous.
 yhub:
   ## @param yhub.enabled Enable the yhub collaboration server, its service and its init-db job
   enabled: true
@@ -1017,6 +1024,11 @@ yhub:
   ## @extra yhub.envVars.YHUB_TASK_DEBOUNCE_MS How long an update waits on the redis stream before a worker persists it, in ms (default: 10000)
   ## @extra yhub.envVars.YHUB_MIN_MESSAGE_LIFETIME_MS How long persisted updates stay replayable from redis, in ms (default: 60000)
   ## @extra yhub.envVars.SOFT_MIGRATION Set to "true" to seed rooms from the legacy Django/S3 document store on first access
+  ## @extra yhub.envVars.LEGACY_S3_ENDPOINT_URL Required by SOFT_MIGRATION, endpoint of the legacy Django media bucket, without a path (e.g. https://s3.example.com)
+  ## @extra yhub.envVars.LEGACY_S3_ACCESS_KEY_ID Required by SOFT_MIGRATION, read access to the legacy bucket (or LEGACY_S3_ACCESS_KEY_ID_FILE)
+  ## @extra yhub.envVars.LEGACY_S3_SECRET_ACCESS_KEY Required by SOFT_MIGRATION, secret of the key above (or LEGACY_S3_SECRET_ACCESS_KEY_FILE)
+  ## @extra yhub.envVars.LEGACY_S3_REGION_NAME Region of the legacy bucket, when its provider needs one
+  ## @extra yhub.envVars.LEGACY_S3_BUCKET_NAME Name of the legacy Django media bucket (default: impress-media-storage)
   ## @extra yhub.envVars.BY_VALUE Example environment variable by setting value directly
   ## @extra yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.name Name of a ConfigMap when configuring env vars from a ConfigMap
   ## @extra yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.key Key within a ConfigMap when configuring env vars from a ConfigMap
