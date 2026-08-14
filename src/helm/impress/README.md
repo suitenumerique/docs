@@ -339,88 +339,93 @@
 
 ### yhub
 
-| Name                                               | Description                                                                                                   | Value                     |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `yhub.enabled`                                     | Enable the yhub collaboration server, its service and its init-db job                                         | `true`                    |
-| `yhub.image.repository`                            | Repository to use to pull the yhub container image                                                            | `lasuite/impress-yhub`    |
-| `yhub.image.tag`                                   | yhub container tag                                                                                            | `latest`                  |
-| `yhub.image.pullPolicy`                            | yhub container image pull policy                                                                              | `IfNotPresent`            |
-| `yhub.command`                                     | Override the yhub container command                                                                           | `[]`                      |
-| `yhub.args`                                        | Override the yhub container args                                                                              | `[]`                      |
-| `yhub.replicas`                                    | Amount of yhub replicas                                                                                       | `3`                       |
-| `yhub.worker.enabled`                              | Deploy the worker apart from the server, each scaling on its own                                              | `false`                   |
-| `yhub.worker.replicas`                             | Amount of yhub worker replicas                                                                                | `1`                       |
-| `yhub.worker.resources`                            | Resource requirements for the yhub worker container, the server ones when empty                               | `{}`                      |
-| `yhub.worker.podAnnotations`                       | Annotations to add to the yhub worker Pod, the server ones when empty                                         | `{}`                      |
-| `yhub.worker.dpAnnotations`                        | Annotations to add to the yhub worker Deployment, the server ones when empty                                  | `{}`                      |
-| `yhub.worker.nodeSelector`                         | Node selector for the yhub worker Pod, the server one when empty                                              | `{}`                      |
-| `yhub.worker.tolerations`                          | Tolerations for the yhub worker Pod, the server ones when empty                                               | `[]`                      |
-| `yhub.worker.affinity`                             | Affinity for the yhub worker Pod, the server one when empty                                                   | `{}`                      |
-| `yhub.worker.terminationGracePeriodSeconds`        | Grace period given to a worker pod to finish its task, the server one when empty                              | `nil`                     |
-| `yhub.worker.pdb.enabled`                          | Enable pdb on the yhub worker                                                                                 | `true`                    |
-| `yhub.shareProcessNamespace`                       | Enable share process namespace between containers                                                             | `false`                   |
-| `yhub.sidecars`                                    | Add sidecars containers to yhub deployment                                                                    | `[]`                      |
-| `yhub.terminationGracePeriodSeconds`               | Grace period given to a yhub pod to drain before it is killed                                                 | `60`                      |
-| `yhub.securityContext.allowPrivilegeEscalation`    | Whether to allow privilege escalation for the yhub container                                                  | `false`                   |
-| `yhub.securityContext.capabilities.drop`           | List of capabilities to drop for the yhub container                                                           | `["ALL"]`                 |
-| `yhub.securityContext.runAsNonRoot`                | Whether to run the yhub container as a non-root user                                                          | `true`                    |
-| `yhub.securityContext.runAsUser`                   | User the yhub container runs as                                                                               | `1000`                    |
-| `yhub.securityContext.runAsGroup`                  | Group the yhub container runs as                                                                              | `1000`                    |
-| `yhub.securityContext.seccompProfile.type`         | Seccomp profile type for the yhub container                                                                   | `RuntimeDefault`          |
-| `yhub.envVars`                                     | Configure yhub container environment variables                                                                | `undefined`               |
-| `yhub.envVars.REDIS`                               | Required, redis/valkey url holding the live document state (e.g. redis://valkey:6379/0)                       |                           |
-| `yhub.envVars.POSTGRES`                            | Required, url of the yhub database, created by the init-db job (e.g. postgres://user:pass@postgres:5432/yhub) |                           |
-| `yhub.envVars.REDIS_PREFIX`                        | Namespace of the redis keys, when the instance is shared (default: yhub)                                      |                           |
-| `yhub.envVars.COLLABORATION_BACKEND_BASE_URL`      | Base url of the Docs backend, which yhub asks about users and document access rights                          |                           |
-| `yhub.envVars.COLLABORATION_SERVER_ORIGIN`         | Comma separated list of the origins allowed to open a websocket                                               |                           |
-| `yhub.envVars.YHUB_JWT_PRIVATE_KEY_FILE`           | Path to the RSA private key (PEM) yhub signs its calls to the backend with, mounted from a secret             |                           |
-| `yhub.envVars.YHUB_TASK_CONCURRENCY`               | Tasks one worker process claims at once, times the replicas running a worker (default: 5)                     |                           |
-| `yhub.envVars.YHUB_TASK_DEBOUNCE_MS`               | How long an update waits on the redis stream before a worker persists it, in ms (default: 10000)              |                           |
-| `yhub.envVars.YHUB_MIN_MESSAGE_LIFETIME_MS`        | How long persisted updates stay replayable from redis, in ms (default: 60000)                                 |                           |
-| `yhub.envVars.SOFT_MIGRATION`                      | Set to "true" to seed rooms from the legacy Django/S3 document store on first access                          |                           |
-| `yhub.envVars.BY_VALUE`                            | Example environment variable by setting value directly                                                        |                           |
-| `yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.name` | Name of a ConfigMap when configuring env vars from a ConfigMap                                                |                           |
-| `yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.key`  | Key within a ConfigMap when configuring env vars from a ConfigMap                                             |                           |
-| `yhub.envVars.FROM_SECRET.secretKeyRef.name`       | Name of a Secret when configuring env vars from a Secret                                                      |                           |
-| `yhub.envVars.FROM_SECRET.secretKeyRef.key`        | Key within a Secret when configuring env vars from a Secret                                                   |                           |
-| `yhub.podAnnotations`                              | Annotations to add to the yhub Pod                                                                            | `{}`                      |
-| `yhub.dpAnnotations`                               | Annotations to add to the yhub Deployment                                                                     | `{}`                      |
-| `yhub.initDbJobAnnotations`                        | Annotations for the yhub init-db job                                                                          | `{}`                      |
-| `yhub.jobs.ttlSecondsAfterFinished`                | Period to wait before removing the init-db job                                                                | `30`                      |
-| `yhub.jobs.backoffLimit`                           | Numbers of init-db job retries                                                                                | `2`                       |
-| `yhub.initDb.enabled`                              | Run the job creating and upgrading the yhub schema                                                            | `true`                    |
-| `yhub.initDb.command`                              | Override the command creating and upgrading the yhub schema                                                   | `[]`                      |
-| `yhub.initDb.retries`                              | How many times the schema script is retried while the postgres server does not answer                         | `60`                      |
-| `yhub.initDb.retryDelaySeconds`                    | Seconds between two attempts                                                                                  | `5`                       |
-| `yhub.initDb.restartPolicy`                        | Restart policy of the init-db job                                                                             | `Never`                   |
-| `yhub.service.type`                                | yhub Service type                                                                                             | `ClusterIP`               |
-| `yhub.service.port`                                | yhub Service listening port                                                                                   | `443`                     |
-| `yhub.service.targetPort`                          | yhub container listening port                                                                                 | `3002`                    |
-| `yhub.service.annotations`                         | Annotations to add to the yhub Service                                                                        | `{}`                      |
-| `yhub.probes.liveness.path`                        | Configure path for yhub HTTP liveness probe                                                                   | `/collaboration/ping/v1`  |
-| `yhub.probes.liveness.initialDelaySeconds`         | Configure initial delay for yhub liveness probe                                                               | `10`                      |
-| `yhub.probes.liveness.timeoutSeconds`              | Configure timeout for yhub liveness probe                                                                     | `2`                       |
-| `yhub.probes.readiness.path`                       | Configure path for yhub HTTP readiness probe                                                                  | `/collaboration/ready/v1` |
-| `yhub.probes.readiness.initialDelaySeconds`        | Configure initial delay for yhub readiness probe                                                              | `5`                       |
-| `yhub.probes.readiness.timeoutSeconds`             | Configure timeout for yhub readiness probe                                                                    | `3`                       |
-| `yhub.probes.liveness.targetPort`                  | Configure port for yhub HTTP liveness probe                                                                   |                           |
-| `yhub.probes.readiness.targetPort`                 | Configure port for yhub HTTP readiness probe                                                                  |                           |
-| `yhub.probes.startup.path`                         | Configure path for yhub HTTP startup probe                                                                    |                           |
-| `yhub.probes.startup.targetPort`                   | Configure port for yhub HTTP startup probe                                                                    |                           |
-| `yhub.probes.startup.initialDelaySeconds`          | Configure initial delay for yhub startup probe                                                                |                           |
-| `yhub.probes.startup.timeoutSeconds`               | Configure timeout for yhub startup probe                                                                      |                           |
-| `yhub.resources`                                   | Resource requirements for the yhub container                                                                  | `{}`                      |
-| `yhub.nodeSelector`                                | Node selector for the yhub Pod                                                                                | `{}`                      |
-| `yhub.tolerations`                                 | Tolerations for the yhub Pod                                                                                  | `[]`                      |
-| `yhub.affinity`                                    | Affinity for the yhub Pod                                                                                     | `{}`                      |
-| `yhub.persistence`                                 | Additional volumes to create and mount on the yhub. Used for debugging purposes                               | `{}`                      |
-| `yhub.persistence.volume-name.size`                | Size of the additional volume                                                                                 |                           |
-| `yhub.persistence.volume-name.type`                | Type of the additional volume, persistentVolumeClaim or emptyDir                                              |                           |
-| `yhub.persistence.volume-name.mountPath`           | Path where the volume should be mounted to                                                                    |                           |
-| `yhub.extraVolumeMounts`                           | Additional volumes to mount on the yhub. Mounted on the init-db job too                                       | `[]`                      |
-| `yhub.extraVolumes`                                | Additional volumes to mount on the yhub. Mounted on the init-db job too                                       | `[]`                      |
-| `yhub.pdb.enabled`                                 | Enable pdb on yhub                                                                                            | `true`                    |
-| `yhub.serviceAccountName`                          | Optional service account name to use for yhub pods                                                            | `nil`                     |
+| Name                                               | Description                                                                                                          | Value                     |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `yhub.enabled`                                     | Enable the yhub collaboration server, its service and its init-db job                                                | `true`                    |
+| `yhub.image.repository`                            | Repository to use to pull the yhub container image                                                                   | `lasuite/impress-yhub`    |
+| `yhub.image.tag`                                   | yhub container tag                                                                                                   | `latest`                  |
+| `yhub.image.pullPolicy`                            | yhub container image pull policy                                                                                     | `IfNotPresent`            |
+| `yhub.command`                                     | Override the yhub container command                                                                                  | `[]`                      |
+| `yhub.args`                                        | Override the yhub container args                                                                                     | `[]`                      |
+| `yhub.replicas`                                    | Amount of yhub replicas                                                                                              | `3`                       |
+| `yhub.worker.enabled`                              | Deploy the worker apart from the server, each scaling on its own                                                     | `false`                   |
+| `yhub.worker.replicas`                             | Amount of yhub worker replicas                                                                                       | `1`                       |
+| `yhub.worker.resources`                            | Resource requirements for the yhub worker container, the server ones when empty                                      | `{}`                      |
+| `yhub.worker.podAnnotations`                       | Annotations to add to the yhub worker Pod, the server ones when empty                                                | `{}`                      |
+| `yhub.worker.dpAnnotations`                        | Annotations to add to the yhub worker Deployment, the server ones when empty                                         | `{}`                      |
+| `yhub.worker.nodeSelector`                         | Node selector for the yhub worker Pod, the server one when empty                                                     | `{}`                      |
+| `yhub.worker.tolerations`                          | Tolerations for the yhub worker Pod, the server ones when empty                                                      | `[]`                      |
+| `yhub.worker.affinity`                             | Affinity for the yhub worker Pod, the server one when empty                                                          | `{}`                      |
+| `yhub.worker.terminationGracePeriodSeconds`        | Grace period given to a worker pod to finish its task, the server one when empty                                     | `nil`                     |
+| `yhub.worker.pdb.enabled`                          | Enable pdb on the yhub worker                                                                                        | `true`                    |
+| `yhub.shareProcessNamespace`                       | Enable share process namespace between containers                                                                    | `false`                   |
+| `yhub.sidecars`                                    | Add sidecars containers to yhub deployment                                                                           | `[]`                      |
+| `yhub.terminationGracePeriodSeconds`               | Grace period given to a yhub pod to drain before it is killed                                                        | `60`                      |
+| `yhub.securityContext.allowPrivilegeEscalation`    | Whether to allow privilege escalation for the yhub container                                                         | `false`                   |
+| `yhub.securityContext.capabilities.drop`           | List of capabilities to drop for the yhub container                                                                  | `["ALL"]`                 |
+| `yhub.securityContext.runAsNonRoot`                | Whether to run the yhub container as a non-root user                                                                 | `true`                    |
+| `yhub.securityContext.runAsUser`                   | User the yhub container runs as                                                                                      | `1000`                    |
+| `yhub.securityContext.runAsGroup`                  | Group the yhub container runs as                                                                                     | `1000`                    |
+| `yhub.securityContext.seccompProfile.type`         | Seccomp profile type for the yhub container                                                                          | `RuntimeDefault`          |
+| `yhub.envVars`                                     | Configure yhub container environment variables                                                                       | `undefined`               |
+| `yhub.envVars.REDIS`                               | Required, redis/valkey url holding the live document state (e.g. redis://valkey:6379/0)                              |                           |
+| `yhub.envVars.POSTGRES`                            | Required, url of the yhub database, created by the init-db job (e.g. postgres://user:pass@postgres:5432/yhub)        |                           |
+| `yhub.envVars.REDIS_PREFIX`                        | Namespace of the redis keys, when the instance is shared (default: yhub)                                             |                           |
+| `yhub.envVars.COLLABORATION_BACKEND_BASE_URL`      | Base url of the Docs backend, which yhub asks about users and document access rights                                 |                           |
+| `yhub.envVars.COLLABORATION_SERVER_ORIGIN`         | Comma separated list of the origins allowed to open a websocket                                                      |                           |
+| `yhub.envVars.YHUB_JWT_PRIVATE_KEY_FILE`           | Path to the RSA private key (PEM) yhub signs its calls to the backend with, mounted from a secret                    |                           |
+| `yhub.envVars.YHUB_TASK_CONCURRENCY`               | Tasks one worker process claims at once, times the replicas running a worker (default: 5)                            |                           |
+| `yhub.envVars.YHUB_TASK_DEBOUNCE_MS`               | How long an update waits on the redis stream before a worker persists it, in ms (default: 10000)                     |                           |
+| `yhub.envVars.YHUB_MIN_MESSAGE_LIFETIME_MS`        | How long persisted updates stay replayable from redis, in ms (default: 60000)                                        |                           |
+| `yhub.envVars.SOFT_MIGRATION`                      | Set to "true" to seed rooms from the legacy Django/S3 document store on first access                                 |                           |
+| `yhub.envVars.LEGACY_S3_ENDPOINT_URL`              | Required by SOFT_MIGRATION, endpoint of the legacy Django media bucket, without a path (e.g. https://s3.example.com) |                           |
+| `yhub.envVars.LEGACY_S3_ACCESS_KEY_ID`             | Required by SOFT_MIGRATION, read access to the legacy bucket (or LEGACY_S3_ACCESS_KEY_ID_FILE)                       |                           |
+| `yhub.envVars.LEGACY_S3_SECRET_ACCESS_KEY`         | Required by SOFT_MIGRATION, secret of the key above (or LEGACY_S3_SECRET_ACCESS_KEY_FILE)                            |                           |
+| `yhub.envVars.LEGACY_S3_REGION_NAME`               | Region of the legacy bucket, when its provider needs one                                                             |                           |
+| `yhub.envVars.LEGACY_S3_BUCKET_NAME`               | Name of the legacy Django media bucket (default: impress-media-storage)                                              |                           |
+| `yhub.envVars.BY_VALUE`                            | Example environment variable by setting value directly                                                               |                           |
+| `yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.name` | Name of a ConfigMap when configuring env vars from a ConfigMap                                                       |                           |
+| `yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.key`  | Key within a ConfigMap when configuring env vars from a ConfigMap                                                    |                           |
+| `yhub.envVars.FROM_SECRET.secretKeyRef.name`       | Name of a Secret when configuring env vars from a Secret                                                             |                           |
+| `yhub.envVars.FROM_SECRET.secretKeyRef.key`        | Key within a Secret when configuring env vars from a Secret                                                          |                           |
+| `yhub.podAnnotations`                              | Annotations to add to the yhub Pod                                                                                   | `{}`                      |
+| `yhub.dpAnnotations`                               | Annotations to add to the yhub Deployment                                                                            | `{}`                      |
+| `yhub.initDbJobAnnotations`                        | Annotations for the yhub init-db job                                                                                 | `{}`                      |
+| `yhub.jobs.ttlSecondsAfterFinished`                | Period to wait before removing the init-db job                                                                       | `30`                      |
+| `yhub.jobs.backoffLimit`                           | Numbers of init-db job retries                                                                                       | `2`                       |
+| `yhub.initDb.enabled`                              | Run the job creating and upgrading the yhub schema                                                                   | `true`                    |
+| `yhub.initDb.command`                              | Override the command creating and upgrading the yhub schema                                                          | `[]`                      |
+| `yhub.initDb.retries`                              | How many times the schema script is retried while the postgres server does not answer                                | `60`                      |
+| `yhub.initDb.retryDelaySeconds`                    | Seconds between two attempts                                                                                         | `5`                       |
+| `yhub.initDb.restartPolicy`                        | Restart policy of the init-db job                                                                                    | `Never`                   |
+| `yhub.service.type`                                | yhub Service type                                                                                                    | `ClusterIP`               |
+| `yhub.service.port`                                | yhub Service listening port                                                                                          | `443`                     |
+| `yhub.service.targetPort`                          | yhub container listening port                                                                                        | `3002`                    |
+| `yhub.service.annotations`                         | Annotations to add to the yhub Service                                                                               | `{}`                      |
+| `yhub.probes.liveness.path`                        | Configure path for yhub HTTP liveness probe                                                                          | `/collaboration/ping/v1`  |
+| `yhub.probes.liveness.initialDelaySeconds`         | Configure initial delay for yhub liveness probe                                                                      | `10`                      |
+| `yhub.probes.liveness.timeoutSeconds`              | Configure timeout for yhub liveness probe                                                                            | `2`                       |
+| `yhub.probes.readiness.path`                       | Configure path for yhub HTTP readiness probe                                                                         | `/collaboration/ready/v1` |
+| `yhub.probes.readiness.initialDelaySeconds`        | Configure initial delay for yhub readiness probe                                                                     | `5`                       |
+| `yhub.probes.readiness.timeoutSeconds`             | Configure timeout for yhub readiness probe                                                                           | `3`                       |
+| `yhub.probes.liveness.targetPort`                  | Configure port for yhub HTTP liveness probe                                                                          |                           |
+| `yhub.probes.readiness.targetPort`                 | Configure port for yhub HTTP readiness probe                                                                         |                           |
+| `yhub.probes.startup.path`                         | Configure path for yhub HTTP startup probe                                                                           |                           |
+| `yhub.probes.startup.targetPort`                   | Configure port for yhub HTTP startup probe                                                                           |                           |
+| `yhub.probes.startup.initialDelaySeconds`          | Configure initial delay for yhub startup probe                                                                       |                           |
+| `yhub.probes.startup.timeoutSeconds`               | Configure timeout for yhub startup probe                                                                             |                           |
+| `yhub.resources`                                   | Resource requirements for the yhub container                                                                         | `{}`                      |
+| `yhub.nodeSelector`                                | Node selector for the yhub Pod                                                                                       | `{}`                      |
+| `yhub.tolerations`                                 | Tolerations for the yhub Pod                                                                                         | `[]`                      |
+| `yhub.affinity`                                    | Affinity for the yhub Pod                                                                                            | `{}`                      |
+| `yhub.persistence`                                 | Additional volumes to create and mount on the yhub. Used for debugging purposes                                      | `{}`                      |
+| `yhub.persistence.volume-name.size`                | Size of the additional volume                                                                                        |                           |
+| `yhub.persistence.volume-name.type`                | Type of the additional volume, persistentVolumeClaim or emptyDir                                                     |                           |
+| `yhub.persistence.volume-name.mountPath`           | Path where the volume should be mounted to                                                                           |                           |
+| `yhub.extraVolumeMounts`                           | Additional volumes to mount on the yhub. Mounted on the init-db job too                                              | `[]`                      |
+| `yhub.extraVolumes`                                | Additional volumes to mount on the yhub. Mounted on the init-db job too                                              | `[]`                      |
+| `yhub.pdb.enabled`                                 | Enable pdb on yhub                                                                                                   | `true`                    |
+| `yhub.serviceAccountName`                          | Optional service account name to use for yhub pods                                                                   | `nil`                     |
 
 ### docSpec
 
