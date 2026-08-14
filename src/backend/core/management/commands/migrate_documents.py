@@ -10,13 +10,17 @@ It is meant to be run again: every document it finishes is recorded, and the
 collaboration server answers "already" for anything it has already migrated, so
 a run that is interrupted, rate limited or killed simply picks up where it
 stopped. Nothing is destroyed, on either side.
+
+One document can also be handed over on its own with `--document-id`, which is
+how a document a run left behind is dealt with once its cause is understood.
 """
 
 import logging
 import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from core import models
@@ -46,6 +50,16 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         """Define the arguments of the command."""
+        parser.add_argument(
+            "--document-id",
+            type=uuid.UUID,
+            default=None,
+            help=(
+                "Migrate this document alone, whatever a previous run recorded "
+                "for it. The filters selecting a corpus (--created-before, "
+                "--limit, --retry-failed) do not apply to it."
+            ),
+        )
         parser.add_argument(
             "--concurrency",
             type=int,
@@ -136,7 +150,20 @@ class Command(BaseCommand):
         A document is opened before it is missed: the ones edited recently are
         the ones users are about to read, and until a document is migrated the
         collaboration server only seeds its latest state, without its history.
+
+        Naming one document is an instruction rather than a filter: it is handed
+        over even when a previous run recorded it as done, which costs a call
+        the collaboration server answers with "already". Nothing else would be
+        useful — a command asked for one document and reporting that it had
+        nothing to do says neither what happened nor why.
         """
+        if options["document_id"]:
+            queryset = models.Document.objects.filter(pk=options["document_id"])
+            if not queryset.exists():
+                raise CommandError(f"No document with id {options['document_id']}")
+
+            return queryset
+
         queryset = models.Document.objects.all()
 
         if options["created_before"]:
