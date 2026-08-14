@@ -29,13 +29,19 @@ import { Client as S3Client } from 'minio';
 import { secret } from './env.js';
 
 export const SOFT_MIGRATION = process.env.SOFT_MIGRATION === 'true';
-const AWS_S3_ENDPOINT_URL = process.env.AWS_S3_ENDPOINT_URL;
-const AWS_S3_ACCESS_KEY_ID = secret('AWS_S3_ACCESS_KEY_ID');
-const AWS_S3_SECRET_ACCESS_KEY = secret('AWS_S3_SECRET_ACCESS_KEY');
-const AWS_S3_REGION_NAME = process.env.AWS_S3_REGION_NAME;
+// The legacy Django media bucket, the one documents are migrated *out of*. It
+// carries a prefix of its own because it is not the only bucket in play: the
+// S3 persistence plugin, once it is enabled, persists *into* a bucket that may
+// sit on another provider with credentials of its own, and the backend's
+// `AWS_S3_*` settings — which a pod may perfectly well carry — name a third.
+// Each set is read by exactly the process it belongs to.
+const LEGACY_S3_ENDPOINT_URL = process.env.LEGACY_S3_ENDPOINT_URL;
+const LEGACY_S3_ACCESS_KEY_ID = secret('LEGACY_S3_ACCESS_KEY_ID');
+const LEGACY_S3_SECRET_ACCESS_KEY = secret('LEGACY_S3_SECRET_ACCESS_KEY');
+const LEGACY_S3_REGION_NAME = process.env.LEGACY_S3_REGION_NAME;
 // Django's default bucket name (impress settings.py) — prod overrides it
-const AWS_STORAGE_BUCKET_NAME =
-  process.env.AWS_STORAGE_BUCKET_NAME || 'impress-media-storage';
+const LEGACY_S3_BUCKET_NAME =
+  process.env.LEGACY_S3_BUCKET_NAME || 'impress-media-storage';
 // the same limit create-ydoc applies to a posted update in server.js: one
 // legacy snapshot handed to a compute worker, or written to the stream as a
 // single message
@@ -60,21 +66,23 @@ const EMPTY_YDOC = Y.encodeStateAsUpdate(new Y.Doc());
 
 if (
   SOFT_MIGRATION &&
-  (!AWS_S3_ENDPOINT_URL || !AWS_S3_ACCESS_KEY_ID || !AWS_S3_SECRET_ACCESS_KEY)
+  (!LEGACY_S3_ENDPOINT_URL ||
+    !LEGACY_S3_ACCESS_KEY_ID ||
+    !LEGACY_S3_SECRET_ACCESS_KEY)
 ) {
   // fail at boot instead of as an opaque 401 storm on first connect
   throw new Error(
-    'SOFT_MIGRATION=true requires AWS_S3_ENDPOINT_URL, AWS_S3_ACCESS_KEY_ID and AWS_S3_SECRET_ACCESS_KEY',
+    'SOFT_MIGRATION=true requires LEGACY_S3_ENDPOINT_URL, LEGACY_S3_ACCESS_KEY_ID and LEGACY_S3_SECRET_ACCESS_KEY',
   );
 }
 const s3 = SOFT_MIGRATION
   ? (() => {
-      const url = new URL(AWS_S3_ENDPOINT_URL);
+      const url = new URL(LEGACY_S3_ENDPOINT_URL);
       if (url.pathname !== '/' && url.pathname !== '') {
         // boto3 accepts path-prefixed endpoints but the minio client cannot
         // address a base path — dropping it silently would probe the wrong
         // keys and "migrate" every doc as empty
-        throw new Error('AWS_S3_ENDPOINT_URL must not contain a path');
+        throw new Error('LEGACY_S3_ENDPOINT_URL must not contain a path');
       }
       return new S3Client({
         endPoint: url.hostname,
@@ -85,9 +93,9 @@ const s3 = SOFT_MIGRATION
               ? 443
               : 80,
         useSSL: url.protocol === 'https:',
-        accessKey: AWS_S3_ACCESS_KEY_ID,
-        secretKey: AWS_S3_SECRET_ACCESS_KEY,
-        ...(AWS_S3_REGION_NAME ? { region: AWS_S3_REGION_NAME } : {}),
+        accessKey: LEGACY_S3_ACCESS_KEY_ID,
+        secretKey: LEGACY_S3_SECRET_ACCESS_KEY,
+        ...(LEGACY_S3_REGION_NAME ? { region: LEGACY_S3_REGION_NAME } : {}),
       });
     })()
   : null;
@@ -133,7 +141,7 @@ const fetchLegacyDoc = async (docid, versionId = null) => {
     let objPromise;
     try {
       objPromise = s3.getObject(
-        AWS_STORAGE_BUCKET_NAME,
+        LEGACY_S3_BUCKET_NAME,
         `${docid}/file`,
         // minio stringifies the whole opts object into the query — pass
         // undefined, not {}, so the unversioned read stays byte-identical
@@ -202,7 +210,7 @@ const listLegacyVersions = async (docid) => {
   const key = `${docid}/file`;
   const found = await new Promise((resolve, reject) => {
     const versions = [];
-    const stream = s3.listObjects(AWS_STORAGE_BUCKET_NAME, key, true, {
+    const stream = s3.listObjects(LEGACY_S3_BUCKET_NAME, key, true, {
       IncludeVersion: true,
     });
     const timer = setTimeout(() => {
@@ -439,7 +447,7 @@ export const maybeMigrate = async (yhub, room) => {
               err,
               docid: room.docid,
               permanent,
-              bucket: AWS_STORAGE_BUCKET_NAME,
+              bucket: LEGACY_S3_BUCKET_NAME,
               key: `${room.docid}/file`,
             },
             permanent
