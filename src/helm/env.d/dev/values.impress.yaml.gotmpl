@@ -219,6 +219,7 @@ yhub:
     COLLABORATION_SERVER_ORIGIN: https://docs.127.0.0.1.nip.io
     NODE_EXTRA_CA_CERTS: /cert/cacert.pem
     # YHUB_JWT_PRIVATE_KEY_FILE comes from the jwtKeys job below
+    LOG_LEVEL: debug
 
   # Extra volume mounts to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumeMounts:

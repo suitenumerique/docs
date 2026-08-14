@@ -148,7 +148,9 @@ and this project adheres to
   In the helm chart, `yhub.worker.enabled` turns the single deployment into
   two, sets the variable on each, and gives the worker no service and no probes
   since it binds nothing; everything not named under `yhub.worker` is the
-  server's
+  server's. `YHUB_TASK_CONCURRENCY` (default 5, unchanged) sets how many tasks
+  one worker process claims at once — the other half of the throughput knob the
+  replica count is, since redis hands each task to a single worker
 - ✨(collaboration) serve two probes on yhub: `GET /collaboration/ping/v1`
   answers `pong` without touching a store — being answered is what a liveness
   check should conclude, and restarting a server over a store it cannot reach
