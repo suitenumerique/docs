@@ -85,7 +85,8 @@ and this project adheres to
   top of content that exists.
   Backend reads carrying the admin JWT are seeded too, so a server-side read of
   an unmigrated document never answers with an empty one. Enabled in the dev
-  stack via compose.yml. The bucket it reads is configured under `LEGACY_S3_*`
+  stack through `env.d/development/yhub`, the collaboration server's own
+  environment file. The bucket it reads is configured under `LEGACY_S3_*`
   (`_ENDPOINT_URL`, `_ACCESS_KEY_ID`, `_SECRET_ACCESS_KEY`, `_REGION_NAME`,
   `_BUCKET_NAME`), a set of its own and not the backend's `AWS_S3_*`: this is
   the bucket the collaboration server migrates *out of*, while the one it will

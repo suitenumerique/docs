@@ -372,8 +372,9 @@ Configuration: `LEGACY_S3_ENDPOINT_URL`, `LEGACY_S3_ACCESS_KEY_ID`,
 `LEGACY_S3_REGION_NAME`, and `LEGACY_S3_BUCKET_NAME` (defaults to Django's dev
 default `impress-media-storage`; production uses a different bucket name and
 must set it explicitly). The server refuses to boot when the flag is set
-without endpoint and credentials. In development the values arrive via
-`env.d/development/common`.
+without endpoint and credentials. In development they come, like everything
+else this server reads, from `env.d/development/yhub` (and `yhub.local`, which
+is not committed — `make create-env-local-files` creates it).
 
 The prefix is deliberate: these name **the bucket this server migrates out
 of**, which is the backend's media bucket and not the one yhub will persist

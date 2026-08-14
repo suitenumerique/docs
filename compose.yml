@@ -241,18 +241,11 @@ services:
     image: impress:yhub-development
     environment:
       HOME: /tmp # same reason as node-based services above (unmapped uid)
-      PORT: 3002
-      REDIS: redis://yhub-valkey:6379
-      POSTGRES: postgres://yhub:yhub@yhub-postgres:5432/yhub
-      REDIS_PREFIX: yhub
-      # seed rooms from the legacy Django/S3 document store on first access —
-      # S3 endpoint/credentials come from env.d/development/common
-      SOFT_MIGRATION: "true"
-      # signs the calls made to the backend, which holds the public half
-      YHUB_JWT_PRIVATE_KEY_FILE: /data/jwt/yhub-private.pem
+    # its own file rather than the backend's: this server reads none of the
+    # django settings `common` carries, and everything it does read is in there
     env_file:
-      - env.d/development/common
-      - env.d/development/common.local
+      - env.d/development/yhub
+      - env.d/development/yhub.local
     volumes:
       - ./data/jwt:/data/jwt:ro
       # editing a source file restarts the server (nodemon), no rebuild

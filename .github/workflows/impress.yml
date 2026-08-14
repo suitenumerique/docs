@@ -263,8 +263,13 @@ jobs:
           REDIS_PREFIX: yhub
           COLLABORATION_BACKEND_BASE_URL: http://localhost:8000
           COLLABORATION_SERVER_ORIGIN: http://localhost:3000
-          AWS_STORAGE_BUCKET_NAME: impress-media-storage
+          # the legacy Django bucket it migrates documents out of, named apart
+          # from the AWS_S3_* the job sets for django itself
           SOFT_MIGRATION: "true"
+          LEGACY_S3_ENDPOINT_URL: http://localhost:9000
+          LEGACY_S3_ACCESS_KEY_ID: impress
+          LEGACY_S3_SECRET_ACCESS_KEY: password
+          LEGACY_S3_BUCKET_NAME: impress-media-storage
         run: |
           nohup node server.js > /tmp/yhub.log 2>&1 &
           dockerize -wait tcp://localhost:3002 -timeout 30s
