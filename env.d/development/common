@@ -37,15 +37,6 @@ AWS_S3_ACCESS_KEY_ID=impress
 AWS_S3_SECRET_ACCESS_KEY=password
 MEDIA_BASE_URL=http://localhost:8083
 
-# The same bucket, read by yhub's soft migration under names of its own: the
-# bucket the collaboration server migrates *out of* is not the one it will
-# persist *into* once the S3 persistence plugin is turned on, so it does not
-# read the backend's AWS_S3_* settings. Locally they hold the same minio, and
-# an override of the three above wants the same override here.
-LEGACY_S3_ENDPOINT_URL=http://minio:9000
-LEGACY_S3_ACCESS_KEY_ID=impress
-LEGACY_S3_SECRET_ACCESS_KEY=password
-
 # OIDC
 OIDC_OP_JWKS_ENDPOINT=http://nginx:8083/realms/impress/protocol/openid-connect/certs
 OIDC_OP_AUTHORIZATION_ENDPOINT=http://localhost:8083/realms/impress/protocol/openid-connect/auth
