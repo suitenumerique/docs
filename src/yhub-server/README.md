@@ -296,8 +296,8 @@ documents into yhub lazily, on first access:
    then the valkey stream (uncompacted `ydoc:update:v1` messages), then the
    `SELECT` again to close the compaction race. Verdicts are cached in-process
    (existing docs 10 min, empty docs 60 s, failures 5 min).
-2. If the room is unknown, the legacy object is fetched from S3 (10 s
-   timeout, 10 MiB decoded cap — the same limit as `create-ydoc`), decoded,
+2. If the room is unknown, the legacy object is fetched from S3 whole,
+   whatever its size (10 s timeout for the request and its body), decoded,
    diffed through yhub's compute pool and appended to the room's stream —
    attributed to the `system` identity with a `migration=s3` custom
    attribution. This completes before the websocket upgrade resolves, so the
@@ -350,7 +350,7 @@ Guarantees and failure behavior:
   guessing wrong the other way costs the document.
 
   A cached failure verdict prevents retry storms from hammering S3 — permanent
-  failures (corrupt/oversized objects) for 5 minutes, transient ones (network
+  failures (objects that do not decode) for 5 minutes, transient ones (network
   errors, timeouts) for 15 seconds, and per-replica seed backpressure (more
   than 20 concurrent seeds) is not cached at all, so the client's next retry
   goes through.
@@ -369,12 +369,29 @@ Guarantees and failure behavior:
 
 Configuration: `LEGACY_S3_ENDPOINT_URL`, `LEGACY_S3_ACCESS_KEY_ID`,
 `LEGACY_S3_SECRET_ACCESS_KEY` (both with `*_FILE` indirection), optional
-`LEGACY_S3_REGION_NAME`, and `LEGACY_S3_BUCKET_NAME` (defaults to Django's dev
-default `impress-media-storage`; production uses a different bucket name and
-must set it explicitly). The server refuses to boot when the flag is set
-without endpoint and credentials. In development they come, like everything
-else this server reads, from `env.d/development/yhub` (and `yhub.local`, which
-is not committed — `make create-env-local-files` creates it).
+`LEGACY_S3_REGION_NAME` (`us-east-1` when unset, which every S3-compatible
+provider answers to), `LEGACY_S3_SIGNATURE_VERSION` (see below), and
+`LEGACY_S3_BUCKET_NAME` (defaults to Django's dev default
+`impress-media-storage`; production uses a different bucket name and must set
+it explicitly). The server refuses to boot when the flag is set without
+endpoint and credentials. In development they come, like everything else this
+server reads, from `env.d/development/yhub` (and `yhub.local`, which is not
+committed — `make create-env-local-files` creates it).
+
+The bucket is read with the **AWS SDK for JavaScript v3**
+(`@aws-sdk/client-s3`), the same library family boto3 is to Django, so the
+provider quirks the backend already deals with apply here too. Two settings
+follow from that:
+
+- `LEGACY_S3_SIGNATURE_VERSION` — the counterpart of Django's
+  `AWS_S3_SIGNATURE_VERSION`, since a provider expecting the other signature
+  answers `403`, which reads exactly like wrong credentials. It defaults to
+  `s3v4` and accepts `s3v4` or `v4`. **SigV2 (boto3's `s3`) is not available**:
+  the AWS SDK v3 dropped it, so asking for it fails at boot instead of signing
+  the other way and being bounced,
+- addressing style is chosen from the endpoint: path style (`{host}/{bucket}`)
+  everywhere but `amazonaws.com`, which prefers virtual-host style. Self-hosted
+  providers have no per-bucket DNS record, so path style is what they need.
 
 The prefix is deliberate: these name **the bucket this server migrates out
 of**, which is the backend's media bucket and not the one yhub will persist
