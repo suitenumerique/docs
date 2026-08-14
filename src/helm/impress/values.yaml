@@ -955,6 +955,11 @@ yhub:
   ## The worker binds nothing: no service, no ingress, and no probes to give it
   ## (its liveness is its process). Everything not named here is the server's:
   ## same image, same envVars, same secrets, same volumes.
+  ##
+  ## How much each pod chews through is `worker.envVars.YHUB_TASK_CONCURRENCY`
+  ## (default 5, and `yhub.envVars` when the two halves share a process), the
+  ## other half of the throughput knob `worker.replicas` is: redis hands each
+  ## task to a single worker, so the two multiply.
   worker:
     enabled: false
     replicas: 1
@@ -1008,6 +1013,7 @@ yhub:
   ## @extra yhub.envVars.COLLABORATION_BACKEND_BASE_URL Base url of the Docs backend, which yhub asks about users and document access rights
   ## @extra yhub.envVars.COLLABORATION_SERVER_ORIGIN Comma separated list of the origins allowed to open a websocket
   ## @extra yhub.envVars.YHUB_JWT_PRIVATE_KEY_FILE Path to the RSA private key (PEM) yhub signs its calls to the backend with, mounted from a secret
+  ## @extra yhub.envVars.YHUB_TASK_CONCURRENCY Tasks one worker process claims at once, times the replicas running a worker (default: 5)
   ## @extra yhub.envVars.SOFT_MIGRATION Set to "true" to seed rooms from the legacy Django/S3 document store on first access
   ## @extra yhub.envVars.BY_VALUE Example environment variable by setting value directly
   ## @extra yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.name Name of a ConfigMap when configuring env vars from a ConfigMap
