@@ -383,6 +383,7 @@
 | `yhub.envVars.LEGACY_S3_SECRET_ACCESS_KEY`         | Required by SOFT_MIGRATION, secret of the key above (or LEGACY_S3_SECRET_ACCESS_KEY_FILE)                            |                           |
 | `yhub.envVars.LEGACY_S3_REGION_NAME`               | Region of the legacy bucket, when its provider needs one                                                             |                           |
 | `yhub.envVars.LEGACY_S3_BUCKET_NAME`               | Name of the legacy Django media bucket (default: impress-media-storage)                                              |                           |
+| `yhub.envVars.LEGACY_S3_SIGNATURE_VERSION`         | How the calls to the legacy bucket are signed, s3v4 or v4 (default: s3v4)                                            |                           |
 | `yhub.envVars.BY_VALUE`                            | Example environment variable by setting value directly                                                               |                           |
 | `yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.name` | Name of a ConfigMap when configuring env vars from a ConfigMap                                                       |                           |
 | `yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.key`  | Key within a ConfigMap when configuring env vars from a ConfigMap                                                    |                           |
