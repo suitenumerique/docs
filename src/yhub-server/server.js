@@ -16,7 +16,6 @@ import {
   jwtVerify,
   SignJWT,
 } from 'jose';
-import { Client as S3Client } from 'minio';
 
 import { secret } from './env.js';
 // legacy Django/S3 document store — see migration.js and README.md
@@ -237,11 +236,11 @@ const backendFetch = async (path, { cookie, origin }) => {
 // Seeding never decides whether the caller may read the document — that is the
 // backend's answer alone. There are two ways this ends other than a seed:
 //
-//   the legacy object cannot be migrated (it does not decode, or it is bigger
-//     than we will load) — retrying will not change that, so the room opens as
-//     a new document. Refusing instead would lock a document nobody can repair
-//     from the outside. Logged per access, because the caller is now editing
-//     alongside legacy content that stayed behind in S3.
+//   the legacy object cannot be migrated (it does not decode) — retrying will
+//     not change that, so the room opens as a new document. Refusing instead
+//     would lock a document nobody can repair from the outside. Logged per
+//     access, because the caller is now editing alongside legacy content that
+//     stayed behind in S3.
 //   the legacy store could not be reached (timeout, network, backpressure) —
 //     the same request later may well succeed, so it answers 503 rather than
 //     silently starting an empty document on top of content that exists.

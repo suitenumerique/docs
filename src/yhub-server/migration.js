@@ -22,9 +22,13 @@
 
 import { randomUUID } from 'node:crypto';
 
+import {
+  GetObjectCommand,
+  ListObjectVersionsCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { logger } from '@y/hub';
 import * as Y from '@y/y';
-import { Client as S3Client } from 'minio';
 
 import { secret } from './env.js';
 
@@ -42,13 +46,18 @@ const LEGACY_S3_REGION_NAME = process.env.LEGACY_S3_REGION_NAME;
 // Django's default bucket name (impress settings.py) — prod overrides it
 const LEGACY_S3_BUCKET_NAME =
   process.env.LEGACY_S3_BUCKET_NAME || 'impress-media-storage';
-// the same limit create-ydoc applies to a posted update in server.js: one
-// legacy snapshot handed to a compute worker, or written to the stream as a
-// single message
-const MAX_LEGACY_BYTES = 10 * 1024 * 1024;
-// base64 inflates 3 bytes to 4 — cap the streamed read at the encoded size of
-// MAX_LEGACY_BYTES plus padding slack
-const MAX_LEGACY_B64_BYTES = Math.ceil(MAX_LEGACY_BYTES / 3) * 4 + 1024;
+// How the requests are signed, the counterpart of Django's
+// AWS_S3_SIGNATURE_VERSION: a provider that expects the other one answers 403,
+// which reads exactly like wrong credentials, so it is worth being explicit
+// about. Only SigV4 is offered — see SIGNATURE_VERSIONS below.
+const LEGACY_S3_SIGNATURE_VERSION =
+  process.env.LEGACY_S3_SIGNATURE_VERSION || 's3v4';
+// What that variable accepts, mapped to what it means for the client. The AWS
+// SDK v3 signs with SigV4 and dropped SigV2 altogether, so the spellings of
+// SigV4 are the whole set: a value asking for SigV2 (`s3`, boto3's other
+// choice) is refused at boot rather than silently signed the other way and
+// bounced by the provider as a credentials error.
+const SIGNATURE_VERSIONS = { s3v4: 'sigv4', v4: 'sigv4' };
 const S3_FETCH_TIMEOUT_MS = 10000;
 const MIGRATE_LOCK_TTL_MS = 30000;
 const MAX_CONCURRENT_SEEDS = 20;
@@ -79,23 +88,36 @@ const s3 = SOFT_MIGRATION
   ? (() => {
       const url = new URL(LEGACY_S3_ENDPOINT_URL);
       if (url.pathname !== '/' && url.pathname !== '') {
-        // boto3 accepts path-prefixed endpoints but the minio client cannot
-        // address a base path — dropping it silently would probe the wrong
-        // keys and "migrate" every doc as empty
+        // boto3 accepts path-prefixed endpoints but an S3 endpoint cannot
+        // carry a base path — dropping it silently would probe the wrong keys
+        // and "migrate" every doc as empty
         throw new Error('LEGACY_S3_ENDPOINT_URL must not contain a path');
       }
+      const signature =
+        SIGNATURE_VERSIONS[LEGACY_S3_SIGNATURE_VERSION.toLowerCase()];
+      if (signature == null) {
+        throw new Error(
+          `LEGACY_S3_SIGNATURE_VERSION must be one of ${Object.keys(
+            SIGNATURE_VERSIONS,
+          ).join(', ')} (got "${LEGACY_S3_SIGNATURE_VERSION}")`,
+        );
+      }
       return new S3Client({
-        endPoint: url.hostname,
-        port:
-          url.port !== ''
-            ? Number(url.port)
-            : url.protocol === 'https:'
-              ? 443
-              : 80,
-        useSSL: url.protocol === 'https:',
-        accessKey: LEGACY_S3_ACCESS_KEY_ID,
-        secretKey: LEGACY_S3_SECRET_ACCESS_KEY,
-        ...(LEGACY_S3_REGION_NAME ? { region: LEGACY_S3_REGION_NAME } : {}),
+        endpoint: url.origin,
+        // required by the sdk even where the provider ignores it; us-east-1 is
+        // what every S3-compatible implementation answers to by default
+        region: LEGACY_S3_REGION_NAME || 'us-east-1',
+        credentials: {
+          accessKeyId: LEGACY_S3_ACCESS_KEY_ID,
+          secretAccessKey: LEGACY_S3_SECRET_ACCESS_KEY,
+        },
+        // `sigv4` today, and the client is built from the setting rather than
+        // from the default so that the value is what decides
+        authSchemePreference: [`aws.auth#${signature}`],
+        // Virtual-host style addresses a bucket as `{bucket}.{host}`, which
+        // needs a DNS record self-hosted providers do not have. AWS is the one
+        // endpoint that prefers it — and the one deprecating path style.
+        forcePathStyle: !/(^|\.)amazonaws\.com$/i.test(url.hostname),
       });
     })()
   : null;
@@ -114,93 +136,60 @@ const migrateLockKey = (yhub, room) =>
 // content twice (see fullMigrate).
 const migratedSetKey = (yhub) => `${yhub.stream.prefix}:migrated:v1`;
 
+// An aborted request surfaces as whatever the sdk or the body stream raises
+// when the socket goes away ("aborted", TimeoutError, …). Say what actually
+// happened instead, and leave it unmarked so it stays retryable — a slow S3
+// may well recover.
+const asTimeout = (err, signal, what, ms) =>
+  signal.aborted ? new Error(`${what} timed out after ${ms}ms`) : err;
+
 // Legacy Django document store: object `{docid}/file`, body = UTF-8 text that
 // is the base64 encoding of a raw Yjs update. With `versionId`, reads that
 // specific object version instead of the current one. Returns null when the
 // object (or version) does not exist — a document that never had content
-// saved, e.g. brand new. Throws on any other failure (network, auth, timeout,
-// oversize); corrupt base64 decodes leniently to garbage that the callers
-// reject.
+// saved, e.g. brand new. Throws on any other failure (network, auth, timeout);
+// corrupt base64 decodes leniently to garbage that the callers reject.
 const fetchLegacyDoc = async (docid, versionId = null) => {
-  let stream = null;
-  let cancelTimeout = () => {};
-  // minio 8 takes no AbortSignal — race a timer that also destroys the body
-  // stream once reading, so a stalled transfer cannot hold the ws upgrade
-  const timeout = new Promise((_, reject) => {
-    const timer = setTimeout(() => {
-      // unmarked, so it counts as retryable: a slow S3 may recover
-      const err = new Error(
-        `s3 fetch timed out after ${S3_FETCH_TIMEOUT_MS}ms`,
-      );
-      stream?.destroy(err);
-      reject(err);
-    }, S3_FETCH_TIMEOUT_MS);
-    cancelTimeout = () => clearTimeout(timer);
-  });
+  // One budget for the whole read, headers and body alike: the sdk aborts the
+  // request when it fires and the body stream dies with it, so a stalled
+  // transfer cannot hold the ws upgrade open.
+  const abortSignal = AbortSignal.timeout(S3_FETCH_TIMEOUT_MS);
+  let body;
   try {
-    let objPromise;
-    try {
-      objPromise = s3.getObject(
-        LEGACY_S3_BUCKET_NAME,
-        `${docid}/file`,
-        // minio stringifies the whole opts object into the query — pass
-        // undefined, not {}, so the unversioned read stays byte-identical
-        versionId != null ? { versionId } : undefined,
-      );
-      stream = await Promise.race([objPromise, timeout]);
-    } catch (err) {
-      // NoSuchVersion: the version vanished between listing and reading
-      if (err?.code === 'NoSuchKey' || err?.code === 'NoSuchVersion') {
-        return null;
-      }
-      // if the timeout won the race, getObject may still resolve later —
-      // destroy the late-arriving response stream, otherwise its never-read
-      // socket leaks (minio 8 sets no request timeout and cannot abort)
-      objPromise?.then(
-        (s) => s.destroy(err),
-        () => {},
-      );
-      throw err;
-    }
-    const body = await Promise.race([
-      new Promise((resolve, reject) => {
-        const chunks = [];
-        let received = 0;
-        stream.on('data', (chunk) => {
-          received += chunk.byteLength;
-          if (received > MAX_LEGACY_B64_BYTES) {
-            const err = new Error(
-              `legacy object exceeds the ${MAX_LEGACY_B64_BYTES}B cap`,
-            );
-            err.permanent = true; // the object will be this big next time too
-            stream.destroy(err);
-            return;
-          }
-          chunks.push(chunk);
-        });
-        stream.on('error', reject);
-        stream.on('end', () => resolve(Buffer.concat(chunks)));
+    ({ Body: body } = await s3.send(
+      new GetObjectCommand({
+        Bucket: LEGACY_S3_BUCKET_NAME,
+        Key: `${docid}/file`,
+        ...(versionId != null ? { VersionId: versionId } : {}),
       }),
-      timeout,
-    ]);
-    const decoded = Buffer.from(body.toString('utf8'), 'base64');
-    if (decoded.byteLength > MAX_LEGACY_BYTES) {
-      const err = new Error(
-        `decoded legacy update (${decoded.byteLength}B) exceeds the ${MAX_LEGACY_BYTES}B cap`,
-      );
-      err.permanent = true; // the object will be this big next time too
-      throw err;
+      { abortSignal },
+    ));
+  } catch (err) {
+    // NoSuchVersion: the version vanished between listing and reading.
+    // NotFound is the bare 404 some S3-compatible providers answer with
+    // instead; a missing *bucket* has a name of its own and is not caught
+    // here — that one is a misconfiguration, not an absent document.
+    if (
+      err?.name === 'NoSuchKey' ||
+      err?.name === 'NoSuchVersion' ||
+      err?.name === 'NotFound'
+    ) {
+      return null;
     }
-    // compute-task schema requires an exact Uint8Array (lib0 compares the
-    // constructor) — re-view the Buffer without copying
-    return new Uint8Array(
-      decoded.buffer,
-      decoded.byteOffset,
-      decoded.byteLength,
-    );
-  } finally {
-    cancelTimeout();
+    throw asTimeout(err, abortSignal, 's3 fetch', S3_FETCH_TIMEOUT_MS);
   }
+  let encoded;
+  try {
+    // the object whole, whatever its size: it is one document's content, and
+    // refusing to read it is refusing to migrate that document at all
+    encoded = await body.transformToString('utf8');
+  } catch (err) {
+    throw asTimeout(err, abortSignal, 's3 fetch', S3_FETCH_TIMEOUT_MS);
+  }
+  const decoded = Buffer.from(encoded, 'base64');
+  // compute-task schema requires an exact Uint8Array (lib0 compares the
+  // constructor) — re-view the Buffer without copying
+  return new Uint8Array(decoded.buffer, decoded.byteOffset, decoded.byteLength);
 };
 
 // Every version of the legacy object, oldest first. Delete markers are skipped
@@ -208,36 +197,58 @@ const fetchLegacyDoc = async (docid, versionId = null) => {
 // the prefix — S3 has no exact-key version listing.
 const listLegacyVersions = async (docid) => {
   const key = `${docid}/file`;
-  const found = await new Promise((resolve, reject) => {
-    const versions = [];
-    const stream = s3.listObjects(LEGACY_S3_BUCKET_NAME, key, true, {
-      IncludeVersion: true,
-    });
-    const timer = setTimeout(() => {
-      const err = new Error(
-        `s3 version listing timed out after ${S3_LIST_TIMEOUT_MS}ms`,
+  // one budget for the whole listing, however many pages it takes
+  const abortSignal = AbortSignal.timeout(S3_LIST_TIMEOUT_MS);
+  const found = [];
+  try {
+    let keyMarker;
+    let versionIdMarker;
+    let truncated = true;
+    while (truncated) {
+      const page = await s3.send(
+        new ListObjectVersionsCommand({
+          Bucket: LEGACY_S3_BUCKET_NAME,
+          Prefix: key,
+          KeyMarker: keyMarker,
+          VersionIdMarker: versionIdMarker,
+        }),
+        { abortSignal },
       );
-      stream.destroy(err);
-    }, S3_LIST_TIMEOUT_MS);
-    stream.on('data', (obj) => {
-      if (obj.name === key && obj.isDeleteMarker !== true && obj.versionId) {
-        versions.push({
-          versionId: String(obj.versionId),
-          // the moment S3 accepted the write: what the backend's version
-          // listing reports as `last_modified`, and what we attribute to
-          timestamp: obj.lastModified?.getTime() ?? 0,
-        });
+      // delete markers record a deletion and carry no body; they come in a
+      // list of their own here, so reading `Versions` skips them by itself
+      for (const version of page.Versions ?? []) {
+        if (version.Key === key && version.VersionId) {
+          found.push({
+            versionId: String(version.VersionId),
+            // the moment S3 accepted the write: what the backend's version
+            // listing reports as `last_modified`, and what we attribute to
+            timestamp: version.LastModified?.getTime() ?? 0,
+          });
+        }
       }
-    });
-    stream.on('error', (err) => {
-      clearTimeout(timer);
-      reject(err);
-    });
-    stream.on('end', () => {
-      clearTimeout(timer);
-      resolve(versions);
-    });
-  });
+      truncated = page.IsTruncated === true;
+      keyMarker = page.NextKeyMarker;
+      versionIdMarker = page.NextVersionIdMarker;
+    }
+  } catch (err) {
+    const failure = asTimeout(
+      err,
+      abortSignal,
+      's3 version listing',
+      S3_LIST_TIMEOUT_MS,
+    );
+    migrationLog.error(
+      {
+        event: 'list_version.failed',
+        err: failure,
+        docid,
+        bucket: LEGACY_S3_BUCKET_NAME,
+        key,
+      },
+      'impossible to list object version',
+    );
+    throw failure;
+  }
   // S3 lists a key's versions newest first; reverse to replay them in write
   // order. The sort is a stable safeguard across paginated listings — equal
   // timestamps keep S3's own ordering.
