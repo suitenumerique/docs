@@ -166,6 +166,17 @@ and this project adheres to
   server's. `YHUB_TASK_CONCURRENCY` (default 5, unchanged) sets how many tasks
   one worker process claims at once — the other half of the throughput knob the
   replica count is, since redis hands each task to a single worker
+- ✨(collaboration) configure the two stream timings that were compiled into
+  the yhub wrapper: `YHUB_TASK_DEBOUNCE_MS` (default 10000, unchanged), how
+  long an update waits on the redis stream before a worker persists it — the
+  delay between an edit and its row in postgres, and the window over which the
+  edits of a busy document are merged into one task — and
+  `YHUB_MIN_MESSAGE_LIFETIME_MS` (default 60000, unchanged), how long persisted
+  updates stay replayable from redis rather than being read back out of
+  postgres. Neither is a durability setting: the trim never goes past what
+  postgres holds. Like the concurrency, they are refused at startup when they
+  are not whole numbers in range, and all of them are logged with the role on
+  the first line a pod writes
 - ✨(collaboration) serve two probes on yhub: `GET /collaboration/ping/v1`
   answers `pong` without touching a store — being answered is what a liveness
   check should conclude, and restarting a server over a store it cannot reach

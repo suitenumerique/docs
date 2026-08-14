@@ -119,13 +119,47 @@ Redis consumer groups hand each task to exactly one worker, so the number of
 workers is a throughput knob and nothing else: no leader, no partitioning, no
 coordination between them.
 
-`YHUB_TASK_CONCURRENCY` (default `5`) is the other half of that knob: how many
-tasks one process claims at once. What actually runs in parallel is that number
-times the processes running a worker, so the two are interchangeable up to the
-point where a pod runs out of memory — each task holds the document it merges.
-A value that is not a positive integer is refused at startup, like an unknown
-role: `Number()` would otherwise read a typo as `NaN` and leave the worker
-claiming nothing.
+`YHUB_TASK_CONCURRENCY` is the other half of that knob — see below.
+
+## Tuning
+
+Three numbers this wrapper passes to yhub, all of them environment variables
+whose defaults are what Docs ran with before they were configurable:
+
+| Variable | Default | What it changes |
+| -------- | ------- | --------------- |
+| `YHUB_TASK_CONCURRENCY` | `5` | Tasks one worker process claims at once |
+| `YHUB_TASK_DEBOUNCE_MS` | `10000` | How long an update waits on the stream before a worker persists it |
+| `YHUB_MIN_MESSAGE_LIFETIME_MS` | `60000` | How long persisted updates stay replayable from redis |
+
+**Concurrency** multiplies with the number of processes running a worker, since
+redis hands each task to exactly one of them: the two are interchangeable up to
+the point where a pod runs out of memory, each task holding the document it
+merges.
+
+**The debounce** is the delay between an edit and its row in postgres, and the
+window over which the edits of a busy document are merged into a single task.
+Lowering it persists sooner and compacts more often; raising it does the
+reverse. yhub's own default is 120s, which is a long time to lose when a pod is
+killed, hence the 10s here.
+
+**The message lifetime** is not a durability setting: the trim stops at the
+older of that age and the point postgres already holds, so nothing unpersisted
+is ever dropped. It buys how much recent history a server can replay from redis
+instead of reading the document back out of postgres, and it is paid for in
+redis memory.
+
+All three are refused at startup, like an unknown role, when they are not whole
+numbers in range (`YHUB_TASK_CONCURRENCY must be an integer >= 1 (got "abc")`):
+`Number()` would otherwise read a typo as `NaN` and hand it to yhub, which
+takes it — a worker that claims nothing, or a stream that is never trimmed,
+with nothing in the logs to say so. Unset and empty both mean the default, so a
+kubernetes variable left blank behaves as if it were absent. The effective
+values are logged at startup, next to the role:
+
+```json
+{"role":"all","server":true,"worker":true,"taskConcurrency":5,"taskDebounceMs":10000,"minMessageLifetimeMs":60000,"msg":"yhub configuration"}
+```
 
 ## Container image
 
