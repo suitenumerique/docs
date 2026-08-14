@@ -180,6 +180,8 @@ yhub:
     COLLABORATION_BACKEND_BASE_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     COLLABORATION_SERVER_ORIGIN: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     NODE_OPTIONS: "--max-old-space-size=1024"
+    UWS_HTTP_MAX_HEADERS_SIZE: 32768
+    LOG_LEVEL: debug
 
 docSpec:
   enabled: true

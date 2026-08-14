@@ -374,6 +374,7 @@
 | `yhub.envVars.COLLABORATION_BACKEND_BASE_URL`      | Base url of the Docs backend, which yhub asks about users and document access rights                          |                           |
 | `yhub.envVars.COLLABORATION_SERVER_ORIGIN`         | Comma separated list of the origins allowed to open a websocket                                               |                           |
 | `yhub.envVars.YHUB_JWT_PRIVATE_KEY_FILE`           | Path to the RSA private key (PEM) yhub signs its calls to the backend with, mounted from a secret             |                           |
+| `yhub.envVars.YHUB_TASK_CONCURRENCY`               | Tasks one worker process claims at once, times the replicas running a worker (default: 5)                     |                           |
 | `yhub.envVars.SOFT_MIGRATION`                      | Set to "true" to seed rooms from the legacy Django/S3 document store on first access                          |                           |
 | `yhub.envVars.BY_VALUE`                            | Example environment variable by setting value directly                                                        |                           |
 | `yhub.envVars.FROM_CONFIGMAP.configMapKeyRef.name` | Name of a ConfigMap when configuring env vars from a ConfigMap                                                |                           |
