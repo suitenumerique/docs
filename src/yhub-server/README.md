@@ -367,13 +367,21 @@ Guarantees and failure behavior:
   document then opens as an *empty* room. Keep the flag on until a backfill
   has migrated the full corpus.
 
-Configuration: `AWS_S3_ENDPOINT_URL`, `AWS_S3_ACCESS_KEY_ID`,
-`AWS_S3_SECRET_ACCESS_KEY` (both with `*_FILE` indirection), optional
-`AWS_S3_REGION_NAME`, and `AWS_STORAGE_BUCKET_NAME` (defaults to Django's dev
+Configuration: `LEGACY_S3_ENDPOINT_URL`, `LEGACY_S3_ACCESS_KEY_ID`,
+`LEGACY_S3_SECRET_ACCESS_KEY` (both with `*_FILE` indirection), optional
+`LEGACY_S3_REGION_NAME`, and `LEGACY_S3_BUCKET_NAME` (defaults to Django's dev
 default `impress-media-storage`; production uses a different bucket name and
 must set it explicitly). The server refuses to boot when the flag is set
 without endpoint and credentials. In development the values arrive via
 `env.d/development/common`.
+
+The prefix is deliberate: these name **the bucket this server migrates out
+of**, which is the backend's media bucket and not the one yhub will persist
+into once the S3 persistence plugin is enabled. That one gets a set of its own,
+and the two are free to be different buckets, on different providers, with
+different credentials. Nothing here reads the backend's `AWS_S3_*` settings —
+a pod that carries them, for the backend's own reasons, must not quietly
+migrate documents out of whatever they point at.
 
 Operational notes:
 
@@ -383,7 +391,7 @@ Operational notes:
   to `s3:GetObject`: without it, S3 reports a missing object as
   `403 AccessDenied` instead of `404 NoSuchKey`, and every brand-new document
   would fail closed instead of starting empty.
-- `AWS_S3_ENDPOINT_URL` must not contain a path (the minio client cannot
+- `LEGACY_S3_ENDPOINT_URL` must not contain a path (the minio client cannot
   address a base path); the server refuses to boot otherwise.
 - After manually wiping a room's yhub state (postgres row + stream key),
   **restart yhub** so the in-process verdict cache cannot serve a stale
