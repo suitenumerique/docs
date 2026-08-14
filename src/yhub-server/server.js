@@ -28,10 +28,38 @@ import {
   migrationLog,
 } from './migration.js';
 
+// A numeric setting, read from the environment and refused rather than guessed
+// when it is not a whole number at or above `min`: `Number()` reads a typo as
+// NaN, which yhub takes as-is and turns into a worker that claims nothing or a
+// stream that is never trimmed — a deployment that looks healthy and is not.
+// An unset or empty variable is the default, so a kubernetes env var left blank
+// behaves as if it had not been set at all.
+const intEnv = (name, dflt, min = 1) => {
+  const raw = process.env[name];
+  const value = raw == null || raw === '' ? dflt : Number(raw);
+  if (!Number.isInteger(value) || value < min) {
+    throw new Error(`${name} must be an integer >= ${min} (got "${raw}")`);
+  }
+  return value;
+};
+
 const PORT = Number(process.env.PORT || 3002);
 const REDIS = process.env.REDIS;
 const POSTGRES = process.env.POSTGRES;
 const REDIS_PREFIX = process.env.REDIS_PREFIX || 'yhub';
+// How long an update waits on the stream before a worker claims the compaction
+// task it belongs to. It is the delay between an edit and its row in postgres,
+// and the window over which the edits of a busy document are merged into one
+// task: lowering it persists sooner and compacts more often, raising it does
+// the reverse. yhub defaults to 120s, which is a long time to lose when a pod
+// is killed — Docs asks for 10s.
+const TASK_DEBOUNCE_MS = intEnv('YHUB_TASK_DEBOUNCE_MS', 10000, 0);
+// How long messages a worker has already persisted are kept on the stream. The
+// trim stops at the older of that age and the point postgres holds, so this is
+// not a durability setting — nothing unpersisted is ever trimmed. It is how
+// much recent history stays replayable from redis instead of being read back
+// out of postgres, paid for in memory on the redis side.
+const MIN_MESSAGE_LIFETIME_MS = intEnv('YHUB_MIN_MESSAGE_LIFETIME_MS', 60000, 0);
 const COLLABORATION_BACKEND_BASE_URL =
   process.env.COLLABORATION_BACKEND_BASE_URL || 'http://app-dev:8000';
 const allowedOrigins = (
@@ -61,14 +89,8 @@ const RUNS_WORKER = ROLE !== 'server';
 // single worker, so what a deployment actually runs in parallel is this times
 // the number of worker processes — the two knobs are interchangeable up to the
 // point where a pod runs out of memory, each task holding the document it
-// merges. Refused rather than guessed when it is not a positive integer:
-// `Number()` would otherwise turn a typo into NaN and yhub into an idle worker.
-const TASK_CONCURRENCY = Number(process.env.YHUB_TASK_CONCURRENCY || 5);
-if (!Number.isInteger(TASK_CONCURRENCY) || TASK_CONCURRENCY < 1) {
-  throw new Error(
-    `YHUB_TASK_CONCURRENCY must be a positive integer (got "${process.env.YHUB_TASK_CONCURRENCY}")`,
-  );
-}
+// merges.
+const TASK_CONCURRENCY = intEnv('YHUB_TASK_CONCURRENCY', 5, 1);
 // Segment every route is mounted under (`server.apiPrefix` below), matching the
 // URL scheme Docs already routes to the collaboration server. Hardcoded like
 // the audiences: the backend builds its urls with the same prefix.
@@ -843,8 +865,8 @@ const yhub = await createYHub({
   redis: {
     url: REDIS,
     prefix: REDIS_PREFIX,
-    taskDebounce: 10000,
-    minMessageLifetime: 60000,
+    taskDebounce: TASK_DEBOUNCE_MS,
+    minMessageLifetime: MIN_MESSAGE_LIFETIME_MS,
   },
   postgres: POSTGRES,
   persistence: [], // blobs live in yhub's postgres
@@ -862,12 +884,19 @@ const yhub = await createYHub({
     : null,
 });
 
+// What this process was configured to be, in one line: yhub's own startup log
+// reports neither the role nor the stream settings, and every one of them is an
+// environment variable a deployment can get wrong. The two timings are read
+// back off the instance rather than from the constants above, so the line says
+// what yhub is using and not merely what it was asked for.
 logger.info(
   {
     role: ROLE,
     server: RUNS_SERVER,
     worker: RUNS_WORKER,
     taskConcurrency: RUNS_WORKER ? TASK_CONCURRENCY : null,
+    taskDebounceMs: yhub.stream.taskDebounce,
+    minMessageLifetimeMs: yhub.stream.minMessageLifetime,
   },
-  'yhub role',
+  'yhub configuration',
 );
