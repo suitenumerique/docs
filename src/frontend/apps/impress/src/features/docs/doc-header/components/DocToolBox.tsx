@@ -22,7 +22,7 @@ import LeaveSVG from '@/assets/icons/ui-kit/leave.svg';
 import MarkdownCopySVG from '@/assets/icons/ui-kit/markdown_copy.svg';
 import MoreSVG from '@/assets/icons/ui-kit/more_horiz.svg';
 import {
-  Doc,
+  type Doc,
   KEY_DOC,
   KEY_LIST_DOC,
   KEY_LIST_FAVORITE_DOC,
@@ -32,6 +32,7 @@ import {
   useDocUtils,
   useDuplicateDoc,
 } from '@/docs/doc-management';
+import { ConfirmationDuplicateModal } from '@/docs/doc-management/components/ConfirmationDuplicateModal';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useAuth } from '@/features/auth';
 import { useFocusStore, useResponsiveStore } from '@/stores';
@@ -96,6 +97,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { authenticated } = useAuth();
   const copyCurrentEditorToClipboard = useCopyCurrentEditorToClipboard();
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [isModalDuplicateOpen, setIsModalDuplicateOpen] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const [isModalShareOpen, setIsModalShareOpen] = useState(false);
@@ -192,11 +194,14 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       icon: <ContentCopySVG width={24} height={24} aria-hidden="true" />,
       isDisabled: !doc.abilities.duplicate,
       callback: () => {
-        duplicateDoc({
-          docId: doc.id,
-          with_accesses: false,
-          canSave: doc.abilities.partial_update,
-        });
+        if (doc.numchild) {
+          setIsModalDuplicateOpen(true);
+        } else {
+          duplicateDoc({
+            docId: doc.id,
+            canSave: doc.abilities.partial_update,
+          });
+        }
       },
       isHidden: !doc.abilities.duplicate,
       showSeparator: true,
@@ -247,6 +252,15 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         />
       </DropdownMenu>
 
+      {isModalDuplicateOpen && (
+        <ConfirmationDuplicateModal
+          onClose={() => {
+            setIsModalDuplicateOpen(false);
+            restoreFocus();
+          }}
+          doc={doc}
+        />
+      )}
       {isModalExportOpen && ModalExport && (
         <ModalExport
           onClose={() => {

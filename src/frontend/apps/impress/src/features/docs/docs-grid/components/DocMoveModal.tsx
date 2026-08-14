@@ -185,7 +185,7 @@ export const DocMoveModal = ({
             <Text as="h2" $margin="0" $size="s" $align="flex-start">
               {t('Choose a new parent doc')}
             </Text>
-            <Box $position="absolute" $css="top: 4px; right: 4px;">
+            <Box $position="absolute" $css="top: 8px; right: 8px;">
               <ButtonCloseModal
                 aria-label={t('Close the move modal')}
                 onClick={onClose}

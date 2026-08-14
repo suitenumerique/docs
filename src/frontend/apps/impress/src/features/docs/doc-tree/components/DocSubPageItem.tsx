@@ -19,7 +19,7 @@ import {
   useTrans,
 } from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
-import { useResponsiveStore } from '@/stores';
+import { useFocusStore, useResponsiveStore } from '@/stores';
 
 import { isDocNode } from '../utils';
 
@@ -108,6 +108,7 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const { closePanel } = useLeftPanelStore();
+  const { addLastFocus } = useFocusStore();
 
   const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title || '');
   const displayTitle = titleWithoutEmoji || untitledDocument;
@@ -148,6 +149,7 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
   const isCurrentPage = router.query?.id === doc.id;
   const isDeleted = !!doc.deleted_at;
   const actionsRef = useRef<HTMLDivElement>(null);
+  const subPageItemRef = useRef<HTMLAnchorElement>(null);
   const buttonOptionRef = useRef<ButtonElement | null>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -168,15 +170,18 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
   const handleActionsOpenChange = (isOpen: boolean) => {
     setMenuOpen(isOpen);
 
-    // When the menu closes (via Escape or activating an option),
-    // return focus to the tree item so focus is not lost.
-    if (!isOpen) {
-      node.focus();
+    // When the actions menu opens, we save the last focused element
+    // to restore focus later when the menu closes or actions are completed.
+    const el =
+      subPageItemRef?.current?.closest<HTMLDivElement>('.c__tree-view--row');
+    if (isOpen && el) {
+      addLastFocus(el);
     }
   };
 
   return (
     <StyledLink
+      ref={subPageItemRef}
       className="--docs-sub-page-item"
       /**
        * Conflict with the react-arborist DND.

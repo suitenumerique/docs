@@ -10,7 +10,7 @@ import {
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
 import { useRouter } from 'next/router';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -27,6 +27,8 @@ import {
   useDocTitleUpdate,
 } from '@/docs/doc-management';
 import { useDuplicateDoc } from '@/docs/doc-management/api';
+import { ConfirmationDuplicateModal } from '@/docs/doc-management/components/ConfirmationDuplicateModal';
+import { useFocusStore } from '@/stores/useFocusStore';
 
 import { useDetachDoc } from '../api/useDetach';
 import MoveDocIcon from '../assets/doc-extract-bold.svg';
@@ -59,6 +61,8 @@ export const DocTreeItemActions = ({
   const router = useRouter();
   const { t } = useTranslation();
   const deleteModal = useModal();
+  const { restoreFocus } = useFocusStore();
+  const [isModalDuplicateOpen, setIsModalDuplicateOpen] = useState(false);
   const copyLink = useCopyDocLink(doc.id);
   const { mutate: detachDoc } = useDetachDoc();
   const treeContext = useTreeContext<Doc | null>();
@@ -141,11 +145,14 @@ export const DocTreeItemActions = ({
       icon: <Icon iconName="content_copy" />,
       isDisabled: !doc.abilities.duplicate,
       callback: () => {
-        duplicateDoc({
-          docId: doc.id,
-          with_accesses: false,
-          canSave: doc.abilities.partial_update,
-        });
+        if (doc.numchild) {
+          setIsModalDuplicateOpen(true);
+        } else {
+          duplicateDoc({
+            docId: doc.id,
+            canSave: doc.abilities.partial_update,
+          });
+        }
       },
     },
     {
@@ -182,11 +189,16 @@ export const DocTreeItemActions = ({
     <Box className="doc-tree-root-item-actions actions">
       <Box
         ref={targetActionsRef}
+        className="--docs--doc-tree-item-actions"
         $direction="row"
         $align="center"
-        className="--docs--doc-tree-item-actions"
         $gap="4xs"
         tabIndex={-1}
+        onKeyDownCapture={(e) => {
+          if (e.key === 'Escape') {
+            restoreFocus();
+          }
+        }}
         $css={css`
           & button {
             height: 24px;
@@ -248,6 +260,15 @@ export const DocTreeItemActions = ({
           </Button>
         )}
       </Box>
+      {isModalDuplicateOpen && (
+        <ConfirmationDuplicateModal
+          onClose={() => {
+            setIsModalDuplicateOpen(false);
+            restoreFocus();
+          }}
+          doc={doc}
+        />
+      )}
       {deleteModal.isOpen && (
         <ModalRemoveDoc
           onClose={deleteModal.onClose}

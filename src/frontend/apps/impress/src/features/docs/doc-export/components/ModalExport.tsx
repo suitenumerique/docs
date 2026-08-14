@@ -273,7 +273,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           >
             {t('Export')}
           </Text>
-          <Box $position="absolute" $css="top: 4px; right: 4px;">
+          <Box $position="absolute" $css="top: 8px; right: 8px;">
             <ButtonCloseModal
               aria-label={t('Close the download modal')}
               onClick={() => onClose()}

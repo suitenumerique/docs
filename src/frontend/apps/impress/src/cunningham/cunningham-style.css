@@ -58,6 +58,18 @@
 }
 
 /**
+* Checkbox
+*/
+.c__checkbox:focus-within {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.c__checkbox .c__checkbox__wrapper:focus-within {
+  outline: none;
+}
+
+/**
  * Modal
 */
 .c__modal__backdrop {
