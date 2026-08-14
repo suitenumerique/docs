@@ -57,6 +57,18 @@ if (!['all', 'server', 'worker'].includes(ROLE)) {
 }
 const RUNS_SERVER = ROLE !== 'worker';
 const RUNS_WORKER = ROLE !== 'server';
+// How many tasks one worker process claims at once. Redis hands each task to a
+// single worker, so what a deployment actually runs in parallel is this times
+// the number of worker processes — the two knobs are interchangeable up to the
+// point where a pod runs out of memory, each task holding the document it
+// merges. Refused rather than guessed when it is not a positive integer:
+// `Number()` would otherwise turn a typo into NaN and yhub into an idle worker.
+const TASK_CONCURRENCY = Number(process.env.YHUB_TASK_CONCURRENCY || 5);
+if (!Number.isInteger(TASK_CONCURRENCY) || TASK_CONCURRENCY < 1) {
+  throw new Error(
+    `YHUB_TASK_CONCURRENCY must be a positive integer (got "${process.env.YHUB_TASK_CONCURRENCY}")`,
+  );
+}
 // Segment every route is mounted under (`server.apiPrefix` below), matching the
 // URL scheme Docs already routes to the collaboration server. Hardcoded like
 // the audiences: the backend builds its urls with the same prefix.
@@ -845,10 +857,17 @@ const yhub = await createYHub({
   server: RUNS_SERVER
     ? { port: PORT, auth, api, apiPrefix: API_PREFIX }
     : null,
-  worker: RUNS_WORKER ? { taskConcurrency: 5, events: workerEvents } : null,
+  worker: RUNS_WORKER
+    ? { taskConcurrency: TASK_CONCURRENCY, events: workerEvents }
+    : null,
 });
 
 logger.info(
-  { role: ROLE, server: RUNS_SERVER, worker: RUNS_WORKER },
+  {
+    role: ROLE,
+    server: RUNS_SERVER,
+    worker: RUNS_WORKER,
+    taskConcurrency: RUNS_WORKER ? TASK_CONCURRENCY : null,
+  },
   'yhub role',
 );

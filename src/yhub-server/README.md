@@ -119,6 +119,14 @@ Redis consumer groups hand each task to exactly one worker, so the number of
 workers is a throughput knob and nothing else: no leader, no partitioning, no
 coordination between them.
 
+`YHUB_TASK_CONCURRENCY` (default `5`) is the other half of that knob: how many
+tasks one process claims at once. What actually runs in parallel is that number
+times the processes running a worker, so the two are interchangeable up to the
+point where a pod runs out of memory — each task holds the document it merges.
+A value that is not a positive integer is refused at startup, like an unknown
+role: `Number()` would otherwise read a typo as `NaN` and leave the worker
+claiming nothing.
+
 ## Container image
 
 The `Dockerfile` has two final stages, like the other services of this
