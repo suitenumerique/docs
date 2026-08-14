@@ -215,12 +215,18 @@ Requires top level scope
 
 {{/*
 yhub worker env vars - combines common yhub.envVars with yhub.worker.envVars
+
+Merged rather than appended: a variable the worker sets differently from the
+server (YHUB_TASK_CONCURRENCY, typically) is meant to replace it, and emitting
+both would leave the value to kubernetes' last-one-wins rule and show the
+variable twice in the pod. deepCopy because merge writes into its first
+argument, which is a live values map.
 */}}
 {{- define "impress.yhub.worker.env" -}}
 {{- $topLevelScope := index . 0 -}}
 {{- $workerScope := index . 1 -}}
-{{- include "impress.env.transformDict" $workerScope.envVars -}}
-{{- include "impress.env.transformDict" (($workerScope.worker | default dict).envVars | default dict) -}}
+{{- $workerEnvVars := ($workerScope.worker | default dict).envVars | default dict -}}
+{{- include "impress.env.transformDict" (merge (deepCopy $workerEnvVars) $workerScope.envVars) -}}
 {{- end }}
 
 {{/*
