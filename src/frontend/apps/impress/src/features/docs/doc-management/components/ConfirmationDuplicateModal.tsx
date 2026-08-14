@@ -6,6 +6,8 @@ import {
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
+import { TreeContextType } from '@gouvfr-lasuite/ui-kit';
+import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
@@ -15,24 +17,33 @@ import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid/api/useDocsTrashbin';
 
 import { KEY_LIST_DOC, useDuplicateDoc } from '../api';
 import { useRemoveDoc } from '../api/useRemoveDoc';
+import { useDocUtils } from '../hooks';
 import { type Doc } from '../types';
 
 const ModalStyle = createGlobalStyle`
   .c__modal__footer {
     margin-top: 0;
   }
+  .c__toast__content__children{
+    flex-shrink: 0;
+    flex-grow: 0;
+  }
 `;
 
 interface ConfirmationDuplicateModalProps {
   doc: Doc;
   onClose: () => void;
+  treeContext: TreeContextType<Doc | null> | null;
 }
 
 export const ConfirmationDuplicateModal = ({
   doc,
   onClose,
+  treeContext,
 }: ConfirmationDuplicateModalProps) => {
   const { t } = useTranslation();
+  const { isTopRoot } = useDocUtils(doc);
+  const router = useRouter();
   const { toast } = useToastProvider();
   const [isWithSubdocs, setIsWithSubdocs] = useState(true);
   const { mutate: duplicateDoc } = useDuplicateDoc({
@@ -47,10 +58,28 @@ export const ConfirmationDuplicateModal = ({
           toastEl.style.display = 'none';
         }
       };
-      toast(t('Document duplicated to My docs'), VariantType.INFO, {
-        duration: 10000,
-        actions: <ToastActions docId={data.id} onClose={onCloseToast} />,
-      });
+      toast(
+        isTopRoot
+          ? t('Document duplicated to My docs')
+          : t('Document duplicated'),
+        VariantType.INFO,
+        {
+          duration: 10000,
+          actions: (
+            <ToastActions
+              duplicatedDocId={data.id}
+              originalDocId={doc.id}
+              isTopRoot={isTopRoot}
+              onClose={onCloseToast}
+              treeContext={treeContext}
+            />
+          ),
+        },
+      );
+
+      if (!isTopRoot) {
+        void router.push(`/docs/${data.id}`);
+      }
     },
   });
 
@@ -76,7 +105,6 @@ export const ConfirmationDuplicateModal = ({
           </Button>
           <Button
             aria-label={t('Confirm the duplicate action')}
-            color="error"
             fullWidth
             onClick={() => {
               duplicateDoc({
@@ -120,7 +148,7 @@ export const ConfirmationDuplicateModal = ({
         as="p"
         $margin="0"
       >
-        {t('The copy will be private and added to My docs.')}
+        {isTopRoot && t('The copy will be private and added to My docs.')}
       </Text>
       <Box $margin={{ vertical: 'base' }}>
         <Checkbox
@@ -134,17 +162,24 @@ export const ConfirmationDuplicateModal = ({
 };
 
 const ToastActions = ({
-  docId,
+  isTopRoot,
   onClose,
+  duplicatedDocId,
+  originalDocId,
+  treeContext,
 }: {
-  docId: string;
+  isTopRoot: boolean;
   onClose: (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void;
+  duplicatedDocId: string;
+  originalDocId: string;
+  treeContext: TreeContextType<Doc | null> | null;
 }) => {
   const { t } = useTranslation();
   const { mutate: removeDoc } = useRemoveDoc({
     listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_DOC_TRASHBIN],
   });
   const openRef = useRef<HTMLButtonElement & HTMLAnchorElement>(null);
+  const router = useRouter();
 
   // When the toast is displayed, we want to focus the "Open" button for accessibility reasons.
   useEffect(() => {
@@ -156,16 +191,26 @@ const ToastActions = ({
       <ButtonLink
         ref={openRef}
         variant="tertiary"
-        href={`/docs/${docId}`}
+        href={`/docs/${isTopRoot ? duplicatedDocId : originalDocId}`}
         onClick={onClose}
       >
-        {t('Open')}
+        {isTopRoot
+          ? t('Open', {
+              description: 'Action to open the duplicated document',
+            })
+          : t('Back to original', {
+              description: 'Back to the original document',
+            })}
       </ButtonLink>
       <Button
         variant="tertiary"
         onClick={(e) => {
-          removeDoc({ docId });
+          removeDoc({ docId: duplicatedDocId });
           onClose(e);
+          treeContext?.setRoot(null);
+          if (!isTopRoot) {
+            void router.push(`/docs/${originalDocId}`);
+          }
         }}
       >
         {t('Undo')}

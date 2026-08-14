@@ -267,6 +267,7 @@ export const DocTreeItemActions = ({
             restoreFocus();
           }}
           doc={doc}
+          treeContext={treeContext}
         />
       )}
       {deleteModal.isOpen && (

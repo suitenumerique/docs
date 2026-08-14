@@ -225,6 +225,7 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
             restoreFocus();
           }}
           doc={doc}
+          treeContext={null}
         />
       )}
       {isModalMoveOpen && (

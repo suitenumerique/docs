@@ -90,7 +90,7 @@ interface DocToolBoxProps {
 
 export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
-  const treeContext = useTreeContext<Doc>();
+  const treeContext = useTreeContext<Doc | null>();
   const router = useRouter();
   const { isTopRoot } = useDocUtils(doc);
   const isTopParent = doc.id === treeContext?.root?.id; // it can be a child but not for the current user
@@ -259,6 +259,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             restoreFocus();
           }}
           doc={doc}
+          treeContext={treeContext}
         />
       )}
       {isModalExportOpen && ModalExport && (
