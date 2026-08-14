@@ -14,6 +14,7 @@ and this project adheres to
 
 ### Changed
 
+- ✨(frontend) reset side panel state between documents
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
 - 💄(frontend) use the same highlight color for cells and moves #2575
 
