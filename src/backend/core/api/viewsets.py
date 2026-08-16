@@ -1550,8 +1550,8 @@ class DocumentViewSet(
         document_id = params.validated_data.get("document")
         if document_id:
             try:
-                path = models.Document.objects.get(pk=document_id).values_list(
-                    "path", flat=True
+                path = models.Document.objects.values_list("path", flat=True).get(
+                    pk=document_id
                 )
             except models.Document.DoesNotExist as exc:
                 raise drf.exceptions.NotFound("Document not found.") from exc
