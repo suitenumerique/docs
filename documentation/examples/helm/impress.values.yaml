@@ -157,6 +157,13 @@ yhub:
     COLLABORATION_BACKEND_BASE_URL: https://docs.127.0.0.1.nip.io
     COLLABORATION_SERVER_ORIGIN: https://docs.127.0.0.1.nip.io
 
+# The backend and the collaboration server authenticate each other with signed
+# tokens, each with a key of its own, verified against the JWKS the other
+# publishes. This generates the two keys on the cluster, once, in a secret both
+# mount read-only — nothing to put in this file.
+jwtKeys:
+  enabled: true
+
 ingress:
   enabled: true
   host: docs.127.0.0.1.nip.io

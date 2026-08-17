@@ -24,7 +24,7 @@ On the `y-provider` side, point it at the Django backend so it can fetch the JWK
 COLLABORATION_BACKEND_BASE_URL: http://{django-service}:8000
 ```
 
-The JWKS url defaults to `{COLLABORATION_BACKEND_BASE_URL}/api/v1.0/jwks`; override it with `JWKS_URL` if Django is not reachable at that base url from the y-provider service.
+The JWKS is fetched from `{COLLABORATION_BACKEND_BASE_URL}/api/v1.0/jwks`, so that url has to be reachable from the y-provider service.
 
 ### One service, not two anymore
 
