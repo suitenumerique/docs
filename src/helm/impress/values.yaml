@@ -908,7 +908,11 @@ jwtKeys:
 ## live state of a document in redis/valkey and persists it to its own
 ## PostgreSQL database, so it needs both — set `yhub.envVars.REDIS` and
 ## `yhub.envVars.POSTGRES`, there is nothing sensible to default them to.
-## Disabling it sends the /collaboration/ ingresses back to the y-provider.
+## Disabling it drops its deployment, its service and its init-db job, and
+## nothing takes that role over: the two /collaboration/ ingresses still name
+## its service, and the y-provider does not serve the websocket anymore. Turn
+## it off only to run the collaboration server outside of this release, and
+## turn `ingressCollaborationWS` and `ingressCollaborationApi` off with it.
 ##
 ## Two buckets can be added to that list, each with a prefix of its own so that
 ## none of them is ambiguous — they may sit on different providers, with
