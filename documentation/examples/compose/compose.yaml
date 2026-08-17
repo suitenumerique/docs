@@ -17,6 +17,22 @@ services:
   redis:
     image: redis:8
 
+  # The valkey of the collaboration server, apart from the redis above: this one
+  # holds the updates no worker has persisted to postgres yet, so it is a store
+  # and not a cache. Hence the append-only file, and a policy that only evicts
+  # the keys carrying an expiry.
+  yhub-valkey:
+    image: valkey/valkey:8-alpine
+    command: ["valkey-server", "--maxmemory-policy", "volatile-lru",
+              "--appendonly", "yes", "--appendfsync", "everysec"]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 1s
+      timeout: 2s
+      retries: 60
+    volumes:
+      - ./data/yhub-valkey:/data
+
   backend:
     image: lasuite/impress-backend:latest
     user: ${DOCKER_USER:-1000}
@@ -28,6 +44,9 @@ services:
       - env.d/backend
       - env.d/yprovider
       - env.d/postgresql
+    volumes:
+      # signs the calls made to the collaboration server and to the converter
+      - ./keys/private.pem:/keys/private.pem:ro
     healthcheck:
       test: ["CMD", "python", "manage.py", "check"]
       interval: 15s
@@ -41,6 +60,37 @@ services:
       redis:
         condition: service_started
 
+  # The collaboration server: it serves everything under /collaboration/, the
+  # websocket included, and holds the content of the documents. Its schema is
+  # not created when it starts — run `docker compose run --rm yhub npm run
+  # init-db` once before the first start, and again after every upgrade.
+  yhub:
+    image: lasuite/impress-yhub:latest
+    user: ${DOCKER_USER:-1000}
+    restart: always
+    env_file:
+      - env.d/common
+      - env.d/yhub
+    volumes:
+      # signs the calls made to the backend, which reads the public half from
+      # the JWKS this server publishes
+      - ./keys/yhub-private.pem:/keys/yhub-private.pem:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3002/collaboration/ready/v1').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    depends_on:
+      postgresql:
+        condition: service_healthy
+        restart: true
+      yhub-valkey:
+        condition: service_healthy
+
+  # The conversion service. It used to serve the collaboration as well, it does
+  # not anymore: the backend calls it on Y_PROVIDER_API_BASE_URL, and nothing is
+  # routed to it by the proxy.
   y-provider:
     image: lasuite/impress-y-provider:latest
     user: ${DOCKER_USER:-1000}
@@ -65,6 +115,8 @@ services:
       - ./default.conf.template:/etc/nginx/templates/docs.conf.template
     depends_on:
       backend:
+        condition: service_healthy
+      yhub:
         condition: service_healthy
 
 # Uncomment if using our nginx proxy example
