@@ -21,6 +21,19 @@ and this project adheres to
 
 ### Added
 
+- 📝(installation) deploy the collaboration server in the compose install: the
+  example stack gains the `yhub` service, the valkey it persists through and an
+  `env.d/yhub` of its own, the proxy routes `/collaboration/` to it instead of
+  the y-provider (and publishes only what browsers call, the backend-internal
+  routes staying inside the network), and the backend gains the signing key and
+  the url it reaches it on. The guide walks through the two keys to generate,
+  the `npm run init-db` that creates the schema before the first start and
+  after every upgrade, and the migration of a corpus stored in the object
+  storage before the collaboration server existed. The kubernetes guide gains
+  the same reading of what is deployed and turns `jwtKeys` on in its example
+  values, the Scalingo one states that its buildpack does not start the
+  collaboration server yet, and `documentation/env.md` documents the variables
+  of the two node services, which it had none of
 - ✨(collaboration) let the collaboration server keep the document blobs in a
   bucket instead of its own PostgreSQL database, through yhub's S3 persistence
   plugin: `YHUB_S3_PERSISTENCE=true`, plus `YHUB_S3_ENDPOINT_URL`,
