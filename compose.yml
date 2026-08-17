@@ -262,7 +262,8 @@ services:
       yhub-postgres:
         condition: service_healthy
       # soft migration reads the legacy document store at startup traffic —
-      # starting before minio would cache 401s for the first accessed docs
+      # starting before minio would cache 401s for the first accessed docs —
+      # and YHUB_S3_PERSISTENCE, when it is on, checks its own bucket at boot
       minio:
         condition: service_healthy
 

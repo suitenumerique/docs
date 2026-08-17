@@ -21,6 +21,28 @@ and this project adheres to
 
 ### Added
 
+- ✨(collaboration) let the collaboration server keep the document blobs in a
+  bucket instead of its own PostgreSQL database, through yhub's S3 persistence
+  plugin: `YHUB_S3_PERSISTENCE=true`, plus `YHUB_S3_ENDPOINT_URL`,
+  `YHUB_S3_ACCESS_KEY_ID`, `YHUB_S3_SECRET_ACCESS_KEY`, `YHUB_S3_BUCKET_NAME`
+  and, when the provider needs one told rather than discovered,
+  `YHUB_S3_REGION_NAME`. Off by default, which keeps everything in postgres —
+  the configuration Docs has been running. Turned on, every compaction writes
+  its four blobs (the garbage-collected document, the one that keeps its
+  history, the content map and the content ids) to the bucket and leaves a
+  reference in the row: postgres holds the index of the corpus, the bucket
+  holds its bytes. It is a third bucket, configured under a prefix of its own
+  next to the backend's `AWS_S3_*` and the legacy document store's
+  `LEGACY_S3_*`, since the three may sit on three providers and each is read by
+  the process it belongs to. Note that it is a one-way setting: a row pointing
+  at an object is unreadable without the plugin that wrote it, and yhub reports
+  such a version as having no content rather than as an error, so removing the
+  setting after a compaction serves those documents empty. That, the
+  permissions the credentials need and what the objects are is in
+  `src/yhub-server/README.md`, worth reading before enabling it. An incomplete
+  configuration is refused at startup, naming what is missing, rather than
+  surfacing on the first compaction — a background task, where it would look
+  like documents quietly not being persisted
 - ✨(collaboration) erase the content of a document on the collaboration server
   when `clean_document` resets it. The command cleared the database and the
   object storage, but the content lives on the collaboration server now: it kept
@@ -90,9 +112,9 @@ and this project adheres to
   (`_ENDPOINT_URL`, `_ACCESS_KEY_ID`, `_SECRET_ACCESS_KEY`, `_REGION_NAME`,
   `_BUCKET_NAME`, `_SIGNATURE_VERSION`), a set of its own and not the backend's
   `AWS_S3_*`: this is the bucket the collaboration server migrates *out of*,
-  while the one it will persist *into* when the yhub S3 persistence plugin is
-  enabled is a separate bucket that may well sit on another provider with
-  credentials of its own. It is read with the AWS SDK for JavaScript v3, whose
+  while the one it persists *into* when `YHUB_S3_PERSISTENCE` is on is a
+  separate bucket that may well sit on another provider with credentials of its
+  own. It is read with the AWS SDK for JavaScript v3, whose
   signature version is configurable (`s3v4` by default, as in Django) because a
   provider expecting another one answers 403, which reads exactly like wrong
   credentials
