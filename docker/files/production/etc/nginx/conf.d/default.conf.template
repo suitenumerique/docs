@@ -55,7 +55,10 @@ server {
         try_files $uri @proxy_to_docs_backend;
     }
 
-    # Proxy auth for collaboration server
+    # Collaboration server. Only the routes below are published: it also serves
+    # create-ydoc, reset-connections, migrate, restore-ydoc and reset-ydoc,
+    # which the backend calls in-cluster and which must not be reachable from
+    # the outside.
     location /collaboration/ws/ {
         # Ensure WebSocket upgrade
         proxy_http_version 1.1;
@@ -63,7 +66,7 @@ server {
         proxy_set_header Connection "Upgrade";
 
         # Collaboration server
-        proxy_pass http://${YPROVIDER_HOST}:4444;
+        proxy_pass http://${YHUB_HOST}:3002;
 
         # Set appropriate timeout for WebSocket
         proxy_read_timeout 86400;
@@ -75,9 +78,12 @@ server {
         proxy_set_header Host $host;
     }
 
-    location /collaboration/api/ {
-        # Collaboration server
-        proxy_pass http://${YPROVIDER_HOST}:4444;
+    # Document routes, guarded by the same document authorization as the
+    # websocket, and the public keys the collaboration server signs with.
+    location ~ ^/collaboration/(ydoc|rollback|prune|changeset|activity|jwks)/ {
+        proxy_pass http://${YHUB_HOST}:3002;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Origin $http_origin;
         proxy_set_header Host $host;
     }
 

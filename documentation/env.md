@@ -149,9 +149,60 @@ These are the environment variables you can set for the `impress-backend` contai
 | USER_RECONCILIATION_FORM_URL                    | URL of a third-party form for user reconciliation requests                                                                                                                 |                                                                         |
 | YHUB_API_BASE_URL                               | Base url of the yhub collaboration server REST API                                                                                                                         |                                                                         |
 | YHUB_API_TIMEOUT                                | Timeout (in seconds) of the requests to the yhub API                                                                                                                       | 30                                                                      |
+| YHUB_MIGRATION_TIMEOUT                          | Timeout (in seconds) of the call replaying the legacy history of one document, which reads every one of its S3 versions                                                     | 600                                                                     |
 | YHUB_ORG                                        | yhub organization the documents live in. Must match the YHUB_ORG of the yhub server                                                                                        | docs                                                                    |
 | Y_PROVIDER_API_BASE_URL                         | Y Provider url                                                                                                                                                             |                                                                         |
-| Y_PROVIDER_API_KEY                              | Y provider API key                                                                                                                                                         |                                                                         |
+| Y_PROVIDER_API_KEY                              | Key exempting the calls of the collaboration server from the API throttling, sent as X-Y-Provider-Key. Set the same value on the yhub container                             |                                                                         |
+
+## impress-yhub container
+
+These are the environment variables you can set for the `impress-yhub`
+container, the collaboration server. It reads none of the backend's settings:
+what it shares with the backend is repeated here by value. `src/yhub-server/README.md`
+documents what each of them changes.
+
+| Option                        | Description                                                                                                                                            | default                |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
+| PORT                          | Port the server listens on                                                                                                                              | 3002                   |
+| REDIS                         | **Required.** Redis/Valkey url holding the live state of the documents. Not a cache: it holds what no worker has persisted yet                          |                        |
+| POSTGRES                      | **Required.** Url of the yhub database. Created by `npm run init-db`, never by the server                                                               |                        |
+| REDIS_PREFIX                  | Namespace of the redis keys, when the instance is shared                                                                                                | yhub                   |
+| COLLABORATION_BACKEND_BASE_URL | Base url of the Docs backend, which answers who a user is and what they may do with a document                                                         | http://app-dev:8000    |
+| COLLABORATION_SERVER_ORIGIN   | Comma separated list of the origins allowed to open a websocket                                                                                         | http://localhost:3000  |
+| Y_PROVIDER_API_KEY            | Sent as X-Y-Provider-Key on the calls made to the backend, exempting them from the API throttling. The same value as the backend's                      | yprovider-api-key      |
+| YHUB_ORG                      | Organization the documents live under. Must match the YHUB_ORG of the backend                                                                           | docs                   |
+| YHUB_JWT_PRIVATE_KEY          | PEM encoded RSA private key signing the calls made to the backend (RS256). Can be read from a file with YHUB_JWT_PRIVATE_KEY_FILE                       |                        |
+| YHUB_ROLE                     | `all` runs the websockets and the worker in one process, `server` only the websockets and the routes, `worker` only the persistence                     | all                    |
+| YHUB_TASK_CONCURRENCY         | Tasks one worker process claims at once                                                                                                                 | 5                      |
+| YHUB_TASK_DEBOUNCE_MS         | How long an update waits on the redis stream before a worker persists it                                                                                 | 10000                  |
+| YHUB_MIN_MESSAGE_LIFETIME_MS  | How long persisted updates stay replayable from redis rather than read back from postgres                                                                | 60000                  |
+| SOFT_MIGRATION                | Set to "true" to seed a room from the legacy Django/S3 document store the first time it is opened                                                        | false                  |
+| LEGACY_S3_ENDPOINT_URL        | Required by SOFT_MIGRATION, endpoint of the legacy media bucket, without a path                                                                          |                        |
+| LEGACY_S3_ACCESS_KEY_ID       | Required by SOFT_MIGRATION, read access to that bucket (or LEGACY_S3_ACCESS_KEY_ID_FILE)                                                                 |                        |
+| LEGACY_S3_SECRET_ACCESS_KEY   | Required by SOFT_MIGRATION, secret of the key above (or LEGACY_S3_SECRET_ACCESS_KEY_FILE)                                                                |                        |
+| LEGACY_S3_BUCKET_NAME         | Name of the legacy media bucket                                                                                                                          | impress-media-storage  |
+| LEGACY_S3_REGION_NAME         | Region of that bucket, when its provider needs one                                                                                                       | us-east-1              |
+| LEGACY_S3_SIGNATURE_VERSION   | How the calls to that bucket are signed, s3v4 or v4                                                                                                      | s3v4                   |
+| YHUB_S3_PERSISTENCE           | Set to "true" to store the document blobs in a bucket instead of the yhub database. Read the "Document storage" section of `src/yhub-server/README.md` first: it cannot be turned back off | false |
+| YHUB_S3_ENDPOINT_URL          | Required by YHUB_S3_PERSISTENCE, endpoint of that bucket, without a path                                                                                 |                        |
+| YHUB_S3_ACCESS_KEY_ID         | Required by YHUB_S3_PERSISTENCE, read/write/delete access to that bucket (or YHUB_S3_ACCESS_KEY_ID_FILE)                                                 |                        |
+| YHUB_S3_SECRET_ACCESS_KEY     | Required by YHUB_S3_PERSISTENCE, secret of the key above (or YHUB_S3_SECRET_ACCESS_KEY_FILE)                                                             |                        |
+| YHUB_S3_BUCKET_NAME           | Required by YHUB_S3_PERSISTENCE, name of that bucket, created on startup when missing                                                                    |                        |
+| YHUB_S3_REGION_NAME           | Region of that bucket, when its provider needs one                                                                                                       |                        |
+
+## impress-y-provider container
+
+These are the environment variables you can set for the `impress-y-provider`
+container, the conversion service. It no longer serves the collaboration.
+
+| Option                         | Description                                                                                                                                 | default               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| PORT                           | Port the service listens on                                                                                                                 | 4444                  |
+| COLLABORATION_BACKEND_BASE_URL | Base url of the Docs backend. The JWKS verifying the tokens it is called with is fetched from `{this}/api/v1.0/jwks`, so it has to reach it  | http://app-dev:8000   |
+| COLLABORATION_SERVER_ORIGIN    | Comma separated list of the allowed origins                                                                                                 | http://localhost:3000 |
+| COLLABORATION_LOGGING          | Set to "true" to log the requests                                                                                                           | false                 |
+| CONVERSION_FILE_MAX_SIZE       | Maximum size, in bytes, of a file submitted for conversion                                                                                  | 20971520              |
+| SENTRY_DSN                     | Sentry DSN, unset disables it                                                                                                               |                       |
 
 ## impress-frontend image
 
