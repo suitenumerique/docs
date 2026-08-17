@@ -182,6 +182,12 @@ yhub:
     NODE_OPTIONS: "--max-old-space-size=1024"
     UWS_HTTP_MAX_HEADERS_SIZE: 32768
     LOG_LEVEL: debug
+    YHUB_S3_PERSISTENCE: true
+    YHUB_S3_ENDPOINT_URL: http://dev-backend-minio.{{ .Namespace }}.svc.cluster.local:9000
+    YHUB_S3_ACCESS_KEY_ID: dinum
+    YHUB_S3_SECRET_ACCESS_KEY: password
+    YHUB_S3_BUCKET_NAME: docs-media-storage
+
 
 docSpec:
   enabled: true
