@@ -35,8 +35,8 @@ import { secret } from './env.js';
 export const SOFT_MIGRATION = process.env.SOFT_MIGRATION === 'true';
 // The legacy Django media bucket, the one documents are migrated *out of*. It
 // carries a prefix of its own because it is not the only bucket in play: the
-// S3 persistence plugin, once it is enabled, persists *into* a bucket that may
-// sit on another provider with credentials of its own, and the backend's
+// S3 persistence plugin (`YHUB_S3_*`, server.js) persists *into* a bucket that
+// may sit on another provider with credentials of its own, and the backend's
 // `AWS_S3_*` settings — which a pod may perfectly well carry — name a third.
 // Each set is read by exactly the process it belongs to.
 const LEGACY_S3_ENDPOINT_URL = process.env.LEGACY_S3_ENDPOINT_URL;

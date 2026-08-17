@@ -8,6 +8,7 @@ import {
   createYHub,
   logger,
 } from '@y/hub';
+import { S3PersistenceV1 } from '@y/hub/plugins/s3';
 import {
   calculateJwkThumbprint,
   createRemoteJWKSet,
@@ -90,6 +91,27 @@ const RUNS_WORKER = ROLE !== 'server';
 // point where a pod runs out of memory, each task holding the document it
 // merges.
 const TASK_CONCURRENCY = intEnv('YHUB_TASK_CONCURRENCY', 5, 1);
+// Where the blobs of a compaction go — the garbage-collected document, the one
+// that keeps its history, the content map and the content ids. yhub writes the
+// four of them into its own postgres; a persistence plugin takes them out of
+// it, the row then holding a reference and the bytes living in the plugin's
+// store. Off by default, which is postgres alone, the way Docs has been
+// running.
+//
+// Not a switch that can be flipped back: a row pointing at an object is
+// unreadable without the plugin that wrote it — yhub reports that version as
+// having no content rather than as an error — so turning it off after a
+// compaction strands what was stored while it was on. See README.md.
+const S3_PERSISTENCE = process.env.YHUB_S3_PERSISTENCE === 'true';
+// Its own bucket, named apart from the backend's `AWS_S3_*` and from the legacy
+// document store's `LEGACY_S3_*` (migration.js): three buckets that may sit on
+// three providers with credentials of their own, each read by the process it
+// belongs to.
+const YHUB_S3_ENDPOINT_URL = process.env.YHUB_S3_ENDPOINT_URL;
+const YHUB_S3_ACCESS_KEY_ID = secret('YHUB_S3_ACCESS_KEY_ID');
+const YHUB_S3_SECRET_ACCESS_KEY = secret('YHUB_S3_SECRET_ACCESS_KEY');
+const YHUB_S3_BUCKET_NAME = process.env.YHUB_S3_BUCKET_NAME;
+const YHUB_S3_REGION_NAME = process.env.YHUB_S3_REGION_NAME;
 // Segment every route is mounted under (`server.apiPrefix` below), matching the
 // URL scheme Docs already routes to the collaboration server. Hardcoded like
 // the audiences: the backend builds its urls with the same prefix.
@@ -858,6 +880,60 @@ const workerEvents = {
   },
 };
 
+// The persistence plugins yhub consults, in order, before writing a blob to
+// postgres and before reading one back. An empty list keeps everything in the
+// database, which is the default.
+//
+// Read here rather than in the call below so that an incomplete configuration
+// is a startup error naming what is missing: the client would otherwise be
+// built anonymous or against the wrong host and only say so on the first
+// compaction, which is a background task — the failure would show up as
+// documents quietly not being persisted.
+const persistencePlugins = () => {
+  if (!S3_PERSISTENCE) return [];
+
+  const missing = [
+    ['YHUB_S3_ENDPOINT_URL', YHUB_S3_ENDPOINT_URL],
+    ['YHUB_S3_ACCESS_KEY_ID', YHUB_S3_ACCESS_KEY_ID],
+    ['YHUB_S3_SECRET_ACCESS_KEY', YHUB_S3_SECRET_ACCESS_KEY],
+    ['YHUB_S3_BUCKET_NAME', YHUB_S3_BUCKET_NAME],
+  ]
+    .filter(([, value]) => !value)
+    .map(([name]) => name);
+  if (missing.length > 0) {
+    throw new Error(`YHUB_S3_PERSISTENCE=true requires ${missing.join(', ')}`);
+  }
+
+  const url = new URL(YHUB_S3_ENDPOINT_URL);
+  if (url.pathname !== '/' && url.pathname !== '') {
+    // the client is given a host and a port, so a base path would be dropped
+    // without a word and the objects written next to where they belong
+    throw new Error('YHUB_S3_ENDPOINT_URL must not contain a path');
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    // the client is told "SSL or not", so any other scheme would read as "not"
+    // and send the credentials in clear
+    throw new Error('YHUB_S3_ENDPOINT_URL must be http:// or https://');
+  }
+  const useSSL = url.protocol === 'https:';
+
+  return [
+    new S3PersistenceV1({
+      bucket: YHUB_S3_BUCKET_NAME,
+      endPoint: url.hostname,
+      // an implicit port parses as "", which the client reads as 0 — its way
+      // of saying "whatever the scheme defaults to"
+      port: Number(url.port),
+      useSSL,
+      accessKey: YHUB_S3_ACCESS_KEY_ID,
+      secretKey: YHUB_S3_SECRET_ACCESS_KEY,
+      // left out rather than passed empty: unset, the client discovers the
+      // region of the bucket instead of validating an empty string
+      ...(YHUB_S3_REGION_NAME ? { region: YHUB_S3_REGION_NAME } : {}),
+    }),
+  ];
+};
+
 // the instance is referenced by the soft-migration helpers above — safe: auth
 // callbacks only fire once the server is up, i.e. after this assignment
 const yhub = await createYHub({
@@ -868,7 +944,8 @@ const yhub = await createYHub({
     minMessageLifetime: MIN_MESSAGE_LIFETIME_MS,
   },
   postgres: POSTGRES,
-  persistence: [], // blobs live in yhub's postgres
+  // where the blobs live: nothing here keeps them in yhub's postgres
+  persistence: persistencePlugins(),
   // Both halves are declared, and YHUB_ROLE decides which are built: a null
   // server binds no port at all (a `worker` pod has no http surface, hence no
   // probes and no service in front of it), a null worker claims no task.
@@ -894,6 +971,8 @@ logger.info(
     server: RUNS_SERVER,
     worker: RUNS_WORKER,
     taskConcurrency: RUNS_WORKER ? TASK_CONCURRENCY : null,
+    // where the compaction blobs go — null is yhub's own postgres
+    s3Bucket: S3_PERSISTENCE ? YHUB_S3_BUCKET_NAME : null,
     taskDebounceMs: yhub.stream.taskDebounce,
     minMessageLifetimeMs: yhub.stream.minMessageLifetime,
   },
