@@ -2,6 +2,15 @@
 If you want to install Docs you've come to the right place.
 Here are a bunch of resources to help you install the project.
 
+Whichever method you pick, Docs is made of four services: the **frontend**, the
+Django **backend**, the **collaboration server** (`yhub`), which holds the
+content of the documents and syncs the editors over the websocket, and the
+**conversion service** (`y-provider`), which converts documents between formats.
+The collaboration server needs a PostgreSQL database and a Redis/Valkey instance
+of its own, beside the ones the backend uses. See [the collaboration
+documentation](../collaboration.md) for how the services find and authenticate
+each other.
+
 ## Kubernetes
 We (Docs maintainers) are only using the Kubernetes deployment method in production. We can only provide advanced support for this method.
 Please follow the instructions laid out [here](/documentation/installation/kubernetes.md).
@@ -13,7 +22,7 @@ Please follow the instructions [here](/documentation/installation/compose.md).
 ⚠️ Please keep in mind that we do not use it ourselves in production. Let us know in the issues if you run into troubles, we'll try to help.
 
 ## Scalingo
-You can deploy Docs on [Scalingo](https://scalingo.com/) using a custom buildpack. This method handles both frontend and backend builds, serving them through Nginx with the collaboration server (y-provider).
+You can deploy Docs on [Scalingo](https://scalingo.com/) using a custom buildpack. This method handles both frontend and backend builds, serving them through Nginx with the conversion service (y-provider). ⚠️ The buildpack does not start the collaboration server, which has to be run separately.
 Please follow the instructions [here](/documentation/installation/scalingo.md).
 
 ## Other ways to install Docs
