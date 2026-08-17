@@ -14,7 +14,9 @@ It is not a fork of yhub — it is a thin wrapper:
 `server.js`:
 
 - starts a yhub instance (websocket sync on port 3002, backed by Redis/Valkey
-  and PostgreSQL),
+  and PostgreSQL — and, when `YHUB_S3_PERSISTENCE` asks for it, a bucket the
+  document blobs are stored in instead of the database, see "Document storage"
+  below),
 - plugs in an auth plugin that resolves users and per-document access rights
   by calling the Docs Django backend (`/api/v1.0/users/me/` and
   `/api/v1.0/documents/{id}/`),
@@ -158,8 +160,79 @@ kubernetes variable left blank behaves as if it were absent. The effective
 values are logged at startup, next to the role:
 
 ```json
-{"role":"all","server":true,"worker":true,"taskConcurrency":5,"taskDebounceMs":10000,"minMessageLifetimeMs":60000,"msg":"yhub configuration"}
+{"role":"all","server":true,"worker":true,"taskConcurrency":5,"s3Bucket":null,"taskDebounceMs":10000,"minMessageLifetimeMs":60000,"msg":"yhub configuration"}
 ```
+
+## Document storage (`YHUB_S3_PERSISTENCE`)
+
+Every compaction writes one row in `yhub_ydoc_v1`, and that row carries four
+blobs: the garbage-collected document, the one that keeps its history, the
+content map and the content ids. By default they are `bytea` columns — the
+whole corpus lives on the database disk, which is the configuration Docs has
+been running and what this server does when nothing below is set.
+
+`YHUB_S3_PERSISTENCE=true` plugs yhub's own S3 persistence plugin
+(`S3PersistenceV1`, shipped with `@y/hub`) into the chain it consults before
+writing a blob and before reading one back. The blobs then go to a bucket and
+the row keeps a reference to them, `<column>_is_reference` saying which of the
+four it is: postgres holds the index of the documents, the bucket holds their
+bytes.
+
+| Variable | Required | What it is |
+| -------- | -------- | ---------- |
+| `YHUB_S3_PERSISTENCE` | — | `true` to store the blobs in a bucket (default: postgres) |
+| `YHUB_S3_ENDPOINT_URL` | yes | Endpoint of that bucket, without a path (e.g. `https://s3.example.com`) |
+| `YHUB_S3_ACCESS_KEY_ID` | yes | Key with read, write and delete on the bucket (or `…_FILE`) |
+| `YHUB_S3_SECRET_ACCESS_KEY` | yes | Secret of that key (or `…_FILE`) |
+| `YHUB_S3_BUCKET_NAME` | yes | Name of the bucket. No default: a typo would create one |
+| `YHUB_S3_REGION_NAME` | no | Region, when the provider needs one told rather than discovered |
+
+"Required" means required *when the plugin is on*: it is a startup error naming
+what is missing, rather than a client that ends up anonymous and only says so
+on the first compaction — which is a background task, so the failure would show
+up as documents quietly not being persisted. The bucket in use is logged next
+to the role (`"s3Bucket":"yhub-storage"`, `null` for postgres).
+
+This is a **third** bucket, and it is deliberately configured apart from the
+other two: the backend's media bucket (`AWS_S3_*`, Django's own settings) and
+the legacy document store the migrations read (`LEGACY_S3_*`, see below). They
+may sit on three providers with three sets of credentials, and each is read by
+the process it belongs to.
+
+A few things worth knowing before turning it on:
+
+- **It cannot be turned back off.** A row pointing at an object is unreadable
+  without the plugin that wrote it, and yhub reports such a version as having
+  no content rather than as an error — so a document compacted while the plugin
+  was on comes back *empty* once it is off, silently. Turning it on is safe in
+  the other direction: rows written before keep their bytes inline and are
+  served exactly as they were,
+- **the bucket is created at startup** when it does not exist, so the
+  credentials need `HeadBucket` and, the first time, `CreateBucket`. It is
+  checked on every boot, which is also what makes a wrong endpoint or a wrong
+  key fail loudly and immediately,
+- **both halves need it.** The worker writes the blobs and the server reads
+  them back, so a split deployment (`YHUB_ROLE`) configures the bucket on both
+  — in the helm chart the worker inherits `yhub.envVars`, so there is nothing
+  to repeat,
+- **only the `main` branch is offloaded.** The plugin declines everything else
+  and those blobs stay in postgres, which is yhub's behaviour, not a setting,
+- **objects are deleted late.** When a version's row is dropped (pruning, a
+  reset, a hard deletion), the object is removed about ten seconds later, so
+  that readers holding the reference are not left with a 404. A delete that
+  fails is logged and forgotten: the bucket may accumulate objects no row names
+  anymore, and nothing collects them,
+- the objects are Yjs blobs keyed by
+  `id:ydoc:v1/{org}/{docid}/{branch}/{gc}/{clock}` (and `id:contentmap:v1/…`,
+  `id:contentids:v1/…`) — one object per version and per column, not one file
+  per document, and **not** a format anything but yhub reads. It is a storage
+  backend, not an export and not a backup.
+
+In the dev stack the variables are in `env.d/development/yhub`, pointing at the
+same minio the rest of the stack uses with a bucket of its own
+(`yhub-storage`), and the toggle is off. Flipping it to `true` and restarting
+the service is enough to exercise the path — on a dev database, where losing
+the documents already compacted costs nothing.
 
 ## Container image
 
