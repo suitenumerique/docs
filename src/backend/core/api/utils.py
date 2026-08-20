@@ -13,6 +13,8 @@ import botocore
 from lasuite.oidc_login.decorators import refresh_oidc_access_token
 from rest_framework.throttling import BaseThrottle
 
+from core.utils.s3 import get_s3_client, get_unsigned_s3_client
+
 
 def nest_tree(flat_list, steplen):
     """
@@ -76,14 +78,14 @@ def generate_s3_authorization_headers(key):
     - access control is truly realtime
     - the object storage service does not need to be exposed on internet
     """
-    url = default_storage.unsigned_connection.meta.client.generate_presigned_url(
+    url = get_unsigned_s3_client().generate_presigned_url(
         "get_object",
         ExpiresIn=0,
         Params={"Bucket": default_storage.bucket_name, "Key": key},
     )
     request = botocore.awsrequest.AWSRequest(method="get", url=url)
 
-    s3_client = default_storage.connection.meta.client
+    s3_client = get_s3_client()
     # pylint: disable=protected-access
     credentials = s3_client._request_signer._credentials  # noqa: SLF001
     frozen_credentials = credentials.get_frozen_credentials()

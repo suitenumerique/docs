@@ -17,6 +17,7 @@ and this project adheres to
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
 - 💄(frontend) use the same highlight color for cells and moves #2575
+- ⚡️(backend) optimize media_auth endpoint
 
 ### Fixed
 

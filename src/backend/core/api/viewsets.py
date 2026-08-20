@@ -73,6 +73,7 @@ from core.tasks.mail import send_ask_for_access_mail
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.dicts import lowercase_keys
 from core.utils.paths import filter_descendants
+from core.utils.s3 import get_s3_client
 from core.utils.s3_response_stream import content_stream
 from core.utils.treebeard import create_tree_node_with_retry
 from core.utils.users import users_sharing_documents_with
@@ -2043,8 +2044,12 @@ class DocumentViewSet(
             logger.debug("User '%s' lacks permission for attachment", user)
             raise drf.exceptions.PermissionDenied()
 
-        # Check if the attachment is ready
-        s3_client = default_storage.connection.meta.client
+        # Check if the attachment is ready. Use the process-global S3 client
+        # (see core.utils.s3): django-storages caches its client per thread, so
+        # relying on default_storage.connection here rebuilds the boto3 client
+        # on every fresh thread -- profiling showed that client construction,
+        # not the DB, dominated this endpoint's CPU under load.
+        s3_client = get_s3_client()
         bucket_name = default_storage.bucket_name
         try:
             head_resp = s3_client.head_object(Bucket=bucket_name, Key=key)

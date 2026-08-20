@@ -12,6 +12,7 @@ from django.utils import timezone
 
 import pytest
 import requests
+from botocore.client import BaseClient
 from freezegun import freeze_time
 from rest_framework.test import APIClient
 
