@@ -17,6 +17,12 @@ urlpatterns = [
     path("", include("core.urls")),
 ]
 
+# Serve the django-silk profiling UI at /silk/ only when profiling is enabled
+# for this environment (SILK_ENABLED=1). The view itself is further gated behind
+# a staff session by SILKY_AUTHENTICATION / SILKY_AUTHORISATION.
+if settings.SILK_ENABLED:
+    urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]
+
 if settings.DEBUG:
     urlpatterns = (
         urlpatterns

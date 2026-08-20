@@ -164,6 +164,15 @@ class Base(Configuration):
                 environ_name="STORAGES_STATICFILES_BACKEND",
             ),
         },
+        # django-silk looks up its binary cProfile (.prof) storage under this
+        # exact alias (see silk.models). Routing it through the S3 backend keeps
+        # profiling artifacts off the pod filesystem, which is read-only /
+        # ephemeral in Kubernetes; the `silk/` prefix isolates them in the
+        # bucket. Only used when SILK_ENABLED and the binary profiler are on.
+        "SILKY_STORAGE": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {"location": "silk"},
+        },
     }
 
     # Media
@@ -1117,6 +1126,52 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # -- Profiling (django-silk) ---------------------------------------------
+    # Opt-in request/SQL/cProfile profiler, OFF by default. Turn it on in a
+    # given environment with SILK_ENABLED=1 (typically a throwaway staging pod
+    # loaded via `generate_volumetry`, or local dev) to record, per request,
+    # the SQL it ran with timing + originating stack, and an optional cProfile
+    # you can download as a binary `.prof`. When enabled, `silk` is appended to
+    # INSTALLED_APPS, `SilkyMiddleware` is wired near the top of MIDDLEWARE, and
+    # the UI is served at /silk/ (see impress/urls.py and post_setup below).
+    #
+    # NEVER enable against production with real users: silk persists request
+    # metadata to the database. Request/response BODIES are deliberately never
+    # stored (the two MAX_*_BODY_SIZE = 0 below) so document content, titles and
+    # emails cannot leak into the silk tables — only method, path, headers-free
+    # metadata, SQL and timings are kept.
+    SILK_ENABLED = values.BooleanValue(
+        False, environ_name="SILK_ENABLED", environ_prefix=None
+    )
+    # Per-request cProfile. Binary output lets you download a `.prof` and open
+    # it in snakeviz / pstats / tuna offline for a full call graph. The binary
+    # is written through the SILKY_STORAGE backend (S3, see STORAGES above), not
+    # the local filesystem, so it works on read-only/ephemeral pods.
+    SILKY_PYTHON_PROFILER = values.BooleanValue(
+        True, environ_name="SILK_PYTHON_PROFILER", environ_prefix=None
+    )
+    SILKY_PYTHON_PROFILER_BINARY = values.BooleanValue(
+        True, environ_name="SILK_PYTHON_PROFILER_BINARY", environ_prefix=None
+    )
+    # Under load, record only a sample of requests to bound silk's own overhead
+    # and storage (100 = every request; drop it for a thundering-herd repro).
+    SILKY_INTERCEPT_PERCENT = values.IntegerValue(
+        100, environ_name="SILK_INTERCEPT_PERCENT", environ_prefix=None
+    )
+    # Ring-buffer the stored requests so a long load run cannot fill the disk.
+    SILKY_MAX_RECORDED_REQUESTS = values.IntegerValue(
+        10000, environ_name="SILK_MAX_RECORDED_REQUESTS", environ_prefix=None
+    )
+    SILKY_MAX_RECORDED_REQUESTS_CHECK_PERCENT = 10
+    # Record silk's own per-request overhead so you can subtract it.
+    SILKY_META = True
+    # Lock the /silk/ UI behind an authenticated staff session.
+    SILKY_AUTHENTICATION = True
+    SILKY_AUTHORISATION = True
+    # RGPD: never persist request/response bodies (0 bytes kept).
+    SILKY_MAX_REQUEST_BODY_SIZE = 0
+    SILKY_MAX_RESPONSE_BODY_SIZE = 0
+
     # pylint: disable=invalid-name
     @property
     def ENVIRONMENT(self):
@@ -1216,6 +1271,21 @@ class Base(Configuration):
             posthog.api_key = cls.POSTHOG_KEY
             posthog.host = cls.POSTHOG_HOST
 
+        if cls.SILK_ENABLED:
+            # Activate django-silk only when explicitly turned on for this
+            # environment. Appending here (rather than in INSTALLED_APPS) keeps
+            # silk absent from every environment that does not opt in, including
+            # production. Guards make re-entry (post_setup can run per subclass)
+            # idempotent.
+            if "silk" not in cls.INSTALLED_APPS:
+                cls.INSTALLED_APPS.append("silk")
+            # SilkyMiddleware must be high enough to time the whole request but
+            # after AuthenticationMiddleware so it can attribute request.user;
+            # process_response runs inner-to-outer, so index 1 (just after
+            # SecurityMiddleware) satisfies both.
+            if "silk.middleware.SilkyMiddleware" not in cls.MIDDLEWARE:
+                cls.MIDDLEWARE.insert(1, "silk.middleware.SilkyMiddleware")
+
 
 class Build(Base):
     """Settings used when the application is built.
@@ -1286,6 +1356,7 @@ class Development(Base):
         self.CONTENT_SECURITY_POLICY["EXCLUDE_URL_PREFIXES"] += [
             f"/api/{self.API_VERSION}/swagger",
             f"/api/{self.API_VERSION}/redoc",
+            "/silk",
         ]
 
 
