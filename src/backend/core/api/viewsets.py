@@ -2004,27 +2004,42 @@ class DocumentViewSet(
         user = request.user
         key = f"{url_params['pk']:s}/{url_params['attachment']:s}"
 
-        # Look for a document to which the user has access and that includes this attachment
-        # We must look into all descendants of any document to which the user has access per se
-        readable_per_se_paths = (
-            self.queryset.readable_per_se(user)
-            .order_by("path")
+        # Look for a document to which the user has access and that includes this
+        # attachment. Access is granted when the document holding the attachment,
+        # or any of its ancestors, is readable per se by the user.
+        #
+        # We answer this without materialising the user's whole readable set:
+        #   1. find the document(s) that hold this key (indexed by the GIN index
+        #      on `attachments`);
+        #   2. expand each to its own path plus every ancestor prefix -- pure
+        #      string slicing, no query, bounded by tree depth
+        #      (<= len(path) / steplen);
+        #   3. ask a single indexed EXISTS whether any of those candidate paths
+        #      is readable per se by this user, right now.
+        # "descendant-or-self of a readable node" and "ancestor-or-self is
+        # readable" are converses over the same fixed-width prefix relation, so
+        # this yields the exact same decision as scanning every readable path.
+        # NOTE: like the previous implementation, `self.queryset` here does not
+        # filter out soft-deleted (ancestors_deleted_at) documents, so a
+        # soft-deleted ancestor still grants access. Behaviour preserved on
+        # purpose; revisit separately if that is not intended.
+        attachment_paths = list(
+            self.queryset.select_related(None)
+            .filter(attachments__contains=[key])
             .values_list("path", flat=True)
         )
 
-        attachments_documents = (
-            self.queryset.select_related(None)
-            .filter(attachments__contains=[key])
-            .only("path")
-            .order_by("path")
-        )
-        readable_attachments_paths = filter_descendants(
-            [doc.path for doc in attachments_documents],
-            readable_per_se_paths,
-            skip_sorting=True,
-        )
+        candidate_paths = {
+            path[:pos]
+            for path in attachment_paths
+            for pos in range(len(path), 0, -models.Document.steplen)
+        }
 
-        if not readable_attachments_paths:
+        if not candidate_paths or not (
+            self.queryset.readable_per_se(user)
+            .filter(path__in=candidate_paths)
+            .exists()
+        ):
             logger.debug("User '%s' lacks permission for attachment", user)
             raise drf.exceptions.PermissionDenied()
 
