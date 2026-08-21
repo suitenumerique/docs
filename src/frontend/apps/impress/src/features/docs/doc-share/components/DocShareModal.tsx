@@ -40,6 +40,9 @@ import {
 import { QuickSearchGroupMember } from './DocShareMember';
 import { DocShareModalFooter } from './DocShareModalFooter';
 
+const SEARCH_QUERY_DEBOUNCE_MS = 300;
+const ACCESSIBILITY_REEXPOSURE_DELAY_MS = 300;
+
 const ShareModalStyle = createGlobalStyle`
   .--docs--doc-share-modal [cmdk-item] {
     cursor: auto;
@@ -84,6 +87,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
 
   const [listHeight, setListHeight] = useState<string>('400px');
   const canShare = doc.abilities.accesses_manage && isRootDoc;
+  const [isContentAccessible, setIsContentAccessible] = useState(canShare);
   const canViewAccesses = doc.abilities.accesses_view;
   const showMemberSection = inputValue === '' && selectedUsers.length === 0;
   const showFooter = selectedUsers.length === 0 && !inputValue;
@@ -119,7 +123,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
 
   const onFilter = useDebouncedCallback((str: string) => {
     setUserQuery(str);
-  }, 300);
+  }, SEARCH_QUERY_DEBOUNCE_MS);
 
   const onRemoveUser = (row: User) => {
     setSelectedUsers((prevState) => {
@@ -161,6 +165,23 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
   const showInheritedShareContent =
     inheritedAccesses.length > 0 && showMemberSection && !isRootDoc;
 
+  // When the search input is hidden, keep the modal content out of the
+  // accessibility tree during the opening announcement, then restore it.
+  useEffect(() => {
+    if (canShare) {
+      setIsContentAccessible(true);
+      return;
+    }
+
+    setIsContentAccessible(false);
+
+    const id = window.setTimeout(() => {
+      setIsContentAccessible(true);
+    }, ACCESSIBILITY_REEXPOSURE_DELAY_MS);
+
+    return () => window.clearTimeout(id);
+  }, [canShare]);
+
   // Invalidate relevant queries to ensure fresh data on modal open
   useEffect(() => {
     [
@@ -197,6 +218,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
               {t('Share the document')}
             </Text>
             <ButtonCloseModal
+              autoFocus={!canShare}
               aria-label={t('Close the share modal')}
               onClick={onClose}
             />
@@ -205,7 +227,11 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
         hideCloseButton
       >
         <ShareModalStyle />
+        {/* aria-hidden is temporary (300ms) to prevent NVDA from reading
+            the entire modal body on open when the search input is absent.
+            autoFocus alone on the close button is not enough. */}
         <Box
+          aria-hidden={isContentAccessible ? undefined : true}
           $height="auto"
           $maxHeight={canViewAccesses ? modalContentHeight : 'none'}
           $overflow="hidden"
