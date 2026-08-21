@@ -144,7 +144,6 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
     }
   };
 
-  const docTitle = doc.title || untitledDocument;
   const isCurrentPage = router.query?.id === doc.id;
   const isDeleted = !!doc.deleted_at;
   const actionsRef = useRef<HTMLDivElement>(null);
@@ -187,8 +186,8 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
       tabIndex={-1}
       aria-label={
         isDeleted
-          ? t('{{title}} (deleted)', { title: docTitle })
-          : t('Open document {{title}}', { title: docTitle })
+          ? t('{{title}} (deleted)', { title: displayTitle })
+          : t('Open document {{title}}', { title: displayTitle })
       }
       aria-current={isCurrentPage ? 'page' : undefined}
       data-testid={`doc-sub-page-item-${doc.id}`}
@@ -308,7 +307,7 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
           $align="center"
           className="light-doc-item-actions actions"
           role="toolbar"
-          aria-label={t('Actions for {{title}}', { title: docTitle })}
+          aria-label={t('Actions for {{title}}', { title: displayTitle })}
         >
           <DocTreeItemActions
             doc={doc}
