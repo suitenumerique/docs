@@ -1,5 +1,4 @@
-import { CloseEvent } from '@hocuspocus/common';
-import { HocuspocusProvider, WebSocketStatus } from '@hocuspocus/provider';
+import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 import { create } from 'zustand';
 
@@ -10,18 +9,20 @@ export interface UseCollaborationStore {
     providerUrl: string,
     storeId: string,
     initialDoc?: Base64,
-  ) => HocuspocusProvider;
+  ) => WebsocketProvider;
   destroyProvider: () => void;
   setReady: (value: boolean) => void;
   pauseForInactivity: () => void;
   resumeFromInactivity: () => void;
-  provider: HocuspocusProvider | undefined;
+  provider: WebsocketProvider | undefined;
   isConnected: boolean;
   isReady: boolean;
   isSynced: boolean;
   hasLostConnection: boolean;
   isPausedForInactivity: boolean;
+  isPermanentlyClosed: boolean;
   resetLostConnection: () => void;
+  reconnect: () => void;
 }
 
 const defaultValues = {
@@ -31,9 +32,8 @@ const defaultValues = {
   isSynced: false,
   hasLostConnection: false,
   isPausedForInactivity: false,
+  isPermanentlyClosed: false,
 };
-
-type ExtendedCloseEvent = CloseEvent & { wasClean: boolean };
 
 /**
  * When a massive simultaneous disconnection occurs (e.g. infra restart), all
@@ -41,10 +41,23 @@ type ExtendedCloseEvent = CloseEvent & { wasClean: boolean };
  * time, causing a possible DB spike. Adding random jitter spreads these events over a
  * time window so the load is absorbed gradually.
  */
-const RECONNECT_BASE_DELAY_MS = 1000;
 const RECONNECT_JITTER_MAX_MS = 3000;
 
-let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
+/**
+ * Close codes 4400-4499 are the collaboration server refusing this connection
+ * rather than losing it: its access changed (4401) or the document was deleted
+ * (4404). It has answered, and reconnecting on a timer only asks the same
+ * question again — twice a minute, for as long as the tab stays open, for a
+ * document that may never come back. Everything else (a dropped socket, a
+ * server restart, an upgrade that failed) is transient and keeps its retry
+ * loop.
+ *
+ * Refused is not the same as gone: an access upgraded from reader to editor is
+ * a refusal too, and the connection has to be made again to carry the new
+ * rights. Asking the backend is what settles it, in `useCollaboration`.
+ */
+const isPermanentCloseCode = (code: number) => code >= 4400 && code <= 4499;
+
 let lostConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
@@ -58,102 +71,69 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       Y.applyUpdate(doc, Buffer.from(initialDoc, 'base64'));
     }
 
-    const provider = new HocuspocusProvider({
-      url: wsUrl,
-      name: storeId,
-      document: doc,
-      onDisconnect(data) {
-        // Skip reconnect when the disconnect was triggered by inactivity:
-        // reconnection only happens once the user becomes active again.
-        if (get().isPausedForInactivity) {
-          return;
-        }
+    const provider = new WebsocketProvider(wsUrl, storeId, doc, {
+      // BroadcastChannel would bypass server auth
+      disableBc: true,
+      // The default 2.5s backoff would hammer the backend with auth fetches
+      // on permanently-failing sockets
+      maxBackoffTime: 30000,
+      // Guarantees inbound traffic for y-websocket's 30s no-traffic watchdog
+      resyncInterval: 20000,
+    });
 
-        // Attempt to reconnect if the disconnection was clean (initiated by the client or server)
-        if ((data.event as ExtendedCloseEvent).wasClean) {
-          if (data.event.reason === 'No cookies' && data.event.code === 4001) {
-            console.error(
-              'Disconnection due to missing cookies. Not attempting to reconnect.',
-            );
-            void provider.disconnect();
-            set({
-              isReady: true,
-              isConnected: false,
-            });
-            return;
-          }
+    provider.on('status', ({ status }) => {
+      // 'connecting' must be ignored: it fires on every backoff retry.
+      // 'disconnected' is handled via 'connection-close' (it never fires
+      // for sockets that failed to open).
+      if (status === 'connected') {
+        clearTimeout(lostConnectionTimeout);
+        // An open socket means we are authenticated (auth happens at upgrade)
+        set({ isConnected: true, isReady: true });
+      }
+    });
 
-          clearTimeout(reconnectTimeout);
+    provider.on('sync', (isSynced: boolean) => {
+      set({ isSynced, isReady: true });
+    });
 
-          // Jitter spreading for reconnection attempts
-          // Math.random() generates a random delay to avoid all clients
-          // reconnecting at the same time
-          reconnectTimeout = setTimeout(
-            () => void provider.connect(),
-            RECONNECT_BASE_DELAY_MS + Math.random() * RECONNECT_JITTER_MAX_MS,
-          );
-        }
-      },
-      onAuthenticationFailed() {
-        set({ isReady: true, isConnected: false });
-      },
-      onAuthenticated() {
-        set({ isReady: true, isConnected: true });
-      },
-      onStatus: ({ status }) => {
-        const isConnected = status === WebSocketStatus.Connected;
-        const wasConnected = get().isConnected;
+    // Fires on every close AND every failed connection attempt
+    // (an auth failure surfaces as an upgrade-level 401, close code 1006).
+    // The event is null when the socket was closed from here.
+    provider.on('connection-close', (event) => {
+      // Skip when the disconnect was triggered by inactivity:
+      // reconnection only happens once the user becomes active again.
+      if (get().isPausedForInactivity) {
+        return;
+      }
 
-        if (isConnected) {
-          clearTimeout(lostConnectionTimeout);
-        }
-        // If we were previously connected and now we're not,
-        // we might have lost the connection
-        else if (wasConnected && !get().isPausedForInactivity) {
-          clearTimeout(lostConnectionTimeout);
-          // Jitter spreading for reconnection attempts
-          // Math.random() generates a random delay to avoid all clients
-          // reconnecting at the same time
-          lostConnectionTimeout = setTimeout(
-            () => set({ hasLostConnection: true }),
-            Math.random() * RECONNECT_JITTER_MAX_MS,
-          );
-        }
+      // The editor renders from the last snapshot while y-websocket retries
+      set({ isConnected: false, isReady: true });
 
-        set((state) => {
-          /**
-           * status === WebSocketStatus.Connected does not mean we are totally connected
-           * because authentication can still be in progress and failed
-           * So we only update isConnected when we lose the connection
-           */
-          const connected =
-            status !== WebSocketStatus.Connected
-              ? {
-                  isConnected: false,
-                }
-              : undefined;
+      clearTimeout(lostConnectionTimeout);
+      // Jitter spreading: Math.random() generates a random delay to avoid
+      // all clients invalidating their queries at the same time
+      const jitter = Math.random() * RECONNECT_JITTER_MAX_MS;
 
-          return {
-            ...connected,
-            isReady: state.isReady || status === WebSocketStatus.Disconnected,
-          };
-        });
-      },
-      onSynced: ({ state }) => {
-        set({ isSynced: state, isReady: true });
-      },
-      onClose(data) {
+      if (event && isPermanentCloseCode(event.code)) {
         /**
-         * Handle the "Reset Connection" event from the server
-         * This is triggered when the server wants to reset the connection
-         * for clients in the room.
-         * A disconnect is made automatically but it takes time to be triggered,
-         * so we force the disconnection here.
+         * Stop the retry loop. Assigning `shouldConnect` rather than calling
+         * `disconnect()`: this runs inside y-websocket's own close handling,
+         * and `disconnect()` closes the socket that is already closing, which
+         * re-enters this listener. The reconnection it has just scheduled reads
+         * the flag back when it fires, and gives up.
          */
-        if (data.event.code === 1000) {
-          provider.disconnect();
-        }
-      },
+        provider.shouldConnect = false;
+        lostConnectionTimeout = setTimeout(
+          () => set({ isPermanentlyClosed: true }),
+          jitter,
+        );
+        return;
+      }
+
+      lostConnectionTimeout = setTimeout(
+        () => set({ hasLostConnection: true }),
+        jitter,
+      );
     });
 
     set({
@@ -163,12 +143,19 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     return provider;
   },
   destroyProvider: () => {
-    clearTimeout(reconnectTimeout);
-    clearTimeout(lostConnectionTimeout);
     const provider = get().provider;
     if (provider) {
+      /**
+       * destroy() emits 'connection-close' synchronously before removing
+       * listeners, which re-arms lostConnectionTimeout: it must be cleared
+       * after, or a stale "connection lost" banner flashes on the next doc.
+       */
       provider.destroy();
+      // y-websocket never destroys the awareness: its interval would leak
+      provider.awareness.destroy();
+      provider.doc.destroy();
     }
+    clearTimeout(lostConnectionTimeout);
 
     set(defaultValues);
   },
@@ -177,7 +164,6 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     if (get().isPausedForInactivity) {
       return;
     }
-    clearTimeout(reconnectTimeout);
     clearTimeout(lostConnectionTimeout);
     set({ isPausedForInactivity: true, hasLostConnection: false });
     get().provider?.disconnect();
@@ -188,7 +174,20 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     }
     clearTimeout(lostConnectionTimeout);
     set({ isPausedForInactivity: false });
-    void get().provider?.connect();
+    // a connection that was refused for good is only reopened by `reconnect`,
+    // once the backend has been asked again — becoming active is not an answer
+    if (get().isPermanentlyClosed) {
+      return;
+    }
+    get().provider?.connect();
   },
   resetLostConnection: () => set({ hasLostConnection: false }),
+  /**
+   * Open the connection again after it was refused for good, once the backend
+   * has confirmed the document is still there to open.
+   */
+  reconnect: () => {
+    set({ isPermanentlyClosed: false });
+    get().provider?.connect();
+  },
 }));

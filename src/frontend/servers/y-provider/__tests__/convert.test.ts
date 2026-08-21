@@ -6,7 +6,7 @@ import {
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
 import { Fragment, Node as PMNode } from 'prosemirror-model';
 import request from 'supertest';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { prosemirrorToYXmlFragment } from 'y-prosemirror';
 import * as Y from 'yjs';
 
@@ -14,17 +14,19 @@ vi.mock('../src/env', async (importOriginal) => {
   return {
     ...(await importOriginal()),
     COLLABORATION_SERVER_ORIGIN: 'http://localhost:3000',
-    Y_PROVIDER_API_KEY: 'yprovider-api-key',
   };
 });
+
+import { mockJwksEndpoint, signAdminToken } from './testUtils/adminJwt';
 
 import { docsBlockNoteSchema } from '@/blockSpecs';
 import { initApp } from '@/servers';
 
-import {
-  Y_PROVIDER_API_KEY as apiKey,
-  COLLABORATION_SERVER_ORIGIN as origin,
-} from '../src/env';
+import { JWKS_URL, COLLABORATION_SERVER_ORIGIN as origin } from '../src/env';
+
+import { mockJwksEndpoint, signAdminToken } from './testUtils/adminJwt';
+
+const apiKey = await signAdminToken();
 
 const expectedMarkdown = '# Example document\n\nLorem ipsum dolor sit amet.';
 const expectedHTML =
@@ -141,8 +143,13 @@ const buildYjsUpdateWithComment = (): Buffer => {
 console.error = vi.fn();
 
 describe('Conversion Testing', () => {
+  beforeEach(() => {
+    mockJwksEndpoint(JWKS_URL);
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
   test('POST /api/convert with incorrect API key responds with 401', async () => {

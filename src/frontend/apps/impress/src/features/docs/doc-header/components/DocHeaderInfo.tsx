@@ -9,7 +9,6 @@ import {
   LinkReach,
   Role,
   getDocLinkReach,
-  useIsCollaborativeEditable,
   useTrans,
 } from '@/docs/doc-management';
 import { useDate } from '@/hooks';
@@ -20,7 +19,6 @@ interface DocHeaderInfoProps {
 
 export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
   const { transRole } = useTrans();
-  const { isEditable } = useIsCollaborativeEditable(doc);
   const { relativeDate, calculateDaysLeft } = useDate();
   const { data: config } = useConfig();
 
@@ -50,12 +48,16 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
         $variation="tertiary"
         $size="s"
         $weight="bold"
-        $theme={isEditable ? 'neutral' : 'warning'}
+        $theme={doc.abilities.partial_update ? 'neutral' : 'warning'}
         $direction="row"
         $margin="0"
       >
         <VisibilityDoc doc={doc} />
-        {transRole(isEditable ? doc.user_role || doc.link_role : Role.READER)}
+        {transRole(
+          doc.abilities.partial_update
+            ? doc.user_role || doc.link_role
+            : Role.READER,
+        )}
         &nbsp;·&nbsp;
       </Text>
       <Text as="dt" $variation="tertiary" $size="s" $margin="0">

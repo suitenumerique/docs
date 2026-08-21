@@ -6,14 +6,255 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) stop reconnecting to the collaboration server when it has refused
+  the connection for good. Close codes 4400-4499 are a refusal, not a lost
+  socket — the document was deleted (4404) or the access of this connection
+  changed (4401) — and retrying only asked the same question again, twice a
+  minute, for as long as the tab stayed open. The editor now stops and refetches
+  the document instead: it reconnects when the document is still there (an
+  access upgraded from reader to editor is a refusal too, and has to reconnect
+  to carry its new rights) and stays closed when it is not, where the page
+  already tells the user what happened. Everything else — a dropped socket, a
+  restart, an unreachable server — keeps its retry loop untouched
+
 ### Added
 
+- 📝(installation) deploy the collaboration server in the compose install: the
+  example stack gains the `yhub` service, the valkey it persists through and an
+  `env.d/yhub` of its own, the proxy routes `/collaboration/` to it instead of
+  the y-provider (and publishes only what browsers call, the backend-internal
+  routes staying inside the network), and the backend gains the signing key and
+  the url it reaches it on. The guide walks through the two keys to generate,
+  the `npm run init-db` that creates the schema before the first start and
+  after every upgrade, and the migration of a corpus stored in the object
+  storage before the collaboration server existed. The kubernetes guide gains
+  the same reading of what is deployed and turns `jwtKeys` on in its example
+  values, the Scalingo one states that its buildpack does not start the
+  collaboration server yet, and `documentation/env.md` documents the variables
+  of the two node services, which it had none of
+- ✨(collaboration) let the collaboration server keep the document blobs in a
+  bucket instead of its own PostgreSQL database, through yhub's S3 persistence
+  plugin: `YHUB_S3_PERSISTENCE=true`, plus `YHUB_S3_ENDPOINT_URL`,
+  `YHUB_S3_ACCESS_KEY_ID`, `YHUB_S3_SECRET_ACCESS_KEY`, `YHUB_S3_BUCKET_NAME`
+  and, when the provider needs one told rather than discovered,
+  `YHUB_S3_REGION_NAME`. Off by default, which keeps everything in postgres —
+  the configuration Docs has been running. Turned on, every compaction writes
+  its four blobs (the garbage-collected document, the one that keeps its
+  history, the content map and the content ids) to the bucket and leaves a
+  reference in the row: postgres holds the index of the corpus, the bucket
+  holds its bytes. It is a third bucket, configured under a prefix of its own
+  next to the backend's `AWS_S3_*` and the legacy document store's
+  `LEGACY_S3_*`, since the three may sit on three providers and each is read by
+  the process it belongs to. Note that it is a one-way setting: a row pointing
+  at an object is unreadable without the plugin that wrote it, and yhub reports
+  such a version as having no content rather than as an error, so removing the
+  setting after a compaction serves those documents empty. That, the
+  permissions the credentials need and what the objects are is in
+  `src/yhub-server/README.md`, worth reading before enabling it. An incomplete
+  configuration is refused at startup, naming what is missing, rather than
+  surfacing on the first compaction — a background task, where it would look
+  like documents quietly not being persisted
+- ✨(collaboration) erase the content of a document on the collaboration server
+  when `clean_document` resets it. The command cleared the database and the
+  object storage, but the content lives on the collaboration server now: it kept
+  serving the document the reset was supposed to erase, and the manual
+  remediation was to run SQL against yhub's own database. It goes through the
+  new backend-internal `POST /collaboration/reset-ydoc/v1/{org}/{docid}`, which
+  hard-deletes the room and then drops the deletion record so it stays usable —
+  the document keeps its id and goes on being edited, which is why neither of
+  yhub's deletions fits on its own. The documents it could not erase are named
+  on stderr: their content is still served, and the reset is not done until they
+  are dealt with. Note that erasing the room does not erase the copy each editor
+  holds — reset a document when nobody is editing it
+- ✨(collaboration) delete a document on the collaboration server when it is
+  deleted in Docs, and restore it when it comes back out of the trashbin. The
+  content lives there now, so until it was told, the clients already editing a
+  deleted document went on editing it and its content outlived it. Both go
+  through `sync_service_deletions_in_cascade`, which walks the deleted subtree
+  and reports what each of its documents is now — a restored document only
+  brings back the part of its subtree that was deleted with it. Deleting uses
+  yhub's built-in `DELETE .../ydoc/` (a soft deletion: connected clients are
+  disconnected with the close code 4404 and every route answers 404, the
+  content is left untouched), restoring the new backend-internal
+  `POST /collaboration/restore-ydoc/v1/{org}/{docid}`, since yhub 0.6.0 has no
+  built-in route for it. Erasing the content for good stays out of reach, as it
+  is in Docs: a document that is no longer restorable is not erased either
+- ⬆️(collaboration) upgrade yhub to 0.6.0, which needs a schema change: a
+  `yhub_ydoc_tombstones_v1` table (it adds document deletion) and four
+  `*_is_reference` markers on `yhub_ydoc_v1`. Neither is optional — every
+  document read joins the tombstone table, so without them yhub answers
+  `relation "yhub_ydoc_tombstones_v1" does not exist`. Existing rows read as
+  "may be a reference", exactly as before the markers existed, so there is no
+  backfill and no downtime beyond applying the DDL
+- 🔧(collaboration) let yhub own its schema: `npm run init-db` in
+  `src/yhub-server` runs the DDL script yhub ships (`bin/init-db.js`), which
+  creates the database when missing and every table the installed version
+  needs. It replaces the copy of the schema we kept in
+  `docker/files/yhub/initdb/`, which only replayed on a fresh postgres volume —
+  so an upgrade that added a table silently skipped an existing database, and
+  the copy had to be updated by hand on every upgrade. `make migrate-yhub` runs
+  it against the dev stack, the counterpart of `make migrate` for the Django
+  database, and is part of `make bootstrap`; CI runs the same script instead of
+  applying the SQL by hand. It is the only thing that runs DDL — the server and
+  the worker never do — and it is idempotent, so re-running it is always safe
+- ✅(collaboration) add integration tests covering both legacy migrations,
+  running against a real yhub: CI now starts the collaboration server and a
+  valkey alongside the backend test job. They skip themselves when nothing
+  answers on `COLLABORATION_API_URL`, so a `make test` without the dev stack
+  still passes
+- ✨(collaboration) soft-migrate legacy S3 documents into yhub on first access
+  (`SOFT_MIGRATION=true`): when yhub does not know a document yet, its legacy
+  snapshot (`{id}/file`, base64 Yjs update) is fetched from the Django S3
+  media bucket and seeded server-side (attributed to `system`, with no
+  timestamp — a lazy seed is not an editing event, and stamping one would
+  collide with the real per-version times the migrate endpoint writes) before
+  the connection is admitted. A missing S3 object means a brand-new document and
+  yields an empty room. Seeding never decides access: a legacy object that
+  cannot be migrated (it does not decode) opens as a new document, logged
+  per access, since no retry could fix it and refusing would make the document
+  permanently unopenable. Every other failure — an unreachable store, but also
+  any refusal from S3 such as `AccessDenied` on a rotated key or a wrong bucket
+  name — answers a retryable `503`, so an empty document is never started on
+  top of content that exists.
+  Backend reads carrying the admin JWT are seeded too, so a server-side read of
+  an unmigrated document never answers with an empty one. Enabled in the dev
+  stack through `env.d/development/yhub`, the collaboration server's own
+  environment file. The bucket it reads is configured under `LEGACY_S3_*`
+  (`_ENDPOINT_URL`, `_ACCESS_KEY_ID`, `_SECRET_ACCESS_KEY`, `_REGION_NAME`,
+  `_BUCKET_NAME`, `_SIGNATURE_VERSION`), a set of its own and not the backend's
+  `AWS_S3_*`: this is the bucket the collaboration server migrates *out of*,
+  while the one it persists *into* when `YHUB_S3_PERSISTENCE` is on is a
+  separate bucket that may well sit on another provider with credentials of its
+  own. It is read with the AWS SDK for JavaScript v3, whose
+  signature version is configurable (`s3v4` by default, as in Django) because a
+  provider expecting another one answers 403, which reads exactly like wrong
+  credentials
+- ✨(collaboration) add a migrate endpoint on yhub:
+  `POST /collaboration/migrate/v1/docs/{id}` replays a document's **full**
+  legacy version history from the versioned S3 media bucket into a
+  `gc: false` Yjs document, crediting each S3 version with its own S3
+  timestamp — so `activity?group=false` reports the same timeline as the
+  backend's `/documents/{id}/versions/`, instead of the single
+  migration-time change the
+  lazy soft migration leaves behind. Purely additive: the result is stored as
+  one new row at clock `0`, so nothing existing is deleted and the next
+  compaction merges it like any other row. Idempotent by construction (the
+  clock-`0` insert is `ON CONFLICT DO NOTHING`, and migrated ids are recorded
+  in a valkey set), lock-free, admin JWT only, and the intended way to backfill
+  the corpus before `SOFT_MIGRATION` is turned off
+- ✨(collaboration) add a create-ydoc endpoint on yhub:
+  `POST /collaboration/create-ydoc/v1/docs/{id}` seeds a document's initial
+  Yjs state from a raw binary update posted as `application/octet-stream`,
+  so the Django backend can create documents without speaking yhub's lib0
+  wire encoding. Strict create (409 when the document already has content),
+  initial content attributed to the optional `X-User-Id` header; guarded by
+  standard document write access (the `aud: "yhub"` admin JWT, or a user
+  session with update ability)
+- ✨(collaboration) add an admin reset-connections endpoint on yhub:
+  `POST /collaboration/reset-connections/v1/docs/{id}` re-checks the
+  authorization of the document's connected clients and disconnects (close
+  code 4401) only those whose access changed. Authenticated with an admin JWT
+  verified against the backend JWKS and required to carry `aud: "yhub"`, so
+  an admin token Django issued for another service (e.g. the `y-converter`
+  one) cannot be replayed here; not yet triggered by the backend on
+  permission changes (follow-up)
+- ⬆️(collaboration) upgrade yhub to 0.5.0 and serve all its routes under the
+  `/collaboration/` prefix (`server.apiPrefix`): the websocket moves to
+  `/collaboration/ws/v1/docs`. All `/collaboration/` routes are meant to be
+  publicly exposed except `reset-connections` and `migrate`, which stay
+  backend-internal (admin JWT only). Following 0.5.0's error semantics
+  (`4xx` permanent, `5xx`/`429` retryable), the auth plugin now reports a
+  temporarily unreachable Django backend, JWKS endpoint or legacy S3 store as
+  `503` instead of denying access like a permission failure, so clients retry
+  instead of giving up. The built-in endpoints can also answer JSON on
+  `Accept: application/json`
+- ✨(backend) add a `migrate_documents` command replaying the legacy content of
+  the documents into the collaboration server, one call to its migrate endpoint
+  per document. Resumable and safe to re-run: what became of every document is
+  recorded (`impress_document_migration`), a server that is unwell is retried
+  with a backoff and a document it refuses is left for a later run
+  (`--retry-failed`). Bounded by `--concurrency`, `--rate` and `--limit`, most
+  recently edited documents first
+- ✨(collaboration) notify the backend when the worker persists new content for
+  a document, so the lists ordered by `updated_at` follow the edits made on the
+  collaboration server. The backend serves it on
+  `POST /api/v1.0/documents/{id}/content-updated/`, authenticated with a short
+  lived RS256 JWT the collaboration server signs (`aud: "docs-backend"`) and
+  the backend verifies against the JWKS the collaboration server publishes on
+  `/collaboration/jwks/v1` — the mirror of the admin token the backend signs to
+  call it, so no long lived secret is shared and either side can roll its key
+  on its own
+- 🔧(dev) generate the JWT signing key of the collaboration server when
+  bootstrapping the dev stack, alongside the backend one
+- ✨(helm) generate the JWT signing keys of the services on the cluster
+  (`jwtKeys.enabled`, off by default): a job generates the backend and the
+  collaboration server keys with `openssl`, hands them to a secret both mount
+  read-only, and sets the `*_FILE` variables pointing at them. No key is
+  templated into a manifest or kept in a values file, and the job is the only
+  thing granted a write: its role may create a secret and read whether that one
+  exists, nothing else, and the services never call the kubernetes API.
+  Idempotent — an existing secret is left alone, so it re-runs on every sync,
+  and rolling the keys is deleting the secret and letting the next run create
+  it again. `jwtKeys.existingSecret` points at keys of your own instead, and
+  skips both the job and its rights
+- ✨(collaboration) split the yhub server and worker with `YHUB_ROLE`: unset (or
+  `all`) runs both halves in one process as before, `server` holds the
+  websockets and the routes without claiming a task, `worker` drains the redis
+  stream into postgres without binding a port. They share the two stores and
+  nothing else, so each scales on what drives it — connected editors on one
+  side, write throughput on the other. Any other value is refused at startup.
+  In the helm chart, `yhub.worker.enabled` turns the single deployment into
+  two, sets the variable on each, and gives the worker no service and no probes
+  since it binds nothing; everything not named under `yhub.worker` is the
+  server's. `YHUB_TASK_CONCURRENCY` (default 5, unchanged) sets how many tasks
+  one worker process claims at once — the other half of the throughput knob the
+  replica count is, since redis hands each task to a single worker
+- ✨(collaboration) configure the two stream timings that were compiled into
+  the yhub wrapper: `YHUB_TASK_DEBOUNCE_MS` (default 10000, unchanged), how
+  long an update waits on the redis stream before a worker persists it — the
+  delay between an edit and its row in postgres, and the window over which the
+  edits of a busy document are merged into one task — and
+  `YHUB_MIN_MESSAGE_LIFETIME_MS` (default 60000, unchanged), how long persisted
+  updates stay replayable from redis rather than being read back out of
+  postgres. Neither is a durability setting: the trim never goes past what
+  postgres holds. Like the concurrency, they are refused at startup when they
+  are not whole numbers in range, and all of them are logged with the role on
+  the first line a pod writes
+- ✨(collaboration) serve two probes on yhub: `GET /collaboration/ping/v1`
+  answers `pong` without touching a store — being answered is what a liveness
+  check should conclude, and restarting a server over a store it cannot reach
+  would drop the websockets it serves — and `GET /collaboration/ready/v1` asks
+  postgres and redis in parallel, answering `503` with the offending one marked
+  unreachable so the pod leaves the service endpoints while its siblings keep
+  serving. Both unauthenticated, like the JWKS; neither names the error in its
+  body, which a postgres client would gladly fill with its connection string.
+  The helm probes point at them
+- ✨(helm) deploy the collaboration server: the chart gains a `yhub` deployment,
+  its service, and the job running the `init-db` script that creates and
+  upgrades its schema — next to the backend migrate job, retrying while the
+  postgres server does not answer, since nothing in the chart creates it.
+  Configured under the `yhub` values key, where `REDIS` and `POSTGRES` are
+  required and have no default; the image is published as
+  `lasuite/impress-yhub`
+- ✨(backend) serve `documents/{id}/formatted-content/` from yhub
+- ✨(backend) duplicate a document through the collaboration server
+- ✨(backend) call YHubService to seed initial document content
+- ✨(backend) reset the yhub connections of a document and its descendants
+  when an access or the link configuration changes
+- ✨(backend) add a service to call the yhub REST API
+- ✨(backend) add a service generating cached RS256 JWT tokens
+- ✨(backend) publish the JWT public key on a JWKS endpoint
+- 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
 - ♿️(frontend) restore skip to content link after header redesign #2510
 - 🌐(i18n) rename cn_CN to zh_CN, add eo_PL and zh_TW locales #2486
 - ✨(backend) conditional email notification in server to server api #2554
 
 ### Changed
 
+- 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
+  `/external_api/{version}/jwks`
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
 - 💄(frontend) use the same highlight color for cells and moves #2575
 
@@ -27,6 +268,64 @@ and this project adheres to
 - 🐛(backend) handle object storage metadata keys case-insensitively #2576
 - 🐛(keycloak) fix database env variables in the self-hosting example #2572
 - 🐛(helm) show the database error while jobs wait for it to be ready #2578
+- ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub:
+  the dev stack gains dedicated valkey and postgres services for yhub. The
+  kick flow is deferred with TODO(yhub) stubs (the reset-connections
+  endpoint added above is its server-side replacement, backend wiring
+  pending). The get-connections API is dropped for good: its only consumer
+  was the removed can-edit mechanism, so it is not needed anymore
+- ♻️(backend) index the content of a document as the collaboration server has
+  it: the search indexer reads it with `YHubService`, and the indexation of an
+  edited document is triggered by the `content-updated` call the collaboration
+  server makes — nothing else sees the content change anymore. It is queued as
+  a celery task, throttled like the other updates, so no indexation ever runs
+  in the process serving the request. A document whose content cannot be read
+  is left out of the batch rather than indexed empty, which would have erased
+  it from the search backend
+- ♻️(backend) duplicate the onboarding sandbox document through the
+  collaboration server: its content is read from there and copied under the
+  identity of the user the sandbox is created for. A collaboration server that
+  cannot be reached skips the sandbox, as a missing template already did, and
+  never fails the signup
+- ♻️(backend) read the content of a document from the built-in `ydoc` endpoint
+  of the collaboration server: `YHubService` asks for JSON, which yhub speaks
+  since 0.5.0, so the custom `get-ydoc` endpoint it used to need is gone.
+  `create-ydoc` stays, no built-in offers what it does — a strict create, and
+  content credited to the user rather than to the backend
+- ♻️(backend) seed the content of the demo documents in the collaboration
+  server: `create_demo` no longer writes it to the object storage, which
+  nothing reads anymore, and fails with an explicit message when the
+  collaboration server is not running rather than building a corpus of
+  documents that would open empty
+- 🔥(backend) remove the unused `CollaborationService`
+- 💥(backend) remove the `documents/{id}/content/` endpoint
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
+- 💥(y-provider) the published `lasuite/impress-y-provider` image becomes
+  converter-only and no longer serves `/collaboration/ws/`
+- 💥(helm) route `/collaboration/` to yhub instead of the y-provider: both
+  collaboration ingresses now point at the yhub service, and
+  `ingressCollaborationApi` serves the routes yhub exposes to browsers
+  (`ingressCollaborationApi.paths`, one ingress rule each) instead of the
+  single `/collaboration/api/` path — what is not listed stays in-cluster, so
+  `create-ydoc`, `reset-connections`, `migrate`, `restore-ydoc` and
+  `reset-ydoc` are not published. The `upstream-hash-by: $arg_room` annotation
+  is dropped: yhub replicas exchange updates through redis, so a room needs no
+  sticky upstream — and hashing on a query argument its urls do not carry would
+  pin every connection to a single pod
+- 💥(helm) drop the `yProvider.converter` values, its deployment and its
+  service: the y-provider serves nothing but the conversion API since the
+  collaboration moved to yhub, so the `yProvider` release *is* the converter
+  and there is no second one to enable. Deployments that had it on lose the
+  `-converter` suffix on the url the backend calls —
+  `Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/` — and
+  `yProvider.converter.*` values are now ignored, their `yProvider.*`
+  counterparts taking over
+- 🔧(collaboration) split the yhub image into a development and a production
+  stage, like the other services: the dev stack now bind-mounts
+  `src/yhub-server` and runs the server through nodemon, so editing a source
+  file restarts it instead of needing `make build-yhub`. The production stage
+  gains the un-privileged user and the entrypoint the other images have, and
+  both are now built from the repository root like the rest of them
 
 ## [v5.4.1] - 2026-07-09
 

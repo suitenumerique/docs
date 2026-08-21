@@ -7,10 +7,8 @@ import random
 from unittest.mock import patch
 
 from django.contrib.auth.models import AnonymousUser
-from django.core.cache import cache
 
 import pytest
-import responses
 from rest_framework.test import APIClient
 
 from core import factories, models
@@ -48,7 +46,6 @@ def test_api_documents_update_anonymous_forbidden(reach, role, via_parent):
     new_document_values = serializers.DocumentSerializer(
         instance=factories.DocumentFactory()
     ).data
-    new_document_values["websocket"] = True
     response = APIClient().put(
         f"/api/v1.0/documents/{document.id!s}/",
         new_document_values,
@@ -97,7 +94,6 @@ def test_api_documents_update_authenticated_unrelated_forbidden(
     new_document_values = serializers.DocumentSerializer(
         instance=factories.DocumentFactory(),
     ).data
-    new_document_values["websocket"] = True
     response = client.put(
         f"/api/v1.0/documents/{document.id!s}/",
         new_document_values,
@@ -149,7 +145,6 @@ def test_api_documents_update_anonymous_or_authenticated_unrelated(
     new_document_values = serializers.DocumentSerializer(
         instance=factories.DocumentFactory(),
     ).data
-    new_document_values["websocket"] = True
     response = client.put(
         f"/api/v1.0/documents/{document.id!s}/",
         new_document_values,
@@ -217,7 +212,6 @@ def test_api_documents_update_authenticated_reader(via, via_parent, mock_user_te
     new_document_values = serializers.DocumentSerializer(
         instance=factories.DocumentFactory()
     ).data
-    new_document_values["websocket"] = True
     response = client.put(
         f"/api/v1.0/documents/{document.id!s}/",
         new_document_values,
@@ -270,7 +264,6 @@ def test_api_documents_update_authenticated_editor_administrator_or_owner(
     new_document_values = serializers.DocumentSerializer(
         instance=factories.DocumentFactory()
     ).data
-    new_document_values["websocket"] = True
     response = client.put(
         f"/api/v1.0/documents/{document.id!s}/",
         new_document_values,
@@ -304,375 +297,6 @@ def test_api_documents_update_authenticated_editor_administrator_or_owner(
             assert value == new_document_values[key]
 
 
-@responses.activate
-def test_api_documents_update_authenticated_no_websocket(settings):
-    """
-    When a user updates the document, not connected to the websocket and is the first to update,
-    the document should be updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    new_document_values = serializers.DocumentSerializer(
-        instance=factories.DocumentFactory()
-    ).data
-    new_document_values["websocket"] = False
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-
-    ws_resp = responses.get(endpoint_url, json={"count": 0, "exists": False})
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    old_path = document.path
-
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/",
-        new_document_values,
-        format="json",
-    )
-    assert response.status_code == 200
-
-    document.refresh_from_db()
-    assert document.path == old_path
-    assert cache.get(f"docs:no-websocket:{document.id}") == session_key
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_update_authenticated_no_websocket_user_already_editing(settings):
-    """
-    When a user updates the document, not connected to the websocket and is not the first to update,
-    the document should not be updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    new_document_values = serializers.DocumentSerializer(
-        instance=factories.DocumentFactory()
-    ).data
-    new_document_values["websocket"] = False
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 0, "exists": False})
-
-    cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
-
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/",
-        new_document_values,
-        format="json",
-    )
-    assert response.status_code == 403
-    assert response.json() == {"detail": "You are not allowed to edit this document."}
-
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_update_no_websocket_other_user_connected_to_websocket(settings):
-    """
-    When a user updates the document, not connected to the websocket and another user is connected
-    to the websocket, the document should not be updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    new_document_values = serializers.DocumentSerializer(
-        instance=factories.DocumentFactory()
-    ).data
-    new_document_values["websocket"] = False
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 3, "exists": False})
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/",
-        new_document_values,
-        format="json",
-    )
-    assert response.status_code == 403
-    assert response.json() == {"detail": "You are not allowed to edit this document."}
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_update_user_connected_to_websocket(settings):
-    """
-    When a user updates the document, connected to the websocket, the document should be updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    new_document_values = serializers.DocumentSerializer(
-        instance=factories.DocumentFactory()
-    ).data
-    new_document_values["websocket"] = False
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 3, "exists": True})
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    old_path = document.path
-
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/",
-        new_document_values,
-        format="json",
-    )
-    assert response.status_code == 200
-
-    document.refresh_from_db()
-    assert document.path == old_path
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_update_websocket_server_unreachable_fallback_to_no_websocket(
-    settings,
-):
-    """
-    When the websocket server is unreachable, the document should be updated like if the user was
-    not connected to the websocket.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    new_document_values = serializers.DocumentSerializer(
-        instance=factories.DocumentFactory()
-    ).data
-    new_document_values["websocket"] = False
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=500)
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    old_path = document.path
-
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/",
-        new_document_values,
-        format="json",
-    )
-    assert response.status_code == 200
-
-    document.refresh_from_db()
-    assert document.path == old_path
-    assert cache.get(f"docs:no-websocket:{document.id}") == session_key
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_update_websocket_server_unreachable_fallback_to_no_websocket_other_users(
-    settings,
-):
-    """
-    When the websocket server is unreachable, the behavior fallback to the no websocket one.
-    If an other user is already editing, the document should not be updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    new_document_values = serializers.DocumentSerializer(
-        instance=factories.DocumentFactory()
-    ).data
-    new_document_values["websocket"] = False
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=500)
-
-    cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
-
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/",
-        new_document_values,
-        format="json",
-    )
-    assert response.status_code == 403
-
-    assert cache.get(f"docs:no-websocket:{document.id}") == "other_session_key"
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_update_websocket_server_room_not_found_fallback_to_no_websocket_other_users(
-    settings,
-):
-    """
-    When the WebSocket server does not have the room created, the logic should fallback to
-    no-WebSocket. If another user is already editing, the update must be denied.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    new_document_values = serializers.DocumentSerializer(
-        instance=factories.DocumentFactory()
-    ).data
-    new_document_values["websocket"] = False
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=404)
-
-    cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
-
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/",
-        new_document_values,
-        format="json",
-    )
-    assert response.status_code == 403
-
-    assert cache.get(f"docs:no-websocket:{document.id}") == "other_session_key"
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_update_force_websocket_param_to_true(settings):
-    """
-    When the websocket parameter is set to true, the document should be updated without any check.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    new_document_values = serializers.DocumentSerializer(
-        instance=factories.DocumentFactory()
-    ).data
-    new_document_values["websocket"] = True
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=500)
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    old_path = document.path
-
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/",
-        new_document_values,
-        format="json",
-    )
-    assert response.status_code == 200
-
-    document.refresh_from_db()
-    assert document.path == old_path
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    assert ws_resp.call_count == 0
-
-
-@responses.activate
-def test_api_documents_update_feature_flag_disabled(settings):
-    """
-    When the feature flag is disabled, the document should be updated without any check.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    new_document_values = serializers.DocumentSerializer(
-        instance=factories.DocumentFactory()
-    ).data
-    new_document_values["websocket"] = False
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = False
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=500)
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    old_path = document.path
-
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/",
-        new_document_values,
-        format="json",
-    )
-    assert response.status_code == 200
-
-    document.refresh_from_db()
-    assert document.path == old_path
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    assert ws_resp.call_count == 0
-
-
 @pytest.mark.parametrize("via", VIA)
 def test_api_documents_update_administrator_or_owner_of_another(via, mock_user_teams):
     """
@@ -703,7 +327,6 @@ def test_api_documents_update_administrator_or_owner_of_another(via, mock_user_t
     new_document_values = serializers.DocumentSerializer(
         instance=factories.DocumentFactory()
     ).data
-    new_document_values["websocket"] = True
     response = client.put(
         f"/api/v1.0/documents/{other_document.id!s}/",
         new_document_values,
@@ -839,7 +462,7 @@ def test_api_documents_patch_anonymous_or_authenticated_unrelated(
 
     response = client.patch(
         f"/api/v1.0/documents/{document.id!s}/",
-        {"title": "new title", "websocket": True},
+        {"title": "new title"},
         format="json",
     )
     assert response.status_code == 200
@@ -943,7 +566,7 @@ def test_api_documents_patch_authenticated_editor_administrator_or_owner(
 
     response = client.patch(
         f"/api/v1.0/documents/{document.id!s}/",
-        {"title": "new title", "websocket": True},
+        {"title": "new title"},
         format="json",
     )
     assert response.status_code == 200
@@ -966,354 +589,6 @@ def test_api_documents_patch_authenticated_editor_administrator_or_owner(
         "nb_accesses_direct",
     ]:
         assert document_values[key] == old_document_values[key]
-
-
-@responses.activate
-def test_api_documents_patch_authenticated_no_websocket(settings):
-    """
-    When a user patches the document, not connected to the websocket and is the first to update,
-    the document should be updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 0, "exists": False})
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    old_path = document.path
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/",
-        {"title": "new title"},
-        format="json",
-    )
-    assert response.status_code == 200
-
-    # Using document.refresh_from_db does not work because the content is cached.
-    # Force reloading it by fetching the document from the database.
-    document = models.Document.objects.get(id=document.id)
-    assert document.path == old_path
-    assert document.title == "new title"
-    assert cache.get(f"docs:no-websocket:{document.id}") == session_key
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_patch_authenticated_no_websocket_user_already_editing(settings):
-    """
-    When a user patches the document, not connected to the websocket and is not the first to
-    update, the document should not be updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 0, "exists": False})
-
-    cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/",
-        {"title": "new title"},
-        format="json",
-    )
-    assert response.status_code == 403
-    assert response.json() == {"detail": "You are not allowed to edit this document."}
-
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_patch_no_websocket_other_user_connected_to_websocket(settings):
-    """
-    When a user patches the document, not connected to the websocket and another user is connected
-    to the websocket, the document should not be updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 3, "exists": False})
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/",
-        {"title": "new title"},
-        format="json",
-    )
-    assert response.status_code == 403
-    assert response.json() == {"detail": "You are not allowed to edit this document."}
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_patch_user_connected_to_websocket(settings):
-    """
-    When a user patches the document while connected to the websocket, the document should be
-    updated.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 3, "exists": True})
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    old_path = document.path
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/",
-        {"title": "new title"},
-        format="json",
-    )
-    assert response.status_code == 200
-
-    # Using document.refresh_from_db does not wirk because the content is in cache.
-    # Force reloading it by fetching the document in the database.
-    document = models.Document.objects.get(id=document.id)
-    assert document.path == old_path
-    assert document.title == "new title"
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_patch_websocket_server_unreachable_fallback_to_no_websocket(
-    settings,
-):
-    """
-    When the websocket server is unreachable, the patch should be applied like if the user was
-    not connected to the websocket.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=500)
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    old_path = document.path
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/",
-        {"title": "new title"},
-        format="json",
-    )
-    assert response.status_code == 200
-
-    # Using document.refresh_from_db does not work because the content is cached.
-    # Force reloading it by fetching the document from the database.
-    document = models.Document.objects.get(id=document.id)
-    assert document.path == old_path
-    assert document.title == "new title"
-    assert cache.get(f"docs:no-websocket:{document.id}") == session_key
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_patch_websocket_server_unreachable_fallback_to_no_websocket_other_users(
-    settings,
-):
-    """
-    When the websocket server is unreachable, the behavior falls back to no-websocket.
-    If another user is already editing, the patch must be denied.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=500)
-
-    cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/",
-        {"title": "new title"},
-        format="json",
-    )
-    assert response.status_code == 403
-
-    assert cache.get(f"docs:no-websocket:{document.id}") == "other_session_key"
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_patch_websocket_server_room_not_found_fallback_to_no_websocket_other_users(
-    settings,
-):
-    """
-    When the WebSocket server does not have the room created, the logic should fallback to
-    no-WebSocket. If another user is already editing, the patch must be denied.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=404)
-
-    cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/",
-        {"title": "new title"},
-        format="json",
-    )
-    assert response.status_code == 403
-
-    assert cache.get(f"docs:no-websocket:{document.id}") == "other_session_key"
-    assert ws_resp.call_count == 1
-
-
-@responses.activate
-def test_api_documents_patch_force_websocket_param_to_true(settings):
-    """
-    When the websocket parameter is set to true, the patch should be applied without any check.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=500)
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    old_path = document.path
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/",
-        {"title": "new title", "websocket": True},
-        format="json",
-    )
-    assert response.status_code == 200
-
-    # Using document.refresh_from_db does not work because the content is cached.
-    # Force reloading it by fetching the document from the database.
-    document = models.Document.objects.get(id=document.id)
-    assert document.path == old_path
-    assert document.title == "new title"
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    assert ws_resp.call_count == 0
-
-
-@responses.activate
-def test_api_documents_patch_feature_flag_disabled(settings):
-    """
-    When the feature flag is disabled, the patch should be applied without any check.
-    """
-    user = factories.UserFactory(with_owned_document=True)
-    client = APIClient()
-    client.force_login(user)
-    session_key = client.session.session_key
-
-    document = factories.DocumentFactory(users=[(user, "editor")])
-
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = False
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, status=500)
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    old_path = document.path
-
-    response = client.patch(
-        f"/api/v1.0/documents/{document.id!s}/",
-        {"title": "new title"},
-        format="json",
-    )
-    assert response.status_code == 200
-
-    # Using document.refresh_from_db does not work because the content is cached.
-    # Force reloading it by fetching the document from the database.
-    document = models.Document.objects.get(id=document.id)
-    assert document.path == old_path
-    assert document.title == "new title"
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    assert ws_resp.call_count == 0
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -1358,8 +633,7 @@ def test_api_documents_patch_administrator_or_owner_of_another(via, mock_user_te
     )
 
 
-@responses.activate
-def test_api_documents_patch_empty_body(settings):
+def test_api_documents_patch_empty_body():
     """
     Test when data is empty the document should not be updated.
     The `updated_at` property should not change asserting that no update in the database is made.
@@ -1368,21 +642,9 @@ def test_api_documents_patch_empty_body(settings):
 
     client = APIClient()
     client.force_login(user)
-    session_key = client.session.session_key
 
     document = factories.DocumentFactory(users=[(user, "owner")], creator=user)
     document_updated_at = document.updated_at
-
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = True
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}get-connections/"
-        f"?room={document.id}&sessionKey={session_key}"
-    )
-    ws_resp = responses.get(endpoint_url, json={"count": 3, "exists": True})
-
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
 
     old_document_values = serializers.DocumentSerializer(instance=document).data
 
@@ -1398,5 +660,3 @@ def test_api_documents_patch_empty_body(settings):
     new_document_values = serializers.DocumentSerializer(instance=document).data
     assert new_document_values == old_document_values
     assert document_updated_at == document.updated_at
-    assert cache.get(f"docs:no-websocket:{document.id}") is None
-    assert ws_resp.call_count == 1

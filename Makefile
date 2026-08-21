@@ -69,6 +69,16 @@ data/media:
 data/static:
 	@mkdir -p data/static
 
+# RSA keys signing the JWT tokens the services issue: one for the backend, one
+# for the collaboration server. Generated locally, never committed: "data/" is
+# gitignored. Regenerate one by deleting the file. Both are listed, so a stack
+# set up before the collaboration server had a key of its own gets it too.
+data/jwt/private.pem:
+	@bin/generate-jwt-private-key.sh
+
+data/jwt/yhub-private.pem:
+	@bin/generate-jwt-private-key.sh
+
 # -- Project
 
 create-env-local-files: ## create env.local files in env.d/development
@@ -78,10 +88,12 @@ create-env-local-files:
 	@touch env.d/development/postgresql.local
 	@touch env.d/development/kc_auth.local
 	@touch env.d/development/kc_postgresql.local
+	@touch env.d/development/yhub.local
 .PHONY: create-env-local-files
 
 generate-secret-keys:
-generate-secret-keys: ## generate secret keys to be stored in common.local
+generate-secret-keys: ## generate the secret keys needed by the dev stack
+generate-secret-keys: data/jwt/private.pem data/jwt/yhub-private.pem
 	@bin/generate-oidc-store-refresh-token-key.sh
 .PHONY: generate-secret-keys
 
@@ -95,6 +107,7 @@ pre-bootstrap: \
 
 post-bootstrap: \
 	migrate \
+	migrate-yhub \
 	demo \
 	back-i18n-compile \
 	mails-install \
@@ -190,6 +203,7 @@ bootstrap-e2e: \
 build: cache ?=
 build: ## build the project containers
 	@$(MAKE) build-backend cache=$(cache)
+	@$(MAKE) build-yhub cache=$(cache)
 	@$(MAKE) build-yjs-provider cache=$(cache)
 	@$(MAKE) build-frontend cache=$(cache)
 .PHONY: build
@@ -199,9 +213,14 @@ build-backend: ## build the app-dev container
 	@$(COMPOSE) build app-dev $(cache)
 .PHONY: build-backend
 
+build-yhub: cache ?=
+build-yhub: ## build the yhub collaboration server container
+	@$(COMPOSE) build yhub $(cache)
+.PHONY: build-yhub
+
 build-yjs-provider: cache ?=
 build-yjs-provider: ## build the y-provider container
-	@$(COMPOSE) build y-provider-development $(cache)
+	@$(COMPOSE) build y-provider-development-converter $(cache)
 .PHONY: build-yjs-provider
 
 build-frontend: cache ?=
@@ -212,8 +231,9 @@ build-frontend: ## build the frontend container
 build-e2e: cache ?=
 build-e2e: ## build the e2e container
 	@$(MAKE) build-backend cache=$(cache)
+	@$(MAKE) build-yhub cache=$(cache)
 	@$(COMPOSE_E2E) build frontend $(cache)
-	@$(COMPOSE_E2E) build y-provider $(cache)
+	@$(COMPOSE_E2E) build y-provider-converter $(cache)
 .PHONY: build-e2e
 
 nginx-frontend: ## build the nginx-frontend container
@@ -230,10 +250,11 @@ logs: ## display app-dev logs (follow mode)
 
 run-backend: ## Start only the backend application and all needed services
 	@$(MAKE) create-docker-network
+	@$(MAKE) data/jwt/private.pem
 	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
-	@$(COMPOSE) up --force-recreate -d y-provider-development
 	@$(COMPOSE) up --force-recreate -d y-provider-development-converter
+	@$(COMPOSE) up --force-recreate -d yhub
 	@$(COMPOSE) up --force-recreate -d nginx
 .PHONY: run-backend
 
@@ -246,9 +267,7 @@ run:
 run-e2e: ## start the e2e server
 run-e2e:
 	@$(MAKE) run-backend
-	@$(COMPOSE_E2E) stop y-provider-development
 	@$(COMPOSE_E2E) up --force-recreate -d frontend
-	@$(COMPOSE_E2E) up --force-recreate -d y-provider
 	@$(COMPOSE_E2E) up --force-recreate -d y-provider-converter
 .PHONY: run-e2e
 
@@ -319,6 +338,20 @@ migrate:  ## run django migrations for the impress project.
 	@$(COMPOSE) up -d postgresql
 	@$(MANAGE) migrate
 .PHONY: migrate
+
+# Runs the DDL script yhub ships (`bin/init-db.js`, wrapped as `npm run
+# init-db`): it creates the yhub database when missing, then every table the
+# installed @y/hub version needs. yhub never runs DDL from the server or the
+# worker, so this is what applies a schema change after an upgrade.
+# Both stores are started because the script also creates the valkey worker
+# stream and connects to it whenever REDIS is set. Re-running is safe and
+# expected; on an existing stream it logs a harmless `BUSYGROUP` error and
+# still exits 0, since the server creates that stream at startup anyway.
+migrate-yhub:  ## create or upgrade the collaboration server (yhub) schema.
+	@echo "$(BOLD)Running yhub migrations$(RESET)"
+	@$(COMPOSE) up -d yhub-postgres yhub-valkey
+	@$(COMPOSE_RUN) --no-deps yhub npm run init-db
+.PHONY: migrate-yhub
 
 superuser: ## Create an admin superuser with password "admin"
 	@echo "$(BOLD)Creating a Django superuser$(RESET)"

@@ -3,10 +3,6 @@ import { useEffect } from 'react';
 
 import { useCollaborationUrl, useConfig } from '@/core/config';
 import { KEY_DOC } from '@/docs/doc-management/api/useDoc';
-import {
-  KEY_DOC_CONTENT,
-  useDocContent,
-} from '@/docs/doc-management/api/useDocContent';
 import { useProviderStore } from '@/docs/doc-management/stores/useProviderStore';
 import { useIsOffline } from '@/features/service-worker/hooks/useOffline';
 import { useBroadcastStore } from '@/stores/useBroadcastStore';
@@ -29,17 +25,12 @@ export const useCollaboration = (room: string) => {
     isReady,
     hasLostConnection,
     resetLostConnection,
+    isPermanentlyClosed,
+    reconnect,
     pauseForInactivity,
     resumeFromInactivity,
   } = useProviderStore();
   const isOffline = useIsOffline((state) => state.isOffline);
-  const { data: docContent } = useDocContent(
-    { id: room },
-    {
-      staleTime: 30000, // 30 seconds - We keep the data fresh as it is a highly collaborative page
-      queryKey: [KEY_DOC_CONTENT, { id: room }],
-    },
-  );
 
   /**
    * When offline, the WebSocket never connects so the provider would stay
@@ -67,11 +58,38 @@ export const useCollaboration = (room: string) => {
   }, [hasLostConnection, room, queryClient, resetLostConnection]);
 
   /**
+   * The collaboration server refused the connection for good and the retry loop
+   * stopped, so nothing will ask again on its own: this refetch is what asks.
+   *
+   * A refusal says the answer changed, not what it changed to. The document may
+   * be gone, our access to it revoked, or merely upgraded from reader to editor
+   * — the last one has to reconnect to carry the new rights. So the connection
+   * comes back only when the document does, and stays closed otherwise, where
+   * the query error puts the page in charge of telling the user why.
+   */
+  useEffect(() => {
+    if (!isPermanentlyClosed || !room) {
+      return;
+    }
+
+    void queryClient
+      .invalidateQueries({ queryKey: [KEY_DOC, { id: room }] })
+      .then(() => {
+        if (
+          queryClient.getQueryState([KEY_DOC, { id: room }])?.status ===
+          'success'
+        ) {
+          reconnect();
+        }
+      });
+  }, [isPermanentlyClosed, room, queryClient, reconnect]);
+
+  /**
    * We add a broadcast task to reset the query cache
    * when the document visibility changes.
    */
   useEffect(() => {
-    if (!room || broadcastProvider?.document?.guid !== room) {
+    if (!room || broadcastProvider?.doc.guid !== room) {
       return;
     }
 
@@ -80,26 +98,19 @@ export const useCollaboration = (room: string) => {
         queryKey: [KEY_DOC, { id: room }],
       });
     });
-  }, [addTask, room, queryClient, broadcastProvider?.document?.guid]);
+  }, [addTask, room, queryClient, broadcastProvider?.doc.guid]);
 
   /**
    * Set the provider when the collaboration URL and the document content are available.
    */
   useEffect(() => {
-    if (!room || !collaborationUrl || provider || docContent === undefined) {
+    if (!room || !collaborationUrl || provider) {
       return;
     }
 
-    const newProvider = createProvider(collaborationUrl, room, docContent);
+    const newProvider = createProvider(collaborationUrl, room);
     setBroadcastProvider(newProvider);
-  }, [
-    provider,
-    collaborationUrl,
-    createProvider,
-    docContent,
-    room,
-    setBroadcastProvider,
-  ]);
+  }, [provider, collaborationUrl, createProvider, room, setBroadcastProvider]);
 
   /**
    * Destroy the provider when the component is unmounted

@@ -8,7 +8,6 @@ import {
   Doc,
   LinkReach,
   getDocLinkReach,
-  useIsCollaborativeEditable,
   useProviderStore,
 } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth/';
@@ -85,10 +84,8 @@ interface DocEditorProps {
 
 export const DocEditor = ({ doc }: DocEditorProps) => {
   useCollaboration(doc.id);
-  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
   const isDeletedDoc = !!doc.deleted_at;
-  const readOnly =
-    !doc.abilities.partial_update || !isEditable || isLoading || isDeletedDoc;
+  const readOnly = !doc.abilities.partial_update || isDeletedDoc;
   const { trackEvent } = useAnalytics();
   const [hasTracked, setHasTracked] = useState(false);
   const { authenticated } = useAuth();
@@ -142,16 +139,10 @@ interface DocCoreEditorProps {
 export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
   const { provider, isReady } = useProviderStore();
   const isProviderReady = isReady && provider;
-  const showContent = !!(
-    isProviderReady && provider?.configuration.name === doc.id
-  );
+  const showContent = !!(isProviderReady && provider?.roomname === doc.id);
   const { skeletonVisible, isFadingOut } = useSkeletonFadeOut(showContent);
 
-  if (
-    skeletonVisible ||
-    !isProviderReady ||
-    provider?.configuration.name !== doc.id
-  ) {
+  if (skeletonVisible || !isProviderReady || provider?.roomname !== doc.id) {
     return (
       <SkeletonEditorCore
         isFadingOut={isFadingOut}
@@ -165,7 +156,7 @@ export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
   if (readOnly) {
     return (
       <BlockNoteReader
-        initialContent={provider.document.getXmlFragment('document-store')}
+        initialContent={provider.doc.getXmlFragment('document-store')}
         docId={doc.id}
       />
     );

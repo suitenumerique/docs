@@ -1,12 +1,11 @@
 """Client serializers for the impress core app."""
 # pylint: disable=too-many-lines
 
-import binascii
 import mimetypes
-from base64 import b64decode
 from os.path import splitext
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Q
 from django.utils.functional import lazy
 from django.utils.text import slugify
@@ -23,6 +22,7 @@ from core.services.converter_services import (
     ConversionError,
     Converter,
 )
+from core.services.yhub_services import YHubError, YHubService
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.treebeard import create_tree_node_with_retry
 
@@ -180,7 +180,6 @@ class DocumentLightSerializer(serializers.ModelSerializer):
 class DocumentSerializer(ListDocumentSerializer):
     """Serialize documents with all fields for display in detail views."""
 
-    websocket = serializers.BooleanField(required=False, write_only=True)
     file = serializers.FileField(
         required=False, write_only=True, allow_null=True, max_length=255
     )
@@ -210,7 +209,6 @@ class DocumentSerializer(ListDocumentSerializer):
             "title",
             "updated_at",
             "user_role",
-            "websocket",
         ]
         read_only_fields = [
             "id",
@@ -306,34 +304,6 @@ class SearchDocumentSerializer(ListDocumentSerializer):
         model = models.Document
         fields = ListDocumentSerializer.Meta.fields + ["parent"]
         read_only_fields = ListDocumentSerializer.Meta.read_only_fields + ["parent"]
-
-
-class DocumentContentSerializer(serializers.Serializer):
-    """Serializer for updating only the raw content of a document stored in S3."""
-
-    content = serializers.CharField(required=True)
-    websocket = serializers.BooleanField(required=False)
-
-    def validate_content(self, value):
-        """Validate the content field."""
-        try:
-            b64decode(value, validate=True)
-        except binascii.Error as err:
-            raise serializers.ValidationError("Invalid base64 content.") from err
-
-        return value
-
-    def update(self, instance, validated_data):
-        """
-        This serializer does not support updates.
-        """
-        raise NotImplementedError("Update is not supported for this serializer.")
-
-    def create(self, validated_data):
-        """
-        This serializer does not support create.
-        """
-        raise NotImplementedError("Create is not supported for this serializer.")
 
 
 class DocumentAccessSerializer(serializers.ModelSerializer):
@@ -485,12 +455,37 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 {"content": ["Could not convert content"]}
             ) from err
 
-        document = create_tree_node_with_retry(
-            lambda: models.Document.add_root(
-                title=validated_data["title"],
-                creator=user,
+        with transaction.atomic():
+            document = create_tree_node_with_retry(
+                lambda: models.Document.add_root(
+                    title=validated_data["title"],
+                    creator=user,
+                )
             )
-        )
+
+            if user:
+                # Associate the document with the pre-existing user
+                models.DocumentAccess.objects.create(
+                    document=document,
+                    role=models.RoleChoices.OWNER,
+                    user=user,
+                )
+            else:
+                # The user doesn't exist in our database: we need to invite him/her
+                models.Invitation.objects.create(
+                    document=document,
+                    email=email,
+                    role=models.RoleChoices.OWNER,
+                )
+
+            # the accesses exist by now, so the owner has access to the very
+            # first version of the document the collaboration server saves
+            try:
+                YHubService(user=user).create_ydoc(document, document_content)
+            except YHubError as err:
+                raise serializers.ValidationError(
+                    {"content": ["Could not save the document content"]}
+                ) from err
 
         posthog_capture(PosthogEventName.DOC_CREATED, user, {}, document=document)
         posthog_capture(
@@ -502,24 +497,6 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
             },
             document=document,
         )
-
-        if user:
-            # Associate the document with the pre-existing user
-            models.DocumentAccess.objects.create(
-                document=document,
-                role=models.RoleChoices.OWNER,
-                user=user,
-            )
-        else:
-            # The user doesn't exist in our database: we need to invite him/her
-            models.Invitation.objects.create(
-                document=document,
-                email=email,
-                role=models.RoleChoices.OWNER,
-            )
-
-        document.content = document_content
-        document.save()
 
         if validated_data.get("send_notification_email", True):
             self._send_email_notification(document, validated_data, email, language)

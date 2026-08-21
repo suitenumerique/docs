@@ -512,27 +512,57 @@ class Base(Configuration):
     SENTRY_DSN = values.Value(None, environ_name="SENTRY_DSN", environ_prefix=None)
 
     # Collaboration
-    COLLABORATION_API_URL = values.Value(
-        None, environ_name="COLLABORATION_API_URL", environ_prefix=None
-    )
-    COLLABORATION_SERVER_SECRET = SecretFileValue(
-        None, environ_name="COLLABORATION_SERVER_SECRET", environ_prefix=None
-    )
     COLLABORATION_WS_URL = values.Value(
         None, environ_name="COLLABORATION_WS_URL", environ_prefix=None
-    )
-    COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = values.BooleanValue(
-        default=values.BooleanValue(  # COLLABORATION_WS_NOT_CONNECTED_READY_ONLY compat
-            default=False,
-            environ_name="COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
-            environ_prefix=None,
-        ),
-        environ_name="COLLABORATION_WS_NOT_CONNECTED_READ_ONLY",
-        environ_prefix=None,
     )
     COLLABORATION_WS_INACTIVITY_TIMEOUT = values.IntegerValue(
         None,
         environ_name="COLLABORATION_WS_INACTIVITY_TIMEOUT",
+        environ_prefix=None,
+    )
+    # Base url of the collaboration server's REST api, including its route
+    # prefix (e.g. "http://yhub:3002/collaboration"). Server-to-server only:
+    # used with an admin JWT to migrate legacy documents and, later, to kick
+    # connections when permissions change.
+    COLLABORATION_API_URL = values.Value(
+        None, environ_name="COLLABORATION_API_URL", environ_prefix=None
+    )
+
+    # yhub collaboration server, as reached by core.services.yhub_services
+    YHUB_API_BASE_URL = values.Value(
+        None, environ_name="YHUB_API_BASE_URL", environ_prefix=None
+    )
+    # The yhub organization our documents live in. It must match the YHUB_ORG
+    # of the yhub server, which rejects the rooms of any other organization.
+    YHUB_ORG = values.Value("docs", environ_name="YHUB_ORG", environ_prefix=None)
+    YHUB_API_TIMEOUT = values.IntegerValue(
+        default=30,
+        environ_name="YHUB_API_TIMEOUT",
+        environ_prefix=None,
+    )
+    # Replaying the legacy history of a document reads every one of its S3
+    # versions, so it is the one call that can take minutes. Timing it out does
+    # not stop the collaboration server, it only loses the answer.
+    YHUB_MIGRATION_TIMEOUT = values.IntegerValue(
+        default=600,
+        environ_name="YHUB_MIGRATION_TIMEOUT",
+        environ_prefix=None,
+    )
+
+    # JWT
+    # RSA private key (PEM) used to sign the tokens issued by
+    # core.services.jwt_services.JWTService. Prefer the JWT_PRIVATE_KEY_FILE
+    # environment variable, a PEM does not fit well in an environment variable.
+    JWT_PRIVATE_KEY = SecretFileValue(
+        None,
+        environ_name="JWT_PRIVATE_KEY",
+        environ_prefix=None,
+    )
+    # Lifetime, in seconds, of the tokens issued by the JWT service. It is both
+    # the "exp" claim horizon and the cache timeout of the generated tokens.
+    JWT_TOKEN_LIFETIME = values.IntegerValue(
+        default=3600,
+        environ_name="JWT_TOKEN_LIFETIME",
         environ_prefix=None,
     )
 
@@ -962,12 +992,6 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
-    NO_WEBSOCKET_CACHE_TIMEOUT = values.Value(
-        default=120,
-        environ_name="NO_WEBSOCKET_CACHE_TIMEOUT",
-        environ_prefix=None,
-    )
-
     # Logging
     # We want to make it easy to log to console but by default we log production
     # to Sentry and don't want to log to console.
@@ -1106,10 +1130,6 @@ class Base(Configuration):
             environ_prefix=None,
         ),
     }
-
-    CONTENT_METADATA_CACHE_TIMEOUT = values.IntegerValue(
-        60 * 60 * 24, environ_name="CONTENT_METADATA_CACHE_TIMEOUT", environ_prefix=None
-    )
 
     TREEBEARD_PATH_COMPUTE_RETRY_MAX_ATTEMPTS = values.IntegerValue(
         10,

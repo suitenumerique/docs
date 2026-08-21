@@ -40,6 +40,7 @@ from core.choices import (
     RoleChoices,
     get_equivalent_link_definition,
 )
+from core.services.yhub_services import YHubError, YHubService
 from core.utils.treebeard import create_tree_node_with_retry
 from core.validators import sub_validator
 
@@ -314,6 +315,10 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         """
         If the user is new and there is a sandbox document configured,
         duplicate the sandbox document for the user
+
+        The content of the template is read from the collaboration server, which
+        owns it, and seeded into the copy under the identity of the user: the
+        sandbox is theirs from its very first revision.
         """
         if settings.USER_ONBOARDING_SANDBOX_DOCUMENT:
             sandbox_id = settings.USER_ONBOARDING_SANDBOX_DOCUMENT
@@ -325,19 +330,36 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
                     sandbox_id,
                 )
                 return
-            with transaction.atomic():
-                sandbox_document = create_tree_node_with_retry(
-                    lambda: Document.add_root(
-                        title=template_document.title,
-                        content=template_document.content,
-                        attachments=template_document.attachments,
-                        duplicated_from=template_document,
-                        creator=self,
-                    )
-                )
 
-                DocumentAccess.objects.create(
-                    user=self, document=sandbox_document, role=RoleChoices.OWNER
+            service = YHubService(user=self)
+            try:
+                # a template the collaboration server holds nothing for is an
+                # empty template: the sandbox is created, empty as well
+                ydoc_update = service.get_ydoc(template_document)
+
+                with transaction.atomic():
+                    sandbox_document = create_tree_node_with_retry(
+                        lambda: Document.add_root(
+                            title=template_document.title,
+                            attachments=template_document.attachments,
+                            duplicated_from=template_document,
+                            creator=self,
+                        )
+                    )
+
+                    DocumentAccess.objects.create(
+                        user=self, document=sandbox_document, role=RoleChoices.OWNER
+                    )
+
+                    if ydoc_update:
+                        service.create_ydoc(sandbox_document, ydoc_update)
+            except YHubError:
+                # Onboarding is not worth failing a signup for, and a sandbox
+                # the content of which could not be copied is not one we want
+                # to leave behind: the transaction takes it back.
+                logger.exception(
+                    "Onboarding sandbox document with id %s could not be copied. Skipping.",
+                    sandbox_id,
                 )
 
     def _convert_valid_invitations(self):
@@ -1386,14 +1408,11 @@ class Document(MP_Node, BaseModel):
             "ai_translate": ai_access,
             "attachment_upload": can_update,
             "media_check": can_get,
-            "can_edit": can_update,
             "children_list": can_get,
             "children_create": can_create_children,
             "collaboration_auth": can_get,
             "comment": can_comment,
             "formatted_content": can_get,
-            "content_patch": can_update,
-            "content_retrieve": retrieve,
             "cors_proxy": can_get,
             "descendants": can_get,
             "destroy": can_destroy,
@@ -2114,3 +2133,66 @@ class Invitation(BaseModel):
             "partial_update": is_admin_or_owner,
             "retrieve": is_admin_or_owner,
         }
+
+
+class DocumentMigrationStatus(models.TextChoices):
+    """What became of a document handed to the collaboration server to migrate."""
+
+    MIGRATED = "ok", _("Migrated")
+    ALREADY = "already", _("Already migrated")
+    EMPTY = "empty", _("Nothing in the object storage")
+    NOTHING = "nothing", _("No readable version")
+    FAILED = "failed", _("Failed")
+
+
+class DocumentMigration(models.Model):
+    """
+    What the collaboration server did with the legacy content of a document.
+
+    The ledger of the backfill: the collaboration server keeps its own set of
+    the documents it migrated, but only of those it actually wrote history for.
+    A document it found nothing for is not in it and would be handed over again
+    on every run, and a valkey configured to evict would lose the set entirely.
+    This table is what the command reads to know what is left to do, and what
+    an operator reads to know how it went.
+    """
+
+    document = models.OneToOneField(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="migration",
+        primary_key=True,
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=DocumentMigrationStatus.choices,
+        verbose_name=_("status"),
+    )
+    versions = models.PositiveIntegerField(default=0, verbose_name=_("versions"))
+    applied = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("applied"),
+        help_text=_("versions that added content, one activity entry each"),
+    )
+    skipped = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("skipped"),
+        help_text=_("versions that could not be read"),
+    )
+    dropped = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("dropped"),
+        help_text=_("versions older than the ones the server replays"),
+    )
+    duration_ms = models.PositiveIntegerField(default=0, verbose_name=_("duration"))
+    error = models.TextField(blank=True, default="", verbose_name=_("error"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("updated on"))
+
+    class Meta:
+        db_table = "impress_document_migration"
+        verbose_name = _("Document migration")
+        verbose_name_plural = _("Document migrations")
+        indexes = [models.Index(fields=["status"])]
+
+    def __str__(self):
+        return f"{self.document_id!s}: {self.status:s}"

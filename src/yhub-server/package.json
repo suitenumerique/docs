@@ -1,0 +1,22 @@
+{
+  "name": "yhub-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon --delay 1 server.js",
+    "init-db": "node node_modules/@y/hub/bin/init-db.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1110.0",
+    "@y/hub": "0.6.0",
+    "@y/y": "14.0.0-rc.24",
+    "jose": "6.2.8"
+  },
+  "devDependencies": {
+    "nodemon": "3.1.14"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

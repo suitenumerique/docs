@@ -1,0 +1,46 @@
+# Collaboration server (yhub)
+#
+# Everything the collaboration server reads, and nothing else: it shares the
+# backend's stores and origins by value, not by loading the backend's own
+# environment. Override any of it in yhub.local, which is not committed.
+
+# Stores. Its own valkey and its own postgres database — the backend's live
+# next to them and are never touched from here.
+PORT=3002
+REDIS=redis://yhub-valkey:6379
+POSTGRES=postgres://yhub:yhub@yhub-postgres:5432/yhub
+REDIS_PREFIX=yhub
+
+# Backend. It answers who a user is and what they may do with a document, and
+# publishes the JWKS the admin tokens it signs are verified against. The origin
+# list is what a browser may open a websocket from — the frontend dev server.
+COLLABORATION_BACKEND_BASE_URL=http://app-dev:8000
+COLLABORATION_SERVER_ORIGIN=http://localhost:3000
+# sent as X-Y-Provider-Key on the calls made to the backend; the same value as
+# in `common`, which is where the backend reads the one it compares it to
+Y_PROVIDER_API_KEY=yprovider-api-key
+
+# Signs the calls made to the backend, which holds the public half. Generated
+# by `make generate-secret-keys`, never committed.
+YHUB_JWT_PRIVATE_KEY_FILE=/data/jwt/yhub-private.pem
+
+# Soft migration: seed a room from the legacy Django/S3 document store the
+# first time it is opened. The bucket read here is the backend's media one —
+# in this stack the same minio, under the credentials of this server rather
+# than the backend's own AWS_S3_* settings.
+SOFT_MIGRATION=true
+LEGACY_S3_ENDPOINT_URL=http://minio:9000
+LEGACY_S3_ACCESS_KEY_ID=impress
+LEGACY_S3_SECRET_ACCESS_KEY=password
+
+# Document storage: where the blobs of a compaction are written. Off, they stay
+# in yhub's postgres, which is what this stack runs. Turning it on stores them
+# in object storage instead — here the same minio, in a bucket of its own that
+# the server creates on startup when it is missing. Read the "Document storage"
+# section of src/yhub-server/README.md first: a document persisted this way
+# cannot be read back with the plugin turned off again.
+YHUB_S3_PERSISTENCE=false
+YHUB_S3_ENDPOINT_URL=http://minio:9000
+YHUB_S3_ACCESS_KEY_ID=impress
+YHUB_S3_SECRET_ACCESS_KEY=password
+YHUB_S3_BUCKET_NAME=yhub-storage

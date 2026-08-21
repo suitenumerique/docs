@@ -82,6 +82,7 @@ services:
     volumes:
       - ./src/backend:/app
       - ./data/static:/data/static
+      - ./data/jwt:/data/jwt:ro
       - /app/.venv
     depends_on:
       postgresql:
@@ -111,6 +112,7 @@ services:
     volumes:
       - ./src/backend:/app
       - ./data/static:/data/static
+      - ./data/jwt:/data/jwt:ro
       - /app/.venv
     depends_on:
       - app-dev
@@ -181,7 +183,7 @@ services:
     volumes:
       - ".:/app"
 
-  y-provider-development:
+  y-provider-development-converter:
     user: ${DOCKER_USER:-1000}
     build:
       context: .
@@ -192,27 +194,78 @@ services:
     env_file:
       - env.d/development/common
       - env.d/development/common.local
-    ports:
-      - "4444:4444"
     volumes:
       - ./src/frontend/:/home/frontend
       - /home/frontend/node_modules
       - /home/frontend/servers/y-provider/node_modules
 
-  y-provider-development-converter:
-    user: ${DOCKER_USER:-1000}
-    image: impress:y-provider-development
-    restart: unless-stopped
-    env_file:
-      - env.d/development/common
-      - env.d/development/common.local
+  yhub-valkey:
+    image: valkey/valkey:alpine
+    # volatile-lru per yhub DEPLOYMENT.md; AOF because valkey is the authoritative store
+    # for updates the worker hasn't persisted yet (up to taskDebounce+minMessageLifetime)
+    command: ["valkey-server", "--maxmemory-policy", "volatile-lru",
+              "--appendonly", "yes", "--appendfsync", "everysec"]
     volumes:
-      - ./src/frontend/:/home/frontend
-      - /home/frontend/node_modules
-      - /home/frontend/servers/y-provider/node_modules
+      - yhub-valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 1s
+      timeout: 2s
+      retries: 60
+
+  yhub-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: yhub
+      POSTGRES_PASSWORD: yhub
+      POSTGRES_DB: yhub
+    volumes:
+      - yhub-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yhub"]
+      interval: 1s
+      timeout: 2s
+      retries: 60
+    # no published port (Django's postgres already publishes)
+    # the schema is not seeded here: initdb.d would only replay on a fresh
+    # volume, so an upgrade that adds a table would silently skip an existing
+    # one. `make migrate-yhub` runs yhub's own DDL script instead, the same way
+    # `make migrate` runs Django's migrations.
+
+  yhub:
+    user: ${DOCKER_USER:-1000}
+    build:
+      context: .
+      dockerfile: ./src/yhub-server/Dockerfile
+      target: yhub-development
+    image: impress:yhub-development
+    environment:
+      HOME: /tmp # same reason as node-based services above (unmapped uid)
+    # its own file rather than the backend's: this server reads none of the
+    # django settings `common` carries, and everything it does read is in there
+    env_file:
+      - env.d/development/yhub
+      - env.d/development/yhub.local
+    volumes:
+      - ./data/jwt:/data/jwt:ro
+      # editing a source file restarts the server (nodemon), no rebuild
+      - ./src/yhub-server:/app
+      # node_modules is installed in the image, not in the source tree: keep
+      # the bind mount above from hiding it
+      - /app/node_modules
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
     depends_on:
-      y-provider-development:
-        condition: service_started
+      yhub-valkey:
+        condition: service_healthy
+      yhub-postgres:
+        condition: service_healthy
+      # soft migration reads the legacy document store at startup traffic —
+      # starting before minio would cache 401s for the first accessed docs —
+      # and YHUB_S3_PERSISTENCE, when it is on, checks its own bucket at boot
+      minio:
+        condition: service_healthy
 
   kc_postgresql:
     image: postgres:14.3
@@ -268,3 +321,7 @@ networks:
     name: lasuite-network
     driver: bridge
     external: true
+
+volumes:
+  yhub-pgdata: {}
+  yhub-valkey-data: {}

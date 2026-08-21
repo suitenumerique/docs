@@ -22,6 +22,11 @@ DJANGO_EMAIL_LOGO_IMG="http://localhost:3000/assets/logo-suite-numerique.png"
 DJANGO_EMAIL_PORT=1025
 DJANGO_EMAIL_URL_APP="http://localhost:3000"
 
+# JWT
+# The key itself is generated locally by "make generate-secret-keys", it is
+# never committed. A PEM does not fit in an env var, hence the _FILE variant.
+JWT_PRIVATE_KEY_FILE=/data/jwt/private.pem
+
 # Backend url
 IMPRESS_BASE_URL="http://localhost:8072"
 
@@ -72,13 +77,13 @@ OIDC_RS_ALLOWED_AUDIENCES=""
 USER_RECONCILIATION_FORM_URL=http://localhost:3000
 
 # Collaboration
-COLLABORATION_API_URL=http://y-provider-development:4444/collaboration/api/
 COLLABORATION_BACKEND_BASE_URL=http://app-dev:8000
 COLLABORATION_SERVER_ORIGIN=http://localhost:3000
-COLLABORATION_SERVER_SECRET=my-secret
-COLLABORATION_WS_NOT_CONNECTED_READ_ONLY=true
-COLLABORATION_WS_URL=ws://localhost:4444/collaboration/ws/
+COLLABORATION_WS_URL=ws://localhost:3002/collaboration/ws/v1/docs
 COLLABORATION_WS_INACTIVITY_TIMEOUT=15 # Seconds
+# server-to-server, reached with an admin JWT (aud: yhub)
+COLLABORATION_API_URL=http://yhub:3002/collaboration
+YHUB_API_BASE_URL=http://yhub:3002
 
 DJANGO_SERVER_TO_SERVER_API_TOKENS=server-api-token
 Y_PROVIDER_API_BASE_URL=http://y-provider-development-converter:4444/api/
