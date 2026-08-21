@@ -222,6 +222,8 @@ class Base(Configuration):
         "application/x-msi",
         "application/java-archive",
         "application/octet-stream",
+        # Vector Graphics (SVG can embed executable scripts/event handlers)
+        "image/svg+xml",
         # Dynamic Web Pages
         "application/x-httpd-php",
         "application/x-asp",
