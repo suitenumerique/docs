@@ -1,0 +1,112 @@
+flowchart LR
+
+  subgraph clients["Clients"]
+    direction TB
+    BROWSER["<b>Browser</b><br/>Next.js SPA · BlockNote<br/>+ service worker (offline)"]
+    EXTAPP["<b>Third-party app</b><br/>resource-server client"]
+  end
+
+  subgraph edge["Edge"]
+    INGRESS["<b>Ingress / Nginx</b><br/>TLS · routing · media auth"]
+  end
+
+  subgraph app["Application services"]
+    direction TB
+    FRONT["<b>Frontend</b><br/>Next.js static build"]
+    BACK["<b>Backend</b><br/>Django · DRF"]
+    CELERY["<b>Celery worker</b>"]
+    subgraph collab["Collaboration"]
+      direction TB
+      YHUB["<b>yhub server</b><br/>WebSocket + REST"]
+      YWORKER["<b>yhub worker</b>"]
+    end
+    subgraph conv["Conversion"]
+      direction TB
+      YPROV["<b>y-provider</b><br/>Yjs to md / HTML / JSON"]
+      DOCSPEC["<b>Docspec</b><br/>.docx import"]
+    end
+  end
+
+  subgraph stores["Data stores"]
+    direction TB
+    PG[("PostgreSQL<br/>docs · users · rights")]
+    REDIS[("Redis<br/>broker · cache")]
+    S3[("S3 / MinIO<br/>attachments · versions")]
+    VALKEY[("Valkey<br/>update stream")]
+    YPG[("PostgreSQL <i>yhub</i><br/>Yjs state")]
+    YS3[("S3 <i>yhub</i><br/>optional")]
+  end
+
+  subgraph ext["External services"]
+    direction TB
+    OIDC["OIDC provider<br/>Keycloak · ProConnect"]
+    LLM["LLM provider<br/>OpenAI · Mistral"]
+    SEARCH["Search / indexing"]
+    SMTP["SMTP relay"]
+    AV["Malware detection"]
+    OBS["Langfuse · Sentry · PostHog"]
+  end
+
+  %% clients to edge
+  BROWSER ==>|"HTTPS · WSS"| INGRESS
+  EXTAPP -->|"bearer token"| INGRESS
+  BROWSER -.->|"login"| OIDC
+
+  %% edge to services
+  INGRESS -->|"/"| FRONT
+  INGRESS ==>|"/api/v1.0/"| BACK
+  INGRESS ==>|"/collaboration/"| YHUB
+  INGRESS -->|"/media/ after auth check"| S3
+  INGRESS -.->|"auth_request"| BACK
+  INGRESS -->|"/external_api/v1.0/"| BACK
+
+  %% backend
+  BACK --> PG
+  BACK --> S3
+  BACK --> REDIS
+  REDIS --> CELERY
+  CELERY --> PG
+  BACK <-.->|"OIDC"| OIDC
+  BACK -->|"AI features"| LLM
+  BACK -->|"query"| SEARCH
+  CELERY -->|"index"| SEARCH
+  CELERY -->|"mail"| SMTP
+  BACK <-.->|"scan · callback"| AV
+  BACK -.-> OBS
+
+  %% backend and collaboration
+  BACK <==>|"document lifecycle<br/>+ auth callbacks"| YHUB
+  CELERY -->|"cascade sync"| YHUB
+
+  %% conversion
+  BACK -->|"convert"| YPROV
+  BACK -->|"import .docx"| DOCSPEC
+  YPROV -.->|"JWKS"| BACK
+
+  %% collaboration internals
+  YHUB --> VALKEY
+  VALKEY --> YWORKER
+  YWORKER --> YPG
+  YHUB --> YPG
+  YWORKER -.-> YS3
+  YHUB -.->|"legacy content"| S3
+
+  classDef client fill:#e8f0fe,stroke:#3b6fd4,color:#12244a
+  classDef service fill:#e6f7ed,stroke:#2f9e5f,color:#0f3d24
+  classDef store fill:#fff4e0,stroke:#d99a19,color:#4a3410
+  classDef external fill:#f3ecfc,stroke:#8256c4,color:#2e1a4d
+  classDef edgeNode fill:#fdeaea,stroke:#cf4747,color:#4a1414
+
+  class BROWSER,EXTAPP client
+  class FRONT,BACK,CELERY,YHUB,YWORKER,YPROV,DOCSPEC service
+  class PG,REDIS,S3,VALKEY,YPG,YS3 store
+  class OIDC,LLM,SEARCH,SMTP,AV,OBS external
+  class INGRESS edgeNode
+
+  style clients fill:#fbfcff,stroke:#c7d4ec
+  style edge fill:#fffafa,stroke:#eccaca
+  style app fill:#fafdfb,stroke:#c9e3d4
+  style collab fill:#f0faf4,stroke:#a9d6bd
+  style conv fill:#f0faf4,stroke:#a9d6bd
+  style stores fill:#fffdf8,stroke:#ecd9b0
+  style ext fill:#fdfbff,stroke:#d9c9ee

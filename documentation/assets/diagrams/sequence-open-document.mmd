@@ -1,0 +1,35 @@
+sequenceDiagram
+  autonumber
+  actor U as Browser
+  participant N as Ingress / Nginx
+  participant D as Django backend
+  participant Y as yhub server
+  participant V as Valkey
+  participant W as yhub worker
+  participant P as PostgreSQL yhub
+
+  U->>N: GET /docs/:id
+  N->>D: GET /api/v1.0/documents/:id/ (session cookie)
+  D-->>U: metadata, abilities, link reach
+
+  U->>N: WSS /collaboration/ws/v1/docs/:id
+  N->>Y: upgrade, forwards cookie and origin
+  Y->>D: GET /api/v1.0/users/me/
+  D-->>Y: user id (or 401, then anonymous)
+  Y->>D: GET /api/v1.0/documents/:id/
+  D-->>Y: abilities, so read-only or read-write
+  Note over Y: unknown room, seed it once<br/>from the legacy S3 content
+  Y->>P: read the persisted state
+  Y-->>U: initial sync
+
+  loop while editing
+    U->>Y: Yjs update
+    Y->>V: XADD
+    Y-->>U: broadcast to the other editors
+  end
+
+  V->>W: XREADGROUP, one task to one worker
+  W->>P: merge and persist
+  W->>V: trim what is stored
+  Y->>D: POST /documents/:id/content-updated/ (yhub JWT)
+  D->>D: bump updated_at, queue the search indexer

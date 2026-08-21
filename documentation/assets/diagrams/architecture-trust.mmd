@@ -1,0 +1,25 @@
+flowchart LR
+
+  BACK["<b>Django backend</b><br/>signs with JWT_PRIVATE_KEY<br/>publishes /api/v1.0/jwks"]
+  YHUB["<b>yhub</b><br/>signs with YHUB_JWT_PRIVATE_KEY<br/>publishes /collaboration/jwks/v1"]
+  YPROV["<b>y-provider</b><br/>verifies only, signs nothing"]
+  RS["<b>Resource server</b><br/>same Django process<br/>publishes /external_api/v1.0/jwks"]
+  OIDC["<b>OIDC provider</b>"]
+
+  BACK ==>|"admin JWT · RS256 · aud yhub · short lived"| YHUB
+  YHUB -.->|"fetches the backend JWKS to verify it"| BACK
+  YHUB ==>|"callback JWT · RS256 · aud docs-backend · 1 min"| BACK
+  BACK -.->|"fetches the yhub JWKS to verify it"| YHUB
+  BACK ==>|"admin JWT · RS256"| YPROV
+  YPROV -.->|"fetches the backend JWKS to verify it"| BACK
+  OIDC -.->|"introspection · declared JWKS"| RS
+  RS --- BACK
+
+  NOTE["No shared secret in either direction.<br/>Each side holds only its own private key<br/>and can roll it without touching the other:<br/>keys are picked by <i>kid</i> and the set is re-fetched<br/>whenever an unknown one shows up."]
+
+  classDef svc fill:#e6f7ed,stroke:#2f9e5f,color:#0f3d24
+  classDef external fill:#f3ecfc,stroke:#8256c4,color:#2e1a4d
+  classDef note fill:#fffdf5,stroke:#d9c9a0,color:#4a3410
+  class BACK,YHUB,YPROV,RS svc
+  class OIDC external
+  class NOTE note
