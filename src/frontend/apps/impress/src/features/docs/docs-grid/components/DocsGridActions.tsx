@@ -52,6 +52,16 @@ const ConfirmationLeaveModal = dynamic(
   { ssr: false },
 );
 
+const ConfirmationDuplicateModal = dynamic(
+  () =>
+    import('@/docs/doc-management/components/ConfirmationDuplicateModal').then(
+      (mod) => ({
+        default: mod.ConfirmationDuplicateModal,
+      }),
+    ),
+  { ssr: false },
+);
+
 interface DocsGridActionsProps {
   doc: Doc;
 }
@@ -61,6 +71,7 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
   const { restoreFocus, addLastFocus } = useFocusStore();
   const [openDropdown, setOpenDropdown] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
+  const [isModalDuplicateOpen, setIsModalDuplicateOpen] = useState(false);
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
   const [isModalShareOpen, setIsModalShareOpen] = useState(false);
   const [isModalMoveOpen, setIsModalMoveOpen] = useState(false);
@@ -122,11 +133,14 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
       icon: <ContentCopySVG width={24} height={24} aria-hidden="true" />,
       isDisabled: !doc.abilities.duplicate,
       callback: () => {
-        duplicateDoc({
-          docId: doc.id,
-          with_accesses: false,
-          canSave: false,
-        });
+        if (doc.numchild) {
+          setIsModalDuplicateOpen(true);
+        } else {
+          duplicateDoc({
+            docId: doc.id,
+            canSave: false,
+          });
+        }
       },
       showSeparator: true,
     },
@@ -202,6 +216,16 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
             restoreFocus();
           }}
           doc={doc}
+        />
+      )}
+      {isModalDuplicateOpen && (
+        <ConfirmationDuplicateModal
+          onClose={() => {
+            setIsModalDuplicateOpen(false);
+            restoreFocus();
+          }}
+          doc={doc}
+          treeContext={null}
         />
       )}
       {isModalMoveOpen && (

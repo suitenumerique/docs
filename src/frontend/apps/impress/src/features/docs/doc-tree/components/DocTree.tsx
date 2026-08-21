@@ -30,6 +30,7 @@ import {
 } from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel/stores/useLeftPanelStore';
 import { TreeSkeleton } from '@/features/skeletons/components/TreeSkeleton';
+import { useFocusStore } from '@/stores/useFocusStore';
 import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 import { CLASS_DOC_TITLE } from '../../doc-header';
@@ -38,6 +39,8 @@ import { findIndexInTree, isDocNode } from '../utils';
 
 import { DocSubPageItem } from './DocSubPageItem';
 import { DocTreeItemActions } from './DocTreeItemActions';
+
+const DOC_TREE_ROOT_ITEM_ID = 'doc-tree-root-item';
 
 type DocTreeProps = {
   currentDoc: Doc;
@@ -58,6 +61,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const rootItemRef = useRef<HTMLDivElement>(null);
   const rootActionsRef = useRef<HTMLDivElement>(null);
   const rootButtonOptionRef = useRef<ButtonElement | null>(null);
+  const { addLastFocus } = useFocusStore();
 
   const { t } = useTranslation();
 
@@ -102,8 +106,13 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const handleRootKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      const isInActions = !!target?.closest('.doc-tree-root-item-actions');
-      const isOnEmojiButton = !!target?.closest('.--docs--doc-icon');
+
+      if (!target || target?.id !== DOC_TREE_ROOT_ITEM_ID) {
+        return;
+      }
+
+      const isInActions = !!target.closest('.doc-tree-root-item-actions');
+      const isOnEmojiButton = !!target.closest('.--docs--doc-icon');
       const isOnRootItem = target === e.currentTarget;
 
       if (e.key === 'F2' && !rootActionsOpen && !isInActions) {
@@ -142,18 +151,14 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   );
 
   // Handle menu open/close for root item - mirrors DocSubPageItem behavior
-  const handleRootActionsOpenChange = useCallback((isOpen: boolean) => {
-    setRootActionsOpen(isOpen);
+  const handleRootActionsOpenChange = useCallback(
+    (isOpen: boolean) => {
+      setRootActionsOpen(isOpen);
 
-    // When the menu closes, return focus to the root tree item
-    // (same behavior as DocSubPageItem for consistency)
-    // Use requestAnimationFrame for smoother focus transition without flickering
-    if (!isOpen) {
-      requestAnimationFrame(() => {
-        rootItemRef.current?.focus();
-      });
-    }
-  }, []);
+      addLastFocus(rootItemRef.current);
+    },
+    [addLastFocus],
+  );
 
   /**
    * This effect is used to reset the tree when a new document
@@ -325,7 +330,8 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       >
         <Box
           ref={rootItemRef}
-          data-testid="doc-tree-root-item"
+          data-testid={DOC_TREE_ROOT_ITEM_ID}
+          id={DOC_TREE_ROOT_ITEM_ID}
           role="treeitem"
           aria-label={`${t('Root document {{title}}', { title: treeContext.root?.title || untitledDocument })}`}
           aria-selected={rootIsSelected}
