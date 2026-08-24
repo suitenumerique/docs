@@ -612,3 +612,20 @@ def test_api_documents_search_success(indexer_settings):
     assert results == [
         {"id": document["id"], "title": document["title"], "path": document["path"]}
     ]
+
+
+@mock.patch("core.services.search_indexers.FindDocumentIndexer.search_query")
+def test_api_documents_search_success_scoped(search_query, indexer_settings):
+    """A document-scoped indexer search should use the document path."""
+    indexer_settings.SEARCH_URL = "http://find/api/v1.0/search"
+    search_query.return_value = []
+    document = factories.DocumentFactory()
+
+    response = APIClient().get(
+        "/api/v1.0/documents/search/",
+        data={"q": "alpha", "document": document.id},
+    )
+
+    assert response.status_code == 200
+    assert search_query.call_count == 1
+    assert search_query.call_args.kwargs["data"]["path"] == document.path
