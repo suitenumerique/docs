@@ -39,7 +39,6 @@
     "@types/react-dom": "19.2.3",
     "dompurify": "3.4.13",
     "eslint": "10.8.0",
-    "js-yaml": "5.2.2",
     "postcss": "8.5.25",
     "react": "19.2.8",
     "react-dom": "19.2.8",

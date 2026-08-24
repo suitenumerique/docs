@@ -45,7 +45,7 @@ export const useOnboardingSteps = () => {
         content: (
           <video
             src={t('src_img_onboarding_step_1', {
-              desc: 'URL of onboarding step 1 preview image',
+              description: 'URL of onboarding step 1 preview image',
               defaultValue: '/assets/on-boarding/step_1_EN.webm',
             })}
             aria-label={t('Compose your doc easily')}
@@ -76,7 +76,7 @@ export const useOnboardingSteps = () => {
         content: (
           <video
             src={t('src_img_onboarding_step_2', {
-              desc: 'URL of onboarding step 2 preview image',
+              description: 'URL of onboarding step 2 preview image',
               defaultValue: '/assets/on-boarding/step_2_EN.webm',
             })}
             aria-label={t('Format your content with the toolbar')}
@@ -107,7 +107,7 @@ export const useOnboardingSteps = () => {
         content: (
           <Image
             src={t('src_img_onboarding_step_3', {
-              desc: 'URL of onboarding step 3 preview image',
+              description: 'URL of onboarding step 3 preview image',
               defaultValue: '/assets/on-boarding/step_3_EN.webp',
             })}
             alt={t('Share and collaborate with ease')}
@@ -149,7 +149,7 @@ export const useOnboardingSteps = () => {
         content: (
           <Image
             src={t('src_img_onboarding_step_4', {
-              desc: 'URL of onboarding step 4 preview image',
+              description: 'URL of onboarding step 4 preview image',
               defaultValue: '/assets/on-boarding/step_4_EN.webp',
             })}
             alt={t('Draw inspiration from the content library')}
