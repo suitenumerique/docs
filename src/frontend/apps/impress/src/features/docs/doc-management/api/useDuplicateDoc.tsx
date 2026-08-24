@@ -3,7 +3,8 @@ import {
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
 import {
-  UseMutationOptions,
+  type InfiniteData,
+  type UseMutationOptions,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
@@ -18,22 +19,24 @@ import { useProviderStore } from '../stores';
 import { Doc } from '../types';
 
 import { useDocContentUpdate } from './useDocContentUpdate';
-import { KEY_LIST_DOC } from './useDocs';
+import { DocsParams, DocsResponse, KEY_LIST_DOC } from './useDocs';
 
 interface DuplicateDocPayload {
   docId: string;
   with_accesses?: boolean;
+  with_descendants?: boolean;
 }
 
-type DuplicateDocResponse = Pick<Doc, 'id'>;
+type DuplicateDocResponse = Doc;
 
 export const duplicateDoc = async ({
   docId,
-  with_accesses,
+  with_accesses = false,
+  with_descendants = true,
 }: DuplicateDocPayload): Promise<DuplicateDocResponse> => {
   const response = await fetchAPI(`documents/${docId}/duplicate/`, {
     method: 'POST',
-    body: JSON.stringify({ with_accesses }),
+    body: JSON.stringify({ with_accesses, with_descendants }),
   });
 
   if (!response.ok) {
@@ -84,14 +87,36 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
       return await duplicateDoc(variables);
     },
     onSuccess: (data, variables, onMutateResult, context) => {
-      void queryClient.resetQueries({
-        queryKey: [KEY_LIST_DOC],
-      });
+      // Add the duplicated document to the list of documents in the cache
+      // It avoids the need to refetch the list of documents after duplicating a document
+      queryClient.setQueriesData<InfiniteData<DocsResponse>>(
+        {
+          queryKey: [KEY_LIST_DOC],
+          predicate: (query) => {
+            const params = query.queryKey[1] as DocsParams | undefined;
+            return params?.is_creator_me !== false;
+          },
+        },
+        (oldData) => {
+          if (!oldData) {
+            return oldData;
+          }
 
-      const message = t('Document duplicated successfully!');
-      toast(message, VariantType.SUCCESS, {
-        duration: 3000,
-      });
+          const [firstPage, ...restPages] = oldData.pages;
+
+          return {
+            ...oldData,
+            pages: [
+              {
+                ...firstPage,
+                count: firstPage.count + 1,
+                results: [data, ...firstPage.results],
+              },
+              ...restPages,
+            ],
+          };
+        },
+      );
 
       void options?.onSuccess?.(data, variables, onMutateResult, context);
     },

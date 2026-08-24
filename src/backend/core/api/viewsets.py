@@ -1340,9 +1340,11 @@ class DocumentViewSet(
             document=duplicated_document,
         )
 
-        return drf_response.Response(
-            {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
+        serializer = serializers.DocumentSerializer(
+            duplicated_document, context=self.get_serializer_context()
         )
+
+        return drf_response.Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def _duplicate_document(
         self,
@@ -1371,7 +1373,7 @@ class DocumentViewSet(
         user_role = document_to_duplicate.get_role(user)
         is_owner_or_admin = user_role in models.PRIVILEGED_ROLES
 
-        base64_yjs_content = document_to_duplicate.content
+        base64_yjs_content = document_to_duplicate.content or ""
 
         # Duplicate the document instance
         link_kwargs = (

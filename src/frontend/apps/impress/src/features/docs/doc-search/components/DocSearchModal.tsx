@@ -109,7 +109,7 @@ const DocSearchModalGlobal = ({
               'Search documents by name, navigate using arrows, and select a result with Enter.',
             )}
           </Text>
-          <Box $position="absolute" $css="top: 4px; right: 4px;">
+          <Box $position="absolute" $css="top: 8px; right: 8px;">
             <ButtonCloseModal
               aria-label={t('Close the search modal')}
               onClick={modalProps.onClose}
