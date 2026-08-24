@@ -31,6 +31,10 @@ and this project adheres to
 - 🐛(keycloak) fix database env variables in the self-hosting example #2572
 - 🐛(helm) show the database error while jobs wait for it to be ready #2578
 
+### Fixed
+
+- 🐛(frontend) fix DnD hover flash and enable drop on pinned documents #2531
+
 ## [v5.4.1] - 2026-07-09
 
 ### Changed
