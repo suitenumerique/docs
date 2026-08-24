@@ -21,9 +21,10 @@ export const CLASS_DOC_TITLE = '--docs--doc-title';
 
 interface DocTitleProps {
   doc: Doc;
+  onTitleUpdate?: (title: string) => void;
 }
 
-export const DocTitle = ({ doc }: DocTitleProps) => {
+export const DocTitle = ({ doc, onTitleUpdate }: DocTitleProps) => {
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
   const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
 
@@ -31,7 +32,7 @@ export const DocTitle = ({ doc }: DocTitleProps) => {
     return <DocTitleText />;
   }
 
-  return <DocTitleInput doc={doc} />;
+  return <DocTitleInput doc={doc} onTitleUpdate={onTitleUpdate} />;
 };
 
 export const DocTitleText = () => {
@@ -98,7 +99,7 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
   );
 };
 
-const DocTitleInput = ({ doc }: DocTitleProps) => {
+const DocTitleInput = ({ doc, onTitleUpdate }: DocTitleProps) => {
   const { isSmallMobile } = useResponsiveStore();
   const { t } = useTranslation();
   const { isTopRoot } = useDocUtils(doc);
@@ -116,6 +117,8 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       if (isTopRoot) {
         const sanitizedTitle = updateDocTitle(doc, inputText);
         setTitleDisplay(sanitizedTitle);
+        onTitleUpdate?.(sanitizedTitle);
+
         return sanitizedTitle;
       } else {
         const { emoji: pastedEmoji } = getEmojiAndTitle(inputText);
@@ -131,9 +134,10 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           getEmojiAndTitle(sanitizedTitle);
 
         setTitleDisplay(sanitizedTitleWithoutEmoji);
+        onTitleUpdate?.(sanitizedTitle);
       }
     },
-    [updateDocTitle, doc, emoji, isTopRoot],
+    [updateDocTitle, doc, emoji, isTopRoot, onTitleUpdate],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

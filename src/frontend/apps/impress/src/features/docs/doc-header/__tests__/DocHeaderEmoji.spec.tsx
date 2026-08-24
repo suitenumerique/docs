@@ -4,12 +4,16 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { AppWrapper } from '@/tests/utils';
 
 const mockUpdateDocEmoji = vi.fn();
+const mockUpdateDocTitle = vi.fn((_doc: unknown, title: string) => title);
 
 vi.mock('@/docs/doc-management', async () => {
   const actual = await vi.importActual('@/docs/doc-management');
   return {
     ...actual,
-    useDocTitleUpdate: () => ({ updateDocEmoji: mockUpdateDocEmoji }),
+    useDocTitleUpdate: () => ({
+      updateDocEmoji: mockUpdateDocEmoji,
+      updateDocTitle: mockUpdateDocTitle,
+    }),
   };
 });
 
@@ -33,6 +37,7 @@ describe('DocHeader - Add emoji (April Fools easter egg)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     mockUpdateDocEmoji.mockClear();
+    mockUpdateDocTitle.mockClear();
   });
 
   afterEach(() => {
@@ -57,5 +62,24 @@ describe('DocHeader - Add emoji (April Fools easter egg)', () => {
         emoji,
       );
     });
+  });
+
+  test('preserves a title changed immediately before adding an emoji', () => {
+    vi.setSystemTime(new Date('2026-03-30'));
+
+    render(<DocHeader doc={{ ...doc, title: '' }} />, {
+      wrapper: AppWrapper,
+    });
+
+    const titleInput = screen.getByRole('textbox', { name: 'Document title' });
+    titleInput.textContent = 'My new document';
+    fireEvent.blur(titleInput);
+    fireEvent.click(screen.getByRole('button', { name: 'Add icon' }));
+
+    expect(mockUpdateDocEmoji).toHaveBeenCalledWith(
+      'doc-1',
+      'My new document',
+      '📄',
+    );
   });
 });
