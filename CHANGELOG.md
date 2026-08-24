@@ -6,27 +6,29 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.5.0] - 2026-08-24
+
 ### Added
 
 - ♿️(frontend) restore skip to content link after header redesign #2510
 - 🌐(i18n) rename cn_CN to zh_CN, add eo_PL and zh_TW locales #2486
 - ✨(backend) conditional email notification in server to server api #2554
-- ✨(backend) profile api using django-silk
+- ✨(backend) profile api using django-silk #2594
 
 ### Changed
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
 - ⚡️(frontend) replace onboarding assets with webm and webp #2569
 - 💄(frontend) use the same highlight color for cells and moves #2575
-- ⚡️(backend) optimize media_auth endpoint
+- ⚡️(backend) optimize media_auth endpoint #2594
 - 🚸(frontend) print from document options menu #2550
 - ♻️(frontend) refacto of the grid documents #2534
 
 ### Fixed
 
-- 🐛(frontend) refresh pins after document deletion and restoration
+- 🐛(frontend) refresh pins after document deletion and restoration #2581
 - 🐛(frontend) redirect homepage to login when homepage feat is disabled #2521
-- 🐛(backend) ignore CSPs for API docs in development
+- 🐛(backend) ignore CSPs for API docs in development #2538
 - 🐛(frontend) export images embedded with a relative url #2573
 - 🐛(y-provider) fix sentry init #2579
 - 🐛(backend) handle object storage metadata keys case-insensitively #2576
@@ -1446,7 +1448,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.4.1...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.5.0...main
+[v5.5.0]: https://github.com/suitenumerique/docs/releases/v5.5.0
 [v5.4.1]: https://github.com/suitenumerique/docs/releases/v5.4.1
 [v5.4.0]: https://github.com/suitenumerique/docs/releases/v5.4.0
 [v5.3.0]: https://github.com/suitenumerique/docs/releases/v5.3.0
