@@ -1,0 +1,543 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: lasuite-docs\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-24 10:31+0000\n"
+"PO-Revision-Date: 2026-08-24 12:09\n"
+"Last-Translator: \n"
+"Language-Team: Polish\n"
+"Language: pl_PL\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n==1 ? 0 : (n%10>=2 && n%10<=4) && (n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
+"X-Crowdin-Project: lasuite-docs\n"
+"X-Crowdin-Project-ID: 754523\n"
+"X-Crowdin-Language: pl\n"
+"X-Crowdin-File: backend-impress.pot\n"
+"X-Crowdin-File-ID: 18\n"
+
+#: core/admin.py:33
+msgid "Personal info"
+msgstr "Dane osobowe"
+
+#: core/admin.py:46 core/admin.py:190
+msgid "Permissions"
+msgstr "Uprawnienia"
+
+#: core/admin.py:58
+msgid "Important dates"
+msgstr "Ważne daty"
+
+#: core/admin.py:119
+msgid "Permanently delete selected users"
+msgstr "Trwale usuń wybranych użytkowników"
+
+#: core/admin.py:141
+msgid "Import job created and queued."
+msgstr "Zadanie importu zostało utworzone i dodane do kolejki."
+
+#: core/admin.py:145
+msgid "Process selected user reconciliations"
+msgstr "Przetwórz wybrane połączenia użytkowników"
+
+#: core/admin.py:200
+msgid "Tree structure"
+msgstr "Struktura drzewa"
+
+#: core/api/filters.py:48
+msgid "Title"
+msgstr "Tytuł"
+
+#: core/api/filters.py:51
+msgid "Search"
+msgstr "Szukaj"
+
+#: core/api/filters.py:65
+msgid "Creator is me"
+msgstr "Jestem twórcą"
+
+#: core/api/filters.py:68
+msgid "Favorite"
+msgstr "Ulubione"
+
+#: core/api/serializers.py:531
+msgid "A new document was created on your behalf!"
+msgstr "Nowy dokument został utworzony w Twoim imieniu!"
+
+#: core/api/serializers.py:535
+msgid "You have been granted ownership of a new document:"
+msgstr "Przyznano Ci rolę właściciela nowego dokumentu:"
+
+#: core/api/serializers.py:571
+msgid "This field is required."
+msgstr "To pole jest wymagane."
+
+#: core/api/serializers.py:582
+#, python-format
+msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
+msgstr "Zasięg linku „%(link_reach)s” nie jest dozwolony zgodnie z konfiguracją dokumentu nadrzędnego."
+
+#: core/api/viewsets.py:1389
+#, python-brace-format
+msgid "copy of {title}"
+msgstr "kopia {title}"
+
+#: core/api/viewsets.py:3328
+#, python-format
+msgid "A comment can have a maximum of %(max)d distinct reactions."
+msgstr "Komentarz może mieć maksymalnie %(max)d różnych reakcji."
+
+#: core/apps.py:12
+msgid "Impress core application"
+msgstr "Główna aplikacja Impress"
+
+#: core/choices.py:35 core/choices.py:43
+msgid "Reader"
+msgstr "Czytelnik"
+
+#: core/choices.py:36 core/choices.py:44
+msgid "Commenter"
+msgstr "Komentujący"
+
+#: core/choices.py:37 core/choices.py:45
+msgid "Editor"
+msgstr "Edytor"
+
+#: core/choices.py:46
+msgid "Administrator"
+msgstr "Administrator"
+
+#: core/choices.py:47
+msgid "Owner"
+msgstr "Właściciel"
+
+#: core/choices.py:58
+msgid "Restricted"
+msgstr "Ograniczony dostęp"
+
+#: core/choices.py:62
+msgid "Authenticated"
+msgstr "Dostęp dla uwierzytelnionych"
+
+#: core/choices.py:64
+msgid "Public"
+msgstr "Dostęp publiczny"
+
+#: core/enums.py:36
+msgid "First child"
+msgstr "Pierwszy element podrzędny"
+
+#: core/enums.py:37
+msgid "Last child"
+msgstr "Ostatni element podrzędny"
+
+#: core/enums.py:38
+msgid "First sibling"
+msgstr "Pierwszy element równorzędny"
+
+#: core/enums.py:39
+msgid "Last sibling"
+msgstr "Ostatni element równorzędny"
+
+#: core/enums.py:40
+msgid "Left"
+msgstr "W lewo"
+
+#: core/enums.py:41
+msgid "Right"
+msgstr "W prawo"
+
+#: core/models.py:83
+msgid "id"
+msgstr "id"
+
+#: core/models.py:84
+msgid "primary key for the record as UUID"
+msgstr "klucz główny dla rekordu jako UUID"
+
+#: core/models.py:90
+msgid "created on"
+msgstr "utworzono"
+
+#: core/models.py:91
+msgid "date and time at which a record was created"
+msgstr "data i godzina utworzenia rekordu"
+
+#: core/models.py:96
+msgid "updated on"
+msgstr "zaktualizowano"
+
+#: core/models.py:97
+msgid "date and time at which a record was last updated"
+msgstr "data i godzina ostatniej aktualizacji rekordu"
+
+#: core/models.py:133
+msgid "We couldn't find a user with this sub but the email is already associated with a registered user."
+msgstr "Nie znaleźliśmy użytkownika z tym identyfikatorem sub, ale adres e-mail jest już powiązany z zarejestrowanym użytkownikiem."
+
+#: core/models.py:144
+msgid "sub"
+msgstr "sub"
+
+#: core/models.py:145
+msgid "Required. 255 characters or fewer. ASCII characters only."
+msgstr "Wymagane. 255 znaków lub mniej. Tylko znaki ASCII."
+
+#: core/models.py:153
+msgid "full name"
+msgstr "imię i nazwisko"
+
+#: core/models.py:155
+msgid "short name"
+msgstr "krótka nazwa"
+
+#: core/models.py:158
+msgid "identity email address"
+msgstr "adres e-mail używany do identyfikacji"
+
+#: core/models.py:163
+msgid "admin email address"
+msgstr "adres e-mail administratora"
+
+#: core/models.py:170
+msgid "language"
+msgstr "język"
+
+#: core/models.py:171
+msgid "The language in which the user wants to see the interface."
+msgstr "Język, w którym użytkownik chce wyświetlać interfejs."
+
+#: core/models.py:179
+msgid "The timezone in which the user wants to see times."
+msgstr "Strefa czasowa, według której użytkownik chce wyświetlać czas."
+
+#: core/models.py:182
+msgid "device"
+msgstr "urządzenie"
+
+#: core/models.py:184
+msgid "Whether the user is a device or a real user."
+msgstr "Określa, czy konto reprezentuje urządzenie, czy rzeczywistego użytkownika."
+
+#: core/models.py:187
+msgid "staff status"
+msgstr "status członka personelu"
+
+#: core/models.py:189
+msgid "Whether the user can log into this admin site."
+msgstr "Określa, czy użytkownik może zalogować się do panelu administracyjnego."
+
+#: core/models.py:192
+msgid "active"
+msgstr "aktywny"
+
+#: core/models.py:195
+msgid "Whether this user should be treated as active. Unselect this instead of deleting accounts."
+msgstr "Określa, czy ten użytkownik powinien być traktowany jako aktywny. Odznacz tę opcję zamiast usuwać konto."
+
+#: core/models.py:200
+msgid "first connection status"
+msgstr "status pierwszego połączenia"
+
+#: core/models.py:202
+msgid "Whether the user has completed the first connection process."
+msgstr "Czy użytkownik zakończył proces pierwszego połączenia."
+
+#: core/models.py:212
+msgid "user"
+msgstr "użytkownik"
+
+#: core/models.py:213
+msgid "users"
+msgstr "użytkownicy"
+
+#: core/models.py:421
+msgid "Active email address"
+msgstr "Aktywny adres e-mail"
+
+#: core/models.py:422
+msgid "Email address to deactivate"
+msgstr "Adres e-mail do dezaktywacji"
+
+#: core/models.py:449
+msgid "Unique ID in the source file"
+msgstr "Unikalny identyfikator w pliku źródłowym"
+
+#: core/models.py:455 core/models.py:753
+msgid "Pending"
+msgstr "Oczekujące"
+
+#: core/models.py:456
+msgid "Ready"
+msgstr "Gotowe"
+
+#: core/models.py:457 core/models.py:755
+msgid "Done"
+msgstr "Zakończone"
+
+#: core/models.py:458 core/models.py:756
+msgid "Error"
+msgstr "Błąd"
+
+#: core/models.py:466
+msgid "user reconciliation"
+msgstr "łączenie kont użytkownika"
+
+#: core/models.py:467
+msgid "user reconciliations"
+msgstr "łączenie kont użytkowników"
+
+#: core/models.py:705
+msgid "You have requested a reconciliation of your user accounts on Docs.\n"
+"            To confirm that you are the one who initiated the request\n"
+"            and that this email belongs to you:"
+msgstr "Otrzymaliśmy Twoją prośbę o połączenie kont w Docs.\n"
+"            Aby potwierdzić, że prośba została wysłana przez Ciebie\n"
+"            i że ten adres e-mail należy do Ciebie:"
+
+#: core/models.py:711
+msgid "Confirm by clicking the link to start the reconciliation"
+msgstr "Potwierdź, klikając link, aby rozpocząć łączenie kont"
+
+#: core/models.py:716 core/models.py:822
+msgid "Click here"
+msgstr "Kliknij tutaj"
+
+#: core/models.py:717
+msgid "Confirm"
+msgstr "Potwierdź"
+
+#: core/models.py:728
+msgid "Your reconciliation request has been processed.\n"
+"            New documents are likely associated with your account:"
+msgstr "Twoja prośba o połączenie kont została przetworzona.\n"
+"            Nowe dokumenty zostały prawdopodobnie przypisane do Twojego konta:"
+
+#: core/models.py:733
+msgid "Your accounts have been merged"
+msgstr "Twoje konta zostały połączone"
+
+#: core/models.py:738
+msgid "Click here to see"
+msgstr "Kliknij tutaj, aby zobaczyć"
+
+#: core/models.py:739
+msgid "See my documents"
+msgstr "Zobacz moje dokumenty"
+
+#: core/models.py:749
+msgid "CSV file"
+msgstr "Plik CSV"
+
+#: core/models.py:754
+msgid "Running"
+msgstr "W toku"
+
+#: core/models.py:764
+msgid "user reconciliation CSV import"
+msgstr "import pliku CSV do łączenia kont użytkowników"
+
+#: core/models.py:765
+msgid "user reconciliation CSV imports"
+msgstr "importy plików CSV do łączenia kont użytkowników"
+
+#: core/models.py:809
+#, python-brace-format
+msgid "Your request for reconciliation was unsuccessful.\n"
+"            Reconciliation failed for the following email addresses:\n"
+"            {recipient_email}, {other_email}.\n"
+"            Please check for typos.\n"
+"            You can submit another request with the valid email addresses."
+msgstr "Twoja prośba o połączenie kont nie powiodła się.\n"
+"            Łączenie kont nie powiodło się dla następujących adresów e-mail:\n"
+"            {recipient_email}, {other_email}.\n"
+"            Sprawdź, czy nie ma literówek.\n"
+"            Możesz złożyć kolejną prośbę, podając prawidłowe adresy e-mail."
+
+#: core/models.py:817
+msgid "Reconciliation of your Docs accounts not completed"
+msgstr "Łączenie Twoich kont Docs nie zostało ukończone"
+
+#: core/models.py:823
+msgid "Make a new request"
+msgstr "Złóż nową prośbę"
+
+#: core/models.py:938
+msgid "title"
+msgstr "tytuł"
+
+#: core/models.py:939
+msgid "excerpt"
+msgstr "fragment"
+
+#: core/models.py:988
+msgid "Document"
+msgstr "Dokument"
+
+#: core/models.py:989
+msgid "Documents"
+msgstr "Dokumenty"
+
+#: core/models.py:1006 core/models.py:1436
+msgid "Untitled Document"
+msgstr "Dokument bez tytułu"
+
+#: core/models.py:1437
+msgid "Open"
+msgstr "Otwórz"
+
+#: core/models.py:1472
+#, python-brace-format
+msgid "{name} shared a document with you!"
+msgstr "Dokument został Ci udostępniony przez {name}!"
+
+#: core/models.py:1476
+#, python-brace-format
+msgid "{name} invited you with the role \"{role}\" on the following document:"
+msgstr "{name} zaprasza Cię z rolą \"{role}\" do następującego dokumentu:"
+
+#: core/models.py:1482
+#, python-brace-format
+msgid "{name} shared a document with you: {title}"
+msgstr "Dokument został Ci udostępniony przez {name}: {title}"
+
+#: core/models.py:1582
+msgid "Document/user link trace"
+msgstr "Ślad powiązania dokumentu z użytkownikiem"
+
+#: core/models.py:1583
+msgid "Document/user link traces"
+msgstr "Ślady powiązań dokumentu z użytkownikiem"
+
+#: core/models.py:1589
+msgid "A link trace already exists for this document/user."
+msgstr "Ślad powiązania dla tego dokumentu i użytkownika już istnieje."
+
+#: core/models.py:1612
+msgid "Document favorite"
+msgstr "Ulubiony dokument"
+
+#: core/models.py:1613
+msgid "Document favorites"
+msgstr "Ulubione dokumenty"
+
+#: core/models.py:1619
+msgid "This document is already targeted by a favorite relation instance for the same user."
+msgstr "Ten dokument jest już objęty relacją ulubionych dla tego samego użytkownika."
+
+#: core/models.py:1641
+msgid "Document/user relation"
+msgstr "Relacja dokumentu z użytkownikiem"
+
+#: core/models.py:1642
+msgid "Document/user relations"
+msgstr "Relacje dokumentu z użytkownikami"
+
+#: core/models.py:1648
+msgid "This user is already in this document."
+msgstr "Ten użytkownik ma już dostęp do tego dokumentu."
+
+#: core/models.py:1654
+msgid "This team is already in this document."
+msgstr "Ten zespół ma już dostęp do tego dokumentu."
+
+#: core/models.py:1660
+msgid "Either user or team must be set, not both."
+msgstr "Należy wskazać użytkownika albo zespół, ale nie oba jednocześnie."
+
+#: core/models.py:1811
+msgid "Document ask for access"
+msgstr "Prośba o dostęp do dokumentu"
+
+#: core/models.py:1812
+msgid "Document ask for accesses"
+msgstr "Prośby o dostęp do dokumentu"
+
+#: core/models.py:1818
+msgid "This user has already asked for access to this document."
+msgstr "Ten użytkownik już poprosił o dostęp do tego dokumentu."
+
+#: core/models.py:1875
+#, python-brace-format
+msgid "{name} would like access to a document!"
+msgstr "{name} chce uzyskać dostęp do dokumentu!"
+
+#: core/models.py:1879
+#, python-brace-format
+msgid "{name} would like access to the following document:"
+msgstr "{name} chce uzyskać dostęp do następującego dokumentu:"
+
+#: core/models.py:1885
+#, python-brace-format
+msgid "{name} is asking for access to the document: {title}"
+msgstr "{name} prosi o dostęp do dokumentu: {title}"
+
+#: core/models.py:1927
+msgid "Thread"
+msgstr "Wątek"
+
+#: core/models.py:1928
+msgid "Threads"
+msgstr "Wątki"
+
+#: core/models.py:1931 core/models.py:1984
+msgid "Anonymous"
+msgstr "Anonimowy"
+
+#: core/models.py:1979
+msgid "Comment"
+msgstr "Komentarz"
+
+#: core/models.py:1980
+msgid "Comments"
+msgstr "Komentarze"
+
+#: core/models.py:2030
+msgid "This emoji has already been reacted to this comment."
+msgstr "Ta reakcja emoji została już dodana do tego komentarza."
+
+#: core/models.py:2034
+msgid "Reaction"
+msgstr "Reakcja"
+
+#: core/models.py:2035
+msgid "Reactions"
+msgstr "Reakcje"
+
+#: core/models.py:2045
+msgid "email address"
+msgstr "adres e-mail"
+
+#: core/models.py:2064
+msgid "Document invitation"
+msgstr "Zaproszenie do dokumentu"
+
+#: core/models.py:2065
+msgid "Document invitations"
+msgstr "Zaproszenia do dokumentu"
+
+#: core/models.py:2085
+msgid "This email is already associated to a registered user."
+msgstr "Ten e-mail jest już powiązany z zarejestrowanym użytkownikiem."
+
+#: core/templates/mail/html/template.html:160
+#: core/templates/mail/text/template.txt:4
+msgid "Logo email"
+msgstr "Logo w wiadomości e-mail"
+
+#: core/templates/mail/html/template.html:258
+#: core/templates/mail/text/template.txt:15
+msgid " Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team. "
+msgstr " Docs, Twoje nowe niezbędne narzędzie do organizowania, udostępniania i wspólnej pracy nad dokumentami w zespole. "
+
+#: core/templates/mail/html/template.html:265
+#: core/templates/mail/text/template.txt:17
+#, python-format
+msgid " Brought to you by %(brandname)s "
+msgstr " Dostarczone przez %(brandname)s "
+
+#: impress/settings.py:876
+msgid "Docs AI"
+msgstr "Docs AI"
+
