@@ -2,9 +2,9 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { css } from 'styled-components';
 
-import { Box, BoxButton, Text } from '@/components';
+import { Box, Text } from '@/components';
 import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
-import { getEmojiAndTitle, useDoc } from '@/docs/doc-management/';
+import { getEmojiAndTitle, useDoc, useDocStore } from '@/docs/doc-management/';
 
 interface LinkSelectedProps {
   docId: string;
@@ -38,11 +38,17 @@ export const LinkSelected = ({
   }, [doc?.title, docId, isEditable]);
 
   const { emoji, titleWithoutEmoji } = getEmojiAndTitle(title);
+  const { currentDoc } = useDocStore();
+  const isDeletedDoc = !!currentDoc?.deleted_at;
   const router = useRouter();
   const href = `/docs/${docId}/`;
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (e: React.MouseEvent<HTMLSpanElement>) => {
     e.preventDefault();
+
+    if (isDeletedDoc) {
+      return;
+    }
 
     // If ctrl or command is pressed, it opens a new tab. If shift is pressed, it opens a new window
     if (e.metaKey || e.ctrlKey || e.shiftKey) {
@@ -53,8 +59,8 @@ export const LinkSelected = ({
   };
 
   // This triggers on middle-mouse click
-  const handleAuxClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (e.button !== 1) {
+  const handleAuxClick = (e: React.MouseEvent<HTMLSpanElement>) => {
+    if (e.button !== 1 || isDeletedDoc) {
       return;
     }
     e.preventDefault();
@@ -62,19 +68,36 @@ export const LinkSelected = ({
     window.open(href, '_blank');
   };
 
+  /**
+   * A link is activated with Enter only, Space is a button behaviour and stays
+   * available to the editor.
+   */
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (e.key !== 'Enter' || isDeletedDoc) {
+      return;
+    }
+    e.preventDefault();
+    void router.push(href);
+  };
+
   return (
-    <BoxButton
+    <Box
       as="span"
+      role="link"
+      tabIndex={isDeletedDoc ? -1 : 0}
+      aria-disabled={isDeletedDoc || undefined}
       className="--docs--interlinking-link-inline-content"
       data-href={href}
       onClick={handleClick}
       onAuxClick={handleAuxClick}
+      onKeyDown={handleKeyDown}
       draggable="false"
       $height="28px"
       $css={css`
         display: inline;
         padding: 0.1rem 0.4rem;
         border-radius: 4px;
+        cursor: pointer;
         & svg {
           position: relative;
           top: 2px;
@@ -129,6 +152,6 @@ export const LinkSelected = ({
           {titleWithoutEmoji}
         </Box>
       </Text>
-    </BoxButton>
+    </Box>
   );
 };

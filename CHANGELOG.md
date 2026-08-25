@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ♿️(frontend) use anchor links for interlinking sub-documents #2391
+
 ## [v5.5.0] - 2026-08-24
 
 ### Added
