@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) export presenter slides as PDF #2487
+- 💄(frontend) redesign email confirmation standalone page #2601
 
 ### Fixed
 

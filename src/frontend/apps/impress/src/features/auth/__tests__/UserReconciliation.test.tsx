@@ -7,8 +7,12 @@ import { AppWrapper } from '@/tests/utils';
 
 import { UserReconciliation } from '../components/UserReconciliation';
 
-vi.mock('../assets/mail-check-filled.svg', () => ({
-  default: () => <div data-testid="success-svg">SuccessSvg</div>,
+vi.mock('../assets/email-confirmation.svg', () => ({
+  default: () => <div>EmailConfirmationSvg</div>,
+}));
+
+vi.mock('../assets/email-validation-error.svg', () => ({
+  default: () => <div>EmailValidationErrorSvg</div>,
 }));
 
 describe('UserReconciliation', () => {
@@ -39,9 +43,20 @@ describe('UserReconciliation', () => {
       });
 
       expect(
+        await screen.findByRole('heading', {
+          level: 1,
+          name: /Email Address Confirmed/i,
+        }),
+      ).toBeInTheDocument();
+
+      expect(
         await screen.findByText(
           /To complete the unification of your user accounts/i,
         ),
+      ).toBeInTheDocument();
+
+      expect(
+        await screen.findByRole('button', { name: /Resend e-mail/i }),
       ).toBeInTheDocument();
     });
   });
@@ -63,7 +78,14 @@ describe('UserReconciliation', () => {
     });
 
     expect(
-      await screen.findByText(/An error occurred during email validation./i),
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /An error occurred during email validation./i,
+      }),
     ).toBeInTheDocument();
+
+    expect(
+      screen.queryByRole('button', { name: /Resend e-mail/i }),
+    ).not.toBeInTheDocument();
   });
 });

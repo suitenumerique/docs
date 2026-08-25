@@ -4,7 +4,7 @@ import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { UserReconciliation } from '@/features/auth/components/UserReconciliation';
-import { PageLayout } from '@/layouts';
+import { StandalonePageLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 
 const Page: NextPageWithLayout = () => {
@@ -34,7 +34,7 @@ const Page: NextPageWithLayout = () => {
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <PageLayout withFooter={false}>{page}</PageLayout>;
+  return <StandalonePageLayout>{page}</StandalonePageLayout>;
 };
 
 export default Page;

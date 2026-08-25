@@ -1,11 +1,12 @@
-import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 
-import error_img from '@/assets/icons/error-coffee.png';
-import { Box, Loading, Text } from '@/components';
+import { Box, BoxButton, Icon, Loading, Text } from '@/components';
+import ArrowUpCircleSvg from '@/icons/arrow-up-circle.svg';
 
 import { useUserReconciliationsQuery } from '../api';
-import SuccessSvg from '../assets/mail-check-filled.svg';
+import EmailConfirmationSvg from '../assets/email-confirmation.svg';
+import EmailValidationErrorSvg from '../assets/email-validation-error.svg';
 
 interface UserReconciliationProps {
   reconciliationId: string;
@@ -33,65 +34,81 @@ export const UserReconciliation = ({
     );
   }
 
-  let render = (
-    <Box $gap="xs" $align="center">
-      <SuccessSvg />
-      <Text
-        as="h3"
-        $textAlign="center"
-        $maxWidth="350px"
-        $theme="neutral"
-        $margin="0"
-        $size="16px"
-      >
-        {t('Email Address Confirmed')}
-      </Text>
-      <Text
-        as="p"
-        $textAlign="center"
-        $maxWidth="330px"
-        $theme="neutral"
-        $variation="secondary"
-        $margin="0"
-        $size="sm"
-      >
-        {t(
-          'To complete the unification of your user accounts, please click the confirmation links sent to all the email addresses you provided.',
-        )}
-      </Text>
-    </Box>
-  );
-
-  if (isError) {
-    render = (
-      <Box $gap="xs" $align="center">
-        <Image
-          src={error_img}
-          alt=""
-          width={300}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-          }}
-        />
-        <Text
-          as="p"
-          $textAlign="center"
-          $maxWidth="330px"
-          $theme="neutral"
-          $variation="secondary"
-          $margin="0"
-          $size="sm"
-        >
-          {t('An error occurred during email validation.')}
-        </Text>
-      </Box>
-    );
-  }
-
   return (
-    <Box $align="center" $margin="auto" $padding={{ bottom: '2rem' }}>
-      {render}
+    <Box
+      $align="center"
+      $gap="xs"
+      $padding={{ horizontal: 'base' }}
+      className="--docs--user-reconciliation"
+    >
+      {isError ? (
+        <EmailValidationErrorSvg aria-hidden="true" />
+      ) : (
+        <EmailConfirmationSvg aria-hidden="true" />
+      )}
+      <Box $align="center" $gap="3xs">
+        <Text
+          as="h1"
+          $size="md"
+          $weight="bold"
+          $textAlign="center"
+          $margin="0"
+          $theme="neutral"
+          $variation="primary"
+        >
+          {isError
+            ? t('An error occurred during email validation.')
+            : t('Email Address Confirmed')}
+        </Text>
+        {!isError && (
+          <>
+            <Text
+              as="p"
+              $textAlign="center"
+              $maxWidth="330px"
+              $theme="neutral"
+              $variation="secondary"
+              $margin="0"
+              $size="sm"
+            >
+              {t(
+                'To complete the unification of your user accounts, please click the confirmation links sent to all the email addresses you provided.',
+              )}
+            </Text>
+            <BoxButton
+              $direction="row"
+              $align="center"
+              $gap="xxxs"
+              $margin={{ top: 'md' }}
+              $theme="neutral"
+              $variation="tertiary"
+              $css={css`
+                &:hover span {
+                  text-decoration: underline;
+                }
+              `}
+              onClick={() => window.location.reload()}
+            >
+              <Icon
+                $theme="neutral"
+                $variation="tertiary"
+                icon={
+                  <ArrowUpCircleSvg width={16} height={16} aria-hidden="true" />
+                }
+              />
+              <Text
+                as="span"
+                $size="xs"
+                $weight="500"
+                $theme="neutral"
+                $variation="tertiary"
+              >
+                {t('Resend e-mail')}
+              </Text>
+            </BoxButton>
+          </>
+        )}
+      </Box>
     </Box>
   );
 };
