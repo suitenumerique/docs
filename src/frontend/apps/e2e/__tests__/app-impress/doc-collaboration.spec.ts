@@ -110,6 +110,68 @@ test.describe('Doc Collaboration', () => {
     await cleanup();
   });
 
+  /**
+   * The networks that refuse a websocket upgrade - corporate proxies, captive portals.
+   * `routeWebSocket` never forwards the connection to the server and closes it towards the
+   * page, which is what those look like from the browser: a socket that dies immediately,
+   * every time. The editor has to keep working over y/hub's REST api instead.
+   */
+  test('falls back to http polling when the websocket cannot be opened', async ({
+    page,
+  }) => {
+    // Polling is slower than a socket by construction, and this waits on it three times: the
+    // first retrieval, the publication about a second after the last keystroke, and the
+    // retrieval after the reload. The default 30s budget cannot cover that.
+    test.setTimeout(120000);
+
+    await page.routeWebSocket(/\/collaboration\/ws\//, (ws) => ws.close());
+    // the interception is injected when a document is created, so it only covers sockets
+    // opened after a navigation - `beforeEach` has already loaded this one
+    await page.goto('/');
+
+    const retrieved = page.waitForResponse(
+      (response) =>
+        response.url().includes('/collaboration/ydoc/v1/') &&
+        response.request().method() === 'GET',
+      { timeout: 45000 },
+    );
+
+    await page
+      .getByRole('link', {
+        name: 'New',
+        exact: true,
+      })
+      .click();
+
+    // a 401/403 here means the request is authorized differently than the websocket:
+    // the session cookie did not reach the collaboration server, or the origin was refused
+    expect((await retrieved).status()).toBe(200);
+
+    // The one carrying the text, not merely the next one: awareness is published over the same
+    // route, so waiting for any PATCH would let the reload below race the document update, which
+    // is debounced until about a second after the last keystroke. Yjs stores inserted text as
+    // plain utf-8 in the update, so the body says whether this is the request we are waiting for.
+    const published = page.waitForRequest(
+      (request) =>
+        request.url().includes('/collaboration/ydoc/v1/') &&
+        request.method() === 'PATCH' &&
+        (request.postDataBuffer()?.includes('Hello over http') ?? false),
+      { timeout: 45000 },
+    );
+
+    await writeInEditor({ page, text: 'Hello over http' });
+
+    expect((await (await published).response())?.status()).toBe(200);
+
+    // the round trip: the socket is still refused, so what comes back on reload came back
+    // over http
+    await page.reload();
+
+    await expect(page.getByText('Hello over http')).toBeVisible({
+      timeout: 45000,
+    });
+  });
+
   // TODO(yhub): Add test to check that no connected websocket users can collaborate
 
   test('checks disconnection and reconnection when changing tab visibility', async ({
