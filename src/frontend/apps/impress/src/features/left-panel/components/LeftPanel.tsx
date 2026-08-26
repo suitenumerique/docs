@@ -42,7 +42,6 @@ export const LeftPanel = ({ isResizable }: { isResizable?: boolean }) => {
         $css={css`
           z-index: 1;
           background-color: var(--c--contextuals--background--surface--primary);
-          box-shadow: 10px 0px 10px 0px rgba(0, 0, 0, 0.05);
           transition:
             transform 0.2s ease-in-out,
             width 0.2s ease-in-out;
@@ -74,6 +73,7 @@ export const LeftPanel = ({ isResizable }: { isResizable?: boolean }) => {
           ${
             isMobile
               ? css`
+                  box-shadow: 10px 0px 10px 0px rgba(0, 0, 0, 0.05);
                   position: fixed;
                   z-index: 1000;
                   top: 0;

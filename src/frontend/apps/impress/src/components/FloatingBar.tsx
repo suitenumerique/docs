@@ -34,6 +34,7 @@ const FLOATING_STYLES = css`
 
 export const FloatingBar = ({
   children,
+  $css,
   ...props
 }: PropsWithChildren<BoxType>) => {
   return (
@@ -45,7 +46,10 @@ export const FloatingBar = ({
       $justify="space-between"
       $align="flex-start"
       $padding="sm"
-      $css={FLOATING_STYLES}
+      $css={css`
+        ${FLOATING_STYLES}
+        ${$css}
+      `}
       {...props}
     >
       {children}
