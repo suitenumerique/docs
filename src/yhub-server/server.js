@@ -238,7 +238,9 @@ const backendFetch = async (path, { cookie, origin }) => {
   const res = await fetch(`${COLLABORATION_BACKEND_BASE_URL}${path}`, {
     headers: {
       cookie,
-      origin,
+      // a same-origin request carries no `Origin` — forwarded when there is one, omitted
+      // rather than sent empty, which is not a value the header is allowed to take
+      ...(origin ? { origin } : {}),
       'X-Y-Provider-Key': Y_PROVIDER_API_KEY,
     },
   });
@@ -339,7 +341,11 @@ const auth = createAuthPlugin({
       }
     }
     if (gcOff) return null; // full-history connections: not for Docs users
-    if (!origin || !allowedOrigins.includes(origin)) return null; // was 4001 'Origin not allowed'
+    // No origin check here: `server.cors` below is the allowlist, and yhub applies it to the
+    // websocket upgrade and to every REST request before this runs. Checking it a second time
+    // would also refuse the http fallback's polls — a same-origin `fetch` GET carries no
+    // `Origin` header at all, so on a deployment where the page and /collaboration/ share a
+    // host every round would 401 while the PATCH beside it succeeded.
     if (!cookie) return null; // was 4001 'No cookies'
     try {
       const user = await backendFetch('/api/v1.0/users/me/', {
@@ -953,7 +959,18 @@ const yhub = await createYHub({
   // apiPrefix mounts every route — built-ins, our custom endpoints, and the
   // websocket (/collaboration/ws/v1/{org}/{docid}) — under /collaboration/.
   server: RUNS_SERVER
-    ? { port: PORT, auth, api, apiPrefix: API_PREFIX }
+    ? {
+        port: PORT,
+        auth,
+        api,
+        apiPrefix: API_PREFIX,
+        // What a browser may reach this server from, applied by yhub to the websocket upgrade
+        // and to every REST route — the only origin check there is, `readAuthInfo` no longer
+        // does its own. `credentials` is what lets the http fallback send the session cookie
+        // on a cross-origin `fetch`; it is also why the list has to be concrete, browsers
+        // refusing "*" together with Access-Control-Allow-Credentials.
+        cors: { origin: allowedOrigins, credentials: true },
+      }
     : null,
   worker: RUNS_WORKER
     ? { taskConcurrency: TASK_CONCURRENCY, events: workerEvents }
