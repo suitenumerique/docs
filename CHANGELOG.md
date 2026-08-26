@@ -6,6 +6,23 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) fall back to http polling when the websocket cannot be opened.
+  Some networks refuse a websocket upgrade — corporate proxies, captive portals
+  — and a browser is told nothing more than "the connection closed"; those users
+  could not edit at all. The editor now runs a second transport next to the
+  socket, polling the collaboration server's REST api on the same room, with the
+  same session cookie and the same authorization, and only while the socket is
+  down. Local changes go out about a second after the last keystroke and remote
+  ones arrive within ten seconds, so editing works with visibly more latency
+  rather than not at all. The socket keeps being retried underneath, so a client
+  that fell back during an outage returns to it on its own, and nothing is lost
+  in either direction — both transports publish from the same document. This
+  makes `/collaboration/ydoc/` a route browsers call, so
+  `COLLABORATION_SERVER_ORIGIN` now gates the http routes as well as the
+  websocket
+
 ### Fixed
 
 - 🐛(frontend) stop reconnecting to the collaboration server when it has refused

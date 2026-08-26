@@ -62,5 +62,31 @@ Several replicas can serve the same document: they exchange updates through Redi
 
 ## What happens when connection to the websocket is not allowed?
 
-When multiple users access a Docs and the connection to the websocket is not allowed, then they will be in a situation where they can lose data.
-They will lose data because they will erase each other modifications. You can also have a scenario with a mix of users connected to the websocket and some other not.
+Some networks refuse a websocket upgrade — corporate proxies, captive portals — and a browser is
+told nothing more than "the connection closed". For those clients the editor falls back to polling
+the collaboration server over plain http, on the same room, with the same session cookie and the
+same authorization. Nothing has to be configured: the fallback is installed next to the websocket
+and only ever sends a request while the socket is down.
+
+That means `/collaboration/ydoc/` has to be routed publicly, not only in-cluster — the browsers of
+those users call it directly. And the origins a browser may reach the server from are the ones in
+`COLLABORATION_SERVER_ORIGIN`, which now gate the http routes as well as the websocket:
+
+```yaml
+COLLABORATION_SERVER_ORIGIN: https://{yourdocsdomain.tld}
+```
+
+A comma-separated list is allowed, and each entry is a bare origin — `https://host[:port]`, no path
+and no trailing slash. A deployment serving the frontend from another origin than the collaboration
+server has to list it here or the fallback is refused, the same way the websocket already is.
+
+What the fallback does *not* do is hide the difference. It publishes local changes about a second
+after the last keystroke, and it retrieves the document every ten seconds, so someone else's edits
+arrive with up to that much delay and remote cursors move at poll resolution. Each round transfers
+the whole document, so a large document polled by many clients is real egress. It is a way to keep
+editing, not a replacement for the socket — and the socket keeps being retried underneath, so a
+client that fell back during an outage returns to it on its own.
+
+Documents are never in conflict either way: both transports publish from the same Yjs document, and
+Yjs merges. Before the fallback existed, users who could not open a websocket edited a document that
+was saved wholesale and erased each other's modifications; that is what this removes.
