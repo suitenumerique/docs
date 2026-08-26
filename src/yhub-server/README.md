@@ -91,6 +91,26 @@ probes are not worth publishing either — kubelet calls them from inside — an
 the helm chart's ingress lists what it routes rather than what it hides, so
 they stay in-cluster on their own.
 
+### Origins and cors
+
+`COLLABORATION_SERVER_ORIGIN` is the list of origins a browser may reach this
+server from, and it is passed to yhub as its `cors` configuration: yhub applies
+it to the websocket upgrade *and* to every REST route, refusing a cross-origin
+request from anywhere else with a `403` before authentication runs. A request
+carrying no `Origin` at all is same-origin or is not a browser, and is gated by
+the session cookie alone — which is why `readAuthInfo` no longer checks the
+origin itself: doing it twice would refuse exactly the requests the http
+fallback makes, since a same-origin `fetch` GET sends no `Origin` header.
+
+`credentials: true` goes with it, so that browsers may send the session cookie
+on a cross-origin request. That is what the frontend's http fallback
+(`@y/yhub-http-fallback`, which polls `GET`/`PATCH /collaboration/ydoc/v1/…`
+when a network refuses the websocket upgrade) needs, and it is also why the
+list has to be concrete: browsers reject `Access-Control-Allow-Credentials`
+together with a wildcard origin. Entries are bare origins —
+`https://host[:port]`, no path, no trailing slash — or yhub refuses them at
+startup.
+
 ## Roles (`YHUB_ROLE`)
 
 yhub is two halves that share the two stores and nothing else — no in-process
