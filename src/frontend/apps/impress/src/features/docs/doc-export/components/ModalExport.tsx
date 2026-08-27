@@ -60,6 +60,11 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const formatSelect = useMemo(() => {
     const formatOptions = (exportAGPL?.formats || []).concat([
       {
+        label: t('Markdown'),
+        value: 'markdown',
+        labelDescription: t('.md'),
+      },
+      {
         label: t('HTML'),
         value: 'html',
         labelDescription: t('.html(zip)'),
@@ -100,6 +105,13 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     const documentTitle = doc.title || untitledDocument;
 
     let blobExport = await exportAGPL?.docToBlob(format, documentTitle);
+
+    if (!blobExport && format === 'markdown') {
+      const markdown = await editor.blocksToMarkdownLossy();
+      blobExport = new Blob([markdown], {
+        type: 'text/markdown;charset=utf-8',
+      });
+    }
 
     if (!blobExport && format === 'html') {
       // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
@@ -142,7 +154,8 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       return;
     }
 
-    const downloadExtension = format === 'html' ? 'zip' : format;
+    const downloadExtension =
+      format === 'html' ? 'zip' : format === 'markdown' ? 'md' : format;
 
     downloadFile(blobExport, `${filename}.${downloadExtension}`);
 

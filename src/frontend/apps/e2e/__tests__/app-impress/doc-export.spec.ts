@@ -30,7 +30,7 @@ test.describe('Doc Export', () => {
     await expect(page.getByTestId('modal-export-title')).toBeVisible();
     await expect(
       page.getByText(
-        'Export your document to download in .pdf, .docx, .odt or .html(zip) format.',
+        'Export your document to download in .pdf, .docx, .odt, .md or .html(zip) format.',
       ),
     ).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Format' })).toBeVisible();
@@ -92,6 +92,32 @@ test.describe('Doc Export', () => {
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.odt`);
+  });
+
+  test('it exports the doc to markdown', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(
+      page,
+      'doc-editor-markdown',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+    await writeInEditor({ page, text: 'Hello Markdown export' });
+
+    await clickInEditorMenu(page, 'Download');
+
+    await page.getByRole('combobox', { name: 'Format' }).click();
+    await page.getByRole('option', { name: 'Markdown' }).click();
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByTestId('doc-export-download-button').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDoc}.md`);
+
+    const markdownBuffer = await cs.toBuffer(await download.createReadStream());
+    expect(markdownBuffer.toString('utf8')).toContain('Hello Markdown export');
   });
 
   test('it exports the doc to html zip', async ({ page, browserName }) => {
