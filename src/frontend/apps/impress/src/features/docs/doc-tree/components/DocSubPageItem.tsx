@@ -1,11 +1,11 @@
-import { ButtonElement } from '@gouvfr-lasuite/cunningham-react';
 import {
+  ButtonElement,
   Spinner,
   TreeViewItem,
   TreeViewNodeProps,
   TreeViewNodeTypeEnum,
   useTreeContext,
-} from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

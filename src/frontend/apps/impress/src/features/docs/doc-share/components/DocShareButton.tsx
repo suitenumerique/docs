@@ -1,5 +1,8 @@
-import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
-import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
+import {
+  Button,
+  useModal,
+  useTreeContext,
+} from '@gouvfr-lasuite/ui-components';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 

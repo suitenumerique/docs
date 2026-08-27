@@ -1,4 +1,4 @@
-import { Tooltip } from '@gouvfr-lasuite/cunningham-react';
+import { Tooltip } from '@gouvfr-lasuite/ui-components';
 import { useSearchParams } from 'next/navigation';
 import type { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';

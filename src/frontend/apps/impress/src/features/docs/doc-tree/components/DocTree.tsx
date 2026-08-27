@@ -1,12 +1,12 @@
-import { ButtonElement } from '@gouvfr-lasuite/cunningham-react';
 import {
+  ButtonElement,
   OpenMap,
   TreeDataItem,
   TreeView,
   TreeViewMoveResult,
   useResponsive,
   useTreeContext,
-} from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import {
   memo,

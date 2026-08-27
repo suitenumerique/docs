@@ -32,7 +32,6 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
-    "@gouvfr-lasuite/cunningham-react": "4.4.0",
     "@tiptap/extensions": "3.29.2",
     "@types/node": "24.13.3",
     "@types/react": "19.2.17",

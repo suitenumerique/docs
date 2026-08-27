@@ -2,11 +2,11 @@ import {
   Button,
   Modal,
   ModalSize,
+  TreeViewMoveModeEnum,
   VariantType,
   useModal,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
-import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

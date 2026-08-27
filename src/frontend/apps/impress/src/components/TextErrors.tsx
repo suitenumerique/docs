@@ -1,4 +1,4 @@
-import { Alert, VariantType } from '@gouvfr-lasuite/cunningham-react';
+import { Alert, VariantType } from '@gouvfr-lasuite/ui-components';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';

@@ -1,4 +1,4 @@
-import { Button, type ButtonProps } from '@gouvfr-lasuite/cunningham-react';
+import { Button, type ButtonProps } from '@gouvfr-lasuite/ui-components';
 
 import CloseIcon from '@/assets/icons/ui-kit/x-mark.svg';
 

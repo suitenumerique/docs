@@ -2,8 +2,8 @@ import {
   Button,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
-import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
+  useTreeContext,
+} from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Card, Icon } from '@/components';

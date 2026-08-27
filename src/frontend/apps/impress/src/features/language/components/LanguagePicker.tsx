@@ -1,7 +1,7 @@
 import {
   LanguagePicker as LanguagePickerUIKit,
   LanguagesOption,
-} from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import { announce } from '@react-aria/live-announcer';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';

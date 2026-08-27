@@ -5,7 +5,7 @@ import {
   ModalSize,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+} from '@gouvfr-lasuite/ui-components';
 import { useEffect, useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 

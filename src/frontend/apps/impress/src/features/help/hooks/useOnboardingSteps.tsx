@@ -1,4 +1,4 @@
-import { type OnboardingStep } from '@gouvfr-lasuite/ui-kit';
+import { type OnboardingStep } from '@gouvfr-lasuite/ui-components';
 import Image from 'next/image';
 import { Trans, useTranslation } from 'react-i18next';
 

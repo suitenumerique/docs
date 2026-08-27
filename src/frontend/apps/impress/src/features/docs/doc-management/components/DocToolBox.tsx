@@ -1,10 +1,10 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
 import {
+  Button,
   DropdownMenu,
   DropdownMenuItem,
   useTreeContext,
-} from '@gouvfr-lasuite/ui-kit';
-import { Present } from '@gouvfr-lasuite/ui-kit/icons';
+} from '@gouvfr-lasuite/ui-components';
+import { Present } from '@gouvfr-lasuite/ui-components/icons';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useState } from 'react';

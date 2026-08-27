@@ -1,5 +1,9 @@
-import { Button, Loader } from '@gouvfr-lasuite/cunningham-react';
-import { DropdownMenu, DropdownMenuItem } from '@gouvfr-lasuite/ui-kit';
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuItem,
+  Loader,
+} from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,4 +1,4 @@
-import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
+import { useTreeContext } from '@gouvfr-lasuite/ui-components';
 import { useCallback } from 'react';
 
 import { useBroadcastStore } from '@/stores/useBroadcastStore';

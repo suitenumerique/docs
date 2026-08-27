@@ -1,4 +1,4 @@
-import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-kit';
+import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-components';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';

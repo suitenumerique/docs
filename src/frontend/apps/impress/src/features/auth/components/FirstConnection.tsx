@@ -1,4 +1,4 @@
-import { useModal } from '@gouvfr-lasuite/cunningham-react';
+import { useModal } from '@gouvfr-lasuite/ui-components';
 import { useEffect } from 'react';
 
 import { OnBoarding } from '@/features/help';

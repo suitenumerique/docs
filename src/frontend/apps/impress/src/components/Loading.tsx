@@ -1,4 +1,4 @@
-import { Loader, LoaderProps } from '@gouvfr-lasuite/cunningham-react';
+import { Loader, LoaderProps } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 
 import { Box, BoxProps } from './Box';

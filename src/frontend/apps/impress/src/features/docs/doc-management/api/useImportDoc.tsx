@@ -1,7 +1,4 @@
-import {
-  VariantType,
-  useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import {
   UseMutationOptions,
   useMutation,

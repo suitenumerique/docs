@@ -1,6 +1,6 @@
 import { StyleSchema } from '@blocknote/core';
 import { ReactCustomInlineContentRenderProps } from '@blocknote/react';
-import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
+import { useTreeContext } from '@gouvfr-lasuite/ui-components';
 import { Popover } from '@mantine/core';
 import type { KeyboardEvent } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';

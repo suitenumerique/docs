@@ -1,4 +1,4 @@
-import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
+import { useTreeContext } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { css } from 'styled-components';
 

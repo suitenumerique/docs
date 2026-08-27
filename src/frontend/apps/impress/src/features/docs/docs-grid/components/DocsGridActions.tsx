@@ -1,9 +1,10 @@
 import {
   Button,
+  DropdownMenu,
+  DropdownMenuItem,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
-import { DropdownMenu, DropdownMenuItem } from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

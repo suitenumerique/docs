@@ -17,7 +17,7 @@ import {
   getDefaultAIMenuItems,
 } from '@blocknote/xl-ai';
 import '@blocknote/xl-ai/style.css';
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/ui-components';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';

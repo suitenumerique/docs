@@ -1,7 +1,4 @@
-import {
-  VariantType,
-  useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';

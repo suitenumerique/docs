@@ -1,14 +1,12 @@
 import {
   Button,
   ButtonElement,
-  useModal,
-} from '@gouvfr-lasuite/cunningham-react';
-import {
   DropdownMenu,
   DropdownMenuOption,
   useArrowRoving,
+  useModal,
   useTreeContext,
-} from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,9 +1,9 @@
 import {
   Button,
   ButtonElement,
+  DropdownMenu,
   Tooltip,
-} from '@gouvfr-lasuite/cunningham-react';
-import { DropdownMenu } from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';

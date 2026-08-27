@@ -1,4 +1,4 @@
-import { Button, Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import { Button, Modal, ModalSize } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
