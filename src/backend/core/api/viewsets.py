@@ -1371,7 +1371,7 @@ class DocumentViewSet(
         user_role = document_to_duplicate.get_role(user)
         is_owner_or_admin = user_role in models.PRIVILEGED_ROLES
 
-        base64_yjs_content = document_to_duplicate.content
+        base64_yjs_content = document_to_duplicate.content or ""
 
         # Duplicate the document instance
         link_kwargs = (
