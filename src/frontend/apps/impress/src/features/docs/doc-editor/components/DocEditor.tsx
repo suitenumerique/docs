@@ -83,9 +83,11 @@ interface DocEditorProps {
 }
 
 export const DocEditor = ({ doc }: DocEditorProps) => {
-  useCollaboration(doc.id);
   const isDeletedDoc = !!doc.deleted_at;
   const readOnly = !doc.abilities.partial_update || isDeletedDoc;
+  // the collaboration providers are built from this too: a reader publishes no
+  // presence, on either transport
+  useCollaboration(doc.id, readOnly);
   const { trackEvent } = useAnalytics();
   const [hasTracked, setHasTracked] = useState(false);
   const { authenticated } = useAuth();

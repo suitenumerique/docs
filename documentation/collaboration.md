@@ -87,6 +87,25 @@ the whole document, so a large document polled by many clients is real egress. I
 editing, not a replacement for the socket — and the socket keeps being retried underneath, so a
 client that fell back during an outage returns to it on its own.
 
+A reader on the fallback sees no cursors at all. Read-only clients may not publish presence (see
+below), the provider has no receive-only setting for it, and a reader that tried to publish would
+be refused and stop polling altogether — so it is built without awareness and only ever reads the
+document. On the websocket a reader still sees everyone else's cursors.
+
 Documents are never in conflict either way: both transports publish from the same Yjs document, and
 Yjs merges. Before the fallback existed, users who could not open a websocket edited a document that
 was saved wholesale and erased each other's modifications; that is what this removes.
+
+## Who may share a cursor
+
+Presence — the coloured cursors and selections of the other people in a document — is a permission
+of its own, separate from the right to edit. A **reader receives presence but never publishes it**:
+they see who else is in the document and where, and nobody sees them.
+
+The collaboration server enforces this itself rather than trusting the editor to be quiet. It drops
+a read-only connection's presence message on the websocket, and refuses the `awareness` field of a
+fallback request, so a modified or stale client changes nothing. See the access-control section of
+`src/yhub-server/README.md` for the permission tables this comes from.
+
+Note this is deliberately stricter than the collaboration server's own default, which lets
+read-only connections broadcast cursors.
