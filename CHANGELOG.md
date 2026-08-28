@@ -54,6 +54,18 @@ and this project adheres to
 - 💥(backend) remove the `documents/{id}/can-edit/` endpointt
 - 💥(backend) remove the `documents/{id}/content/` endpoint
 
+### Security
+
+- 🔒️(collaboration) stop read-only users from sharing their cursor #2544. A
+  read-only connection could still propagate awareness updates — the cursor and
+  the selection — to everyone else in the document, even though its document
+  updates were already dropped. Presence is now a permission of its own,
+  separate from the right to edit: a reader receives it and never publishes it.
+  The collaboration server enforces it rather than trusting the editor to stay
+  quiet, dropping a read-only connection's presence on the websocket and
+  refusing the awareness field of an http fallback request, so a modified or
+  stale client changes nothing
+
 ## [v5.7.0] - 2026-09-15
 
 ### Added
