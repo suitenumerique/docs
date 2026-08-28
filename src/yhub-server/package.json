@@ -5,11 +5,12 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon --delay 1 server.js",
-    "init-db": "node node_modules/@y/hub/bin/init-db.js"
+    "init-db": "node node_modules/@y/hub/bin/init-db.js",
+    "test": "node --test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1110.0",
-    "@y/hub": "0.7.0",
+    "@y/hub": "0.8.0",
     "@y/y": "14.0.0-rc.24",
     "jose": "6.2.8"
   },

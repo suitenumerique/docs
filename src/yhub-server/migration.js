@@ -129,8 +129,8 @@ export const migrationLog = logger.child({ module: 'soft-migration' });
 // drift from the room keys, and both sit outside its scanned `:room:*` pattern.
 //
 // One seeder per room:
-const migrateLockKey = (yhub, room) =>
-  `${yhub.stream.prefix}:softmigrate:${room.org}:${room.docid}:${room.branch}`;
+const migrateLockKey = (yhub, docRef) =>
+  `${yhub.stream.prefix}:softmigrate:${docRef.org}:${docRef.docid}:${docRef.branch}`;
 // Documents whose version history has been replayed into postgres. Membership
 // is permanent: a second replay of the same versions would attribute the same
 // content twice (see fullMigrate).
@@ -265,15 +265,15 @@ const listLegacyVersions = async (docid) => {
 // the stream but carry no content) — then the SELECT again, which closes the
 // store-before-trim compaction race (and the worst case of a miss is only a
 // redundant, idempotent re-seed).
-const ydocExists = async (yhub, room) => {
-  if ((await yhub.persistence.retrieveDoc(room, {})).lastClock !== '0') {
+const ydocExists = async (yhub, docRef) => {
+  if ((await yhub.persistence.retrieveDoc(docRef, {})).lastClock !== '0') {
     return true;
   }
-  const streams = await yhub.stream.getMessages([{ room, clock: '0' }]);
+  const streams = await yhub.stream.getMessages([{ docRef, clock: '0' }]);
   if ((streams[0]?.messages ?? []).some((m) => m.type === 'ydoc:update:v1')) {
     return true;
   }
-  return (await yhub.persistence.retrieveDoc(room, {})).lastClock !== '0';
+  return (await yhub.persistence.retrieveDoc(docRef, {})).lastClock !== '0';
 };
 
 // Per-docid migration verdicts, in-memory (per replica). 'exists' is monotone
@@ -321,18 +321,18 @@ const rememberVerdict = (
 const inflightMigrations = new Map(); // docid -> Promise<void>
 let activeSeeds = 0;
 
-const migrate = async (yhub, room) => {
+const migrate = async (yhub, docRef) => {
   // A fully migrated room holds a single row at clock 0, which leaves
   // `lastClock` at '0' — so ydocExists cannot see it and would seed on top of a
   // complete history. Harmless (the seed's attributions are excluded as already
   // known) but a pointless S3 round-trip per document during a backfill.
-  if (await yhub.stream.redis.sIsMember(migratedSetKey(yhub), room.docid)) {
+  if (await yhub.stream.redis.sIsMember(migratedSetKey(yhub), docRef.docid)) {
     return 'exists';
   }
-  if (await ydocExists(yhub, room)) return 'exists';
+  if (await ydocExists(yhub, docRef)) return 'exists';
   // collapse cross-replica herds: one seeder per room, the rest wait and
   // re-probe
-  const lockKey = migrateLockKey(yhub, room);
+  const lockKey = migrateLockKey(yhub, docRef);
   const lockToken = randomUUID();
   const redis = yhub.stream.redis;
   const acquired = await redis.set(lockKey, lockToken, {
@@ -349,7 +349,7 @@ const migrate = async (yhub, room) => {
       while (Date.now() < deadline && (await redis.exists(lockKey)) === 1) {
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
-      if (await ydocExists(yhub, room)) return 'exists';
+      if (await ydocExists(yhub, docRef)) return 'exists';
     }
     if (activeSeeds >= MAX_CONCURRENT_SEEDS) {
       // fail fast under a herd of distinct cold docs — the client's retry
@@ -363,10 +363,10 @@ const migrate = async (yhub, room) => {
     activeSeeds++;
     try {
       const start = Date.now();
-      const update = await fetchLegacyDoc(room.docid);
+      const update = await fetchLegacyDoc(docRef.docid);
       if (update == null) {
         migrationLog.info(
-          { event: 'seed.empty', docid: room.docid },
+          { event: 'seed.empty', docid: docRef.docid },
           'no legacy s3 object; room starts empty',
         );
         return 'empty';
@@ -381,7 +381,7 @@ const migrate = async (yhub, room) => {
         err.permanent = true;
         throw err;
       }
-      await yhub.stream.addMessage(room, {
+      await yhub.stream.addMessage(docRef, {
         type: 'ydoc:update:v1',
         // Deliberately no insertAt/deleteAt. A lazy seed is not an editing
         // event: stamping it would put a second, meaningless timestamp on
@@ -409,7 +409,7 @@ const migrate = async (yhub, room) => {
       migrationLog.info(
         {
           event: 'seed.ok',
-          docid: room.docid,
+          docid: docRef.docid,
           bytes: update.byteLength,
           durationMs: Date.now() - start,
         },
@@ -436,17 +436,17 @@ const migrate = async (yhub, room) => {
 // Resolves when the room is usable (already known, freshly seeded, or
 // legitimately empty); rejects to deny access. Idempotent and safe to
 // re-enter — it also runs on rechecks and default-purpose REST calls.
-export const maybeMigrate = async (yhub, room) => {
-  const cached = verdicts.get(room.docid);
+export const maybeMigrate = async (yhub, docRef) => {
+  const cached = verdicts.get(docRef.docid);
   if (cached != null && cached.expires > Date.now()) {
     if (cached.verdict === 'failed') throw cached.error;
     return;
   }
-  let migration = inflightMigrations.get(room.docid);
+  let migration = inflightMigrations.get(docRef.docid);
   if (migration == null) {
-    migration = migrate(yhub, room)
+    migration = migrate(yhub, docRef)
       .then(
-        (verdict) => rememberVerdict(room.docid, verdict),
+        (verdict) => rememberVerdict(docRef.docid, verdict),
         (err) => {
           // The one place the *cause* is recorded, once per attempt rather
           // than per access: a cached verdict re-raises this error without
@@ -456,10 +456,10 @@ export const maybeMigrate = async (yhub, room) => {
             {
               event: 'seed.failed',
               err,
-              docid: room.docid,
+              docid: docRef.docid,
               permanent,
               bucket: LEGACY_S3_BUCKET_NAME,
-              key: `${room.docid}/file`,
+              key: `${docRef.docid}/file`,
             },
             permanent
               ? 'soft migration is not possible for this legacy object'
@@ -469,7 +469,7 @@ export const maybeMigrate = async (yhub, room) => {
             // a retryable failure is remembered only briefly, so a hiccup
             // cannot lock a document out for the full poison-object window
             rememberVerdict(
-              room.docid,
+              docRef.docid,
               'failed',
               err,
               permanent ? VERDICT_TTL_MS.failed : TRANSIENT_TTL_MS,
@@ -478,8 +478,8 @@ export const maybeMigrate = async (yhub, room) => {
           throw err;
         },
       )
-      .finally(() => inflightMigrations.delete(room.docid));
-    inflightMigrations.set(room.docid, migration);
+      .finally(() => inflightMigrations.delete(docRef.docid));
+    inflightMigrations.set(docRef.docid, migration);
   }
   return migration;
 };
@@ -500,17 +500,17 @@ export const maybeMigrate = async (yhub, room) => {
 // messages a live editor is writing; and the history is genuinely the oldest
 // thing in the room. The next compact task merges the row into the room's
 // normal state and drops it — yhub needs no special case for any of this.
-export const fullMigrate = async (yhub, room, { force = false } = {}) => {
+export const fullMigrate = async (yhub, docRef, { force = false } = {}) => {
   const start = Date.now();
   const redis = yhub.stream.redis;
   // Membership is the guard against attributing the same content twice: once
   // compaction has folded the clock-0 row into a normal one and deleted it,
   // a second replay would insert a second contentmap for ids that already
   // carry one, and the two timestamps would both survive the merge.
-  if (!force && (await redis.sIsMember(migratedSetKey(yhub), room.docid))) {
+  if (!force && (await redis.sIsMember(migratedSetKey(yhub), docRef.docid))) {
     return { status: 'already' };
   }
-  const { versions, dropped } = await listLegacyVersions(room.docid);
+  const { versions, dropped } = await listLegacyVersions(docRef.docid);
   if (versions.length === 0) {
     return { status: 'empty', versions: 0, durationMs: Date.now() - start };
   }
@@ -525,7 +525,7 @@ export const fullMigrate = async (yhub, room, { force = false } = {}) => {
   let skipped = 0;
   try {
     for (const version of versions) {
-      const update = await fetchLegacyDoc(room.docid, version.versionId);
+      const update = await fetchLegacyDoc(docRef.docid, version.versionId);
       if (update == null) continue; // deleted between listing and read
       bytes += update.byteLength;
       try {
@@ -543,7 +543,7 @@ export const fullMigrate = async (yhub, room, { force = false } = {}) => {
           {
             event: 'full.version-skipped',
             err,
-            docid: room.docid,
+            docid: docRef.docid,
             versionId: version.versionId,
           },
           'legacy s3 version is not a valid yjs update; skipping it',
@@ -592,9 +592,9 @@ export const fullMigrate = async (yhub, room, { force = false } = {}) => {
       };
     }
     const nongcDoc = Y.encodeStateAsUpdate(ydoc);
-    await yhub.persistence.store(room, {
+    await yhub.persistence.store(docRef, {
       lastClock: '0',
-      gcDoc: await yhub.computePool.mergeUpdates(true, [nongcDoc], { room }),
+      gcDoc: await yhub.computePool.mergeUpdates(true, [nongcDoc], { docRef }),
       nongcDoc,
       contentmap: Y.encodeContentMap(Y.mergeContentMaps(contentmaps)),
       contentids: Y.encodeContentIds(seen),
@@ -602,7 +602,7 @@ export const fullMigrate = async (yhub, room, { force = false } = {}) => {
   } finally {
     ydoc.destroy();
   }
-  await redis.sAdd(migratedSetKey(yhub), room.docid);
+  await redis.sAdd(migratedSetKey(yhub), docRef.docid);
   const result = {
     status: 'ok',
     versions: versions.length,
@@ -613,7 +613,7 @@ export const fullMigrate = async (yhub, room, { force = false } = {}) => {
     durationMs: Date.now() - start,
   };
   migrationLog.info(
-    { event: 'full.ok', docid: room.docid, ...result },
+    { event: 'full.ok', docid: docRef.docid, ...result },
     'stored document history from s3 versions',
   );
   return result;
