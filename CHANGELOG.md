@@ -6,7 +6,34 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Security
+
+- 🔒️(collaboration) stop read-only users from sharing their cursor #2544. A
+  read-only connection could still propagate awareness updates — the cursor and
+  the selection — to everyone else in the document, even though its document
+  updates were already dropped. Presence is now a permission of its own,
+  separate from the right to edit: a reader receives it and never publishes it.
+  The collaboration server enforces it rather than trusting the editor to stay
+  quiet, dropping a read-only connection's presence on the websocket and
+  refusing the awareness field of an http fallback request, so a modified or
+  stale client changes nothing
+
 ### Added
+
+- ✨(collaboration) grant the browser only the two routes it uses. The
+  collaboration server now answers what a caller may do with a document as a
+  permission object, facet by facet, and enforces every facet itself. A browser
+  is granted the websocket and the document route the http fallback polls, and
+  nothing else — the history, activity, changeset, rollback and prune routes,
+  every backend-internal endpoint, and any endpoint a future release adds are
+  refused to it. `create-ydoc` in particular was reachable by any signed-in
+  editor and is now the backend's alone. The backend's admin token keeps full
+  access, minus the irreversible content erasure that the new version exposes
+  over http for the first time
+
+- ✨(collaboration) let anonymous visitors edit public documents again under the
+  new permission model, with their changes attributed to a shared `anonymous`
+  author
 
 - ✨(frontend) fall back to http polling when the websocket cannot be opened.
   Some networks refuse a websocket upgrade — corporate proxies, captive portals
