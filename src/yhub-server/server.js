@@ -450,7 +450,19 @@ const auth = createAuthPlugin({
       if (SOFT_MIGRATION) {
         await seedFromLegacyStore({ org, docid, branch });
       }
-      return browserDocumentPermissions(doc.abilities.update === true);
+      // When this caller was given access, which is where the history they may
+      // read starts. The backend sends ISO-8601 (null for a link-reach reader,
+      // who holds no access and so has no date); `history.from` is unix ms.
+      //
+      // Anything unparseable is *no* history rather than full history, and zero
+      // is refused with it: `from: 0` is the one value that also unlocks a
+      // `gc=false` websocket, and no real access date is ever zero, so a zero
+      // here could only ever be a bug upstream.
+      const accessSince = Date.parse(doc.user_access_since ?? '');
+      return browserDocumentPermissions(
+        doc.abilities.update === true,
+        Number.isFinite(accessSince) && accessSince > 0 ? accessSince : null,
+      );
     },
     async global() {
       return publicGlobalPermissions;

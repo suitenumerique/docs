@@ -183,6 +183,16 @@ class DocumentSerializer(ListDocumentSerializer):
     file = serializers.FileField(
         required=False, write_only=True, allow_null=True, max_length=255
     )
+    # When the current user gained access to this document — the earliest access they hold on
+    # it or on one of its ancestors, `null` when they reach it through its link reach alone.
+    # It bounds the history they may read: the collaboration server fetches this endpoint to
+    # authorize a connection and turns this into `history.from`.
+    #
+    # Read from the `user_access_since` annotation, which `filter_queryset` applies — so it is
+    # answered on the retrieve endpoint, the one that is read for it. It falls back to `null`
+    # on the write responses (create/update), which serialize an instance that never came from
+    # that queryset; nothing consumes it there.
+    user_access_since = serializers.DateTimeField(read_only=True, default=None)
 
     class Meta:
         model = models.Document
@@ -208,6 +218,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "path",
             "title",
             "updated_at",
+            "user_access_since",
             "user_role",
         ]
         read_only_fields = [
@@ -229,6 +240,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "numchild",
             "path",
             "updated_at",
+            "user_access_since",
             "user_role",
         ]
 
