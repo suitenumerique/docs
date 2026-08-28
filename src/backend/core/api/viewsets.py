@@ -21,7 +21,7 @@ from django.core.validators import URLValidator
 from django.db import DatabaseError, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
-from django.db.models.functions import Greatest, Left, Length
+from django.db.models.functions import Greatest
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils import timezone
@@ -563,6 +563,7 @@ class DocumentViewSet(
     all_serializer_class = serializers.ListDocumentSerializer
     children_serializer_class = serializers.ListDocumentSerializer
     descendants_serializer_class = serializers.ListDocumentSerializer
+    favorite_list_serializer_class = serializers.ListDocumentSerializer
     list_serializer_class = serializers.ListDocumentSerializer
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
@@ -607,6 +608,9 @@ class DocumentViewSet(
         queryset = queryset.annotate_is_favorite(user)
         queryset = queryset.annotate_user_roles(user)
         queryset = queryset.annotate_user_has_link_trace(user)
+        # Detail views only — `list` builds its own annotation chain below and does not need
+        # this one, so the list endpoint keeps its current query cost
+        queryset = queryset.annotate_user_access_since(user)
 
         return queryset
 
@@ -1807,16 +1811,14 @@ class DocumentViewSet(
         document = self.get_object()
 
         # Users should not see version history dating from before they gained access to the
-        # document. Filter to get the minimum access date for the logged-in user
-        access_queryset = models.DocumentAccess.objects.filter(
-            db.Q(user=user) | db.Q(team__in=user.teams),
-            document__path=Left(db.Value(document.path), Length("document__path")),
-        ).aggregate(min_date=db.Min("created_at"))
-
-        # Handle the case where the user has no accesses
-        min_datetime = access_queryset["min_date"]
-        if not min_datetime:
-            return drf.exceptions.PermissionDenied(
+        # document. `user_access_since` is annotated onto the queryset (see
+        # `DocumentQuerySet.annotate_user_access_since`) and is the one definition of that
+        # date — the collaboration server is handed the same value to bound the history it
+        # serves. It is None for a user who reaches the document through its link reach
+        # alone: no access, no date, and so no history.
+        min_datetime = document.user_access_since
+        if min_datetime is None:
+            raise drf.exceptions.PermissionDenied(
                 "Only users with specific access can see version history"
             )
 
@@ -1838,21 +1840,20 @@ class DocumentViewSet(
         """Custom action to retrieve a specific version of a document"""
         document = self.get_object()
 
+        # Don't let users access versions that were created before they were given access to
+        # the document — the same cut-off as `versions_list`, from the same annotation.
+        # Checked before the object is fetched: a caller who may see no version at all should
+        # not learn from a 404 whether this one exists.
+        min_datetime = document.user_access_since
+        if min_datetime is None:
+            raise drf.exceptions.PermissionDenied(
+                "Only users with specific access can see version history"
+            )
+
         try:
             response = document.get_content_response(version_id=version_id)
         except (FileNotFoundError, ClientError) as err:
             raise Http404 from err
-
-        # Don't let users access versions that were created before they were given access
-        # to the document
-        user = request.user
-        min_datetime = min(
-            access.created_at
-            for access in models.DocumentAccess.objects.filter(
-                db.Q(user=user) | db.Q(team__in=user.teams),
-                document__path=Left(db.Value(document.path), Length("document__path")),
-            )
-        )
 
         if response["LastModified"] < min_datetime:
             raise Http404
