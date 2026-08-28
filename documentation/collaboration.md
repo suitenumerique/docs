@@ -22,7 +22,7 @@ The Django backend reads and writes document content there too, so point it at t
 YHUB_API_BASE_URL: http://{yhub-service}:443
 ```
 
-Prefer the internal service url: the routes the backend calls are not meant to be reachable from the outside. Route `/collaboration/ws/` to the service publicly — that is the one the browsers open — plus the document routes (`/collaboration/ydoc/`, `rollback`, `prune`, `changeset`, `activity`) and `/collaboration/jwks/`, which carries public keys and nothing else. Keep `reset-connections`, `migrate`, `restore-ydoc`, `reset-ydoc` and `create-ydoc` in-cluster.
+Prefer the internal service url: the routes the backend calls are not meant to be reachable from the outside. Route `/collaboration/ws/` to the service publicly — that is the one the browsers open — plus `/collaboration/ydoc/` for the http fallback, `/collaboration/activity/` and `/collaboration/changeset/` for the editing history, and `/collaboration/jwks/`, which carries public keys and nothing else. Keep everything else in-cluster: `rollback`, `prune`, `reset-connections`, `migrate`, `restore-ydoc`, `reset-ydoc` and `create-ydoc` are refused to a browser by the permission tables anyway, and an endpoint that cannot be reached cannot be probed.
 
 Both directions are authenticated with short-lived RS256 JWTs rather than a shared secret, and each side verifies the other against the JWKS it publishes — so both need a signing key of their own, and neither needs a copy of the other's:
 
@@ -109,3 +109,25 @@ fallback request, so a modified or stale client changes nothing. See the access-
 
 Note this is deliberately stricter than the collaboration server's own default, which lets
 read-only connections broadcast cursors.
+
+## How much history a user may see
+
+The editing history is bounded per user: **you see the document's history from the moment you were
+given access to it, and no further back.** Joining a document that has been written for a year does
+not hand you the year — it hands you what happened since you arrived.
+
+This is not a new rule. It is the one the version endpoints have always applied ("only those
+created after the user got access to the document"); it now also bounds the collaboration server's
+`activity` and `changeset` routes, which are what a history view is built on.
+
+The date is the earliest access you hold on the document **or on one of its ancestors** — share a
+folder with someone and they get its whole subtree from that moment, including documents created in
+it later. The backend computes it (`user_access_since` on the document endpoint) and the
+collaboration server turns it into the start of the history it will serve. The bound is applied
+server-side and silently: a client asks for whatever range it likes and receives only its own
+share, so there is no bound for it to get wrong and none it can widen.
+
+A reader who reaches a document through its link alone — a public or authenticated-reach document
+they hold no access on — gets **no history at all**, not a bounded one. There is no access record
+and therefore no date to bound it with, which is the same reason the version endpoints have always
+refused them.

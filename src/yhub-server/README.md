@@ -80,14 +80,14 @@ It is not a fork of yhub — it is a thin wrapper:
 - mirrors the environment conventions used elsewhere in this repository
   (`*_FILE` secret indirection, `COLLABORATION_SERVER_ORIGIN` allowlist, …).
 
-Public exposure: the browser needs two routes, the websocket
-`/collaboration/ws/` and `/collaboration/ydoc/` for the http fallback, plus
+Public exposure: the browser needs the websocket `/collaboration/ws/`,
+`/collaboration/ydoc/` for the http fallback, `/collaboration/activity/` and
+`/collaboration/changeset/` for the editing history, plus
 `/collaboration/jwks/v1`, which carries public keys and nothing else. Every
-other route this server serves — `rollback`, `prune`, `changeset`, `activity`,
-`reset-connections`, `migrate`, `create-ydoc`, `restore-ydoc`, `reset-ydoc` —
-is now refused to a browser by the permission tables themselves (see "Access
-control" below), so publishing one is no longer the security boundary it was
-under yhub 0.7. Keep them off the
+other route this server serves — `rollback`, `prune`, `reset-connections`,
+`migrate`, `create-ydoc`, `restore-ydoc`, `reset-ydoc` — is refused to a browser
+by the permission tables themselves (see "Access control" below), so publishing
+one is no longer the security boundary it was under yhub 0.7. Keep them off the
 public ingress all the same: an endpoint that cannot be reached cannot be
 probed. The two probes are not worth publishing either — kubelet calls them from
 inside — and the helm chart's ingress lists what it routes rather than what it
@@ -105,21 +105,25 @@ out of `server.js` so they can be read and tested without redis and postgres.
 
 Masks are positional `crud` strings where `-` denies, so `'-r--'` is read-only.
 
-| Facet | Reader | Editor | Admin token |
-|---|---|---|---|
-| `ydoc` | `-r--` | `-ru-` | `cru-` |
-| `awareness` | `-r--` | `-ru-` | `-ru-` |
-| `history` | — | — | `from: 0` |
-| `delete` | — | — | `['soft']` |
-| `endpoint.ws` | `-r--` | `-ru-` | `crud` (`'*'`) |
-| `endpoint.ydoc` | `-r--` | `-ru-` | `crud` (`'*'`) |
-| every other endpoint | — | — | `crud` (`'*'`) |
+| Facet | Reader | Editor | Link-only reader | Admin token |
+|---|---|---|---|---|
+| `ydoc` | `-r--` | `-ru-` | as reader/editor | `cru-` |
+| `awareness` | `-r--` | `-ru-` | as reader/editor | `-ru-` |
+| `history` | `from: <access date>` | `from: <access date>` | — | `from: 0` |
+| `delete` | — | — | — | `['soft']` |
+| `endpoint.ws` | `-r--` | `-ru-` | as reader/editor | `crud` (`'*'`) |
+| `endpoint.ydoc` | `-r--` | `-ru-` | as reader/editor | `crud` (`'*'`) |
+| `endpoint.activity` | `-r--` | `-r--` | — | `crud` (`'*'`) |
+| `endpoint.changeset` | `-r--` | `-r--` | — | `crud` (`'*'`) |
+| every other endpoint | — | — | — | `crud` (`'*'`) |
 
-Reader and editor are the same document permission, `browserDocumentPermissions`,
-switched on the backend's `abilities.update`; `abilities.retrieve` decided
-whether there is any access at all before that.
+All three browser columns are the same document permission,
+`browserDocumentPermissions`, switched on two things the backend sends:
+`abilities.update` for reader-vs-editor, and `user_access_since` for whether
+there is a history to read. `abilities.retrieve` decided whether there is any
+access at all before either.
 
-Four of those cells are decisions rather than transcriptions:
+Five of those cells are decisions rather than transcriptions:
 
 - **`awareness: '-r--'` for a reader.** A reader receives presence and never
   publishes it — [suitenumerique/docs#2544](https://github.com/suitenumerique/docs/pull/2544),
@@ -131,14 +135,32 @@ Four of those cells are decisions rather than transcriptions:
   a feature. The frontend has to know it too: the http fallback provider has no
   receive-only setting, so a reader's `HttpProvider` is built with no awareness
   instance at all, or its first `PATCH` would take a 403 and close it for good.
-- **No `'*'` endpoint fallback for the browser.** Only `ws` and `ydoc` are named,
-  so everything else is denied — including any endpoint a future yhub release
-  adds. Under 0.7 this fence was a `purpose != null` check, which `create-ydoc`
-  slipped through by declaring no purpose.
-- **No `history` facet for the browser.** This is what makes yhub refuse a
-  `gc=false` connection with a 403; Docs users are served the garbage-collected
-  document, and the full history is the backend's business. It also keeps
-  `activity` and `changeset` closed even if their endpoints were ever granted.
+- **No `'*'` endpoint fallback for the browser.** Only the four routes above are
+  named, so everything else is denied — including any endpoint a future yhub
+  release adds. Under 0.7 this fence was a `purpose != null` check, which
+  `create-ydoc` slipped through by declaring no purpose.
+- **`history.from` is the moment the user got access**, not the beginning of the
+  document. It is the backend's `user_access_since` — the earliest access they
+  hold on the document or on one of its ancestors — and it is the same rule the
+  version endpoints have always applied ("only those created after the user got
+  access to the document"). yhub clamps `from` up to it on every
+  `activity`/`changeset` read, so a client asks for whatever range it likes and
+  gets back only its own share: the bound is silent, enforced server-side, and a
+  stale client cannot widen it. Two properties fall out of it and are worth
+  keeping true:
+  - a **`gc=false` connection stays refused**, because that requires
+    `from === 0` exactly and a real access date never is;
+  - the ray is a **stored** bound (`DocumentAccess.created_at`), not a
+    wall-clock-relative one, which is what yhub's determinism contract asks for —
+    it re-derives identically on every websocket recheck instead of flapping the
+    connection.
+- **A reader who holds no access, only the link, gets no history.** There is no
+  access row and so no date; the backend has always refused those users their
+  version history for exactly that reason ("we wouldn't know from which date to
+  allow them anyway"). `activity` and `changeset` are withheld together with the
+  ray rather than granted alone, which would open a route that answers 403 by
+  itself. `rollback` and `prune` are withheld from everyone: they are
+  destructive and are granted by name.
 - **`delete: ['soft']` and not `'hard'` for the admin.** yhub 0.8 made
   `DELETE /ydoc?hard=true` reachable over REST for the first time. Docs keeps
   irreversible erasure programmatic, behind `reset-ydoc` (see "Deletion").
