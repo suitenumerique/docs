@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useCollaborationUrl, useConfig } from '@/core/config';
 import { KEY_DOC } from '@/docs/doc-management/api/useDoc';
@@ -7,7 +7,15 @@ import { useProviderStore } from '@/docs/doc-management/stores/useProviderStore'
 import { useIsOffline } from '@/features/service-worker/hooks/useOffline';
 import { useBroadcastStore } from '@/stores/useBroadcastStore';
 
-export const useCollaboration = (room: string) => {
+/**
+ * `readOnly` is the editor's own predicate, and it reaches this far because the
+ * providers are built with it: a reader publishes no presence, which the http
+ * fallback can only express by carrying no awareness instance at all (see
+ * `createProvider`). It is allowed to be stricter than the collaboration
+ * server's own verdict — that direction only declines presence we would have
+ * been permitted to send — but never looser.
+ */
+export const useCollaboration = (room: string, readOnly = false) => {
   const collaborationUrl = useCollaborationUrl(room);
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();
@@ -108,9 +116,41 @@ export const useCollaboration = (room: string) => {
       return;
     }
 
-    const newProvider = createProvider(collaborationUrl, room);
+    const newProvider = createProvider(collaborationUrl, room, undefined, {
+      readOnly,
+    });
     setBroadcastProvider(newProvider);
-  }, [provider, collaborationUrl, createProvider, room, setBroadcastProvider]);
+  }, [
+    provider,
+    collaborationUrl,
+    createProvider,
+    room,
+    readOnly,
+    setBroadcastProvider,
+  ]);
+
+  /**
+   * Rebuild the providers when the access changes under us.
+   *
+   * The effect above builds them once and `reconnect` only reopens the socket, so
+   * the `readOnly` decision baked into the http fallback would otherwise outlive
+   * the access it was made from. Demotion is the direction that bites: an editor
+   * turned reader would keep an awareness-publishing fallback, whose first
+   * `PATCH` takes a 403 and closes it for good. A permission change already
+   * forces a full re-auth (the server closes with 4401, the document is
+   * refetched, the connection is made again), so tearing the providers down here
+   * is in keeping rather than an extra disruption — the document itself lives on
+   * the server, and the editor re-renders from the fresh sync.
+   */
+  const builtReadOnly = useRef(readOnly);
+  useEffect(() => {
+    if (!provider || builtReadOnly.current === readOnly) {
+      return;
+    }
+    builtReadOnly.current = readOnly;
+    cleanupBroadcast();
+    destroyProvider();
+  }, [readOnly, provider, cleanupBroadcast, destroyProvider]);
 
   /**
    * Destroy the provider when the component is unmounted

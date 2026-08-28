@@ -1,10 +1,12 @@
-import { createHash, createPublicKey, randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { createPublicKey } from 'node:crypto';
 
 import {
   apiError,
+  checkPermissions,
   createApiEndpoint,
   createAuthPlugin,
+  createAuthorize,
+  createDocumentPermissions,
   createYHub,
   logger,
 } from '@y/hub';
@@ -19,6 +21,12 @@ import {
 } from 'jose';
 
 import { secret } from './env.js';
+// Docs' access policy as yhub permission objects — see permissions.test.js
+import {
+  adminDocumentPermissions,
+  browserDocumentPermissions,
+  publicGlobalPermissions,
+} from './permissions.js';
 // legacy Django/S3 document store — see migration.js and README.md
 import {
   SOFT_MIGRATION,
@@ -116,16 +124,14 @@ const YHUB_S3_REGION_NAME = process.env.YHUB_S3_REGION_NAME;
 // URL scheme Docs already routes to the collaboration server. Hardcoded like
 // the audiences: the backend builds its urls with the same prefix.
 const API_PREFIX = 'collaboration';
-// Paths of the routes declared in `api` that are served to anyone: the JWKS,
-// which carries public keys and which the backend must read before it can
-// authenticate anything we send it, and the two probes, which kubernetes calls
-// with no cookie and no token. readAuthInfo reads the raw request, without any
-// route context, hence the duplication of the paths here.
-const PUBLIC_PATHS = new Set([
-  `/${API_PREFIX}/jwks/v1`,
-  `/${API_PREFIX}/ping/v1`,
-  `/${API_PREFIX}/ready/v1`,
-]);
+// The identity of a caller who is not signed in. It is a userid rather than the
+// absence of one on purpose: yhub refuses the websocket upgrade of a caller that
+// holds the write but has no identity (401 `unauthenticated`), because
+// attributions carry the userid — so without this an anonymous visitor could not
+// edit a public document at all. Every anonymous edit is therefore attributed to
+// one shared author; yhub's own userids are opaque strings and Docs' are UUIDs,
+// so this cannot collide with a real one.
+const ANONYMOUS_USERID = 'anonymous';
 // What the readiness check gives a store before reporting it unreachable. Short
 // on purpose: the point of the probe is to answer, and answering "not ready"
 // early is more useful than holding the connection until kubelet times out.
@@ -237,7 +243,9 @@ const JWKS = createRemoteJWKSet(
 const backendFetch = async (path, { cookie, origin }) => {
   const res = await fetch(`${COLLABORATION_BACKEND_BASE_URL}${path}`, {
     headers: {
-      cookie,
+      // an anonymous caller may have no session at all; `cookie: undefined` would
+      // reach the backend as the literal string "undefined"
+      ...(cookie ? { cookie } : {}),
       // a same-origin request carries no `Origin` — forwarded when there is one, omitted
       // rather than sent empty, which is not a value the header is allowed to take
       ...(origin ? { origin } : {}),
@@ -268,61 +276,65 @@ const backendFetch = async (path, { cookie, origin }) => {
 //   the legacy store could not be reached (timeout, network, backpressure) —
 //     the same request later may well succeed, so it answers 503 rather than
 //     silently starting an empty document on top of content that exists.
-const seedFromLegacyStore = async (room) => {
+const seedFromLegacyStore = async (docRef) => {
   try {
     // `yhub` is declared at the bottom of this file — safe: auth callbacks only
     // fire once the server is up, i.e. after that assignment
-    await maybeMigrate(yhub, room);
+    await maybeMigrate(yhub, docRef);
   } catch (err) {
     if (!isPermanentFailure(err)) {
       throw apiError(503, 'Legacy document store is unavailable');
     }
     // why it failed was logged once, at the attempt, inside maybeMigrate
     migrationLog.warn(
-      { event: 'seed.skipped', docid: room.docid, err: err?.message },
+      { event: 'seed.skipped', docid: docRef.docid, err: err?.message },
       'admitting caller to a document that could not be migrated; it opens as new',
     );
   }
 };
 
 const auth = createAuthPlugin({
-  // uws req is only valid synchronously — read headers AND query before first await.
-  async readAuthInfo(req) {
-    const url = req.getUrl();
+  /**
+   * Who is asking. Returning `null` here would mean "an anonymous caller" — it is
+   * not a refusal, and `authorize` is still asked — so every rejection below is a
+   * thrown `apiError(401)` and every unauthenticated caller gets an identity.
+   * Under 0.7 this callback denied by returning `null`, which is the one change
+   * in this file that would fail open rather than closed if it were missed.
+   */
+  async authenticate(req) {
+    // uws req is only valid synchronously — read headers AND the url before the
+    // first await.
     const authorization = req.getHeader('authorization');
     const cookie = req.getHeader('cookie');
     const origin = req.getHeader('origin');
-    const gcOff = req.getQuery('gc') === 'false';
-    // The JWKS and the probes are served to anyone (see PUBLIC_PATHS). This
-    // identity is granted their purposes and nothing else
-    // (getGlobalAccessType), and the check is on their exact paths.
-    if (PUBLIC_PATHS.has(url)) {
-      return { userid: 'anonymous' };
-    }
+    // 0.8 dropped `accessPurpose`, and `authorize` is told the scope and the
+    // resource but not the route. The seed below needs to know one thing about
+    // the route — whether this is the `migrate` call — so the endpoint name is
+    // read off the path here, where the request still exists, and carried on the
+    // identity. `/collaboration/{name}/{version}/...` → index 2.
+    const endpoint = req.getUrl().split('/')[2] ?? '';
+
     if (authorization !== '') {
       // backend-to-server call: RS256 JWT signed by Django, verified against
       // its JWKS. A browser cannot attach an Authorization header to a ws
       // upgrade or a credentialed cross-origin fetch, so this never shadows a
-      // real user session. present-but-invalid fails here (401) instead of
-      // falling through to the cookie flow, which would mask a
-      // misconfiguration as an origin error.
+      // real user session. present-but-invalid is rejected here (401) instead of
+      // falling through to the cookie flow, which would mask a misconfiguration
+      // as an anonymous browse.
       const token = authorization.startsWith('Bearer ')
         ? authorization.slice('Bearer '.length)
         : authorization;
+      let payload;
       try {
         // clockTolerance absorbs Django's cache-at-exp race (the admin token
         // is cached for exactly its lifetime, so it can arrive here moments
         // after exp) plus small clock skew — without it a kick would be
         // silently dropped as a 401.
-        const { payload } = await jwtVerify(token, JWKS, {
+        ({ payload } = await jwtVerify(token, JWKS, {
           algorithms: ['RS256'],
           audience: YHUB_AUDIENCE,
           clockTolerance: 5,
-        });
-        // admin tokens act as the "system" user (no per-user admin identities yet)
-        return payload.admin === true
-          ? { userid: 'system', admin: true }
-          : null;
+        }));
       } catch (err) {
         // jose tags every token-validation failure with an `ERR_J…` code (bad
         // signature, expired, wrong or missing audience) — those are permanent,
@@ -337,22 +349,34 @@ const auth = createAuthPlugin({
         ) {
           throw apiError(503, 'Token verification keys are unavailable');
         }
-        return null;
+        throw apiError(401, 'Invalid token');
       }
+      if (payload.admin !== true) {
+        // a valid token that is not an admin one is a credential we refuse, not
+        // an anonymous caller: returning null here — which is what 0.7 did —
+        // would now silently downgrade a service call into a public browse
+        throw apiError(401, 'Not an admin token');
+      }
+      // admin tokens act as the "system" user (no per-user admin identities yet)
+      return { userid: 'system', admin: true, endpoint };
     }
-    if (gcOff) return null; // full-history connections: not for Docs users
     // No origin check here: `server.cors` below is the allowlist, and yhub applies it to the
     // websocket upgrade and to every REST request before this runs. Checking it a second time
     // would also refuse the http fallback's polls — a same-origin `fetch` GET carries no
     // `Origin` header at all, so on a deployment where the page and /collaboration/ share a
     // host every round would 401 while the PATCH beside it succeeded.
-    if (!cookie) return null; // was 4001 'No cookies'
+    //
+    // A caller with no cookie at all is anonymous too: the probes arrive that way, and so does
+    // a public document opened in a fresh browser. What they may do is `authorize`'s answer.
+    if (!cookie) {
+      return { userid: ANONYMOUS_USERID, origin, endpoint };
+    }
     try {
       const user = await backendFetch('/api/v1.0/users/me/', {
         cookie,
         origin,
       });
-      return { userid: String(user.id), cookie, origin }; // MUST be string (yhub server.js:667)
+      return { userid: String(user.id), cookie, origin, endpoint };
     } catch (err) {
       // Only a genuine "not signed in" falls back to the anonymous identity.
       // On backend failure (5xx/network) still refuse to admit the connection —
@@ -363,82 +387,75 @@ const auth = createAuthPlugin({
       if (err?.status !== 401 && err?.status !== 403) {
         throw apiError(503, 'Authentication backend is unavailable');
       }
-      // anonymous (public docs): stable per-session id — random ids would mint a new
-      // permanent attribution identity per reconnect
-      const anon = createHash('sha256')
-        .update(cookie)
-        .digest('base64url')
-        .slice(0, 16);
-      return { userid: `anon:${anon}`, cookie, origin };
+      // the cookie is kept: it is a session the backend still answers document
+      // questions about, which is how a public document resolves below
+      return { userid: ANONYMOUS_USERID, cookie, origin, endpoint };
     }
   },
-  // Authorizes the global-scoped endpoints: the JWKS and the two probes, all
-  // of them read-only and public. Anything else is refused here.
-  async getGlobalAccessType(authInfo, purpose) {
-    return purpose === 'jwks' || purpose === 'ping' || purpose === 'ready'
-      ? 'r'
-      : null;
-  },
-  async getAccessType(authInfo, { org, docid, branch }, purpose) {
-    if (authInfo.admin === true) {
-      // Django's admin token: full access. It still goes through the legacy
-      // seed, on the same terms as a user (default purpose only, so a
-      // `migrate` call is not seeded out from under fullMigrate). Without it a
-      // backend read of an unmigrated document would answer with an *empty*
-      // doc, and a create-ydoc against one would write a second lineage next
-      // to the legacy content the first user access is about to seed in.
-      // Access itself is never in question here — the token already granted it.
-      // The same org/branch fence the user path applies below. The admin token
-      // is the only identity that can name an arbitrary org or branch, and the
-      // legacy store is branchless — `{docid}/file` *is* main — so seeding any
-      // other room would write main's content into an orphan room, and the
-      // per-docid verdict cache would then report that docid as done and leave
-      // the real room empty.
-      if (
-        SOFT_MIGRATION &&
-        purpose == null &&
-        org === ORG &&
-        branch === 'main' &&
-        UUID4.test(docid)
-      ) {
-        await seedFromLegacyStore({ org, docid, branch });
+  /**
+   * What that caller may do. One handler per scope; a scope without a handler
+   * denies, which is what closes `org` and `branch` here. Denial is a value —
+   * returning `null`, never throwing: an error thrown during a websocket recheck
+   * disconnects with the transient close code 1013 instead of the revoke code
+   * 4401.
+   */
+  authorize: createAuthorize({
+    async document({ org, docid, branch }, user) {
+      if (user?.admin === true) {
+        // Django's admin token: full access. It still goes through the legacy
+        // seed, on the same terms as a user, but not for `migrate` — that call
+        // replays the whole version history itself, and seeding first would put
+        // the newest version in the room underneath it. Without the seed a
+        // backend read of an unmigrated document would answer with an *empty*
+        // doc, and a create-ydoc against one would write a second lineage next
+        // to the legacy content the first user access is about to seed in.
+        // Access itself is never in question here — the token already granted it.
+        // The same org/branch fence the user path applies below. The admin token
+        // is the only identity that can name an arbitrary org or branch, and the
+        // legacy store is branchless — `{docid}/file` *is* main — so seeding any
+        // other room would write main's content into an orphan room, and the
+        // per-docid verdict cache would then report that docid as done and leave
+        // the real room empty.
+        if (
+          SOFT_MIGRATION &&
+          user.endpoint !== 'migrate' &&
+          org === ORG &&
+          branch === 'main' &&
+          UUID4.test(docid)
+        ) {
+          await seedFromLegacyStore({ org, docid, branch });
+        }
+        return adminDocumentPermissions;
       }
-      return 'rw';
-    }
-    // Regular users only get access for the default purpose — custom-endpoint
-    // purposes (reset-connections, migrate) are backend-internal. Loose != on
-    // purpose: ws upgrades and rechecks pass undefined, built-in rest
-    // endpoints null.
-    if (
-      org !== ORG ||
-      branch !== 'main' ||
-      !UUID4.test(docid) ||
-      purpose != null
-    ) {
-      return null;
-    }
-    let doc;
-    try {
-      doc = await backendFetch(`/api/v1.0/documents/${docid}/`, authInfo);
-    } catch (err) {
-      // the backend answered "no": a real, permanent denial (403 Forbidden)
-      if (err?.status === 401 || err?.status === 403 || err?.status === 404) {
+      if (org !== ORG || branch !== 'main' || !UUID4.test(docid)) {
         return null;
       }
-      // it did not answer at all — say so, so the caller retries instead of
-      // reading a 5xx or a network blip as a permission decision
-      throw apiError(503, 'Document authorization backend is unavailable');
-    }
-    if (!doc.abilities?.retrieve) {
-      return null;
-    }
-    // the backend has already decided the caller may read this document; the
-    // seed only decides what is in it
-    if (SOFT_MIGRATION) {
-      await seedFromLegacyStore({ org, docid, branch });
-    }
-    return doc.abilities.update ? 'rw' : 'r';
-  },
+      let doc;
+      try {
+        doc = await backendFetch(`/api/v1.0/documents/${docid}/`, user);
+      } catch (err) {
+        // the backend answered "no": a real, permanent denial (403 Forbidden)
+        if (err?.status === 401 || err?.status === 403 || err?.status === 404) {
+          return null;
+        }
+        // it did not answer at all — say so, so the caller retries instead of
+        // reading a 5xx or a network blip as a permission decision
+        throw apiError(503, 'Document authorization backend is unavailable');
+      }
+      if (!doc.abilities?.retrieve) {
+        return null;
+      }
+      // the backend has already decided the caller may read this document; the
+      // seed only decides what is in it
+      if (SOFT_MIGRATION) {
+        await seedFromLegacyStore({ org, docid, branch });
+      }
+      return browserDocumentPermissions(doc.abilities.update === true);
+    },
+    async global() {
+      return publicGlobalPermissions;
+    },
+  }),
 });
 
 // Mimic the old y-provider REST responses (JSON, not yhub's lib0-any
@@ -452,9 +469,9 @@ const jsonResponse = (status, body) =>
 // Does the room hold anything? Covers persisted rows and the messages still on
 // the stream, which is what makes it an answer about the content rather than
 // about the storage.
-const hasContent = async (yhub, room) => {
+const hasContent = async (yhub, docRef) => {
   const { gcDoc } = await yhub.getDoc(
-    room,
+    docRef,
     { gc: true, nongc: false },
     { gcOnMerge: false },
   );
@@ -474,9 +491,9 @@ const hasContent = async (yhub, room) => {
 // yhub has no such operation, a hard deletion is final for the room and even
 // `restoreDoc` refuses it. Here the document id belongs to a Django document
 // that goes on living, so the room has to be usable again.
-const eraseContent = async (yhub, room, by) => {
-  await yhub.deleteDoc(room, { hard: true, by });
-  await yhub.persistence.deleteTombstone(room);
+const eraseContent = async (yhub, docRef, by) => {
+  await yhub.deleteDoc(docRef, { hard: true, by });
+  await yhub.persistence.deleteTombstone(docRef);
 };
 
 const readyLog = logger.child({ module: 'readiness' });
@@ -512,7 +529,6 @@ const api = [
   // holds perfectly good websocket connections every time a store blinks.
   createApiEndpoint('ping', {
     scope: 'global',
-    accessPurpose: 'ping',
     get: {
       handler: () => jsonResponse(200, { status: 'pong' }),
     },
@@ -524,7 +540,6 @@ const api = [
   // is the whole difference with the liveness probe above.
   createApiEndpoint('ready', {
     scope: 'global',
-    accessPurpose: 'ready',
     get: {
       handler: async (req) => {
         // both at once: a probe is not the place to add the latency of one
@@ -551,7 +566,6 @@ const api = [
   // the other's key, so either can be rolled without the other being changed.
   createApiEndpoint('jwks', {
     scope: 'global',
-    accessPurpose: 'jwks',
     get: {
       // an empty set when no key is configured: honest, and the backend
       // refuses our (equally absent) tokens rather than trusting anything
@@ -563,11 +577,10 @@ const api = [
   }),
   // POST /collaboration/reset-connections/v1/{org}/{docid} — replaces
   // y-provider's /collaboration/api/reset-connections/?room=. Doc-scoped, so
-  // the room comes from the path; access is gated to the admin token via the
-  // 'reset-connections' purpose in getAccessType. uws routes are exact: a
-  // trailing slash 404s.
+  // the docRef comes from the path; access is the admin token's alone, because
+  // the browser's grant names no `reset-connections` endpoint and has no `'*'`
+  // fallback. uws routes are exact: a trailing slash 404s.
   createApiEndpoint('reset-connections', {
-    accessPurpose: 'reset-connections',
     post: {
       handler: async (req) => {
         const userId = req.headers['x-user-id'] || null;
@@ -577,10 +590,10 @@ const api = [
         if (!UUID4.test(req.docid)) {
           return jsonResponse(400, { error: 'Room name is invalid' });
         }
-        // in-place recheck: every yhub server re-runs getAccessType per
+        // in-place recheck: every yhub server re-runs `authorize` per
         // matching connection and closes 4401 only when the access changed —
         // no reconnect churn for unaffected clients
-        await req.yhub.recheckAuth(req.room, {
+        await req.yhub.recheckAuth(req.docRef, {
           users: userId ? [userId] : null,
         });
         return jsonResponse(200, { message: 'Connections reset' });
@@ -593,7 +606,6 @@ const api = [
   // 'migrate' access purpose, since it writes history and reads the legacy
   // store.
   createApiEndpoint('migrate', {
-    accessPurpose: 'migrate',
     post: {
       handler: async (req) => {
         if (req.org !== ORG) {
@@ -614,7 +626,7 @@ const api = [
         // Only safe while its clock-0 row is still there: once compaction has
         // folded that row away, a second replay attributes the same content a
         // second time and the activity timestamps become ambiguous.
-        const { status, ...stats } = await fullMigrate(req.yhub, req.room, {
+        const { status, ...stats } = await fullMigrate(req.yhub, req.docRef, {
           force: req.query.force === 'true',
         });
         // `status` is what a backfill driver records per document: 'ok',
@@ -653,6 +665,14 @@ const api = [
   createApiEndpoint('create-ydoc', {
     post: {
       handler: async (req) => {
+        // The endpoint facet already admitted this caller — only the admin
+        // token names this route — but the write itself is a separate facet, and
+        // yhub's contract is that a handler states the facets it touches. Cheap,
+        // and it keeps the grant honest if the tables above ever widen.
+        checkPermissions(
+          req.permissions,
+          createDocumentPermissions({ ydoc: '--u-' }),
+        );
         if (req.org !== ORG) {
           return jsonResponse(400, { error: 'Unknown org' });
         }
@@ -660,7 +680,7 @@ const api = [
           return jsonResponse(400, { error: 'Room name is invalid' });
         }
         if (req.branch !== 'main') {
-          // cookie users are main-only via getAccessType, but the admin
+          // cookie users are main-only via `authorize`, but the admin
           // token bypasses it — reject explicitly so an admin create can't
           // seed an orphan non-main room (and dodge the 409 check, which is
           // branch-scoped)
@@ -693,7 +713,7 @@ const api = [
         // content then appears twice. Accepted: Django creates each doc
         // once, and a duplicated seed is user-fixable, unlike corruption.
         const { gcDoc } = await req.yhub.getDoc(
-          req.room,
+          req.docRef,
           { gc: true, nongc: false },
           { gcOnMerge: false },
         );
@@ -718,7 +738,7 @@ const api = [
               userid,
               customAttributions: [],
             },
-            { room: req.room },
+            { docRef: req.docRef },
           );
         } catch {
           // a malformed update makes the compute worker throw (yhub logs
@@ -735,7 +755,7 @@ const api = [
         }
         // on a fresh room this creates the stream, schedules compaction, and
         // fans out to any live subscribers — nothing else to do
-        await req.yhub.stream.addMessage(req.room, {
+        await req.yhub.stream.addMessage(req.docRef, {
           type: 'ydoc:update:v1',
           contentmap: result.contentmap,
           update: result.update,
@@ -753,7 +773,6 @@ const api = [
   // 'restore' purpose — a document leaves the trashbin because the backend
   // says so, never because an editor asked.
   createApiEndpoint('restore-ydoc', {
-    accessPurpose: 'restore',
     post: {
       handler: async (req) => {
         if (req.org !== ORG) {
@@ -764,14 +783,14 @@ const api = [
         }
         if (req.branch !== 'main') {
           // as in create-ydoc: the admin token is not fenced to main by
-          // getAccessType, and a deletion is recorded per branch
+          // `authorize`, and a deletion is recorded per branch
           return jsonResponse(400, { error: 'Unknown branch' });
         }
         // read the deletion before undoing it: `restoreDoc` throws a plain
         // Error for a document whose content was erased, and that is a
         // conflict to report as one — catching around the call would turn
         // every failure alike, a database outage included, into the same answer
-        const tombstone = await req.yhub.persistence.retrieveTombstone(req.room);
+        const tombstone = await req.yhub.persistence.retrieveTombstone(req.docRef);
         if (tombstone == null) {
           // not an error: the backend restores a whole subtree, of which only
           // the part that was deleted with it has anything to put back
@@ -783,7 +802,7 @@ const api = [
         if (tombstone.hard || tombstone.purgedAt != null) {
           return jsonResponse(409, { error: 'Document content was erased' });
         }
-        await req.yhub.restoreDoc(req.room);
+        await req.yhub.restoreDoc(req.docRef);
         return jsonResponse(200, {
           message: 'Document restored',
           restored: true,
@@ -801,7 +820,6 @@ const api = [
   // and admin-only, like the deletions it is built on: this destroys content
   // with no way back.
   createApiEndpoint('reset-ydoc', {
-    accessPurpose: 'reset',
     post: {
       handler: async (req) => {
         if (req.org !== ORG) {
@@ -814,22 +832,28 @@ const api = [
           return jsonResponse(400, { error: 'Unknown branch' });
         }
         const by = req.headers['x-user-id'] || req.authInfo.userid;
+        // No `checkPermissions` here, deliberately. The honest facet for what
+        // follows would be `delete: ['hard']`, and the admin grant withholds
+        // `'hard'` on purpose so that `DELETE /ydoc?hard=true` stays refused over
+        // REST. The erasure below reaches `deleteDoc` programmatically, which the
+        // `delete` facet does not gate; the endpoint facet — this route is named
+        // by no browser grant — is what admits the caller.
         // Nothing compacts this room while the erasure runs: this drops the
         // task already waiting for it and refuses to enqueue another, which
         // leaves one writer to race with — a task a worker had claimed before
         // this call. The tombstone barrier covers it right up to the moment
         // the room is made writable again, so it can only land after that,
         // and the second pass below is what picks it up.
-        await req.yhub.stream.disableCompaction(req.room);
+        await req.yhub.stream.disableCompaction(req.docRef);
         try {
-          await eraseContent(req.yhub, req.room, by);
-          if (await hasContent(req.yhub, req.room)) {
+          await eraseContent(req.yhub, req.docRef, by);
+          if (await hasContent(req.yhub, req.docRef)) {
             resetLog.warn(
               { docid: req.docid },
               'content came back while it was being erased, erasing again',
             );
-            await eraseContent(req.yhub, req.room, by);
-            if (await hasContent(req.yhub, req.room)) {
+            await eraseContent(req.yhub, req.docRef, by);
+            if (await hasContent(req.yhub, req.docRef)) {
               // saying it is erased when it is not is the one answer this
               // endpoint must never give
               return jsonResponse(500, {
@@ -840,7 +864,7 @@ const api = [
         } finally {
           // even on failure: leaving compaction off would freeze the room for
           // every later edit, a worse state than the one we came to fix
-          await req.yhub.stream.enableCompaction(req.room);
+          await req.yhub.stream.enableCompaction(req.docRef);
         }
         return jsonResponse(200, { message: 'Document content erased' });
       },
@@ -876,13 +900,17 @@ const touchDocument = async (docid) => {
 // traffic of someone merely opening a document never reaches it. Since yhub
 // 0.5.0 it is handed the room of the task alongside the merged document.
 const workerEvents = {
-  docUpdate: ({ room }) => {
+  docUpdate: ({ docRef }) => {
     // Django knows the documents of this org, on the main branch, by their uuid
-    if (room.org !== ORG || room.branch !== 'main' || !UUID4.test(room.docid)) {
+    if (
+      docRef.org !== ORG ||
+      docRef.branch !== 'main' ||
+      !UUID4.test(docRef.docid)
+    ) {
       return;
     }
     // deliberately not awaited: a slow backend must not hold the worker
-    touchDocument(room.docid);
+    touchDocument(docRef.docid);
   },
 };
 
@@ -965,7 +993,7 @@ const yhub = await createYHub({
         api,
         apiPrefix: API_PREFIX,
         // What a browser may reach this server from, applied by yhub to the websocket upgrade
-        // and to every REST route — the only origin check there is, `readAuthInfo` no longer
+        // and to every REST route — the only origin check there is, `authenticate` no longer
         // does its own. `credentials` is what lets the http fallback send the session cookie
         // on a cross-origin `fetch`; it is also why the list has to be concrete, browsers
         // refusing "*" together with Access-Control-Allow-Credentials.
