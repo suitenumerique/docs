@@ -6,13 +6,11 @@ import {
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 
-import { useProviderStore } from '../stores';
 import { Doc } from '../types';
 
 export interface UpdateDocParams {
   id: Doc['id'];
   title?: string;
-  websocket?: boolean;
 }
 
 export const updateDoc = async ({
@@ -40,16 +38,7 @@ type UseUpdateDoc = UseMutationOptions<Doc, APIError, UpdateDocParams> & {
 export function useUpdateDoc(queryConfig?: UseUpdateDoc) {
   const queryClient = useQueryClient();
   return useMutation<Doc, APIError, UpdateDocParams>({
-    /**
-     * Tell the backend when we hold a live collaboration connection,
-     * otherwise its no-websocket cache lock blocks the update while
-     * another user is connected.
-     */
-    mutationFn: (params) =>
-      updateDoc({
-        ...(useProviderStore.getState().isSynced ? { websocket: true } : {}),
-        ...params,
-      }),
+    mutationFn: updateDoc,
     ...queryConfig,
     onSuccess: (data, variables, onMutateResult, context) => {
       queryConfig?.listInvalidQueries?.forEach((queryKey) => {

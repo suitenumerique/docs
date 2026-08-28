@@ -11,12 +11,6 @@ export type DBRequest = {
   key: string;
 };
 
-export interface DocContentCacheEntry {
-  etag: string;
-  lastModified: string;
-  content: string;
-}
-
 interface IDocsDB extends DBSchema {
   'doc-list': {
     key: string;
@@ -34,13 +28,9 @@ interface IDocsDB extends DBSchema {
     key: 'version';
     value: number;
   };
-  'doc-content': {
-    key: string;
-    value: DocContentCacheEntry;
-  };
 }
 
-type TableName = 'doc-list' | 'doc-item' | 'doc-mutation' | 'doc-content';
+type TableName = 'doc-list' | 'doc-item' | 'doc-mutation';
 
 /**
  * IndexDB prefers incremental versioning when upgrading the database,
@@ -88,8 +78,15 @@ export class DocsDB {
           if (!db.objectStoreNames.contains('doc-version')) {
             db.createObjectStore('doc-version');
           }
-          if (!db.objectStoreNames.contains('doc-content')) {
-            db.createObjectStore('doc-content');
+          /**
+           * Dropped with the Django `documents/{id}/content/` endpoint it
+           * mirrored: document content is the collaboration server's alone now.
+           * Existing browsers still carry the store, so it is removed here
+           * rather than left orphaned. Cast because it is deliberately absent
+           * from the schema above.
+           */
+          if (db.objectStoreNames.contains('doc-content' as never)) {
+            db.deleteObjectStore('doc-content' as never);
           }
         },
       });
@@ -140,7 +137,7 @@ export class DocsDB {
    */
   public static async cacheResponse(
     key: string,
-    body: DocsResponse | Doc | DBRequest | DocContentCacheEntry,
+    body: DocsResponse | Doc | DBRequest,
     tableName: TableName,
     isRetry = false,
   ): Promise<void> {

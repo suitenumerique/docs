@@ -259,16 +259,6 @@ export class ApiPlugin implements WorkboxPlugin {
     );
 
     /**
-     * Create an empty content for the new document in the cache, so the client can use it while offline,
-     * and it will be updated later when the request will be synced.
-     */
-    await DocsDB.cacheResponse(
-      `${request.url}${uuid}/content/`,
-      { etag: '', lastModified: '', content: '' },
-      'doc-content',
-    );
-
-    /**
      * Add the new entry to the cache list.
      */
     const db = await DocsDB.open();
@@ -310,7 +300,6 @@ export class ApiPlugin implements WorkboxPlugin {
      */
     const db = await DocsDB.open();
     await db.delete('doc-item', request.url);
-    await db.delete('doc-content', `${request.url}content/`);
 
     /**
      * Delete entry from the cache list.
