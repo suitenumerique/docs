@@ -20,14 +20,25 @@ and this project adheres to
 
 ### Added
 
-- ✨(collaboration) grant the browser only the two routes it uses. The
+- ✨(collaboration) let a user read the document's editing history from the
+  moment they were given access to it. The collaboration server's `activity` and
+  `changeset` routes are opened to the browser, bounded per user to the earliest
+  access they hold on the document or on one of its ancestors — the same cut-off
+  the version endpoints have always applied, now computed once in the backend
+  (`user_access_since`) and applied by the collaboration server as well. The
+  bound is enforced server-side and silently: a client asks for whatever range it
+  likes and receives only its own share. A reader who reaches a document through
+  its link alone holds no access and so has no date to bound a history with, and
+  gets none — as they never did
+
+- ✨(collaboration) grant the browser only the routes it uses. The
   collaboration server now answers what a caller may do with a document as a
   permission object, facet by facet, and enforces every facet itself. A browser
-  is granted the websocket and the document route the http fallback polls, and
-  nothing else — the history, activity, changeset, rollback and prune routes,
-  every backend-internal endpoint, and any endpoint a future release adds are
-  refused to it. `create-ydoc` in particular was reachable by any signed-in
-  editor and is now the backend's alone. The backend's admin token keeps full
+  is granted the websocket, the document route the http fallback polls and the
+  two history routes, and nothing else — rollback, prune, every backend-internal
+  endpoint, and any endpoint a future release adds are refused to it.
+  `create-ydoc` in particular was reachable by any signed-in editor and is now
+  the backend's alone. The backend's admin token keeps full
   access, minus the irreversible content erasure that the new version exposes
   over http for the first time
 
