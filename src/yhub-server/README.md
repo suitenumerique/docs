@@ -27,8 +27,8 @@ It is not a fork of yhub — it is a thin wrapper:
   `X-User-Id` header), for the Django backend to re-check the authorization
   of a document's connected clients when permissions change (backend wiring
   pending) — authenticated with an RS256 admin JWT issued by Django and
-  verified against its JWKS (`/api/v1.0/jwks`); the `reset-connections`
-  purpose is granted only to that admin token, never to regular users,
+  verified against its JWKS (`/api/v1.0/jwks`); this route is named by no
+  browser grant, so it is reachable by that admin token alone,
 - exposes `POST /collaboration/create-ydoc/v1/{org}/{docid}` (optional
   `X-User-Id` header naming the user the initial content is attributed to),
   which seeds a document's initial Yjs state from a raw binary update
@@ -36,11 +36,12 @@ It is not a fork of yhub — it is a thin wrapper:
   `application/octet-stream`), so the Django backend can create documents
   server-side. The built-in `PATCH .../ydoc/` takes the same update, but this
   one is a **strict create** — 409 when the document already has content — and
-  it credits the content to `X-User-Id` instead of to the caller. Guarded by
-  standard document write access (the admin JWT, or a user session with update
-  ability). Reading needs neither, and goes through the built-in `GET
-  .../ydoc/`, which since 0.5.0 answers JSON (the update base64 encoded) to a
-  request sending `Accept: application/json`,
+  it credits the content to `X-User-Id` instead of to the caller. Admin JWT
+  only: it is a backend route, and under yhub 0.7 it was the one custom
+  endpoint a signed-in editor could also reach, because it declared no
+  `accessPurpose`. Reading goes through the built-in `GET .../ydoc/`, which
+  since 0.5.0 answers JSON (the update base64 encoded) to a request sending
+  `Accept: application/json`,
 - exposes `POST /collaboration/migrate/v1/{org}/{docid}`, which replays a
   document's **full** legacy version history out of the S3 media bucket (see
   "Full migration" below) — admin JWT only, like `reset-connections`,
@@ -79,17 +80,76 @@ It is not a fork of yhub — it is a thin wrapper:
 - mirrors the environment conventions used elsewhere in this repository
   (`*_FILE` secret indirection, `COLLABORATION_SERVER_ORIGIN` allowlist, …).
 
-Public exposure: route the whole `/collaboration/` prefix to this server —
-the websocket and the built-in document APIs (`ydoc`, `rollback`, `prune`,
-`changeset`, `activity`) are all guarded by the same cookie-based document
-authorization and are meant to be reachable by browsers, as is
-`/collaboration/jwks/v1`, which carries public keys and nothing else. The one
-exception is `/collaboration/reset-connections/`, `/collaboration/migrate/`,
-`/collaboration/restore-ydoc/` and `/collaboration/reset-ydoc/`, which are
-backend-internal and should not be routed through the public ingress. The two
-probes are not worth publishing either — kubelet calls them from inside — and
-the helm chart's ingress lists what it routes rather than what it hides, so
-they stay in-cluster on their own.
+Public exposure: the browser needs two routes, the websocket
+`/collaboration/ws/` and `/collaboration/ydoc/` for the http fallback, plus
+`/collaboration/jwks/v1`, which carries public keys and nothing else. Every
+other route this server serves — `rollback`, `prune`, `changeset`, `activity`,
+`reset-connections`, `migrate`, `create-ydoc`, `restore-ydoc`, `reset-ydoc` —
+is now refused to a browser by the permission tables themselves (see "Access
+control" below), so publishing one is no longer the security boundary it was
+under yhub 0.7. Keep them off the
+public ingress all the same: an endpoint that cannot be reached cannot be
+probed. The two probes are not worth publishing either — kubelet calls them from
+inside — and the helm chart's ingress lists what it routes rather than what it
+hides, so they stay in-cluster on their own.
+
+### Access control
+
+yhub 0.8 replaced the `'r' | 'rw' | null` access vocabulary with **permission
+objects**: the auth plugin answers, per facet, what a subject may do with one
+document, and yhub enforces every facet itself — on the websocket and on the
+REST routes alike. Docs' whole policy is three tables in `permissions.js`, kept
+out of `server.js` so they can be read and tested without redis and postgres.
+`permissions.test.js` asks them the same questions yhub's gates ask; run it with
+`npm test`.
+
+Masks are positional `crud` strings where `-` denies, so `'-r--'` is read-only.
+
+| Facet | Reader | Editor | Admin token |
+|---|---|---|---|
+| `ydoc` | `-r--` | `-ru-` | `cru-` |
+| `awareness` | `-r--` | `-ru-` | `-ru-` |
+| `history` | — | — | `from: 0` |
+| `delete` | — | — | `['soft']` |
+| `endpoint.ws` | `-r--` | `-ru-` | `crud` (`'*'`) |
+| `endpoint.ydoc` | `-r--` | `-ru-` | `crud` (`'*'`) |
+| every other endpoint | — | — | `crud` (`'*'`) |
+
+Reader and editor are the same document permission, `browserDocumentPermissions`,
+switched on the backend's `abilities.update`; `abilities.retrieve` decided
+whether there is any access at all before that.
+
+Four of those cells are decisions rather than transcriptions:
+
+- **`awareness: '-r--'` for a reader.** A reader receives presence and never
+  publishes it — [suitenumerique/docs#2544](https://github.com/suitenumerique/docs/pull/2544),
+  where a read-only connection was found to still propagate cursors even though
+  its document updates were dropped. yhub enforces it on both transports: it
+  drops a read-only connection's awareness message on the socket, and refuses the
+  `awareness` field of `PATCH /ydoc`. This is a deliberate departure from yhub's
+  own default, which grants a reader `'-ru-'` and documents read-only cursors as
+  a feature. The frontend has to know it too: the http fallback provider has no
+  receive-only setting, so a reader's `HttpProvider` is built with no awareness
+  instance at all, or its first `PATCH` would take a 403 and close it for good.
+- **No `'*'` endpoint fallback for the browser.** Only `ws` and `ydoc` are named,
+  so everything else is denied — including any endpoint a future yhub release
+  adds. Under 0.7 this fence was a `purpose != null` check, which `create-ydoc`
+  slipped through by declaring no purpose.
+- **No `history` facet for the browser.** This is what makes yhub refuse a
+  `gc=false` connection with a 403; Docs users are served the garbage-collected
+  document, and the full history is the backend's business. It also keeps
+  `activity` and `changeset` closed even if their endpoints were ever granted.
+- **`delete: ['soft']` and not `'hard'` for the admin.** yhub 0.8 made
+  `DELETE /ydoc?hard=true` reachable over REST for the first time. Docs keeps
+  irreversible erasure programmatic, behind `reset-ydoc` (see "Deletion").
+
+Identity is separate from permission. `authenticate` establishes who is asking;
+returning `null` there means *anonymous*, not *denied*, so every rejection in
+this server is a thrown `apiError(401, …)`. An unauthenticated visitor is given
+the userid `anonymous`, which is what lets them edit a public document at all:
+yhub refuses the upgrade of a caller that holds the write but has no identity,
+because attributions carry the userid. Every anonymous edit is therefore
+attributed to that one shared author.
 
 ### Origins and cors
 
@@ -98,7 +158,7 @@ server from, and it is passed to yhub as its `cors` configuration: yhub applies
 it to the websocket upgrade *and* to every REST route, refusing a cross-origin
 request from anywhere else with a `403` before authentication runs. A request
 carrying no `Origin` at all is same-origin or is not a browser, and is gated by
-the session cookie alone — which is why `readAuthInfo` no longer checks the
+the session cookie alone — which is why `authenticate` no longer checks the
 origin itself: doing it twice would refuse exactly the requests the http
 fallback makes, since a same-origin `fetch` GET sends no `Origin` header.
 
@@ -332,12 +392,15 @@ so the document comes back with its whole history. Restoring one that is not
 deleted answers 200 and changes nothing, which is what lets the backend restore
 a subtree without asking what became of each document in it.
 
-Erasing the content for good is a third operation (`YHub.deleteDoc(room, {
-hard: true })`), reachable from inside this process only — yhub deliberately
-keeps it off the REST API. It is not what deleting a document in Docs does: a
-soft-deleted one simply stops being restorable after `TRASHBIN_CUTOFF_DAYS`,
-and its content is kept. Note that a hard deletion is final for that room — the
-docid can never be written again, and `restore-ydoc` answers 409 for it.
+Erasing the content for good is a third operation (`YHub.deleteDoc(docRef, {
+hard: true })`). yhub 0.8 exposes it over REST as `DELETE .../ydoc?hard=true`,
+gated by the `delete` facet — and the admin token is granted `['soft']` only, so
+in Docs that request is refused and the erasure stays reachable from inside this
+process alone, through `reset-ydoc` below. It is not what deleting a document in
+Docs does: a soft-deleted one simply stops being restorable after
+`TRASHBIN_CUTOFF_DAYS`, and its content is kept. Note that a hard deletion is
+final for that room — the docid can never be written again, and `restore-ydoc`
+answers 409 for it.
 
 ### Resetting (`POST /collaboration/reset-ydoc/v1/{org}/{docid}`)
 

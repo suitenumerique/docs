@@ -99,10 +99,16 @@ const createWebsocketFallback = vi.fn(
   },
 );
 
-vi.mock('@y/yhub-http-fallback', () => ({
-  HttpProvider: vi.fn(function () {
+// hoisted alongside the `vi.mock` below, which is lifted above every `const` in
+// this file — the store builds it with `new`, so it stays a function expression
+const { HttpProviderMock } = vi.hoisted(() => ({
+  HttpProviderMock: vi.fn(function (..._args: unknown[]) {
     return httpProvider;
   }),
+}));
+
+vi.mock('@y/yhub-http-fallback', () => ({
+  HttpProvider: HttpProviderMock,
   createWebsocketFallback: (primary: unknown, secondary: unknown) =>
     createWebsocketFallback(
       primary as FakeProvider,
@@ -119,6 +125,7 @@ describe('useProviderStore', () => {
     httpProvider = new FakeHttpProvider();
     stopFallback = vi.fn();
     createWebsocketFallback.mockClear();
+    HttpProviderMock.mockClear();
     // the store is a module-level singleton: put it back to its defaults, or
     // a test reads what the one before it left behind
     useProviderStore.getState().destroyProvider();
@@ -229,6 +236,43 @@ describe('useProviderStore', () => {
     // `useUpdateDoc` reads this to tell the backend that the collaboration
     // server holds the content - true of either transport
     expect(useProviderStore.getState().isSynced).toBe(true);
+  });
+
+  it('lets an editor publish presence over the http fallback', () => {
+    // the shared Awareness instance: one client id, one set of clocks, whichever
+    // transport is carrying it
+    expect(HttpProviderMock).toHaveBeenCalledTimes(1);
+    expect(HttpProviderMock.mock.calls[0][3]).toMatchObject({
+      awareness: provider.awareness,
+    });
+  });
+
+  it('gives a read-only document no awareness on the http fallback', () => {
+    useProviderStore.getState().destroyProvider();
+    HttpProviderMock.mockClear();
+
+    useProviderStore
+      .getState()
+      .createProvider(
+        'ws://localhost/collaboration/ws/v1/docs',
+        'doc-id',
+        undefined,
+        {
+          readOnly: true,
+        },
+      );
+
+    /**
+     * A reader may not publish presence, and the provider has no receive-only
+     * setting. Left enabled, its first round would PATCH awareness, take a 403
+     * from the collaboration server, and — a 4xx being permanent — close before
+     * it ever issued a GET, leaving a reader whose websocket is blocked in front
+     * of an empty document. `null` is what keeps the round to a plain poll.
+     */
+    expect(HttpProviderMock).toHaveBeenCalledTimes(1);
+    expect(HttpProviderMock.mock.calls[0][3]).toMatchObject({
+      awareness: null,
+    });
   });
 
   it('tears everything down with the document', () => {

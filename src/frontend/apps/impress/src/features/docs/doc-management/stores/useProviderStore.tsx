@@ -6,11 +6,22 @@ import { create } from 'zustand';
 import { collaborationHttpTarget } from '@/core/config/hooks/useCollaborationUrl';
 import { Base64 } from '@/docs/doc-management';
 
+/**
+ * `readOnly` decides whether this client may publish presence. It has to be known
+ * when the providers are built, not merely when the editor renders: the http
+ * fallback either carries an awareness instance or does not, and there is no
+ * middle setting (see `createProvider`).
+ */
+export interface CreateProviderOptions {
+  readOnly?: boolean;
+}
+
 export interface UseCollaborationStore {
   createProvider: (
     providerUrl: string,
     storeId: string,
     initialDoc?: Base64,
+    options?: CreateProviderOptions,
   ) => WebsocketProvider;
   destroyProvider: () => void;
   setReady: (value: boolean) => void;
@@ -80,7 +91,7 @@ const suspendFallback = (httpProvider: HttpProvider | undefined) => {
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
   ...defaultValues,
-  createProvider: (wsUrl, storeId, initialDoc) => {
+  createProvider: (wsUrl, storeId, initialDoc, { readOnly = false } = {}) => {
     const doc = new Y.Doc({
       guid: storeId,
     });
@@ -111,6 +122,17 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
      * sync. It shares the `Awareness` instance for the same reason — awareness state is keyed
      * by `doc.clientID`, so two instances would advertise the same client id with independent
      * clocks and fight over the local state.
+     *
+     * A reader gets no awareness instance at all. It may not publish presence (the
+     * collaboration server refuses the `awareness` field of a `PATCH`, and the endpoint grant
+     * makes the whole route read-only for it), and the provider has no receive-only setting:
+     * one flag both publishes the local state and applies the remote one. Left enabled, the
+     * first round would `PATCH` presence, take a 403, and — a 4xx being permanent — close the
+     * provider for good *before* it ever issued its first `GET`, so a reader on a network that
+     * blocks websockets would sit in front of an empty document indefinitely. Disabled, the
+     * round carries no body at all and degrades to exactly the poll a reader needs. The cost is
+     * that a reader on the fallback sees no remote cursors; at a 10s poll they would be a
+     * postcard from the past anyway.
      */
     const target = collaborationHttpTarget(wsUrl);
     const httpProvider = target
@@ -119,7 +141,7 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
           target.serverUrl,
           { org: target.org, docid: storeId },
           {
-            awareness: provider.awareness,
+            awareness: readOnly ? null : provider.awareness,
             // createWebsocketFallback owns the connection state
             connect: false,
             // Docs users are served the garbage-collected document; a full-history request is
