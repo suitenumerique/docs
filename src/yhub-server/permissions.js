@@ -29,27 +29,51 @@
  * `create-ydoc` with the admin token. `u` alone already creates the document on
  * first write.
  *
- * No `history` facet, and that is load-bearing rather than an omission: it is
- * what makes yhub refuse a `gc=false` connection with a 403. Docs users are
- * served the garbage-collected document; the full history is the backend's.
+ * `historyFrom` is the moment this user gained access to the document, in unix
+ * milliseconds — the backend's `user_access_since`, which is the earliest access
+ * they hold on the document or on one of its ancestors. It becomes the start of
+ * the history they may read, which is the rule Docs has always had rather than a
+ * new one: the version endpoints have always shown "only those created after the
+ * user got access to the document". yhub clamps `from` up to this on every
+ * changeset/activity read, so a client asks for whatever range it likes and gets
+ * back only its own share — it never has to know the bound, and a stale or
+ * modified one cannot widen it.
+ *
+ * `null` for a reader who reaches the document by link alone. There is no access
+ * row and so no date, and the backend has always refused those users their
+ * history for exactly that reason: "we wouldn't know from which date to allow
+ * them anyway" (`Document.get_abilities`). Without the facet, `activity` and
+ * `changeset` answer 403 on their own, so their endpoint entries are withheld
+ * together with it rather than granting a route that opens nothing.
+ *
+ * A bounded ray is not a wall-clock-relative grant: it comes from a stored
+ * `created_at`, so it re-derives identically on every websocket recheck, which is
+ * what yhub's determinism contract asks for. And it never unlocks a `gc=false`
+ * connection, which requires `from === 0` exactly — see the guard in server.js.
  *
  * No `delete` facet: deleting a document is Django's, through the admin token.
+ * Deliberately absent too: `rollback` and `prune`, which are destructive and are
+ * granted by name — restoring a version is not something a reader, or an editor,
+ * does through this grant today.
  *
- * No `'*'` endpoint fallback, so everything not named here is denied. The browser
- * calls exactly two routes — the websocket, and `ydoc` for the http fallback.
- * `activity`, `changeset`, `rollback`, `prune` and every custom endpoint are
- * closed to it. Under 0.7 this fence was a `purpose != null` check in
- * `getAccessType`, which `create-ydoc` slipped through by declaring no purpose.
+ * No `'*'` endpoint fallback, so everything not named here is denied — including
+ * any endpoint a future yhub release adds. Under 0.7 this fence was a
+ * `purpose != null` check in `getAccessType`, which `create-ydoc` slipped through
+ * by declaring no purpose.
  */
-export const browserDocumentPermissions = (canEdit) => ({
+export const browserDocumentPermissions = (canEdit, historyFrom = null) => ({
   type: 'permissions:document:v1',
   ydoc: canEdit ? '-ru-' : '-r--',
   awareness: canEdit ? '-ru-' : '-r--',
+  ...(historyFrom ? { history: { from: historyFrom } } : null),
   endpoint: {
     // `r` opens the socket, `u` admits document updates over it
     ws: canEdit ? '-ru-' : '-r--',
     // GET is `r` and PATCH is `u`; DELETE (`d`) stays out — see `delete` above
     ydoc: canEdit ? '-ru-' : '-r--',
+    // the editing timeline, and one point in it — both GET-only, both clamped to
+    // the ray above
+    ...(historyFrom ? { activity: '-r--', changeset: '-r--' } : null),
   },
 });
 

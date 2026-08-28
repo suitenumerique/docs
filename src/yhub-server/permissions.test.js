@@ -26,8 +26,22 @@ import {
  * not as a snapshot of the objects: a table may be respelled freely, but it may
  * not start answering a question differently.
  */
-const reader = normalizePermissions(browserDocumentPermissions(false));
-const editor = normalizePermissions(browserDocumentPermissions(true));
+/**
+ * When these two were given access to the document. Any positive number would
+ * do — what the assertions care about is that it is the value the ray starts at,
+ * and that it is not zero.
+ */
+const ACCESS_SINCE = 1_700_000_000_000;
+
+const reader = normalizePermissions(
+  browserDocumentPermissions(false, ACCESS_SINCE),
+);
+const editor = normalizePermissions(
+  browserDocumentPermissions(true, ACCESS_SINCE),
+);
+// the same two reaching the document by link alone: no access row, so no date
+const linkReader = normalizePermissions(browserDocumentPermissions(false));
+const linkEditor = normalizePermissions(browserDocumentPermissions(true));
 const admin = normalizePermissions(adminDocumentPermissions);
 
 const grants = (permissions, required) =>
@@ -87,13 +101,104 @@ describe('the http fallback route', () => {
   });
 });
 
+describe('the history a user may read', () => {
+  /**
+   * The rule Docs has always had, now expressed as a permission: a user sees the
+   * document's history from the moment they were given access to it, and no
+   * further back. yhub clamps every changeset/activity read up to this, so the
+   * bound is enforced on the server and the client never has to know it.
+   */
+  it('starts the ray where the user got access', () => {
+    for (const who of [reader, editor]) {
+      assert.equal(grants(who, { history: { from: ACCESS_SINCE } }), true);
+    }
+  });
+
+  it('does not reach back before that', () => {
+    // a requirement asking for a wider ray than the grant is not contained in it
+    for (const who of [reader, editor]) {
+      assert.equal(grants(who, { history: { from: ACCESS_SINCE - 1 } }), false);
+      assert.equal(grants(who, { history: { from: 0 } }), false);
+    }
+  });
+
+  it('opens the timeline and one point in it, read only', () => {
+    for (const who of [reader, editor]) {
+      for (const name of ['activity', 'changeset']) {
+        assert.equal(grants(who, { endpoint: { [name]: '-r--' } }), true);
+        // GET only: neither endpoint has another verb, and granting one would
+        // be granting a route that does not exist
+        assert.equal(grants(who, { endpoint: { [name]: '--u-' } }), false);
+      }
+    }
+  });
+
+  it('never grants the full ray, which is what would unlock gc=false', () => {
+    // `gc=false` demands `history.from === 0` exactly. A real access date is
+    // ~1.8e12, so this can only regress through a bug — assert on the object
+    // rather than through `hasPermissions`, because it is the literal value
+    // that matters here
+    for (const who of [reader, editor]) {
+      assert.notEqual(who.history, false);
+      assert.ok(who.history.from > 0);
+    }
+  });
+
+  it('never grants rollback or prune', () => {
+    // destructive, granted by name, and restoring a version is not something
+    // this grant does
+    for (const who of [reader, editor]) {
+      assert.equal(
+        grants(who, { history: { from: ACCESS_SINCE, rollback: true } }),
+        false,
+      );
+      assert.equal(
+        grants(who, { history: { from: ACCESS_SINCE, prune: true } }),
+        false,
+      );
+      assert.equal(grants(who, { endpoint: { rollback: 'c---' } }), false);
+      assert.equal(grants(who, { endpoint: { prune: 'c---' } }), false);
+    }
+  });
+});
+
+describe('a reader who holds no access, only the link', () => {
+  /**
+   * There is no access row and so no date. The backend has always refused these
+   * users their version history for exactly that reason — "we wouldn't know from
+   * which date to allow them anyway" — and the grant says the same thing by
+   * withholding the facet.
+   */
+  it('gets no history at all', () => {
+    for (const who of [linkReader, linkEditor]) {
+      assert.equal(who.history, false);
+      assert.equal(grants(who, { history: { from: 0 } }), false);
+      assert.equal(grants(who, { history: { from: ACCESS_SINCE } }), false);
+    }
+  });
+
+  it('cannot reach the timeline either', () => {
+    // withheld together with the ray: without it these two answer 403 on their
+    // own, so granting them would open nothing and only muddy the grant
+    for (const who of [linkReader, linkEditor]) {
+      for (const name of ['activity', 'changeset']) {
+        assert.equal(grants(who, { endpoint: { [name]: '-r--' } }), false);
+      }
+    }
+  });
+
+  it('still reads and syncs the document like anyone else', () => {
+    assert.equal(grants(linkReader, { ydoc: '-r--' }), true);
+    assert.equal(grants(linkEditor, { ydoc: '--u-' }), true);
+    assert.equal(grants(linkEditor, { endpoint: { ws: '--u-' } }), true);
+  });
+});
+
 describe('everything the browser must not reach', () => {
   // there is no '*' fallback in the browser grant, so an endpoint yhub adds in
   // a future release is denied until it is named — this is the property that
   // replaced 0.7's `purpose != null` check
   for (const name of [
-    'activity',
-    'changeset',
     'rollback',
     'prune',
     'create-ydoc',
@@ -108,10 +213,6 @@ describe('everything the browser must not reach', () => {
       assert.equal(grants(editor, { endpoint: { [name]: 'c---' } }), false);
     });
   }
-
-  it('withholds history, which is what refuses a gc=false connection', () => {
-    assert.equal(grants(editor, { history: { from: 0 } }), false);
-  });
 });
 
 describe('the admin token', () => {

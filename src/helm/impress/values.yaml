@@ -127,8 +127,14 @@ ingressCollaborationApi:
   ##
   ## `jwks` is public on purpose: it carries the public halves of the keys
   ## yhub signs with, and nothing else.
+  ##
+  ## `activity` and `changeset` carry the editing history, bounded per user to
+  ## the moment they were given access to the document — a user who holds no
+  ## access on it, only its link, is refused both.
   paths:
     - /collaboration/ydoc/
+    - /collaboration/activity/
+    - /collaboration/changeset/
     - /collaboration/jwks/
   ## @param ingressCollaborationApi.hosts Additional host to configure for the Ingress
   hosts: []
