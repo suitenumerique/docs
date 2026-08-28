@@ -925,6 +925,44 @@ class DocumentQuerySet(MP_NodeQuerySet):
             user_roles=models.Value([], output_field=output_field),
         )
 
+    def annotate_user_access_since(self, user):
+        """
+        Annotate document queryset with the moment the current user gained access to the
+        document — the earliest access they hold on it or on one of its ancestors.
+
+        This is the point from which they may see the document's history: the collaboration
+        server turns it into a `history.from` permission, and the version endpoints filter on
+        it. `None` when the user reaches the document through its link reach alone, which is
+        not an access and carries no date — those users get no history at all, deliberately
+        (see the comment in `get_abilities`).
+        """
+        if user.is_authenticated:
+            # the same ancestor-aware subquery as `annotate_user_roles`: the access's document
+            # path is a prefix of this one's, so it matches the document and every ancestor
+            user_access_since_subquery = (
+                DocumentAccess.objects.filter(
+                    models.Q(user=user) | models.Q(team__in=user.teams),
+                    document__path=Left(
+                        models.OuterRef("path"), Length("document__path")
+                    ),
+                )
+                .order_by()
+                .values("user")
+                .annotate(min_created_at=models.Min("created_at"))
+                .values("min_created_at")
+            )
+
+            return self.annotate(
+                user_access_since=models.Subquery(
+                    user_access_since_subquery,
+                    output_field=models.DateTimeField(),
+                )
+            )
+
+        return self.annotate(
+            user_access_since=models.Value(None, output_field=models.DateTimeField()),
+        )
+
     def annotate_user_has_link_trace(self, user):
         """
         Annotate document queryset with a boolean to know if the current user
