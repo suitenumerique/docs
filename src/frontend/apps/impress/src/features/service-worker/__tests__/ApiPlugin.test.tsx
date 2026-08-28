@@ -139,60 +139,6 @@ describe('ApiPlugin', () => {
     });
   });
 
-  it(`calls requestWillFetch with type content and sets If-None-Match when etag is cached`, async () => {
-    const mockedSync = vi.fn().mockResolvedValue({});
-    const apiPlugin = new ApiPlugin({
-      type: 'content',
-      tableName: 'doc-content',
-      syncManager: { sync: () => mockedSync() } as any,
-    });
-
-    mockedGet.mockResolvedValue({
-      etag: '"abc123"',
-      lastModified: '',
-      content: 'hello',
-    });
-
-    const requestInit = {
-      request: new Request('http://test.jest/documents/123456/content/'),
-    } as any;
-
-    const request = await apiPlugin.requestWillFetch?.(requestInit);
-    expect(mockedGet).toHaveBeenCalledWith(
-      'doc-content',
-      'http://test.jest/documents/123456/content/',
-    );
-    expect(request?.headers.get('If-None-Match')).toBe('"abc123"');
-  });
-
-  it(`calls requestWillFetch with type content and sets If-Modified-Since when only lastModified is cached`, async () => {
-    const mockedSync = vi.fn().mockResolvedValue({});
-    const apiPlugin = new ApiPlugin({
-      type: 'content',
-      tableName: 'doc-content',
-      syncManager: { sync: () => mockedSync() } as SyncManager,
-    });
-
-    mockedGet.mockResolvedValue({
-      etag: '',
-      lastModified: 'Mon, 14 Apr 2026 00:00:00 GMT',
-      content: 'hello',
-    });
-
-    const requestInit = {
-      request: new Request('http://test.jest/documents/123456/content/'),
-    } as any;
-
-    const request = await apiPlugin.requestWillFetch?.(requestInit);
-    expect(mockedGet).toHaveBeenCalledWith(
-      'doc-content',
-      'http://test.jest/documents/123456/content/',
-    );
-    expect(request?.headers.get('If-Modified-Since')).toBe(
-      'Mon, 14 Apr 2026 00:00:00 GMT',
-    );
-  });
-
   it(`checks getApiCatchHandler`, async () => {
     const response = ApiPlugin.getApiCatchHandler();
     expect(await response.json()).toEqual({ error: 'Network is unavailable.' });
@@ -201,7 +147,6 @@ describe('ApiPlugin', () => {
   [
     { type: 'list', tableName: 'doc-list' },
     { type: 'item', tableName: 'doc-item' },
-    { type: 'content', tableName: 'doc-content' },
   ].forEach(({ type, tableName }) => {
     it(`checks handlerDidError with type ${type}`, async () => {
       const requestInit = {
@@ -299,72 +244,6 @@ describe('ApiPlugin', () => {
     expect(response?.status).toBe(200);
   });
 
-  it(`checks handlerDidError with type content-update`, async () => {
-    const requestInit = {
-      request: {
-        url: 'http://test.jest/documents/123456/content/',
-        clone: () => mockedClone(),
-        headers: new Headers({
-          'Content-Type': 'application/json',
-        }),
-        arrayBuffer: () =>
-          RequestSerializer.objectToArrayBuffer({
-            content: 'test',
-          }),
-        json: () => ({
-          content: 'test',
-        }),
-      } as unknown as Request,
-    } as any;
-
-    const mockedClone = vi.fn().mockReturnValue(requestInit.request);
-
-    const mockedSync = vi.fn().mockResolvedValue({});
-    const apiPlugin = new ApiPlugin({
-      type: 'content-update',
-      syncManager: {
-        sync: () => mockedSync(),
-      } as any,
-    });
-
-    mockedGet.mockResolvedValue({
-      etag: '',
-      lastModified: '',
-      content: '',
-    });
-
-    await apiPlugin.requestWillFetch?.(requestInit);
-    await apiPlugin.fetchDidFail?.({} as any);
-    const response = await apiPlugin.handlerDidError?.(requestInit);
-    expect(mockedGet).toHaveBeenCalledWith(
-      'doc-content',
-      'http://test.jest/documents/123456/content/',
-    );
-
-    expect(mockedPut).toHaveBeenCalledWith(
-      'doc-mutation',
-      expect.objectContaining({
-        key: expect.any(String),
-        requestData: expect.objectContaining({
-          url: 'http://test.jest/documents/123456/content/',
-          headers: {
-            'content-type': 'application/json',
-          },
-        }),
-      }),
-      expect.any(String),
-    );
-    expect(mockedPut).toHaveBeenCalledWith(
-      'doc-content',
-      { etag: '', lastModified: '', content: 'test' },
-      'http://test.jest/documents/123456/content/',
-    );
-
-    expect(mockedPut).toHaveBeenCalledTimes(2);
-    expect(mockedClose).toHaveBeenCalled();
-    expect(response?.status).toBe(204);
-  });
-
   it(`checks handlerDidError with type delete`, async () => {
     const requestInit = {
       request: {
@@ -413,10 +292,6 @@ describe('ApiPlugin', () => {
     expect(mockedDelete).toHaveBeenCalledWith(
       'doc-item',
       'http://test.jest/documents/123456/',
-    );
-    expect(mockedDelete).toHaveBeenCalledWith(
-      'doc-content',
-      'http://test.jest/documents/123456/content/',
     );
     expect(mockedGetAllKeys).toHaveBeenCalledWith('doc-list');
     expect(mockedGet).toHaveBeenCalledWith(
@@ -510,15 +385,6 @@ describe('ApiPlugin', () => {
       'http://test.jest/documents/444555/',
     );
     expect(mockedPut).toHaveBeenCalledWith(
-      'doc-content',
-      expect.objectContaining({
-        content: '',
-        etag: '',
-        lastModified: '',
-      }),
-      'http://test.jest/documents/444555/content/',
-    );
-    expect(mockedPut).toHaveBeenCalledWith(
       'doc-list',
       expect.objectContaining({
         results: expect.arrayContaining([
@@ -534,7 +400,8 @@ describe('ApiPlugin', () => {
       'doc-list',
       'http://test.jest/documents/?page=1',
     );
-    expect(mockedPut).toHaveBeenCalledTimes(4);
+    // doc-item, doc-list and the queued mutation — the doc-content entry is gone
+    expect(mockedPut).toHaveBeenCalledTimes(3);
     expect(mockedClose).toHaveBeenCalled();
     expect(response?.status).toBe(201);
   });
