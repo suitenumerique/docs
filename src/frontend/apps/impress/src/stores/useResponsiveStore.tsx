@@ -42,6 +42,8 @@ export const useResponsiveStore = create<UseResponsiveStore>((set) => ({
   screenWidth: initialState.screenWidth,
   setScreenSize: (size: ScreenSize) => set(() => ({ screenSize: size })),
   initializeResizeListener: () => {
+    let pendingResize = false;
+
     const resizeHandler = () => {
       const width = window.innerWidth;
       if (width < BREAKPOINTS.SMALL_MOBILE) {
@@ -89,10 +91,16 @@ export const useResponsiveStore = create<UseResponsiveStore>((set) => ({
 
     let resizeTimeout: ReturnType<typeof setTimeout> | undefined;
     const debouncedResizeHandler = () => {
+      if (pendingResize) {
+        return;
+      }
+
+      pendingResize = true;
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
         resizeHandler();
-      }, 300);
+        pendingResize = false;
+      }, 200);
     };
 
     window.addEventListener('resize', debouncedResizeHandler);
