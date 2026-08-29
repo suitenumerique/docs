@@ -1,6 +1,5 @@
 import { Tooltip } from '@gouvfr-lasuite/cunningham-react';
 import { t } from 'i18next';
-import { ComponentPropsWithoutRef, forwardRef } from 'react';
 
 import PublicSVG from '@/assets/icons/ui-kit/public.svg';
 import ProtedtedSVG from '@/assets/icons/ui-kit/vpn_lock.svg';
@@ -77,25 +76,13 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
           dateValue
         ) : (
           <Tooltip content={fullDate} placement="top">
-            <FocusableTime
-              dateTime={doc.updated_at}
-              aria-label={`${relativeOnly}. ${fullDate}`}
-            >
-              {relativeOnly}
-            </FocusableTime>
+            <time dateTime={doc.updated_at}>{relativeOnly}</time>
           </Tooltip>
         )}
       </Text>
     </Box>
   );
 };
-
-const FocusableTime = forwardRef<
-  HTMLTimeElement,
-  ComponentPropsWithoutRef<'time'>
->((props, ref) => <time {...props} ref={ref} tabIndex={0} />);
-
-FocusableTime.displayName = 'FocusableTime';
 
 const VisibilityDoc = ({ doc }: { doc: Doc }) => {
   const docIsPublic = getDocLinkReach(doc) === LinkReach.PUBLIC;

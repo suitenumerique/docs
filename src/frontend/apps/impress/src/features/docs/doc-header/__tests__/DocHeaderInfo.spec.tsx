@@ -55,28 +55,6 @@ describe('<DocHeaderInfo />', () => {
     vi.restoreAllMocks();
   });
 
-  it('keeps the relative date and exposes the full date on focus', async () => {
-    const user = userEvent.setup();
-
-    render(<DocHeaderInfo doc={doc} />, { wrapper: AppWrapper });
-
-    const relativeDate = screen.getByText('5 minutes ago');
-    expect(relativeDate).toHaveTextContent('5 minutes ago');
-    expect(relativeDate.tagName).toBe('TIME');
-    expect(relativeDate).toHaveAttribute('datetime', updatedAt);
-    expect(relativeDate).not.toHaveAttribute('role', 'button');
-    expect(relativeDate).toHaveAccessibleName(
-      '5 minutes ago. 08/14/2026, 02:23 PM',
-    );
-
-    await user.tab();
-
-    expect(relativeDate).toHaveFocus();
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(
-      '08/14/2026, 02:23 PM',
-    );
-  });
-
   it('uses the current locale for the relative and full dates', async () => {
     const user = userEvent.setup();
 
@@ -87,9 +65,9 @@ describe('<DocHeaderInfo />', () => {
     render(<DocHeaderInfo doc={doc} />, { wrapper: AppWrapper });
 
     const relativeDate = screen.getByText('il y a 5 minutes');
-    await user.tab();
+    fireEvent.pointerMove(relativeDate, { pointerType: 'mouse' });
+    await user.hover(relativeDate);
 
-    expect(relativeDate).toHaveFocus();
     expect(await screen.findByRole('tooltip')).toHaveTextContent(
       '14/08/2026 14:23',
     );
