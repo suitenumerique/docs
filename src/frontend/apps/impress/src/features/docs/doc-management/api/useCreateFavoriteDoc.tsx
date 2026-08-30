@@ -42,13 +42,13 @@ export function useCreateFavoriteDoc({
         });
       });
 
-      const message = t('Document pinned successfully!');
+      const message = t('Document starred successfully!');
       announce(message, 'polite');
 
       onSuccess?.();
     },
     onError: () => {
-      const message = t('Failed to pin the document.');
+      const message = t('Failed to star the document.');
       announce(message, 'assertive');
     },
   });

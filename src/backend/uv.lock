@@ -583,6 +583,20 @@ wheels = [
 ]
 
 [[package]]
+name = "django-silk"
+version = "5.5.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "gprof2dot" },
+    { name = "sqlparse" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/90/f4/e5f50497db9a3e59121237e3f74d6b2a2e5fc09ae0d242a659f3e0ca33c6/django_silk-5.5.2.tar.gz", hash = "sha256:c488ee1eab763a6f3d0db09a969e7a91b637743f04159cd8d10141386157ec0d", size = 4498731, upload-time = "2026-08-13T04:25:18.482Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ee/da/48607c4a756df4a3d37752006824004fe6ecb5e0a2b34864c97a9903ea08/django_silk-5.5.2-py3-none-any.whl", hash = "sha256:6f11ae724699192bdda247513aa40160fd5e7e3de3083ec307b7151d801d1d51", size = 1945106, upload-time = "2026-08-13T04:25:29.316Z" },
+]
+
+[[package]]
 name = "django-storages"
 version = "1.14.6"
 source = { registry = "https://pypi.org/simple" }
@@ -808,6 +822,15 @@ wheels = [
 ]
 
 [[package]]
+name = "gprof2dot"
+version = "2025.4.14"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bb/fd/cad13fa1f7a463a607176432c4affa33ea162f02f58cc36de1d40d3e6b48/gprof2dot-2025.4.14.tar.gz", hash = "sha256:35743e2d2ca027bf48fa7cba37021aaf4a27beeae1ae8e05a50b55f1f921a6ce", size = 39536, upload-time = "2025-04-14T07:21:45.76Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/71/ed/89d760cb25279109b89eb52975a7b5479700d3114a2421ce735bfb2e7513/gprof2dot-2025.4.14-py3-none-any.whl", hash = "sha256:0742e4c0b4409a5e8777e739388a11e1ed3750be86895655312ea7c20bd0090e", size = 37555, upload-time = "2025-04-14T07:21:43.319Z" },
+]
+
+[[package]]
 name = "griffelib"
 version = "2.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -925,7 +948,7 @@ wheels = [
 
 [[package]]
 name = "impress"
-version = "5.4.1"
+version = "5.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -942,6 +965,7 @@ dependencies = [
     { name = "django-lasuite", extra = ["all"] },
     { name = "django-parler" },
     { name = "django-redis" },
+    { name = "django-silk" },
     { name = "django-storages", extra = ["s3"] },
     { name = "django-timezone-field" },
     { name = "django-treebeard" },
@@ -1013,6 +1037,7 @@ requires-dist = [
     { name = "django-lasuite", extras = ["all"], specifier = "==0.0.27" },
     { name = "django-parler", specifier = "==2.4" },
     { name = "django-redis", specifier = "==7.0.0" },
+    { name = "django-silk", specifier = "==5.5.2" },
     { name = "django-storages", extras = ["s3"], specifier = "==1.14.6" },
     { name = "django-test-migrations", marker = "extra == 'dev'", specifier = "==1.5.0" },
     { name = "django-timezone-field", specifier = ">=5.1" },

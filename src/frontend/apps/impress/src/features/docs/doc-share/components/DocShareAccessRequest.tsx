@@ -3,7 +3,7 @@ import {
   ButtonProps,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+} from '@gouvfr-lasuite/ui-components';
 import { MouseEventHandler, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';

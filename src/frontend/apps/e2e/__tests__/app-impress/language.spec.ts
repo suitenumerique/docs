@@ -57,12 +57,12 @@ test.describe('Language', () => {
     // Switch to German using the utility function for consistency
     await waitForLanguageSwitch(page, TestLanguage.German, 'Menu utilisateur');
 
-    await page.getByLabel('User menu').click();
+    await page.getByLabel('Benutzermenü öffnen').click();
     await expect(
       page.getByRole('button', { name: 'Language: Deutsch' }),
     ).toBeVisible();
 
-    await expect(page.getByText('Logout', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Abmelden' })).toBeVisible();
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'de');
   });

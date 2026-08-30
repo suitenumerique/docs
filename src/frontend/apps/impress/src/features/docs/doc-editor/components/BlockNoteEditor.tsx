@@ -18,6 +18,7 @@ import {
   useCreateBlockNote,
 } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
+import { FindAndReplace } from '@tiptap/extension-find-and-replace';
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +33,7 @@ import {
   useCommentSidebarStore,
   useComments,
 } from '@/docs/doc-comments';
+import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
 import { Doc } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
@@ -41,6 +43,7 @@ import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
 import {
   useHeadings,
   useSaveDoc,
+  useScrollToBlockAnchor,
   useShortcuts,
   useUploadFile,
   useUploadStatus,
@@ -51,9 +54,9 @@ import { DocsBlockNoteEditor } from '../types';
 import { randomColor, sanitizeColor } from '../utils';
 
 import BlockNoteAI from './AI';
-import { BlockNoteSideMenu } from './BlockNoteSideMenu';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
+import { DocsSideMenu } from './DocsSideMenu/DocsSideMenu';
 import { CalloutBlock, PdfBlock, UploadLoaderBlock } from './custom-blocks';
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
@@ -233,6 +236,13 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         CommentsExtension({ threadStore, resolveUsers }),
         ...(aiExtension ? [aiExtension] : []),
       ],
+      _tiptapOptions: {
+        extensions: [
+          FindAndReplace.configure({
+            injectCSS: false,
+          }),
+        ],
+      },
       visualMedia: {
         image: {
           maxWidth: 760,
@@ -267,6 +277,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   useUploadStatus(editor);
 
+  useScrollToBlockAnchor();
+
   useEffect(() => {
     setEditor(editor);
 
@@ -282,6 +294,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         canSeeComment={canSeeComment}
         currentUserAvatarUrl={currentUserAvatarUrl}
       />
+      <DocsFindReplaceStyle />
       {errorAttachment && (
         <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
           <TextErrors
@@ -308,7 +321,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         )}
         <BlockNoteSuggestionMenu aiAllowed={aiBlockNoteAllowed} />
         <BlockNoteToolbar aiAllowed={aiBlockNoteAllowed} />
-        <BlockNoteSideMenu />
+        <DocsSideMenu />
         {showComments && <FloatingComposerController />}
         {showComments && !isCommentSideBarOpen && <FloatingThreadController />}
         {threadsSidebarTarget &&

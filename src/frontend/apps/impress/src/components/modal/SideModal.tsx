@@ -2,7 +2,7 @@ import {
   Modal,
   ModalDefaultVariantProps,
   ModalSize,
-} from '@gouvfr-lasuite/cunningham-react';
+} from '@gouvfr-lasuite/ui-components';
 import { PropsWithChildren } from 'react';
 import { createGlobalStyle } from 'styled-components';
 

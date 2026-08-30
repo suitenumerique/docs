@@ -3,6 +3,7 @@ import { Box, BoxType } from '../Box';
 export const HorizontalSeparator = (props: BoxType) => {
   return (
     <Box
+      role="separator"
       $height="1px"
       $width="100%"
       $margin={{ vertical: 'base' }}

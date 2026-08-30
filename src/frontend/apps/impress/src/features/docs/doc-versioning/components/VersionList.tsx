@@ -1,4 +1,4 @@
-import { Loader } from '@gouvfr-lasuite/cunningham-react';
+import { Loader } from '@gouvfr-lasuite/ui-components';
 import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
 

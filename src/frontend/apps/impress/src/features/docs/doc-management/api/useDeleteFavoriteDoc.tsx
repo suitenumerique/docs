@@ -42,13 +42,13 @@ export function useDeleteFavoriteDoc({
         });
       });
 
-      const message = t('Document unpinned successfully!');
+      const message = t('Document unstarred successfully!');
       announce(message, 'polite');
 
       onSuccess?.();
     },
     onError: () => {
-      const message = t('Failed to unpin the document.');
+      const message = t('Failed to unstar the document.');
       announce(message, 'assertive');
     },
   });

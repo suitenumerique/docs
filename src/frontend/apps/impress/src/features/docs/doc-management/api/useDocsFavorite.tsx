@@ -9,10 +9,11 @@ import {
   useAPIInfiniteQuery,
 } from '@/api';
 
-import { Doc } from '../types';
+import { Doc, DocsOrdering } from '../types';
 
 export type DocsFavoriteParams = {
   page: number;
+  ordering?: DocsOrdering;
 };
 
 export type DocsFavoriteResponse = APIList<Doc>;
@@ -24,7 +25,9 @@ export const getDocsFavorite = async (
   if (params.page) {
     searchParams.set('page', params.page.toString());
   }
-
+  if (params.ordering) {
+    searchParams.set('ordering', params.ordering);
+  }
   const response = await fetchAPI(
     `documents/favorite_list/?${searchParams.toString()}`,
   );

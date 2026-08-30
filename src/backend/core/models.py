@@ -14,6 +14,7 @@ from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.files.base import ContentFile
@@ -986,6 +987,11 @@ class Document(MP_Node, BaseModel):
         ordering = ("path",)
         verbose_name = _("Document")
         verbose_name_plural = _("Documents")
+        indexes = [
+            # Used by media-auth to find the document(s) holding an attachment
+            # key without scanning the table (attachments @> [key]).
+            GinIndex(fields=["attachments"], name="document_attachments_gin"),
+        ]
         constraints = [
             models.CheckConstraint(
                 condition=(

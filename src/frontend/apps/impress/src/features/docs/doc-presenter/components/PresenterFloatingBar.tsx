@@ -1,5 +1,8 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
-import { DropdownMenu, DropdownMenuItem } from '@gouvfr-lasuite/ui-kit';
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuItem,
+} from '@gouvfr-lasuite/ui-components';
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,7 +11,7 @@ import {
   Minimize,
   Share,
   XMark,
-} from '@gouvfr-lasuite/ui-kit/icons';
+} from '@gouvfr-lasuite/ui-components/icons';
 import { MouseEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';

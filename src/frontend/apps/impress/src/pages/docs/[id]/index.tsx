@@ -1,4 +1,4 @@
-import { TreeProvider } from '@gouvfr-lasuite/ui-kit';
+import { TreeProvider } from '@gouvfr-lasuite/ui-components';
 import { useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';

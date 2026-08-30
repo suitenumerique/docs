@@ -1,7 +1,4 @@
-import {
-  VariantType,
-  useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import {
   UseMutationOptions,
   useMutation,
@@ -91,7 +88,6 @@ export function useImportDoc(props?: UseImportDocOptions) {
               KEY_LIST_DOC,
               {
                 page: 1,
-                ordering: undefined,
                 is_creator_me: isCreatorMe,
                 title: undefined,
                 is_favorite: undefined,

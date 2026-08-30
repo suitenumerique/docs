@@ -112,29 +112,35 @@ test.describe('Document grid item options', () => {
     ).toBeVisible();
   });
 
-  test('it pins a document', async ({ page, browserName }) => {
+  test('it stars a document', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, `Favorite doc`, browserName);
+    const [docTitle2] = await createDoc(page, `Not Favorite doc`, browserName);
 
-    await page.goto('/');
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
 
     const row = await getGridRow(page, docTitle);
 
-    // Pin
+    // Star
     await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-    await page.getByRole('menuitem', { name: 'Pin' }).click();
+    await page.getByRole('menuitem', { name: 'Star' }).click();
 
-    // Check is pinned
-    await expect(row.getByTestId('doc-pinned-icon')).toBeVisible();
-    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
+    // Check is starred
+    await expect(row.getByText(/This document is starred/)).toBeVisible();
+    await expect(page.getByText(docTitle2)).toBeVisible();
 
-    // Unpin
+    await page.getByRole('link', { name: 'Starred', exact: true }).click();
+    await expect(row.getByText(/This document is starred/)).toBeVisible();
+    await expect(page.getByText(docTitle2)).toBeHidden();
+
+    // Unstar
     await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-    await page.getByText('Unpin').click();
+    await page.getByText('Unstar').click();
+    await expect(row).toBeHidden();
 
-    // Check is unpinned
-    await expect(row.getByTestId('doc-pinned-icon')).toBeHidden();
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
+    // Check is unstarred
+    await page.getByRole('link', { name: 'Recent', exact: true }).click();
+    await expect(row).toBeVisible();
+    await expect(row.getByText(/This document is starred/)).toBeHidden();
   });
 
   test('it deletes the document', async ({ page, browserName }) => {
@@ -148,13 +154,6 @@ test.describe('Document grid item options', () => {
     const row = await getGridRow(page, docTitle);
 
     await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-    await page.getByRole('menuitem', { name: 'Pin' }).click();
-
-    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
-
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-
     await page.getByRole('menuitem', { name: 'Delete' }).click();
 
     await expect(
@@ -174,7 +173,6 @@ test.describe('Document grid item options', () => {
     await expect(
       page.getByLabel('Documents grid').getByText(docTitle),
     ).toBeHidden();
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
   });
 
   test('it checks the leave feature', async ({ page, browserName }) => {
@@ -308,34 +306,6 @@ test.describe('Documents filters', () => {
 });
 
 test.describe('Documents Grid', () => {
-  test('checks all the elements are visible', async ({ page }) => {
-    void page.goto('/');
-
-    let docs: SmallDoc[];
-    const response = await page.waitForResponse(
-      (response) =>
-        response.url().endsWith('documents/?page=1') &&
-        response.status() === 200,
-    );
-    const result = await response.json();
-    docs = result.results as SmallDoc[];
-
-    await expect(page.getByTestId('grid-loader')).toBeHidden();
-    await expect(page.locator('h2').getByText('All docs')).toBeVisible();
-
-    const thead = page.getByTestId('docs-grid-header');
-    await expect(thead.getByText(/Name/i)).toBeVisible();
-    await expect(thead.getByText(/Updated at/i)).toBeVisible();
-
-    await Promise.all(
-      docs.map(async (doc) => {
-        await expect(
-          page.getByTestId(`docs-grid-name-${doc.id}`),
-        ).toBeVisible();
-      }),
-    );
-  });
-
   test('opens a document with keyboard (Tab + Enter)', async ({
     page,
     browserName,
@@ -363,14 +333,14 @@ test.describe('Documents Grid', () => {
     let docs: SmallDoc[];
     const responsePromisePage1 = page.waitForResponse((response) => {
       return (
-        response.url().endsWith(`/documents/?page=1`) &&
+        response.url().endsWith(`/documents/?page=1&ordering=-updated_at`) &&
         response.status() === 200
       );
     });
 
     const responsePromisePage2 = page.waitForResponse(
       (response) =>
-        response.url().endsWith(`/documents/?page=2`) &&
+        response.url().endsWith(`/documents/?page=2&ordering=-updated_at`) &&
         response.status() === 200,
     );
 
@@ -399,5 +369,47 @@ test.describe('Documents Grid', () => {
         ).toBeVisible();
       }),
     );
+  });
+
+  test('it checks the sorting feature', async ({ page, browserName }) => {
+    await page.goto('/');
+
+    const [docA] = await createDoc(page, 'a-sorting-feat-aaa', browserName);
+    const [docB] = await createDoc(page, 'b-sorting-feat-bbb', browserName);
+    const [docZ] = await createDoc(page, 'z-sorting-feat-zzz', browserName);
+
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+
+    const rowFilter = (text: string) =>
+      page.getByTestId('docs-grid').getByRole('listitem').filter({
+        hasText: text,
+      });
+
+    const row = rowFilter('sorting-feat');
+
+    // By default, the documents are sorted by descending order (last modified first)
+    await expect(row.nth(0).getByTestId('doc-title')).toHaveText(docZ);
+    await expect(row.nth(1).getByTestId('doc-title')).toHaveText(docB);
+    await expect(row.nth(2).getByTestId('doc-title')).toHaveText(docA);
+
+    // Sort by ascending order - should be empty
+    await page
+      .getByRole('button', { name: 'Sorted documents by Last modified' })
+      .click();
+    await expect(row).toHaveCount(0);
+
+    // Sort by title ascending
+    await page.getByRole('button', { name: 'Sort documents by Name' }).click();
+    await expect(rowFilter(docA)).toHaveCount(1);
+    await expect(rowFilter(docB)).toHaveCount(1);
+    await expect(rowFilter(docZ)).toHaveCount(0);
+
+    // Sort by title descending
+    await page
+      .getByRole('button', { name: 'Sorted documents by Name' })
+      .click();
+    await expect(rowFilter(docZ)).toHaveCount(1);
+    await expect(rowFilter(docA)).toHaveCount(0);
+    await expect(rowFilter(docB)).toHaveCount(0);
   });
 });

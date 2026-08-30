@@ -831,13 +831,485 @@
   --c--contextuals--border--semantic--disabled--primary: var(
     --c--globals--colors--gray-100
   );
-  --c--components--modal--width-small: 342px;
-  --c--components--tooltip--padding: 4px 8px;
-  --c--components--button--medium-height: 40px;
-  --c--components--button--medium-text-height: 40px;
+  --c--components--alert--background-color: var(
+    --c--contextuals--background--semantic--neutral--tertiary
+  );
+  --c--components--alert--border-radius: 4px;
+  --c--components--alert--border-color: var(
+    --c--contextuals--border--semantic--neutral--primary
+  );
+  --c--components--alert--border-left-color: var(
+    --c--contextuals--border--semantic--neutral--primary
+  );
+  --c--components--alert--font-weight: var(--c--globals--font--weights--medium);
+  --c--components--alert--color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--alert--icon-size: 19px;
+  --c--components--alert--additional-font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--alert--additional-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
   --c--components--button--border-radius: 4px;
   --c--components--button--border-radius--active: 4px;
   --c--components--button--border-radius--focus: 4px;
+  --c--components--button--medium-text-height: 40px;
+  --c--components--button--medium-height: 40px;
+  --c--components--button--small-height: 32px;
+  --c--components--button--nano-height: 24px;
+  --c--components--button--medium-font-size: var(--c--globals--font--sizes--md);
+  --c--components--button--medium-icon-font-size: 1.5rem;
+  --c--components--button--small-font-size: var(--c--globals--font--sizes--sm);
+  --c--components--button--small-icon-font-size: var(
+    --c--globals--font--sizes--md
+  );
+  --c--components--button--nano-font-size: var(--c--globals--font--sizes--xs);
+  --c--components--button--nano-icon-font-size: var(
+    --c--globals--font--sizes--md
+  );
+  --c--components--button--font-weight: var(
+    --c--globals--font--weights--medium
+  );
+  --c--components--button--font-family: var(--c--globals--font--families--base);
+  --c--components--calendar--background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--calendar--border-radius: 8px;
+  --c--components--calendar--padding: 8px;
+  --c--components--calendar--cell-size: 32px;
+  --c--components--calendar--cell-border-radius: 4px;
+  --c--components--calendar--cell-font-size: var(--c--globals--font--sizes--xs);
+  --c--components--calendar--header-font-size: var(
+    --c--globals--font--sizes--xs
+  );
+  --c--components--calendar--date-past-color: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--calendar--date-today-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--calendar--date-today-border-color: var(
+    --c--contextuals--border--semantic--neutral--secondary
+  );
+  --c--components--calendar--date-future-color: var(
+    --c--contextuals--content--semantic--neutral--secondary
+  );
+  --c--components--calendar--date-selected-bg: var(
+    --c--contextuals--background--semantic--brand--primary
+  );
+  --c--components--calendar--date-selected-color: var(
+    --c--contextuals--content--semantic--brand--on-brand
+  );
+  --c--components--calendar--range-middle-bg: var(
+    --c--contextuals--background--semantic--brand--tertiary
+  );
+  --c--components--calendar--range-middle-color: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--calendar--range-middle-bg--disabled: var(
+    --c--contextuals--background--semantic--neutral--tertiary
+  );
+  --c--components--calendar--menu-background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--calendar--menu-border-radius: 8px;
+  --c--components--calendar--menu-item-height: 32px;
+  --c--components--calendar--menu-item-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--calendar--menu-item-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--calendar--menu-item-background-color--hover: var(
+    --c--contextuals--background--semantic--neutral--tertiary-hover
+  );
+  --c--components--calendar--menu-item-background-color--selected: var(
+    --c--contextuals--background--semantic--brand--tertiary
+  );
+  --c--components--forms-checkbox--background-color--hover: var(
+    --c--contextuals--background--semantic--neutral--tertiary-hover
+  );
+  --c--components--forms-checkbox--background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--forms-checkbox--font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-checkbox--font-weight: var(
+    --c--globals--font--weights--medium
+  );
+  --c--components--forms-checkbox--color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-checkbox--border-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-checkbox--border-color--hover: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-checkbox--border-color--focus: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--forms-checkbox--border-radius: 2px;
+  --c--components--forms-checkbox--border-width: 1.5px;
+  --c--components--forms-checkbox--border-width--hover: 1px;
+  --c--components--forms-checkbox--accent-color: var(
+    --c--contextuals--content--semantic--brand--tertiary
+  );
+  --c--components--forms-checkbox--accent-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-checkbox--checkmark-color: var(
+    --c--contextuals--content--semantic--contextual--primary
+  );
+  --c--components--forms-checkbox--size: 1.5rem;
+  --c--components--forms-datepicker--border-color: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-datepicker--border-color--disabled: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-datepicker--border-color--focus: var(
+    --c--contextuals--border--semantic--brand--primary
+  );
+  --c--components--forms-datepicker--border-color--hover: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-datepicker--border-radius: 4px;
+  --c--components--forms-datepicker--border-radius--focus: 4px;
+  --c--components--forms-datepicker--border-radius--hover: 4px;
+  --c--components--forms-datepicker--border-style: solid;
+  --c--components--forms-datepicker--border-width: 1px;
+  --c--components--forms-datepicker--border-width--focus: 1px;
+  --c--components--forms-datepicker--border-width--hover: 1px;
+  --c--components--forms-datepicker--value-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-datepicker--value-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-datepicker--font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-datepicker--height: 3.5rem;
+  --c--components--forms-datepicker--background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--forms-datepicker--label-color--focus: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--forms-field--width: 292px;
+  --c--components--forms-field--font-size: var(--c--globals--font--sizes--s);
+  --c--components--forms-field--color: var(
+    --c--contextuals--content--semantic--neutral--secondary
+  );
+  --c--components--forms-field--color--error: var(
+    --c--contextuals--content--semantic--error--secondary
+  );
+  --c--components--forms-field--color--success: var(
+    --c--contextuals--content--semantic--success--secondary
+  );
+  --c--components--forms-field--color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-field--inline-label-width: max-content;
+  --c--components--forms-field--inline-column-gap: var(
+    --c--globals--spacings--xs
+  );
+  --c--components--forms-field--inline-row-gap: var(
+    --c--globals--spacings--3xs
+  );
+  --c--components--forms-field--label-description-gap: var(
+    --c--globals--spacings--4xs
+  );
+  --c--components--forms-field--label-description-font-size: var(
+    --c--globals--font--sizes--s
+  );
+  --c--components--forms-field--label-description-font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--forms-field--label-description-line-height: 1rem;
+  --c--components--forms-field--label-description-color: var(
+    --c--contextuals--content--semantic--neutral--secondary
+  );
+  --c--components--forms-field--label-description-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-input--font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--forms-input--font-size: var(--c--globals--font--sizes--sm);
+  --c--components--forms-input--border-radius: 4px;
+  --c--components--forms-input--border-radius--hover: 4px;
+  --c--components--forms-input--border-radius--focus: 4px;
+  --c--components--forms-input--border-width: 1px;
+  --c--components--forms-input--border-width--hover: 1px;
+  --c--components--forms-input--border-width--focus: 1px;
+  --c--components--forms-input--border-color: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-input--border-color--hover: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-input--border-color--focus: var(
+    --c--contextuals--border--semantic--brand--primary
+  );
+  --c--components--forms-input--border-style: solid;
+  --c--components--forms-input--placeholder-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-input--label-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-input--label-color--focus: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--forms-input--background-color: var(
+    --c--contextuals--background--surface--secondary
+  );
+  --c--components--forms-input--value-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-input--value-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-input--inline-min-height: 40px;
+  --c--components--forms-input--inline-border-radius: var(
+    --c--globals--spacings--xxxs
+  );
+  --c--components--forms-input--inline-padding-block: var(
+    --c--globals--spacings--xxs
+  );
+  --c--components--forms-input--inline-padding-inline: var(
+    --c--globals--spacings--xs
+  );
+  --c--components--forms-input--inline-background-color--disabled: var(
+    --c--contextuals--background--semantic--disabled--secondary
+  );
+  --c--components--forms-input--inline-border-color--disabled: var(
+    --c--contextuals--border--semantic--disabled--primary
+  );
+  --c--components--forms-labelledbox--label-color--small: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-labelledbox--label-color--big: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-labelledbox--label-color--small--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-labelledbox--label-color--big--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-labelledbox--classic-label-margin-bottom: var(
+    --c--globals--spacings--xs
+  );
+  --c--components--forms-labelledbox--classic-label-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-labelledbox--classic-label-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-labelledbox--classic-label-font-weight: var(
+    --c--globals--font--weights--medium
+  );
+  --c--components--forms-labelledbox--classic-label-line-height: 1.125rem;
+  --c--components--forms-select--border-color: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-select--border-color--focus: var(
+    --c--contextuals--border--semantic--brand--primary
+  );
+  --c--components--forms-select--border-color--hover: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-select--border-radius: 4px;
+  --c--components--forms-select--border-radius--focus: 4px;
+  --c--components--forms-select--border-radius--hover: 4px;
+  --c--components--forms-select--border-style: solid;
+  --c--components--forms-select--border-width: 1px;
+  --c--components--forms-select--border-width--focus: 1px;
+  --c--components--forms-select--border-width--hover: 1px;
+  --c--components--forms-select--value-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-select--value-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-select--font-size: var(--c--globals--font--sizes--sm);
+  --c--components--forms-select--height: 3.5rem;
+  --c--components--forms-select--item-background-color--hover: var(
+    --c--contextuals--background--semantic--overlay--primary
+  );
+  --c--components--forms-select--item-background-color--selected: var(
+    --c--contextuals--background--semantic--brand--secondary
+  );
+  --c--components--forms-select--item-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-select--item-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--secondary
+  );
+  --c--components--forms-select--item-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-select--background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--forms-select--menu-background-color: var(
+    --c--contextuals--background--surface--secondary
+  );
+  --c--components--forms-select--label-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-select--label-color--focus: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--forms-select--multi-pill-background-color: var(
+    --c--contextuals--background--semantic--neutral--tertiary
+  );
+  --c--components--forms-select--multi-pill-border-radius: 2px;
+  --c--components--forms-select--multi-pill-max-width: 68%;
+  --c--components--forms-select--multi-pill-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-select--placeholder-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-switch--accent-color: var(
+    --c--contextuals--content--semantic--brand--tertiary
+  );
+  --c--components--forms-switch--rail-background-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-switch--rail-background-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-switch--rail-border-radius: 50vw;
+  --c--components--forms-switch--handle-background-color: var(
+    --c--contextuals--content--semantic--contextual--primary
+  );
+  --c--components--forms-switch--handle-background-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--secondary
+  );
+  --c--components--forms-switch--handle-border-radius: 50%;
+  --c--components--forms-textarea--font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--forms-textarea--font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-textarea--border-radius: 4px;
+  --c--components--forms-textarea--border-radius--hover: 4px;
+  --c--components--forms-textarea--border-radius--focus: 4px;
+  --c--components--forms-textarea--border-width: 1px;
+  --c--components--forms-textarea--border-width--hover: 1px;
+  --c--components--forms-textarea--border-width--focus: 1px;
+  --c--components--forms-textarea--border-color: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-textarea--border-color--hover: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-textarea--border-color--focus: var(
+    --c--contextuals--border--semantic--brand--primary
+  );
+  --c--components--forms-textarea--border-color--disabled: var(
+    --c--contextuals--border--semantic--disabled--primary
+  );
+  --c--components--forms-textarea--border-style: solid;
+  --c--components--forms-textarea--label-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-textarea--label-color--focus: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--forms-textarea--background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--forms-textarea--value-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-textarea--value-color--disabled: var(
+    --c--contextuals--content--semantic--neutral--secondary
+  );
+  --c--components--forms-textarea--placeholder-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--modal--background-color: var(
+    --c--contextuals--background--surface--secondary
+  );
+  --c--components--modal--backdrop-color: #0009;
+  --c--components--modal--border-radius: 8px;
+  --c--components--modal--border-color: var(
+    --c--contextuals--border--surface--primary
+  );
+  --c--components--modal--box-shadow: 0 6px 20px 0 rgb(0 0 18 / 10%);
+  --c--components--modal--color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--modal--title-font-weight: var(
+    --c--globals--font--weights--bold
+  );
+  --c--components--modal--compact-title-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--modal--content-font-size: var(--c--globals--font--sizes--sm);
+  --c--components--modal--content-font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--modal--content-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--modal--width-small: 342px;
+  --c--components--modal--width-medium: 600px;
+  --c--components--modal--width-large: 800px;
+  --c--components--modal--width-extra-large: 75%;
+  --c--components--modal--tab-sidebar-width: 200px;
+  --c--components--modal--tab-sidebar-background-color: var(
+    --c--contextuals--background--surface--tertiary
+  );
+  --c--components--modal--tab-item-height: 32px;
+  --c--components--modal--tab-item-border-radius: 4px;
+  --c--components--modal--tab-item-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--modal--tab-item-font-weight: var(
+    --c--globals--font--weights--medium
+  );
+  --c--components--modal--tab-item-font-weight--active: var(
+    --c--globals--font--weights--bold
+  );
+  --c--components--modal--tab-item-active-background-color: rgb(24 27 36 / 5%);
+  --c--components--modal--tab-item-hover-background-color: rgb(24 27 36 / 3%);
+  --c--components--toast--slide-in-duration: 1000ms;
+  --c--components--toast--slide-out-duration: 300ms;
+  --c--components--toast--background-color: var(
+    --c--contextuals--background--semantic--neutral--tertiary
+  );
+  --c--components--toast--color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--toast--font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--toast--icon-size: 19px;
+  --c--components--toast--progress-bar-height: 3px;
+  --c--components--tooltip--border-radius: 0.5rem;
+  --c--components--tooltip--background-color: var(
+    --c--contextuals--background--semantic--neutral--tertiary
+  );
+  --c--components--tooltip--border-color: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--tooltip--color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--tooltip--font-size: var(--c--globals--font--sizes--s);
+  --c--components--tooltip--padding: 4px 8px;
+  --c--components--tooltip--max-width: 150px;
   --c--components--resize-handle--hover--color: var(
     --c--contextuals--border--surface--primary
   );
@@ -849,24 +1321,6 @@
   --c--components--datagrid--body--background-color-hover: var(
     --c--contextuals--background--semantic--neutral--tertiary
   );
-  --c--components--forms-fileuploader--border-style: solid;
-  --c--components--forms-fileuploader--border-radius: 4px;
-  --c--components--forms-fileuploader--border-width: 1px;
-  --c--components--forms-checkbox--font-size: var(
-    --c--globals--font--sizes--sm
-  );
-  --c--components--forms-input--border-radius: 4px;
-  --c--components--forms-input--border-radius--hover: 4px;
-  --c--components--forms-input--border-radius--focus: 4px;
-  --c--components--forms-select--border-radius: 4px;
-  --c--components--forms-select--border-radius--hover: 4px;
-  --c--components--forms-select--border-radius--focus: 4px;
-  --c--components--forms-textarea--border-radius: 4px;
-  --c--components--forms-textarea--border-radius--hover: 4px;
-  --c--components--forms-textarea--border-radius--focus: 4px;
-  --c--components--forms-datepicker--border-radius: 4px;
-  --c--components--forms-datepicker--border-radius--hover: 4px;
-  --c--components--forms-datepicker--border-radius--focus: 4px;
   --c--components--badge--font-size: var(--c--globals--font--sizes--xs);
   --c--components--badge--border-radius: 12px;
   --c--components--badge--padding-inline: var(--c--globals--spacings--xs);
@@ -2538,13 +2992,485 @@
   --c--contextuals--border--semantic--disabled--primary: var(
     --c--globals--colors--gray-100
   );
-  --c--components--modal--width-small: 342px;
-  --c--components--tooltip--padding: 4px 8px;
-  --c--components--button--medium-height: 40px;
-  --c--components--button--medium-text-height: 40px;
+  --c--components--alert--background-color: var(
+    --c--contextuals--background--semantic--neutral--tertiary
+  );
+  --c--components--alert--border-radius: 4px;
+  --c--components--alert--border-color: var(
+    --c--contextuals--border--semantic--neutral--primary
+  );
+  --c--components--alert--border-left-color: var(
+    --c--contextuals--border--semantic--neutral--primary
+  );
+  --c--components--alert--font-weight: var(--c--globals--font--weights--medium);
+  --c--components--alert--color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--alert--icon-size: 19px;
+  --c--components--alert--additional-font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--alert--additional-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
   --c--components--button--border-radius: 4px;
   --c--components--button--border-radius--active: 4px;
   --c--components--button--border-radius--focus: 4px;
+  --c--components--button--medium-text-height: 40px;
+  --c--components--button--medium-height: 40px;
+  --c--components--button--small-height: 32px;
+  --c--components--button--nano-height: 24px;
+  --c--components--button--medium-font-size: var(--c--globals--font--sizes--md);
+  --c--components--button--medium-icon-font-size: 1.5rem;
+  --c--components--button--small-font-size: var(--c--globals--font--sizes--sm);
+  --c--components--button--small-icon-font-size: var(
+    --c--globals--font--sizes--md
+  );
+  --c--components--button--nano-font-size: var(--c--globals--font--sizes--xs);
+  --c--components--button--nano-icon-font-size: var(
+    --c--globals--font--sizes--md
+  );
+  --c--components--button--font-weight: var(
+    --c--globals--font--weights--medium
+  );
+  --c--components--button--font-family: var(--c--globals--font--families--base);
+  --c--components--calendar--background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--calendar--border-radius: 8px;
+  --c--components--calendar--padding: 8px;
+  --c--components--calendar--cell-size: 32px;
+  --c--components--calendar--cell-border-radius: 4px;
+  --c--components--calendar--cell-font-size: var(--c--globals--font--sizes--xs);
+  --c--components--calendar--header-font-size: var(
+    --c--globals--font--sizes--xs
+  );
+  --c--components--calendar--date-past-color: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--calendar--date-today-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--calendar--date-today-border-color: var(
+    --c--contextuals--border--semantic--neutral--secondary
+  );
+  --c--components--calendar--date-future-color: var(
+    --c--contextuals--content--semantic--neutral--secondary
+  );
+  --c--components--calendar--date-selected-bg: var(
+    --c--contextuals--background--semantic--brand--primary
+  );
+  --c--components--calendar--date-selected-color: var(
+    --c--contextuals--content--semantic--brand--on-brand
+  );
+  --c--components--calendar--range-middle-bg: var(
+    --c--contextuals--background--semantic--brand--tertiary
+  );
+  --c--components--calendar--range-middle-color: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--calendar--range-middle-bg--disabled: var(
+    --c--contextuals--background--semantic--neutral--tertiary
+  );
+  --c--components--calendar--menu-background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--calendar--menu-border-radius: 8px;
+  --c--components--calendar--menu-item-height: 32px;
+  --c--components--calendar--menu-item-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--calendar--menu-item-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--calendar--menu-item-background-color--hover: var(
+    --c--contextuals--background--semantic--neutral--tertiary-hover
+  );
+  --c--components--calendar--menu-item-background-color--selected: var(
+    --c--contextuals--background--semantic--brand--tertiary
+  );
+  --c--components--forms-checkbox--background-color--hover: var(
+    --c--contextuals--background--semantic--neutral--tertiary-hover
+  );
+  --c--components--forms-checkbox--background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--forms-checkbox--font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-checkbox--font-weight: var(
+    --c--globals--font--weights--medium
+  );
+  --c--components--forms-checkbox--color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-checkbox--border-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-checkbox--border-color--hover: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-checkbox--border-color--focus: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--forms-checkbox--border-radius: 2px;
+  --c--components--forms-checkbox--border-width: 1.5px;
+  --c--components--forms-checkbox--border-width--hover: 1px;
+  --c--components--forms-checkbox--accent-color: var(
+    --c--contextuals--content--semantic--brand--tertiary
+  );
+  --c--components--forms-checkbox--accent-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-checkbox--checkmark-color: var(
+    --c--contextuals--content--semantic--contextual--primary
+  );
+  --c--components--forms-checkbox--size: 1.5rem;
+  --c--components--forms-datepicker--border-color: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-datepicker--border-color--disabled: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-datepicker--border-color--focus: var(
+    --c--contextuals--border--semantic--brand--primary
+  );
+  --c--components--forms-datepicker--border-color--hover: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-datepicker--border-radius: 4px;
+  --c--components--forms-datepicker--border-radius--focus: 4px;
+  --c--components--forms-datepicker--border-radius--hover: 4px;
+  --c--components--forms-datepicker--border-style: solid;
+  --c--components--forms-datepicker--border-width: 1px;
+  --c--components--forms-datepicker--border-width--focus: 1px;
+  --c--components--forms-datepicker--border-width--hover: 1px;
+  --c--components--forms-datepicker--value-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-datepicker--value-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-datepicker--font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-datepicker--height: 3.5rem;
+  --c--components--forms-datepicker--background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--forms-datepicker--label-color--focus: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--forms-field--width: 292px;
+  --c--components--forms-field--font-size: var(--c--globals--font--sizes--s);
+  --c--components--forms-field--color: var(
+    --c--contextuals--content--semantic--neutral--secondary
+  );
+  --c--components--forms-field--color--error: var(
+    --c--contextuals--content--semantic--error--secondary
+  );
+  --c--components--forms-field--color--success: var(
+    --c--contextuals--content--semantic--success--secondary
+  );
+  --c--components--forms-field--color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-field--inline-label-width: max-content;
+  --c--components--forms-field--inline-column-gap: var(
+    --c--globals--spacings--xs
+  );
+  --c--components--forms-field--inline-row-gap: var(
+    --c--globals--spacings--3xs
+  );
+  --c--components--forms-field--label-description-gap: var(
+    --c--globals--spacings--4xs
+  );
+  --c--components--forms-field--label-description-font-size: var(
+    --c--globals--font--sizes--s
+  );
+  --c--components--forms-field--label-description-font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--forms-field--label-description-line-height: 1rem;
+  --c--components--forms-field--label-description-color: var(
+    --c--contextuals--content--semantic--neutral--secondary
+  );
+  --c--components--forms-field--label-description-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-input--font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--forms-input--font-size: var(--c--globals--font--sizes--sm);
+  --c--components--forms-input--border-radius: 4px;
+  --c--components--forms-input--border-radius--hover: 4px;
+  --c--components--forms-input--border-radius--focus: 4px;
+  --c--components--forms-input--border-width: 1px;
+  --c--components--forms-input--border-width--hover: 1px;
+  --c--components--forms-input--border-width--focus: 1px;
+  --c--components--forms-input--border-color: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-input--border-color--hover: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-input--border-color--focus: var(
+    --c--contextuals--border--semantic--brand--primary
+  );
+  --c--components--forms-input--border-style: solid;
+  --c--components--forms-input--placeholder-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-input--label-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-input--label-color--focus: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--forms-input--background-color: var(
+    --c--contextuals--background--surface--secondary
+  );
+  --c--components--forms-input--value-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-input--value-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-input--inline-min-height: 40px;
+  --c--components--forms-input--inline-border-radius: var(
+    --c--globals--spacings--xxxs
+  );
+  --c--components--forms-input--inline-padding-block: var(
+    --c--globals--spacings--xxs
+  );
+  --c--components--forms-input--inline-padding-inline: var(
+    --c--globals--spacings--xs
+  );
+  --c--components--forms-input--inline-background-color--disabled: var(
+    --c--contextuals--background--semantic--disabled--secondary
+  );
+  --c--components--forms-input--inline-border-color--disabled: var(
+    --c--contextuals--border--semantic--disabled--primary
+  );
+  --c--components--forms-labelledbox--label-color--small: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-labelledbox--label-color--big: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-labelledbox--label-color--small--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-labelledbox--label-color--big--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-labelledbox--classic-label-margin-bottom: var(
+    --c--globals--spacings--xs
+  );
+  --c--components--forms-labelledbox--classic-label-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-labelledbox--classic-label-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-labelledbox--classic-label-font-weight: var(
+    --c--globals--font--weights--medium
+  );
+  --c--components--forms-labelledbox--classic-label-line-height: 1.125rem;
+  --c--components--forms-select--border-color: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-select--border-color--focus: var(
+    --c--contextuals--border--semantic--brand--primary
+  );
+  --c--components--forms-select--border-color--hover: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-select--border-radius: 4px;
+  --c--components--forms-select--border-radius--focus: 4px;
+  --c--components--forms-select--border-radius--hover: 4px;
+  --c--components--forms-select--border-style: solid;
+  --c--components--forms-select--border-width: 1px;
+  --c--components--forms-select--border-width--focus: 1px;
+  --c--components--forms-select--border-width--hover: 1px;
+  --c--components--forms-select--value-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-select--value-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-select--font-size: var(--c--globals--font--sizes--sm);
+  --c--components--forms-select--height: 3.5rem;
+  --c--components--forms-select--item-background-color--hover: var(
+    --c--contextuals--background--semantic--overlay--primary
+  );
+  --c--components--forms-select--item-background-color--selected: var(
+    --c--contextuals--background--semantic--brand--secondary
+  );
+  --c--components--forms-select--item-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-select--item-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--secondary
+  );
+  --c--components--forms-select--item-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-select--background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--forms-select--menu-background-color: var(
+    --c--contextuals--background--surface--secondary
+  );
+  --c--components--forms-select--label-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-select--label-color--focus: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--forms-select--multi-pill-background-color: var(
+    --c--contextuals--background--semantic--neutral--tertiary
+  );
+  --c--components--forms-select--multi-pill-border-radius: 2px;
+  --c--components--forms-select--multi-pill-max-width: 68%;
+  --c--components--forms-select--multi-pill-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-select--placeholder-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-switch--accent-color: var(
+    --c--contextuals--content--semantic--brand--tertiary
+  );
+  --c--components--forms-switch--rail-background-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-switch--rail-background-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--primary
+  );
+  --c--components--forms-switch--rail-border-radius: 50vw;
+  --c--components--forms-switch--handle-background-color: var(
+    --c--contextuals--content--semantic--contextual--primary
+  );
+  --c--components--forms-switch--handle-background-color--disabled: var(
+    --c--contextuals--content--semantic--disabled--secondary
+  );
+  --c--components--forms-switch--handle-border-radius: 50%;
+  --c--components--forms-textarea--font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--forms-textarea--font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--forms-textarea--border-radius: 4px;
+  --c--components--forms-textarea--border-radius--hover: 4px;
+  --c--components--forms-textarea--border-radius--focus: 4px;
+  --c--components--forms-textarea--border-width: 1px;
+  --c--components--forms-textarea--border-width--hover: 1px;
+  --c--components--forms-textarea--border-width--focus: 1px;
+  --c--components--forms-textarea--border-color: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-textarea--border-color--hover: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--forms-textarea--border-color--focus: var(
+    --c--contextuals--border--semantic--brand--primary
+  );
+  --c--components--forms-textarea--border-color--disabled: var(
+    --c--contextuals--border--semantic--disabled--primary
+  );
+  --c--components--forms-textarea--border-style: solid;
+  --c--components--forms-textarea--label-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--forms-textarea--label-color--focus: var(
+    --c--contextuals--content--semantic--brand--primary
+  );
+  --c--components--forms-textarea--background-color: var(
+    --c--contextuals--background--surface--primary
+  );
+  --c--components--forms-textarea--value-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--forms-textarea--value-color--disabled: var(
+    --c--contextuals--content--semantic--neutral--secondary
+  );
+  --c--components--forms-textarea--placeholder-color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--modal--background-color: var(
+    --c--contextuals--background--surface--secondary
+  );
+  --c--components--modal--backdrop-color: #0009;
+  --c--components--modal--border-radius: 8px;
+  --c--components--modal--border-color: var(
+    --c--contextuals--border--surface--primary
+  );
+  --c--components--modal--box-shadow: 0 6px 20px 0 rgb(0 0 18 / 10%);
+  --c--components--modal--color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--modal--title-font-weight: var(
+    --c--globals--font--weights--bold
+  );
+  --c--components--modal--compact-title-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--modal--content-font-size: var(--c--globals--font--sizes--sm);
+  --c--components--modal--content-font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--modal--content-color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--modal--width-small: 342px;
+  --c--components--modal--width-medium: 600px;
+  --c--components--modal--width-large: 800px;
+  --c--components--modal--width-extra-large: 75%;
+  --c--components--modal--tab-sidebar-width: 200px;
+  --c--components--modal--tab-sidebar-background-color: var(
+    --c--contextuals--background--surface--tertiary
+  );
+  --c--components--modal--tab-item-height: 32px;
+  --c--components--modal--tab-item-border-radius: 4px;
+  --c--components--modal--tab-item-font-size: var(
+    --c--globals--font--sizes--sm
+  );
+  --c--components--modal--tab-item-font-weight: var(
+    --c--globals--font--weights--medium
+  );
+  --c--components--modal--tab-item-font-weight--active: var(
+    --c--globals--font--weights--bold
+  );
+  --c--components--modal--tab-item-active-background-color: rgb(24 27 36 / 5%);
+  --c--components--modal--tab-item-hover-background-color: rgb(24 27 36 / 3%);
+  --c--components--toast--slide-in-duration: 1000ms;
+  --c--components--toast--slide-out-duration: 300ms;
+  --c--components--toast--background-color: var(
+    --c--contextuals--background--semantic--neutral--tertiary
+  );
+  --c--components--toast--color: var(
+    --c--contextuals--content--semantic--neutral--primary
+  );
+  --c--components--toast--font-weight: var(
+    --c--globals--font--weights--regular
+  );
+  --c--components--toast--icon-size: 19px;
+  --c--components--toast--progress-bar-height: 3px;
+  --c--components--tooltip--border-radius: 0.5rem;
+  --c--components--tooltip--background-color: var(
+    --c--contextuals--background--semantic--neutral--tertiary
+  );
+  --c--components--tooltip--border-color: var(
+    --c--contextuals--border--semantic--neutral--tertiary
+  );
+  --c--components--tooltip--color: var(
+    --c--contextuals--content--semantic--neutral--tertiary
+  );
+  --c--components--tooltip--font-size: var(--c--globals--font--sizes--s);
+  --c--components--tooltip--padding: 4px 8px;
+  --c--components--tooltip--max-width: 150px;
   --c--components--resize-handle--hover--color: var(
     --c--contextuals--border--surface--primary
   );
@@ -2556,24 +3482,6 @@
   --c--components--datagrid--body--background-color-hover: var(
     --c--contextuals--background--semantic--neutral--tertiary
   );
-  --c--components--forms-fileuploader--border-style: solid;
-  --c--components--forms-fileuploader--border-radius: 4px;
-  --c--components--forms-fileuploader--border-width: 1px;
-  --c--components--forms-checkbox--font-size: var(
-    --c--globals--font--sizes--sm
-  );
-  --c--components--forms-input--border-radius: 4px;
-  --c--components--forms-input--border-radius--hover: 4px;
-  --c--components--forms-input--border-radius--focus: 4px;
-  --c--components--forms-select--border-radius: 4px;
-  --c--components--forms-select--border-radius--hover: 4px;
-  --c--components--forms-select--border-radius--focus: 4px;
-  --c--components--forms-textarea--border-radius: 4px;
-  --c--components--forms-textarea--border-radius--hover: 4px;
-  --c--components--forms-textarea--border-radius--focus: 4px;
-  --c--components--forms-datepicker--border-radius: 4px;
-  --c--components--forms-datepicker--border-radius--hover: 4px;
-  --c--components--forms-datepicker--border-radius--focus: 4px;
   --c--components--badge--font-size: var(--c--globals--font--sizes--xs);
   --c--components--badge--border-radius: 12px;
   --c--components--badge--padding-inline: var(--c--globals--spacings--xs);

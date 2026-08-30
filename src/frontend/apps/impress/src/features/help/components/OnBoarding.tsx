@@ -3,7 +3,7 @@ import {
   OnboardingModal,
   type OnboardingModalProps,
   OnboardingStep,
-} from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import React, { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';

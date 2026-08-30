@@ -1,17 +1,17 @@
-import { ButtonElement } from '@gouvfr-lasuite/cunningham-react';
 import {
+  ButtonElement,
   Spinner,
   TreeViewItem,
   TreeViewNodeProps,
   TreeViewNodeTypeEnum,
   useTreeContext,
-} from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Icon, StyledLink, Text } from '@/components';
+import { Box, StyledLink, Text } from '@/components';
 import {
   Doc,
   DocIcon,
@@ -294,14 +294,6 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
           <Text $css={ItemTextCss} $size="sm">
             {displayTitle}
           </Text>
-          {doc.nb_accesses_direct >= 1 && (
-            <Icon
-              variant="filled"
-              iconName="group"
-              $size="md"
-              aria-label={t('Shared with others')}
-            />
-          )}
         </Box>
         <Box
           $direction="row"

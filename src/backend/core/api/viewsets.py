@@ -73,6 +73,7 @@ from core.tasks.mail import send_ask_for_access_mail
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.dicts import lowercase_keys
 from core.utils.paths import filter_descendants
+from core.utils.s3 import get_s3_client
 from core.utils.s3_response_stream import content_stream
 from core.utils.treebeard import create_tree_node_with_retry
 from core.utils.users import users_sharing_documents_with
@@ -2004,32 +2005,51 @@ class DocumentViewSet(
         user = request.user
         key = f"{url_params['pk']:s}/{url_params['attachment']:s}"
 
-        # Look for a document to which the user has access and that includes this attachment
-        # We must look into all descendants of any document to which the user has access per se
-        readable_per_se_paths = (
-            self.queryset.readable_per_se(user)
-            .order_by("path")
+        # Look for a document to which the user has access and that includes this
+        # attachment. Access is granted when the document holding the attachment,
+        # or any of its ancestors, is readable per se by the user.
+        #
+        # We answer this without materialising the user's whole readable set:
+        #   1. find the document(s) that hold this key (indexed by the GIN index
+        #      on `attachments`);
+        #   2. expand each to its own path plus every ancestor prefix -- pure
+        #      string slicing, no query, bounded by tree depth
+        #      (<= len(path) / steplen);
+        #   3. ask a single indexed EXISTS whether any of those candidate paths
+        #      is readable per se by this user, right now.
+        # "descendant-or-self of a readable node" and "ancestor-or-self is
+        # readable" are converses over the same fixed-width prefix relation, so
+        # this yields the exact same decision as scanning every readable path.
+        # NOTE: like the previous implementation, `self.queryset` here does not
+        # filter out soft-deleted (ancestors_deleted_at) documents, so a
+        # soft-deleted ancestor still grants access. Behaviour preserved on
+        # purpose; revisit separately if that is not intended.
+        attachment_paths = list(
+            self.queryset.select_related(None)
+            .filter(attachments__contains=[key])
             .values_list("path", flat=True)
         )
 
-        attachments_documents = (
-            self.queryset.select_related(None)
-            .filter(attachments__contains=[key])
-            .only("path")
-            .order_by("path")
-        )
-        readable_attachments_paths = filter_descendants(
-            [doc.path for doc in attachments_documents],
-            readable_per_se_paths,
-            skip_sorting=True,
-        )
+        candidate_paths = {
+            path[:pos]
+            for path in attachment_paths
+            for pos in range(len(path), 0, -models.Document.steplen)
+        }
 
-        if not readable_attachments_paths:
+        if not candidate_paths or not (
+            self.queryset.readable_per_se(user)
+            .filter(path__in=candidate_paths)
+            .exists()
+        ):
             logger.debug("User '%s' lacks permission for attachment", user)
             raise drf.exceptions.PermissionDenied()
 
-        # Check if the attachment is ready
-        s3_client = default_storage.connection.meta.client
+        # Check if the attachment is ready. Use the process-global S3 client
+        # (see core.utils.s3): django-storages caches its client per thread, so
+        # relying on default_storage.connection here rebuilds the boto3 client
+        # on every fresh thread -- profiling showed that client construction,
+        # not the DB, dominated this endpoint's CPU under load.
+        s3_client = get_s3_client()
         bucket_name = default_storage.bucket_name
         try:
             head_resp = s3_client.head_object(Bucket=bucket_name, Key=key)

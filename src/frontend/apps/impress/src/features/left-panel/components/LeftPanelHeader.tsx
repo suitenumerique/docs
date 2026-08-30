@@ -1,4 +1,4 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/ui-components';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
@@ -29,11 +29,11 @@ export const LeftPanelHeader = () => {
   return (
     <Box $width="100%" className="--docs--left-panel-header">
       <Box
-        $padding={{ horizontal: 'sm' }}
+        $padding={{ horizontal: 'xs' }}
         $direction="row"
         $align="center"
         $gap="2xs"
-        $minHeight="68px"
+        $minHeight="64px"
       >
         <StyledLink
           href="/"
@@ -66,7 +66,7 @@ export const LeftPanelHeader = () => {
             <Title
               headingLevel="h1"
               className={icon?.withTitle ? undefined : 'sr-only'}
-              $size="1.8rem"
+              $size="1.7rem"
             />
           </Box>
         </StyledLink>

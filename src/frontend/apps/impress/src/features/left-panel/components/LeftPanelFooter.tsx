@@ -1,4 +1,4 @@
-import { UserMenu } from '@gouvfr-lasuite/ui-kit';
+import { UserMenu } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 

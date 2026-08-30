@@ -3,7 +3,7 @@
 @import url('@fontsource/material-icons-outlined');
 @import url('@fontsource-variable/material-symbols-outlined');
 @import url('@fontsource-variable/inter');
-@import url('@gouvfr-lasuite/ui-kit/fonts/Marianne');
+@import url('@gouvfr-lasuite/ui-components/fonts/marianne');
 
 body {
   margin: 0;
@@ -22,6 +22,12 @@ body > #__next > .c__app > div:has(> .c__loader) {
 
 * {
   box-sizing: border-box;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--c--globals--colors--brand-400);
+  outline-offset: calc(-1 * var(--c--globals--spacings--4xs));
+  border-radius: var(--c--globals--spacings--2xs);
 }
 
 main ::-webkit-scrollbar,

@@ -9,7 +9,7 @@ import {
   Loader,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+} from '@gouvfr-lasuite/ui-components';
 import { PropsWithChildren, ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 

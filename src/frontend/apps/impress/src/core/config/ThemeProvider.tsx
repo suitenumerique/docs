@@ -1,4 +1,4 @@
-import { CunninghamProvider } from '@gouvfr-lasuite/cunningham-react';
+import { CunninghamProvider } from '@gouvfr-lasuite/ui-components';
 
 import { useCunninghamTheme } from '@/cunningham';
 import { useLocales } from '@/i18n/useLocale';

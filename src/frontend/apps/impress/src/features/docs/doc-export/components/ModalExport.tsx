@@ -1,6 +1,3 @@
-import { DOCXExporter } from '@blocknote/xl-docx-exporter';
-import { ODTExporter } from '@blocknote/xl-odt-exporter';
-import { PDFExporter } from '@blocknote/xl-pdf-exporter';
 import {
   Button,
   Loader,
@@ -9,46 +6,28 @@ import {
   Select,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
-import { DocumentProps, pdf } from '@react-pdf/renderer';
-import jsonemoji from 'emoji-datasource-apple' with { type: 'json' };
+} from '@gouvfr-lasuite/ui-components';
 import i18next from 'i18next';
 import JSZip from 'jszip';
-import {
-  cloneElement,
-  isValidElement,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, ButtonCloseModal, Text } from '@/components';
 import { useMediaUrl } from '@/core';
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
-import { Doc, useTrans } from '@/docs/doc-management';
+import { type Doc, useTrans } from '@/docs/doc-management';
 import { fallbackLng } from '@/i18n/config';
 
-import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
-import { docxDocsSchemaMappings } from '../mappingDocx';
-import { odtDocsSchemaMappings } from '../mappingODT';
-import { pdfDocsSchemaMappings } from '../mappingPDF';
+import ModulesExport from '../hooks/';
 import { downloadFile } from '../utils';
 import {
   addMediaFilesToZip,
   generateHtmlDocument,
   improveHtmlAccessibility,
 } from '../utils_html';
-import { printDocumentWithStyles } from '../utils_print';
 
-enum DocDownloadFormat {
-  HTML = 'html',
-  PDF = 'pdf',
-  DOCX = 'docx',
-  ODT = 'odt',
-  PRINT = 'print',
-}
+const useExportAGPL = ModulesExport?.useExportAGPL;
 
 interface ModalExportProps {
   onClose: () => void;
@@ -60,12 +39,13 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const { toast } = useToastProvider();
   const { editor } = useEditorStore();
   const [isExporting, setIsExporting] = useState(false);
-  const [format, setFormat] = useState<DocDownloadFormat>(
-    DocDownloadFormat.PDF,
-  );
   const { untitledDocument } = useTrans();
   const mediaUrl = useMediaUrl();
   const selectRef = useRef<HTMLDivElement>(null);
+  const exportAGPL = useExportAGPL?.(doc, editor);
+  const [format, setFormat] = useState(
+    exportAGPL?.formats.find((opt) => opt.value === 'pdf')?.value || 'html',
+  );
 
   useEffect(() => {
     const frameId = requestAnimationFrame(() => {
@@ -77,22 +57,31 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     return () => cancelAnimationFrame(frameId);
   }, []);
 
-  const formatOptions = [
-    { label: t('PDF'), value: DocDownloadFormat.PDF },
-    { label: t('Docx'), value: DocDownloadFormat.DOCX },
-    { label: t('ODT'), value: DocDownloadFormat.ODT },
-    { label: t('HTML'), value: DocDownloadFormat.HTML },
-    { label: t('Print'), value: DocDownloadFormat.PRINT },
-  ];
+  const formatSelect = useMemo(() => {
+    const formatOptions = (exportAGPL?.formats || []).concat([
+      {
+        label: t('HTML'),
+        value: 'html',
+        labelDescription: t('.html(zip)'),
+      },
+    ]);
 
-  const formatLabels = Object.fromEntries(
-    formatOptions.map((opt) => [opt.value, opt.label]),
-  );
+    const formatLabels = Object.fromEntries(
+      formatOptions.map((opt) => [opt.value, opt.label]),
+    );
 
-  const downloadButtonAriaLabel =
-    format === DocDownloadFormat.PRINT
-      ? t('Print')
-      : t('Download {{format}}', { format: formatLabels[format] });
+    const labels = formatOptions.map((opt) => opt.labelDescription);
+    const or = t('or', {
+      description:
+        'Word joining the last two items of the list of available export formats',
+    });
+    const allFormatsLabel =
+      labels.length > 1
+        ? `${labels.slice(0, -1).join(', ')} ${or} ${labels[labels.length - 1]}`
+        : labels.join('');
+
+    return { formatOptions, formatLabels, allFormatsLabel };
+  }, [t, exportAGPL?.formats]);
 
   async function onSubmit() {
     if (!editor) {
@@ -102,14 +91,6 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
     setIsExporting(true);
 
-    // Handle print separately as it doesn't download a file
-    if (format === DocDownloadFormat.PRINT) {
-      printDocumentWithStyles();
-      setIsExporting(false);
-      onClose();
-      return;
-    }
-
     const filename = (doc.title || untitledDocument)
       .toLowerCase()
       .normalize('NFD')
@@ -118,62 +99,9 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
     const documentTitle = doc.title || untitledDocument;
 
-    const exportDocument = editor.document;
-    let blobExport: Blob;
-    if (format === DocDownloadFormat.PDF) {
-      const exporter = new PDFExporter(editor.schema, pdfDocsSchemaMappings, {
-        resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
-        emojiSource: {
-          format: 'png',
-          builder(code) {
-            const emojisFound = jsonemoji.filter(
-              (e) =>
-                e.unified.split('-')[0].toLowerCase() ===
-                code.split('-')[0].toLowerCase(),
-            );
+    let blobExport = await exportAGPL?.docToBlob(format, documentTitle);
 
-            const emoji = emojisFound.find((e) =>
-              e.unified.toLocaleLowerCase().includes(code.toLowerCase()),
-            );
-
-            if (emoji) {
-              return `/assets/fonts/emoji/${emoji.image}`;
-            }
-
-            return '/assets/fonts/emoji/fallback.png';
-          },
-        },
-      });
-      const rawPdfDocument = (await exporter.toReactPDFDocument(
-        exportDocument,
-      )) as React.ReactElement<DocumentProps>;
-
-      // Add language, title and outline properties to improve PDF accessibility and navigation
-      const pdfDocument = isValidElement(rawPdfDocument)
-        ? cloneElement(rawPdfDocument, {
-            language: i18next.language,
-            title: documentTitle,
-            pageMode: 'useOutlines',
-          })
-        : rawPdfDocument;
-
-      blobExport = await pdf(pdfDocument).toBlob();
-    } else if (format === DocDownloadFormat.DOCX) {
-      const exporter = new DOCXExporter(editor.schema, docxDocsSchemaMappings, {
-        resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
-      });
-
-      blobExport = await exporter.toBlob(exportDocument, {
-        documentOptions: { title: documentTitle },
-        sectionOptions: {},
-      });
-    } else if (format === DocDownloadFormat.ODT) {
-      const exporter = new ODTExporter(editor.schema, odtDocsSchemaMappings, {
-        resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
-      });
-
-      blobExport = await exporter.toODTDocument(exportDocument);
-    } else if (format === DocDownloadFormat.HTML) {
+    if (!blobExport && format === 'html') {
       // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
       const fullHtml = await editor.blocksToFullHTML();
 
@@ -206,14 +134,15 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       zip.file('styles.css', cssContent);
 
       blobExport = await zip.generateAsync({ type: 'blob' });
-    } else {
+    }
+
+    if (!blobExport) {
       toast(t('The export failed'), VariantType.ERROR);
       setIsExporting(false);
       return;
     }
 
-    const downloadExtension =
-      format === DocDownloadFormat.HTML ? 'zip' : format;
+    const downloadExtension = format === 'html' ? 'zip' : format;
 
     downloadFile(blobExport, `${filename}.${downloadExtension}`);
 
@@ -250,13 +179,15 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           </Button>
           <Button
             data-testid="doc-export-download-button"
-            aria-label={downloadButtonAriaLabel}
+            aria-label={t('Download {{format}}', {
+              format: formatSelect.formatLabels[format],
+            })}
             variant="primary"
             fullWidth
             onClick={() => void onSubmit()}
             disabled={isExporting}
           >
-            {format === DocDownloadFormat.PRINT ? t('Print') : t('Download')}
+            {t('Download')}
           </Button>
         </>
       }
@@ -294,20 +225,18 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           as="p"
           id="modal-export-description"
         >
-          {t(
-            'Export your document to print or download in .docx, .odt, .pdf or .html(zip) format.',
-          )}
+          {t('Export your document to download in {{format}} format.', {
+            format: formatSelect.allFormatsLabel,
+          })}
         </Text>
         <Box ref={selectRef}>
           <Select
             clearable={false}
             fullWidth
             label={t('Format')}
-            options={formatOptions}
+            options={formatSelect.formatOptions}
             value={format}
-            onChange={(options) =>
-              setFormat(options.target.value as DocDownloadFormat)
-            }
+            onChange={(options) => setFormat(options.target.value as string)}
           />
         </Box>
 

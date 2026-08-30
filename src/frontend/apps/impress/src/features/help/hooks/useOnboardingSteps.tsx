@@ -1,4 +1,4 @@
-import { type OnboardingStep } from '@gouvfr-lasuite/ui-kit';
+import { type OnboardingStep } from '@gouvfr-lasuite/ui-components';
 import Image from 'next/image';
 import { Trans, useTranslation } from 'react-i18next';
 
@@ -43,16 +43,18 @@ export const useOnboardingSteps = () => {
           'Move, duplicate, and transform your texts, headings, lists, images without breaking your layout.',
         ),
         content: (
-          <Image
+          <video
             src={t('src_img_onboarding_step_1', {
-              desc: 'URL of onboarding step 1 preview image',
-              defaultValue: '/assets/on-boarding/step_1_EN.gif',
+              description: 'URL of onboarding step 1 preview image',
+              defaultValue: '/assets/on-boarding/step_1_EN.webm',
             })}
-            alt={t('Compose your doc easily')}
+            aria-label={t('Compose your doc easily')}
             width={350}
             height={350}
-            priority
-            unoptimized
+            autoPlay
+            loop
+            muted
+            playsInline
           />
         ),
       },
@@ -72,16 +74,18 @@ export const useOnboardingSteps = () => {
           'Apply styles, structure, and emphasis in one click—keep documents clean, consistent, and easy to scan.',
         ),
         content: (
-          <Image
+          <video
             src={t('src_img_onboarding_step_2', {
-              desc: 'URL of onboarding step 2 preview image',
-              defaultValue: '/assets/on-boarding/step_2_EN.gif',
+              description: 'URL of onboarding step 2 preview image',
+              defaultValue: '/assets/on-boarding/step_2_EN.webm',
             })}
-            alt={t('Format your content with the toolbar')}
+            aria-label={t('Format your content with the toolbar')}
             width={350}
             height={350}
-            priority
-            unoptimized
+            autoPlay
+            loop
+            muted
+            playsInline
           />
         ),
       },
@@ -103,8 +107,8 @@ export const useOnboardingSteps = () => {
         content: (
           <Image
             src={t('src_img_onboarding_step_3', {
-              desc: 'URL of onboarding step 3 preview image',
-              defaultValue: '/assets/on-boarding/step_3_EN.png',
+              description: 'URL of onboarding step 3 preview image',
+              defaultValue: '/assets/on-boarding/step_3_EN.webp',
             })}
             alt={t('Share and collaborate with ease')}
             width={350}
@@ -145,8 +149,8 @@ export const useOnboardingSteps = () => {
         content: (
           <Image
             src={t('src_img_onboarding_step_4', {
-              desc: 'URL of onboarding step 4 preview image',
-              defaultValue: '/assets/on-boarding/step_4_EN.png',
+              description: 'URL of onboarding step 4 preview image',
+              defaultValue: '/assets/on-boarding/step_4_EN.webp',
             })}
             alt={t('Draw inspiration from the content library')}
             width={350}

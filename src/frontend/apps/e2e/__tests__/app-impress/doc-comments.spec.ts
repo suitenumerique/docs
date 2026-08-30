@@ -13,6 +13,7 @@ import {
   updateShareLink,
 } from './utils-share';
 import { logOut } from './utils-signin';
+import { createRootSubPage } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -205,7 +206,20 @@ test.describe('Doc Comments', () => {
     await editor.getByText('Hello').selectText();
     await page.getByRole('button', { name: 'Add comment' }).click();
 
-    await thread.getByRole('paragraph').first().fill('This is a new comment');
+    // The composer of a new thread must not clip its formatting toolbar
+    await expect(thread).toHaveCSS('overflow', 'visible');
+
+    // Write the new comment and select it to reveal the formatting toolbar
+    const newComment = thread.getByRole('paragraph').first();
+    await newComment.fill('This is a new comment');
+    await newComment.selectText();
+
+    const boldButton = thread.locator(
+      '.bn-formatting-toolbar button[data-test="bold"]',
+    );
+    await expect(boldButton).toBeVisible();
+    await boldButton.click();
+
     await thread.locator('[data-test="save"]').click();
     await expect(editor.getByText('Hello')).toHaveClass('bn-thread-mark');
 
@@ -216,6 +230,13 @@ test.describe('Doc Comments', () => {
 
     await editor.first().click();
     await editor.getByText('Hello').click();
+
+    // The saved comment keeps the formatting applied in the composer
+    await expect(
+      thread
+        .locator('.bn-editor[contenteditable="false"] strong')
+        .getByText('This is a new comment'),
+    ).toBeVisible();
 
     await thread.getByText('This is a new comment').first().hover();
     await thread.locator('[data-test="moreactions"]').first().click();
@@ -518,6 +539,27 @@ test.describe('Doc Comments Side Panel', () => {
       .getByRole('button', { name: 'Filter comments' })
       .click();
     await page.getByRole('menuitem', { name: 'Resolved' }).click();
+    await expect(
+      elCommentsSidePanel.getByText('This is a comment'),
+    ).toBeVisible();
+
+    // Closing the panel resets the filter to open comments
+    await page
+      .getByRole('button', { name: 'Close the comments sidebar' })
+      .click();
+    await expect(elCommentsSidePanel).toBeHidden();
+    await page
+      .getByRole('button', { name: 'Show the comments sidebar' })
+      .click();
+    await expect(
+      elCommentsSidePanel.getByText('This is a comment'),
+    ).toBeHidden();
+
+    // Select resolved comments again to continue working with the thread
+    await elCommentsSidePanel
+      .getByRole('button', { name: 'Filter comments' })
+      .click();
+    await page.getByRole('menuitem', { name: 'Resolved' }).click();
     await elCommentsSidePanel.getByText('This is a comment').click();
     await expect(editor.getByText('Hello World')).toHaveClass(
       'bn-thread-mark-selected',
@@ -583,5 +625,35 @@ test.describe('Doc Comments Side Panel', () => {
     await expect(
       page.getByRole('button', { name: 'Show the comments sidebar' }),
     ).toBeFocused();
+  });
+
+  test('it closes the comments side panel when switching documents', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'comment-doc-panel-switch', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'Hello World' });
+    await editor.getByText('Hello').selectText();
+    await page.getByRole('button', { name: 'Add comment' }).click();
+
+    const thread = page.locator('.bn-thread');
+    await thread.getByRole('paragraph').first().fill('This is a comment');
+    await thread.locator('[data-test="save"]').click();
+
+    await page
+      .getByRole('button', { name: 'Show the comments sidebar' })
+      .click();
+    const elCommentsSidePanel = page.getByLabel('Comments side panel');
+    await expect(elCommentsSidePanel).toBeVisible();
+
+    const { name: childDocName } = await createRootSubPage(
+      page,
+      browserName,
+      'comment-doc-panel-switch-child',
+    );
+
+    await verifyDocName(page, childDocName);
+    await expect(elCommentsSidePanel).toBeHidden();
   });
 });

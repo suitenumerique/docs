@@ -12,6 +12,7 @@ from django.utils import timezone
 
 import pytest
 import requests
+from botocore.client import BaseClient
 from freezegun import freeze_time
 from rest_framework.test import APIClient
 
@@ -490,3 +491,90 @@ def test_api_documents_media_auth_anonymous_public_custom_origin_header(settings
         timeout=1,
     )
     assert response.content.decode("utf-8") == "my prose"
+
+
+def _media_auth_ready(user, key):
+    """
+    Call media-auth for `key` as `user` (None = anonymous), with the object
+    storage HEAD mocked as a READY attachment so the test exercises only the
+    authorization logic and does not depend on a live object store.
+    """
+    client = APIClient()
+    if user is not None:
+        client.force_login(user)
+
+    real_make_api_call = BaseClient._make_api_call  # pylint: disable=protected-access
+
+    def fake_make_api_call(self, operation_name, api_params):
+        if operation_name == "HeadObject":
+            return {"Metadata": {"status": DocumentAttachmentStatus.READY}}
+        return real_make_api_call(self, operation_name, api_params)
+
+    with patch.object(BaseClient, "_make_api_call", new=fake_make_api_call):
+        return client.get(
+            "/api/v1.0/documents/media-auth/",
+            HTTP_X_ORIGINAL_URL=f"http://localhost/media/{key:s}",
+        )
+
+
+def test_api_documents_media_auth_grant_via_deep_ancestor():
+    """
+    Access to an attachment is granted when a *distant* ancestor of the
+    document holding it is readable, even though the document and every
+    intermediate ancestor are restricted and the user has no direct access to
+    them. This mirrors the production scenario where the attachment lived on a
+    deeply nested document.
+    """
+    user = factories.UserFactory()
+
+    # User has access only at the root; everything below is restricted.
+    root = factories.DocumentFactory(users=[user], link_reach="restricted")
+    level1 = factories.DocumentFactory(parent=root, link_reach="restricted")
+    level2 = factories.DocumentFactory(parent=level1, link_reach="restricted")
+
+    filename = f"{uuid4()!s}.jpg"
+    key = f"{level2.id!s}/attachments/{filename:s}"
+    factories.DocumentFactory(parent=level2, link_reach="restricted", attachments=[key])
+
+    response = _media_auth_ready(user, key)
+
+    assert response.status_code == 200
+    assert "AWS4-HMAC-SHA256 Credential=" in response["Authorization"]
+
+    # A user with no access anywhere in the tree is denied.
+    other = factories.UserFactory()
+    assert _media_auth_ready(other, key).status_code == 403
+
+
+# Number of DB queries a single media-auth authorization performs, end to end
+# (session + user resolution, the attachment lookup and the readable EXISTS).
+# It is a small constant and, crucially, independent of how many documents the
+# instance holds -- that invariance is the regression guard for the thundering
+# herd, where the check used to materialise the user's entire readable set.
+MEDIA_AUTH_QUERY_COUNT = 5
+
+
+def test_api_documents_media_auth_authorization_cost_is_bounded(
+    django_assert_num_queries,
+):
+    """
+    The authorization decision must not get more expensive as the instance
+    grows: adding many unrelated readable documents leaves the query count
+    unchanged.
+    """
+    user = factories.UserFactory()
+    filename = f"{uuid4()!s}.jpg"
+    document = factories.DocumentFactory(users=[user], link_reach="restricted")
+    key = f"{document.id!s}/attachments/{filename:s}"
+    document.attachments = [key]
+    document.save()
+
+    with django_assert_num_queries(MEDIA_AUTH_QUERY_COUNT):
+        assert _media_auth_ready(user, key).status_code == 200
+
+    # Flood the instance with unrelated readable (public) documents: the query
+    # count must not change.
+    factories.DocumentFactory.create_batch(30, link_reach="public")
+
+    with django_assert_num_queries(MEDIA_AUTH_QUERY_COUNT):
+        assert _media_auth_ready(user, key).status_code == 200

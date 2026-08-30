@@ -69,6 +69,8 @@ test.describe('Doc Header', () => {
   }) => {
     await createDoc(page, 'doc-update', browserName, 1);
 
+    await writeInEditor({ page, text: 'Hello Content' });
+
     const card = page.getByLabel(
       'It is the card information about the document.',
     );
@@ -93,6 +95,7 @@ test.describe('Doc Header', () => {
     await expect(
       page.getByRole('menuitem', { name: 'Download' }),
     ).toBeVisible();
+    await expect(page.getByText('Word count: 2 words').first()).toBeVisible();
   });
 
   test('it updates the title doc and check the broadcast', async ({
@@ -480,46 +483,6 @@ test.describe('Doc Header', () => {
     ).toBeHidden();
   });
 
-  test('It checks the copy as Markdown button', async ({
-    page,
-    browserName,
-  }) => {
-    test.skip(
-      browserName === 'webkit',
-      'navigator.clipboard is not working with webkit and playwright',
-    );
-
-    // create page and navigate to it
-    await page
-      .getByRole('link', {
-        name: 'New',
-        exact: true,
-      })
-      .click();
-
-    // Add dummy content to the doc
-    const editor = page.locator('.ProseMirror');
-    const docFirstBlock = editor.locator('.bn-block-content').first();
-    await docFirstBlock.click();
-    await page.keyboard.type('# Hello World', { delay: 100 });
-    const docFirstBlockContent = docFirstBlock.locator('h1');
-    await expect(docFirstBlockContent).toHaveText('Hello World');
-
-    // Copy content to clipboard
-    await page.getByLabel('Open the document options').click();
-    await page.getByRole('menuitem', { name: 'Copy as Markdown' }).click();
-    await expect(
-      page.getByText('Copied as Markdown to clipboard'),
-    ).toBeVisible();
-
-    // Test that clipboard is in Markdown format
-    const handle = await page.evaluateHandle(() =>
-      navigator.clipboard.readText(),
-    );
-    const clipboardContent = await handle.jsonValue();
-    expect(clipboardContent.trim()).toBe('# Hello World');
-  });
-
   test('it checks the copy link button', async ({ page, browserName }) => {
     test.skip(
       browserName === 'webkit',
@@ -560,46 +523,22 @@ test.describe('Doc Header', () => {
     expect(clipboardContent.trim()).toMatch(url);
   });
 
-  test('it pins a document', async ({ page, browserName }) => {
-    const [docTitle] = await createDoc(page, `Pin doc`, browserName);
+  test('it stars a document', async ({ page, browserName }) => {
+    await createDoc(page, `Star doc`, browserName);
 
+    // Star
     await page
       .getByRole('button', { name: 'Open the document options' })
       .click();
+    await page.getByRole('menuitem', { name: 'Star' }).click();
+    await expect(page.getByText('This document is starred')).toBeVisible();
 
-    // Pin
-    await page.getByRole('menuitem', { name: 'Pin' }).click();
+    // UnStar
     await page
       .getByRole('button', { name: 'Open the document options' })
       .click();
-    await expect(page.getByText('Unpin')).toBeVisible();
-
-    await page.goto('/');
-
-    const row = await getGridRow(page, docTitle);
-
-    // Check is pinned
-    await expect(row.getByTestId('doc-pinned-icon')).toBeVisible();
-    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
-
-    await row.getByText(docTitle).click();
-    await page
-      .getByRole('button', { name: 'Open the document options' })
-      .click();
-
-    // Unpin
-    await page.getByRole('menuitem', { name: 'Unpin' }).click();
-    await page
-      .getByRole('button', { name: 'Open the document options' })
-      .click();
-    await expect(page.getByRole('menuitem', { name: 'Pin' })).toBeVisible();
-
-    await page.goto('/');
-
-    // Check is unpinned
-    await expect(row.getByTestId('doc-pinned-icon')).toBeHidden();
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
+    await page.getByRole('menuitem', { name: 'Unstar' }).click();
+    await expect(page.getByText('This document is starred')).toBeHidden();
   });
 
   test('it duplicates a document', async ({ page, browserName }) => {

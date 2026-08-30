@@ -23,23 +23,6 @@ describe('DocsGridItemDate', () => {
     fetchMock.mockGlobal();
   });
 
-  it('should not render date when not on desktop', () => {
-    render(
-      <DocsGridItemDate
-        doc={
-          { updated_at: DateTime.now().minus({ minutes: 1 }).toISO() } as Doc
-        }
-        isDesktop={false}
-        isInTrashbin={false}
-      />,
-      {
-        wrapper: AppWrapper,
-      },
-    );
-
-    expect(screen.queryByText('1 minute ago')).not.toBeInTheDocument();
-  });
-
   [
     {
       updated_at: DateTime.now().minus({ seconds: 1 }).toISO(),
@@ -70,7 +53,6 @@ describe('DocsGridItemDate', () => {
               updated_at,
             } as Doc
           }
-          isDesktop={true}
           isInTrashbin={false}
         />,
         { wrapper: AppWrapper },
@@ -92,7 +74,6 @@ describe('DocsGridItemDate', () => {
             updated_at: DateTime.now().minus({ days: 5 }).toISO(),
           } as Doc
         }
-        isDesktop={true}
         isInTrashbin={false}
       />,
       { wrapper: AppWrapper },
@@ -112,7 +93,6 @@ describe('DocsGridItemDate', () => {
     render(
       <DocsGridItemDate
         doc={{ updated_at: updatedAt.toISO() } as Doc}
-        isDesktop={true}
         isInTrashbin={false}
       />,
       { wrapper: AppWrapper },
@@ -168,7 +148,6 @@ describe('DocsGridItemDate', () => {
               updated_at,
             } as Doc
           }
-          isDesktop={true}
           isInTrashbin={true}
         />,
         { wrapper: AppWrapper },

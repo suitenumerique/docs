@@ -3,7 +3,7 @@ import path from 'path';
 
 import { Page, expect, test } from '@playwright/test';
 
-import { overrideConfig } from './utils-common';
+import { overrideConfig, randomName } from './utils-common';
 import { getEditor } from './utils-editor';
 
 test.beforeEach(async ({ page }) => {
@@ -129,20 +129,25 @@ test.describe('Doc Import', () => {
     await contentCheck();
   });
 
-  test('it imports 2 docs with the drag and drop area', async ({ page }) => {
+  test('it imports 2 docs with the drag and drop area', async ({
+    page,
+    browserName,
+  }) => {
     const docsGrid = page.getByTestId('docs-grid');
     await expect(docsGrid).toBeVisible();
+
+    const randomImport = randomName('test_import', browserName, 1);
 
     await dragAndDropFiles(page, "[data-testid='docs-grid']", [
       {
         filePath: path.join(__dirname, 'assets/test_import.docx'),
-        fileName: 'test_import.docx',
+        fileName: `${randomImport}.docx`,
         fileType:
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       },
       {
         filePath: path.join(__dirname, 'assets/test_import.md'),
-        fileName: 'test_import.md',
+        fileName: `${randomImport}.md`,
         fileType: 'text/markdown',
       },
     ]);
@@ -150,17 +155,21 @@ test.describe('Doc Import', () => {
     // Wait for success messages
     await expect(
       page.getByText(
-        'The document "test_import.docx" has been successfully imported',
+        `The document "${randomImport}.docx" has been successfully imported`,
       ),
     ).toBeVisible();
     await expect(
       page.getByText(
-        'The document "test_import.md" has been successfully imported',
+        `The document "${randomImport}.md" has been successfully imported`,
       ),
     ).toBeVisible();
 
-    await expect(docsGrid.getByText('test_import.docx').first()).toBeVisible();
-    await expect(docsGrid.getByText('test_import.md').first()).toBeVisible();
+    await expect(
+      docsGrid.getByText(`${randomImport}.docx`).first(),
+    ).toBeVisible();
+    await expect(
+      docsGrid.getByText(`${randomImport}.md`).first(),
+    ).toBeVisible();
   });
 });
 

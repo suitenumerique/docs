@@ -1,4 +1,4 @@
-import { Loader } from '@gouvfr-lasuite/cunningham-react';
+import { Loader } from '@gouvfr-lasuite/ui-components';
 import Head from 'next/head';
 import Script from 'next/script';
 import { PropsWithChildren, useEffect, useRef } from 'react';

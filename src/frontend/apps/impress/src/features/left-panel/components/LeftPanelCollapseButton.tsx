@@ -1,4 +1,4 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/ui-components';
 
 import { Text } from '@/components';
 import { FadeComponent } from '@/components/Effect';

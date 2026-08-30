@@ -1,4 +1,4 @@
-import { LaGaufreV2 } from '@gouvfr-lasuite/ui-kit';
+import { LaGaufreV2 } from '@gouvfr-lasuite/ui-components';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';

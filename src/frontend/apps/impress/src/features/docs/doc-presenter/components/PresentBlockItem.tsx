@@ -6,7 +6,9 @@ import {
 } from '@blocknote/react';
 import { useTranslation } from 'react-i18next';
 
+import { Box } from '@/components';
 import type { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
+import PresentIcon from '@/icons/present.svg';
 import { useResponsiveStore } from '@/stores';
 
 import { getContentSlideIndexForBlock } from '../hooks/useSlides';
@@ -44,7 +46,10 @@ export const PresentBlockItem = () => {
         openPresenter(contentSlideIndex + 1);
       }}
     >
-      {t('Present from here')}
+      <Box $align="center" $gap="xxs" $direction="row">
+        <PresentIcon width="16" height="16" aria-hidden="true" />
+        {t('Present from here')}
+      </Box>
     </Components.Generic.Menu.Item>
   );
 };

@@ -1,21 +1,26 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/ui-components';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
 
-import AllDocs from '@/assets/icons/doc-all.svg';
-import { Box, Card, Icon, Text } from '@/components';
-import { useInfiniteDocs } from '@/docs/doc-management/api/useDocs';
+import { Box, Card, Loading, Text } from '@/components';
+import { FadeComponent } from '@/components/Effect';
 import { useImport } from '@/docs/doc-management/hooks/useImport';
-import { DocDefaultFilter } from '@/docs/doc-management/types';
+import { DocDefaultFilter, DocsOrdering } from '@/docs/doc-management/types';
+import DocsIcon from '@/icons/Docs.svg';
+import BinIcon from '@/icons/bin.svg';
+import ClockIcon from '@/icons/clock.svg';
+import SharedIcon from '@/icons/shared.svg';
+import StarIcon from '@/icons/star.svg';
+import TrashIcon from '@/icons/trash.svg';
+import UserIcon from '@/icons/user.svg';
 import { useResponsiveStore } from '@/stores';
 
-import { useInfiniteDocsTrashbin } from '../api';
-import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
+import { useDocsGridQuery } from '../api/useDocsGridQuery';
 
 import { DocGridContentList } from './DocGridContentList';
-import { DocsGridLoader } from './DocsGridLoader';
+import { DocsGridColumnName } from './DocsGridColumnName';
 
 type DocsGridProps = {
   target?: DocDefaultFilter;
@@ -42,17 +47,13 @@ export const DocsGrid = ({
       target === DocDefaultFilter.MY_DOCS) &&
     isImportEnabled;
 
-  const { isDesktop } = useResponsiveStore();
-  const { flexLeft, flexRight } = useResponsiveDocGrid();
+  const { isDesktop, isSmallMobile } = useResponsiveStore();
 
-  const {
-    data,
-    isFetching,
-    isRefetching,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-  } = useDocsQuery(target);
+  const [ordering, setOrdering] = useState<DocsOrdering>('-updated_at');
+  const canSort = target !== DocDefaultFilter.TRASHBIN;
+
+  const { data, isFetching, isLoading, fetchNextPage, hasNextPage } =
+    useDocsGridQuery(target, canSort ? ordering : undefined);
 
   const docs = useMemo(() => {
     const allDocs = data?.pages.flatMap((page) => page.results) ?? [];
@@ -81,18 +82,21 @@ export const DocsGrid = ({
     <Box
       className="--docs--doc-grid"
       $position="relative"
-      $padding={{ horizontal: 'sm' }}
+      $padding={{
+        horizontal: isSmallMobile ? '0' : 'sm',
+        vertical: isSmallMobile ? '0' : 'sm',
+      }}
       $width="100%"
       $maxWidth="960px"
       $minHeight="0"
       $align="center"
     >
-      <DocsGridLoader isLoading={isRefetching || loading || isImportPending} />
       <Card
         data-testid="docs-grid"
         $width="100%"
+        $border="none"
+        $background="transparent"
         $css={css`
-          border: 1px solid var(--c--contextuals--border--surface--primary);
           ${
             isDragOver
               ? `
@@ -109,84 +113,84 @@ export const DocsGrid = ({
           ? getRootProps({ className: 'dropzone', tabIndex: -1 })
           : {})}
       >
-        <DocGridTitleBar target={target} />
-        {!hasDocs && !loading && (
-          <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
-            <Text $size="sm" $weight="700">
-              {t('No documents found')}
-            </Text>
-          </Box>
-        )}
-        {hasDocs && (
-          <Box
-            $gap="6px"
-            $padding={{ vertical: 'sm', horizontal: isDesktop ? 'md' : 'xs' }}
-          >
-            <Box aria-label={t('Documents grid')}>
-              <Box
-                $direction="row"
-                $padding={{ horizontal: 'xs' }}
-                $gap="10px"
-                data-testid="docs-grid-header"
-                aria-hidden="true"
-              >
-                <Box $flex={flexLeft} $padding="3xs">
-                  <Text $size="xs" $variation="secondary" $weight="500">
-                    {t('Name')}
-                  </Text>
-                </Box>
-                {isDesktop && (
-                  <Box $flex={flexRight} $padding={{ vertical: '3xs' }}>
-                    <Text $size="xs" $weight="500" $variation="secondary">
-                      {DocDefaultFilter.TRASHBIN === target
-                        ? t('Days remaining')
-                        : t('Updated at')}
-                    </Text>
-                  </Box>
-                )}
-              </Box>
-              <Box role="list">
+        <DocGridTitleBar target={target} isImportPending={isImportPending} />
+        {!hasDocs && !loading && <DocGridNoDocs target={target} />}
+        <Box
+          $gap="6px"
+          $padding={{ vertical: 'sm', horizontal: isDesktop ? 'md' : 'xs' }}
+        >
+          <FadeComponent isVisible={!!hasDocs}>
+            <Box
+              aria-label={t('Documents grid')}
+              $display="grid"
+              $css={css`
+                grid-template-columns: ${
+                  isSmallMobile
+                    ? 'minmax(0, 550px) auto'
+                    : 'minmax(0, 550px) auto auto'
+                };
+                column-gap: 20px;
+              `}
+            >
+              <DocsGridColumnName
+                target={target}
+                ordering={ordering}
+                setOrdering={setOrdering}
+              />
+              <Box role="list" $display="contents">
                 <DocGridContentList docs={docs} />
               </Box>
             </Box>
-            {hasNextPage && !loading && (
-              <InView
-                data-testid="infinite-scroll-trigger"
-                as="div"
-                onChange={loadMore}
+          </FadeComponent>
+          {loading && (
+            <Loading loaderProps={{ size: 'small' }} $margin={{ top: 'sm' }} />
+          )}
+          {hasNextPage && !loading && (
+            <InView
+              data-testid="infinite-scroll-trigger"
+              as="div"
+              onChange={loadMore}
+              style={{ margin: 'auto' }}
+            >
+              <Button
+                onClick={() => void fetchNextPage()}
+                color="brand"
+                variant="tertiary"
+                className="sr-only"
               >
-                {!isFetching && hasNextPage && (
-                  <Button
-                    onClick={() => void fetchNextPage()}
-                    color="brand"
-                    variant="tertiary"
-                  >
-                    {t('More docs')}
-                  </Button>
-                )}
-              </InView>
-            )}
-          </Box>
-        )}
+                {t('More docs')}
+              </Button>
+            </InView>
+          )}
+        </Box>
       </Card>
     </Box>
   );
 };
 
-const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
+const DocGridTitleBar = ({
+  target,
+  isImportPending,
+}: {
+  target: DocDefaultFilter;
+  isImportPending: boolean;
+}) => {
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
 
-  let title = t('All docs');
-  let icon = <Icon icon={<AllDocs width={24} height={24} />} />;
+  let title = t('Recent');
+  let icon = <ClockIcon width={24} height={24} aria-hidden="true" />;
   if (target === DocDefaultFilter.MY_DOCS) {
-    icon = <Icon iconName="lock" />;
+    icon = <UserIcon width={24} height={24} aria-hidden="true" />;
     title = t('My docs');
   } else if (target === DocDefaultFilter.SHARED_WITH_ME) {
-    icon = <Icon iconName="group" />;
+    icon = <SharedIcon width={24} height={24} aria-hidden="true" />;
     title = t('Shared with me');
+  } else if (target === DocDefaultFilter.STARRED) {
+    icon = <StarIcon width={24} height={24} aria-hidden="true" />;
+    title = t('Starred');
   } else if (target === DocDefaultFilter.TRASHBIN) {
-    icon = <Icon iconName="delete" />;
+    icon = <TrashIcon width={24} height={24} aria-hidden="true" />;
     title = t('Trashbin');
   }
 
@@ -197,9 +201,6 @@ const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
         vertical: 'sm',
         horizontal: isDesktop ? 'md' : 'xs',
       }}
-      $css={css`
-        border-bottom: 1px solid var(--c--contextuals--border--surface--primary);
-      `}
       $align="center"
       $justify="space-between"
     >
@@ -208,33 +209,53 @@ const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
         <Text as="h2" $size="h4" $margin="none" tabIndex={-1}>
           {title}
         </Text>
+        {isImportPending && <Loading loaderProps={{ size: 'small' }} />}
       </Box>
     </Box>
   );
 };
 
-const useDocsQuery = (target: DocDefaultFilter) => {
-  const trashbinQuery = useInfiniteDocsTrashbin(
-    {
-      page: 1,
-    },
-    {
-      enabled: target === DocDefaultFilter.TRASHBIN,
-    },
-  );
+const DocGridNoDocs = ({ target }: { target: DocDefaultFilter }) => {
+  const { t } = useTranslation();
 
-  const docsQuery = useInfiniteDocs(
-    {
-      page: 1,
-      ...(target &&
-        target !== DocDefaultFilter.ALL_DOCS && {
-          is_creator_me: target === DocDefaultFilter.MY_DOCS,
-        }),
-    },
-    {
-      enabled: target !== DocDefaultFilter.TRASHBIN,
-    },
+  return (
+    <Box as="p" $padding={{ vertical: 'sm' }} $align="center" $justify="center">
+      {[
+        DocDefaultFilter.ALL_DOCS,
+        DocDefaultFilter.MY_DOCS,
+        DocDefaultFilter.SHARED_WITH_ME,
+        DocDefaultFilter.STARRED,
+      ].includes(target) && (
+        <>
+          <DocsIcon width={56} height={56} aria-hidden="true" />
+          <Text $size="sm" $weight="700">
+            {t('No doc yet')}
+          </Text>
+          {[DocDefaultFilter.ALL_DOCS, DocDefaultFilter.MY_DOCS].includes(
+            target,
+          ) && (
+            <Text $size="sm" $weight="400" $variation="secondary">
+              {t('Your docs will appear here.')}
+            </Text>
+          )}
+          {target === DocDefaultFilter.SHARED_WITH_ME && (
+            <Text $size="sm" $weight="400" $variation="secondary">
+              {t('Your shared docs will appear here.')}
+            </Text>
+          )}
+        </>
+      )}
+      {target === DocDefaultFilter.TRASHBIN && (
+        <>
+          <BinIcon width={56} height={56} aria-hidden="true" />
+          <Text $size="sm" $weight="700">
+            {t('No doc deleted')}
+          </Text>
+          <Text $size="sm" $weight="400" $variation="secondary">
+            {t('Deleted docs will appear here.')}
+          </Text>
+        </>
+      )}
+    </Box>
   );
-
-  return target === DocDefaultFilter.TRASHBIN ? trashbinQuery : docsQuery;
 };

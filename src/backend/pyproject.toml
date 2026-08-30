@@ -7,7 +7,7 @@ build-backend = "uv_build"
 
 [project]
 name = "impress"
-version = "5.4.1"
+version = "5.5.0"
 authors = [{ "name" = "DINUM", "email" = "dev@mail.numerique.gouv.fr" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -37,6 +37,7 @@ dependencies = [
     "django-lasuite[all]==0.0.27",
     "django-parler==2.4",
     "django-redis==7.0.0",
+    "django-silk==5.5.2",
     "django-storages[s3]==1.14.6",
     "django-timezone-field>=5.1",
     "django<6.0.0",
