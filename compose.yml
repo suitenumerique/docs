@@ -229,10 +229,11 @@ services:
     image: postgres:16-alpine
     env_file:
       - env.d/development/yhub-postgres
+      - env.d/development/yhub-postgres.local
     volumes:
       - yhub-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U yhub"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 1s
       timeout: 2s
       retries: 60
@@ -251,9 +252,13 @@ services:
     image: impress:yhub-development
     environment:
       HOME: /tmp # same reason as node-based services above (unmapped uid)
-    # its own file rather than the backend's: this server reads none of the
-    # django settings `common` carries, and everything it does read is in there
+    # its own files rather than the backend's: this server reads none of the
+    # django settings `common` carries. The database url is in the file its
+    # postgres is configured from, beside the credentials it spells out;
+    # everything else this server reads is in `yhub`
     env_file:
+      - env.d/development/yhub-postgres
+      - env.d/development/yhub-postgres.local
       - env.d/development/yhub
       - env.d/development/yhub.local
     volumes:

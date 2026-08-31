@@ -1,14 +1,16 @@
 # Collaboration server (yhub)
 #
-# Everything the collaboration server reads, and nothing else: it shares the
-# backend's stores and origins by value, not by loading the backend's own
-# environment. Override any of it in yhub.local, which is not committed.
+# Everything the collaboration server reads but its database url, and nothing
+# else: it shares the backend's stores and origins by value, not by loading the
+# backend's own environment. Override any of it in yhub.local, which is not
+# committed.
 
 # Stores. Its own valkey and its own postgres database — the backend's live
-# next to them and are never touched from here.
+# next to them and are never touched from here. The postgres url is not here
+# but in `yhub-postgres`, the file that database is configured from, so that
+# its credentials are written once; this service reads that file too.
 PORT=3002
 REDIS=redis://yhub-valkey:6379
-POSTGRES=postgres://yhub:pass@yhub-postgres:5432/yhub
 REDIS_PREFIX=yhub
 
 # Backend. It answers who a user is and what they may do with a document, and
