@@ -934,10 +934,11 @@ jwtKeys:
 ## - `LEGACY_S3_*`, turned on by `SOFT_MIGRATION`, is the legacy Django media
 ##   bucket it reads old documents *out of*. Not the backend's `AWS_S3_*`,
 ##   which names the same bucket for the backend's own use,
-## - `YHUB_S3_*`, turned on by `YHUB_S3_PERSISTENCE`, is a bucket of its own it
-##   stores the document blobs *into*, instead of its PostgreSQL database.
-##   Read `src/yhub-server/README.md` before enabling it: a document persisted
-##   this way cannot be read back once the setting is removed.
+## - `YHUB_S3_*` is a bucket of its own it stores the document blobs *into*,
+##   instead of its PostgreSQL database, when `YHUB_S3_PERSISTENCE` asks for
+##   it. Read `src/yhub-server/README.md` before enabling it: those settings
+##   attach the bucket whether or not the toggle is on, and dropping them from
+##   a deployment whose bucket holds anything makes those documents unreadable.
 yhub:
   ## @param yhub.enabled Enable the yhub collaboration server, its service and its init-db job
   enabled: true
@@ -1052,7 +1053,7 @@ yhub:
   ## @extra yhub.envVars.LEGACY_S3_REGION_NAME Region of the legacy bucket, when its provider needs one
   ## @extra yhub.envVars.LEGACY_S3_BUCKET_NAME Name of the legacy Django media bucket (default: impress-media-storage)
   ## @extra yhub.envVars.LEGACY_S3_SIGNATURE_VERSION How the calls to the legacy bucket are signed, s3v4 or v4 (default: s3v4)
-  ## @extra yhub.envVars.YHUB_S3_PERSISTENCE Set to "true" to store the document blobs in a bucket instead of the yhub database — read src/yhub-server/README.md first, it cannot be turned back off
+  ## @extra yhub.envVars.YHUB_S3_PERSISTENCE Set to "true" to write new document blobs to a bucket instead of the yhub database — the YHUB_S3_* settings attach the bucket whether or not this is on, read src/yhub-server/README.md first
   ## @extra yhub.envVars.YHUB_S3_ENDPOINT_URL Required by YHUB_S3_PERSISTENCE, endpoint of the bucket the blobs are stored in, without a path (e.g. https://s3.example.com)
   ## @extra yhub.envVars.YHUB_S3_ACCESS_KEY_ID Required by YHUB_S3_PERSISTENCE, read/write/delete access to that bucket (or YHUB_S3_ACCESS_KEY_ID_FILE)
   ## @extra yhub.envVars.YHUB_S3_SECRET_ACCESS_KEY Required by YHUB_S3_PERSISTENCE, secret of the key above (or YHUB_S3_SECRET_ACCESS_KEY_FILE)

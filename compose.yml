@@ -49,11 +49,23 @@ services:
       minio:
         condition: service_healthy
         restart: true
+    # The yhub bucket is made here rather than left to the collaboration
+    # server, which creates the bucket it does not find with no versioning on
+    # it. Versioning is what a deployment runs, and it is the case where
+    # deleting an object needs the version named to delete anything at all
+    # (YHUB_S3_PERSISTENCE, src/yhub-server/README.md).
+    #
+    # The lines below end on `&&` and not on a backslash: yaml folds this block
+    # by joining its lines with a space, so a trailing `\` reaches the shell as
+    # an escaped space glued to the word after it — ` /usr/bin/mc`, which is no
+    # command, and everything past the first `&&` silently did nothing.
     entrypoint: >
       sh -c "
-      /usr/bin/mc alias set impress http://minio:9000 impress password && \
-      /usr/bin/mc mb impress/impress-media-storage && \
-      /usr/bin/mc version enable impress/impress-media-storage && \
+      /usr/bin/mc alias set impress http://minio:9000 impress password &&
+      /usr/bin/mc mb --ignore-existing impress/impress-media-storage &&
+      /usr/bin/mc version enable impress/impress-media-storage &&
+      /usr/bin/mc mb --ignore-existing impress/yhub-storage &&
+      /usr/bin/mc version enable impress/yhub-storage &&
       exit 0;"
 
   app-dev:
@@ -261,7 +273,12 @@ services:
         condition: service_healthy
       # soft migration reads the legacy document store at startup traffic —
       # starting before minio would cache 401s for the first accessed docs —
-      # and YHUB_S3_PERSISTENCE, when it is on, checks its own bucket at boot
+      # and YHUB_S3_PERSISTENCE checks its own bucket at boot. Waiting for the
+      # buckets to be *made*, not merely for the job to have started: the
+      # collaboration server creates the bucket it does not find, and the one
+      # it creates has no versioning
+      createbuckets:
+        condition: service_completed_successfully
       minio:
         condition: service_healthy
 
