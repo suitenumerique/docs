@@ -27,6 +27,7 @@ and this project adheres to
 - 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
 - 🐛(backend) fix duplicating a document that has no content
 - 📄(frontend) allowed partially export when MIT #2551
+- 🐛(backend) manage async support for Docs custom middleware
 
 ## [v5.5.0] - 2026-08-24
 
