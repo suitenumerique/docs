@@ -3,7 +3,7 @@ import path from 'path';
 import { Locator, Page, expect, test } from '@playwright/test';
 import { PDFParse } from 'pdf-parse';
 
-import { createDoc, mockedDocument, saveContent } from './utils-common';
+import { createDoc, mockedDocument, reopenDoc } from './utils-common';
 import {
   openSuggestionMenu,
   tryFocusEditorContent,
@@ -432,9 +432,10 @@ test.describe('Presenter Mode', () => {
     await writeMultiSlideDoc(page);
     const docId = getDocIdFromUrl(page);
 
-    // Ensure the typed content is persisted (awaits the PATCH /content/) before
-    // reloading the page through the deep-link, instead of using a fixed sleep.
-    await saveContent(page, docTitle);
+    // Leave and come back before reloading through the deep-link, so what the
+    // deep-link opens is what the collaboration server kept, not what this tab
+    // still had in memory.
+    await reopenDoc(page, docTitle);
     await page.goto(`/docs/${docId}/?view=present&slide=3`);
 
     const overlay = page.getByRole('dialog', { name: 'Presenter mode' });

@@ -1,12 +1,18 @@
-import { Button, Modal, ModalSize } from '@gouvfr-lasuite/ui-components';
+import {
+  Button,
+  Modal,
+  ModalSize,
+  VariantType,
+  useToastProvider,
+} from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { Doc } from '@/docs/doc-management/';
 
-import { useDocVersion } from '../api';
-import { Versions } from '../types';
+import { useRestoreDocVersion } from '../api';
+import { DocVersion } from '../types';
 
 const ModalStyle = createGlobalStyle`
   .c__modal__title {
@@ -18,46 +24,29 @@ interface ModalConfirmationVersionProps {
   docId: Doc['id'];
   onClose: () => void;
   onSuccess: () => void;
-  versionId: Versions['version_id'];
+  versionId: DocVersion['id'];
 }
 
 export const ModalConfirmationVersion = ({
   onClose,
-  onSuccess: __onSuccess,
+  onSuccess,
   docId,
   versionId,
 }: ModalConfirmationVersionProps) => {
-  const { data: version } = useDocVersion({
-    docId,
-    versionId,
-  });
   const { t } = useTranslation();
+  const { toast } = useToastProvider();
 
-  // TODO(yhub) : Revert the doc to a previous state using Y.js / Yhub
-  // const { mutate: updateDocContent } = useDocContentUpdate({
-  //   listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
-  //   onSuccess: () => {
-  //     const onDisplaySuccess = () => {
-  //       toast(t('Version restored successfully'), VariantType.SUCCESS);
-  //       onSuccess();
-  //     };
-
-  //     if (!provider || !version?.content) {
-  //       onDisplaySuccess();
-  //       return;
-  //     }
-
-  //     revertUpdate(provider.doc, provider.doc, base64ToYDoc(version.content));
-
-  //     threadStore?.refreshThreads();
-
-  //     onDisplaySuccess();
-  //   },
-  // });
-
-  if (!version) {
-    return null;
-  }
+  /**
+   * The collaboration server undoes everything after this version and hands the
+   * result to every open editor, this one included — so there is nothing to
+   * apply here and nothing to reload.
+   */
+  const { mutate: restoreVersion, isPending } = useRestoreDocVersion({
+    onSuccess: () => {
+      toast(t('Version restored successfully'), VariantType.SUCCESS);
+      onSuccess();
+    },
+  });
 
   return (
     <Modal
@@ -80,13 +69,8 @@ export const ModalConfirmationVersion = ({
             aria-label={t('Restore')}
             color="error"
             fullWidth
-            onClick={() => {
-              if (!version?.content) {
-                return;
-              }
-
-              onClose();
-            }}
+            disabled={isPending}
+            onClick={() => restoreVersion({ docId, versionId })}
           >
             {t('Restore')}
           </Button>

@@ -9,13 +9,13 @@ import { DocEditorContainer } from '@/docs/doc-editor/components/DocEditor';
 import { Doc, base64ToBlocknoteXmlFragment } from '@/docs/doc-management';
 
 import { useDocVersion } from '../api/useDocVersion';
-import { Versions } from '../types';
+import { DocVersion } from '../types';
 
 import { DocVersionHeader } from './DocVersionHeader';
 
 interface DocVersionEditorProps {
   docId: Doc['id'];
-  versionId: Versions['version_id'];
+  versionId: DocVersion['id'];
 }
 
 export const DocVersionEditor = ({
@@ -41,12 +41,12 @@ export const DocVersionEditor = ({
   }, [versionId]);
 
   useEffect(() => {
-    if (!version?.content || isLoading || initialContent) {
+    if (!version?.ydoc || isLoading || initialContent) {
       return;
     }
 
-    setInitialContent(base64ToBlocknoteXmlFragment(version.content));
-  }, [versionId, version?.content, isLoading, initialContent]);
+    setInitialContent(base64ToBlocknoteXmlFragment(version.ydoc));
+  }, [versionId, version?.ydoc, isLoading, initialContent]);
 
   if (isError && error) {
     if (error.status === 404) {
@@ -90,7 +90,12 @@ export const DocVersionEditor = ({
     >
       <BlockNoteReader
         initialContent={initialContent}
-        docId={version.id}
+        /**
+         * The version, not the document: this identifies the thread store the
+         * preview reads, and a read-only view of an older state has no business
+         * sharing the live one.
+         */
+        docId={versionId}
         isMainEditor={false}
       />
     </DocEditorContainer>
