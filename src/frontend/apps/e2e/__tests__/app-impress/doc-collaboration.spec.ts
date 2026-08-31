@@ -37,11 +37,91 @@ test.describe('Doc Collaboration', () => {
 
     const framesent = await framesentPromise;
     expect(framesent.payload).not.toBeNull();
+  });
 
-    // TODO(yhub): re-add the close/reconnect check (the backend closed the
-    // connection when the doc visibility changed) once yhub exposes a kick
-    // API - `reset_connections` is currently a no-op so the server never
-    // closes the connection.
+  /**
+   * A change to the sharing settings has to reach the clients that are already connected.
+   * The backend asks the collaboration server to re-check them, and yhub closes the sockets
+   * whose access is no longer the one they connected with - code 4401 - and leaves the
+   * others open. The client then reconnects and resyncs at its new level.
+   *
+   * The author is not the one to watch: their access is the same before and after, and their
+   * socket is deliberately kept. This is the difference with what the collaboration server
+   * used to do, which was to close every connection to the document indiscriminately. What
+   * moves here is the anonymous reader holding the public link, whose access goes from read
+   * to read/write when the link is switched to Editing.
+   */
+  test('closes the connection of a user whose access changed', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'doc-reset-connections',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docTitle);
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(page, 'Public', 'Reading');
+    await page.getByRole('button', { name: 'close' }).first().click();
+
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      browserName,
+      docUrl: page.url(),
+      withoutSignIn: true,
+      docTitle,
+    });
+
+    // the reader is on the document, at the level the link grants today
+    await expect(otherPage.locator('.ProseMirror')).toHaveAttribute(
+      'contenteditable',
+      'false',
+    );
+
+    // The socket the reader holds was opened by `connectOtherUserToDoc`, before this test had
+    // a page to listen on, so it is unreachable. Reloading opens another one under a listener.
+    const readerSocketPromise = otherPage.waitForEvent(
+      'websocket',
+      (webSocket) =>
+        webSocket.url().includes(`${process.env.COLLABORATION_WS_URL}/`),
+    );
+    await otherPage.reload();
+    const readerSocket = await readerSocketPromise;
+    await readerSocket.waitForEvent('framesent');
+
+    const readerSocketClosed = readerSocket.waitForEvent('close');
+    const readerReconnected = otherPage.waitForEvent('websocket', (webSocket) =>
+      webSocket.url().includes(`${process.env.COLLABORATION_WS_URL}/`),
+    );
+
+    // the author opens the link to editing
+    await page.getByRole('button', { name: 'Share' }).click();
+    await page.getByTestId('doc-access-mode').click();
+    await page.getByRole('menuitemradio', { name: 'Editing' }).click();
+    await expect(
+      page.getByText('The document visibility has been updated').first(),
+    ).toBeVisible();
+
+    // the re-check reaches the reader and their socket goes down
+    await readerSocketClosed;
+    expect(readerSocket.isClosed()).toBeTruthy();
+
+    // and the client comes back on its own. What proves the new connection is live is not the
+    // socket being open - a socket that is refused is open for a moment too - but the document
+    // still flowing through it: nothing is reloaded here, so the only way the text below can
+    // reach the reader is the connection opened after the revocation.
+    await readerReconnected;
+
+    await page.getByRole('button', { name: 'close' }).first().click();
+    await writeInEditor({ page, text: 'Hello after the reset' });
+
+    await expect(otherPage.getByText('Hello after the reset')).toBeVisible({
+      timeout: 15000,
+    });
+
+    await cleanup();
   });
 
   test('it cannot edit if viewer but see and can get resources', async ({
