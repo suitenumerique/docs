@@ -106,10 +106,14 @@ const TASK_CONCURRENCY = intEnv('YHUB_TASK_CONCURRENCY', 5, 1);
 // store. Off by default, which is postgres alone, the way Docs has been
 // running.
 //
-// Not a switch that can be flipped back: a row pointing at an object is
-// unreadable without the plugin that wrote it — yhub reports that version as
-// having no content rather than as an error — so turning it off after a
-// compaction strands what was stored while it was on. See README.md.
+// This decides where *new* blobs are written, and nothing else. The plugin
+// itself is loaded whenever the bucket below is configured, on or off, because
+// a row pointing at an object is unreadable without the plugin that wrote it —
+// yhub reports such a version as having no content rather than as an error, so
+// a deployment that has ever had this on and drops the plugin loses those
+// documents silently. Keep the YHUB_S3_* settings in place for as long as the
+// bucket holds anything; turning this off then stops the writing and leaves the
+// reading alone. See README.md.
 const S3_PERSISTENCE = process.env.YHUB_S3_PERSISTENCE === 'true';
 // Its own bucket, named apart from the backend's `AWS_S3_*` and from the legacy
 // document store's `LEGACY_S3_*` (migration.js): three buckets that may sit on
@@ -928,7 +932,13 @@ const workerEvents = {
 
 // The persistence plugins yhub consults, in order, before writing a blob to
 // postgres and before reading one back. An empty list keeps everything in the
-// database, which is the default.
+// database, which is what a deployment that names no bucket gets.
+//
+// Naming a bucket is enough to get the plugin, whether or not the toggle asks
+// for the writing: reading is the half that must never be taken away, since the
+// objects an earlier run wrote are the only copy of those versions. `branches`
+// is what the toggle actually moves — every branch, or none, which is a plugin
+// that retrieves and deletes what is in the bucket and adds nothing to it.
 //
 // Read here rather than in the call below so that an incomplete configuration
 // is a startup error naming what is missing: the client would otherwise be
@@ -936,18 +946,25 @@ const workerEvents = {
 // compaction, which is a background task — the failure would show up as
 // documents quietly not being persisted.
 const persistencePlugins = () => {
-  if (!S3_PERSISTENCE) return [];
-
-  const missing = [
+  const settings = [
     ['YHUB_S3_ENDPOINT_URL', YHUB_S3_ENDPOINT_URL],
     ['YHUB_S3_ACCESS_KEY_ID', YHUB_S3_ACCESS_KEY_ID],
     ['YHUB_S3_SECRET_ACCESS_KEY', YHUB_S3_SECRET_ACCESS_KEY],
     ['YHUB_S3_BUCKET_NAME', YHUB_S3_BUCKET_NAME],
-  ]
-    .filter(([, value]) => !value)
-    .map(([name]) => name);
+  ];
+  const missing = settings.filter(([, value]) => !value).map(([name]) => name);
+  // no bucket named at all, and the toggle does not ask for one: postgres
+  // alone, and no object anywhere that would need reading back
+  if (missing.length === settings.length && !S3_PERSISTENCE) return [];
   if (missing.length > 0) {
-    throw new Error(`YHUB_S3_PERSISTENCE=true requires ${missing.join(', ')}`);
+    // half a configuration is always a mistake, and the half that is set says
+    // which mistake: a bucket was meant to be reachable and is not
+    const named = missing.join(', ');
+    throw new Error(
+      S3_PERSISTENCE
+        ? `YHUB_S3_PERSISTENCE=true requires ${named}`
+        : `The YHUB_S3_* bucket is partly configured, missing ${named}`,
+    );
   }
 
   const url = new URL(YHUB_S3_ENDPOINT_URL);
@@ -976,6 +993,22 @@ const persistencePlugins = () => {
       // left out rather than passed empty: unset, the client discovers the
       // region of the bucket instead of validating an empty string
       ...(YHUB_S3_REGION_NAME ? { region: YHUB_S3_REGION_NAME } : {}),
+      // The branches whose blobs are written here: all of them, or none, which
+      // is how the plugin is kept for reading while the writing goes back to
+      // postgres. `store` declines a branch it is not given and yhub falls
+      // through to the database, while `retrieve` and `delete` go on answering
+      // for every object already in the bucket.
+      branches: S3_PERSISTENCE ? true : [],
+      // On a versioned bucket a plain delete deletes nothing: it writes a
+      // delete marker over the object and keeps every version underneath it.
+      // Each compaction supersedes the blobs of the one before, so that would
+      // be every version ever written kept forever — and a document a user
+      // asked to erase still readable by anyone who can list versions. The
+      // plugin records the version id it wrote at store time so that the
+      // delete can name it, which is what removes the bytes. Asked for here
+      // rather than left to the plugin's default: the delete is only as
+      // thorough as this line.
+      deleteVersions: true,
     }),
   ];
 };
@@ -1028,8 +1061,11 @@ logger.info(
     server: RUNS_SERVER,
     worker: RUNS_WORKER,
     taskConcurrency: RUNS_WORKER ? TASK_CONCURRENCY : null,
-    // where the compaction blobs go — null is yhub's own postgres
-    s3Bucket: S3_PERSISTENCE ? YHUB_S3_BUCKET_NAME : null,
+    // the bucket the plugin is attached to, null when there is no plugin at
+    // all, and whether the compaction blobs are written to it or to yhub's own
+    // postgres — a bucket with `s3Writes` false is one that is only read
+    s3Bucket: YHUB_S3_BUCKET_NAME ?? null,
+    s3Writes: S3_PERSISTENCE,
     taskDebounceMs: yhub.stream.taskDebounce,
     minMessageLifetimeMs: yhub.stream.minMessageLifetime,
   },

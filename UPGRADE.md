@@ -228,9 +228,10 @@ upgrade, in the order they are done, and end with the API changes.
   its own PostgreSQL database (`YHUB_S3_PERSISTENCE=true`, plus the
   `YHUB_S3_*` settings). It is off by default and nothing about this upgrade
   needs it. Read the "Document storage" section of `src/yhub-server/README.md`
-  before enabling it: a document persisted that way cannot be read back once
-  the setting is removed, and it is a third bucket, not the backend's
-  `AWS_S3_*` nor the legacy one the migration reads.
+  before enabling it: the `YHUB_S3_*` settings attach the bucket whether or not
+  the toggle is on and have to stay in place for as long as it holds anything,
+  and it is a third bucket, not the backend's `AWS_S3_*` nor the legacy one the
+  migration reads.
 
 - The endpoint `/api/v1.0/documents/{document_id}/content/`, added in 5.0.0, is
   removed, both its `GET` and its `PATCH`. The content of a document is now
