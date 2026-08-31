@@ -22,7 +22,7 @@ The Django backend reads and writes document content there too, so point it at t
 YHUB_API_BASE_URL: http://{yhub-service}:443
 ```
 
-Prefer the internal service url: the routes the backend calls are not meant to be reachable from the outside. Route `/collaboration/ws/` to the service publicly — that is the one the browsers open — plus `/collaboration/ydoc/` for the http fallback, `/collaboration/activity/` and `/collaboration/changeset/` for the editing history, and `/collaboration/jwks/`, which carries public keys and nothing else. Keep everything else in-cluster: `rollback`, `prune`, `reset-connections`, `migrate`, `restore-ydoc`, `reset-ydoc` and `create-ydoc` are refused to a browser by the permission tables anyway, and an endpoint that cannot be reached cannot be probed.
+Prefer the internal service url: the routes the backend calls are not meant to be reachable from the outside. Route `/collaboration/ws/` to the service publicly — that is the one the browsers open — plus `/collaboration/ydoc/` for the http fallback, `/collaboration/activity/` and `/collaboration/changeset/` for the editing history, `/collaboration/rollback/` for restoring a document to a point in that history, and `/collaboration/jwks/`, which carries public keys and nothing else. Keep everything else in-cluster: `prune`, `reset-connections`, `migrate`, `restore-ydoc`, `reset-ydoc` and `create-ydoc` are refused to a browser by the permission tables anyway, and an endpoint that cannot be reached cannot be probed.
 
 Both directions are authenticated with short-lived RS256 JWTs rather than a shared secret, and each side verifies the other against the JWKS it publishes — so both need a signing key of their own, and neither needs a copy of the other's:
 
@@ -131,3 +131,29 @@ A reader who reaches a document through its link alone — a public or authentic
 they hold no access on — gets **no history at all**, not a bounded one. There is no access record
 and therefore no date to bound it with, which is the same reason the version endpoints have always
 refused them.
+
+## What a version is
+
+The version history lists the document's editing activity at a granularity of **one minute**:
+changes less than a minute apart become one version, and no version spans more than a minute. That
+bound is deliberate — the collaboration server records activity at the granularity of a keystroke,
+and a list of every few keystrokes is not a history anyone can read.
+
+Changes are merged **regardless of who made them**. A version is a moment in the document, not a
+moment in one person's editing, so two people typing in the same minute produce one version and not
+two interleaved ones. The collaboration server only ever groups changes by the same author, so this
+last step happens in the browser, on top of its grouping.
+
+## Restoring a previous state
+
+Selecting a version and restoring it asks the collaboration server to undo everything that happened
+after it. **Any user who may edit a document may restore it**; a reader may not.
+
+The restore is applied where the document lives, not in the tab that asked for it, so everyone with
+the document open sees it arrive over their own connection like any other change. Nothing is
+destroyed: the restore is itself a change, so the state it replaced stays in the history and can be
+restored again.
+
+It is bounded by the same date as everything else, and more strictly. Reads are trimmed silently to
+what a user may see; a restore is *refused* if it reaches further back than that — so nobody can
+undo work that predates their access, even by asking for it directly.
