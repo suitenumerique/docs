@@ -1,4 +1,13 @@
 # Postgresql db container configuration for the collaboration server (yhub).
+# Its own database on its own server: the backend's lives next to it and is
+# never touched from here. The credentials are the backend's dev ones, and the
+# ones CI uses for this database too — only the database name differs.
 POSTGRES_DB=yhub
-POSTGRES_USER=yhub
+POSTGRES_USER=dinum
 POSTGRES_PASSWORD=pass
+
+# What the collaboration server connects with: the credentials above spelled as
+# a url, which is the only form it takes. Read by the `yhub` service as well,
+# which is why it lives here rather than next to the rest of that server's
+# settings — the password is written once.
+POSTGRES=postgres://dinum:pass@yhub-postgres:5432/yhub
