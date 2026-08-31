@@ -52,9 +52,30 @@
  * connection, which requires `from === 0` exactly — see the guard in server.js.
  *
  * No `delete` facet: deleting a document is Django's, through the admin token.
- * Deliberately absent too: `rollback` and `prune`, which are destructive and are
- * granted by name — restoring a version is not something a reader, or an editor,
- * does through this grant today.
+ *
+ * `history.rollback` is granted to an editor, and it is the one thing here that
+ * lets a browser change the past rather than read it: `POST /rollback` undoes
+ * every change in a window, which is what the version history's "restore" button
+ * is. Four things bound it.
+ *
+ * A reader never gets it, twice over. yhub normalizes `rollback` to `false`
+ * unless `ydoc` carries `u` — it is a dead grant without the write it rides on —
+ * and the requirement side mirrors that, so a reader would be refused even if
+ * this table said otherwise. `canEdit` is belt to those braces, and withholds
+ * the endpoint with it so a reader is refused once, at the door, instead of
+ * halfway through the handler.
+ *
+ * Nobody can undo what happened before they arrived. Mutations refuse where
+ * reads clamp: `POST /rollback` demands a ray reaching back to its own `from`,
+ * rather than quietly moving it forward the way `activity` does. Every moment a
+ * user can name is one they were shown, and everything they were shown is inside
+ * their ray — so the bound holds without the client being trusted to respect it,
+ * and a rollback with no `from` at all, which would ask to undo all of history,
+ * is refused outright.
+ *
+ * `prune` stays absent. Rollback is additive — it appends an update that undoes
+ * another, and what it undid is still in the history, still restorable by the
+ * same route. Prune erases, and no browser needs that.
  *
  * No `'*'` endpoint fallback, so everything not named here is denied — including
  * any endpoint a future yhub release adds. Under 0.7 this fence was a
@@ -65,15 +86,24 @@ export const browserDocumentPermissions = (canEdit, historyFrom = null) => ({
   type: 'permissions:document:v1',
   ydoc: canEdit ? '-ru-' : '-r--',
   awareness: canEdit ? '-ru-' : '-r--',
-  ...(historyFrom ? { history: { from: historyFrom } } : null),
+  ...(historyFrom
+    ? { history: { from: historyFrom, ...(canEdit && { rollback: true }) } }
+    : null),
   endpoint: {
     // `r` opens the socket, `u` admits document updates over it
     ws: canEdit ? '-ru-' : '-r--',
     // GET is `r` and PATCH is `u`; DELETE (`d`) stays out — see `delete` above
     ydoc: canEdit ? '-ru-' : '-r--',
     // the editing timeline, and one point in it — both GET-only, both clamped to
-    // the ray above
-    ...(historyFrom ? { activity: '-r--', changeset: '-r--' } : null),
+    // the ray above — and, for an editor, the route that undoes a window of it.
+    // `c---` because rollback is a POST; there is no other verb on it
+    ...(historyFrom
+      ? {
+          activity: '-r--',
+          changeset: '-r--',
+          ...(canEdit && { rollback: 'c---' }),
+        }
+      : null),
   },
 });
 

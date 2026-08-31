@@ -1,55 +1,68 @@
-import * as Y from 'yjs';
+import { ActivityEntry, DocVersion } from './types';
 
 /**
- * Revert the doc to a previous state.
+ * How coarse the version history is: neighbouring changes closer together than
+ * this become one version, and no version spans more than this.
  *
- * We cannot simply replace a doc with another previous doc,
- * because Y.js will act as if the previous doc is a new doc and so
- * merge it with the current doc, so we need to revert the doc (undo).
- *
- * To do so we simulate a history of the doc by saving snapshots of the doc
- * and then revert the doc to a previous snapshot.
- *
- * @param doc
- * @param snapshotOrigin
- * @param snapshotUpdate
+ * A minute is a deliberate choice about what a "version" means here. The
+ * collaboration server records an activity entry per stretch of editing, which
+ * at typing speed is far finer than anything worth listing — a history of every
+ * few keystrokes is not a history.
  */
-export function revertUpdate(
-  doc: Y.Doc,
-  snapshotOrigin: Y.Doc,
-  snapshotUpdate: Y.Doc,
-) {
-  try {
-    const snapshotDoc = new Y.Doc();
-    Y.applyUpdate(
-      snapshotDoc,
-      Y.encodeStateAsUpdate(snapshotUpdate),
-      snapshotOrigin,
-    );
+export const VERSION_GRANULARITY_MS = 60_000;
 
-    const currentStateVector = Y.encodeStateVector(doc);
-    const snapshotStateVector = Y.encodeStateVector(snapshotDoc);
+/**
+ * Merge an ascending activity timeline into the versions the panel lists.
+ *
+ * The collaboration server already groups with the same two bounds (a gap and a
+ * maximum span, both a minute), but it will only ever merge changes by the
+ * *same* author: it breaks a run whenever the author changes. Two people typing
+ * in the same paragraph at the same time would otherwise produce two interleaved
+ * columns of entries, which is not what a version is — a version is a moment in
+ * the document, not a moment in someone's editing.
+ *
+ * So this applies the server's own rule again, minus the author test, and keeps
+ * the authors instead of discarding them. Because the server sorts by `from` and
+ * breaks a run only where the author changes, re-merging those adjacent runs
+ * yields exactly what one pass over the whole timeline would have produced.
+ *
+ * Both comparisons are `<`, matching the server's, so entries exactly a minute
+ * apart start a new version rather than joining the old one.
+ */
+export const mergeActivityEntries = (
+  activity: ActivityEntry[],
+  granularityMs: number = VERSION_GRANULARITY_MS,
+): DocVersion[] => {
+  const versions: DocVersion[] = [];
+  const authors: Set<string>[] = [];
 
-    const changesSinceSnapshotUpdate = Y.encodeStateAsUpdate(
-      doc,
-      snapshotStateVector,
-    );
+  activity.forEach((entry) => {
+    const last = versions[versions.length - 1];
 
-    const undoManager = new Y.UndoManager(
-      [snapshotDoc.getMap('document-store')],
-      {
-        trackedOrigins: new Set([snapshotOrigin]),
-      },
-    );
+    if (
+      last &&
+      entry.from - last.to < granularityMs &&
+      entry.to - last.from < granularityMs
+    ) {
+      last.to = entry.to;
+      last.id = String(entry.to);
+    } else {
+      versions.push({
+        id: String(entry.to),
+        from: entry.from,
+        to: entry.to,
+        by: [],
+      });
+      authors.push(new Set());
+    }
 
-    Y.applyUpdate(snapshotDoc, changesSinceSnapshotUpdate, snapshotOrigin);
-    undoManager.undo();
-    const revertChangesSinceSnapshotUpdate = Y.encodeStateAsUpdate(
-      snapshotDoc,
-      currentStateVector,
-    );
-    Y.applyUpdate(doc, revertChangesSinceSnapshotUpdate, snapshotOrigin);
-  } catch (e) {
-    console.error('Failed to revert the doc to a previous state', e);
-  }
-}
+    if (entry.by) {
+      authors[authors.length - 1].add(entry.by);
+    }
+  });
+
+  return versions.map((version, index) => ({
+    ...version,
+    by: Array.from(authors[index]),
+  }));
+};

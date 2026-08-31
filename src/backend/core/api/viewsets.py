@@ -1799,6 +1799,31 @@ class DocumentViewSet(
         """
         Return the document's versions but only those created after the user got access
         to the document
+
+        DEPRECATED — nothing calls this any more, and it can be removed once the
+        migration to the collaboration server is finished.
+
+        The collaboration server is the source of truth for document history and
+        keeps it itself; the version history in the frontend is built from its
+        `activity` and `changeset` routes, bounded by the same date this method
+        applies (`user_access_since`, which the collaboration server is handed to
+        bound what it serves). What this endpoint lists is S3 object versions of
+        the legacy `{pk}/file` key, and nothing writes that key any more — the
+        content endpoint that used to went away with the migration — so the list
+        is frozen at each document's migration date and gains no further entries.
+
+        Removing it is safe once every document has had its real history replayed
+        into the collaboration server by `manage.py migrate_documents`; until
+        then these versions are the only record of what a soft-migrated document
+        looked like before it moved. `versions_detail` and
+        `Document.get_versions_slice` are kept for the same reason and go at the
+        same time.
+
+        The `versions_list` ability still gates the history menu item in the
+        frontend, and correctly: it is `has_access_role`, which is exactly the
+        condition under which `user_access_since` is not None and the
+        collaboration server grants a history — so the gate and the grant cannot
+        disagree.
         """
         user = request.user
         if not user.is_authenticated:
