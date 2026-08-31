@@ -82,14 +82,14 @@ It is not a fork of yhub — it is a thin wrapper:
 
 Public exposure: the browser needs the websocket `/collaboration/ws/`,
 `/collaboration/ydoc/` for the http fallback, `/collaboration/activity/` and
-`/collaboration/changeset/` for the editing history, plus
-`/collaboration/jwks/v1`, which carries public keys and nothing else. Every
-other route this server serves — `rollback`, `prune`, `reset-connections`,
-`migrate`, `create-ydoc`, `restore-ydoc`, `reset-ydoc` — is refused to a browser
-by the permission tables themselves (see "Access control" below), so publishing
-one is no longer the security boundary it was under yhub 0.7. Keep them off the
-public ingress all the same: an endpoint that cannot be reached cannot be
-probed. The two probes are not worth publishing either — kubelet calls them from
+`/collaboration/changeset/` for the editing history, `/collaboration/rollback/`
+for restoring a document to a point in it, plus `/collaboration/jwks/v1`, which
+carries public keys and nothing else. Every other route this server serves —
+`prune`, `reset-connections`, `migrate`, `create-ydoc`, `restore-ydoc`,
+`reset-ydoc` — is refused to a browser by the permission tables themselves (see
+"Access control" below), so publishing one is no longer the security boundary it
+was under yhub 0.7. Keep them off the public ingress all the same: an endpoint
+that cannot be reached cannot be probed. The two probes are not worth publishing either — kubelet calls them from
 inside — and the helm chart's ingress lists what it routes rather than what it
 hides, so they stay in-cluster on their own.
 
@@ -109,12 +109,13 @@ Masks are positional `crud` strings where `-` denies, so `'-r--'` is read-only.
 |---|---|---|---|---|
 | `ydoc` | `-r--` | `-ru-` | as reader/editor | `cru-` |
 | `awareness` | `-r--` | `-ru-` | as reader/editor | `-ru-` |
-| `history` | `from: <access date>` | `from: <access date>` | — | `from: 0` |
+| `history` | `from: <access date>` | `from: <access date>`, `rollback` | — | `from: 0` |
 | `delete` | — | — | — | `['soft']` |
 | `endpoint.ws` | `-r--` | `-ru-` | as reader/editor | `crud` (`'*'`) |
 | `endpoint.ydoc` | `-r--` | `-ru-` | as reader/editor | `crud` (`'*'`) |
 | `endpoint.activity` | `-r--` | `-r--` | — | `crud` (`'*'`) |
 | `endpoint.changeset` | `-r--` | `-r--` | — | `crud` (`'*'`) |
+| `endpoint.rollback` | — | `c---` | — | `crud` (`'*'`) |
 | every other endpoint | — | — | — | `crud` (`'*'`) |
 
 All three browser columns are the same document permission,
@@ -123,7 +124,7 @@ All three browser columns are the same document permission,
 there is a history to read. `abilities.retrieve` decided whether there is any
 access at all before either.
 
-Five of those cells are decisions rather than transcriptions:
+Six of those cells are decisions rather than transcriptions:
 
 - **`awareness: '-r--'` for a reader.** A reader receives presence and never
   publishes it — [suitenumerique/docs#2544](https://github.com/suitenumerique/docs/pull/2544),
@@ -135,7 +136,7 @@ Five of those cells are decisions rather than transcriptions:
   a feature. The frontend has to know it too: the http fallback provider has no
   receive-only setting, so a reader's `HttpProvider` is built with no awareness
   instance at all, or its first `PATCH` would take a 403 and close it for good.
-- **No `'*'` endpoint fallback for the browser.** Only the four routes above are
+- **No `'*'` endpoint fallback for the browser.** Only the routes above are
   named, so everything else is denied — including any endpoint a future yhub
   release adds. Under 0.7 this fence was a `purpose != null` check, which
   `create-ydoc` slipped through by declaring no purpose.
@@ -159,8 +160,24 @@ Five of those cells are decisions rather than transcriptions:
   version history for exactly that reason ("we wouldn't know from which date to
   allow them anyway"). `activity` and `changeset` are withheld together with the
   ray rather than granted alone, which would open a route that answers 403 by
-  itself. `rollback` and `prune` are withheld from everyone: they are
-  destructive and are granted by name.
+  itself — and `rollback` with them.
+- **`history.rollback` for an editor.** `POST /rollback` undoes every change in
+  a window, and it is what the version history's restore button calls: **any
+  user who may edit a document may restore it to an earlier state.** Four things
+  bound that.
+  - A reader cannot, twice over. yhub normalizes `rollback` to `false` unless
+    `ydoc` carries `u` — it is a dead grant without the write it rides on — and
+    the requirement side mirrors it. Docs additionally withholds the endpoint,
+    so a reader is refused at the door rather than inside the handler.
+  - Nobody can undo what happened before they arrived. Mutations *refuse* where
+    reads clamp: a rollback demands a ray reaching back to its own `from`
+    instead of having it moved forward silently. Every moment a user can name is
+    one the timeline showed them, and that timeline starts at their access date
+    — so the bound holds without trusting the client, and a rollback with no
+    `from` at all, which asks to undo all of history, is refused outright.
+  - Nothing is destroyed. A rollback appends an update that undoes another; what
+    it undid stays in the history and can be restored again from the same panel.
+  - `prune`, which does erase, stays withheld from everyone.
 - **`delete: ['soft']` and not `'hard'` for the admin.** yhub 0.8 made
   `DELETE /ydoc?hard=true` reachable over REST for the first time. Docs keeps
   irreversible erasure programmatic, behind `reset-ydoc` (see "Deletion").
@@ -601,10 +618,16 @@ Operational notes:
 ## Full migration (`POST /collaboration/migrate/v1/{org}/{docid}`)
 
 The media bucket is versioned, so `{docid}/file` keeps every snapshot Django
-ever wrote — that is the version history the backend exposes at
-`/documents/{id}/versions/`. The lazy seed above replays only the newest one, so
-a soft-migrated document lands in yhub as a single `system` change stamped with
-the migration time and its past is gone.
+ever wrote — that is the version history the backend used to expose at
+`/documents/{id}/versions/`, and which nothing writes to any more. The lazy seed
+above replays only the newest one, so a soft-migrated document lands in yhub as a
+single `system` change stamped with the migration time and its past is gone.
+
+This is what makes the backfill user-visible rather than housekeeping. The
+frontend's version history is built from `activity`, so until a document has been
+migrated in full its history begins at the moment it reached yhub: the snapshots
+are still in S3, but nothing reads them. Running the backfill is what gives those
+documents their past back.
 
 `migrate` replays the whole history instead. It lists the object's versions and
 applies them, oldest first, to a single `Y.Doc({ gc: false })`; after each one
@@ -612,9 +635,12 @@ it credits the ids that version introduced (and the ones it deleted) with
 **that version's own S3 timestamp**. `GET
 /collaboration/activity/v1/{org}/{docid}?group=false` then reports one entry per
 S3 version, at the same timestamps the backend's version listing reports as
-`last_modified` — which is what lines the two up. (Pass `group=false`: the
-default grouping merges changes by the same author less than a second apart,
-which would fold versions saved in quick succession into one entry.)
+`last_modified` — which is what lines the two up, and what makes the two lists
+comparable when checking a backfill. (Pass `group=false`: the default grouping
+merges changes by the same author less than a second apart, which would fold
+versions saved in quick succession into one entry. The frontend asks for the
+opposite — a minute of grouping — because it wants a readable history rather
+than a faithful one; use `group=false` to compare, not what the browser sends.)
 `gc: false` is what preserves content that later versions deleted — most of
 what makes a history worth keeping.
 

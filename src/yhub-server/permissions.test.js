@@ -144,21 +144,79 @@ describe('the history a user may read', () => {
     }
   });
 
-  it('never grants rollback or prune', () => {
-    // destructive, granted by name, and restoring a version is not something
-    // this grant does
+  it('never grants prune', () => {
+    // erasure, granted by name, and nothing a browser does needs it
     for (const who of [reader, editor]) {
-      assert.equal(
-        grants(who, { history: { from: ACCESS_SINCE, rollback: true } }),
-        false,
-      );
       assert.equal(
         grants(who, { history: { from: ACCESS_SINCE, prune: true } }),
         false,
       );
-      assert.equal(grants(who, { endpoint: { rollback: 'c---' } }), false);
       assert.equal(grants(who, { endpoint: { prune: 'c---' } }), false);
     }
+  });
+});
+
+describe('undoing a stretch of history', () => {
+  /**
+   * `POST /rollback` appends an update that undoes every change in a window: it
+   * is what the version history's restore button does. An editor may, a reader
+   * may not, and neither may reach back past the moment they arrived.
+   */
+  it('lets an editor undo a window of its own history', () => {
+    assert.equal(
+      grants(editor, { history: { from: ACCESS_SINCE, rollback: true } }),
+      true,
+    );
+    assert.equal(grants(editor, { endpoint: { rollback: 'c---' } }), true);
+  });
+
+  it('refuses an editor a window wider than its ray', () => {
+    // the difference between a read and a mutation: `activity` would clamp this
+    // silently, `rollback` refuses it. `from: 0` is what a rollback with no
+    // bound at all asks for, so this is also what stops "undo everything"
+    assert.equal(
+      grants(editor, { history: { from: 0, rollback: true } }),
+      false,
+    );
+    assert.equal(
+      grants(editor, { history: { from: ACCESS_SINCE - 1, rollback: true } }),
+      false,
+    );
+  });
+
+  it('never lets a reader undo anything', () => {
+    assert.equal(
+      grants(reader, { history: { from: ACCESS_SINCE, rollback: true } }),
+      false,
+    );
+    assert.equal(grants(reader, { endpoint: { rollback: 'c---' } }), false);
+  });
+
+  it('is a dead grant without the write it rides on', () => {
+    // yhub's own rule, asserted here because it is what makes the reader case
+    // safe even if this policy ever spelled it wrong: `rollback` normalizes to
+    // false unless `ydoc` carries `u`
+    const readerWithRollback = normalizePermissions({
+      ...browserDocumentPermissions(false, ACCESS_SINCE),
+      history: { from: ACCESS_SINCE, rollback: true },
+    });
+    assert.equal(readerWithRollback.history.rollback, false);
+  });
+
+  it('is withheld from a browser that holds no access', () => {
+    for (const who of [linkReader, linkEditor]) {
+      assert.equal(
+        grants(who, { history: { from: ACCESS_SINCE, rollback: true } }),
+        false,
+      );
+      assert.equal(grants(who, { endpoint: { rollback: 'c---' } }), false);
+    }
+  });
+
+  it('is not granted to the admin token', () => {
+    // 0.8 stopped implying it from write access, and the backend does not
+    // restore versions — the browser does
+    assert.equal(grants(admin, { history: { from: 0, rollback: true } }), false);
   });
 });
 
@@ -199,7 +257,6 @@ describe('everything the browser must not reach', () => {
   // a future release is denied until it is named — this is the property that
   // replaced 0.7's `purpose != null` check
   for (const name of [
-    'rollback',
     'prune',
     'create-ydoc',
     'migrate',
@@ -235,9 +292,8 @@ describe('the admin token', () => {
     assert.equal(grants(admin, { delete: ['hard'] }), false);
   });
 
-  it('is not granted rollback or prune', () => {
-    // 0.8 stopped implying them from write access; Docs does not use them
-    assert.equal(grants(admin, { history: { from: 0, rollback: true } }), false);
+  it('is not granted prune', () => {
+    // 0.8 stopped implying it from write access; Docs does not use it
     assert.equal(grants(admin, { history: { from: 0, prune: true } }), false);
   });
 });
