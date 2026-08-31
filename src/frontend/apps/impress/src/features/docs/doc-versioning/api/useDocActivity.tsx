@@ -9,7 +9,11 @@ import {
 import { useCollaborationTarget } from '@/core/config/hooks/useCollaborationUrl';
 
 import { APIActivity, DocVersion } from '../types';
-import { VERSION_GRANULARITY_MS, mergeActivityEntries } from '../utils';
+import {
+  UNGROUPED_AUTHORS,
+  VERSION_GRANULARITY_MS,
+  mergeActivityEntries,
+} from '../utils';
 
 export type DocActivityParam = {
   docId: string;
@@ -41,6 +45,9 @@ const getDocActivity = async (
         group: true,
         groupMaxGap: VERSION_GRANULARITY_MS,
         groupMaxDuration: VERSION_GRANULARITY_MS,
+        // the imported history is shown save by save — see UNGROUPED_AUTHORS.
+        // The panel applies this again, on both sides of an entry.
+        groupExclude: UNGROUPED_AUTHORS.join(','),
       },
     },
   );
