@@ -26,14 +26,14 @@
   resolved "https://registry.yarnpkg.com/@colordx/core/-/core-5.4.3.tgz#35a8d239b324a6cdf9a16de9970a32c8abc24824"
   integrity sha512-kIxYSfA5T8HXjav55UaaH/o/cKivF6jCCGIb8eqtcsfI46wsvlSiT8jMDyrl779qLec3c2c2oHBZo4oAhvbjrQ==
 
-"@html-to/text-cli@0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@html-to/text-cli/-/text-cli-0.6.0.tgz#e2ad7147059a80c7ebf29afa6910903451d0bca0"
-  integrity sha512-JwlrCBccUM/QkUpc37P+qG+hpkXRbWOVcHd9vM+5D+O82Ak2p8anGRxisr33//aJzlkYNKNg2I8LDh3Bx2tBPg==
+"@html-to/text-cli@0.6.1":
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/@html-to/text-cli/-/text-cli-0.6.1.tgz#80ef2eae64c164f1fa3379ae20fc57b82a11cef2"
+  integrity sha512-fnbLS8bra4BkGinXWzUKfalqLPYmz8E2ABT+TgHUZ4inhAUYF2rBEEctOKqZ6FgaJF1iZ//KBBLKVz6nm3RbhA==
   dependencies:
     "@selderee/plugin-htmlparser2" "~0.12.0"
     aspargvs "~0.7.0"
-    deepmerge-ts "^7.1.5"
+    deepmerge-ts "^8.0.1"
     htmlparser2 "^10.1.0"
     selderee "~0.12.0"
 
@@ -398,10 +398,10 @@ csso@^5.0.5:
   dependencies:
     css-tree "~2.2.0"
 
-deepmerge-ts@^7.1.5:
-  version "7.1.5"
-  resolved "https://registry.yarnpkg.com/deepmerge-ts/-/deepmerge-ts-7.1.5.tgz#ff818564007f5c150808d2b7b732cac83aa415ab"
-  integrity sha512-HOJkrhaYsweh+W+e74Yn7YStZOilkoPb6fycpwNLKzSPtruFs48nYis0zy5yJz1+ktUhHxoRDJ27RQAWLIJVJw==
+deepmerge-ts@^8.0.1:
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/deepmerge-ts/-/deepmerge-ts-8.0.2.tgz#4f3e5588c3a7c59ea80d54b583948d6f404cf13e"
+  integrity sha512-uqbvqLUMrc6p0MO+WBRtTxY55hmyh94WRwI5a++PZe54X+bfVh59FSN7uWCBCW1CCVjzjnrwzfI8zidE2obMMw==
 
 detect-node@2.1.0, detect-node@^2.0.4:
   version "2.1.0"
