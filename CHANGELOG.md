@@ -20,6 +20,29 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) build the version history from the collaboration server. The
+  history panel now lists the document's own editing activity instead of the
+  snapshots the backend used to write to S3 — a list that has not gained an
+  entry since the document was migrated, because nothing writes those snapshots
+  any more. A version is a minute of editing: changes less than a minute apart
+  become one, no version spans more than a minute, and changes are merged
+  whoever made them, because a version is a moment in the document rather than a
+  moment in one person's editing. Selecting one previews the document exactly as
+  it stood then. Note that a document whose history has not yet been replayed
+  into the collaboration server (`manage.py migrate_documents`) lists only the
+  edits made since it moved there
+
+- ✨(frontend) make restoring a version work again. It has done nothing since
+  the migration, while still promising that the document would be replaced. The
+  collaboration server now performs the restore where the document lives, so
+  everyone with it open sees it arrive over their own connection rather than one
+  tab rewriting the document under the others. Nothing is destroyed — the
+  restore is itself a change, so the state it replaced stays in the history and
+  can be restored again. **Any user who may edit a document may restore it**;
+  readers may not, and nobody may undo work that predates their own access —
+  where reads are silently trimmed to what a user may see, a restore reaching
+  further back is refused
+
 - ✨(collaboration) let a user read the document's editing history from the
   moment they were given access to it. The collaboration server's `activity` and
   `changeset` routes are opened to the browser, bounded per user to the earliest

@@ -120,10 +120,10 @@ ingressCollaborationApi:
   ##
   ## The routes yhub serves to browsers, guarded by the same document
   ## authorization as the websocket. Everything it serves that is not listed
-  ## here stays in-cluster — `create-ydoc`, `reset-connections`, `migrate`,
-  ## `restore-ydoc` and `reset-ydoc` are called by the backend only, and
-  ## publishing them would put document deletion and the legacy migration one
-  ## request away from the internet.
+  ## here stays in-cluster — `prune`, `create-ydoc`, `reset-connections`,
+  ## `migrate`, `restore-ydoc` and `reset-ydoc` are called by the backend only
+  ## (or by nobody), and publishing them would put document deletion, content
+  ## erasure and the legacy migration one request away from the internet.
   ##
   ## `jwks` is public on purpose: it carries the public halves of the keys
   ## yhub signs with, and nothing else.
@@ -131,10 +131,17 @@ ingressCollaborationApi:
   ## `activity` and `changeset` carry the editing history, bounded per user to
   ## the moment they were given access to the document — a user who holds no
   ## access on it, only its link, is refused both.
+  ##
+  ## `rollback` restores a document to an earlier state, and is the one route
+  ## here through which a browser changes the past rather than reading it. It
+  ## is published because the version history's restore button calls it: any
+  ## user who may edit a document may roll it back, bounded by the same date as
+  ## the history they can see. Readers are refused it.
   paths:
     - /collaboration/ydoc/
     - /collaboration/activity/
     - /collaboration/changeset/
+    - /collaboration/rollback/
     - /collaboration/jwks/
   ## @param ingressCollaborationApi.hosts Additional host to configure for the Ingress
   hosts: []

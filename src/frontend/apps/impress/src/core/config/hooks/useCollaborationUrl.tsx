@@ -1,13 +1,14 @@
+import { CollaborationTarget } from '@/api';
+
 import { useConfig } from '../api';
 
-export const useCollaborationUrl = (room?: string) => {
+/**
+ * Where the collaboration server's rooms live, independent of which document is
+ * being opened. Kept apart so the two hooks below cannot answer differently.
+ */
+const useCollaborationBaseUrl = () => {
   const { data: conf } = useConfig();
 
-  if (!room) {
-    return;
-  }
-
-  // The room is appended to the base URL by the provider (y-websocket)
   return (
     conf?.COLLABORATION_WS_URL ||
     (typeof window !== 'undefined'
@@ -15,6 +16,17 @@ export const useCollaborationUrl = (room?: string) => {
         `wss://${window.location.host}/collaboration/ws/v1/docs`
       : '')
   );
+};
+
+export const useCollaborationUrl = (room?: string) => {
+  const baseUrl = useCollaborationBaseUrl();
+
+  if (!room) {
+    return;
+  }
+
+  // The room is appended to the base URL by the provider (y-websocket)
+  return baseUrl;
 };
 
 /**
@@ -41,4 +53,20 @@ export const collaborationHttpTarget = (wsUrl: string) => {
     serverUrl: `${scheme === 'wss' ? 'https' : 'http'}://${base}`,
     org,
   };
+};
+
+/**
+ * The collaboration server's http address, for the routes that are plain REST
+ * rather than a transport: the editing history (`activity`, `changeset`) and
+ * the restore it feeds (`rollback`).
+ *
+ * `undefined` while the configuration is still loading, and for an instance
+ * whose collaboration url is not shaped like a room url — the same answer, and
+ * the same reason, as the http fallback's: no address is better than one nobody
+ * serves.
+ */
+export const useCollaborationTarget = (): CollaborationTarget | undefined => {
+  const baseUrl = useCollaborationBaseUrl();
+
+  return baseUrl ? collaborationHttpTarget(baseUrl) : undefined;
 };

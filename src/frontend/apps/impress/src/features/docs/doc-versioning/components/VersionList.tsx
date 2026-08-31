@@ -3,21 +3,27 @@ import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
 
 import { APIError } from '@/api';
-import { Box, Icon, InfiniteScroll, Text, TextErrors } from '@/components';
+import { Box, Icon, Text, TextErrors } from '@/components';
 import { Doc } from '@/docs/doc-management';
 import { useDate } from '@/hooks';
 
-import { useDocVersionsInfiniteQuery } from '../api/useDocVersions';
-import { Versions } from '../types';
+import { useDocActivity } from '../api/useDocActivity';
+import { DocVersion } from '../types';
 
 import { VersionItem } from './VersionItem';
+
+/**
+ * The timeline's timestamps are unix milliseconds; every date helper here reads
+ * ISO strings.
+ */
+const toISO = (timestamp: number) => new Date(timestamp).toISOString();
 
 interface VersionListStateProps {
   isLoading: boolean;
   error: APIError<unknown> | null;
-  versions?: Versions[];
-  selectedVersionId?: Versions['version_id'];
-  onSelectVersion?: (versionId: Versions['version_id']) => void;
+  versions?: DocVersion[];
+  selectedVersionId?: DocVersion['id'];
+  onSelectVersion?: (versionId: DocVersion['id']) => void;
 }
 
 const VersionListState = ({
@@ -41,16 +47,16 @@ const VersionListState = ({
     <Box $gap="xxs" $padding="xs">
       {versions?.map((version) => {
         const formattedDate = formatDateSpecial(
-          version.last_modified,
+          toISO(version.to),
           'dd MMMM · HH:mm',
         );
-        const isSelected = version.version_id === selectedVersionId;
+        const isSelected = version.id === selectedVersionId;
         return (
-          <Box as="li" key={version.version_id} $css="list-style: none;">
+          <Box as="li" key={version.id} $css="list-style: none;">
             <VersionItem
               text={formattedDate}
               isActive={isSelected}
-              onSelect={() => onSelectVersion?.(version.version_id)}
+              onSelect={() => onSelectVersion?.(version.id)}
             />
           </Box>
         );
@@ -76,8 +82,8 @@ const VersionListState = ({
 
 interface VersionListProps {
   doc: Doc;
-  onSelectVersion?: (versionId: Versions['version_id']) => void;
-  selectedVersionId?: Versions['version_id'];
+  onSelectVersion?: (versionId: DocVersion['id']) => void;
+  selectedVersionId?: DocVersion['id'];
 }
 
 export const VersionList = ({
@@ -88,25 +94,22 @@ export const VersionList = ({
   const { t } = useTranslation();
   const { formatDate } = useDate();
 
+  /**
+   * The whole list arrives at once — the collaboration server bounds it to the
+   * history this user may see, and a version is at least a minute of editing —
+   * so there is nothing to page through.
+   */
   const {
-    data,
+    data: versions,
     error,
     isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useDocVersionsInfiniteQuery({
-    docId: doc.id,
-  });
+  } = useDocActivity({ docId: doc.id });
 
-  const versions = data?.pages.reduce((acc, page) => {
-    return acc.concat(page.versions);
-  }, [] as Versions[]);
   const selectedVersion = versions?.find(
-    (version) => version.version_id === selectedVersionId,
+    (version) => version.id === selectedVersionId,
   );
   const selectedVersionDate = selectedVersion
-    ? formatDate(selectedVersion.last_modified, DateTime.DATETIME_MED)
+    ? formatDate(toISO(selectedVersion.to), DateTime.DATETIME_MED)
     : null;
 
   return (
@@ -114,17 +117,7 @@ export const VersionList = ({
       $css="overflow-y: auto; overflow-x: hidden;"
       className="--docs--version-list"
     >
-      <InfiniteScroll
-        hasMore={hasNextPage}
-        isLoading={isFetchingNextPage}
-        next={() => {
-          void fetchNextPage();
-        }}
-        as="ul"
-        $padding="none"
-        $margin={{ top: 'none' }}
-        role="list"
-      >
+      <Box as="ul" $padding="none" $margin={{ top: 'none' }} role="list">
         {versions?.length === 0 && (
           <Box $align="center" $margin="large">
             <Text $size="h6" $weight="bold">
@@ -139,7 +132,7 @@ export const VersionList = ({
           versions={versions}
           selectedVersionId={selectedVersionId}
         />
-      </InfiniteScroll>
+      </Box>
       <Text className="sr-only" aria-live="polite">
         {selectedVersionDate
           ? t('Selected version {{date}}', { date: selectedVersionDate })
