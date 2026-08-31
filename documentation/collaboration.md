@@ -144,6 +144,14 @@ moment in one person's editing, so two people typing in the same minute produce 
 two interleaved ones. The collaboration server only ever groups changes by the same author, so this
 last step happens in the browser, on top of its grouping.
 
+With one exception: **a migrated document's imported history is never grouped.** Before the
+migration the editor saved the whole document once a minute, and the migration replays each of
+those saves at its original timestamp, attributed to `system`. Grouped like ordinary editing they
+would land on the granularity itself — a chain of entries a minute apart, merging or not depending
+on how fast the network was on the day each was written, losing about a third of the chain. There
+was no editing session to summarise here, only a record of saves that already happened, so they are
+shown one for one. Both the collaboration server and the browser are told to leave them alone.
+
 ## Restoring a previous state
 
 Selecting a version and restoring it asks the collaboration server to undo everything that happened

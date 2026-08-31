@@ -28,9 +28,14 @@ and this project adheres to
   become one, no version spans more than a minute, and changes are merged
   whoever made them, because a version is a moment in the document rather than a
   moment in one person's editing. Selecting one previews the document exactly as
-  it stood then. Note that a document whose history has not yet been replayed
-  into the collaboration server (`manage.py migrate_documents`) lists only the
-  edits made since it moved there
+  it stood then. A migrated document's imported history is the exception to the
+  grouping and is listed save by save: those entries are a record of saves that
+  already happened rather than an editing session to summarise, and they arrive
+  spaced exactly the width of the grouping window, so grouping them would have
+  dropped about a third of them depending on how fast the network was years ago.
+  Note that a document whose history has not yet been replayed into the
+  collaboration server (`manage.py migrate_documents`) lists only the edits made
+  since it moved there
 
 - ✨(frontend) make restoring a version work again. It has done nothing since
   the migration, while still promising that the document would be replaced. The

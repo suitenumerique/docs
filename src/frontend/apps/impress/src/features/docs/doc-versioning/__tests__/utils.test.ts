@@ -86,6 +86,47 @@ describe('mergeActivityEntries', () => {
     expect(version.to).toBe(900);
   });
 
+  it('keeps a migrated history intact, save by save', () => {
+    /**
+     * The case `UNGROUPED_AUTHORS` exists for. The backend used to save the
+     * whole document every 60s, each save becoming one version of the legacy
+     * file, and the migration replays them at their original timestamps, all
+     * attributed to `system` — so an imported history is a chain of entries
+     * spaced almost exactly the granularity apart, with nothing to tell them
+     * apart by author.
+     *
+     * Jitter is applied in both directions on purpose: it is the negative side
+     * that would merge, and a perfectly fixed interval would pass either way.
+     */
+    let t = 0;
+    const legacy: ActivityEntry[] = [];
+    [0, -900, 700, -1500, 400, -300, 1200, -80].forEach((jitter) => {
+      legacy.push(entry(t, t, 'system'));
+      t += 60_000 + jitter;
+    });
+
+    expect(mergeActivityEntries(legacy)).toHaveLength(legacy.length);
+  });
+
+  it('never folds an edit into the imported history beside it', () => {
+    // stricter than the collaboration server's own test, which would have
+    // refused this on the author comparison it makes and this one does not: a
+    // document edited moments after it was migrated must not absorb the
+    // migration entry, nor be absorbed by it
+    const versions = mergeActivityEntries([
+      entry(0, 0, 'system'),
+      entry(500, 500, 'alice'),
+      entry(1_000, 1_000, 'system'),
+    ]);
+
+    expect(versions).toHaveLength(3);
+    expect(versions.map((v) => v.by)).toEqual([
+      ['system'],
+      ['alice'],
+      ['system'],
+    ]);
+  });
+
   it('keeps an unattributed change without inventing an author', () => {
     const [version] = mergeActivityEntries([entry(0, 0, null)]);
 
