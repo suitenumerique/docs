@@ -75,6 +75,15 @@ and this project adheres to
   makes `/collaboration/ydoc/` a route browsers call, so
   `COLLABORATION_SERVER_ORIGIN` now gates the http routes as well as the
   websocket
+- ⬆️(collaboration) upgrade yhub to 0.9.0 and delete superseded document blobs
+  for real. Its S3 persistence plugin now records the object version it wrote
+  and names that version when it deletes it. On a versioned bucket — which is
+  what a deployment runs — a delete that names no version deletes nothing: it
+  writes a delete marker and keeps every version underneath. Each compaction
+  supersedes the blobs of the one before, so what was kept was every version of
+  every document ever written, a document someone asked to erase included, still
+  readable by anyone who can list versions. Blobs are written to the bucket for
+  every branch of a document.
 - ✨(backend) add a service generating cached RS256 JWT tokens
 - ✨(backend) publish the JWT public key on a JWKS endpoint
 - 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
