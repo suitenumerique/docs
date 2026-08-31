@@ -26,6 +26,7 @@ import {
   generateHtmlDocument,
   improveHtmlAccessibility,
 } from '../utils_html';
+import { addMediaFilesToMarkdownZip } from '../utils_markdown';
 
 const useExportAGPL = ModulesExport?.useExportAGPL;
 
@@ -62,7 +63,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       {
         label: t('Markdown'),
         value: 'markdown',
-        labelDescription: t('.md'),
+        labelDescription: t('.md(zip)'),
       },
       {
         label: t('HTML'),
@@ -107,10 +108,15 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     let blobExport = await exportAGPL?.docToBlob(format, documentTitle);
 
     if (!blobExport && format === 'markdown') {
-      const markdown = await editor.blocksToMarkdownLossy();
-      blobExport = new Blob([markdown], {
-        type: 'text/markdown;charset=utf-8',
-      });
+      const zip = new JSZip();
+      const blocks = structuredClone(editor.document);
+
+      await addMediaFilesToMarkdownZip(blocks, zip, mediaUrl);
+
+      const markdown = await editor.blocksToMarkdownLossy(blocks);
+      zip.file(`${filename}.md`, markdown);
+
+      blobExport = await zip.generateAsync({ type: 'blob' });
     }
 
     if (!blobExport && format === 'html') {
@@ -155,7 +161,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     }
 
     const downloadExtension =
-      format === 'html' ? 'zip' : format === 'markdown' ? 'md' : format;
+      format === 'html' || format === 'markdown' ? 'zip' : format;
 
     downloadFile(blobExport, `${filename}.${downloadExtension}`);
 

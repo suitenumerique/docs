@@ -30,7 +30,7 @@ test.describe('Doc Export', () => {
     await expect(page.getByTestId('modal-export-title')).toBeVisible();
     await expect(
       page.getByText(
-        'Export your document to download in .pdf, .docx, .odt, .md or .html(zip) format.',
+        'Export your document to download in .pdf, .docx, .odt, .md(zip) or .html(zip) format.',
       ),
     ).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Format' })).toBeVisible();
@@ -105,6 +105,26 @@ test.describe('Doc Export', () => {
     await verifyDocName(page, randomDoc);
     await writeInEditor({ page, text: 'Hello Markdown export' });
 
+    await openSuggestionMenu({
+      page,
+      suggestion: 'Resizable image with caption',
+    });
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByText('Upload image').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
+
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
+    await expect(image).toBeAttached({ timeout: 10000 });
+    await expect(image).toHaveAttribute('src', /.*\.svg/);
+    await expect(image).not.toHaveAttribute('src', /media-check/, {
+      timeout: 10000,
+    });
+
     await clickInEditorMenu(page, 'Download');
 
     await page.getByRole('combobox', { name: 'Format' }).click();
@@ -114,10 +134,24 @@ test.describe('Doc Export', () => {
     await page.getByTestId('doc-export-download-button').click();
 
     const download = await downloadPromise;
-    expect(download.suggestedFilename()).toBe(`${randomDoc}.md`);
+    expect(download.suggestedFilename()).toBe(`${randomDoc}.zip`);
 
-    const markdownBuffer = await cs.toBuffer(await download.createReadStream());
-    expect(markdownBuffer.toString('utf8')).toContain('Hello Markdown export');
+    const zipBuffer = await cs.toBuffer(await download.createReadStream());
+    const zip = await JSZip.loadAsync(zipBuffer);
+
+    const markdownFile = zip.file(`${randomDoc}.md`);
+    expect(markdownFile).not.toBeNull();
+
+    const markdown = await markdownFile!.async('string');
+    expect(markdown).toContain('Hello Markdown export');
+
+    const mediaFiles = Object.keys(zip.files).filter(
+      (filename) => filename !== `${randomDoc}.md`,
+    );
+    expect(mediaFiles).toHaveLength(1);
+    expect(mediaFiles[0]).toMatch(/\.svg$/);
+    expect(markdown).toContain(mediaFiles[0]);
+    expect(markdown).not.toContain('/media/');
   });
 
   test('it exports the doc to html zip', async ({ page, browserName }) => {
