@@ -596,9 +596,11 @@ provider answers to), `LEGACY_S3_SIGNATURE_VERSION` (see below), and
 `LEGACY_S3_BUCKET_NAME` (defaults to Django's dev default
 `impress-media-storage`; production uses a different bucket name and must set
 it explicitly). The server refuses to boot when the flag is set without
-endpoint and credentials. In development they come, like everything else this
-server reads, from `env.d/development/yhub` (and `yhub.local`, which is not
-committed — `make create-env-local-files` creates it).
+endpoint and credentials. In development they come from
+`env.d/development/yhub`, which holds everything this server reads but the
+database url — that one is in `env.d/development/yhub-postgres`, beside the
+credentials it spells out. Both have a `.local` counterpart, not committed,
+that `make create-env-local-files` creates.
 
 The bucket is read with the **AWS SDK for JavaScript v3**
 (`@aws-sdk/client-s3`), the same library family boto3 is to Django, so the
