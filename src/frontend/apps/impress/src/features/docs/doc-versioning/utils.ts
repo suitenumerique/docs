@@ -12,6 +12,24 @@ import { ActivityEntry, DocVersion } from './types';
 export const VERSION_GRANULARITY_MS = 60_000;
 
 /**
+ * Authors whose changes are never merged into a version with anything else.
+ *
+ * `system` is not a person who edited for a long time; it is what a document's
+ * imported past is attributed to. The backend used to save the whole document
+ * once a minute, each save becoming one version of the legacy file, and the
+ * migration replays those saves at their original timestamps — so an imported
+ * history arrives as a chain of `system` entries spaced almost exactly the
+ * granularity apart. Grouped like ordinary editing, whether two of those
+ * versions survive as two would come down to how fast the network was on the
+ * day they were written, and about a third of the chain would collapse.
+ *
+ * Grouping is a judgement about someone's editing, and there was no editing
+ * here: these entries are the record of saves that already happened, and the
+ * only honest thing to do with them is to show them one for one.
+ */
+export const UNGROUPED_AUTHORS = ['system'];
+
+/**
  * Merge an ascending activity timeline into the versions the panel lists.
  *
  * The collaboration server already groups with the same two bounds (a gap and a
@@ -28,6 +46,13 @@ export const VERSION_GRANULARITY_MS = 60_000;
  *
  * Both comparisons are `<`, matching the server's, so entries exactly a minute
  * apart start a new version rather than joining the old one.
+ *
+ * `UNGROUPED_AUTHORS` is honoured on both sides, which is stricter than the
+ * server's own test and has to be: the server only refuses to merge an excluded
+ * entry into the one before it, because it would have refused anyway on the
+ * author test it makes and this does not. Here an excluded entry both starts a
+ * version and closes it, so an edit made moments after a document was migrated
+ * cannot be folded into the imported history it happens to sit next to.
  */
 export const mergeActivityEntries = (
   activity: ActivityEntry[],
@@ -35,12 +60,17 @@ export const mergeActivityEntries = (
 ): DocVersion[] => {
   const versions: DocVersion[] = [];
   const authors: Set<string>[] = [];
+  const isUngrouped = (by: string | null) =>
+    by !== null && UNGROUPED_AUTHORS.includes(by);
 
   activity.forEach((entry) => {
     const last = versions[versions.length - 1];
+    const lastAuthors = authors[authors.length - 1];
 
     if (
       last &&
+      !isUngrouped(entry.by) &&
+      !Array.from(lastAuthors ?? []).some(isUngrouped) &&
       entry.from - last.to < granularityMs &&
       entry.to - last.from < granularityMs
     ) {
