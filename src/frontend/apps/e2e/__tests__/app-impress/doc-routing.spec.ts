@@ -8,7 +8,6 @@ import {
 } from './utils-common';
 import { writeInEditor } from './utils-editor';
 import { SignIn, expectLoginPage } from './utils-signin';
-import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc Routing', () => {
   test.beforeEach(async ({ page }) => {
@@ -102,44 +101,36 @@ test.describe('Doc Routing', () => {
       'This test is only relevant when silent login is disabled.',
     );
 
-    const [docTitle] = await createDoc(page, '401-doc-parent', browserName, 1);
+    const [docTitle] = await createDoc(page, '401-doc', browserName, 1);
     await verifyDocName(page, docTitle);
-
-    await createRootSubPage(page, browserName, '401-doc-child');
 
     await writeInEditor({ page, text: 'Hello World' });
 
-    const responsePromise = page.route(
-      /.*\/documents\/.*\/$|users\/me\/$/,
-      async (route) => {
-        const request = route.request();
+    /**
+     * The session dies underneath an open document: the backend answers 401 to the
+     * next thing the page asks it about the document.
+     *
+     * That next request used to arrive by itself. Leaving a document sent a
+     * `PATCH .../content/` to save it - which is what this test used to intercept,
+     * navigating to another document to provoke it. Content is no longer saved over
+     * the api at all, so nothing is sent on the way out any more and the reload
+     * below is what puts a question to the backend.
+     */
+    await page.route(/.*\/documents\/.*\/$/, async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.continue();
+        return;
+      }
 
-        // When we quit a document, a PATCH request is sent to save the document.
-        // We intercept this request to simulate a 401 error from the backend.
-        // The GET request to users/me is also intercepted to simulate the user
-        // being logged out when trying to fetch user info.
-        // This way we can test the 401 error handling when saving the document
-        if (
-          (request.url().includes('/documents/') &&
-            request.method().includes('PATCH')) ||
-          (request.url().includes('/users/me/') &&
-            request.method().includes('GET'))
-        ) {
-          await route.fulfill({
-            status: 401,
-            json: {
-              detail: 'Log in to access the document',
-            },
-          });
-        } else {
-          await route.continue();
-        }
-      },
-    );
+      await route.fulfill({
+        status: 401,
+        json: {
+          detail: 'Log in to access the document',
+        },
+      });
+    });
 
-    await page.getByRole('link', { name: '401-doc-parent' }).click();
-
-    await responsePromise;
+    await page.reload();
 
     await expect(page.getByText('Log in to access the document.')).toBeVisible({
       timeout: 10000,
