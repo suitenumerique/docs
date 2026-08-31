@@ -7,16 +7,30 @@ import { Canvg } from 'canvg';
 import { IParagraphOptions, ShadingType } from 'docx';
 import React from 'react';
 
+const WINDOWS_RESERVED_FILENAME =
+  /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i;
+
 /**
  * Converts a document title into a safe filename for exported files.
  */
 export function getExportFilename(title: string): string {
-  return title
+  const filename = title
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s/g, '-')
-    .replace(/[\\/]/g, '-');
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[<>:"/\\|?*]/g, '-')
+    .split('')
+    .map((character) => (character.charCodeAt(0) < 32 ? '-' : character))
+    .join('')
+    .replace(/[. ]+$/g, '');
+
+  if (!filename) {
+    return 'document';
+  }
+
+  return WINDOWS_RESERVED_FILENAME.test(filename) ? `_${filename}` : filename;
 }
 
 export function downloadFile(blob: Blob, filename: string) {

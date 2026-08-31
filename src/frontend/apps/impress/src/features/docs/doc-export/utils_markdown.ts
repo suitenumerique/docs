@@ -15,6 +15,7 @@ interface MediaReference {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+/** Collects media URL properties from a nested editor block tree. */
 const collectMediaReferences = (
   blocks: unknown[],
   references: MediaReference[],
