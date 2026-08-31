@@ -34,11 +34,15 @@ LEGACY_S3_ACCESS_KEY_ID=impress
 LEGACY_S3_SECRET_ACCESS_KEY=password
 
 # Document storage: where the blobs of a compaction are written. Off, they stay
-# in yhub's postgres, which is what this stack runs. Turning it on stores them
-# in object storage instead — here the same minio, in a bucket of its own that
-# the server creates on startup when it is missing. Read the "Document storage"
-# section of src/yhub-server/README.md first: a document persisted this way
-# cannot be read back with the plugin turned off again.
+# in yhub's postgres, which is what this stack runs. On, they go to object
+# storage instead — here the same minio, in a bucket of its own, created
+# versioned by compose so that flipping this to true exercises what a
+# deployment does rather than a simpler case.
+#
+# The settings below are read whether or not the toggle is on: they are what
+# attaches the S3 plugin, and the plugin is what can read back the objects a
+# previous run wrote. Only the writing follows the toggle. See the "Document
+# storage" section of src/yhub-server/README.md.
 YHUB_S3_PERSISTENCE=false
 YHUB_S3_ENDPOINT_URL=http://minio:9000
 YHUB_S3_ACCESS_KEY_ID=impress
