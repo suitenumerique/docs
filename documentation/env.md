@@ -183,11 +183,11 @@ documents what each of them changes.
 | LEGACY_S3_BUCKET_NAME         | Name of the legacy media bucket                                                                                                                          | impress-media-storage  |
 | LEGACY_S3_REGION_NAME         | Region of that bucket, when its provider needs one                                                                                                       | us-east-1              |
 | LEGACY_S3_SIGNATURE_VERSION   | How the calls to that bucket are signed, s3v4 or v4                                                                                                      | s3v4                   |
-| YHUB_S3_PERSISTENCE           | Set to "true" to store the document blobs in a bucket instead of the yhub database. Read the "Document storage" section of `src/yhub-server/README.md` first: it cannot be turned back off | false |
-| YHUB_S3_ENDPOINT_URL          | Required by YHUB_S3_PERSISTENCE, endpoint of that bucket, without a path                                                                                 |                        |
-| YHUB_S3_ACCESS_KEY_ID         | Required by YHUB_S3_PERSISTENCE, read/write/delete access to that bucket (or YHUB_S3_ACCESS_KEY_ID_FILE)                                                 |                        |
-| YHUB_S3_SECRET_ACCESS_KEY     | Required by YHUB_S3_PERSISTENCE, secret of the key above (or YHUB_S3_SECRET_ACCESS_KEY_FILE)                                                             |                        |
-| YHUB_S3_BUCKET_NAME           | Required by YHUB_S3_PERSISTENCE, name of that bucket, created on startup when missing                                                                    |                        |
+| YHUB_S3_PERSISTENCE           | Set to "true" to write new document blobs to a bucket instead of the yhub database. The YHUB_S3_* settings below attach the bucket whether or not this is on, and must stay in place for as long as it holds anything — see the "Document storage" section of `src/yhub-server/README.md` | false |
+| YHUB_S3_ENDPOINT_URL          | Endpoint of the bucket the blobs live in, without a path. Required as a set with the three below                                                                                 |                        |
+| YHUB_S3_ACCESS_KEY_ID         | Read/write/delete access to that bucket, deleting object versions included (or YHUB_S3_ACCESS_KEY_ID_FILE)                                                 |                        |
+| YHUB_S3_SECRET_ACCESS_KEY     | Secret of the key above (or YHUB_S3_SECRET_ACCESS_KEY_FILE)                                                             |                        |
+| YHUB_S3_BUCKET_NAME           | Name of that bucket, created on startup when missing                                                                    |                        |
 | YHUB_S3_REGION_NAME           | Region of that bucket, when its provider needs one                                                                                                       |                        |
 
 ## impress-y-provider container
