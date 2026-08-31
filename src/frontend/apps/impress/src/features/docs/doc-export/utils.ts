@@ -7,6 +7,18 @@ import { Canvg } from 'canvg';
 import { IParagraphOptions, ShadingType } from 'docx';
 import React from 'react';
 
+/**
+ * Converts a document title into a safe filename for exported files.
+ */
+export function getExportFilename(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s/g, '-')
+    .replace(/[\\/]/g, '-');
+}
+
 export function downloadFile(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');

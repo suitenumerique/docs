@@ -35,6 +35,10 @@ const collectMediaReferences = (
   });
 };
 
+/**
+ * Adds resolvable same-origin media to a Markdown archive and rewrites the
+ * corresponding block URLs to archive-local filenames.
+ */
 export const addMediaFilesToMarkdownZip = async (
   blocks: unknown[],
   zip: JSZip,

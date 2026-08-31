@@ -20,7 +20,7 @@ import { type Doc, useTrans } from '@/docs/doc-management';
 import { fallbackLng } from '@/i18n/config';
 
 import ModulesExport from '../hooks/';
-import { downloadFile } from '../utils';
+import { downloadFile, getExportFilename } from '../utils';
 import {
   addMediaFilesToZip,
   generateHtmlDocument,
@@ -97,13 +97,8 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
     setIsExporting(true);
 
-    const filename = (doc.title || untitledDocument)
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s/g, '-');
-
     const documentTitle = doc.title || untitledDocument;
+    const filename = getExportFilename(documentTitle);
 
     let blobExport = await exportAGPL?.docToBlob(format, documentTitle);
 
