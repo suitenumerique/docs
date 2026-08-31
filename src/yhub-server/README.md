@@ -290,27 +290,38 @@ content map and the content ids. By default they are `bytea` columns — the
 whole corpus lives on the database disk, which is the configuration Docs has
 been running and what this server does when nothing below is set.
 
-`YHUB_S3_PERSISTENCE=true` plugs yhub's own S3 persistence plugin
-(`S3PersistenceV1`, shipped with `@y/hub`) into the chain it consults before
-writing a blob and before reading one back. The blobs then go to a bucket and
-the row keeps a reference to them, `<column>_is_reference` saying which of the
-four it is: postgres holds the index of the documents, the bucket holds their
-bytes.
+Naming a bucket plugs yhub's own S3 persistence plugin (`S3PersistenceV1`,
+shipped with `@y/hub`) into the chain it consults before writing a blob and
+before reading one back. `YHUB_S3_PERSISTENCE=true` then sends the blobs to that
+bucket, the row keeping a reference to them and `<column>_is_reference` saying
+which of the four it is: postgres holds the index of the documents, the bucket
+holds their bytes.
+
+The two are deliberately separate. **The plugin is attached whenever the bucket
+is configured, on or off**, because reading is the half that must never be taken
+away: the objects an earlier run wrote are the only copy of those versions, and
+a row pointing at one is unreadable without the plugin that wrote it. Turning
+the toggle off stops the writing — new blobs go back to postgres — and leaves
+the reading alone. Keep the settings in place for as long as the bucket holds
+anything.
 
 | Variable | Required | What it is |
 | -------- | -------- | ---------- |
-| `YHUB_S3_PERSISTENCE` | — | `true` to store the blobs in a bucket (default: postgres) |
+| `YHUB_S3_PERSISTENCE` | — | `true` to write new blobs to the bucket (default: postgres) |
 | `YHUB_S3_ENDPOINT_URL` | yes | Endpoint of that bucket, without a path (e.g. `https://s3.example.com`) |
 | `YHUB_S3_ACCESS_KEY_ID` | yes | Key with read, write and delete on the bucket (or `…_FILE`) |
 | `YHUB_S3_SECRET_ACCESS_KEY` | yes | Secret of that key (or `…_FILE`) |
 | `YHUB_S3_BUCKET_NAME` | yes | Name of the bucket. No default: a typo would create one |
 | `YHUB_S3_REGION_NAME` | no | Region, when the provider needs one told rather than discovered |
 
-"Required" means required *when the plugin is on*: it is a startup error naming
-what is missing, rather than a client that ends up anonymous and only says so
-on the first compaction — which is a background task, so the failure would show
-up as documents quietly not being persisted. The bucket in use is logged next
-to the role (`"s3Bucket":"yhub-storage"`, `null` for postgres).
+"Required" means required *as a set*: name one of them and the rest are a
+startup error naming what is missing, rather than a client that ends up
+anonymous or against the wrong host and only says so on the first compaction —
+which is a background task, so the failure would show up as documents quietly
+not being persisted. Naming none of them, with the toggle off, is the one
+configuration with no plugin at all: postgres alone, and no object anywhere that
+would need reading back. The bucket is logged next to the role
+(`"s3Bucket":"yhub-storage","s3Writes":false` — a bucket that is only read).
 
 This is a **third** bucket, and it is deliberately configured apart from the
 other two: the backend's media bucket (`AWS_S3_*`, Django's own settings) and
@@ -320,27 +331,39 @@ the process it belongs to.
 
 A few things worth knowing before turning it on:
 
-- **It cannot be turned back off.** A row pointing at an object is unreadable
-  without the plugin that wrote it, and yhub reports such a version as having
-  no content rather than as an error — so a document compacted while the plugin
-  was on comes back *empty* once it is off, silently. Turning it on is safe in
-  the other direction: rows written before keep their bytes inline and are
-  served exactly as they were,
+- **the settings are what must not be dropped, not the toggle.** A row pointing
+  at an object is unreadable without the plugin, and yhub reports such a version
+  as having no content rather than as an error — so removing the `YHUB_S3_*`
+  settings from a deployment whose bucket holds anything makes those documents
+  come back *empty*, silently. `YHUB_S3_PERSISTENCE=false` is the safe way to
+  stop using the bucket, and it goes both ways: rows written while it was off
+  keep their bytes inline and are served exactly as they were,
 - **the bucket is created at startup** when it does not exist, so the
   credentials need `HeadBucket` and, the first time, `CreateBucket`. It is
-  checked on every boot, which is also what makes a wrong endpoint or a wrong
-  key fail loudly and immediately,
+  checked on every boot — including a boot with the toggle off, which is what
+  makes a wrong endpoint or a wrong key fail loudly and immediately rather than
+  on the first document that needs reading back,
 - **both halves need it.** The worker writes the blobs and the server reads
   them back, so a split deployment (`YHUB_ROLE`) configures the bucket on both
   — in the helm chart the worker inherits `yhub.envVars`, so there is nothing
   to repeat,
-- **only the `main` branch is offloaded.** The plugin declines everything else
-  and those blobs stay in postgres, which is yhub's behaviour, not a setting,
+- **every branch is offloaded.** The bucket is where the blobs of a document
+  belong whatever branch they were written on. This is the one thing the toggle
+  moves: `branches` is every branch when it is on and none when it is off, a
+  plugin that goes on retrieving and deleting what is in the bucket and adds
+  nothing to it,
 - **objects are deleted late.** When a version's row is dropped (pruning, a
   reset, a hard deletion), the object is removed about ten seconds later, so
   that readers holding the reference are not left with a 404. A delete that
   fails is logged and forgotten: the bucket may accumulate objects no row names
   anymore, and nothing collects them,
+- **on a versioned bucket, the version is what gets deleted.** A plain delete
+  there deletes nothing — it writes a delete marker over the object and keeps
+  every version underneath it, so the blobs of every compaction ever made would
+  stay, and so would a document someone asked to erase. The plugin records the
+  version id it wrote and the delete names it (`deleteVersions`, on), which
+  removes the bytes for real — on AWS that is `s3:DeleteObjectVersion`, which a
+  policy granting `s3:DeleteObject` alone does not cover,
 - the objects are Yjs blobs keyed by
   `id:ydoc:v1/{org}/{docid}/{branch}/{gc}/{clock}` (and `id:contentmap:v1/…`,
   `id:contentids:v1/…`) — one object per version and per column, not one file
@@ -349,9 +372,13 @@ A few things worth knowing before turning it on:
 
 In the dev stack the variables are in `env.d/development/yhub`, pointing at the
 same minio the rest of the stack uses with a bucket of its own
-(`yhub-storage`), and the toggle is off. Flipping it to `true` and restarting
-the service is enough to exercise the path — on a dev database, where losing
-the documents already compacted costs nothing.
+(`yhub-storage`), and the toggle is off — the plugin is attached and reads that
+bucket, the compactions go to postgres. Flipping `YHUB_S3_PERSISTENCE` to true
+and restarting the service is enough to exercise the writing path. The bucket is
+made by the `createbuckets` job of `compose.yml` rather than by this server, and
+made *versioned*, so what is exercised is what a deployment runs rather than a
+simpler case. Watch it with `mc ls --versions --recursive impress/yhub-storage`
+from an `mc` container on the stack's network.
 
 ## Container image
 
