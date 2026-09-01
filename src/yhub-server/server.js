@@ -458,7 +458,7 @@ const auth = createAuthPlugin({
       // read starts. The backend sends ISO-8601 (null for a link-reach reader,
       // who holds no access and so has no date); `history.from` is unix ms.
       //
-      // Anything unparseable is *no* history rather than full history, and zero
+      // Anything unparsable is *no* history rather than full history, and zero
       // is refused with it: `from: 0` is the one value that also unlocks a
       // `gc=false` websocket, and no real access date is ever zero, so a zero
       // here could only ever be a bug upstream.
