@@ -29,6 +29,10 @@ and this project adheres to
 - 📄(frontend) allowed partially export when MIT #2551
 - 🐛(backend) manage async support for Docs custom middleware
 
+### Removed
+
+- 🔥(backend) remove whitenoise package
+
 ## [v5.5.0] - 2026-08-24
 
 ### Added
