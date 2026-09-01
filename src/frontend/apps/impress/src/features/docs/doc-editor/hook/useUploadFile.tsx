@@ -44,6 +44,7 @@ export const useUploadFile = (docId: string) => {
         throw buildAndReportSizeError();
       }
 
+      setSizeError(null);
       const body = new FormData();
       body.append('file', file);
 
@@ -152,6 +153,30 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
 
       const innerTimeoutId = setTimeout(() => {
         const block = editor.getBlock({ id: blockId });
+
+        // onUploadEnd fires whether uploadFile resolved or threw (BlockNote calls
+        // it in a finally-like manner). At that moment, BlockNote may not have
+        // had time to update the block URL yet, so we wait 300ms. After this
+        // delay:
+        //   - Upload succeeded → BlockNote has updated the block URL to the final
+        //     ANALYZE_URL returned by uploadFile.
+        //   - Upload failed → uploadFile threw before returning a URL. BlockNote
+        //     never received a URL, so the block URL is still the empty string
+        //     it was initialised with.
+        //
+        // An empty URL at this checkpoint therefore unambiguously indicates a
+        // failed upload. We remove the block to avoid leaving a stuck
+        // "Loading..." block in the editor.
+        if (block && 'url' in block.props && !block.props.url) {
+          try {
+            editor.removeBlocks([blockId]);
+          } catch (error) {
+            captureException(error, {
+              extra: { info: 'Error removing block after failed upload' },
+            });
+          }
+          return;
+        }
 
         replaceBlockWithUploadLoader(block as Block);
       }, 300);
