@@ -9,6 +9,13 @@ import { useContext } from 'react';
 
 import { Doc } from '../doc-management';
 
+export const CLASS_TREE_ITEM_ACTIONS = 'doc-tree-root-item-actions';
+
+export const isWithinTreeItemActions = (event: React.SyntheticEvent) =>
+  !!(event.target as HTMLElement | null)?.closest(
+    `.${CLASS_TREE_ITEM_ACTIONS}`,
+  );
+
 /**
  * Type guard to check if a tree node value is a Doc (as opposed to a
  * ui-kit synthetic node like VIEW_MORE, SEPARATOR, TITLE, or SIMPLE_NODE).
@@ -54,6 +61,8 @@ export const syncDocInTree = (
   } else if (treeContext.treeData.getNode(docId)) {
     treeContext.treeData.updateNode(docId, data);
   }
+
+  treeContext.treeApiRef.current?.focus(docId);
 };
 
 export const findIndexInTree = (

@@ -329,98 +329,85 @@ test.describe('Doc Tree', () => {
     ).toBeHidden();
   });
 
-  test('keyboard navigation with Enter key opens documents', async ({
+  test('check the accessibility of the doc tree', async ({
     page,
     browserName,
   }) => {
-    // Create a parent document
     const [docParent] = await createDoc(
       page,
-      'doc-tree-keyboard-nav',
+      'doc-tree-accessibility',
       browserName,
       1,
     );
-    await verifyDocName(page, docParent);
 
-    // Create a sub-document
-    const { name: docChild } = await createRootSubPage(
+    const { name: docChild1 } = await createRootSubPage(
       page,
       browserName,
-      'doc-tree-keyboard-child',
+      'doc-tree-accessibility-child-1',
+    );
+
+    const { name: docChild2 } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-tree-accessibility-child-2',
     );
 
     const docTree = page.getByTestId('doc-tree');
-    await expect(docTree).toBeVisible();
+    const rootItem = docTree.getByLabel('Root document').first();
+    const treeRow1 = await getTreeRow(page, docChild1);
+    const treeRow2 = await getTreeRow(page, docChild2);
 
-    // Test keyboard navigation on root document
-    const rootItem = page.getByTestId('doc-tree-root-item');
-    await expect(rootItem).toBeVisible();
-
-    // Focus on the root item and press Enter
-    await rootItem.focus();
+    await docTree.click();
+    await page.keyboard.press('Tab');
     await expect(rootItem).toBeFocused();
-    await page.keyboard.press('Enter');
-
-    // Verify we navigated to the root document
-    await verifyDocName(page, docParent);
-    await expect(page).toHaveURL(/\/docs\/[^/]+\/?$/);
-
-    // Now test keyboard navigation on sub-document
-    await expect(docTree.getByText(docChild)).toBeVisible();
-  });
-
-  test('keyboard navigation with F2 focuses root actions button', async ({
-    page,
-    browserName,
-  }) => {
-    // Create a parent document to initialize the tree
-    const [docParent] = await createDoc(
-      page,
-      'doc-tree-keyboard-f2-root',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, docParent);
-
-    const docTree = page.getByTestId('doc-tree');
-    await expect(docTree).toBeVisible();
-
-    const rootItem = page.getByTestId('doc-tree-root-item');
-    await expect(rootItem).toBeVisible();
-
-    // Focus the root item
-    await rootItem.focus();
-    await expect(rootItem).toBeFocused();
-
-    // Press F2 → focus should move to the root actions \"Open the document options\" button
+    await page.keyboard.press('ArrowDown');
+    await expect(treeRow1).toBeFocused();
     await page.keyboard.press('F2');
+    await expect(
+      treeRow1.getByRole('button', { name: 'Add emoji' }),
+    ).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(
+      treeRow1.getByRole('button', {
+        name: /Open the document options/i,
+      }),
+    ).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(treeRow1).toBeFocused();
 
+    await page.keyboard.press('ArrowUp');
+    await expect(rootItem).toBeFocused();
+
+    // Check F2
+    await page.keyboard.press('F2');
     const rootActions = rootItem.locator('.doc-tree-root-item-actions');
     const rootMoreOptionsButton = rootActions.getByRole('button', {
       name: /Open the document options/i,
     });
-
-    await expect(rootMoreOptionsButton).toBeFocused();
-  });
-
-  test('Shift+Tab from resize handle returns focus to selected sub-doc', async ({
-    page,
-    browserName,
-  }) => {
-    await createDoc(page, 'doc-tree-shift-tab', browserName, 1);
-
-    const { name: docChild } = await createRootSubPage(
-      page,
-      browserName,
-      'doc-tree-shift-tab-child',
+    const rootAddDocButton = rootItem.getByTestId(
+      'doc-tree-item-actions-add-child',
     );
+    await expect(rootMoreOptionsButton).toBeFocused();
+    await page.keyboard.press('F2');
+    await expect(rootAddDocButton).toBeFocused();
+    await page.keyboard.press('F2');
+    await expect(rootMoreOptionsButton).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(rootAddDocButton).toBeFocused();
+    await page.keyboard.press('ArrowLeft');
+    await expect(rootMoreOptionsButton).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(
+      page.getByRole('menuitem', { name: /Copy Link/i }),
+    ).toBeVisible();
+    await page.waitForTimeout(500);
+    await page.keyboard.press('Escape');
+    await expect(rootMoreOptionsButton).toBeFocused();
 
-    const docTree = page.getByTestId('doc-tree');
-    const selectedSubDoc = await getTreeRow(page, docChild);
-    await expect(selectedSubDoc).toHaveAttribute('aria-selected', 'true');
-
-    await selectedSubDoc.focus();
-    await expect(selectedSubDoc).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(treeRow1).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(treeRow2).toBeFocused();
 
     await page.keyboard.press('Tab');
     await expect(page.getByLabel('Open user menu')).toBeFocused();
@@ -441,6 +428,9 @@ test.describe('Doc Tree', () => {
 
     await page.keyboard.press('Shift+Tab');
     await expect(docTree.getByLabel('Root document').first()).toBeFocused();
+
+    await page.keyboard.press('Enter');
+    await verifyDocName(page, docParent);
   });
 
   test('it updates the child icon from the tree', async ({
