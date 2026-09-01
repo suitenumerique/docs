@@ -1,6 +1,6 @@
 import { Block } from '@blocknote/core';
 import { captureException } from '@sentry/nextjs';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { APIError, backendUrl } from '@/api';
@@ -14,37 +14,51 @@ import { DocsBlockNoteEditor } from '../types';
 export const useUploadFile = (docId: string) => {
   const { t } = useTranslation();
   const { data: config } = useConfig();
+  const [sizeError, setSizeError] = useState<APIError | null>(null);
+  const [errorKey, setErrorKey] = useState(0);
   const {
     mutateAsync: createDocAttachment,
     isError: isErrorAttachment,
     error: errorAttachment,
   } = useCreateDocAttachment();
 
+  const maxSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? 10 * 1024 * 1024; // Default to 10MB if config isn't provided by the backend.
+
+  const buildAndReportSizeError = useCallback((): APIError => {
+    const error = new APIError(t('File is too large'), {
+      status: 413,
+      cause: [
+        t('File size exceeds the maximum allowed size of {{size}}MB.', {
+          size: Math.round(maxSize / (1024 * 1024)),
+        }),
+      ],
+    });
+    setSizeError(error);
+    setErrorKey((prev) => prev + 1);
+    return error;
+  }, [maxSize, t]);
+
   const uploadFile = useCallback(
     async (file: File) => {
-      const maxSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? 10 * 1024 * 1024; // Default to 10MB if config isn't provided by the backend.
+      if (file.size > maxSize) {
+        throw buildAndReportSizeError();
+      }
+
       const body = new FormData();
       body.append('file', file);
 
-      const ret = await createDocAttachment({
-        docId,
-        body,
-        maxSize,
-        errorTitle: t('File is too large'),
-        errorCause: t('File size exceeds the maximum allowed size of {{size}}MB.', {
-          size: Math.round(maxSize / (1024 * 1024)),
-        }),
-      });
+      const ret = await createDocAttachment({ docId, body });
 
       return `${backendUrl()}${ret.file}`;
     },
-    [config?.DOCUMENT_IMAGE_MAX_SIZE, createDocAttachment, docId, t],
+    [buildAndReportSizeError, createDocAttachment, docId, maxSize],
   );
 
   return {
     uploadFile,
-    isErrorAttachment,
-    errorAttachment,
+    isErrorAttachment: isErrorAttachment || !!sizeError,
+    errorAttachment: sizeError ?? errorAttachment,
+    errorKey,
   };
 };
 

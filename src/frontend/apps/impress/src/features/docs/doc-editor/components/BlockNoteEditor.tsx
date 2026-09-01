@@ -133,7 +133,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       ? DEFAULT_LOCALE
       : i18n.resolvedLanguage;
 
-  const { uploadFile, errorAttachment } = useUploadFile(doc.id);
+  const { uploadFile, errorAttachment, errorKey } = useUploadFile(doc.id);
   const conf = useConfig().data;
   const { isFeatureFlagActivated } = useAnalytics();
   const aiBlockNoteAllowed = !!(
@@ -236,14 +236,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         }),
       },
       pasteHandler: ({ event, defaultPasteHandler }) => {
-        const files = Array.from(event.clipboardData?.files ?? []);
-        try {
-          files.forEach(checkFileSize);
-        } catch {
-          return;
-        }
-
-        // Get clipboard data
         const blocknoteData = event.clipboardData?.getData('blocknote/html');
 
         /**
@@ -314,41 +306,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   useScrollToBlockAnchor();
 
   useEffect(() => {
-    const container = refEditorContainer.current;
-    if (!container) return;
-
-    const handleDrop = (event: DragEvent) => {
-      const files = Array.from(event.dataTransfer?.files ?? []);
-      try {
-        files.forEach(checkFileSize);
-      } catch {
-        event.stopPropagation();
-        event.preventDefault();
-      }
-    };
-
-    const handlePaste = (event: ClipboardEvent) => {
-      const files = Array.from(event.clipboardData?.items ?? [])
-        .filter((item) => item.kind === 'file')
-        .map((item) => item.getAsFile())
-        .filter((f): f is File => f !== null);
-      try {
-        files.forEach(checkFileSize);
-      } catch {
-        event.stopPropagation();
-        event.preventDefault();
-      }
-    };
-
-    container.addEventListener('drop', handleDrop, true);
-    container.addEventListener('paste', handlePaste, true);
-    return () => {
-      container.removeEventListener('drop', handleDrop, true);
-      container.removeEventListener('paste', handlePaste, true);
-    };
-  }, [checkFileSize]);
-
-  useEffect(() => {
     setEditor(editor);
 
     return () => {
@@ -366,7 +323,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       <DocsFindReplaceStyle />
       {errorAttachment && (
         <Box
-          key={sizeErrorKey}
+          key={errorKey}
           $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}
         >
           <TextErrors

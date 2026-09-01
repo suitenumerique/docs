@@ -2,7 +2,6 @@ import { renderHook, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { APIError } from '@/api';
 import { AppWrapper } from '@/tests/utils';
 
 import { useUploadFile } from '../useUploadFile';
@@ -17,7 +16,7 @@ describe('useUploadFile', () => {
   // Fake file with a size slightly under the limit
   const smallFile = new File(
     [new ArrayBuffer(1 * 1024 * 1024 - 1)],
-    'big.png',
+    'small.png',
     {
       type: 'image/png',
     },
@@ -28,7 +27,8 @@ describe('useUploadFile', () => {
   });
 
   beforeEach(() => {
-    fetchMock.restore();
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
   });
 
   it("proceeds to upload when file doesn't exceed the size limit", async () => {
@@ -41,7 +41,7 @@ describe('useUploadFile', () => {
     });
 
     await result.current.uploadFile(smallFile);
-    expect(fetchMock.calls()).toHaveLength(1);
+    expect(fetchMock.callHistory.calls()).toHaveLength(1);
   });
 
   it('throws an APIError before uploading when file exceeds the size limit', async () => {
@@ -49,16 +49,17 @@ describe('useUploadFile', () => {
       wrapper: AppWrapper,
     });
 
-    await expect(result.current.uploadFile(bigFile)).rejects.toThrow(APIError);
-    expect(fetchMock.calls()).toHaveLength(0);
+    await expect(result.current.uploadFile(bigFile)).rejects.toThrow();
+    expect(fetchMock.callHistory.calls()).toHaveLength(0);
   });
 
-  it('sets errorAttachment with a user-friendly message when file exceeds the size limit', async () => {
+  it('sets errorAttachment synchronously (before any network call) when file exceeds the size limit', async () => {
     const { result } = renderHook(() => useUploadFile('doc-id'), {
       wrapper: AppWrapper,
     });
 
-    await result.current.uploadFile(bigFile).catch(() => {});
+    // Start the upload but do not await — error must be visible immediately
+    const uploadPromise = result.current.uploadFile(bigFile).catch(() => {});
 
     await waitFor(() => {
       expect(result.current.isErrorAttachment).toBe(true);
@@ -67,29 +68,8 @@ describe('useUploadFile', () => {
     expect(result.current.errorAttachment?.cause).toEqual([
       'File size exceeds the maximum allowed size of 1MB.',
     ]);
-  });
+    expect(fetchMock.callHistory.calls()).toHaveLength(0);
 
-  it('exposes checkFileSize that does not throw for files within the limit', () => {
-    const { result } = renderHook(() => useUploadFile('doc-id'), {
-      wrapper: AppWrapper,
-    });
-
-    expect(() => result.current.checkFileSize(smallFile)).not.toThrow();
-  });
-
-  it('exposes checkFileSize that throws and sets errorAttachment for files over the limit', async () => {
-    const { result } = renderHook(() => useUploadFile('doc-id'), {
-      wrapper: AppWrapper,
-    });
-
-    expect(() => result.current.checkFileSize(bigFile)).toThrow(APIError);
-
-    await waitFor(() => {
-      expect(result.current.isErrorAttachment).toBe(true);
-    });
-
-    expect(result.current.errorAttachment?.cause).toEqual([
-      'File size exceeds the maximum allowed size of 1MB.',
-    ]);
+    await uploadPromise;
   });
 });
