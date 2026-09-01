@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { useRouter } from 'next/router';
-import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 
 import { AppWrapper } from '@/tests/utils';
@@ -36,6 +36,10 @@ describe('useSaveDoc', () => {
     (useRouter as Mock).mockReturnValue({
       events: mockRouterEvents,
     });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('should setup event listeners on mount', () => {
@@ -127,6 +131,105 @@ describe('useSaveDoc', () => {
     expect(fetchMock.callHistory.calls().length).toBe(0);
 
     vi.useRealTimers();
+  });
+
+  const setupSavedDoc = async (yDoc: Y.Doc, docId: string) => {
+    fetchMock.patch(`http://test.jest/api/v1.0/documents/${docId}/content/`, {
+      body: JSON.stringify({ id: docId, content: 'test-content' }),
+    });
+
+    renderHook(() => useSaveDoc(docId, yDoc), {
+      wrapper: AppWrapper,
+    });
+
+    act(() => {
+      // Trigger a local update so there is something to save
+      yDoc.getMap('test').set('key', 'value');
+    });
+  };
+
+  const dispatchBeforeUnload = () => {
+    const event = new Event('beforeunload', { cancelable: true });
+    act(() => {
+      window.dispatchEvent(event);
+    });
+    return event;
+  };
+
+  it('should save with keepalive when the page is unloading', async () => {
+    const yDoc = new Y.Doc();
+    const docId = self.crypto.randomUUID();
+
+    await setupSavedDoc(yDoc, docId);
+
+    const event = dispatchBeforeUnload();
+
+    await waitFor(() => {
+      expect(fetchMock.callHistory.lastCall()?.url).toBe(
+        `http://test.jest/api/v1.0/documents/${docId}/content/`,
+      );
+    });
+
+    expect(fetchMock.callHistory.lastCall()?.options.keepalive).toBe(true);
+    // The browser owns the request, no need to hold the unload back
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('should not use keepalive when saving without unloading', async () => {
+    vi.useFakeTimers();
+    const yDoc = new Y.Doc();
+    const docId = self.crypto.randomUUID();
+
+    await setupSavedDoc(yDoc, docId);
+
+    act(() => {
+      vi.advanceTimersByTime(61000);
+    });
+
+    vi.useRealTimers();
+
+    await waitFor(() => {
+      expect(fetchMock.callHistory.lastCall()?.url).toBe(
+        `http://test.jest/api/v1.0/documents/${docId}/content/`,
+      );
+    });
+
+    expect(fetchMock.callHistory.lastCall()?.options.keepalive).toBeFalsy();
+  });
+
+  it('should hold the unload back when the doc is too big for keepalive with firefox', async () => {
+    const yDoc = new Y.Doc();
+    const docId = self.crypto.randomUUID();
+
+    // Mock Firefox user agent to simulate Firefox behavior
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0',
+    );
+
+    fetchMock.patch(`http://test.jest/api/v1.0/documents/${docId}/content/`, {
+      body: JSON.stringify({ id: docId, content: 'test-content' }),
+    });
+
+    renderHook(() => useSaveDoc(docId, yDoc), {
+      wrapper: AppWrapper,
+    });
+
+    act(() => {
+      // Over the 64 KiB keepalive cap once base64 encoded
+      yDoc.getText('big').insert(0, 'a'.repeat(70 * 1024));
+    });
+
+    const event = dispatchBeforeUnload();
+
+    await waitFor(() => {
+      expect(fetchMock.callHistory.lastCall()?.url).toBe(
+        `http://test.jest/api/v1.0/documents/${docId}/content/`,
+      );
+    });
+
+    expect(fetchMock.callHistory.lastCall()?.options.keepalive).toBe(false);
+    // Regular fetch: the unload is held back so the request has time to go out
+    expect(event.defaultPrevented).toBe(true);
   });
 
   it('should cleanup event listeners on unmount', () => {

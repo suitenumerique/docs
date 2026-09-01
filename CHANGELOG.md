@@ -28,6 +28,7 @@ and this project adheres to
 - 🐛(backend) fix duplicating a document that has no content
 - 📄(frontend) allowed partially export when MIT #2551
 - 🐛(backend) manage async support for Docs custom middleware
+- 🐛(frontend) save the doc with a keepalive request when leaving the page
 
 ### Removed
 
