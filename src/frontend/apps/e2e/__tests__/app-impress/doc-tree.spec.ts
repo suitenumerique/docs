@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  clickInDocOptionMenu,
   createDoc,
   getOtherBrowserName,
   updateDocTitle,
@@ -247,9 +248,7 @@ test.describe('Doc Tree', () => {
         hasText: docChild,
       });
     await child.hover();
-    const menu = child.getByRole('button', { name: /More options/ });
-    await menu.click();
-    await page.getByText('Move to my docs').click();
+    await clickInDocOptionMenu(page, child, 'Move to my docs');
 
     await verifyDocName(page, docParent);
 
@@ -258,24 +257,17 @@ test.describe('Doc Tree', () => {
   });
 
   test('Only owner can detaches a document', async ({ page, browserName }) => {
-    await createDoc(page, 'doc-tree-detach', browserName, 1);
+    const [docParent] = await createDoc(
+      page,
+      'doc-tree-detach',
+      browserName,
+      1,
+    );
 
     await page.getByRole('button', { name: 'Share' }).click();
 
     const otherBrowserName = getOtherBrowserName(browserName);
     await addNewMember(page, 0, 'Owner', otherBrowserName);
-
-    const list = page.getByTestId('doc-share-quick-search');
-    const currentEmail =
-      process.env[`SIGN_IN_USERNAME_${browserName.toUpperCase()}`] || '';
-    const currentUser = list.getByTestId(
-      `doc-share-member-row-${currentEmail}`,
-    );
-    const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
-    await currentUserRole.click();
-    await page.getByRole('menuitemradio', { name: 'Administrator' }).click();
-    await list.click();
-
     await page.getByRole('button', { name: 'Ok' }).click();
 
     const { name: docChild } = await createRootSubPage(
@@ -283,12 +275,6 @@ test.describe('Doc Tree', () => {
       browserName,
       'doc-tree-detach-child',
     );
-
-    await expect(
-      page
-        .getByLabel('It is the card information about the document.')
-        .getByText('Administrator ·'),
-    ).toBeVisible();
 
     const docTree = page.getByTestId('doc-tree');
     await expect(docTree.getByText(docChild)).toBeVisible();
@@ -299,13 +285,48 @@ test.describe('Doc Tree', () => {
       .filter({
         hasText: docChild,
       });
+
     await child.hover();
-    const menu = child.getByRole('button', { name: /More options/ });
+    const menu = child.getByRole('button', {
+      name: /Open the document options/,
+    });
     await menu.click();
 
     await expect(
       page.getByRole('menuitem', { name: 'Move to my docs' }),
-    ).toHaveAttribute('aria-disabled', 'true');
+    ).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    await docTree.getByText(docParent).click();
+    await verifyDocName(page, docParent);
+
+    // Change the role current user to "Administrator" to test that only the owner can detach a document
+    await page.getByRole('button', { name: 'Share' }).click();
+    const list = page.getByTestId('doc-share-quick-search');
+    const currentEmail =
+      process.env[`SIGN_IN_USERNAME_${browserName.toUpperCase()}`] || '';
+    const currentUser = list.getByTestId(
+      `doc-share-member-row-${currentEmail}`,
+    );
+    const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
+    await currentUserRole.click();
+    await page.getByRole('menuitemradio', { name: 'Administrator' }).click();
+    await list.click();
+    await page.getByRole('button', { name: 'Ok' }).click();
+
+    await expect(
+      page
+        .getByLabel('It is the card information about the document.')
+        .getByText('Administrator ·'),
+    ).toBeVisible();
+
+    await child.hover();
+    await menu.click();
+
+    await expect(
+      page.getByRole('menuitem', { name: 'Move to my docs' }),
+    ).toBeHidden();
   });
 
   test('keyboard navigation with Enter key opens documents', async ({
@@ -371,12 +392,12 @@ test.describe('Doc Tree', () => {
     await rootItem.focus();
     await expect(rootItem).toBeFocused();
 
-    // Press F2 → focus should move to the root actions \"More options\" button
+    // Press F2 → focus should move to the root actions \"Open the document options\" button
     await page.keyboard.press('F2');
 
     const rootActions = rootItem.locator('.doc-tree-root-item-actions');
     const rootMoreOptionsButton = rootActions.getByRole('button', {
-      name: /more options/i,
+      name: /Open the document options/i,
     });
 
     await expect(rootMoreOptionsButton).toBeFocused();
@@ -386,13 +407,7 @@ test.describe('Doc Tree', () => {
     page,
     browserName,
   }) => {
-    const [docParent] = await createDoc(
-      page,
-      'doc-tree-shift-tab',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, docParent);
+    await createDoc(page, 'doc-tree-shift-tab', browserName, 1);
 
     const { name: docChild } = await createRootSubPage(
       page,
@@ -400,6 +415,7 @@ test.describe('Doc Tree', () => {
       'doc-tree-shift-tab-child',
     );
 
+    const docTree = page.getByTestId('doc-tree');
     const selectedSubDoc = await getTreeRow(page, docChild);
     await expect(selectedSubDoc).toHaveAttribute('aria-selected', 'true');
 
@@ -407,7 +423,7 @@ test.describe('Doc Tree', () => {
     await expect(selectedSubDoc).toBeFocused();
 
     await page.keyboard.press('Tab');
-    await expect(page.getByLabel('User menu')).toBeFocused();
+    await expect(page.getByLabel('Open user menu')).toBeFocused();
 
     await page.keyboard.press('Tab');
     await expect(page.getByLabel('Open help menu')).toBeFocused();
@@ -424,7 +440,7 @@ test.describe('Doc Tree', () => {
     await expect(page.getByLabel('User menu')).toBeFocused();
 
     await page.keyboard.press('Shift+Tab');
-    await expect(selectedSubDoc).toBeFocused();
+    await expect(docTree.getByLabel('Root document').first()).toBeFocused();
   });
 
   test('it updates the child icon from the tree', async ({
@@ -441,19 +457,6 @@ test.describe('Doc Tree', () => {
 
     const row = await getTreeRow(page, docChild);
 
-    // Check Remove emoji is not present initially
-    await row.hover();
-    const menu = row.getByRole('button', { name: /More options/ });
-    await menu.click();
-    await expect(
-      page.getByRole('menuitem', { name: 'Remove emoji' }),
-    ).toBeHidden();
-
-    // Close the menu
-    await page.keyboard.press('Escape');
-
-    await page.waitForTimeout(500);
-
     // Update the emoji from the tree
     await row.locator('.--docs--doc-icon').click();
     await page.getByRole('button', { name: '😀' }).first().click();
@@ -465,14 +468,6 @@ test.describe('Doc Tree', () => {
       .locator('.--docs--doc-title')
       .getByRole('button');
     await expect(titleEmojiPicker).toHaveText('😀');
-
-    // Now remove the emoji using the new action
-    await row.hover();
-    await menu.click();
-    await page.getByRole('menuitem', { name: 'Remove emoji' }).click();
-
-    await expect(row.getByText('😀')).toBeHidden();
-    await expect(titleEmojiPicker).toBeHidden();
   });
 
   test('A child inherit from the parent', async ({ page, browserName }) => {

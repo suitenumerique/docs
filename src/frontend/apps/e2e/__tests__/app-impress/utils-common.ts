@@ -446,20 +446,20 @@ export const clickInEditorShareButton = async (page: Page) => {
 };
 
 export const clickInEditorMenu = async (page: Page, textButton: string) => {
-  await page
-    .getByTestId('floating-bar')
-    .getByRole('button', { name: 'Open the document options' })
-    .click();
-  await page.getByRole('menuitem', { name: textButton }).click();
+  await clickInDocOptionMenu(
+    page,
+    page.getByTestId('floating-bar'),
+    textButton,
+  );
 };
 
-export const clickInGridMenu = async (
+export const clickInDocOptionMenu = async (
   page: Page,
-  row: Locator,
+  selector: Locator,
   textButton: string,
 ) => {
-  await row
-    .getByRole('button', { name: /Open the menu of actions for the document/ })
+  await selector
+    .getByRole('button', { name: /Open the document options/ })
     .click();
   await page.getByRole('menuitem', { name: textButton }).click();
 };

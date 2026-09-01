@@ -2,12 +2,7 @@ import path from 'path';
 
 import { Locator, Page, expect, test } from '@playwright/test';
 
-import {
-  createDoc,
-  goToGridDoc,
-  mockedDocument,
-  saveContent,
-} from './utils-common';
+import { createDoc, mockedDocument, saveContent } from './utils-common';
 import {
   openSuggestionMenu,
   tryFocusEditorContent,
@@ -15,7 +10,7 @@ import {
 } from './utils-editor';
 
 const openPresenter = async (page: Page) => {
-  await page.getByLabel('Open the document options').click();
+  await page.getByLabel('Open the document options').first().click();
   await page.getByRole('menuitem', { name: 'Present' }).click();
 
   const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
@@ -513,9 +508,9 @@ test.describe('Presenter Mode mobile', () => {
       },
     });
 
-    await goToGridDoc(page);
+    await page.goto('/');
 
-    await page.getByLabel('Open the document options').click();
+    await page.getByLabel('Open the document options').first().click();
     await expect(page.getByRole('menuitem', { name: 'Present' })).toBeHidden();
   });
 

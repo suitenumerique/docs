@@ -19,6 +19,7 @@ and this project adheres to
 - ♿️(frontend) announce search loading state for screen readers #2526
 - ♻️(frontend) change favorite to star #2539
 - 🚚(frontend) add doc move to doc options #2555
+- ♻️(frontend) unified menu #2620
 - ♿(frontend) hide decorative emojis in document titles from SR #2527
 
 ### Fixed

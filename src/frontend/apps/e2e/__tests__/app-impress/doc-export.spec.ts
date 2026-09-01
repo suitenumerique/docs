@@ -269,7 +269,9 @@ test.describe('Doc Export', () => {
     });
 
     await page
-      .getByRole('button', { name: 'Ouvrir les options du document' })
+      .getByRole('button', {
+        name: `Ouvrir les options du document: ${randomDocFrench}`,
+      })
       .click();
     await page.getByRole('menuitem', { name: 'Télécharger' }).click();
 

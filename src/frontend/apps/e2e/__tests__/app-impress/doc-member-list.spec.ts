@@ -188,6 +188,8 @@ test.describe('Document list members', () => {
     await list.click();
     await expect(currentUserRole).toBeVisible();
 
+    await page.waitForTimeout(300);
+
     await newUserRoles.click();
     await expect(
       page.getByRole('menuitemradio', { name: 'Owner' }),

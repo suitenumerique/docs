@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  clickInDocOptionMenu,
   clickInEditorMenu,
-  clickInGridMenu,
   createDoc,
   getGridRow,
   verifyDocName,
@@ -34,18 +34,18 @@ test.describe('Doc Trashbin', () => {
 
     // Delete the first document - Is not displayed
     const row1 = await getGridRow(page, title1);
-    await clickInGridMenu(page, row1, 'Delete');
+    await clickInDocOptionMenu(page, row1, 'Delete');
     await page.getByRole('button', { name: 'Delete document' }).click();
     await expect(row1.getByText(title1)).toBeHidden();
 
     // Star the second document - Is displayed in the starred list
     const row2 = await getGridRow(page, title2);
-    await clickInGridMenu(page, row2, 'Star');
+    await clickInDocOptionMenu(page, row2, 'Star');
     await page.getByRole('link', { name: 'Starred', exact: true }).click();
     await expect(row2.getByText(title2)).toBeVisible();
 
     // Delete the second document - It is not displayed in the starred list anymore
-    await clickInGridMenu(page, row2, 'Delete');
+    await clickInDocOptionMenu(page, row2, 'Delete');
     await page.getByRole('button', { name: 'Delete document' }).click();
     await expect(row2.getByText(title2)).toBeHidden();
 
@@ -86,7 +86,7 @@ test.describe('Doc Trashbin', () => {
       }),
     ).toBeDisabled();
 
-    await clickInGridMenu(page, row2, 'Restore');
+    await clickInDocOptionMenu(page, row2, 'Restore');
 
     await expect(row2.getByText(title2)).toBeHidden();
 

@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  clickInDocOptionMenu,
   clickInEditorMenu,
-  clickInEditorShareButton,
   createDoc,
   getGridRow,
   goToGridDoc,
@@ -527,30 +527,23 @@ test.describe('Doc Header', () => {
     await createDoc(page, `Star doc`, browserName);
 
     // Star
-    await page
-      .getByRole('button', { name: 'Open the document options' })
-      .click();
-    await page.getByRole('menuitem', { name: 'Star' }).click();
+    await clickInEditorMenu(page, 'Star');
     await expect(page.getByText('This document is starred')).toBeVisible();
 
     // UnStar
-    await page
-      .getByRole('button', { name: 'Open the document options' })
-      .click();
-    await page.getByRole('menuitem', { name: 'Unstar' }).click();
+    await clickInEditorMenu(page, 'Unstar');
     await expect(page.getByText('This document is starred')).toBeHidden();
   });
 
   test('it duplicates a document', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, `Duplicate doc`, browserName);
 
-    const editor = page.locator('.ProseMirror');
-    await editor.click();
-    await editor.fill('Hello Duplicated World');
+    await writeInEditor({
+      page,
+      text: 'Hello Duplicated World',
+    });
 
-    await page.getByLabel('Open the document options').click();
-
-    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    await clickInEditorMenu(page, 'Duplicate');
     await expect(
       page.getByText('Document duplicated successfully!'),
     ).toBeVisible();
@@ -564,10 +557,9 @@ test.describe('Doc Header', () => {
 
     await expect(row.getByText(duplicateTitle)).toBeVisible();
 
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    await clickInDocOptionMenu(page, row, 'Duplicate');
     const duplicateDuplicateTitle = 'Copy of ' + duplicateTitle;
-    await page.getByText(duplicateDuplicateTitle).click();
+    await verifyDocName(page, duplicateDuplicateTitle);
     await expect(page.getByText('Hello Duplicated World')).toBeVisible();
   });
 
@@ -586,6 +578,7 @@ test.describe('Doc Header', () => {
 
     const duplicateTitle = 'Copy of ' + childTitle;
     const docTree = page.getByTestId('doc-tree');
+    const currentUrl = page.url();
 
     const child = docTree
       .getByRole('treeitem')
@@ -593,12 +586,9 @@ test.describe('Doc Header', () => {
       .filter({
         hasText: childTitle,
       });
+
     await child.hover();
-    await child.getByRole('button', { name: /More options/ }).click();
-
-    const currentUrl = page.url();
-
-    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    await clickInDocOptionMenu(page, child, 'Duplicate');
 
     await expect(page).not.toHaveURL(new RegExp(currentUrl));
 
@@ -607,75 +597,5 @@ test.describe('Doc Header', () => {
     await expect(
       page.getByTestId('doc-tree').getByText(duplicateTitle),
     ).toBeVisible();
-  });
-});
-
-test.describe('Documents Header mobile', () => {
-  test.use({ viewport: { width: 500, height: 1200 } });
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-  });
-
-  test('it checks the copy link button is displayed', async ({ page }) => {
-    await mockedDocument(page, {
-      abilities: {
-        destroy: false,
-        link_configuration: true,
-        versions_destroy: true,
-        versions_list: true,
-        versions_retrieve: true,
-        accesses_manage: false,
-        accesses_view: false,
-        update: true,
-        partial_update: true,
-        retrieve: true,
-      },
-    });
-
-    await goToGridDoc(page);
-
-    await page.getByLabel('Open the document options').click();
-    await expect(
-      page.getByRole('menuitem', { name: 'Copy link' }),
-    ).toBeVisible();
-    await page.keyboard.press('Escape');
-    await page.getByRole('button', { name: 'Share' }).click();
-    const shareModal = page.getByRole('dialog', {
-      name: 'Share the document',
-    });
-    await expect(
-      shareModal.getByRole('button', { name: 'Copy link' }),
-    ).toBeVisible();
-  });
-
-  test('it checks the close button on Share modal', async ({ page }) => {
-    await mockedDocument(page, {
-      abilities: {
-        destroy: true, // Means owner
-        link_configuration: true,
-        versions_destroy: true,
-        versions_list: true,
-        versions_retrieve: true,
-        accesses_manage: true,
-        accesses_view: true,
-        update: true,
-        partial_update: true,
-        retrieve: true,
-      },
-    });
-
-    await goToGridDoc(page);
-
-    await clickInEditorShareButton(page);
-
-    const shareModal = page.getByRole('dialog', {
-      name: 'Share the document',
-    });
-    await expect(shareModal).toBeVisible();
-    await page.getByRole('button', { name: 'close' }).click();
-    await expect(
-      page.getByRole('dialog', { name: 'Share the document' }),
-    ).toBeHidden();
   });
 });

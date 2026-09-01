@@ -1,14 +1,14 @@
 import {
   Button,
+  ButtonProps,
   DropdownMenu,
   DropdownMenuItem,
-  useTreeContext,
 } from '@gouvfr-lasuite/ui-components';
 import { Present } from '@gouvfr-lasuite/ui-components/icons';
 import { announce } from '@react-aria/live-announcer';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components/Text';
@@ -17,15 +17,16 @@ import { getWordCount } from '@/docs/doc-editor/utils';
 import { printDocumentWithStyles } from '@/docs/doc-export/utils_print';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useDetachDoc } from '@/docs/doc-tree/api/useDetach';
+import { useTreeContextOrNull } from '@/docs/doc-tree/utils';
 import { useAuth } from '@/features/auth';
 import ContentCopyIcon from '@/icons/copy.svg';
 import DocMoveInIcon from '@/icons/doc-move-in.svg';
 import DocMoveOutIcon from '@/icons/doc-move-out.svg';
-import DownloadSVG from '@/icons/download.svg';
-import HistorySVG from '@/icons/history.svg';
-import LeaveSVG from '@/icons/leave.svg';
+import DownloadIcon from '@/icons/download.svg';
+import HistoryIcon from '@/icons/history.svg';
+import LeaveIcon from '@/icons/leave.svg';
 import LinkIcon from '@/icons/link.svg';
-import MoreSVG from '@/icons/more_horiz.svg';
+import MoreIcon from '@/icons/more_horiz.svg';
 import PrintIcon from '@/icons/print.svg';
 import SharedIcon from '@/icons/shared.svg';
 import StarSlashIcon from '@/icons/star-slash.svg';
@@ -41,7 +42,7 @@ import {
   useDeleteFavoriteDoc,
   useDuplicateDoc,
 } from '../api';
-import { useCopyDocLink } from '../hooks';
+import { useCopyDocLink, useTrans } from '../hooks';
 import { Doc, Role } from '../types';
 
 const DocMoveModal = dynamic(
@@ -96,13 +97,24 @@ const ModalExport = dynamic(
 
 interface DocToolBoxProps {
   doc: Doc;
+  isCurrentDoc: boolean;
+  buttonProps?: ButtonProps;
+  onOpenChange?: (isOpen: boolean) => void;
+  optionsDefault?: DropdownMenuItem[];
 }
 
-export const DocToolBox = ({ doc }: DocToolBoxProps) => {
+const DocToolBoxComponent = ({
+  buttonProps,
+  doc,
+  isCurrentDoc,
+  onOpenChange,
+  optionsDefault,
+}: DocToolBoxProps) => {
   const { t } = useTranslation();
-  const treeContext = useTreeContext<Doc | null>();
+  const { untitledDocument } = useTrans();
+  const treeContext = useTreeContextOrNull<Doc | null>();
   const router = useRouter();
-  const isTopParent = doc.id === treeContext?.root?.id; // it can be a child but not for the current user
+  const isTopParent = !treeContext || doc.id === treeContext?.root?.id; // it can be a child but not for the current user
   const { authenticated } = useAuth();
   const [openDropdown, setOpenDropdown] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
@@ -111,17 +123,18 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
   const [isModalMoveOpen, setIsModalMoveOpen] = useState(false);
+  const { onClick: onButtonClick, ...buttonPropsLeft } = buttonProps || {};
 
-  const { editor } = useEditorStore();
+  const editor = useEditorStore((state) => state.editor);
   const wordCountLabel = useMemo(() => {
-    if (openDropdown) {
+    if (openDropdown && isCurrentDoc && editor) {
       return t('Word count: {{count}} words', {
         count: getWordCount(editor),
         description:
           'In the document options menu, showing the number of words in the document.',
       });
     }
-  }, [editor, openDropdown, t]);
+  }, [editor, isCurrentDoc, openDropdown, t]);
 
   useEffect(() => {
     if (wordCountLabel) {
@@ -131,8 +144,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
 
   const { mutate: detachDoc } = useDetachDoc();
 
-  const { restoreFocus, addLastFocus } = useFocusStore();
-  const { isMobile } = useResponsiveStore();
+  const restoreFocus = useFocusStore((state) => state.restoreFocus);
+  const addLastFocus = useFocusStore((state) => state.addLastFocus);
+  const isMobile = useResponsiveStore((state) => state.isMobile);
   const copyDocLink = useCopyDocLink(doc.id);
 
   const openPresenter = usePresenterStore((state) => state.open);
@@ -155,7 +169,10 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         description: 'Dropdown menu item to copy the document link',
       }),
       icon: <LinkIcon width={18} height={18} aria-hidden="true" />,
-      callback: copyDocLink,
+      callback: () => {
+        copyDocLink();
+        restoreFocus();
+      },
     },
     {
       label: t('Share', {
@@ -166,8 +183,8 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         setIsModalShareOpen(true);
       },
       isHidden: !authenticated,
+      showSeparator: isCurrentDoc,
     },
-    { type: 'separator' },
     {
       label: t('Present', {
         description:
@@ -177,17 +194,18 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       callback: () => {
         openPresenter(0);
       },
-      isHidden: Boolean(doc.deleted_at) || isMobile,
+      isHidden: Boolean(doc.deleted_at) || isMobile || !isCurrentDoc,
       testId: `docs-actions-present-${doc.id}`,
     },
     {
       label: t('Download', {
         description: 'Dropdown menu item to download the document',
       }),
-      icon: <DownloadSVG width={18} height={18} aria-hidden="true" />,
+      icon: <DownloadIcon width={18} height={18} aria-hidden="true" />,
       callback: () => {
         setIsModalExportOpen(true);
       },
+      isHidden: !isCurrentDoc,
     },
     {
       label: t('Print', {
@@ -197,6 +215,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       callback: () => {
         printDocumentWithStyles();
       },
+      isHidden: !isCurrentDoc,
     },
     { type: 'separator' },
     {
@@ -212,6 +231,8 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         } else {
           makeFavoriteDoc.mutate({ id: doc.id });
         }
+
+        restoreFocus();
       },
       isHidden: !doc.abilities.favorite,
       testId: `docs-actions-${doc.is_favorite ? 'unstar' : 'star'}-${doc.id}`,
@@ -270,19 +291,19 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       label: t('History', {
         description: 'Dropdown menu item to view the document history',
       }),
-      icon: <HistorySVG width={18} height={18} aria-hidden="true" />,
+      icon: <HistoryIcon width={18} height={18} aria-hidden="true" />,
       isDisabled: !doc.abilities.versions_list,
       callback: () => {
         setIsModalHistoryOpen(true);
       },
-      isHidden: isMobile || !doc.abilities.versions_list,
+      isHidden: isMobile || !doc.abilities.versions_list || !isCurrentDoc,
       showSeparator: true,
     },
     {
       label: t('Leave', {
         description: 'Dropdown menu item to leave the document',
       }),
-      icon: <LeaveSVG width={18} height={18} aria-hidden="true" />,
+      icon: <LeaveIcon width={18} height={18} aria-hidden="true" />,
       callback: () => {
         setIsModalLeaveOpen(true);
       },
@@ -302,35 +323,44 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         setIsModalRemoveOpen(true);
       },
       isHidden: !doc.abilities.destroy,
-    },
-    {
-      type: 'separator',
+      showSeparator: isCurrentDoc,
     },
   ];
 
   return (
     <>
       <DropdownMenu
-        options={options}
+        options={optionsDefault ?? options}
         isOpen={openDropdown}
         shouldCloseOnInteractOutside={() => true}
-        onOpenChange={setOpenDropdown}
+        onOpenChange={(isOpen) => {
+          setOpenDropdown(isOpen);
+          onOpenChange?.(isOpen);
+        }}
         bottomMessage={
           wordCountLabel && <Text $variation="tertiary">{wordCountLabel}</Text>
         }
       >
         <Button
-          aria-label={t('Open the document options')}
+          aria-label={t('Open the document options: {{title}}', {
+            title: doc.title || untitledDocument,
+          })}
           size="small"
-          icon={<MoreSVG width={24} height={24} aria-hidden="true" />}
+          icon={<MoreIcon width={24} height={24} aria-hidden="true" />}
           color="neutral"
           variant="tertiary"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
-            setOpenDropdown((o) => !o);
+            const isOpen = !openDropdown;
+            setOpenDropdown(isOpen);
+            onOpenChange?.(isOpen);
             addLastFocus(e.currentTarget);
+            onButtonClick?.(
+              e as React.MouseEvent<HTMLButtonElement, MouseEvent>,
+            );
           }}
+          {...buttonPropsLeft}
         />
       </DropdownMenu>
 
@@ -409,3 +439,5 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
     </>
   );
 };
+
+export const DocToolBox = memo(DocToolBoxComponent);

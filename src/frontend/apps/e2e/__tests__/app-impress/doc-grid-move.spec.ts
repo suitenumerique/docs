@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  clickInDocOptionMenu,
   createDoc,
   getGridRow,
   getOtherBrowserName,
@@ -205,9 +206,7 @@ test.describe('Doc grid move', () => {
     await expect(docsGrid.getByText(titleDoc2)).toBeVisible();
 
     const row = await getGridRow(page, titleDoc1);
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-
-    await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
+    await clickInDocOptionMenu(page, row, 'Move into a doc');
 
     await expect(
       page
@@ -295,9 +294,7 @@ test.describe('Doc grid move', () => {
     await expect(docsGrid.getByText(titleDoc2)).toBeVisible();
 
     const row = await getGridRow(page, titleDoc1);
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-
-    await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
+    await clickInDocOptionMenu(page, row, 'Move into a doc');
 
     await expect(
       page
@@ -366,9 +363,7 @@ test.describe('Doc grid move', () => {
 
     // The first user should now be able to move the doc
     await page.reload();
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-
-    await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
+    await clickInDocOptionMenu(page, row, 'Move into a doc');
 
     await expect(
       page

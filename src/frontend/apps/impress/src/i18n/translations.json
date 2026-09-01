@@ -1523,6 +1523,7 @@
       "Open new document options": "Ouvrir les options de nouveau document",
       "Open root document": "Ouvrir le document racine",
       "Open the document options": "Ouvrir les options du document",
+      "Open the document options: {{title}}": "Ouvrir les options du document: {{title}}",
       "Open the menu of actions for the document: {{title}}": "Ouvrir le menu des actions du document : {{title}}",
       "Open the sharing settings for the document": "Ouvrir les paramètres de partage pour le document",
       "Organize": "Organiser",
