@@ -50,6 +50,17 @@ and this project adheres to
 
 ### Removed
 
+- 🔥(backend) remove the document version endpoints. `GET
+  /documents/{id}/versions/` and `GET, DELETE /documents/{id}/versions/{id}/`
+  listed S3 object versions of the legacy `{id}/file` key. Nothing has written
+  that key since the migration to the collaboration server, so the list was
+  frozen at each document's migration date, and nothing has called the
+  endpoints since the history panel started reading the collaboration server's
+  `activity` and `changeset` routes instead. Gone with them:
+  `Document.get_versions_slice`, `Document.delete_version`, the `version_id`
+  argument of
+  `get_content_response`, the `DOCUMENT_VERSIONS_PAGE_SIZE` setting, and the
+  `versions_retrieve` and `versions_destroy` abilities
 - 🔥(backend) remove the unused `CollaborationService`
 - 💥(backend) remove the `documents/{id}/can-edit/` endpointt
 - 💥(backend) remove the `documents/{id}/content/` endpoint
