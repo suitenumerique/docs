@@ -709,7 +709,7 @@ test.describe('Doc Editor', () => {
     page,
     browserName,
   }) => {
-    await createDoc(page, 'doc-scroll', browserName, 1);
+    await createDoc(page, 'doc-copy-link-to-block', browserName, 1);
 
     const editor = await writeInEditor({ page, text: 'First Block' });
 
@@ -744,5 +744,46 @@ test.describe('Doc Editor', () => {
     await page.goto(clipboardContent);
     await expect(editor.getByText('First Block')).not.toBeInViewport();
     await expect(editor.getByText('My Block')).toBeInViewport();
+  });
+
+  test('it checks "Equation block" feature', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-equation', browserName, 1);
+
+    const { editor } = await openSuggestionMenu({
+      page,
+      suggestion: 'Block Equation',
+    });
+
+    await editor.getByLabel('E = mc^2').fill('E = mc^2');
+    await editor.locator('.bn-code-block-source-popup-ok-button').click();
+    await expect(
+      editor.locator('.katex-html').filter({ hasText: 'E=mc2' }),
+    ).toBeVisible();
+  });
+
+  test('it checks "Diagram block" feature', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-diagram', browserName, 1);
+
+    const { editor } = await openSuggestionMenu({
+      page,
+      suggestion: 'Diagram',
+    });
+
+    await editor.getByRole('img', { name: 'Mermaid diagram' }).click();
+
+    const diagramCode = editor.getByLabel('Enter diagram code');
+    await diagramCode.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.press('Backspace');
+
+    await page.keyboard.type('graph TD');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('    A[Hello] --> B[World]');
+
+    await editor.locator('.bn-code-block-source-popup-ok-button').click();
+
+    await expect(
+      editor.getByLabel('Mermaid diagram').filter({ hasText: 'HelloWorld' }),
+    ).toBeVisible();
   });
 });

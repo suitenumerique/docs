@@ -11,6 +11,10 @@ const nextConfig = {
   allowedDevOrigins: ['docs.127.0.0.1.nip.io'],
   output: 'export',
   trailingSlash: true,
+  // `@blocknote/math-block` imports `katex/dist/katex.min.css` from its entry
+  // point; transpiling it lets Next.js accept that global CSS import from
+  // within node_modules.
+  transpilePackages: ['@blocknote/math-block'],
   images: {
     unoptimized: true,
   },

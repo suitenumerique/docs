@@ -1,4 +1,4 @@
-import { codeBlockOptions } from '@blocknote/code-block';
+import { codeBlockOptions, syntaxHighlighter } from '@blocknote/code-block';
 import {
   BlockNoteSchema,
   createCodeBlockSpec,
@@ -10,8 +10,17 @@ import { CommentsExtension } from '@blocknote/core/comments';
 import '@blocknote/core/fonts/inter.css';
 import * as localesBN from '@blocknote/core/locales';
 import { withCollaboration } from '@blocknote/core/yjs';
+import {
+  createReactDiagramBlockSpec,
+  locales as diagramLocales,
+} from '@blocknote/diagram-block';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
+import {
+  createReactInlineMathSpec,
+  createReactMathBlockSpec,
+  locales as mathLocales,
+} from '@blocknote/math-block';
 import {
   FloatingComposerController,
   FloatingThreadController,
@@ -75,12 +84,15 @@ const baseBlockNoteSchema = withPageBreak(
       ...defaultBlockSpecs,
       callout: CalloutBlock(),
       codeBlock: createCodeBlockSpec(codeBlockOptions),
+      diagram: createReactDiagramBlockSpec(),
+      mathBlock: createReactMathBlockSpec(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
       interlinkingLinkInline: InterlinkingLinkInlineContent,
+      math: createReactInlineMathSpec(),
     },
   }),
 );
@@ -113,6 +125,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       : i18n.resolvedLanguage;
   const langLocalesBNAI =
     !i18n.resolvedLanguage || !(i18n.resolvedLanguage in localesBNAI)
+      ? DEFAULT_LOCALE
+      : i18n.resolvedLanguage;
+  // The math and diagram blocks ship the same set of locales.
+  const langLocalesBNMathDiagram =
+    !i18n.resolvedLanguage || !(i18n.resolvedLanguage in mathLocales)
       ? DEFAULT_LOCALE
       : i18n.resolvedLanguage;
 
@@ -205,6 +222,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
       dictionary: {
         ...localesBN[langLocalesBN as keyof typeof localesBN],
+        math: mathLocales[langLocalesBNMathDiagram as keyof typeof mathLocales],
+        diagram:
+          diagramLocales[
+            langLocalesBNMathDiagram as keyof typeof diagramLocales
+          ],
         ...(localesBNMultiColumn && {
           multi_column:
             localesBNMultiColumn[
@@ -234,6 +256,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         return defaultPasteHandler();
       },
       extensions: [
+        // Highlights the source of code blocks and of the math / diagram
+        // blocks' editable LaTeX / Mermaid popups.
+        syntaxHighlighter,
         CommentsExtension({ threadStore, resolveUsers }),
         ...(aiExtension ? [aiExtension] : []),
       ],
@@ -265,6 +290,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       langLocalesBN,
       langLocalesBNMultiColumn,
       langLocalesBNAI,
+      langLocalesBNMathDiagram,
       provider,
       uploadFile,
       threadStore,

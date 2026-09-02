@@ -11,6 +11,7 @@ and this project adheres to
 - ✨(frontend) Add "Copy link to block" feature #2547
 - ✨(frontend) add word count to doc header toolbox #2549
 - ✨(frontend) add find and replace feature to the editor #2570
+- ✨(frontend) add math and diagram blocks to the editor #2617
 
 ### Changed
 

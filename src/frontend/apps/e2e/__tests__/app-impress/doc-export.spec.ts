@@ -360,7 +360,7 @@ test.describe('Doc Export', () => {
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(3000);
 
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
 

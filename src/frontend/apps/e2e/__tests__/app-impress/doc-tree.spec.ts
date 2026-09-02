@@ -357,6 +357,9 @@ test.describe('Doc Tree', () => {
     const treeRow1 = await getTreeRow(page, docChild1);
     const treeRow2 = await getTreeRow(page, docChild2);
 
+    // Wait for the tree to be stable
+    await page.waitForTimeout(500);
+
     await docTree.click();
     await page.keyboard.press('Tab');
     await expect(rootItem).toBeFocused();

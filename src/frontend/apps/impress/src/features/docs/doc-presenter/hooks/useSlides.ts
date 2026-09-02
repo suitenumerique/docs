@@ -26,7 +26,11 @@ const extractInlineText = (content: PresenterBlock['content']): string => {
           return node.text;
         }
         if ('content' in node && node.content !== undefined) {
-          return extractInlineText(node.content);
+          // Plain inline content (e.g. inline math) exposes its content as a
+          // raw string rather than a list of inline nodes.
+          return typeof node.content === 'string'
+            ? node.content
+            : extractInlineText(node.content);
         }
       }
       return '';

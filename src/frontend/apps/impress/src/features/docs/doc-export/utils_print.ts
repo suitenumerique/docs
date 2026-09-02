@@ -30,8 +30,8 @@ const PRINT_ONLY_CONTENT_CSS = `
   div[data-is-empty-and-focused="true"],
   div[data-floating-ui-focusable],
   .collaboration-cursor-custom__base,
-  .c__toast__container
-   {
+  .bn-source-block-popup,
+  .c__toast__container {
     display: none !important;
   }
 
