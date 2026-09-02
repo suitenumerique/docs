@@ -288,9 +288,7 @@ test.describe('Doc Header', () => {
         accesses_view: true,
         destroy: false, // Means not owner
         link_configuration: true,
-        versions_destroy: true,
         versions_list: true,
-        versions_retrieve: true,
         update: true,
         partial_update: true,
         retrieve: true,
@@ -358,9 +356,7 @@ test.describe('Doc Header', () => {
         accesses_view: true,
         destroy: false, // Means not owner
         link_configuration: false,
-        versions_destroy: true,
         versions_list: true,
-        versions_retrieve: true,
         update: true,
         partial_update: true, // Means editor
         retrieve: true,
@@ -428,9 +424,7 @@ test.describe('Doc Header', () => {
         accesses_view: true,
         destroy: false, // Means not owner
         link_configuration: false,
-        versions_destroy: false,
         versions_list: true,
-        versions_retrieve: true,
         update: false,
         partial_update: false, // Means not editor
         retrieve: true,
@@ -499,9 +493,7 @@ test.describe('Doc Header', () => {
       abilities: {
         destroy: false, // Means owner
         link_configuration: true,
-        versions_destroy: true,
         versions_list: true,
-        versions_retrieve: true,
         accesses_manage: false,
         accesses_view: false,
         update: true,

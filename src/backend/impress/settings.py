@@ -287,9 +287,6 @@ class Base(Configuration):
         environ_name="DOCUMENT_ATTACHMENT_CHECK_UNSAFE_MIME_TYPES_ENABLED",
         environ_prefix=None,
     )
-    # Document versions
-    DOCUMENT_VERSIONS_PAGE_SIZE = 50
-
     # Document /all endpoint
     DOCUMENT_ALL_ENDPOINT_ENABLED = values.BooleanValue(
         default=True,

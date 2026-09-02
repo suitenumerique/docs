@@ -30,14 +30,15 @@
  * first write.
  *
  * `historyFrom` is the moment this user gained access to the document, in unix
- * milliseconds — the backend's `user_access_since`, which is the earliest access
- * they hold on the document or on one of its ancestors. It becomes the start of
- * the history they may read, which is the rule Docs has always had rather than a
- * new one: the version endpoints have always shown "only those created after the
- * user got access to the document". yhub clamps `from` up to this on every
- * changeset/activity read, so a client asks for whatever range it likes and gets
- * back only its own share — it never has to know the bound, and a stale or
- * modified one cannot widen it.
+ * milliseconds — the `created_at` of the earliest access they hold on the
+ * document or on one of its ancestors, which the backend serves as
+ * `GET /accesses/me/` and `resolveHistoryFrom` below turns into this number. It
+ * becomes the start of the history they may read, which is the rule Docs has
+ * always had rather than a new one: the version endpoints have always shown
+ * "only those created after the user got access to the document". yhub clamps
+ * `from` up to this on every changeset/activity read, so a client asks for
+ * whatever range it likes and gets back only its own share — it never has to
+ * know the bound, and a stale or modified one cannot widen it.
  *
  * `null` for a reader who reaches the document by link alone. There is no access
  * row and so no date, and the backend has always refused those users their
@@ -132,4 +133,50 @@ export const adminDocumentPermissions = {
 export const publicGlobalPermissions = {
   type: 'permissions:global:v1',
   endpoint: { ping: '-r--', ready: '-r--', jwks: '-r--' },
+};
+
+/**
+ * Where the history this caller may read starts, in unix milliseconds, or `null`
+ * when they get none — the `historyFrom` argument of `browserDocumentPermissions`
+ * above.
+ *
+ * Only a user holding an access has a history at all, and `abilities.versions_list`
+ * is exactly that condition (`has_access_role` on the backend, which is also false
+ * on a deleted document). So the access is fetched only when it is granted, and a
+ * link-reach reader — who holds no access and so has no date — costs no extra
+ * request on their way in.
+ *
+ * `fetchAccess` is called only in that case and must resolve the backend's
+ * `GET /api/v1.0/documents/{id}/accesses/me/` payload; it is passed in rather than
+ * built here so this stays testable without a backend.
+ *
+ * Two ways this ends with no history rather than with a date. The backend refusing
+ * (401/403/404) means the abilities and the access disagree — a race with a
+ * revocation, most likely — and the safe reading of that is no history. And
+ * anything unparseable is *no* history rather than full history, zero refused with
+ * it: `from: 0` is the one value that also unlocks a `gc=false` websocket, and no
+ * real access date is ever zero, so a zero here could only ever be a bug upstream.
+ *
+ * A backend that did not answer at all is not a permission decision and is not
+ * turned into one: the error is rethrown, and the caller reports it as retryable.
+ * Silently dropping the history there would cost the connection its version panel
+ * for as long as it lives, on a blip.
+ */
+export const resolveHistoryFrom = async (abilities, fetchAccess) => {
+  if (abilities?.versions_list !== true) {
+    return null;
+  }
+
+  let access;
+  try {
+    access = await fetchAccess();
+  } catch (err) {
+    if (err?.status === 401 || err?.status === 403 || err?.status === 404) {
+      return null;
+    }
+    throw err;
+  }
+
+  const from = Date.parse(access?.created_at ?? '');
+  return Number.isFinite(from) && from > 0 ? from : null;
 };
