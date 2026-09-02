@@ -315,9 +315,7 @@ export const mockedDocument = async (page: Page, data: object) => {
           abilities: {
             destroy: false, // Means not owner
             link_configuration: false,
-            versions_destroy: false,
             versions_list: true,
-            versions_retrieve: true,
             accesses_manage: false, // Means not admin
             update: false,
             partial_update: false, // Means not editor

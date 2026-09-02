@@ -229,9 +229,7 @@ export class ApiPlugin implements WorkboxPlugin {
         retrieve: true,
         search: true,
         update: true,
-        versions_destroy: true,
         versions_list: true,
-        versions_retrieve: true,
         link_select_options: {
           public: [LinkRole.READER, LinkRole.EDITOR],
           authenticated: [LinkRole.READER, LinkRole.EDITOR],

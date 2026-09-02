@@ -199,6 +199,8 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_user(
         "role": role,
         "team": "",
         "user": other_user,
+        "updated_at": new_document_access.updated_at.isoformat().replace("+00:00", "Z"),
+        "created_at": new_document_access.created_at.isoformat().replace("+00:00", "Z"),
     }
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -306,6 +308,8 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_team(
         "role": role,
         "team": "new-team",
         "user": None,
+        "updated_at": new_document_access.updated_at.isoformat().replace("+00:00", "Z"),
+        "created_at": new_document_access.created_at.isoformat().replace("+00:00", "Z"),
     }
     assert len(mail.outbox) == 0
 
@@ -387,6 +391,8 @@ def test_api_document_accesses_create_authenticated_owner_share_to_user(
         "role": role,
         "team": "",
         "user": other_user,
+        "updated_at": new_document_access.updated_at.isoformat().replace("+00:00", "Z"),
+        "created_at": new_document_access.created_at.isoformat().replace("+00:00", "Z"),
     }
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -477,6 +483,8 @@ def test_api_document_accesses_create_authenticated_owner_share_to_team(
         "role": role,
         "team": "new-team",
         "user": None,
+        "updated_at": new_document_access.updated_at.isoformat().replace("+00:00", "Z"),
+        "created_at": new_document_access.created_at.isoformat().replace("+00:00", "Z"),
     }
     assert len(mail.outbox) == 0
 
@@ -555,6 +563,12 @@ def test_api_document_accesses_create_email_in_receivers_language(via, mock_user
             "role": role,
             "team": "",
             "user": other_user_data,
+            "updated_at": new_document_access.updated_at.isoformat().replace(
+                "+00:00", "Z"
+            ),
+            "created_at": new_document_access.created_at.isoformat().replace(
+                "+00:00", "Z"
+            ),
         }
         assert len(mail.outbox) == index + 1
         email = mail.outbox[index]
