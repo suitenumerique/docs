@@ -61,9 +61,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
             "search": True,
             "tree": True,
             "update": document.link_role == "editor",
-            "versions_destroy": False,
             "versions_list": False,
-            "versions_retrieve": False,
         },
         "ancestors_link_reach": None,
         "ancestors_link_role": None,
@@ -83,7 +81,6 @@ def test_api_documents_retrieve_anonymous_public_standalone():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_access_since": None,
         "user_role": None,
     }
 
@@ -138,9 +135,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "search": True,
             "tree": True,
             "update": grand_parent.link_role == "editor",
-            "versions_destroy": False,
             "versions_list": False,
-            "versions_retrieve": False,
         },
         "ancestors_link_reach": "public",
         "ancestors_link_role": grand_parent.link_role,
@@ -160,7 +155,6 @@ def test_api_documents_retrieve_anonymous_public_parent():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_access_since": None,
         "user_role": None,
     }
 
@@ -248,9 +242,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
             "search": True,
             "tree": True,
             "update": document.link_role == "editor",
-            "versions_destroy": False,
             "versions_list": False,
-            "versions_retrieve": False,
         },
         "ancestors_link_reach": None,
         "ancestors_link_role": None,
@@ -270,7 +262,6 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_access_since": None,
         "user_role": None,
     }
     assert (
@@ -332,9 +323,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "search": True,
             "tree": True,
             "update": grand_parent.link_role == "editor",
-            "versions_destroy": False,
             "versions_list": False,
-            "versions_retrieve": False,
         },
         "ancestors_link_reach": reach,
         "ancestors_link_role": grand_parent.link_role,
@@ -354,7 +343,6 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_access_since": None,
         "user_role": None,
     }
 
@@ -469,7 +457,6 @@ def test_api_documents_retrieve_authenticated_related_direct():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_access_since": access.created_at.isoformat().replace("+00:00", "Z"),
         "user_role": access.role,
     }
 
@@ -531,9 +518,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "search": True,
             "tree": True,
             "update": access.role not in ["reader", "commenter"],
-            "versions_destroy": access.role in ["administrator", "owner"],
             "versions_list": True,
-            "versions_retrieve": True,
         },
         "ancestors_link_reach": "restricted",
         "ancestors_link_role": None,
@@ -553,7 +538,6 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_access_since": access.created_at.isoformat().replace("+00:00", "Z"),
         "user_role": access.role,
     }
 
@@ -684,14 +668,6 @@ def test_api_documents_retrieve_authenticated_related_team_members(
     factories.TeamDocumentAccessFactory(document=document, team="owners", role="owner")
     factories.TeamDocumentAccessFactory(document=document)
     factories.TeamDocumentAccessFactory()
-    # the history this user may read starts at the earliest access they hold —
-    # here through one of their teams
-    expected_access_since = (
-        models.DocumentAccess.objects.filter(document=document, team__in=teams)
-        .earliest("created_at")
-        .created_at.isoformat()
-        .replace("+00:00", "Z")
-    )
 
     response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
@@ -718,7 +694,6 @@ def test_api_documents_retrieve_authenticated_related_team_members(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_access_since": expected_access_since,
         "user_role": role,
     }
 
@@ -759,14 +734,6 @@ def test_api_documents_retrieve_authenticated_related_team_administrators(
     factories.TeamDocumentAccessFactory(document=document, team="owners", role="owner")
     factories.TeamDocumentAccessFactory(document=document)
     factories.TeamDocumentAccessFactory()
-    # the history this user may read starts at the earliest access they hold —
-    # here through one of their teams
-    expected_access_since = (
-        models.DocumentAccess.objects.filter(document=document, team__in=teams)
-        .earliest("created_at")
-        .created_at.isoformat()
-        .replace("+00:00", "Z")
-    )
 
     response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
@@ -793,7 +760,6 @@ def test_api_documents_retrieve_authenticated_related_team_administrators(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_access_since": expected_access_since,
         "user_role": role,
     }
 
@@ -834,14 +800,6 @@ def test_api_documents_retrieve_authenticated_related_team_owners(
     factories.TeamDocumentAccessFactory(document=document, team="owners", role="owner")
     factories.TeamDocumentAccessFactory(document=document)
     factories.TeamDocumentAccessFactory()
-    # the history this user may read starts at the earliest access they hold —
-    # here through one of their teams
-    expected_access_since = (
-        models.DocumentAccess.objects.filter(document=document, team__in=teams)
-        .earliest("created_at")
-        .created_at.isoformat()
-        .replace("+00:00", "Z")
-    )
 
     response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
@@ -868,7 +826,6 @@ def test_api_documents_retrieve_authenticated_related_team_owners(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_access_since": expected_access_since,
         "user_role": role,
     }
 
@@ -1086,58 +1043,3 @@ def test_api_documents_retrieve_permanently_deleted_related(role, depth):
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Not found."}
-
-
-def test_api_documents_retrieve_user_access_since_is_ancestor_aware():
-    """
-    `user_access_since` is the earliest access the user holds on the document or on any of
-    its ancestors. It is what bounds the history they may read — the collaboration server
-    turns it into `history.from` — so a later access on the document itself must not shorten
-    what an earlier one on a parent already gave them.
-    """
-    user = factories.UserFactory()
-    client = APIClient()
-    client.force_login(user)
-
-    parent = factories.DocumentFactory(link_reach="restricted")
-    child = factories.DocumentFactory(parent=parent, link_reach="restricted")
-
-    ten_days_ago = timezone.now() - timedelta(days=10)
-    with mock.patch("django.utils.timezone.now", return_value=ten_days_ago):
-        parent_access = factories.UserDocumentAccessFactory(
-            document=parent, user=user, role="reader"
-        )
-    # granted later, and deliberately the stronger role: recency must not win
-    factories.UserDocumentAccessFactory(document=child, user=user, role="editor")
-
-    response = client.get(f"/api/v1.0/documents/{child.id!s}/")
-
-    assert response.status_code == 200
-    expected = parent_access.created_at.isoformat().replace("+00:00", "Z")
-    assert response.json()["user_access_since"] == expected
-
-
-def test_api_documents_retrieve_user_access_since_is_null_without_an_access():
-    """
-    A user who reaches a document through its link reach alone holds no access, so there is
-    no date to bound their history with — and they get none at all. This is the reason the
-    version endpoints have always refused them, and the collaboration server withholds the
-    `history` facet on the same grounds.
-    """
-    document = factories.DocumentFactory(link_reach="public", link_role="editor")
-
-    # anonymous
-    assert (
-        APIClient()
-        .get(f"/api/v1.0/documents/{document.id!s}/")
-        .json()["user_access_since"]
-        is None
-    )
-
-    # signed in, but still reaching it only through the link
-    client = APIClient()
-    client.force_login(factories.UserFactory())
-    response = client.get(f"/api/v1.0/documents/{document.id!s}/")
-
-    assert response.status_code == 200
-    assert response.json()["user_access_since"] is None
