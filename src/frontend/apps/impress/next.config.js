@@ -18,6 +18,12 @@ const nextConfig = {
     // Enables the styled-components SWC transform
     styledComponents: true,
   },
+  experimental: {
+    // Next.js 16.3 defaults `next build` to the `tsc` CLI, which type-checks the
+    // whole tsconfig project (test files included) and chokes on vitest globals.
+    // Keep the compiler-API checker, which skips test files. Safe on TypeScript 6.
+    useTypeScriptCli: false,
+  },
   generateBuildId: () => buildId,
   env: {
     NEXT_PUBLIC_BUILD_ID: buildId,

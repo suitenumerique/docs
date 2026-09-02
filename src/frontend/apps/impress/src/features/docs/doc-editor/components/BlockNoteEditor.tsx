@@ -9,6 +9,7 @@ import {
 import { CommentsExtension } from '@blocknote/core/comments';
 import '@blocknote/core/fonts/inter.css';
 import * as localesBN from '@blocknote/core/locales';
+import { withCollaboration } from '@blocknote/core/yjs';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import {
@@ -152,7 +153,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }, [canSeeComment, collabName, themeTokens?.font?.families?.base]);
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
-    {
+    withCollaboration({
       collaboration: {
         provider: provider as { awareness?: Awareness | undefined },
         fragment: provider.document.getXmlFragment('document-store'),
@@ -257,7 +258,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       setIdAttribute: true,
       uploadFile,
       schema: blockNoteSchema,
-    },
+    }),
     [
       aiExtension,
       cursorName,
@@ -352,7 +353,7 @@ export const BlockNoteReader = ({
   const { setEditor } = useEditorStore();
   const { threadStore } = useComments(docId, false, user);
   const editor = useCreateBlockNote(
-    {
+    withCollaboration({
       collaboration: {
         fragment: initialContent,
         user: {
@@ -371,7 +372,7 @@ export const BlockNoteReader = ({
           },
         }),
       ],
-    },
+    }),
     [initialContent, threadStore],
   );
 

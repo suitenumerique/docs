@@ -14,9 +14,10 @@ import {
   useEditorState,
 } from '@blocknote/react';
 import { useCallback } from 'react';
-import { RiDownload2Fill } from 'react-icons/ri';
 
-import { downloadFile, exportResolveFileUrl } from '@/docs/doc-export';
+import { exportResolveFileUrl } from '@/docs/doc-export/api';
+import { downloadFile } from '@/docs/doc-export/utils';
+import DownLoadIcon from '@/icons/download.svg';
 import { isSafeUrl } from '@/utils/url';
 
 import {
@@ -130,7 +131,7 @@ export const FileDownloadButton = ({
         data-test="downloadfile"
         label={tooltipText}
         mainTooltip={tooltipText}
-        icon={<RiDownload2Fill />}
+        icon={<DownLoadIcon aria-hidden="true" width="22" height="22" />}
         onClick={() => void onClick()}
       />
     </>

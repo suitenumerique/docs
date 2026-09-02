@@ -25,6 +25,9 @@ export const DocsEditorStyle = createGlobalStyle`
       height: 100%;
     }
 
+    &.bn-mantine .bn-suggestion-menu-item-small {
+      min-height: auto;
+    }
     .mantine-Menu-itemLabel,
     .mantine-Button-label {
       font-family: var(--c--components--button--font-family);

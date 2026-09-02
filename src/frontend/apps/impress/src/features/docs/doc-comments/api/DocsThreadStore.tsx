@@ -210,14 +210,8 @@ export class DocsThreadStore extends ThreadStore {
   public addThreadToDocument = (options: {
     threadId: string;
     selection: {
-      prosemirror: {
-        head: number;
-        anchor: number;
-      };
-      yjs: {
-        head: unknown;
-        anchor: unknown;
-      };
+      head: number;
+      anchor: number;
     };
   }) => {
     const { threadId } = options;

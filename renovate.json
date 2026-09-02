@@ -68,7 +68,6 @@
       "matchPackageNames": [
         "@hocuspocus/provider",
         "@hocuspocus/server",
-        "@react-pdf/renderer",
         "node",
         "node-fetch",
         "react-resizable-panels",
