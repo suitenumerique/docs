@@ -70,6 +70,12 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
     );
   };
 
+/**
+ * Renders an optional caption below an image in the PDF.
+ *
+ * @param props - Block props that may include a caption string and previewWidth.
+ * @returns A react-pdf Text element, or undefined when no caption is set.
+ */
 function caption(
   props: Partial<DefaultProps & { caption: string; previewWidth: number }>,
 ) {

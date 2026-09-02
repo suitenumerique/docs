@@ -7,6 +7,12 @@ import { Canvg } from 'canvg';
 import { IParagraphOptions, ShadingType } from 'docx';
 import React from 'react';
 
+/**
+ * Triggers a browser download of a Blob with the given filename.
+ *
+ * @param blob - The data to download.
+ * @param filename - The name the downloaded file should have.
+ */
 export function downloadFile(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -142,6 +148,14 @@ export async function convertBlobToPng(
   }
 }
 
+/**
+ * Converts BlockNote block props (background color, text color, alignment)
+ * into a docx IParagraphOptions object for use with the docx exporter.
+ *
+ * @param props - Partial BlockNote default props.
+ * @param colors - The color palette to resolve named colors.
+ * @returns A docx paragraph options object with shading, run color, and alignment.
+ */
 export function docxBlockPropsToStyles(
   props: Partial<DefaultProps>,
   colors: typeof COLORS_DEFAULT,
