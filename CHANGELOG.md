@@ -52,12 +52,12 @@ and this project adheres to
   moment they were given access to it. The collaboration server's `activity` and
   `changeset` routes are opened to the browser, bounded per user to the earliest
   access they hold on the document or on one of its ancestors — the same cut-off
-  the version endpoints have always applied, now computed once in the backend
-  (`user_access_since`) and applied by the collaboration server as well. The
-  bound is enforced server-side and silently: a client asks for whatever range it
-  likes and receives only its own share. A reader who reaches a document through
-  its link alone holds no access and so has no date to bound a history with, and
-  gets none — as they never did
+  the version endpoints have always applied, read from the backend
+  (`GET /documents/{id}/accesses/me/`) and applied by the collaboration
+  server. The bound is enforced server-side and silently: a client asks for
+  whatever range it likes and receives only its own share. A reader who reaches
+  a document through its link alone holds no access and so has no date to bound
+  a history with, and gets none — as they never did
 
 - ✨(collaboration) grant the browser only the routes it uses. The
   collaboration server now answers what a caller may do with a document as a
@@ -108,6 +108,26 @@ and this project adheres to
   deployment whose bucket holds anything must keep. The dev stack keeps the
   toggle off and now creates its bucket versioned, so flipping it on exercises
   what a deployment runs rather than a simpler case
+
+### Removed
+
+- 🔥(backend) remove the document version endpoints. `GET
+  /documents/{id}/versions/` and `GET, DELETE /documents/{id}/versions/{id}/`
+  listed S3 object versions of the legacy `{id}/file` key. Nothing has written
+  that key since the migration to the collaboration server, so the list was
+  frozen at each document's migration date, and nothing has called the
+  endpoints since the history panel started reading the collaboration server's
+  `activity` and `changeset` routes instead. Gone with them:
+  `Document.get_versions_slice`, `Document.delete_version`, the `version_id`
+  argument of
+  `get_content_response`, the `DOCUMENT_VERSIONS_PAGE_SIZE` setting, and the
+  `versions_retrieve` and `versions_destroy` abilities
+
+  The `versions_list` ability stays and keeps its meaning — may this user see
+  this document's history — now as a pure gate rather than the permission for
+  an endpoint of ours: the frontend hides the history menu without it, and the
+  collaboration server reads it to decide whether to ask this backend when the
+  caller's access began, which is where the history it serves starts
 
 ### Fixed
 
