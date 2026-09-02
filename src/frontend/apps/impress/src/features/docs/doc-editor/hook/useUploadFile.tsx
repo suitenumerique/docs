@@ -1,6 +1,6 @@
 import { Block } from '@blocknote/core';
 import { captureException } from '@sentry/nextjs';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { APIError, backendUrl } from '@/api';
@@ -138,20 +138,54 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
 
   /**
    * Handle upload end to replace the upload block by a uploadLoader
-   * block to show analyzing status
+   * block to show analyzing status.
+   *
+   * A Map keyed by blockId tracks the pending 300 ms cleanup timeout so that:
+   * - onUploadStart: cancels any earlier cleanup scheduled for the same block,
+   *   preventing a stale timeout from removing a block whose retry is in flight.
+   * - onUploadEnd: replaces any earlier timeout with a fresh one (handles rapid
+   *   successive failures), then either removes the URL-less block (failed) or
+   *   replaces it with the uploadLoader (success).
    */
+  const pendingTimeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
+
   useEffect(() => {
     // Check if editor and its view are mounted before setting up handlers
     if (!editor) {
       return;
     }
 
-    editor.onUploadEnd((blockId) => {
+    const cancelPending = (blockId: string) => {
+      const existing = pendingTimeouts.current.get(blockId);
+      if (existing !== undefined) {
+        clearTimeout(existing);
+        pendingTimeouts.current.delete(blockId);
+      }
+    };
+
+    const unsubscribeStart = editor.onUploadStart((blockId) => {
+      if (!blockId) {
+        return;
+      }
+      // A new upload attempt has started for this block — cancel any scheduled
+      // cleanup from a previous failed attempt so it cannot remove an active retry.
+      cancelPending(blockId);
+    });
+
+    const unsubscribeEnd = editor.onUploadEnd((blockId) => {
       if (!blockId) {
         return;
       }
 
-      const innerTimeoutId = setTimeout(() => {
+      // Cancel any earlier pending cleanup for this block before scheduling a
+      // new one (e.g. rapid successive failures for the same blockId).
+      cancelPending(blockId);
+
+      const timeoutId = setTimeout(() => {
+        pendingTimeouts.current.delete(blockId);
+
         const block = editor.getBlock({ id: blockId });
 
         // onUploadEnd fires whether uploadFile resolved or threw (BlockNote calls
@@ -181,9 +215,17 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
         replaceBlockWithUploadLoader(block as Block);
       }, 300);
 
-      return () => {
-        clearTimeout(innerTimeoutId);
-      };
+      pendingTimeouts.current.set(blockId, timeoutId);
     });
+
+    const timeouts = pendingTimeouts.current;
+    return () => {
+      unsubscribeStart();
+      unsubscribeEnd();
+      for (const timeoutId of timeouts.values()) {
+        clearTimeout(timeoutId);
+      }
+      timeouts.clear();
+    };
   }, [editor, replaceBlockWithUploadLoader]);
 };
