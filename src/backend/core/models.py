@@ -925,44 +925,6 @@ class DocumentQuerySet(MP_NodeQuerySet):
             user_roles=models.Value([], output_field=output_field),
         )
 
-    def annotate_user_access_since(self, user):
-        """
-        Annotate document queryset with the moment the current user gained access to the
-        document — the earliest access they hold on it or on one of its ancestors.
-
-        This is the point from which they may see the document's history: the collaboration
-        server turns it into a `history.from` permission, and the version endpoints filter on
-        it. `None` when the user reaches the document through its link reach alone, which is
-        not an access and carries no date — those users get no history at all, deliberately
-        (see the comment in `get_abilities`).
-        """
-        if user.is_authenticated:
-            # the same ancestor-aware subquery as `annotate_user_roles`: the access's document
-            # path is a prefix of this one's, so it matches the document and every ancestor
-            user_access_since_subquery = (
-                DocumentAccess.objects.filter(
-                    models.Q(user=user) | models.Q(team__in=user.teams),
-                    document__path=Left(
-                        models.OuterRef("path"), Length("document__path")
-                    ),
-                )
-                .order_by()
-                .values("user")
-                .annotate(min_created_at=models.Min("created_at"))
-                .values("min_created_at")
-            )
-
-            return self.annotate(
-                user_access_since=models.Subquery(
-                    user_access_since_subquery,
-                    output_field=models.DateTimeField(),
-                )
-            )
-
-        return self.annotate(
-            user_access_since=models.Value(None, output_field=models.DateTimeField()),
-        )
-
     def annotate_user_has_link_trace(self, user):
         """
         Annotate document queryset with a boolean to know if the current user
@@ -1144,78 +1106,10 @@ class Document(MP_Node, BaseModel):
 
         self._content = content
 
-    def get_content_response(self, version_id=""):
-        """Get the content in a specific version of the document"""
-        params = {
-            "Bucket": default_storage.bucket_name,
-            "Key": self.file_key,
-        }
-        if version_id:
-            params["VersionId"] = version_id
-        return default_storage.connection.meta.client.get_object(**params)
-
-    def get_versions_slice(self, from_version_id="", min_datetime=None, page_size=None):
-        """Get document versions from object storage with pagination and starting conditions"""
-        # /!\ Trick here /!\
-        # The "KeyMarker" and "VersionIdMarker" fields must either be both set or both not set.
-        # The error we get otherwise is not helpful at all.
-        markers = {}
-        if from_version_id:
-            markers.update(
-                {"KeyMarker": self.file_key, "VersionIdMarker": from_version_id}
-            )
-
-        real_page_size = (
-            min(page_size, settings.DOCUMENT_VERSIONS_PAGE_SIZE)
-            if page_size
-            else settings.DOCUMENT_VERSIONS_PAGE_SIZE
-        )
-
-        response = default_storage.connection.meta.client.list_object_versions(
-            Bucket=default_storage.bucket_name,
-            Prefix=self.file_key,
-            # compensate the latest version that we exclude below and get one more to
-            # know if there are more pages
-            MaxKeys=real_page_size + 2,
-            **markers,
-        )
-
-        min_last_modified = min_datetime or self.created_at
-        versions = [
-            {
-                key_snake: version[key_camel]
-                for key_snake, key_camel in [
-                    ("etag", "ETag"),
-                    ("is_latest", "IsLatest"),
-                    ("last_modified", "LastModified"),
-                    ("version_id", "VersionId"),
-                ]
-            }
-            for version in response.get("Versions", [])
-            if version["LastModified"] >= min_last_modified
-            and version["IsLatest"] is False
-        ]
-        results = versions[:real_page_size]
-
-        count = len(results)
-        if count == len(versions):
-            is_truncated = False
-            next_version_id_marker = ""
-        else:
-            is_truncated = True
-            next_version_id_marker = versions[count - 1]["version_id"]
-
-        return {
-            "next_version_id_marker": next_version_id_marker,
-            "is_truncated": is_truncated,
-            "versions": results,
-            "count": count,
-        }
-
-    def delete_version(self, version_id):
-        """Delete a version from object storage given its version id"""
-        return default_storage.connection.meta.client.delete_object(
-            Bucket=default_storage.bucket_name, Key=self.file_key, VersionId=version_id
+    def get_content_response(self):
+        """Get the content of the document from object storage"""
+        return default_storage.connection.meta.client.get_object(
+            Bucket=default_storage.bucket_name, Key=self.file_key
         )
 
     def get_nb_accesses_cache_key(self):
@@ -1386,6 +1280,13 @@ class Document(MP_Node, BaseModel):
         # want anonymous users to access versions (we wouldn't know from
         # which date to allow them anyway)
         # Anonymous users should also not see document accesses
+        #
+        # This is what `versions_list` reports. The history itself lives in the
+        # collaboration server, which reads the ability to decide whether to ask
+        # this backend for the caller's access — the `created_at` it answers with
+        # bounds what it serves. So the ability and `accesses/me/` have to agree,
+        # and a test holds them to it
+        # (test_api_document_accesses_me_agrees_with_the_versions_list_ability).
         has_access_role = bool(role) and not is_deleted
         can_update_from_access = (
             is_owner_or_admin or role == RoleChoices.EDITOR
@@ -1473,9 +1374,7 @@ class Document(MP_Node, BaseModel):
             "link_select_options": link_select_options,
             "tree": retrieve,
             "update": can_update,
-            "versions_destroy": is_owner_or_admin,
             "versions_list": has_access_role,
-            "versions_retrieve": has_access_role,
             "search": can_get,
         }
 

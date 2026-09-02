@@ -21,7 +21,7 @@ from django.core.validators import URLValidator
 from django.db import DatabaseError, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
-from django.db.models.functions import Greatest
+from django.db.models.functions import Greatest, Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils import timezone
@@ -75,7 +75,6 @@ from core.tasks.mail import send_ask_for_access_mail
 from core.tasks.search import trigger_batch_document_indexer
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.dicts import lowercase_keys
-from core.utils.paths import filter_descendants
 from core.utils.s3 import get_s3_client
 from core.utils.treebeard import create_tree_node_with_retry
 from core.utils.users import users_sharing_documents_with
@@ -479,31 +478,25 @@ class DocumentViewSet(
     5. **Children**: List or create child documents.
         Example: GET, POST /documents/{id}/children/
 
-    6. **Versions List**: Retrieve version history of a document.
-        Example: GET /documents/{id}/versions/
-
-    7. **Version Detail**: Get or delete a specific document version.
-        Example: GET, DELETE /documents/{id}/versions/{version_id}/
-
-    8. **Favorite**: Get list of favorite documents for a user. Mark or unmark
+    6. **Favorite**: Get list of favorite documents for a user. Mark or unmark
         a document as favorite.
         Examples:
         - GET /documents/favorite_list/
         - POST, DELETE /documents/{id}/favorite/
 
-    9. **Create for Owner**: Create a document via server-to-server on behalf of a user.
+    7. **Create for Owner**: Create a document via server-to-server on behalf of a user.
         Example: POST /documents/create-for-owner/
 
-    10. **Link Configuration**: Update document link configuration.
+    8. **Link Configuration**: Update document link configuration.
         Example: PUT /documents/{id}/link-configuration/
 
-    11. **Attachment Upload**: Upload a file attachment for the document.
+    9. **Attachment Upload**: Upload a file attachment for the document.
         Example: POST /documents/{id}/attachment-upload/
 
-    12. **Media Auth**: Authorize access to document media.
+    10. **Media Auth**: Authorize access to document media.
         Example: GET /documents/media-auth/
 
-    13. **AI Transform**: Apply a transformation action on a piece of text with AI.
+    11. **AI Transform**: Apply a transformation action on a piece of text with AI.
         Example: POST /documents/{id}/ai-transform/
         Expected data:
         - text (str): The input text.
@@ -511,7 +504,7 @@ class DocumentViewSet(
         Returns: JSON response with the processed text.
         Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
 
-    14. **AI Translate**: Translate a piece of text with AI.
+    12. **AI Translate**: Translate a piece of text with AI.
         Example: POST /documents/{id}/ai-translate/
         Expected data:
         - text (str): The input text.
@@ -519,7 +512,7 @@ class DocumentViewSet(
         Returns: JSON response with the translated text.
         Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
 
-    15. **AI Proxy**: Proxy an AI request to an external AI service.
+    13. **AI Proxy**: Proxy an AI request to an external AI service.
         Example: POST /api/v1.0/documents/<resource_id>/ai-proxy
 
     ### Ordering: created_at, updated_at, is_favorite, title
@@ -608,9 +601,6 @@ class DocumentViewSet(
         queryset = queryset.annotate_is_favorite(user)
         queryset = queryset.annotate_user_roles(user)
         queryset = queryset.annotate_user_has_link_trace(user)
-        # Detail views only — `list` builds its own annotation chain below and does not need
-        # this one, so the list endpoint keeps its current query cost
-        queryset = queryset.annotate_user_access_since(user)
 
         return queryset
 
@@ -1794,109 +1784,6 @@ class DocumentViewSet(
             lambda paths: {parent.path: parent},
         )
 
-    @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
-    def versions_list(self, request, *args, **kwargs):
-        """
-        Return the document's versions but only those created after the user got access
-        to the document
-
-        DEPRECATED — nothing calls this any more, and it can be removed once the
-        migration to the collaboration server is finished.
-
-        The collaboration server is the source of truth for document history and
-        keeps it itself; the version history in the frontend is built from its
-        `activity` and `changeset` routes, bounded by the same date this method
-        applies (`user_access_since`, which the collaboration server is handed to
-        bound what it serves). What this endpoint lists is S3 object versions of
-        the legacy `{pk}/file` key, and nothing writes that key any more — the
-        content endpoint that used to went away with the migration — so the list
-        is frozen at each document's migration date and gains no further entries.
-
-        Removing it is safe once every document has had its real history replayed
-        into the collaboration server by `manage.py migrate_documents`; until
-        then these versions are the only record of what a soft-migrated document
-        looked like before it moved. `versions_detail` and
-        `Document.get_versions_slice` are kept for the same reason and go at the
-        same time.
-
-        The `versions_list` ability still gates the history menu item in the
-        frontend, and correctly: it is `has_access_role`, which is exactly the
-        condition under which `user_access_since` is not None and the
-        collaboration server grants a history — so the gate and the grant cannot
-        disagree.
-        """
-        user = request.user
-        if not user.is_authenticated:
-            raise drf.exceptions.PermissionDenied("Authentication required.")
-
-        # Validate query parameters using dedicated serializer
-        serializer = serializers.VersionFilterSerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
-
-        document = self.get_object()
-
-        # Users should not see version history dating from before they gained access to the
-        # document. `user_access_since` is annotated onto the queryset (see
-        # `DocumentQuerySet.annotate_user_access_since`) and is the one definition of that
-        # date — the collaboration server is handed the same value to bound the history it
-        # serves. It is None for a user who reaches the document through its link reach
-        # alone: no access, no date, and so no history.
-        min_datetime = document.user_access_since
-        if min_datetime is None:
-            raise drf.exceptions.PermissionDenied(
-                "Only users with specific access can see version history"
-            )
-
-        versions_data = document.get_versions_slice(
-            from_version_id=serializer.validated_data.get("version_id"),
-            min_datetime=min_datetime,
-            page_size=serializer.validated_data.get("page_size"),
-        )
-
-        return drf.response.Response(versions_data)
-
-    @drf.decorators.action(
-        detail=True,
-        methods=["get", "delete"],
-        url_path=r"versions/(?P<version_id>[A-Za-z0-9._+\-=~]{1,1024})",
-    )
-    # pylint: disable=unused-argument
-    def versions_detail(self, request, pk, version_id, *args, **kwargs):
-        """Custom action to retrieve a specific version of a document"""
-        document = self.get_object()
-
-        # Don't let users access versions that were created before they were given access to
-        # the document — the same cut-off as `versions_list`, from the same annotation.
-        # Checked before the object is fetched: a caller who may see no version at all should
-        # not learn from a 404 whether this one exists.
-        min_datetime = document.user_access_since
-        if min_datetime is None:
-            raise drf.exceptions.PermissionDenied(
-                "Only users with specific access can see version history"
-            )
-
-        try:
-            response = document.get_content_response(version_id=version_id)
-        except (FileNotFoundError, ClientError) as err:
-            raise Http404 from err
-
-        if response["LastModified"] < min_datetime:
-            raise Http404
-
-        if request.method == "DELETE":
-            response = document.delete_version(version_id)
-            return drf.response.Response(
-                status=response["ResponseMetadata"]["HTTPStatusCode"]
-            )
-
-        return drf.response.Response(
-            {
-                "content": response["Body"].read().decode("utf-8"),
-                "last_modified": response["LastModified"],
-                "id": version_id,
-            }
-        )
-
     @drf.decorators.action(detail=True, methods=["put"], url_path="link-configuration")
     def link_configuration(self, request, *args, **kwargs):
         """Update link configuration with specific rights (cf get_abilities)."""
@@ -2639,6 +2526,7 @@ class DocumentAccessViewSet(
         "created_at",
         "role",
         "team",
+        "updated_at",
         "user__id",
         "user__short_name",
         "user__full_name",
@@ -2819,6 +2707,36 @@ class DocumentAccessViewSet(
 
         # Notify collaboration server about the access removed
         reset_service_connections_in_cascade.delay(document_id, user_id)
+
+    @drf.decorators.action(
+        detail=False,
+        methods=["get"],
+        url_name="me",
+        url_path="me",
+    )
+    def get_user_access(self, request, *args, **kwargs):
+        """Retrieve the access related to the current user and return it."""
+
+        document = self.document
+        user = request.user
+        access = (
+            self.get_queryset()
+            .filter(
+                db.Q(user=user) | db.Q(team__in=user.teams),
+                document__path=Left(db.Value(document.path), Length("document__path")),
+                document__ancestors_deleted_at__isnull=True,
+            )
+            .order_by("created_at")
+            .first()
+        )
+
+        if not access:
+            raise drf.exceptions.PermissionDenied()
+
+        serializer = serializers.DocumentAccessLightSerializer(
+            access, context=self.get_serializer_context()
+        )
+        return drf.response.Response(serializer.data)
 
 
 class InvitationViewset(

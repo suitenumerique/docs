@@ -26,6 +26,7 @@ import {
   adminDocumentPermissions,
   browserDocumentPermissions,
   publicGlobalPermissions,
+  resolveHistoryFrom,
 } from './permissions.js';
 // legacy Django/S3 document store — see migration.js and README.md
 import {
@@ -454,19 +455,20 @@ const auth = createAuthPlugin({
       if (SOFT_MIGRATION) {
         await seedFromLegacyStore({ org, docid, branch });
       }
+
       // When this caller was given access, which is where the history they may
-      // read starts. The backend sends ISO-8601 (null for a link-reach reader,
-      // who holds no access and so has no date); `history.from` is unix ms.
-      //
-      // Anything unparseable is *no* history rather than full history, and zero
-      // is refused with it: `from: 0` is the one value that also unlocks a
-      // `gc=false` websocket, and no real access date is ever zero, so a zero
-      // here could only ever be a bug upstream.
-      const accessSince = Date.parse(doc.user_access_since ?? '');
-      return browserDocumentPermissions(
-        doc.abilities.update === true,
-        Number.isFinite(accessSince) && accessSince > 0 ? accessSince : null,
-      );
+      // read starts. `resolveHistoryFrom` decides whether to ask for it at all
+      // and what an unusable answer means — see permissions.js.
+      let accessSince;
+      try {
+        accessSince = await resolveHistoryFrom(doc.abilities, () =>
+          backendFetch(`/api/v1.0/documents/${docid}/accesses/me/`, user),
+        );
+      } catch {
+        // the backend did not answer; same treatment as the document fetch above
+        throw apiError(503, 'Document authorization backend is unavailable');
+      }
+      return browserDocumentPermissions(doc.abilities.update === true, accessSince);
     },
     async global() {
       return publicGlobalPermissions;
