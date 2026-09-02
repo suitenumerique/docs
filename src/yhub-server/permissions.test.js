@@ -17,6 +17,7 @@ import {
   adminDocumentPermissions,
   browserDocumentPermissions,
   publicGlobalPermissions,
+  resolveHistoryFrom,
 } from './permissions.js';
 
 /**
@@ -315,5 +316,120 @@ describe('the public global routes', () => {
 
   it('refuses a global endpoint it does not name', () => {
     assert.equal(globalGrants({ endpoint: { anything: '-r--' } }), false);
+  });
+});
+
+/**
+ * Where a caller's history starts, from the backend's answers about them. This is
+ * the one input `browserDocumentPermissions` cannot check for itself: every
+ * assertion above takes `historyFrom` as given, and this is what decides it.
+ *
+ * The `status`-carrying errors are `backendFetch`'s, which is the only thing that
+ * ever rejects the callback in server.js.
+ */
+describe('resolveHistoryFrom', () => {
+  const httpError = (status) => Object.assign(new Error(`HTTP ${status}`), {
+    status,
+  });
+  const never = () => {
+    throw new Error('the access must not be fetched');
+  };
+
+  it('does not ask for an access the caller has no history to bound', async () => {
+    // a link-reach reader: no access, no date, and no extra request on their way in
+    assert.equal(await resolveHistoryFrom({ versions_list: false }, never), null);
+    assert.equal(await resolveHistoryFrom({}, never), null);
+    assert.equal(await resolveHistoryFrom(undefined, never), null);
+  });
+
+  it('turns the access date into unix milliseconds', async () => {
+    const from = await resolveHistoryFrom({ versions_list: true }, async () => ({
+      created_at: '2023-11-14T22:13:20Z',
+    }));
+
+    assert.equal(from, Date.parse('2023-11-14T22:13:20Z'));
+    assert.equal(from, ACCESS_SINCE);
+  });
+
+  it('grants no history when the backend refuses the access', async () => {
+    // abilities and access disagree — a revocation racing this connection
+    for (const status of [401, 403, 404]) {
+      assert.equal(
+        await resolveHistoryFrom({ versions_list: true }, async () => {
+          throw httpError(status);
+        }),
+        null,
+      );
+    }
+  });
+
+  it('rethrows when the backend does not answer at all', async () => {
+    // not a permission decision: the caller turns this into a retryable 503
+    for (const status of [500, 502, 503]) {
+      await assert.rejects(
+        resolveHistoryFrom({ versions_list: true }, async () => {
+          throw httpError(status);
+        }),
+        { status },
+      );
+    }
+
+    await assert.rejects(
+      resolveHistoryFrom({ versions_list: true }, async () => {
+        throw new TypeError('fetch failed');
+      }),
+      TypeError,
+    );
+  });
+
+  it('grants no history rather than all of it on an unusable date', async () => {
+    for (const created_at of [undefined, null, '', 'not a date']) {
+      assert.equal(
+        await resolveHistoryFrom({ versions_list: true }, async () => ({
+          created_at,
+        })),
+        null,
+      );
+    }
+
+    // and on no payload at all
+    assert.equal(
+      await resolveHistoryFrom({ versions_list: true }, async () => undefined),
+      null,
+    );
+  });
+
+  it('refuses the epoch, which would unlock a gc=false socket', async () => {
+    // `from: 0` is the one value that also opens the ungarbage-collected
+    // connection; no real access date is ever zero
+    assert.equal(
+      await resolveHistoryFrom({ versions_list: true }, async () => ({
+        created_at: '1970-01-01T00:00:00Z',
+      })),
+      null,
+    );
+  });
+
+  it('answers with a bound a reader is actually held to', async () => {
+    // the round trip: what this returns is what the tables above are given
+    const from = await resolveHistoryFrom({ versions_list: true }, async () => ({
+      created_at: new Date(ACCESS_SINCE).toISOString(),
+    }));
+    const perms = normalizePermissions(browserDocumentPermissions(false, from));
+
+    assert.equal(
+      hasPermissions(perms, {
+        type: 'permissions:document:v1',
+        history: { from: ACCESS_SINCE },
+      }),
+      true,
+    );
+    assert.equal(
+      hasPermissions(perms, {
+        type: 'permissions:document:v1',
+        history: { from: ACCESS_SINCE - 1 },
+      }),
+      false,
+    );
   });
 });

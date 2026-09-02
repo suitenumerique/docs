@@ -99,6 +99,9 @@ dev = [
     "types-requests==2.33.0.20260712",
 ]
 
+[tool.basedpyright]
+typeCheckingMode = "standard"
+
 [tool.uv.build-backend]
 module-name = [
     "core",

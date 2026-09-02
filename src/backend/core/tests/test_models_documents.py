@@ -185,9 +185,7 @@ def test_models_documents_get_abilities_forbidden(
         "retrieve": False,
         "tree": False,
         "update": False,
-        "versions_destroy": False,
         "versions_list": False,
-        "versions_retrieve": False,
         "search": False,
     }
     nb_queries = 2 if is_authenticated else 0
@@ -251,9 +249,7 @@ def test_models_documents_get_abilities_reader(
         "retrieve": True,
         "tree": True,
         "update": False,
-        "versions_destroy": False,
         "versions_list": False,
-        "versions_retrieve": False,
         "search": True,
     }
     nb_queries = 2 if is_authenticated else 0
@@ -322,9 +318,7 @@ def test_models_documents_get_abilities_commenter(
         "retrieve": True,
         "tree": True,
         "update": False,
-        "versions_destroy": False,
         "versions_list": False,
-        "versions_retrieve": False,
         "search": True,
     }
     nb_queries = 2 if is_authenticated else 0
@@ -390,9 +384,7 @@ def test_models_documents_get_abilities_editor(
         "retrieve": True,
         "tree": True,
         "update": True,
-        "versions_destroy": False,
         "versions_list": False,
-        "versions_retrieve": False,
         "search": True,
     }
     nb_queries = 2 if is_authenticated else 0
@@ -447,9 +439,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "retrieve": True,
         "tree": True,
         "update": True,
-        "versions_destroy": True,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
     with django_assert_num_queries(1):
@@ -490,9 +480,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "retrieve": True,
         "tree": True,
         "update": False,
-        "versions_destroy": False,
         "versions_list": False,
-        "versions_retrieve": False,
         "search": False,
     }
 
@@ -537,9 +525,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "retrieve": True,
         "tree": True,
         "update": True,
-        "versions_destroy": True,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
     with django_assert_num_queries(1):
@@ -594,9 +580,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "retrieve": True,
         "tree": True,
         "update": True,
-        "versions_destroy": False,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
     with django_assert_num_queries(1):
@@ -659,9 +643,7 @@ def test_models_documents_get_abilities_reader_user(
         "retrieve": True,
         "tree": True,
         "update": access_from_link,
-        "versions_destroy": False,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
 
@@ -725,9 +707,7 @@ def test_models_documents_get_abilities_commenter_user(
         "retrieve": True,
         "tree": True,
         "update": access_from_link,
-        "versions_destroy": False,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
 
@@ -787,9 +767,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "retrieve": True,
         "tree": True,
         "update": False,
-        "versions_destroy": False,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
 
@@ -928,71 +906,6 @@ def test_models_document_get_abilities_ai_access_public(is_authenticated, reach)
     assert abilities["ai_proxy"] == is_authenticated
     assert abilities["ai_transform"] == is_authenticated
     assert abilities["ai_translate"] == is_authenticated
-
-
-def test_models_documents_get_versions_slice_pagination(settings):
-    """
-    The "get_versions_slice" method should allow navigating all versions of
-    the document with pagination.
-    """
-    settings.DOCUMENT_VERSIONS_PAGE_SIZE = 4
-
-    # Create a document with 7 versions
-    document = factories.DocumentFactory(content=factories.YDOC_HELLO_WORLD_BASE64)
-    for i in range(6):
-        document.content = f"bar{i:d}"
-        document.save()
-
-    # Add a document version not related to the first document
-    factories.DocumentFactory()
-
-    # - Get default max versions
-    response = document.get_versions_slice()
-    assert response["is_truncated"] is True
-    assert len(response["versions"]) == 4
-    assert response["next_version_id_marker"] != ""
-
-    expected_keys = ["etag", "is_latest", "last_modified", "version_id"]
-    for i in range(4):
-        assert list(response["versions"][i].keys()) == expected_keys
-
-    # - Get page 2
-    response = document.get_versions_slice(
-        from_version_id=response["next_version_id_marker"]
-    )
-    assert response["is_truncated"] is False
-    assert len(response["versions"]) == 2
-    assert response["next_version_id_marker"] == ""
-
-    # - Get custom max versions
-    response = document.get_versions_slice(page_size=2)
-    assert response["is_truncated"] is True
-    assert len(response["versions"]) == 2
-    assert response["next_version_id_marker"] != ""
-
-
-def test_models_documents_get_versions_slice_min_datetime():
-    """
-    The "get_versions_slice" method should filter out versions anterior to
-    the from_datetime passed in argument and the current version.
-    """
-    document = factories.DocumentFactory()
-    from_dt = []
-    for i in range(6):
-        from_dt.append(timezone.now())
-        document.content = f"bar{i:d}"
-        document.save()
-
-    response = document.get_versions_slice(min_datetime=from_dt[2])
-
-    assert len(response["versions"]) == 3
-    for version in response["versions"]:
-        assert version["last_modified"] > from_dt[2]
-
-    response = document.get_versions_slice(min_datetime=from_dt[4])
-
-    assert len(response["versions"]) == 1
-    assert response["versions"][0]["last_modified"] > from_dt[4]
 
 
 def test_models_documents_version_duplicate():

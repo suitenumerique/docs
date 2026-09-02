@@ -665,9 +665,7 @@ test.describe('Presenter Mode mobile', () => {
       abilities: {
         destroy: true,
         link_configuration: true,
-        versions_destroy: true,
         versions_list: true,
-        versions_retrieve: true,
         accesses_manage: true,
         accesses_view: true,
         update: true,
