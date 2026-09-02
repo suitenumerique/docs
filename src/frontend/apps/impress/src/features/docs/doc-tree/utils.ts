@@ -65,6 +65,10 @@ export const syncDocInTree = (
   treeContext.treeApiRef.current?.focus(docId);
 };
 
+export const reloadTree = (treeContext: TreeContextType<Doc | null> | null) => {
+  treeContext?.setRoot(null);
+};
+
 export const findIndexInTree = (
   nodes: TreeDataItem<TreeViewDataType<Doc>>[],
   key: string,

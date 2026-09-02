@@ -14,7 +14,7 @@ import { Doc } from '@/docs/doc-management';
 import { TreeSkeleton } from '@/features/skeletons/components/TreeSkeleton';
 
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
-import { findIndexInTree } from '../utils';
+import { findIndexInTree, reloadTree } from '../utils';
 
 import { DocTreeRoot } from './DocTreeRoot';
 import { DocTreeSubpages } from './DocTreeSubpages';
@@ -44,7 +44,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
    * This function resets the tree states.
    */
   const resetStateTree = useCallback(() => {
-    treeContext?.setRoot(null);
+    reloadTree(treeContext);
     setInitialOpenState(undefined);
   }, [treeContext]);
 

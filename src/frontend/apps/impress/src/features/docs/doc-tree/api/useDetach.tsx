@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-
-import { KEY_DOC, KEY_LIST_DOC } from '../../doc-management';
+import { KEY_DOC, KEY_LIST_DOC } from '@/docs/doc-management';
 
 export type DetachDocParam = {
   documentId: string;
