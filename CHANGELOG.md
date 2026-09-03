@@ -119,15 +119,29 @@ and this project adheres to
   endpoints since the history panel started reading the collaboration server's
   `activity` and `changeset` routes instead. Gone with them:
   `Document.get_versions_slice`, `Document.delete_version`, the `version_id`
-  argument of
-  `get_content_response`, the `DOCUMENT_VERSIONS_PAGE_SIZE` setting, and the
-  `versions_retrieve` and `versions_destroy` abilities
+  argument of `get_content_response`, the `DOCUMENT_VERSIONS_PAGE_SIZE`
+  setting, and the `versions_retrieve` and `versions_destroy` abilities
 
   The `versions_list` ability stays and keeps its meaning — may this user see
   this document's history — now as a pure gate rather than the permission for
   an endpoint of ours: the frontend hides the history menu without it, and the
   collaboration server reads it to decide whether to ask this backend when the
   caller's access began, which is where the history it serves starts
+
+- 🔥(backend) remove `Document.content`. The collaboration server has owned the
+  content of the documents since the migration, and the version endpoints
+  removed above were the last thing in Django that read the legacy `{id}/file`
+  object; nothing had written it for as long. Gone with the property: its
+  setter, `Document.save_content`, `Document.get_content_response` and the
+  `save()` override that existed only to write the content — a document is
+  saved by `Model.save` alone now, and creating one no longer costs a `HEAD`
+  and a `PUT` against the object storage
+
+  The objects are untouched and must stay: the collaboration server seeds a
+  room from `{id}/file` on first access (`SOFT_MIGRATION`) and replays its
+  versions to rebuild the history. `Document.file_key` stays with them, and
+  `clean_document` goes on purging that object so that a document it reset
+  cannot be seeded back from what it left behind
 
 ### Fixed
 
