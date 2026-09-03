@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) hide Leave in the doc menu when not logged in #2626
+
 ## [v5.6.0] - 2026-09-03
 
 ### Added

@@ -247,6 +247,13 @@ test.describe('Doc Visibility: Public', () => {
     await writeInEditor({ page, text: 'Can you see it ?' });
     await expect(otherEditor.getByText('Can you see it ?')).toBeVisible();
 
+    await otherPage
+      .getByRole('button', { name: 'Open the document options' })
+      .click();
+    await expect(
+      otherPage.getByRole('menuitem', { name: 'Leave' }),
+    ).toBeHidden();
+
     await cleanup();
   });
 

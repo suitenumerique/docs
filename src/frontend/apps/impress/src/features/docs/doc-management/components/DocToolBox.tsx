@@ -311,8 +311,9 @@ const DocToolBoxComponent = ({
        * A user can only leave a top parent because we cannot
        * leave a child if the parent is not left.
        * ⚠️ This doc can still be a child for other users.
+       * Unauthenticated visitors also cannot leave.
        */
-      isHidden: !isTopParent,
+      isHidden: !isTopParent || !authenticated,
     },
     {
       label: t('Delete', {
