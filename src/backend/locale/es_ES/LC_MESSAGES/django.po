@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-24 10:31+0000\n"
-"PO-Revision-Date: 2026-08-24 12:09\n"
+"POT-Creation-Date: 2026-09-03 06:55+0000\n"
+"PO-Revision-Date: 2026-09-03 12:26\n"
 "Last-Translator: \n"
 "Language-Team: Spanish\n"
 "Language: es_ES\n"
@@ -530,7 +530,7 @@ msgstr "Docs, su nueva herramienta esencial para organizar, compartir y colabora
 msgid " Brought to you by %(brandname)s "
 msgstr " Presentado por %(brandname)s "
 
-#: impress/settings.py:876
+#: impress/settings.py:875
 msgid "Docs AI"
 msgstr "Docs AI"
 
