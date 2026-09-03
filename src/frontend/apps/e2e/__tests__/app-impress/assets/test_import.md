@@ -28,7 +28,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor, nisl ege
 
 **Code block:**
 
-```javascript
+```js
 const hello_world = () => {
     console.log("Hello, world!");
 }

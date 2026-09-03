@@ -164,6 +164,8 @@ test.describe('Doc Tree', () => {
     await clickOnAddRootSubPage(page);
     await updateDocTitle(page, 'second move');
 
+    await page.waitForTimeout(500); // Wait for the tree to be stable
+
     const firstSubPageItem = docTree.getByText('first move').first();
     const secondSubPageItem = docTree.getByText('second move').first();
 

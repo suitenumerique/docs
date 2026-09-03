@@ -1,7 +1,6 @@
-import { codeBlockOptions, syntaxHighlighter } from '@blocknote/code-block';
+import { syntaxHighlighter } from '@blocknote/code-block';
 import {
   BlockNoteSchema,
-  createCodeBlockSpec,
   defaultBlockSpecs,
   defaultInlineContentSpecs,
   withPageBreak,
@@ -72,6 +71,7 @@ const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
 const localesBNAI = BlockNoteAI?.localesAI || {};
+import { createSafeCodeBlockSpec } from './custom-blocks/CodeBlock';
 import { InterlinkingLinkInlineContent } from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
 
@@ -83,7 +83,7 @@ const baseBlockNoteSchema = withPageBreak(
     blockSpecs: {
       ...defaultBlockSpecs,
       callout: CalloutBlock(),
-      codeBlock: createCodeBlockSpec(codeBlockOptions),
+      codeBlock: createSafeCodeBlockSpec(),
       diagram: createReactDiagramBlockSpec(),
       mathBlock: createReactMathBlockSpec(),
       pdf: PdfBlock(),
