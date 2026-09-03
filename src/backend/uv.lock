@@ -948,7 +948,7 @@ wheels = [
 
 [[package]]
 name = "impress"
-version = "5.5.0"
+version = "5.6.0"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
