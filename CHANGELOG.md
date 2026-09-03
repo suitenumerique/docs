@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.6.0] - 2026-09-03
+
 ### Added
 
 - ✨(frontend) Add "Copy link to block" feature #2547
@@ -26,14 +28,15 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
-- 🐛(backend) fix duplicating a document that has no content
+- 🐛(backend) fix duplicating a document that has no content #2609
 - 📄(frontend) allowed partially export when MIT #2551
-- 🐛(backend) manage async support for Docs custom middleware
-- 🐛(frontend) save the doc with a keepalive request when leaving the page
+- 🐛(backend) manage async support for Docs custom middleware #2619
+- 🐛(frontend) save the doc with a keepalive 
+  request when leaving the page #2619
 
 ### Removed
 
-- 🔥(backend) remove whitenoise package
+- 🔥(backend) remove whitenoise package #2619
 
 ## [v5.5.0] - 2026-08-24
 
@@ -1477,7 +1480,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.5.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.6.0...main
+[v5.6.0]: https://github.com/suitenumerique/docs/releases/v5.6.0
 [v5.5.0]: https://github.com/suitenumerique/docs/releases/v5.5.0
 [v5.4.1]: https://github.com/suitenumerique/docs/releases/v5.4.1
 [v5.4.0]: https://github.com/suitenumerique/docs/releases/v5.4.0
