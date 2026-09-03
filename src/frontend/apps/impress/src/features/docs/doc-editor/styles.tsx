@@ -192,9 +192,6 @@ export const DocsEditorStyle = createGlobalStyle`
         var(--c--contextuals--border--semantic--brand--tertiary);
       background: var(--c--contextuals--border--semantic--brand--secondary);
     }
-    .bn-side-menu[data-block-type='divider'] {
-      height: 28px;
-    }
 
     /**
     * Checklist items
@@ -251,15 +248,6 @@ export const DocsEditorStyle = createGlobalStyle`
         --level: 0.875rem;
       }
     }
-    .bn-side-menu[data-block-type='heading'][data-level='1'] {
-      height: 54px;
-    }
-    .bn-side-menu[data-block-type='heading'][data-level='2'] {
-      height: 43px;
-    }
-    .bn-side-menu[data-block-type='heading'][data-level='3'] {
-      height: 35px;
-    }
     & .bn-default-styles h1 {
       font-size: 1.875rem;
     }
@@ -308,15 +296,6 @@ export const DocsEditorStyle = createGlobalStyle`
       }
       & .bn-editor {
         padding-right: 10px;
-      }
-      .bn-side-menu[data-block-type='heading'][data-level='1'] {
-        height: 46px;
-      }
-      .bn-side-menu[data-block-type='heading'][data-level='2'] {
-        height: 40px;
-      }
-      .bn-side-menu[data-block-type='heading'][data-level='3'] {
-        height: 40px;
       }
       [data-content-type='heading'] {
         --level: 1.6rem;
