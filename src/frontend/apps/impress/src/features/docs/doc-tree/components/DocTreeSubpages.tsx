@@ -11,15 +11,21 @@ import { RefObject, memo, useCallback, useEffect } from 'react';
 import { NodeApi } from 'react-arborist';
 
 import { Overlayer } from '@/components';
-import { CLASS_DOC_TITLE } from '@/docs/doc-header';
 import { Doc, useMoveDoc } from '@/docs/doc-management';
+import { focusMainContentStart } from '@/layouts/utils';
 
 import { isDocNode, isWithinTreeItemActions } from '../utils';
 
 import { DocSubPageItem } from './DocSubPageItem';
 
+/**
+ * Scalars rather than the current `Doc`: refetching it yields an equal but new
+ * object, which would break the memo and re-render the tree. That re-inserts
+ * the rows' DOM nodes and drops the focus held inside them.
+ */
 interface DocTreeSubPagesProps {
-  doc: Doc;
+  canMoveInto: boolean;
+  isDeleted: boolean;
   treeRoot: HTMLElement;
   initialOpenState: OpenMap;
   rootNodeId: string;
@@ -27,7 +33,8 @@ interface DocTreeSubPagesProps {
 }
 
 export const DocTreeSubpages = memo(function DocTreeSubpages({
-  doc,
+  canMoveInto,
+  isDeleted,
   treeRoot,
   initialOpenState,
   rootNodeId,
@@ -39,17 +46,22 @@ export const DocTreeSubpages = memo(function DocTreeSubpages({
   const { query } = useRouter();
 
   /**
-   * The root item is the tree's only Tab stop; the sub pages are reached from
-   * it with the arrow keys. react-arborist hardcodes `tabIndex=0` on its
-   * container and `ui-components` does not forward `renderContainer`, so the
-   * attribute is corrected here. React leaves it alone afterwards: it only
-   * writes an attribute when the rendered prop value changes, and this one
-   * stays `0` for the lifetime of the container.
+   * react-arborist hardcodes `tabIndex=0` and `role="tree"` on its container,
+   * and `ui-components` does not forward `renderContainer`. The root item is
+   * the tree's only Tab stop, and `DocTree` already owns the `tree` role, so
+   * this container is only the root item's `group`.
    */
   useEffect(() => {
-    treeRoot
-      .querySelector<HTMLElement>('.c__tree-view--container [role="tree"]')
-      ?.setAttribute('tabindex', '-1');
+    const container = treeRoot.querySelector<HTMLElement>(
+      '.c__tree-view--container [role="tree"], .c__tree-view--container [role="group"]',
+    );
+
+    if (!container) {
+      return;
+    }
+
+    container.setAttribute('tabindex', '-1');
+    container.setAttribute('role', 'group');
   }, [treeRoot]);
 
   const handleMove = useCallback(
@@ -69,11 +81,11 @@ export const DocTreeSubpages = memo(function DocTreeSubpages({
     ({ parentNode }: { parentNode: NodeApi<TreeDataItem<Doc>> | null }) => {
       const parentValue = parentNode?.data.value;
       if (!parentValue || !isDocNode(parentValue)) {
-        return doc.abilities.move && isDesktop;
+        return canMoveInto && isDesktop;
       }
       return parentValue.abilities.move && isDesktop;
     },
-    [doc.abilities.move, isDesktop],
+    [canMoveInto, isDesktop],
   );
 
   const canDrag = useCallback(
@@ -125,11 +137,12 @@ export const DocTreeSubpages = memo(function DocTreeSubpages({
         return;
       }
 
-      // Already on this document: move on to its title rather than reloading.
-      const treeItem = e.currentTarget.querySelector('[role="treeitem"]');
-      if (treeItem?.getAttribute('aria-selected') === 'true') {
+      // Already on this document: move on to its content rather than reloading.
+      // `role="treeitem"` sits on the row itself — react-arborist puts it there
+      // through `rowClassName` — so this reads the row, not a descendant.
+      if (e.currentTarget.getAttribute('aria-selected') === 'true') {
         e.preventDefault();
-        document.querySelector<HTMLElement>(`.${CLASS_DOC_TITLE}`)?.focus();
+        focusMainContentStart();
         return;
       }
 
@@ -141,7 +154,7 @@ export const DocTreeSubpages = memo(function DocTreeSubpages({
   );
 
   return (
-    <Overlayer isOverlay={doc.deleted_at != null} inert>
+    <Overlayer isOverlay={isDeleted} inert>
       <TreeView
         dndRootElement={treeRoot}
         initialOpenState={initialOpenState}

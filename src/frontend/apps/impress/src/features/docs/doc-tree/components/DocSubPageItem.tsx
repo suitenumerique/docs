@@ -21,7 +21,7 @@ import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
 import { useTreeItemActions } from '../hooks/useTreeItemActions';
-import { isDocNode } from '../utils';
+import { isDocNode, treeItemActionsRevealCss } from '../utils';
 
 import SubPageIcon from './../assets/sub-page-logo.svg';
 import { DocTreeItemActions } from './DocTreeItemActions';
@@ -114,31 +114,16 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
   const itemRef = useRef<HTMLAnchorElement>(null);
 
   const focusRow = useCallback(() => {
-    // Keep react-arborist's notion of the focused node in sync…
     node.focus();
-    /**
-     * …but move the DOM focus ourselves. The library only does it from an
-     * effect keyed on `isFocused` *changing*, and it is already true whenever
-     * focus sits on one of this row's own buttons — so `node.focus()` alone
-     * would leave focus right where it is.
-     */
+    // react-arborist only moves the DOM focus when `isFocused` changes, and it
+    // is already true while one of this row's buttons holds the focus.
     itemRef.current?.closest<HTMLElement>('.c__tree-view--row')?.focus();
   }, [node]);
 
-  /**
-   * F2 / arrows step through the item's actions (emoji button, then the toolbar
-   * buttons) and Escape leaves them; the very first F2 is handled by the
-   * ui-components row itself (row → emoji button).
-   */
-  const {
-    areActionsVisible,
-    onMenuOpenChange,
-    handleActionsKeyDown,
-    itemProps,
-  } = useTreeItemActions({
-    isActive: node.isFocused,
-    focusItem: focusRow,
-  });
+  const { isMenuOpen, onMenuOpenChange, handleActionsKeyDown } =
+    useTreeItemActions({
+      focusItem: focusRow,
+    });
 
   const afterCreate = (createdDoc: Doc) => {
     const actualChildren = node.data.children ?? [];
@@ -177,9 +162,9 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
 
   return (
     <StyledLink
-      {...itemProps}
       ref={itemRef}
       className="--docs-sub-page-item"
+      data-menu-open={isMenuOpen || undefined}
       /**
        * Conflict with the react-arborist DND.
        * It should be disabled to have the DND working properly.
@@ -223,6 +208,8 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
         display: block;
         width: 100%;
         border-radius: var(--c--globals--spacings--st);
+        ${treeItemActionsRevealCss}
+
         .c__tree-view--node {
           padding-right: var(--c--globals--spacings--xxxs);
           height: 32px;
@@ -285,13 +272,11 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
             {displayTitle}
           </Text>
         </Box>
-        {areActionsVisible && (
-          <DocTreeItemActions
-            doc={doc}
-            onOpenChange={onMenuOpenChange}
-            onCreateSuccess={afterCreate}
-          />
-        )}
+        <DocTreeItemActions
+          doc={doc}
+          onOpenChange={onMenuOpenChange}
+          onCreateSuccess={afterCreate}
+        />
       </TreeViewItem>
     </StyledLink>
   );
