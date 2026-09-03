@@ -32,8 +32,8 @@ YDOC_HELLO_WORLD_BASE64 = (
 
 # The same document as the raw Yjs update the collaboration server serves, which
 # is what a test faking `YHubService.get_ydoc` answers with (see the
-# `yhub_content` fixture). The base64 above is the legacy object storage format,
-# only the tests still about that storage have a use for it.
+# `yhub_content` fixture). The base64 above is what a test expecting the text of
+# that document reads it from.
 YDOC_HELLO_WORLD_UPDATE = base64.b64decode(YDOC_HELLO_WORLD_BASE64)
 
 
@@ -93,8 +93,7 @@ class DocumentFactory(factory.django.DjangoModelFactory):
     excerpt = factory.Sequence(lambda n: f"excerpt{n}")
     # No content: the collaboration server holds it, and a document built here
     # is one it knows nothing of. A test needing a document with content fakes
-    # what the collaboration server serves for it (`YHubService.get_ydoc`), and
-    # only the ones about the legacy object storage itself pass `content=`.
+    # what the collaboration server serves for it (`YHubService.get_ydoc`).
     creator = factory.SubFactory(UserFactory)
     deleted_at = None
     link_reach = factory.fuzzy.FuzzyChoice(

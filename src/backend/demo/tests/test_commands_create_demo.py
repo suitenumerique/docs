@@ -44,14 +44,12 @@ def test_commands_create_demo(collaboration_server):
     assert models.Document.objects.count() >= 10
     assert models.DocumentAccess.objects.count() > 10
 
-    # every document was seeded with its content in the collaboration server,
-    # and nothing was written to the object storage
+    # every document was seeded with its content in the collaboration server
     assert collaboration_server.call_count == 10
     seeded = {call.args[0].id for call in collaboration_server.call_args_list}
     assert seeded == set(models.Document.objects.values_list("id", flat=True))
     for call in collaboration_server.call_args_list:
         document, update = call.args
-        assert document.content is None
 
         # the structure BlockNote stores, so the editor opens a real document
         xml = yjs_to_xml(update)

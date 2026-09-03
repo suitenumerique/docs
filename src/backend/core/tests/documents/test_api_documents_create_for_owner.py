@@ -219,7 +219,6 @@ def test_api_documents_create_for_owner_existing(mock_convert_md, mock_yhub):
 
     assert document.title == "My Document"
     # the content is saved by the collaboration server, not by Django
-    assert document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         document, CONVERTED_CONTENT
     )
@@ -289,7 +288,6 @@ def test_api_documents_create_for_owner_new_user(mock_convert_md, mock_yhub):
 
     assert document.title == "My Document"
     # the content is saved by the collaboration server, not by Django
-    assert document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         document, CONVERTED_CONTENT
     )
@@ -401,7 +399,6 @@ def test_api_documents_create_for_owner_existing_user_email_no_sub_with_fallback
 
     assert document.title == "My Document"
     # the content is saved by the collaboration server, not by Django
-    assert document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         document, CONVERTED_CONTENT
     )
@@ -503,7 +500,6 @@ def test_api_documents_create_for_owner_new_user_no_sub_no_fallback_allow_duplic
 
     assert document.title == "My Document"
     # the content is saved by the collaboration server, not by Django
-    assert document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         document, CONVERTED_CONTENT
     )

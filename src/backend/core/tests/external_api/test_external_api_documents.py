@@ -302,10 +302,9 @@ def test_external_api_documents_create_with_markdown_file_success(
     document = models.Document.objects.get(id=data["id"])
 
     assert document.title == "readme.md"
-    # the content is saved by the collaboration server, not by Django
-    assert document.content is None
     assert document.accesses.filter(role="owner", user=user_specific_sub).exists()
 
+    # the content is saved by the collaboration server, not by Django
     mock_yhub.assert_called_once_with(user=user_specific_sub)
     mock_yhub.return_value.create_ydoc.assert_called_once_with(document, converted_yjs)
 
