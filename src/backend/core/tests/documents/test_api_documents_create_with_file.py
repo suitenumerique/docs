@@ -76,10 +76,9 @@ def test_api_documents_create_with_docx_file_success(mock_convert, mock_yhub, se
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "My Important Document.docx"
-    # the content is saved by the collaboration server, not by Django
-    assert document.content is None
     assert document.accesses.filter(role="owner", user=user).exists()
 
+    # the content is saved by the collaboration server, not by Django
     mock_yhub.assert_called_once_with(user=user)
     mock_yhub.return_value.create_ydoc.assert_called_once_with(document, converted_yjs)
 
@@ -176,10 +175,9 @@ def test_api_documents_create_with_markdown_file_success(
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "readme.md"
-    # the content is saved by the collaboration server, not by Django
-    assert document.content is None
     assert document.accesses.filter(role="owner", user=user).exists()
 
+    # the content is saved by the collaboration server, not by Django
     mock_yhub.return_value.create_ydoc.assert_called_once_with(document, converted_yjs)
 
     # Verify the converter was called correctly
@@ -383,7 +381,6 @@ def test_api_documents_create_without_file_still_works():
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "Regular document without file"
-    assert document.content is None
     assert document.accesses.filter(role="owner", user=user).exists()
 
     mock_capture.assert_called_once_with(
@@ -465,7 +462,6 @@ def test_api_documents_create_with_file_preserves_content_format(
 
     # The update is sent untouched, it is not base64 encoded on the way
     mock_yhub.return_value.create_ydoc.assert_called_once_with(document, converted_yjs)
-    assert document.content is None
 
     # The successful conversion should be tracked in PostHog
     mock_capture.assert_any_call(

@@ -12,7 +12,6 @@ from django.contrib.auth.models import AnonymousUser
 from django.core import mail
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.core.files.storage import default_storage
 from django.test.utils import override_settings
 from django.utils import timezone
 
@@ -906,34 +905,6 @@ def test_models_document_get_abilities_ai_access_public(is_authenticated, reach)
     assert abilities["ai_proxy"] == is_authenticated
     assert abilities["ai_transform"] == is_authenticated
     assert abilities["ai_translate"] == is_authenticated
-
-
-def test_models_documents_version_duplicate():
-    """A new version should be created in object storage only if the content has changed."""
-    document = factories.DocumentFactory(content=factories.YDOC_HELLO_WORLD_BASE64)
-
-    file_key = str(document.pk)
-    response = default_storage.connection.meta.client.list_object_versions(
-        Bucket=default_storage.bucket_name, Prefix=file_key
-    )
-    assert len(response["Versions"]) == 1
-
-    # Save again with the same content
-    document.save()
-
-    response = default_storage.connection.meta.client.list_object_versions(
-        Bucket=default_storage.bucket_name, Prefix=file_key
-    )
-    assert len(response["Versions"]) == 1
-
-    # Save modified content
-    document.content = "new content"
-    document.save()
-
-    response = default_storage.connection.meta.client.list_object_versions(
-        Bucket=default_storage.bucket_name, Prefix=file_key
-    )
-    assert len(response["Versions"]) == 2
 
 
 def test_models_documents__email_invitation__success():

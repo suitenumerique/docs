@@ -354,7 +354,6 @@ def test_api_documents_children_create_with_docx_file_success(
     children = Document.objects.get(pk=response.json()["id"])
     assert children.title == "My Important Document.docx"
     # the content is saved by the collaboration server, not by Django
-    assert children.content is None
     mock_yhub.assert_called_once_with(user=user)
     mock_yhub.return_value.create_ydoc.assert_called_once_with(children, converted_yjs)
 

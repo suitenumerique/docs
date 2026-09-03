@@ -4,7 +4,6 @@ Declare and configure the models for the impress core application
 
 # pylint: disable=too-many-lines
 
-import hashlib
 import smtplib
 import uuid
 from datetime import timedelta
@@ -17,8 +16,6 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.sites.models import Site
 from django.core.cache import cache
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.db import models, transaction
 from django.db.models import Count
@@ -29,7 +26,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import get_language, override
 from django.utils.translation import gettext_lazy as _
 
-from botocore.exceptions import ClientError
 from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
 from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
@@ -955,7 +951,7 @@ class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
 
 # pylint: disable=too-many-public-methods
 class Document(MP_Node, BaseModel):
-    """Pad document carrying the content."""
+    """Pad document, the content of which lives in the collaboration server."""
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
     excerpt = models.TextField(_("excerpt"), max_length=300, null=True, blank=True)
@@ -992,8 +988,6 @@ class Document(MP_Node, BaseModel):
         blank=True,
         null=True,
     )
-
-    _content = None
 
     # Tree structure
     alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -1033,39 +1027,6 @@ class Document(MP_Node, BaseModel):
         self._ancestors_link_definition = None
         self._computed_link_definition = None
 
-    def save(self, *args, **kwargs):
-        """Write content to object storage only if _content has changed."""
-        super().save(*args, **kwargs)
-        if self._content:
-            self.save_content(self._content)
-
-    def save_content(self, content):
-        """Save content to object storage."""
-
-        file_key = self.file_key
-        bytes_content = content.encode("utf-8")
-
-        # Attempt to directly check if the object exists using the storage client.
-        try:
-            response = default_storage.connection.meta.client.head_object(
-                Bucket=default_storage.bucket_name, Key=file_key
-            )
-        except ClientError as excpt:
-            # If the error is a 404, the object doesn't exist, so we should create it.
-            if excpt.response["Error"]["Code"] == "404":
-                has_changed = True
-            else:
-                raise
-        else:
-            # Compare the existing ETag with the MD5 hash of the new content.
-            has_changed = (
-                response["ETag"].strip('"') != hashlib.md5(bytes_content).hexdigest()  # noqa: S324
-            )
-
-        if has_changed:
-            content_file = ContentFile(bytes_content)
-            default_storage.save(file_key, content_file)
-
     def is_leaf(self):
         """
         :returns: True if the node is has no children
@@ -1083,34 +1044,16 @@ class Document(MP_Node, BaseModel):
 
     @property
     def file_key(self):
-        """Key of the object storage file to which the document content is stored"""
+        """
+        Key of the legacy object storage file that used to hold the content.
+
+        The collaboration server owns the content now, and Django neither reads
+        nor writes this object any more. The key outlives it: the collaboration
+        server seeds a room from that object on first access and replays its
+        versions to rebuild the history, and `clean_document` purges it so that
+        a document it reset cannot be seeded back from what it left behind.
+        """
         return f"{self.key_base}/file"
-
-    @property
-    def content(self):
-        """Return the json content from object storage if available"""
-        if self._content is None and self.id:
-            try:
-                response = self.get_content_response()
-            except FileNotFoundError, ClientError:
-                pass
-            else:
-                self._content = response["Body"].read().decode("utf-8")
-        return self._content
-
-    @content.setter
-    def content(self, content):
-        """Cache the content, don't write to object storage yet"""
-        if not isinstance(content, str):
-            raise ValueError("content should be a string.")
-
-        self._content = content
-
-    def get_content_response(self):
-        """Get the content of the document from object storage"""
-        return default_storage.connection.meta.client.get_object(
-            Bucket=default_storage.bucket_name, Key=self.file_key
-        )
 
     def get_nb_accesses_cache_key(self):
         """Generate a unique cache key for each document."""

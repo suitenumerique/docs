@@ -222,8 +222,7 @@ def test_api_documents_content_updated_rolled_key(yhub_jwks):
 def test_api_documents_content_updated():
     """The collaboration server should be able to refresh the date of a document."""
     with freeze_time("2026-08-01 12:00:00"):
-        # no content: writing one to S3 under a frozen clock breaks its signature
-        document = factories.DocumentFactory(title="my document", content="")
+        document = factories.DocumentFactory(title="my document")
 
     with freeze_time("2026-08-06 12:00:00"):
         response = APIClient().post(
