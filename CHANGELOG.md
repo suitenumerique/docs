@@ -58,9 +58,16 @@ and this project adheres to
   endpoints since the history panel started reading the collaboration server's
   `activity` and `changeset` routes instead. Gone with them:
   `Document.get_versions_slice`, `Document.delete_version`, the `version_id`
-  argument of
-  `get_content_response`, the `DOCUMENT_VERSIONS_PAGE_SIZE` setting, and the
-  `versions_retrieve` and `versions_destroy` abilities
+  argument of `get_content_response`, the `DOCUMENT_VERSIONS_PAGE_SIZE`
+  setting, and the `versions_retrieve` and `versions_destroy` abilities
+- 🔥(backend) remove `Document.content`. The collaboration server has owned the
+  content of the documents since the migration, and the version endpoints
+  removed above were the last thing in Django that read the legacy `{id}/file`
+  object; nothing had written it for as long. Gone with the property: its
+  setter, `Document.save_content`, `Document.get_content_response` and the
+  `save()` override that existed only to write the content — a document is
+  saved by `Model.save` alone now, and creating one no longer costs a `HEAD`
+  and a `PUT` against the object storage
 - 🔥(backend) remove the unused `CollaborationService`
 - 💥(backend) remove the `documents/{id}/can-edit/` endpointt
 - 💥(backend) remove the `documents/{id}/content/` endpoint

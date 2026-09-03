@@ -85,8 +85,9 @@ upgrade, in the order they are done, and end with the API changes.
   2. Then backfill the corpus, which the lazy seeding never finishes on its own
      — a document nobody opens stays in S3 forever. `python manage.py
      migrate_documents` hands every document to the collaboration server, which
-     replays its **full** S3 version history rather than its last snapshot, so
-     `/documents/{id}/versions/` and the history the editor shows agree. It is
+     replays its **full** S3 version history rather than its last snapshot,
+     so the history the editor shows reaches back to the document's first save
+     instead of beginning the day it reached the collaboration server. It is
      bounded (`--concurrency`, `--rate`, `--limit`, `--created-before`),
      resumable and safe to re-run: what became of every document is recorded in
      the new `impress_document_migration` table, a document the server refused
@@ -98,9 +99,18 @@ upgrade, in the order they are done, and end with the API changes.
   migrated — but an unmigrated document then opens as an *empty* room over
   content that is alive in S3.
 
-  Keep the media bucket, its objects and its versioning either way:
-  `/documents/{id}/versions/` still serves the version history from there, and
-  the full migration replays it.
+  The media bucket itself is not going anywhere: the attachments of the
+  documents live in it, under `{document-id}/attachments/`, and the backend
+  goes on uploading them, signing urls for them and scanning them through the
+  S3 API. What this upgrade adds to it is temporary, and has to be kept either
+  way: the legacy `{document-id}/file` objects **and their versions**. Django
+  has let go of that key — it neither reads nor writes it anymore, and the
+  endpoints that used to serve its versions are removed below — but the two
+  steps above are what read it now, the lazy seed taking its newest version and
+  the backfill replaying every one of them. They are the whole record of what
+  the documents were before the collaboration server, so leave the bucket
+  versioned and those objects in place until the backfill has covered the
+  corpus; there is no way back from deleting them.
 
 - ⚠️ **The websocket url changed**, and so does what `/collaboration/` is
   routed to. The room is appended by the client, and the last segment of the
@@ -242,6 +252,22 @@ upgrade, in the order they are done, and end with the API changes.
   it. `/api/v1.0/documents/{document_id}/formatted-content/` is not affected.
   The `CONTENT_METADATA_CACHE_TIMEOUT` setting only tuned the cache of the
   removed `GET` and is no longer read, you can drop it from your configuration.
+- The endpoints `GET /api/v1.0/documents/{document_id}/versions/` and `GET,
+  DELETE /api/v1.0/documents/{document_id}/versions/{version_id}/` are removed.
+  They listed and served the S3 object versions of `{document_id}/file`, the
+  key the content of a document used to be stored under; nothing has written it
+  since the content moved to the collaboration server, so what they listed was
+  frozen at each document's migration date. The editor reads the history from
+  the collaboration server instead. If you integrate with Docs, stop calling
+  them: the `versions_retrieve` and `versions_destroy` abilities disappear from
+  the document payload along with them, and the `DOCUMENT_VERSIONS_PAGE_SIZE`
+  setting is no longer read, you can drop it from your configuration.
+
+  The `versions_list` ability stays, and keeps its meaning — may this user see
+  this document's history. It is a gate now rather than the permission for an
+  endpoint of ours: the frontend hides the history menu without it, and the
+  collaboration server reads it to decide whether to ask this backend when the
+  caller's access began, which is where the history it serves starts.
 - The JWKS of the resource server moved from `/api/{version}/jwks` to
   `/external_api/{version}/jwks`, alongside the rest of the resource server
   endpoints. `/api/{version}/jwks` now publishes the public key validating the

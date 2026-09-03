@@ -147,7 +147,6 @@ def test_api_documents_duplicate_success(index, mock_yhub):
     duplicated_document = models.Document.objects.get(id=response.json()["id"])
     assert duplicated_document.title == "Copy of document with an image"
     # the content is copied through the collaboration server
-    assert duplicated_document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         duplicated_document, update
     )
@@ -274,7 +273,6 @@ def test_api_documents_duplicate_with_accesses_admin(role, mock_yhub):
     duplicated_document = models.Document.objects.get(id=response.json()["id"])
     assert duplicated_document.title == "Copy of document with accesses"
     # the content is copied through the collaboration server
-    assert duplicated_document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         duplicated_document, YDOC_HELLO_WORLD_UPDATE
     )
@@ -333,7 +331,6 @@ def test_api_documents_duplicate_with_accesses_non_admin(role, mock_yhub):
     duplicated_document = models.Document.objects.get(id=response.json()["id"])
     assert duplicated_document.title == "Copy of document with accesses"
     # the content is copied through the collaboration server
-    assert duplicated_document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         duplicated_document, YDOC_HELLO_WORLD_UPDATE
     )
@@ -385,7 +382,6 @@ def test_api_documents_duplicate_non_root_document(role, mock_yhub):
     duplicated_document = models.Document.objects.get(id=response.json()["id"])
     assert duplicated_document.title == "Copy of document with accesses"
     # the content is copied through the collaboration server
-    assert duplicated_document.content is None
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         duplicated_document, YDOC_HELLO_WORLD_UPDATE
     )
@@ -662,8 +658,6 @@ def test_api_documents_duplicate_with_descendants_and_attachments(mock_yhub):
     assert dup_child.attachments == [image_key_child]
 
     # the content of the whole subtree is copied through the collaboration server
-    assert duplicated_root.content is None
-    assert dup_child.content is None
     assert mock_yhub.return_value.create_ydoc.call_args_list == [
         mock.call(duplicated_root, root_update),
         mock.call(dup_child, child_update),
