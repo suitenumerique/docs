@@ -32,7 +32,7 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
-    "@tiptap/core": "3.29.2",
+    "@tiptap/core": "3.30.4",
     "@tiptap/extensions": "3.29.2",
     "@tiptap/pm": "3.29.2",
     "@types/node": "24.13.3",
