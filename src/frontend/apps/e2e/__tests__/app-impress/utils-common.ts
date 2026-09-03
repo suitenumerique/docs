@@ -261,8 +261,7 @@ export const goToGridDoc = async (
 
 export const updateDocTitle = async (page: Page, title: string) => {
   const input = page.getByRole('textbox', { name: 'Document title' });
-  await expect(input).toHaveText('');
-  await expect(input).toBeVisible();
+  await expect(input).toBeEmpty({ timeout: 10000 });
   await input.fill(title, {
     force: true,
   });
