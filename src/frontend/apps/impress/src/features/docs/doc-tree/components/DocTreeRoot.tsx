@@ -7,11 +7,15 @@ import { css } from 'styled-components';
 import { Box, StyledLink } from '@/components';
 import { Doc, SimpleDocItem, useTrans } from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel/stores/useLeftPanelStore';
+import { focusMainContentStart } from '@/layouts/utils';
 import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
-import { CLASS_DOC_TITLE } from '../../doc-header';
 import { useTreeItemActions } from '../hooks/useTreeItemActions';
-import { isWithinTreeItemActions } from '../utils';
+import {
+  ID_TREE_KEYBOARD_INSTRUCTIONS,
+  isWithinTreeItemActions,
+  treeItemActionsRevealCss,
+} from '../utils';
 
 import { DocTreeItemActions } from './DocTreeItemActions';
 
@@ -47,15 +51,10 @@ export const DocTreeRoot = ({
     rootItemRef.current?.focus();
   }, [rootItemRef]);
 
-  const {
-    areActionsVisible,
-    isMenuOpen,
-    onMenuOpenChange,
-    handleActionsKeyDown,
-    itemProps,
-  } = useTreeItemActions({
-    focusItem: focusRootItem,
-  });
+  const { isMenuOpen, onMenuOpenChange, handleActionsKeyDown } =
+    useTreeItemActions({
+      focusItem: focusRootItem,
+    });
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLElement>) => {
@@ -66,18 +65,13 @@ export const DocTreeRoot = ({
 
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         event.preventDefault();
-        // ArrowDown enters the sub pages at the first row — from the item
-        // itself or from one of its actions, the same as the sub page rows.
-        // ArrowUp has nowhere to go (the root is the top) but must not scroll
-        // the panel.
+        // ArrowDown enters the sub pages; ArrowUp has nowhere to go but must
+        // not scroll the panel.
         const api = treeApiRef.current;
         const firstNode = api?.firstNode;
         if (event.key === 'ArrowDown' && api && firstNode) {
           api.focus(firstNode);
-          // react-arborist only moves DOM focus from the effect that fires
-          // when a row's `isFocused` flips to true. When it already considers
-          // the first row focused that effect never runs, so move the focus
-          // ourselves, the way `focusRow` does in `DocSubPageItem`.
+          // Same reason as `focusRow` in `DocSubPageItem`.
           rootItemRef.current
             ?.closest('[data-testid="doc-tree"]')
             ?.querySelector<HTMLElement>(
@@ -97,9 +91,10 @@ export const DocTreeRoot = ({
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
 
-        // Already on this document: move on to its title rather than reloading.
+        // Already on this document: move on to its content rather than
+        // reloading.
         if (currentDoc.id === root?.id) {
-          document.querySelector<HTMLElement>(`.${CLASS_DOC_TITLE}`)?.focus();
+          focusMainContentStart();
         } else if (root) {
           selectRoot();
           void router.push(`/docs/${root.id}`);
@@ -125,11 +120,12 @@ export const DocTreeRoot = ({
 
   return (
     <Box
-      {...itemProps}
       ref={rootItemRef}
       data-testid="doc-tree-root-item"
+      data-menu-open={isMenuOpen || undefined}
       role="treeitem"
       aria-label={t('Root document {{title}}', { title })}
+      aria-describedby={ID_TREE_KEYBOARD_INSTRUCTIONS}
       aria-selected={isSelected}
       tabIndex={0}
       onKeyDown={handleKeyDown}
@@ -160,6 +156,8 @@ export const DocTreeRoot = ({
         &:has(.doc-tree-root-item-actions *:focus) {
           box-shadow: none !important;
         }
+
+        ${treeItemActionsRevealCss}
       `}
     >
       <StyledLink
@@ -182,25 +180,23 @@ export const DocTreeRoot = ({
       >
         <Box $direction="row" $align="center" $width="100%">
           <SimpleDocItem doc={root} showDate={true} />
-          {areActionsVisible && (
-            <DocTreeItemActions
-              doc={root}
-              onOpenChange={onMenuOpenChange}
-              onCreateSuccess={(createdDoc) => {
-                const newDoc = {
-                  ...createdDoc,
-                  children: [],
-                  childrenCount: 0,
-                  parentId: root.id,
-                };
-                treeContext.treeData.addChild(null, newDoc);
+          <DocTreeItemActions
+            doc={root}
+            onOpenChange={onMenuOpenChange}
+            onCreateSuccess={(createdDoc) => {
+              const newDoc = {
+                ...createdDoc,
+                children: [],
+                childrenCount: 0,
+                parentId: root.id,
+              };
+              treeContext.treeData.addChild(null, newDoc);
 
-                if (isMobile) {
-                  closePanel();
-                }
-              }}
-            />
-          )}
+              if (isMobile) {
+                closePanel();
+              }
+            }}
+          />
         </Box>
       </StyledLink>
     </Box>

@@ -9,7 +9,10 @@ import { Doc, useCreateChildDoc, useTrans } from '@/docs/doc-management';
 import { DocToolBox } from '@/docs/doc-management/components/DocToolBox';
 import MoreIcon from '@/icons/more_horiz.svg';
 
-import { CLASS_TREE_ITEM_ACTIONS } from '../utils';
+import {
+  CLASS_TREE_ITEM_ACTIONS,
+  CLASS_TREE_ITEM_ACTIONS_WRAPPER,
+} from '../utils';
 
 // Module-level so the reference stays stable and the memoized `DocToolBox`
 // isn't forced to re-render on every parent render.
@@ -47,7 +50,7 @@ export const DocTreeItemActions = ({
       $direction="row"
       $align="center"
       $gap="4xs"
-      className={`${CLASS_TREE_ITEM_ACTIONS} --docs--doc-tree-item-actions actions`}
+      className={`${CLASS_TREE_ITEM_ACTIONS} ${CLASS_TREE_ITEM_ACTIONS_WRAPPER} actions`}
       role="toolbar"
       aria-label={t('Actions for {{title}}', {
         title: doc.title || untitledDocument,

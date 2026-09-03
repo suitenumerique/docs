@@ -1,25 +1,12 @@
-import {
-  FocusEvent,
-  HTMLAttributes,
-  KeyboardEvent,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
-
-import { useResponsiveStore } from '@/stores';
+import { KeyboardEvent, useCallback, useState } from 'react';
 
 import { isWithinTreeItemActions } from '../utils';
 
 type UseTreeItemActionsProps = {
-  isActive?: boolean;
-  onFocus?: () => void;
   focusItem: () => void;
 };
 
 type UseTreeItemActionsReturn = {
-  /** Whether `DocTreeItemActions` should be rendered for this item. */
-  areActionsVisible: boolean;
   isMenuOpen: boolean;
   onMenuOpenChange: (isOpen: boolean) => void;
   /**
@@ -33,13 +20,6 @@ type UseTreeItemActionsReturn = {
    * Returns whether the event was handled, so the caller can stop there.
    */
   handleActionsKeyDown: (event: KeyboardEvent<HTMLElement>) => boolean;
-  /** Spread on the element wrapping the item and its actions. */
-  itemProps: Required<
-    Pick<
-      HTMLAttributes<HTMLElement>,
-      'onMouseEnter' | 'onMouseLeave' | 'onFocus' | 'onBlur'
-    >
-  >;
 };
 
 /** Focusable action buttons inside `container`, in DOM order. */
@@ -49,24 +29,11 @@ const getActionButtons = (container: HTMLElement) =>
       !button.disabled && button.getAttribute('aria-disabled') !== 'true',
   );
 
-/**
- * Drives how a tree item reveals its actions, across every input method:
- * pointer (hover), keyboard (focus, then F2 / arrows to step through them) and
- * touch (always visible, since there is no hover).
- *
- * Visibility is React state rather than `:hover` / `:focus-within` CSS, so the
- * actions — and the fairly heavy dropdown menu they mount — only exist for the
- * one item the user is interacting with instead of for every row in the tree.
- */
+/** Keyboard navigation inside a tree item's actions. */
 export const useTreeItemActions = ({
-  isActive = false,
-  onFocus,
   focusItem,
 }: UseTreeItemActionsProps): UseTreeItemActionsReturn => {
-  const { isMobile } = useResponsiveStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isPointerOver, setIsPointerOver] = useState(false);
-  const [hasFocusWithin, setHasFocusWithin] = useState(false);
 
   const onMenuOpenChange = useCallback((isOpen: boolean) => {
     setIsMenuOpen(isOpen);
@@ -75,7 +42,7 @@ export const useTreeItemActions = ({
   const handleActionsKeyDown = useCallback(
     (event: KeyboardEvent<HTMLElement>) => {
       // While the menu is open the keyboard belongs to it: Escape closes it and
-      // `onMenuOpenChange` restores focus from there.
+      // React Aria restores the focus to the trigger from there.
       if (isMenuOpen) {
         return false;
       }
@@ -119,30 +86,9 @@ export const useTreeItemActions = ({
     [isMenuOpen, focusItem],
   );
 
-  const itemProps = useMemo(
-    () => ({
-      onMouseEnter: () => setIsPointerOver(true),
-      onMouseLeave: () => setIsPointerOver(false),
-      onFocus: () => {
-        setHasFocusWithin(true);
-        onFocus?.();
-      },
-      onBlur: (event: FocusEvent<HTMLElement>) => {
-        // Focus moving between the item and its own actions is not a blur.
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setHasFocusWithin(false);
-        }
-      },
-    }),
-    [onFocus],
-  );
-
   return {
-    areActionsVisible:
-      isMobile || isMenuOpen || isPointerOver || hasFocusWithin || isActive,
     isMenuOpen,
     onMenuOpenChange,
     handleActionsKeyDown,
-    itemProps,
   };
 };
