@@ -47,6 +47,10 @@ and this project adheres to
 - ✨(backend) conditional email notification in server to server api #2554
 - ✨(backend) profile api using django-silk #2594
 
+### Security
+
+- 🔒️(yprovider) readOnly connections awareness propagation #2544
+
 ### Changed
 
 - ♿️(frontend) use semantic `<dl>` structure in document info card #2379
