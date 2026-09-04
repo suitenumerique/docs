@@ -206,6 +206,8 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    DATA_UPLOAD_MAX_MEMORY_SIZE = values.IntegerValue(20 * MB)  # 20 MB
+
     REACTIONS_MAX_PER_COMMENT = values.IntegerValue(
         15,
         environ_name="REACTIONS_MAX_PER_COMMENT",
@@ -937,7 +939,7 @@ class Base(Configuration):
         False, environ_name="CONVERSION_UPLOAD_ENABLED", environ_prefix=None
     )
     CONVERSION_FILE_MAX_SIZE = values.IntegerValue(
-        20 * MB,
+        default=DATA_UPLOAD_MAX_MEMORY_SIZE,
         environ_name="CONVERSION_FILE_MAX_SIZE",
         environ_prefix=None,
     )

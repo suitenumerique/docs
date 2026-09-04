@@ -9,6 +9,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) hide Leave in the doc menu when not logged in #2626
+- 🐛(backend) allow to configure settings DATA_UPLOAD_MAX_MEMORY_SIZE
 
 ## [v5.6.0] - 2026-09-03
 
