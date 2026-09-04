@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 
 import {
   clickInDocOptionMenu,
@@ -13,7 +13,22 @@ import {
   clickOnAddRootSubPage,
   createRootSubPage,
   getTreeRow,
+  navigateToTopParentFromTree,
 } from './utils-sub-pages';
+
+/** Whether the doc title, inside the main content, holds the focus. */
+const isDocTitleFocused = (page: Page) =>
+  page.evaluate(() => {
+    const active = document.activeElement;
+    const mainContent = document.getElementById('mainContent');
+
+    return (
+      !!active &&
+      !!mainContent &&
+      mainContent.contains(active) &&
+      active.classList.contains('--docs--doc-title')
+    );
+  });
 
 test.describe('Doc Tree', () => {
   test.beforeEach(async ({ page }) => {
@@ -436,6 +451,160 @@ test.describe('Doc Tree', () => {
 
     await page.keyboard.press('Enter');
     await verifyDocName(page, docParent);
+  });
+
+  test('it keeps the focus on the options button after starring a sub page', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-tree-star-focus', browserName, 1);
+
+    const { name: subPageName } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-tree-star-focus-child',
+    );
+
+    const treeRow = await getTreeRow(page, subPageName);
+    await treeRow.hover();
+
+    const optionsButton = treeRow.getByRole('button', {
+      name: /Open the document options/i,
+    });
+
+    const starResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/favorite/') &&
+        response.request().method() === 'POST',
+    );
+
+    await clickInDocOptionMenu(page, treeRow, 'Star');
+
+    // Closing the menu hands the focus back to the trigger.
+    await expect(optionsButton).toBeFocused();
+
+    // Syncing the starred doc into the tree happens a round trip later, and
+    // must not take the focus away.
+    await starResponse;
+    await expect(optionsButton).toBeFocused();
+  });
+
+  test('it keeps the actions of a tree item visible while its menu is open', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-tree-menu-open', browserName, 1);
+
+    const { name: subPageName } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-tree-menu-open-child',
+    );
+
+    const treeRow = await getTreeRow(page, subPageName);
+    const actions = treeRow.locator('.--docs--doc-tree-item-actions');
+
+    await page.mouse.move(0, 0);
+    await expect(actions).toHaveCSS('opacity', '0');
+
+    await treeRow.hover();
+    await expect(actions).toHaveCSS('opacity', '1');
+
+    await treeRow
+      .getByRole('button', { name: /Open the document options/i })
+      .click();
+    await expect(page.getByRole('menuitem', { name: 'Star' })).toBeVisible();
+
+    // The pointer sits on the overlay and the focus in the menu portal, so
+    // only `data-menu-open` keeps the trigger on screen.
+    await page.mouse.move(0, 0);
+    await expect(actions).toHaveCSS('opacity', '1');
+  });
+
+  test('check the aria structure of the doc tree', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-tree-aria', browserName, 1);
+
+    const { name: subPageName } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-tree-aria-child',
+    );
+
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree).toHaveAttribute('role', 'tree');
+
+    // A tree cannot contain another tree: the sub pages are a group.
+    await expect(docTree.locator('[role="tree"]')).toHaveCount(0);
+    await expect(docTree.locator('[role="group"]').first()).toBeAttached();
+
+    // The keyboard hints only get announced from the tree's single Tab stop.
+    const rootItem = docTree.getByRole('treeitem', { name: /Root document/ });
+    await expect(rootItem).toHaveAttribute('tabindex', '0');
+    await expect(rootItem).toHaveAttribute(
+      'aria-describedby',
+      'doc-tree-keyboard-instructions',
+    );
+    await expect(page.locator('#doc-tree-keyboard-instructions')).toHaveText(
+      /Press F2 to reach the actions of a document, then the left and right arrow keys/,
+    );
+
+    const treeRow = await getTreeRow(page, subPageName);
+    await treeRow.hover();
+    const optionsButton = treeRow.getByRole('button', {
+      name: /Open the document options/i,
+    });
+    await expect(optionsButton).toHaveAttribute('aria-haspopup', 'menu');
+    await expect(optionsButton).toHaveAttribute('aria-expanded', 'false');
+
+    await optionsButton.click();
+    await expect(optionsButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  test('it moves the focus to the doc content when pressing Enter on the current doc', async ({
+    page,
+    browserName,
+  }) => {
+    const [docParent] = await createDoc(
+      page,
+      'doc-tree-enter-focus',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docParent);
+
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree).toBeVisible();
+
+    await docTree.getByRole('treeitem', { name: /Root document/ }).focus();
+    await page.keyboard.press('Enter');
+
+    expect(await isDocTitleFocused(page)).toBe(true);
+  });
+
+  test('it leaves the focus alone when opening a doc with the pointer', async ({
+    page,
+    browserName,
+  }) => {
+    const [docParent] = await createDoc(
+      page,
+      'doc-tree-pointer-focus',
+      browserName,
+      1,
+    );
+
+    await createRootSubPage(page, browserName, 'doc-tree-pointer-focus-child');
+
+    // Any key press used to mark every navigation that followed as a keyboard
+    // one, which sent the focus into the content of the doc being opened.
+    await page.keyboard.press('Tab');
+
+    await navigateToTopParentFromTree({ page });
+    await verifyDocName(page, docParent);
+
+    expect(await isDocTitleFocused(page)).toBe(false);
   });
 
   test('it updates the child icon from the tree', async ({

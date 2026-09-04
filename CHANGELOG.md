@@ -28,6 +28,7 @@ and this project adheres to
 - 🚚(frontend) add doc move to doc options #2555
 - ♻️(frontend) unified menu #2620
 - ♿(frontend) hide decorative emojis in document titles from SR #2527
+- ♿️(frontend) restore focus and roles in the doc tree- #2640 #2640
 
 ### Fixed
 
