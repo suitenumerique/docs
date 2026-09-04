@@ -14,14 +14,7 @@ const FooterActionsGlobalStyle = createGlobalStyle`
   }
 `;
 
-type FooterActionsProps = {
-  /** In the left panel the help menu sits at the opposite edge of the row. */
-  isHelpMenuAside?: boolean;
-};
-
-export const FooterActions = ({
-  isHelpMenuAside = false,
-}: FooterActionsProps) => {
+export const FooterActions = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -38,7 +31,7 @@ export const FooterActions = ({
         $direction="row"
         $align="center"
         $gap="3xs"
-        $justify={isHelpMenuAside ? 'space-between' : undefined}
+        $justify="space-between"
         className="--docs--footer-actions"
       >
         <Box $direction="row" $align="center" $gap="3xs">

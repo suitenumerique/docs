@@ -7,7 +7,7 @@ export const FooterBar = () => {
     <Box
       as="footer"
       className="--docs--footer-bar"
-      $width="100%"
+      $width="fit-content"
       $shrink={0}
       $padding={{ vertical: 'sm' }}
     >
