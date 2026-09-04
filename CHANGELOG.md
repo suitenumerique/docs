@@ -22,6 +22,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) make the full last-update date available #1215
 - ✨(frontend) Add "Copy link to block" feature #2547
 - ✨(frontend) add word count to doc header toolbox #2549
 - ✨(frontend) add find and replace feature to the editor #2570
