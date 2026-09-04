@@ -64,7 +64,7 @@ export const overrideDocContent = async ({
 
   await page.waitForTimeout(1000);
 
-  // Add a simple Image PNG (1 IDAT chunk)
+  // Add image PNG
   await openSuggestionMenu({
     page,
     suggestion: 'Resizable image with caption',
@@ -73,30 +73,30 @@ export const overrideDocContent = async ({
   await page.getByText('Upload image').click();
   const fileChooserPNG = await fileChooserPNGPromise;
   await fileChooserPNG.setFiles(
-    path.join(__dirname, 'assets/logo-suite-numerique.png'),
-  );
-  const imagePng = page
-    .locator('.--docs--editor-container')
-    .getByRole('img', { name: 'logo-suite-numerique.png' });
-  await expect(imagePng).toBeVisible();
-
-  await page.waitForTimeout(1000);
-
-  // Add a more complex Image PNG (45 IDAT chunks)
-  await openSuggestionMenu({
-    page,
-    suggestion: 'Resizable image with caption',
-  });
-  const fileChooserComplexPNGPromise = page.waitForEvent('filechooser');
-  await page.getByText('Upload image').click();
-  const fileChooserComplexPNG = await fileChooserComplexPNGPromise;
-  await fileChooserComplexPNG.setFiles(
     path.join(__dirname, 'assets/issue-860-complex-image.png'),
   );
   const complexImagePng = page
     .locator('.--docs--editor-container')
     .getByRole('img', { name: 'issue-860-complex-image.png' });
   await expect(complexImagePng).toBeVisible();
+
+  await page.waitForTimeout(1000);
+
+  // Add image WEBP
+  await openSuggestionMenu({
+    page,
+    suggestion: 'Resizable image with caption',
+  });
+  const fileChooserWEBPPromise = page.waitForEvent('filechooser');
+  await page.getByText('Upload image').click();
+  const fileChooserWEBP = await fileChooserWEBPPromise;
+  await fileChooserWEBP.setFiles(
+    path.join(__dirname, 'assets/webp-image.webp'),
+  );
+  const complexImageWebP = page
+    .locator('.--docs--editor-container')
+    .getByRole('img', { name: 'webp-image.webp' });
+  await expect(complexImageWebP).toBeVisible();
 
   await page.waitForTimeout(1000);
 
