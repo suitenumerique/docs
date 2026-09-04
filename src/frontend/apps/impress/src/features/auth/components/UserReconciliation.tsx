@@ -75,37 +75,6 @@ export const UserReconciliation = ({
                 'To complete the unification of your user accounts, please click the confirmation links sent to all the email addresses you provided.',
               )}
             </Text>
-            <BoxButton
-              $direction="row"
-              $align="center"
-              $gap="xxxs"
-              $margin={{ top: 'md' }}
-              $theme="neutral"
-              $variation="tertiary"
-              $css={css`
-                &:hover span {
-                  text-decoration: underline;
-                }
-              `}
-              onClick={() => window.location.reload()}
-            >
-              <Icon
-                $theme="neutral"
-                $variation="tertiary"
-                icon={
-                  <ArrowUpCircleSvg width={16} height={16} aria-hidden="true" />
-                }
-              />
-              <Text
-                as="span"
-                $size="xs"
-                $weight="500"
-                $theme="neutral"
-                $variation="tertiary"
-              >
-                {t('Resend e-mail')}
-              </Text>
-            </BoxButton>
           </>
         )}
       </Box>
