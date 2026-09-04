@@ -146,6 +146,13 @@ class Base(Configuration):
     # Static files (CSS, JavaScript, Images)
     STATIC_URL = "/static/"
     STATIC_ROOT = os.path.join(DATA_DIR, "static")
+    # Let Django itself serve the files collected in STATIC_ROOT. The admin is
+    # unusable without them and, since whitenoise was removed, nothing else
+    # serves STATIC_URL. Disable it when a web server or a CDN is placed in
+    # front of the application to serve them.
+    SERVE_STATIC_FILES = values.BooleanValue(
+        True, environ_name="SERVE_STATIC_FILES", environ_prefix=None
+    )
     MEDIA_URL = "/media/"
     MEDIA_ROOT = os.path.join(DATA_DIR, "media")
     MEDIA_BASE_URL = values.Value(
@@ -1371,6 +1378,7 @@ class Test(Base):
     # Static files are not used in the test environment
     # Tests are raising warnings because the /data/static directory does not exist
     STATIC_ROOT = None
+    SERVE_STATIC_FILES = False
 
     CELERY_TASK_ALWAYS_EAGER = values.BooleanValue(True)
 
