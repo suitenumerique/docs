@@ -9,14 +9,10 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
 import { Box, Text } from '@/components';
-import { useThreadStore } from '@/docs/doc-comments/stores/useThreadStore';
-import { Doc, base64ToYDoc, useProviderStore } from '@/docs/doc-management/';
-import { useDocContentUpdate } from '@/docs/doc-management/api/useDocContentUpdate';
+import { Doc } from '@/docs/doc-management/';
 
-import { useDocVersion } from '../api';
-import { KEY_LIST_DOC_VERSIONS } from '../api/useDocVersions';
-import { Versions } from '../types';
-import { revertUpdate } from '../utils';
+import { useRestoreDocVersion } from '../api';
+import { DocVersion } from '../types';
 
 const ModalStyle = createGlobalStyle`
   .c__modal__title {
@@ -28,7 +24,7 @@ interface ModalConfirmationVersionProps {
   docId: Doc['id'];
   onClose: () => void;
   onSuccess: () => void;
-  versionId: Versions['version_id'];
+  versionId: DocVersion['id'];
 }
 
 export const ModalConfirmationVersion = ({
@@ -37,42 +33,20 @@ export const ModalConfirmationVersion = ({
   docId,
   versionId,
 }: ModalConfirmationVersionProps) => {
-  const { data: version } = useDocVersion({
-    docId,
-    versionId,
-  });
   const { t } = useTranslation();
   const { toast } = useToastProvider();
-  const { provider } = useProviderStore();
-  const { threadStore } = useThreadStore();
-  const { mutate: updateDocContent } = useDocContentUpdate({
-    listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
+
+  /**
+   * The collaboration server undoes everything after this version and hands the
+   * result to every open editor, this one included — so there is nothing to
+   * apply here and nothing to reload.
+   */
+  const { mutate: restoreVersion, isPending } = useRestoreDocVersion({
     onSuccess: () => {
-      const onDisplaySuccess = () => {
-        toast(t('Version restored successfully'), VariantType.SUCCESS);
-        onSuccess();
-      };
-
-      if (!provider || !version?.content) {
-        onDisplaySuccess();
-        return;
-      }
-
-      revertUpdate(
-        provider.document,
-        provider.document,
-        base64ToYDoc(version.content),
-      );
-
-      threadStore?.refreshThreads();
-
-      onDisplaySuccess();
+      toast(t('Version restored successfully'), VariantType.SUCCESS);
+      onSuccess();
     },
   });
-
-  if (!version) {
-    return null;
-  }
 
   return (
     <Modal
@@ -95,18 +69,8 @@ export const ModalConfirmationVersion = ({
             aria-label={t('Restore')}
             color="error"
             fullWidth
-            onClick={() => {
-              if (!version?.content) {
-                return;
-              }
-
-              updateDocContent({
-                id: docId,
-                content: version.content,
-              });
-
-              onClose();
-            }}
+            disabled={isPending}
+            onClick={() => restoreVersion({ docId, versionId })}
           >
             {t('Restore')}
           </Button>

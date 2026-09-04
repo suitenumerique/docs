@@ -6,14 +6,193 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Security
+
+- 🔒️(collaboration) stop read-only users from sharing their cursor #2544. A
+  read-only connection could still propagate awareness updates — the cursor and
+  the selection — to everyone else in the document, even though its document
+  updates were already dropped. Presence is now a permission of its own,
+  separate from the right to edit: a reader receives it and never publishes it.
+  The collaboration server enforces it rather than trusting the editor to stay
+  quiet, dropping a read-only connection's presence on the websocket and
+  refusing the awareness field of an http fallback request, so a modified or
+  stale client changes nothing
+
+### Added
+
+- ✨(frontend) build the version history from the collaboration server. The
+  history panel now lists the document's own editing activity instead of the
+  snapshots the backend used to write to S3 — a list that has not gained an
+  entry since the document was migrated, because nothing writes those snapshots
+  any more. A version is a minute of editing: changes less than a minute apart
+  become one, no version spans more than a minute, and changes are merged
+  whoever made them, because a version is a moment in the document rather than a
+  moment in one person's editing. Selecting one previews the document exactly as
+  it stood then. A migrated document's imported history is the exception to the
+  grouping and is listed save by save: those entries are a record of saves that
+  already happened rather than an editing session to summarise, and they arrive
+  spaced exactly the width of the grouping window, so grouping them would have
+  dropped about a third of them depending on how fast the network was years ago.
+  Note that a document whose history has not yet been replayed into the
+  collaboration server (`manage.py migrate_documents`) lists only the edits made
+  since it moved there
+
+- ✨(frontend) make restoring a version work again. It has done nothing since
+  the migration, while still promising that the document would be replaced. The
+  collaboration server now performs the restore where the document lives, so
+  everyone with it open sees it arrive over their own connection rather than one
+  tab rewriting the document under the others. Nothing is destroyed — the
+  restore is itself a change, so the state it replaced stays in the history and
+  can be restored again. **Any user who may edit a document may restore it**;
+  readers may not, and nobody may undo work that predates their own access —
+  where reads are silently trimmed to what a user may see, a restore reaching
+  further back is refused
+
+- ✨(collaboration) let a user read the document's editing history from the
+  moment they were given access to it. The collaboration server's `activity` and
+  `changeset` routes are opened to the browser, bounded per user to the earliest
+  access they hold on the document or on one of its ancestors — the same cut-off
+  the version endpoints have always applied, read from the backend
+  (`GET /documents/{id}/accesses/me/`) and applied by the collaboration
+  server. The bound is enforced server-side and silently: a client asks for
+  whatever range it likes and receives only its own share. A reader who reaches
+  a document through its link alone holds no access and so has no date to bound
+  a history with, and gets none — as they never did
+
+- ✨(collaboration) grant the browser only the routes it uses. The
+  collaboration server now answers what a caller may do with a document as a
+  permission object, facet by facet, and enforces every facet itself. A browser
+  is granted the websocket, the document route the http fallback polls and the
+  two history routes, and nothing else — rollback, prune, every backend-internal
+  endpoint, and any endpoint a future release adds are refused to it.
+  `create-ydoc` in particular was reachable by any signed-in editor and is now
+  the backend's alone. The backend's admin token keeps full
+  access, minus the irreversible content erasure that the new version exposes
+  over http for the first time
+
+- ✨(collaboration) let anonymous visitors edit public documents again under the
+  new permission model, with their changes attributed to a shared `anonymous`
+  author
+
+- ✨(frontend) fall back to http polling when the websocket cannot be opened.
+  Some networks refuse a websocket upgrade — corporate proxies, captive portals
+  — and a browser is told nothing more than "the connection closed"; those users
+  could not edit at all. The editor now runs a second transport next to the
+  socket, polling the collaboration server's REST api on the same room, with the
+  same session cookie and the same authorization, and only while the socket is
+  down. Local changes go out about a second after the last keystroke and remote
+  ones arrive within ten seconds, so editing works with visibly more latency
+  rather than not at all. The socket keeps being retried underneath, so a client
+  that fell back during an outage returns to it on its own, and nothing is lost
+  in either direction — both transports publish from the same document. This
+  makes `/collaboration/ydoc/` a route browsers call, so
+  `COLLABORATION_SERVER_ORIGIN` now gates the http routes as well as the
+  websocket
+
+- ⬆️(collaboration) upgrade yhub to 0.9.0 and delete superseded document blobs
+  for real. Its S3 persistence plugin now records the object version it wrote
+  and names that version when it deletes it. On a versioned bucket — which is
+  what a deployment runs — a delete that names no version deletes nothing: it
+  writes a delete marker and keeps every version underneath. Each compaction
+  supersedes the blobs of the one before, so what was kept was every version of
+  every document ever written, a document someone asked to erase included, still
+  readable by anyone who can list versions. Blobs are written to the bucket for
+  every branch of a document.
+
+  `YHUB_S3_PERSISTENCE` now governs only whether new blobs are *written* to the
+  bucket. The plugin itself is attached whenever the `YHUB_S3_*` settings name
+  one, on or off, so that the objects an earlier run wrote stay readable —
+  turning the toggle off used to strand them, since a row pointing at an object
+  is unreadable without the plugin and yhub reports such a version as having no
+  content rather than as an error. The settings, not the toggle, are what a
+  deployment whose bucket holds anything must keep. The dev stack keeps the
+  toggle off and now creates its bucket versioned, so flipping it on exercises
+  what a deployment runs rather than a simpler case
+
+### Removed
+
+- 🔥(backend) remove the document version endpoints. `GET
+  /documents/{id}/versions/` and `GET, DELETE /documents/{id}/versions/{id}/`
+  listed S3 object versions of the legacy `{id}/file` key. Nothing has written
+  that key since the migration to the collaboration server, so the list was
+  frozen at each document's migration date, and nothing has called the
+  endpoints since the history panel started reading the collaboration server's
+  `activity` and `changeset` routes instead. Gone with them:
+  `Document.get_versions_slice`, `Document.delete_version`, the `version_id`
+  argument of `get_content_response`, the `DOCUMENT_VERSIONS_PAGE_SIZE`
+  setting, and the `versions_retrieve` and `versions_destroy` abilities
+
+  The `versions_list` ability stays and keeps its meaning — may this user see
+  this document's history — now as a pure gate rather than the permission for
+  an endpoint of ours: the frontend hides the history menu without it, and the
+  collaboration server reads it to decide whether to ask this backend when the
+  caller's access began, which is where the history it serves starts
+
+- 🔥(backend) remove `Document.content`. The collaboration server has owned the
+  content of the documents since the migration, and the version endpoints
+  removed above were the last thing in Django that read the legacy `{id}/file`
+  object; nothing had written it for as long. Gone with the property: its
+  setter, `Document.save_content`, `Document.get_content_response` and the
+  `save()` override that existed only to write the content — a document is
+  saved by `Model.save` alone now, and creating one no longer costs a `HEAD`
+  and a `PUT` against the object storage
+
+  The objects are untouched and must stay: the collaboration server seeds a
+  room from `{id}/file` on first access (`SOFT_MIGRATION`) and replays its
+  versions to rebuild the history. `Document.file_key` stays with them, and
+  `clean_document` goes on purging that object so that a document it reset
+  cannot be seeded back from what it left behind
+
+### Fixed
+
+- 🐛(frontend) stop reconnecting to the collaboration server when it has refused
+  the connection for good. Close codes 4400-4499 are a refusal, not a lost
+  socket — the document was deleted (4404) or the access of this connection
+  changed (4401) — and retrying only asked the same question again, twice a
+  minute, for as long as the tab stayed open. The editor now stops and refetches
+  the document instead: it reconnects when the document is still there (an
+  access upgraded from reader to editor is a refusal too, and has to reconnect
+  to carry its new rights) and stays closed when it is not, where the page
+  already tells the user what happened. Everything else — a dropped socket, a
+  restart, an unreachable server — keeps its retry loop untouched
+
 ### Added
 
 - ✨(frontend) export presenter slides as PDF #2487
+- ✨(backend) add a service generating cached RS256 JWT tokens
+- ✨(backend) publish the JWT public key on a JWKS endpoint
+- 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
+- ✨(collaboration) add an admin reset-connections endpoint on yhub
+- ✨(collaboration) add a create-ydoc endpoint on yhub
+- ✨(collaboration) soft-migrate legacy S3 documents into yhub
+- ✨(collaboration) replay legacy s3 version history into yhub
+- ✨(backend) add a service to call the yhub REST API
+- ✨(backend) call YHubService to seed initial document content
+- ✨(collaboration) add a get-ydoc endpoint on yhub
+- ✨(backend) duplicate a document through the collaboration server
+- ✨(backend) serve `documents/{id}/formatted-content/` from yhub
+- ✨(collaboration) notify the backend when the worker persists new content
+
+### Changed
+
+- ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub
+- 💥(y-provider) y-provider becomes converter-only
+- 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
+  `/external_api/{version}/jwks`
+- 🔒️(collaboration) reject admin jwts not issued for the yhub audience
+- 🔧(collaboration) adapt docker stack for development purpose
+- ⏪️(backend) reintroduce the reset connection mechanism
 
 ### Fixed
 
 - 🐛(frontend) hide Leave in the doc menu when not logged in #2626
 - 🐛(backend) allow to configure settings DATA_UPLOAD_MAX_MEMORY_SIZE
+
+### Removed
+
+- 🔥(backend) remove the unused `CollaborationService`
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
+- 💥(backend) remove the `documents/{id}/content/` endpoint
 
 ## [v5.6.0] - 2026-09-03
 

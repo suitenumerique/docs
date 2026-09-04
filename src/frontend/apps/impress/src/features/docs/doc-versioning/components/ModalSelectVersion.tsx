@@ -12,7 +12,7 @@ import { createGlobalStyle, css } from 'styled-components';
 import { Box, ButtonCloseModal, Text } from '@/components';
 import { Doc } from '@/docs/doc-management';
 
-import { Versions } from '../types';
+import { DocVersion } from '../types';
 
 import { DocVersionEditor } from './DocVersionEditor';
 import { VersionList } from './VersionList';
@@ -48,7 +48,7 @@ export const ModalSelectVersion = ({
 }: ModalSelectVersionProps) => {
   const { t } = useTranslation();
   const [selectedVersionId, setSelectedVersionId] =
-    useState<Versions['version_id']>();
+    useState<DocVersion['id']>();
   const canRestore = doc.abilities.partial_update;
   const restoreModal = useModal();
 

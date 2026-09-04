@@ -2,6 +2,8 @@
 Core application factories
 """
 
+import base64
+
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 
@@ -27,6 +29,12 @@ YDOC_HELLO_WORLD_BASE64 = (
     "9e7y1Q4eAmlkAXckODk3MDBjMDctZTBlMS00ZmUwLWFjYTItODQ5MzIwOWE3ZTQyKAD17vLVDh4J"
     "dGV4dENvbG9yAXcHZGVmYXVsdCgA9e7y1Q4eD2JhY2tncm91bmRDb2xvcgF3B2RlZmF1bHQA"
 )
+
+# The same document as the raw Yjs update the collaboration server serves, which
+# is what a test faking `YHubService.get_ydoc` answers with (see the
+# `yhub_content` fixture). The base64 above is what a test expecting the text of
+# that document reads it from.
+YDOC_HELLO_WORLD_UPDATE = base64.b64decode(YDOC_HELLO_WORLD_BASE64)
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -83,7 +91,9 @@ class DocumentFactory(factory.django.DjangoModelFactory):
 
     title = factory.Sequence(lambda n: f"document{n}")
     excerpt = factory.Sequence(lambda n: f"excerpt{n}")
-    content = YDOC_HELLO_WORLD_BASE64
+    # No content: the collaboration server holds it, and a document built here
+    # is one it knows nothing of. A test needing a document with content fakes
+    # what the collaboration server serves for it (`YHubService.get_ydoc`).
     creator = factory.SubFactory(UserFactory)
     deleted_at = None
     link_reach = factory.fuzzy.FuzzyChoice(

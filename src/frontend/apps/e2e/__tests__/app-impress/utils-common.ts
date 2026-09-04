@@ -20,7 +20,6 @@ export const CONFIG = {
   API_USERS_SEARCH_QUERY_MIN_LENGTH: 3,
   COLLABORATION_WS_INACTIVITY_TIMEOUT: 15,
   COLLABORATION_WS_URL: process.env.COLLABORATION_WS_URL,
-  COLLABORATION_WS_NOT_CONNECTED_READ_ONLY: true,
   CONVERSION_UPLOAD_ENABLED: true,
   CONVERSION_FILE_EXTENSIONS_ALLOWED: ['.docx', '.md'],
   CONVERSION_FILE_MAX_SIZE: 20971520,
@@ -280,26 +279,20 @@ export const waitForResponseCreateDoc = (page: Page) => {
 };
 
 /**
- * Navigates back to the homepage, waits for the PATCH /content/ request
- * triggered by the route change to complete, then navigates back to the doc.
+ * Leaves the doc and comes back to it, so that what follows reads the document
+ * from the collaboration server rather than from the editor that just wrote it.
  *
- * Use this instead of goToGridDoc when the test must assert on content that
- * was just written in the editor, to avoid a race condition where the GET
- * request fired on doc mount returns stale data because the server has not
- * yet processed the PATCH.
+ * There is nothing to save: the collaboration server receives every change as
+ * it is typed, and the backend holds no copy of the content to be pushed to.
+ * (This used to wait for a `PATCH /content/`, which stopped existing with the
+ * migration — and so waited forever.) What makes the round trip meaningful is
+ * therefore the assertion that follows it: content still on the page after
+ * leaving and returning is content the server kept.
  */
-export const saveContent = async (page: Page, title: string) => {
-  const savePromise = page.waitForResponse(
-    (response) =>
-      response.url().includes('/content/') &&
-      response.request().method() === 'PATCH',
-  );
-
+export const reopenDoc = async (page: Page, title: string) => {
   await page.getByRole('button', { name: 'Back to homepage' }).click();
   await expect(page.getByTestId('docs-grid')).toBeVisible();
   await expect(page.getByTestId('grid-loader')).toBeHidden();
-
-  await savePromise;
 
   await goToGridDoc(page, { title });
 };
@@ -322,9 +315,7 @@ export const mockedDocument = async (page: Page, data: object) => {
           abilities: {
             destroy: false, // Means not owner
             link_configuration: false,
-            versions_destroy: false,
             versions_list: true,
-            versions_retrieve: true,
             accesses_manage: false, // Means not admin
             update: false,
             partial_update: false, // Means not editor

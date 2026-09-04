@@ -5,6 +5,10 @@ __pycache__
 **/*.pyc
 venv
 .venv
+# the pattern above only matches at the root, and every image is built from
+# there: without this one, the backend virtualenv travels to the daemon on
+# every build
+**/.venv
 
 # System-specific files
 .DS_Store
@@ -34,4 +38,7 @@ db.sqlite3
 
 # Frontend
 node_modules
+# same as .venv above: nested ones are not matched by the pattern above, and no
+# image copies them — every one of them runs its own install
+**/node_modules
 **/.next

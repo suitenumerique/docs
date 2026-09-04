@@ -50,6 +50,7 @@ dependencies = [
     "emoji==2.15.0",
     "factory_boy==3.3.3",
     "gunicorn==26.0.0",
+    "joserfc==1.6.5",
     "jsonschema==4.26.0",
     "langfuse==3.11.2",
     "lxml==6.1.1",
@@ -62,7 +63,7 @@ dependencies = [
     "pycrdt==0.14.1",
     "pydantic==2.13.4",
     "pydantic-ai-slim[openai,mistral,logfire,web]==1.107.1",
-    "PyJWT==2.13.0",
+    "PyJWT[crypto]==2.13.0",
     "python-magic==0.4.27",
     "redis<6.0.0",
     "requests==2.34.2",
@@ -97,6 +98,9 @@ dev = [
     "ruff==0.16.0",
     "types-requests==2.33.0.20260712",
 ]
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
 
 [tool.uv.build-backend]
 module-name = [

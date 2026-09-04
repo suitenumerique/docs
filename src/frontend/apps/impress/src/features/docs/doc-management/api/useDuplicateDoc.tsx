@@ -5,16 +5,11 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import * as Y from 'yjs';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning/api/useDocVersions';
-import { toBase64 } from '@/utils/string';
 
-import { useProviderStore } from '../stores';
 import { Doc } from '../types';
 
-import { useDocContentUpdate } from './useDocContentUpdate';
 import { KEY_LIST_DOC } from './useDocs';
 
 interface DuplicateDocPayload {
@@ -57,29 +52,10 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
   const queryClient = useQueryClient();
   const { toast } = useToastProvider();
   const { t } = useTranslation();
-  const { provider } = useProviderStore();
-
-  const { mutateAsync: updateDocContent } = useDocContentUpdate({
-    listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
-  });
 
   return useMutation<DuplicateDocResponse, APIError, DuplicateDocParams>({
-    mutationFn: async (variables) => {
-      // Save the document if we can first, to ensure the latest state is duplicated
-      const canSave =
-        variables.canSave &&
-        provider &&
-        provider.document.guid === variables.docId;
-
-      if (canSave) {
-        await updateDocContent({
-          id: variables.docId,
-          content: toBase64(Y.encodeStateAsUpdate(provider.document)),
-        });
-      }
-
-      return await duplicateDoc(variables);
-    },
+    // TODO(yhub): double check the saving is made correctly from the back so
+    mutationFn: duplicateDoc,
     onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC],

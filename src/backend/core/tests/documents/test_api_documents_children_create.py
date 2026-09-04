@@ -314,8 +314,11 @@ def test_api_documents_create_document_children_race_condition():
         assert document.numchild == 2
 
 
+@patch("core.api.viewsets.YHubService")
 @patch("core.services.converter_services.Converter.convert")
-def test_api_documents_children_create_with_docx_file_success(mock_convert, settings):
+def test_api_documents_children_create_with_docx_file_success(
+    mock_convert, mock_yhub, settings
+):
     """
     Authenticated users should be able to create children document by uploading a DOCX file.
     The file should be converted to YJS format and the title should be set from filename.
@@ -327,7 +330,7 @@ def test_api_documents_children_create_with_docx_file_success(mock_convert, sett
     settings.CONVERSION_UPLOAD_ENABLED = True
 
     # Mock the conversion
-    converted_yjs = "base64encodedyjscontent"
+    converted_yjs = b"\x01\x02raw yjs update"
     mock_convert.return_value = converted_yjs
 
     # Create a fake DOCX file
@@ -350,7 +353,9 @@ def test_api_documents_children_create_with_docx_file_success(mock_convert, sett
     assert Document.objects.count() == 2
     children = Document.objects.get(pk=response.json()["id"])
     assert children.title == "My Important Document.docx"
-    assert children.content == converted_yjs
+    # the content is saved by the collaboration server, not by Django
+    mock_yhub.assert_called_once_with(user=user)
+    mock_yhub.return_value.create_ydoc.assert_called_once_with(children, converted_yjs)
 
     # Verify the converter was called correctly
     mock_convert.assert_called_once_with(

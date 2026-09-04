@@ -2,13 +2,13 @@
 
 import logging
 import typing
-from base64 import b64encode
 
 from django.conf import settings
 
 import requests
 
 from core.services import mime_types
+from core.services.jwt_services import Audiences, JWTService
 
 logger = logging.getLogger(__name__)
 
@@ -109,8 +109,8 @@ class YdocConverter:
     @property
     def auth_header(self):
         """Build microservice authentication header."""
-        # Note: Yprovider microservice accepts only raw token, which is not recommended
-        return f"Bearer {settings.Y_PROVIDER_API_KEY}"
+        token = JWTService().get_admin_token(audience=Audiences.Y_CONVERTER)
+        return f"Bearer {token}"
 
     def _request(self, url, data, content_type, accept):
         """Make a request to the Y-Provider API."""
@@ -136,7 +136,13 @@ class YdocConverter:
         return response
 
     def convert(self, data, content_type=mime_types.MARKDOWN, accept=mime_types.YJS):
-        """Convert a Markdown text into our internal format using an external microservice."""
+        """
+        Convert a Markdown text into our internal format using an external microservice.
+
+        A Yjs document is returned as the raw update the collaboration server
+        expects. It is base64 encoded only by the callers storing it in the
+        text content of a document.
+        """
 
         if not data:
             raise ValidationError("Input data cannot be empty")
@@ -145,7 +151,7 @@ class YdocConverter:
         try:
             response = self._request(url, data, content_type, accept)
             if accept == mime_types.YJS:
-                return b64encode(response.content).decode("utf-8")
+                return response.content
             if accept in {mime_types.MARKDOWN, "text/html"}:
                 return response.text
             if accept == mime_types.JSON:
