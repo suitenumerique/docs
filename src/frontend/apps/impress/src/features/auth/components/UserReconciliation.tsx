@@ -1,8 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
-import { Box, BoxButton, Icon, Loading, Text } from '@/components';
-import ArrowUpCircleSvg from '@/icons/arrow-up-circle.svg';
+import { Box, Loading, Text } from '@/components';
 
 import { useUserReconciliationsQuery } from '../api';
 import EmailConfirmationSvg from '../assets/email-confirmation.svg';
@@ -61,21 +59,19 @@ export const UserReconciliation = ({
             : t('Email Address Confirmed')}
         </Text>
         {!isError && (
-          <>
-            <Text
-              as="p"
-              $textAlign="center"
-              $maxWidth="330px"
-              $theme="neutral"
-              $variation="secondary"
-              $margin="0"
-              $size="sm"
-            >
-              {t(
-                'To complete the unification of your user accounts, please click the confirmation links sent to all the email addresses you provided.',
-              )}
-            </Text>
-          </>
+          <Text
+            as="p"
+            $textAlign="center"
+            $maxWidth="330px"
+            $theme="neutral"
+            $variation="secondary"
+            $margin="0"
+            $size="sm"
+          >
+            {t(
+              'To complete the unification of your user accounts, please click the confirmation links sent to all the email addresses you provided.',
+            )}
+          </Text>
         )}
       </Box>
     </Box>

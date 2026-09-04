@@ -54,10 +54,6 @@ describe('UserReconciliation', () => {
           /To complete the unification of your user accounts/i,
         ),
       ).toBeInTheDocument();
-
-      expect(
-        await screen.findByRole('button', { name: /Resend e-mail/i }),
-      ).toBeInTheDocument();
     });
   });
 
@@ -85,7 +81,7 @@ describe('UserReconciliation', () => {
     ).toBeInTheDocument();
 
     expect(
-      screen.queryByRole('button', { name: /Resend e-mail/i }),
+      screen.queryByText(/To complete the unification of your user accounts/i),
     ).not.toBeInTheDocument();
   });
 });
