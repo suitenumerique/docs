@@ -4,7 +4,7 @@ import { Page } from '@playwright/test';
 
 export const getEditor = async ({ page }: { page: Page }) => {
   const editor = page.locator('.--docs--editor-container .ProseMirror');
-  await editor.click();
+  await editor.focus();
   return editor;
 };
 
