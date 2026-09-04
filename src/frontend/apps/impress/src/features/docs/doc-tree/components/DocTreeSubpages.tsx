@@ -42,6 +42,7 @@ export const DocTreeSubpages = memo(function DocTreeSubpages({
 }: DocTreeSubPagesProps) {
   const { isDesktop } = useResponsive();
   const treeContext = useTreeContext<Doc | null>();
+  const treeApiRef = treeContext?.treeApiRef;
   const { mutateAsync: moveDoc } = useMoveDoc();
   const { query } = useRouter();
 
@@ -63,6 +64,25 @@ export const DocTreeSubpages = memo(function DocTreeSubpages({
     container.setAttribute('tabindex', '-1');
     container.setAttribute('role', 'group');
   }, [treeRoot]);
+
+  /**
+   * Tell react-arborist the focus left, so it stops considering its last row
+   * focused. Opening a doc reloads the tree, and remounting a row it still
+   * believes is focused makes it take the focus back from the doc content.
+   *
+   * Its own container does the same, but on a React `onBlur` that never fires
+   * when the row is unmounted along with the tree.
+   */
+  useEffect(() => {
+    const handleFocusOut = (event: FocusEvent) => {
+      if (!treeRoot.contains(event.relatedTarget as Node | null)) {
+        treeApiRef?.current?.onBlur();
+      }
+    };
+
+    treeRoot.addEventListener('focusout', handleFocusOut);
+    return () => treeRoot.removeEventListener('focusout', handleFocusOut);
+  }, [treeRoot, treeApiRef]);
 
   const handleMove = useCallback(
     async (result: TreeViewMoveResult) => {
