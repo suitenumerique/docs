@@ -4,16 +4,10 @@ import {
   clickInDocOptionMenu,
   createDoc,
   getOtherBrowserName,
-  updateDocTitle,
   verifyDocName,
 } from './utils-common';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
-import {
-  addChild,
-  clickOnAddRootSubPage,
-  createRootSubPage,
-  getTreeRow,
-} from './utils-sub-pages';
+import { addChild, createRootSubPage, getTreeRow } from './utils-sub-pages';
 
 test.describe('Doc Tree', () => {
   test.beforeEach(async ({ page }) => {
@@ -157,17 +151,23 @@ test.describe('Doc Tree', () => {
     const docTree = page.getByTestId('doc-tree');
 
     // Create first sub page
-    await clickOnAddRootSubPage(page);
-    await updateDocTitle(page, 'first move');
+    const { name: docChild1 } = await createRootSubPage(
+      page,
+      browserName,
+      'first move',
+    );
 
     // Create second sub page
-    await clickOnAddRootSubPage(page);
-    await updateDocTitle(page, 'second move');
+    const { name: docChild2 } = await createRootSubPage(
+      page,
+      browserName,
+      'second move',
+    );
 
     await page.waitForTimeout(500); // Wait for the tree to be stable
 
-    const firstSubPageItem = docTree.getByText('first move').first();
-    const secondSubPageItem = docTree.getByText('second move').first();
+    const firstSubPageItem = docTree.getByText(docChild1).first();
+    const secondSubPageItem = docTree.getByText(docChild2).first();
 
     // check that the sub pages are visible in the tree
     await expect(firstSubPageItem).toBeVisible();
@@ -178,8 +178,8 @@ test.describe('Doc Tree', () => {
     await expect(allSubPageItems).toHaveCount(2);
 
     // Check that elements are in the correct order
-    await expect(allSubPageItems.nth(0).getByText('first move')).toBeVisible();
-    await expect(allSubPageItems.nth(1).getByText('second move')).toBeVisible();
+    await expect(allSubPageItems.nth(0).getByText(docChild1)).toBeVisible();
+    await expect(allSubPageItems.nth(1).getByText(docChild2)).toBeVisible();
 
     // Will move the first sub page to the second position
     // Wait for elements to be stable before reading their positions — a React
@@ -211,8 +211,8 @@ test.describe('Doc Tree', () => {
 
     // Wait for the reorder to be reflected in the tree before reloading —
     // this also ensures the API call has had time to persist the new order.
-    await expect(allSubPageItems.nth(0).getByText('second move')).toBeVisible();
-    await expect(allSubPageItems.nth(1).getByText('first move')).toBeVisible();
+    await expect(allSubPageItems.nth(0).getByText(docChild2)).toBeVisible();
+    await expect(allSubPageItems.nth(1).getByText(docChild1)).toBeVisible();
 
     // reload the page
     await page.reload();
@@ -222,8 +222,8 @@ test.describe('Doc Tree', () => {
     await expect(secondSubPageItem).toBeVisible();
 
     // Check that elements are in the correct order
-    await expect(allSubPageItems.nth(0).getByText('second move')).toBeVisible();
-    await expect(allSubPageItems.nth(1).getByText('first move')).toBeVisible();
+    await expect(allSubPageItems.nth(0).getByText(docChild2)).toBeVisible();
+    await expect(allSubPageItems.nth(1).getByText(docChild1)).toBeVisible();
   });
 
   test('it detaches a document', async ({ page, browserName }) => {

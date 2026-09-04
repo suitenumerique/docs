@@ -56,10 +56,19 @@ export const createRootSubPage = async (
 };
 
 export const clickOnAddRootSubPage = async (page: Page) => {
+  const currentUrl = page.url();
+  const docTree = page.getByTestId('doc-tree');
   const rootItem = page.getByTestId('doc-tree-root-item');
   await expect(rootItem).toBeVisible();
   await rootItem.hover();
+  const responsePromise = waitForResponseCreateDoc(page);
   await rootItem.getByTestId('doc-tree-item-actions-add-child').click();
+  const response = await responsePromise;
+  const { id } = (await response.json()) as { id: string };
+  await page.waitForURL((url) => url.href !== currentUrl);
+  await expect(docTree.getByTestId(`doc-sub-page-item-${id}`)).toBeVisible({
+    timeout: 10000,
+  });
 };
 
 export const addChild = async ({
