@@ -67,6 +67,7 @@ dependencies = [
     "redis<6.0.0",
     "requests==2.34.2",
     "sentry-sdk==2.66.1",
+    "servestatic==4.3.3",
     "uvicorn==0.51.0",
 ]
 

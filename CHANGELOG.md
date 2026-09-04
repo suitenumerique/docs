@@ -14,6 +14,7 @@ and this project adheres to
 
 - 🐛(frontend) hide Leave in the doc menu when not logged in #2626
 - 🐛(backend) allow to configure settings DATA_UPLOAD_MAX_MEMORY_SIZE
+- ➕(backend) add servestatic dependency
 
 ## [v5.6.0] - 2026-09-03
 

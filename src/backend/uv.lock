@@ -994,6 +994,7 @@ dependencies = [
     { name = "redis" },
     { name = "requests" },
     { name = "sentry-sdk" },
+    { name = "servestatic" },
     { name = "uvicorn" },
 ]
 
@@ -1081,6 +1082,7 @@ requires-dist = [
     { name = "responses", marker = "extra == 'dev'", specifier = "==0.26.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.16.0" },
     { name = "sentry-sdk", specifier = "==2.66.1" },
+    { name = "servestatic", specifier = "==4.3.3" },
     { name = "types-requests", marker = "extra == 'dev'", specifier = "==2.33.0.20260712" },
     { name = "uvicorn", specifier = "==0.51.0" },
 ]
@@ -2373,6 +2375,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7f/6f/d59cad0889d15fde85254cf58e701484de3f3f0406003b3197746910b19b/sentry_sdk-2.66.1.tar.gz", hash = "sha256:f882fb08710c5f8bfc603aafa3e901b384009a19cc3f76a572b863392ee81cdc", size = 940543, upload-time = "2026-07-22T12:26:54.553Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/89/d3/726bd88f0eece09ddf431bea4c9191c18e7a8d070b854eb0014d447712ee/sentry_sdk-2.66.1-py3-none-any.whl", hash = "sha256:86002793161d9a95ef04bdd8d442e9bfece5d989b755f05d6360215094a7aff6", size = 505555, upload-time = "2026-07-22T12:26:52.71Z" },
+]
+
+[[package]]
+name = "servestatic"
+version = "4.3.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asgiref" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6c/6b/ccfd794c446b61a191848337dc2757219152b142879dd50ff93b0e7290a7/servestatic-4.3.3.tar.gz", hash = "sha256:87628989eed8b6594ceed052bb185593df1fb3ff2db7c0c69b05bb8b2f7393d0", size = 33426, upload-time = "2026-09-02T21:55:49.492Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ce/fb/222b40a47f1f5736728c00485758ca35ffa8535a16f75e22e1a05205f614/servestatic-4.3.3-py3-none-any.whl", hash = "sha256:d46d374eef87a48b3b55379bf693613420e186c5b823f3e8fcceeda65c0c6e30", size = 40519, upload-time = "2026-09-02T21:55:48.302Z" },
 ]
 
 [[package]]
