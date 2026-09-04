@@ -14,7 +14,11 @@ import { Doc } from '@/docs/doc-management';
 import { TreeSkeleton } from '@/features/skeletons/components/TreeSkeleton';
 
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
-import { findIndexInTree, reloadTree } from '../utils';
+import {
+  ID_TREE_KEYBOARD_INSTRUCTIONS,
+  findIndexInTree,
+  reloadTree,
+} from '../utils';
 
 import { DocTreeRoot } from './DocTreeRoot';
 import { DocTreeSubpages } from './DocTreeSubpages';
@@ -174,7 +178,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       $height="100%"
       role="tree"
       aria-label={t('Document tree')}
-      aria-describedby="doc-tree-keyboard-instructions"
       $css={css`
         /**
         * TODO: When this pull request is merged (https://github.com/suitenumerique/ui-kit/pull/215), we 
@@ -205,9 +208,9 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       `}
     >
       {/* Keyboard instructions for screen readers */}
-      <Box id="doc-tree-keyboard-instructions" className="sr-only">
+      <Box id={ID_TREE_KEYBOARD_INSTRUCTIONS} className="sr-only">
         {t(
-          'Use the up and down arrow keys to move between documents, and Enter to open one. Press F2 to reach the actions of a document and to move between them, use Escape to go back to the document list.',
+          'Use the up and down arrow keys to move between documents, and Enter to open one. Press F2 to reach the actions of a document, then the left and right arrow keys to move between them, and Escape to go back to the document list.',
         )}
       </Box>
       <Box
@@ -227,7 +230,8 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         treeContext.treeData.nodes.length > 0 &&
         treeRoot && (
           <DocTreeSubpages
-            doc={currentDoc}
+            canMoveInto={currentDoc.abilities.move}
+            isDeleted={currentDoc.deleted_at != null}
             treeRoot={treeRoot}
             initialOpenState={initialOpenState}
             rootNodeId={treeContext.root.id}
