@@ -20,12 +20,13 @@ import { type Doc, useTrans } from '@/docs/doc-management';
 import { fallbackLng } from '@/i18n/config';
 
 import ModulesExport from '../hooks/';
-import { downloadFile } from '../utils';
+import { downloadFile, getExportFilename } from '../utils';
 import {
   addMediaFilesToZip,
   generateHtmlDocument,
   improveHtmlAccessibility,
 } from '../utils_html';
+import { addMediaFilesToMarkdownZip } from '../utils_markdown';
 
 const useExportAGPL = ModulesExport?.useExportAGPL;
 
@@ -60,6 +61,11 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const formatSelect = useMemo(() => {
     const formatOptions = (exportAGPL?.formats || []).concat([
       {
+        label: t('Markdown'),
+        value: 'markdown',
+        labelDescription: t('.md(zip)'),
+      },
+      {
         label: t('HTML'),
         value: 'html',
         labelDescription: t('.html(zip)'),
@@ -83,6 +89,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     return { formatOptions, formatLabels, allFormatsLabel };
   }, [t, exportAGPL?.formats]);
 
+  /** Exports the selected format and always releases the loading state. */
   async function onSubmit() {
     if (!editor) {
       toast(t('The export failed'), VariantType.ERROR);
@@ -90,72 +97,91 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     }
 
     setIsExporting(true);
+    let shouldClose = false;
 
-    const filename = (doc.title || untitledDocument)
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s/g, '-');
+    try {
+      const documentTitle = doc.title || untitledDocument;
+      const filename = getExportFilename(documentTitle);
 
-    const documentTitle = doc.title || untitledDocument;
+      let blobExport = await exportAGPL?.docToBlob(format, documentTitle);
 
-    let blobExport = await exportAGPL?.docToBlob(format, documentTitle);
+      if (!blobExport && format === 'markdown') {
+        const zip = new JSZip();
+        const blocks = structuredClone(editor.document);
 
-    if (!blobExport && format === 'html') {
-      // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
-      const fullHtml = await editor.blocksToFullHTML();
+        await addMediaFilesToMarkdownZip(blocks, zip, mediaUrl);
 
-      // Parse HTML and fetch media so that we can package a fully offline HTML document in a ZIP.
-      const domParser = new DOMParser();
-      const parsedDocument = domParser.parseFromString(fullHtml, 'text/html');
+        const markdown = await editor.blocksToMarkdownLossy(blocks);
+        zip.file(`${filename}.md`, markdown);
 
-      const zip = new JSZip();
+        blobExport = await zip.generateAsync({ type: 'blob' });
+      }
 
-      improveHtmlAccessibility(parsedDocument, documentTitle);
-      await addMediaFilesToZip(parsedDocument, zip, mediaUrl);
+      if (!blobExport && format === 'html') {
+        // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
+        const fullHtml = await editor.blocksToFullHTML();
 
-      const lang = i18next.language || fallbackLng;
-      const body = parsedDocument.body;
-      const editorHtmlWithLocalMedia = body ? body.innerHTML : '';
+        // Parse HTML and fetch media so that we can package a fully offline HTML document in a ZIP.
+        const domParser = new DOMParser();
+        const parsedDocument = domParser.parseFromString(fullHtml, 'text/html');
 
-      const htmlContent = generateHtmlDocument(
-        documentTitle,
-        editorHtmlWithLocalMedia,
-        lang,
+        const zip = new JSZip();
+
+        improveHtmlAccessibility(parsedDocument, documentTitle);
+        await addMediaFilesToZip(parsedDocument, zip, mediaUrl);
+
+        const lang = i18next.language || fallbackLng;
+        const body = parsedDocument.body;
+        const editorHtmlWithLocalMedia = body ? body.innerHTML : '';
+
+        const htmlContent = generateHtmlDocument(
+          documentTitle,
+          editorHtmlWithLocalMedia,
+          lang,
+        );
+
+        zip.file('index.html', htmlContent);
+
+        // CSS Styles
+        const cssResponse = await fetch(
+          new URL(
+            '../assets/export-html-styles.txt',
+            import.meta.url,
+          ).toString(),
+        );
+        const cssContent = await cssResponse.text();
+        zip.file('styles.css', cssContent);
+
+        blobExport = await zip.generateAsync({ type: 'blob' });
+      }
+
+      if (!blobExport) {
+        toast(t('The export failed'), VariantType.ERROR);
+        return;
+      }
+
+      const downloadExtension =
+        format === 'html' || format === 'markdown' ? 'zip' : format;
+
+      downloadFile(blobExport, `${filename}.${downloadExtension}`);
+
+      toast(
+        t('Your {{format}} was downloaded succesfully', {
+          format,
+        }),
+        VariantType.SUCCESS,
       );
 
-      zip.file('index.html', htmlContent);
-
-      // CSS Styles
-      const cssResponse = await fetch(
-        new URL('../assets/export-html-styles.txt', import.meta.url).toString(),
-      );
-      const cssContent = await cssResponse.text();
-      zip.file('styles.css', cssContent);
-
-      blobExport = await zip.generateAsync({ type: 'blob' });
-    }
-
-    if (!blobExport) {
+      shouldClose = true;
+    } catch {
       toast(t('The export failed'), VariantType.ERROR);
+    } finally {
       setIsExporting(false);
-      return;
     }
 
-    const downloadExtension = format === 'html' ? 'zip' : format;
-
-    downloadFile(blobExport, `${filename}.${downloadExtension}`);
-
-    toast(
-      t('Your {{format}} was downloaded succesfully', {
-        format,
-      }),
-      VariantType.SUCCESS,
-    );
-
-    setIsExporting(false);
-
-    onClose();
+    if (shouldClose) {
+      onClose();
+    }
   }
 
   return (

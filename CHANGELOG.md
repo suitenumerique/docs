@@ -22,6 +22,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) add markdown download option #2608
 - ✨(frontend) Add "Copy link to block" feature #2547
 - ✨(frontend) add word count to doc header toolbox #2549
 - ✨(frontend) add find and replace feature to the editor #2570
