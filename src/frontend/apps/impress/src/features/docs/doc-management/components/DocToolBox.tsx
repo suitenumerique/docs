@@ -345,6 +345,10 @@ const DocToolBoxComponent = ({
           aria-label={t('Open the document options: {{title}}', {
             title: doc.title || untitledDocument,
           })}
+          // `DropdownMenu` does not use React Aria's MenuTrigger, so nothing
+          // exposes the button as a menu button. Both attributes are ours.
+          aria-haspopup="menu"
+          aria-expanded={openDropdown}
           size="small"
           icon={<MoreIcon width={24} height={24} aria-hidden="true" />}
           color="neutral"
