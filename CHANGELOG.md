@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.6.1] - 2026-09-04
+
 ### Added
 
 - ✨(frontend) export presenter slides as PDF #2487
@@ -1490,7 +1492,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.6.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.6.1...main
+[v5.6.1]: https://github.com/suitenumerique/docs/releases/v5.6.0
 [v5.6.0]: https://github.com/suitenumerique/docs/releases/v5.6.0
 [v5.5.0]: https://github.com/suitenumerique/docs/releases/v5.5.0
 [v5.4.1]: https://github.com/suitenumerique/docs/releases/v5.4.1
