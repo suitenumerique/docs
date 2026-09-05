@@ -1,4 +1,4 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/ui-components';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 

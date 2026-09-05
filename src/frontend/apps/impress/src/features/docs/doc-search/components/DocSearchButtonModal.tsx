@@ -1,4 +1,4 @@
-import { Button, ButtonProps } from '@gouvfr-lasuite/cunningham-react';
+import { Button, ButtonProps } from '@gouvfr-lasuite/ui-components';
 import { t } from 'i18next';
 import dynamic from 'next/dynamic';
 import { useCallback, useState } from 'react';

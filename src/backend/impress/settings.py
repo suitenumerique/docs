@@ -160,7 +160,7 @@ class Base(Configuration):
         },
         "staticfiles": {
             "BACKEND": values.Value(
-                "whitenoise.storage.CompressedManifestStaticFilesStorage",
+                "servestatic.storage.CompressedManifestStaticFilesStorage",
                 environ_name="STORAGES_STATICFILES_BACKEND",
             ),
         },
@@ -205,6 +205,8 @@ class Base(Configuration):
         environ_name="DOCUMENT_IMAGE_MAX_SIZE",
         environ_prefix=None,
     )
+
+    DATA_UPLOAD_MAX_MEMORY_SIZE = values.IntegerValue(20 * MB)  # 20 MB
 
     REACTIONS_MAX_PER_COMMENT = values.IntegerValue(
         15,
@@ -354,7 +356,7 @@ class Base(Configuration):
 
     MIDDLEWARE = [
         "django.middleware.security.SecurityMiddleware",
-        "whitenoise.middleware.WhiteNoiseMiddleware",
+        "servestatic.middleware.ServeStaticMiddleware",
         "django.contrib.sessions.middleware.SessionMiddleware",
         "django.middleware.locale.LocaleMiddleware",
         "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -380,6 +382,7 @@ class Base(Configuration):
         # impress
         "core",
         "demo",
+        "servestatic",
         "drf_spectacular",
         # Third party apps
         "corsheaders",
@@ -938,7 +941,7 @@ class Base(Configuration):
         False, environ_name="CONVERSION_UPLOAD_ENABLED", environ_prefix=None
     )
     CONVERSION_FILE_MAX_SIZE = values.IntegerValue(
-        20 * MB,
+        default=DATA_UPLOAD_MAX_MEMORY_SIZE,
         environ_name="CONVERSION_FILE_MAX_SIZE",
         environ_prefix=None,
     )
@@ -1301,7 +1304,7 @@ class Build(Base):
         },
         "staticfiles": {
             "BACKEND": values.Value(
-                "whitenoise.storage.CompressedManifestStaticFilesStorage",
+                "servestatic.storage.CompressedManifestStaticFilesStorage",
                 environ_name="STORAGES_STATICFILES_BACKEND",
             ),
         },
@@ -1372,6 +1375,18 @@ class Test(Base):
     STATIC_ROOT = None
 
     CELERY_TASK_ALWAYS_EAGER = values.BooleanValue(True)
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": values.Value(
+                "servestatic.storage.CompressedStaticFilesStorage",
+                environ_name="STORAGES_STATICFILES_BACKEND",
+            ),
+        },
+    }
 
     def __init__(self):
         # pylint: disable=invalid-name

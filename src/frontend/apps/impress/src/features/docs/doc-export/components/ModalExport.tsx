@@ -6,7 +6,7 @@ import {
   Select,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+} from '@gouvfr-lasuite/ui-components';
 import i18next from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useMemo, useRef, useState } from 'react';

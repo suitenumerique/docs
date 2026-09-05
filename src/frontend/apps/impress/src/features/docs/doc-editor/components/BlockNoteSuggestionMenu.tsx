@@ -1,5 +1,7 @@
 import { combineByGroup } from '@blocknote/core';
 import { filterSuggestionItems } from '@blocknote/core/extensions';
+import { getDiagramSlashMenuItems } from '@blocknote/diagram-block';
+import { getMathSlashMenuItems } from '@blocknote/math-block';
 import {
   DefaultReactSuggestionItem,
   SuggestionMenuController,
@@ -57,6 +59,8 @@ export const BlockNoteSuggestionMenu = ({
       getMultiColumnSlashMenuItems?.(editor) || [],
       getPdfReactSlashMenuItems(editor, t, fileBlocksName),
       getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
+      getMathSlashMenuItems(editor),
+      getDiagramSlashMenuItems(editor),
       aiAllowed && getAISlashMenuItems ? getAISlashMenuItems(editor) : [],
     );
 

@@ -2,8 +2,8 @@ import { PartialBlock } from '@blocknote/core';
 import {
   CommentsExtension,
   DefaultThreadStoreAuth,
-  YjsThreadStore,
 } from '@blocknote/core/comments';
+import { YjsThreadStore } from '@blocknote/core/yjs';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
 import * as Sentry from '@sentry/node';
 import { Request, Response } from 'express';

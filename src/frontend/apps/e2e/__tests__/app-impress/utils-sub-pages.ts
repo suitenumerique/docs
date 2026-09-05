@@ -46,11 +46,13 @@ export const createRootSubPage = async (
   }
 
   // Update sub page name
-  const randomDocs = randomName(docName, browserName, 1);
-  await updateDocTitle(page, randomDocs[0]);
+  const [randomDoc] = randomName(docName, browserName, 1);
+  await updateDocTitle(page, randomDoc);
+
+  await expect(docTree.getByText(randomDoc)).toBeVisible();
 
   // Return sub page data
-  return { name: randomDocs[0], docTreeItem: subPageItem, item: subPageJson };
+  return { name: randomDoc, docTreeItem: subPageItem, item: subPageJson };
 };
 
 export const clickOnAddRootSubPage = async (page: Page) => {

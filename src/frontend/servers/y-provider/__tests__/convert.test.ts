@@ -1,8 +1,8 @@
 import {
   CommentsExtension,
   DefaultThreadStoreAuth,
-  YjsThreadStore,
 } from '@blocknote/core/comments';
+import { YjsThreadStore } from '@blocknote/core/yjs';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
 import { Fragment, Node as PMNode } from 'prosemirror-model';
 import request from 'supertest';
@@ -101,8 +101,14 @@ const buildYjsUpdateWithComment = (): Buffer => {
 
   const commentMark = commentsEditor.editor.pmSchema.marks.comment;
   const pmNode = commentsEditor._blocksToProsemirrorNode([
-    { type: 'paragraph', content: [{ type: 'text', text: commentedText }] },
-    { type: 'paragraph', content: [{ type: 'text', text: plainText }] },
+    {
+      type: 'paragraph',
+      content: [{ type: 'text', text: commentedText, styles: {} }],
+    },
+    {
+      type: 'paragraph',
+      content: [{ type: 'text', text: plainText, styles: {} }],
+    },
   ]);
 
   // Add the comment mark to every text node of the node passed in.

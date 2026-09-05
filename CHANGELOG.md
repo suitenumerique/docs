@@ -6,9 +6,26 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.6.1] - 2026-09-04
+
+### Added
+
+- ✨(frontend) export presenter slides as PDF #2487
+
+### Fixed
+
+- 🐛(frontend) hide Leave in the doc menu when not logged in #2626
+- 🐛(backend) allow to configure settings DATA_UPLOAD_MAX_MEMORY_SIZE
+- ➕(backend) add servestatic dependency
+
+## [v5.6.0] - 2026-09-03
+
 ### Added
 
 - ✨(frontend) Add "Copy link to block" feature #2547
+- ✨(frontend) add word count to doc header toolbox #2549
+- ✨(frontend) add find and replace feature to the editor #2570
+- ✨(frontend) add math and diagram blocks to the editor #2617
 
 ### Changed
 
@@ -16,11 +33,22 @@ and this project adheres to
 - ✨(frontend) reset side panel state between documents #2583
 - ♿️(frontend) announce search loading state for screen readers #2526
 - ♻️(frontend) change favorite to star #2539
+- 🚚(frontend) add doc move to doc options #2555
+- ♻️(frontend) unified menu #2620
+- ♿(frontend) hide decorative emojis in document titles from SR #2527
 
 ### Fixed
 
 - 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
+- 🐛(backend) fix duplicating a document that has no content #2609
 - 📄(frontend) allowed partially export when MIT #2551
+- 🐛(backend) manage async support for Docs custom middleware #2619
+- 🐛(frontend) save the doc with a keepalive 
+  request when leaving the page #2619
+
+### Removed
+
+- 🔥(backend) remove whitenoise package #2619
 
 ## [v5.5.0] - 2026-08-24
 
@@ -1464,7 +1492,9 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.5.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.6.1...main
+[v5.6.1]: https://github.com/suitenumerique/docs/releases/v5.6.0
+[v5.6.0]: https://github.com/suitenumerique/docs/releases/v5.6.0
 [v5.5.0]: https://github.com/suitenumerique/docs/releases/v5.5.0
 [v5.4.1]: https://github.com/suitenumerique/docs/releases/v5.4.1
 [v5.4.0]: https://github.com/suitenumerique/docs/releases/v5.4.0

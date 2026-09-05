@@ -862,3 +862,35 @@ def test_api_documents_duplicate_with_descendants_complex_tree():
     dup_grandchildren2 = dup_child2.get_children()
     assert dup_grandchildren2.count() == 1
     assert dup_grandchildren2.first().title == "Copy of GrandChild 3"
+
+
+def test_api_documents_duplicate_document_without_content():
+    """
+    A document that was never edited has no content in object storage. Duplicating it
+    should succeed and produce an empty duplicate.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create through the API so nothing is ever written to object storage
+    with mock.patch("core.api.viewsets.posthog_capture"):
+        response = client.post(
+            "/api/v1.0/documents/", {"title": "never edited"}, format="json"
+        )
+
+    assert response.status_code == 201
+    document = models.Document.objects.get(id=response.json()["id"])
+    assert document.content is None
+
+    with mock.patch("core.api.viewsets.posthog_capture"):
+        response = client.post(f"/api/v1.0/documents/{document.id!s}/duplicate/")
+
+    assert response.status_code == 201
+
+    duplicated_document = models.Document.objects.get(id=response.json()["id"])
+    assert duplicated_document.title == "Copy of never edited"
+    assert duplicated_document.content is None
+    assert duplicated_document.creator == user
+    assert duplicated_document.duplicated_from == document
+    assert duplicated_document.attachments == []

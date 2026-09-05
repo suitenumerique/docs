@@ -1,4 +1,4 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/ui-components';
 import Head from 'next/head';
 import Image, { StaticImageData } from 'next/image';
 import { useTranslation } from 'react-i18next';

@@ -1,6 +1,6 @@
 {
   "name": "app-e2e",
-  "version": "5.5.0",
+  "version": "5.6.1",
   "repository": "https://github.com/suitenumerique/docs",
   "author": "DINUM",
   "license": "MIT",
@@ -15,7 +15,7 @@
     "test:ui::chromium": "yarn test:ui --project=chromium"
   },
   "devDependencies": {
-    "@playwright/test": "1.62.0",
+    "@playwright/test": "1.62.1",
     "@types/node": "*",
     "@types/pdf-parse": "1.1.5",
     "eslint-plugin-docs": "*",

@@ -1,9 +1,10 @@
 import {
   Button,
   ButtonProps,
+  DropdownMenu,
+  DropdownMenuItem,
   useModal,
-} from '@gouvfr-lasuite/cunningham-react';
-import { DropdownMenu, DropdownMenuItem } from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';

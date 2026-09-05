@@ -1,66 +1,33 @@
-import { ButtonElement } from '@gouvfr-lasuite/cunningham-react';
+import { OpenMap, useTreeContext } from '@gouvfr-lasuite/ui-components';
 import {
-  OpenMap,
-  TreeDataItem,
-  TreeView,
-  TreeViewMoveResult,
-  useResponsive,
-  useTreeContext,
-} from '@gouvfr-lasuite/ui-kit';
-import { useRouter } from 'next/router';
-import {
-  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react';
-import { NodeApi } from 'react-arborist';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Overlayer, StyledLink } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
-import {
-  Doc,
-  SimpleDocItem,
-  useMoveDoc,
-  useTrans,
-} from '@/docs/doc-management';
-import { useLeftPanelStore } from '@/features/left-panel/stores/useLeftPanelStore';
+import { Box } from '@/components';
+import { Doc } from '@/docs/doc-management';
 import { TreeSkeleton } from '@/features/skeletons/components/TreeSkeleton';
-import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
-import { CLASS_DOC_TITLE } from '../../doc-header';
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
-import { findIndexInTree, isDocNode } from '../utils';
+import { findIndexInTree, reloadTree } from '../utils';
 
-import { DocSubPageItem } from './DocSubPageItem';
-import { DocTreeItemActions } from './DocTreeItemActions';
+import { DocTreeRoot } from './DocTreeRoot';
+import { DocTreeSubpages } from './DocTreeSubpages';
 
 type DocTreeProps = {
   currentDoc: Doc;
 };
 
 export const DocTree = ({ currentDoc }: DocTreeProps) => {
-  const { spacingsTokens } = useCunninghamTheme();
-  const { isMobile } = useResponsiveStore();
-  const { closePanel } = useLeftPanelStore();
-  const { untitledDocument } = useTrans();
   const [treeRoot, setTreeRoot] = useState<HTMLElement | null>(null);
   const treeContext = useTreeContext<Doc | null>();
-  const router = useRouter();
-  const [rootActionsOpen, setRootActionsOpen] = useState(false);
-  const rootIsSelected =
-    !!treeContext?.root?.id &&
-    treeContext?.treeData.selectedNode?.id === treeContext.root.id;
   const rootItemRef = useRef<HTMLDivElement>(null);
-  const rootActionsRef = useRef<HTMLDivElement>(null);
-  const rootButtonOptionRef = useRef<ButtonElement | null>(null);
-
   const { t } = useTranslation();
-
   const [initialOpenState, setInitialOpenState] = useState<OpenMap | undefined>(
     undefined,
   );
@@ -77,83 +44,9 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
    * This function resets the tree states.
    */
   const resetStateTree = useCallback(() => {
-    treeContext?.setRoot(null);
+    reloadTree(treeContext);
     setInitialOpenState(undefined);
   }, [treeContext]);
-
-  const selectRoot = useCallback(() => {
-    if (treeContext?.root) {
-      treeContext.treeData.setSelectedNode(treeContext.root);
-    }
-  }, [treeContext]);
-
-  const navigateToRoot = useCallback(() => {
-    const id = treeContext?.root?.id;
-    if (id) {
-      void router.push(`/docs/${id}`);
-    }
-  }, [router, treeContext?.root?.id]);
-
-  const handleRootFocus = useCallback(() => {
-    selectRoot();
-  }, [selectRoot]);
-
-  // Handle keyboard navigation for root item
-  const handleRootKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const isInActions = !!target?.closest('.doc-tree-root-item-actions');
-      const isOnEmojiButton = !!target?.closest('.--docs--doc-icon');
-      const isOnRootItem = target === e.currentTarget;
-
-      if (e.key === 'F2' && !rootActionsOpen && !isInActions) {
-        if (
-          isOnEmojiButton ||
-          isOnRootItem ||
-          target?.classList.contains('c__tree-view--node')
-        ) {
-          e.preventDefault();
-          rootButtonOptionRef.current?.focus();
-        }
-        return;
-      }
-
-      if (isInActions) {
-        return;
-      }
-
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        if (currentDoc.id === treeContext?.root?.id) {
-          document.querySelector<HTMLElement>(`.${CLASS_DOC_TITLE}`)?.focus();
-        } else {
-          selectRoot();
-          navigateToRoot();
-        }
-      }
-    },
-    [
-      selectRoot,
-      navigateToRoot,
-      rootActionsOpen,
-      currentDoc.id,
-      treeContext?.root?.id,
-    ],
-  );
-
-  // Handle menu open/close for root item - mirrors DocSubPageItem behavior
-  const handleRootActionsOpenChange = useCallback((isOpen: boolean) => {
-    setRootActionsOpen(isOpen);
-
-    // When the menu closes, return focus to the root tree item
-    // (same behavior as DocSubPageItem for consistency)
-    // Use requestAnimationFrame for smoother focus transition without flickering
-    if (!isOpen) {
-      requestAnimationFrame(() => {
-        rootItemRef.current?.focus();
-      });
-    }
-  }, []);
 
   /**
    * This effect is used to reset the tree when a new document
@@ -314,7 +207,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       {/* Keyboard instructions for screen readers */}
       <Box id="doc-tree-keyboard-instructions" className="sr-only">
         {t(
-          'Use arrow keys to navigate between documents. Press Enter to open a document. Press F2 to focus the emoji button when available, then press F2 again to access document actions.',
+          'Use the up and down arrow keys to move between documents, and Enter to open one. Press F2 to reach the actions of a document and to move between them, use Escape to go back to the document list.',
         )}
       </Box>
       <Box
@@ -323,229 +216,24 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
           z-index: 2;
         `}
       >
-        <Box
-          ref={rootItemRef}
-          data-testid="doc-tree-root-item"
-          role="treeitem"
-          aria-label={`${t('Root document {{title}}', { title: treeContext.root?.title || untitledDocument })}`}
-          aria-selected={rootIsSelected}
-          tabIndex={0}
-          onFocus={handleRootFocus}
-          onKeyDown={handleRootKeyDown}
-          $css={css`
-            padding: ${spacingsTokens['2xs']};
-            border-radius: var(--c--globals--spacings--st);
-            width: 100%;
-            min-width: 200px;
-            background-color: ${
-              rootIsSelected || rootActionsOpen
-                ? 'var(--c--contextuals--background--semantic--contextual--primary)'
-                : 'transparent'
-            };
-
-            &:hover {
-              background-color: var(
-                --c--contextuals--background--semantic--contextual--primary
-              );
-            }
-
-            &:focus-visible {
-              outline: none !important;
-              box-shadow: 0 0 0 2px var(--c--globals--colors--brand-500) !important;
-              border-radius: var(--c--globals--spacings--st);
-            }
-
-            .doc-tree-root-item-actions {
-              opacity: ${rootActionsOpen ? '1' : '0'};
-              display: ${rootActionsOpen ? 'flex' : 'none'};
-
-              &:has(.isOpen) {
-                opacity: 1;
-              }
-            }
-            &:hover,
-            &:focus-visible,
-            &:focus-within {
-              .doc-tree-root-item-actions {
-                display: flex;
-                opacity: 1;
-              }
-            }
-            /* Remove visual focus from the root item when focus is on the actions */
-            &:has(.doc-tree-root-item-actions *:focus) {
-              box-shadow: none !important;
-            }
-          `}
-        >
-          <StyledLink
-            $css={css`
-              width: 100%;
-            `}
-            href={`/docs/${treeContext.root.id}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              treeContext.treeData.setSelectedNode(
-                treeContext.root ?? undefined,
-              );
-              void router.push(`/docs/${treeContext?.root?.id}`);
-            }}
-            aria-label={`${t('Open root document')}: ${treeContext.root?.title || untitledDocument}`}
-            tabIndex={-1} // avoid double tabstop
-          >
-            <Box $direction="row" $align="center" $width="100%">
-              <SimpleDocItem doc={treeContext.root} showDate={true} />
-              <DocTreeItemActions
-                doc={treeContext.root}
-                onCreateSuccess={(createdDoc) => {
-                  const newDoc = {
-                    ...createdDoc,
-                    children: [],
-                    childrenCount: 0,
-                    parentId: treeContext.root?.id ?? undefined,
-                  };
-                  treeContext?.treeData.addChild(null, newDoc);
-
-                  if (isMobile) {
-                    closePanel();
-                  }
-                }}
-                isOpen={rootActionsOpen}
-                isRoot={true}
-                onOpenChange={handleRootActionsOpenChange}
-                actionsRef={rootActionsRef}
-                buttonOptionRef={rootButtonOptionRef}
-              />
-            </Box>
-          </StyledLink>
-        </Box>
+        <DocTreeRoot
+          currentDoc={currentDoc}
+          rootItemRef={rootItemRef}
+          treeContext={treeContext}
+        />
       </Box>
 
       {initialOpenState &&
         treeContext.treeData.nodes.length > 0 &&
         treeRoot && (
-          <DocTreeView
+          <DocTreeSubpages
             doc={currentDoc}
             treeRoot={treeRoot}
             initialOpenState={initialOpenState}
             rootNodeId={treeContext.root.id}
-            rootItem={rootItemRef.current}
+            rootItemRef={rootItemRef}
           />
         )}
     </Box>
   );
 };
-
-interface DocTreeViewProps {
-  doc: Doc;
-  treeRoot: HTMLElement;
-  initialOpenState: OpenMap;
-  rootNodeId: string;
-  rootItem: HTMLDivElement | null;
-}
-
-const DocTreeView = memo(function DocTreeView({
-  doc,
-  treeRoot,
-  initialOpenState,
-  rootNodeId,
-  rootItem,
-}: DocTreeViewProps) {
-  const { isDesktop } = useResponsive();
-  const treeContext = useTreeContext<Doc | null>();
-  const { mutate: moveDoc } = useMoveDoc();
-  const { query } = useRouter();
-
-  const handleMove = useCallback(
-    (result: TreeViewMoveResult) => {
-      moveDoc({
-        sourceDocumentId: result.sourceId,
-        targetDocumentId: result.targetModeId,
-        position: result.mode,
-      });
-      treeContext?.treeData.handleMove(result);
-    },
-    [moveDoc, treeContext],
-  );
-
-  const canDrop = useCallback(
-    ({ parentNode }: { parentNode: NodeApi<TreeDataItem<Doc>> | null }) => {
-      const parentValue = parentNode?.data.value;
-      if (!parentValue || !isDocNode(parentValue)) {
-        return doc.abilities.move && isDesktop;
-      }
-      return parentValue.abilities.move && isDesktop;
-    },
-    [doc.abilities.move, isDesktop],
-  );
-
-  const canDrag = useCallback(
-    (node: TreeDataItem<Doc>) => {
-      if (!isDocNode(node.value)) {
-        return false;
-      }
-      return node.value.abilities.move && isDesktop;
-    },
-    [isDesktop],
-  );
-
-  const handleRowKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Tab' && e.shiftKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        rootItem?.focus();
-        return;
-      }
-
-      if (e.key !== 'Enter') {
-        return;
-      }
-
-      const target = e.target as HTMLElement | null;
-      if (
-        !target ||
-        !(
-          target.classList.contains('c__tree-view--row') ||
-          target.classList.contains('c__tree-view--node')
-        )
-      ) {
-        return;
-      }
-
-      const treeItem = e.currentTarget.querySelector('[role="treeitem"]');
-      if (treeItem?.getAttribute('aria-selected') === 'true') {
-        e.preventDefault();
-        document.querySelector<HTMLElement>(`.${CLASS_DOC_TITLE}`)?.focus();
-        return;
-      }
-
-      e.currentTarget
-        .querySelector<HTMLDivElement>('.c__tree-view--node')
-        ?.click();
-    },
-    [rootItem],
-  );
-
-  return (
-    <Overlayer isOverlay={doc.deleted_at != null} inert>
-      <TreeView
-        dndRootElement={treeRoot}
-        initialOpenState={initialOpenState}
-        afterMove={handleMove}
-        selectedNodeId={
-          (query.id as string | undefined) ??
-          treeContext?.initialTargetId ??
-          undefined
-        }
-        canDrop={canDrop}
-        canDrag={canDrag}
-        rootNodeId={rootNodeId}
-        renderNode={DocSubPageItem}
-        rowProps={{
-          onKeyDown: handleRowKeyDown,
-        }}
-      />
-    </Overlayer>
-  );
-});

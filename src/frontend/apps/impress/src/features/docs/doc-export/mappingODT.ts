@@ -1,3 +1,8 @@
+import { diagramBlockMapping } from '@blocknote/diagram-block/odt-exporter';
+import {
+  inlineMathMapping,
+  mathBlockMapping,
+} from '@blocknote/math-block/odt-exporter';
 import { odtDefaultSchemaMappings } from '@blocknote/xl-odt-exporter';
 
 import {
@@ -23,10 +28,16 @@ export const odtDocsSchemaMappings: DocsExporterODT['mappings'] = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pdf: odtDefaultSchemaMappings.blockMapping.file as any,
     uploadLoader: blockMappingUploadLoaderODT,
+    // Renders the LaTeX as a native (editable) ODF formula object.
+    mathBlock: mathBlockMapping,
+    // Renders the Mermaid source to a PNG in the browser (async mapping).
+    diagram: diagramBlockMapping,
   },
 
   inlineContentMapping: {
     ...baseInlineMappings,
     interlinkingLinkInline: inlineContentMappingInterlinkingLinkODT,
+    // Renders inline math as a native (editable) ODF formula object.
+    math: inlineMathMapping,
   },
 };

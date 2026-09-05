@@ -2,7 +2,7 @@ import {
   dsfrGlobals,
   getUIKitThemesFromGlobals,
   whiteLabelGlobals,
-} from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 
 const themeWhiteLabelLight = getUIKitThemesFromGlobals(whiteLabelGlobals, {
   prefix: 'default',

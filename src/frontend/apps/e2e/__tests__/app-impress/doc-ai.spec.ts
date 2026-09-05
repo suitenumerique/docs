@@ -273,18 +273,9 @@ if (process.env.IS_INSTANCE !== 'true') {
           title: '',
         });
 
-        const [randomDoc] = await createDoc(
-          page,
-          'doc-editor-ai',
-          browserName,
-          1,
-        );
+        await createDoc(page, 'doc-editor-ai', browserName, 1);
 
-        await verifyDocName(page, randomDoc);
-
-        await page.locator('.bn-block-outer').last().fill('Hello World');
-
-        const editor = page.locator('.ProseMirror');
+        const editor = await writeInEditor({ page, text: 'Hello World' });
         await editor.getByText('Hello').selectText();
 
         if (!ai_transform && !ai_translate) {

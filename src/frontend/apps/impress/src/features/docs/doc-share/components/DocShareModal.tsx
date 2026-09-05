@@ -1,4 +1,4 @@
-import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import { Modal, ModalSize } from '@gouvfr-lasuite/ui-components';
 import { announce } from '@react-aria/live-announcer';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';

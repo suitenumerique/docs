@@ -1,4 +1,4 @@
-import { Loader } from '@gouvfr-lasuite/cunningham-react';
+import { Loader } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import * as Y from 'yjs';

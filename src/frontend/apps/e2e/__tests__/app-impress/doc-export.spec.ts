@@ -269,7 +269,9 @@ test.describe('Doc Export', () => {
     });
 
     await page
-      .getByRole('button', { name: 'Ouvrir les options du document' })
+      .getByRole('button', {
+        name: `Ouvrir les options du document: ${randomDocFrench}`,
+      })
       .click();
     await page.getByRole('menuitem', { name: 'Télécharger' }).click();
 
@@ -358,7 +360,7 @@ test.describe('Doc Export', () => {
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
 
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(3000);
 
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
 

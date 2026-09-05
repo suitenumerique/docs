@@ -2,7 +2,10 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
 
-import { useDocContentUpdate } from '@/docs/doc-management/api/useDocContentUpdate';
+import {
+  canKeepaliveContent,
+  useDocContentUpdate,
+} from '@/docs/doc-management/api/useDocContentUpdate';
 import { useProviderStore } from '@/docs/doc-management/stores/useProviderStore';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning/api/useDocVersions';
 import { COMMENT_UPDATE_ORIGIN } from '@/features/docs/doc-comments/api/DocsThreadStore';
@@ -86,26 +89,41 @@ export const useSaveDoc = (docId: string, yDoc: Y.Doc) => {
     };
   }, [yDoc]);
 
-  const saveDoc = useCallback(() => {
-    if (!isLocalChange || isSavingRef.current) {
-      return false;
-    }
+  /**
+   * `isSaving` tells whether a request was actually sent, `isKeptAlive`
+   * whether it was handed over to the browser process (see `keepalive`) and
+   * will therefore outlive the page.
+   */
+  const saveDoc = useCallback(
+    ({ isUnloading = false }: { isUnloading?: boolean } = {}) => {
+      if (!isLocalChange || isSavingRef.current) {
+        return { isSaving: false, isKeptAlive: false };
+      }
 
-    isSavingRef.current = true;
-    updateDocContent({
-      id: docId,
-      content: toBase64(Y.encodeStateAsUpdate(yDoc)),
-      websocket: isConnectedToCollabServer,
-    });
+      isSavingRef.current = true;
+      const content = toBase64(Y.encodeStateAsUpdate(yDoc));
+      const websocket = isConnectedToCollabServer;
+      updateDocContent({
+        id: docId,
+        content,
+        websocket,
+        keepalive: isUnloading,
+      });
 
-    return true;
-  }, [isLocalChange, updateDocContent, docId, yDoc, isConnectedToCollabServer]);
+      return {
+        isSaving: true,
+        isKeptAlive: isUnloading && canKeepaliveContent({ content, websocket }),
+      };
+    },
+    [isLocalChange, updateDocContent, docId, yDoc, isConnectedToCollabServer],
+  );
 
   const router = useRouter();
 
   useEffect(() => {
     const onSave = (e?: Event) => {
-      const isSaving = saveDoc();
+      const isUnloading = typeof e !== 'undefined' && e.type === 'beforeunload';
+      const { isSaving, isKeptAlive } = saveDoc({ isUnloading });
 
       /**
        * Firefox does not trigger the request every time the user leaves the page.
@@ -113,19 +131,24 @@ export const useSaveDoc = (docId: string, yDoc: Y.Doc) => {
        * So we prevent the default behavior to have the popup asking the user
        * if he wants to leave the page, by adding the popup, we let the time to the
        * request to be sent, and intercepted by the service worker (for the offline part).
+       *
+       * We do the same for documents too big to be sent with `keepalive`: the
+       * request is a regular fetch, so it dies with the page unless we hold
+       * the unload back.
        */
       if (
         isSaving &&
-        typeof e !== 'undefined' &&
+        isUnloading &&
         e.preventDefault &&
-        isFirefox()
+        isFirefox() &&
+        !isKeptAlive
       ) {
         e.preventDefault();
       }
     };
 
     // Save every minute
-    const timeout = setInterval(onSave, SAVE_INTERVAL);
+    const timeout = setInterval(() => onSave(), SAVE_INTERVAL);
     // Save when the user leaves the page
     addEventListener('beforeunload', onSave);
     // Save when the user navigates to another page

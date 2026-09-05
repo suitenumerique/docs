@@ -5,7 +5,7 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { KEY_LIST_DOC } from '@/docs/doc-management/api';
+import { KEY_LIST_DOC, KEY_LIST_FAVORITE_DOC } from '@/docs/doc-management/api';
 
 interface LeaveDocProps {
   docId: string;
@@ -35,6 +35,9 @@ export const useLeaveDoc = (options?: UseLeaveDocOptions) => {
     onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.invalidateQueries({
         queryKey: [KEY_LIST_DOC],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_LIST_FAVORITE_DOC],
       });
 
       if (options?.onSuccess) {

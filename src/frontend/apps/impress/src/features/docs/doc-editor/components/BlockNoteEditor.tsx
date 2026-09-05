@@ -1,7 +1,6 @@
-import { codeBlockOptions } from '@blocknote/code-block';
+import { syntaxHighlighter } from '@blocknote/code-block';
 import {
   BlockNoteSchema,
-  createCodeBlockSpec,
   defaultBlockSpecs,
   defaultInlineContentSpecs,
   withPageBreak,
@@ -9,8 +8,18 @@ import {
 import { CommentsExtension } from '@blocknote/core/comments';
 import '@blocknote/core/fonts/inter.css';
 import * as localesBN from '@blocknote/core/locales';
+import { withCollaboration } from '@blocknote/core/yjs';
+import {
+  createReactDiagramBlockSpec,
+  locales as diagramLocales,
+} from '@blocknote/diagram-block';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
+import {
+  createReactInlineMathSpec,
+  createReactMathBlockSpec,
+  locales as mathLocales,
+} from '@blocknote/math-block';
 import {
   FloatingComposerController,
   FloatingThreadController,
@@ -18,6 +27,7 @@ import {
   useCreateBlockNote,
 } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
+import { FindAndReplace } from '@tiptap/extension-find-and-replace';
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +42,7 @@ import {
   useCommentSidebarStore,
   useComments,
 } from '@/docs/doc-comments';
+import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
 import { Doc } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
@@ -60,6 +71,7 @@ const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
 const localesBNAI = BlockNoteAI?.localesAI || {};
+import { createSafeCodeBlockSpec } from './custom-blocks/CodeBlock';
 import { InterlinkingLinkInlineContent } from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
 
@@ -71,13 +83,16 @@ const baseBlockNoteSchema = withPageBreak(
     blockSpecs: {
       ...defaultBlockSpecs,
       callout: CalloutBlock(),
-      codeBlock: createCodeBlockSpec(codeBlockOptions),
+      codeBlock: createSafeCodeBlockSpec(),
+      diagram: createReactDiagramBlockSpec(),
+      mathBlock: createReactMathBlockSpec(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
       interlinkingLinkInline: InterlinkingLinkInlineContent,
+      math: createReactInlineMathSpec(),
     },
   }),
 );
@@ -110,6 +125,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       : i18n.resolvedLanguage;
   const langLocalesBNAI =
     !i18n.resolvedLanguage || !(i18n.resolvedLanguage in localesBNAI)
+      ? DEFAULT_LOCALE
+      : i18n.resolvedLanguage;
+  // The math and diagram blocks ship the same set of locales.
+  const langLocalesBNMathDiagram =
+    !i18n.resolvedLanguage || !(i18n.resolvedLanguage in mathLocales)
       ? DEFAULT_LOCALE
       : i18n.resolvedLanguage;
 
@@ -150,7 +170,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }, [canSeeComment, collabName, themeTokens?.font?.families?.base]);
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
-    {
+    withCollaboration({
       collaboration: {
         provider: provider as { awareness?: Awareness | undefined },
         fragment: provider.document.getXmlFragment('document-store'),
@@ -202,6 +222,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
       dictionary: {
         ...localesBN[langLocalesBN as keyof typeof localesBN],
+        math: mathLocales[langLocalesBNMathDiagram as keyof typeof mathLocales],
+        diagram:
+          diagramLocales[
+            langLocalesBNMathDiagram as keyof typeof diagramLocales
+          ],
         ...(localesBNMultiColumn && {
           multi_column:
             localesBNMultiColumn[
@@ -231,9 +256,19 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         return defaultPasteHandler();
       },
       extensions: [
+        // Highlights the source of code blocks and of the math / diagram
+        // blocks' editable LaTeX / Mermaid popups.
+        syntaxHighlighter,
         CommentsExtension({ threadStore, resolveUsers }),
         ...(aiExtension ? [aiExtension] : []),
       ],
+      _tiptapOptions: {
+        extensions: [
+          FindAndReplace.configure({
+            injectCSS: false,
+          }),
+        ],
+      },
       visualMedia: {
         image: {
           maxWidth: 760,
@@ -248,13 +283,14 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       setIdAttribute: true,
       uploadFile,
       schema: blockNoteSchema,
-    },
+    }),
     [
       aiExtension,
       cursorName,
       langLocalesBN,
       langLocalesBNMultiColumn,
       langLocalesBNAI,
+      langLocalesBNMathDiagram,
       provider,
       uploadFile,
       threadStore,
@@ -285,6 +321,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         canSeeComment={canSeeComment}
         currentUserAvatarUrl={currentUserAvatarUrl}
       />
+      <DocsFindReplaceStyle />
       {errorAttachment && (
         <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
           <TextErrors
@@ -342,7 +379,7 @@ export const BlockNoteReader = ({
   const { setEditor } = useEditorStore();
   const { threadStore } = useComments(docId, false, user);
   const editor = useCreateBlockNote(
-    {
+    withCollaboration({
       collaboration: {
         fragment: initialContent,
         user: {
@@ -361,7 +398,7 @@ export const BlockNoteReader = ({
           },
         }),
       ],
-    },
+    }),
     [initialContent, threadStore],
   );
 

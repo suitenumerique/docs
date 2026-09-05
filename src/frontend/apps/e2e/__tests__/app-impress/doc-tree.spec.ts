@@ -1,18 +1,13 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  clickInDocOptionMenu,
   createDoc,
   getOtherBrowserName,
-  updateDocTitle,
   verifyDocName,
 } from './utils-common';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
-import {
-  addChild,
-  clickOnAddRootSubPage,
-  createRootSubPage,
-  getTreeRow,
-} from './utils-sub-pages';
+import { addChild, createRootSubPage, getTreeRow } from './utils-sub-pages';
 
 test.describe('Doc Tree', () => {
   test.beforeEach(async ({ page }) => {
@@ -156,15 +151,23 @@ test.describe('Doc Tree', () => {
     const docTree = page.getByTestId('doc-tree');
 
     // Create first sub page
-    await clickOnAddRootSubPage(page);
-    await updateDocTitle(page, 'first move');
+    const { name: docChild1 } = await createRootSubPage(
+      page,
+      browserName,
+      'first move',
+    );
 
     // Create second sub page
-    await clickOnAddRootSubPage(page);
-    await updateDocTitle(page, 'second move');
+    const { name: docChild2 } = await createRootSubPage(
+      page,
+      browserName,
+      'second move',
+    );
 
-    const firstSubPageItem = docTree.getByText('first move').first();
-    const secondSubPageItem = docTree.getByText('second move').first();
+    await page.waitForTimeout(500); // Wait for the tree to be stable
+
+    const firstSubPageItem = docTree.getByText(docChild1).first();
+    const secondSubPageItem = docTree.getByText(docChild2).first();
 
     // check that the sub pages are visible in the tree
     await expect(firstSubPageItem).toBeVisible();
@@ -175,8 +178,8 @@ test.describe('Doc Tree', () => {
     await expect(allSubPageItems).toHaveCount(2);
 
     // Check that elements are in the correct order
-    await expect(allSubPageItems.nth(0).getByText('first move')).toBeVisible();
-    await expect(allSubPageItems.nth(1).getByText('second move')).toBeVisible();
+    await expect(allSubPageItems.nth(0).getByText(docChild1)).toBeVisible();
+    await expect(allSubPageItems.nth(1).getByText(docChild2)).toBeVisible();
 
     // Will move the first sub page to the second position
     // Wait for elements to be stable before reading their positions — a React
@@ -208,8 +211,8 @@ test.describe('Doc Tree', () => {
 
     // Wait for the reorder to be reflected in the tree before reloading —
     // this also ensures the API call has had time to persist the new order.
-    await expect(allSubPageItems.nth(0).getByText('second move')).toBeVisible();
-    await expect(allSubPageItems.nth(1).getByText('first move')).toBeVisible();
+    await expect(allSubPageItems.nth(0).getByText(docChild2)).toBeVisible();
+    await expect(allSubPageItems.nth(1).getByText(docChild1)).toBeVisible();
 
     // reload the page
     await page.reload();
@@ -219,8 +222,8 @@ test.describe('Doc Tree', () => {
     await expect(secondSubPageItem).toBeVisible();
 
     // Check that elements are in the correct order
-    await expect(allSubPageItems.nth(0).getByText('second move')).toBeVisible();
-    await expect(allSubPageItems.nth(1).getByText('first move')).toBeVisible();
+    await expect(allSubPageItems.nth(0).getByText(docChild2)).toBeVisible();
+    await expect(allSubPageItems.nth(1).getByText(docChild1)).toBeVisible();
   });
 
   test('it detaches a document', async ({ page, browserName }) => {
@@ -247,9 +250,7 @@ test.describe('Doc Tree', () => {
         hasText: docChild,
       });
     await child.hover();
-    const menu = child.getByRole('button', { name: /More options/ });
-    await menu.click();
-    await page.getByText('Move to my docs').click();
+    await clickInDocOptionMenu(page, child, 'Move to my docs');
 
     await verifyDocName(page, docParent);
 
@@ -258,24 +259,17 @@ test.describe('Doc Tree', () => {
   });
 
   test('Only owner can detaches a document', async ({ page, browserName }) => {
-    await createDoc(page, 'doc-tree-detach', browserName, 1);
+    const [docParent] = await createDoc(
+      page,
+      'doc-tree-detach',
+      browserName,
+      1,
+    );
 
     await page.getByRole('button', { name: 'Share' }).click();
 
     const otherBrowserName = getOtherBrowserName(browserName);
     await addNewMember(page, 0, 'Owner', otherBrowserName);
-
-    const list = page.getByTestId('doc-share-quick-search');
-    const currentEmail =
-      process.env[`SIGN_IN_USERNAME_${browserName.toUpperCase()}`] || '';
-    const currentUser = list.getByTestId(
-      `doc-share-member-row-${currentEmail}`,
-    );
-    const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
-    await currentUserRole.click();
-    await page.getByRole('menuitemradio', { name: 'Administrator' }).click();
-    await list.click();
-
     await page.getByRole('button', { name: 'Ok' }).click();
 
     const { name: docChild } = await createRootSubPage(
@@ -283,12 +277,6 @@ test.describe('Doc Tree', () => {
       browserName,
       'doc-tree-detach-child',
     );
-
-    await expect(
-      page
-        .getByLabel('It is the card information about the document.')
-        .getByText('Administrator ·'),
-    ).toBeVisible();
 
     const docTree = page.getByTestId('doc-tree');
     await expect(docTree.getByText(docChild)).toBeVisible();
@@ -299,115 +287,135 @@ test.describe('Doc Tree', () => {
       .filter({
         hasText: docChild,
       });
+
     await child.hover();
-    const menu = child.getByRole('button', { name: /More options/ });
+    const menu = child.getByRole('button', {
+      name: /Open the document options/,
+    });
     await menu.click();
 
     await expect(
       page.getByRole('menuitem', { name: 'Move to my docs' }),
-    ).toHaveAttribute('aria-disabled', 'true');
+    ).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    await docTree.getByText(docParent).click();
+    await verifyDocName(page, docParent);
+
+    // Change the role current user to "Administrator" to test that only the owner can detach a document
+    await page.getByRole('button', { name: 'Share' }).click();
+    const list = page.getByTestId('doc-share-quick-search');
+    const currentEmail =
+      process.env[`SIGN_IN_USERNAME_${browserName.toUpperCase()}`] || '';
+    const currentUser = list.getByTestId(
+      `doc-share-member-row-${currentEmail}`,
+    );
+    const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
+    await currentUserRole.click();
+    await page.getByRole('menuitemradio', { name: 'Administrator' }).click();
+    await list.click();
+    await page.getByRole('button', { name: 'Ok' }).click();
+
+    await expect(
+      page
+        .getByLabel('It is the card information about the document.')
+        .getByText('Administrator ·'),
+    ).toBeVisible();
+
+    await child.hover();
+    await menu.click();
+
+    await expect(
+      page.getByRole('menuitem', { name: 'Move to my docs' }),
+    ).toBeHidden();
   });
 
-  test('keyboard navigation with Enter key opens documents', async ({
+  test('check the accessibility of the doc tree', async ({
     page,
     browserName,
   }) => {
-    // Create a parent document
     const [docParent] = await createDoc(
       page,
-      'doc-tree-keyboard-nav',
+      'doc-tree-accessibility',
       browserName,
       1,
     );
-    await verifyDocName(page, docParent);
 
-    // Create a sub-document
-    const { name: docChild } = await createRootSubPage(
+    const { name: docChild1 } = await createRootSubPage(
       page,
       browserName,
-      'doc-tree-keyboard-child',
+      'doc-tree-accessibility-child-1',
+    );
+
+    const { name: docChild2 } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-tree-accessibility-child-2',
     );
 
     const docTree = page.getByTestId('doc-tree');
-    await expect(docTree).toBeVisible();
+    const rootItem = docTree.getByLabel('Root document').first();
+    const treeRow1 = await getTreeRow(page, docChild1);
+    const treeRow2 = await getTreeRow(page, docChild2);
 
-    // Test keyboard navigation on root document
-    const rootItem = page.getByTestId('doc-tree-root-item');
-    await expect(rootItem).toBeVisible();
+    // Wait for the tree to be stable
+    await page.waitForTimeout(500);
 
-    // Focus on the root item and press Enter
-    await rootItem.focus();
+    await docTree.click();
+    await page.keyboard.press('Tab');
     await expect(rootItem).toBeFocused();
-    await page.keyboard.press('Enter');
-
-    // Verify we navigated to the root document
-    await verifyDocName(page, docParent);
-    await expect(page).toHaveURL(/\/docs\/[^/]+\/?$/);
-
-    // Now test keyboard navigation on sub-document
-    await expect(docTree.getByText(docChild)).toBeVisible();
-  });
-
-  test('keyboard navigation with F2 focuses root actions button', async ({
-    page,
-    browserName,
-  }) => {
-    // Create a parent document to initialize the tree
-    const [docParent] = await createDoc(
-      page,
-      'doc-tree-keyboard-f2-root',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, docParent);
-
-    const docTree = page.getByTestId('doc-tree');
-    await expect(docTree).toBeVisible();
-
-    const rootItem = page.getByTestId('doc-tree-root-item');
-    await expect(rootItem).toBeVisible();
-
-    // Focus the root item
-    await rootItem.focus();
-    await expect(rootItem).toBeFocused();
-
-    // Press F2 → focus should move to the root actions \"More options\" button
+    await page.keyboard.press('ArrowDown');
+    await expect(treeRow1).toBeFocused();
     await page.keyboard.press('F2');
+    await expect(
+      treeRow1.getByRole('button', { name: 'Add emoji' }),
+    ).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(
+      treeRow1.getByRole('button', {
+        name: /Open the document options/i,
+      }),
+    ).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(treeRow1).toBeFocused();
 
+    await page.keyboard.press('ArrowUp');
+    await expect(rootItem).toBeFocused();
+
+    // Check F2
+    await page.keyboard.press('F2');
     const rootActions = rootItem.locator('.doc-tree-root-item-actions');
     const rootMoreOptionsButton = rootActions.getByRole('button', {
-      name: /more options/i,
+      name: /Open the document options/i,
     });
-
+    const rootAddDocButton = rootItem.getByTestId(
+      'doc-tree-item-actions-add-child',
+    );
     await expect(rootMoreOptionsButton).toBeFocused();
-  });
+    await page.keyboard.press('F2');
+    await expect(rootAddDocButton).toBeFocused();
+    await page.keyboard.press('F2');
+    await expect(rootMoreOptionsButton).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(rootAddDocButton).toBeFocused();
+    await page.keyboard.press('ArrowLeft');
+    await expect(rootMoreOptionsButton).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(
+      page.getByRole('menuitem', { name: /Copy Link/i }),
+    ).toBeVisible();
+    await page.waitForTimeout(500);
+    await page.keyboard.press('Escape');
+    await expect(rootMoreOptionsButton).toBeFocused();
 
-  test('Shift+Tab from resize handle returns focus to selected sub-doc', async ({
-    page,
-    browserName,
-  }) => {
-    const [docParent] = await createDoc(
-      page,
-      'doc-tree-shift-tab',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, docParent);
-
-    const { name: docChild } = await createRootSubPage(
-      page,
-      browserName,
-      'doc-tree-shift-tab-child',
-    );
-
-    const selectedSubDoc = await getTreeRow(page, docChild);
-    await expect(selectedSubDoc).toHaveAttribute('aria-selected', 'true');
-
-    await selectedSubDoc.focus();
-    await expect(selectedSubDoc).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(treeRow1).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(treeRow2).toBeFocused();
 
     await page.keyboard.press('Tab');
-    await expect(page.getByLabel('User menu')).toBeFocused();
+    await expect(page.getByLabel('Open user menu')).toBeFocused();
 
     await page.keyboard.press('Tab');
     await expect(page.getByLabel('Open help menu')).toBeFocused();
@@ -424,7 +432,10 @@ test.describe('Doc Tree', () => {
     await expect(page.getByLabel('User menu')).toBeFocused();
 
     await page.keyboard.press('Shift+Tab');
-    await expect(selectedSubDoc).toBeFocused();
+    await expect(docTree.getByLabel('Root document').first()).toBeFocused();
+
+    await page.keyboard.press('Enter');
+    await verifyDocName(page, docParent);
   });
 
   test('it updates the child icon from the tree', async ({
@@ -441,19 +452,6 @@ test.describe('Doc Tree', () => {
 
     const row = await getTreeRow(page, docChild);
 
-    // Check Remove emoji is not present initially
-    await row.hover();
-    const menu = row.getByRole('button', { name: /More options/ });
-    await menu.click();
-    await expect(
-      page.getByRole('menuitem', { name: 'Remove emoji' }),
-    ).toBeHidden();
-
-    // Close the menu
-    await page.keyboard.press('Escape');
-
-    await page.waitForTimeout(500);
-
     // Update the emoji from the tree
     await row.locator('.--docs--doc-icon').click();
     await page.getByRole('button', { name: '😀' }).first().click();
@@ -465,14 +463,6 @@ test.describe('Doc Tree', () => {
       .locator('.--docs--doc-title')
       .getByRole('button');
     await expect(titleEmojiPicker).toHaveText('😀');
-
-    // Now remove the emoji using the new action
-    await row.hover();
-    await menu.click();
-    await page.getByRole('menuitem', { name: 'Remove emoji' }).click();
-
-    await expect(row.getByText('😀')).toBeHidden();
-    await expect(titleEmojiPicker).toBeHidden();
   });
 
   test('A child inherit from the parent', async ({ page, browserName }) => {

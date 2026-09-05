@@ -1,17 +1,16 @@
-import { ButtonElement } from '@gouvfr-lasuite/cunningham-react';
 import {
   Spinner,
   TreeViewItem,
   TreeViewNodeProps,
   TreeViewNodeTypeEnum,
   useTreeContext,
-} from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Icon, StyledLink, Text } from '@/components';
+import { Box, StyledLink, Text } from '@/components';
 import {
   Doc,
   DocIcon,
@@ -21,6 +20,7 @@ import {
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
+import { useTreeItemActions } from '../hooks/useTreeItemActions';
 import { isDocNode } from '../utils';
 
 import SubPageIcon from './../assets/sub-page-logo.svg';
@@ -103,14 +103,42 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
   const treeContext = useTreeContext<Doc>();
   const { untitledDocument } = useTrans();
   const { node } = props;
-  const { isLargeScreen, isMobile } = useResponsiveStore();
+  const { isMobile } = useResponsiveStore();
   const { t } = useTranslation();
-  const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const { closePanel } = useLeftPanelStore();
 
   const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title || '');
   const displayTitle = titleWithoutEmoji || untitledDocument;
+
+  const itemRef = useRef<HTMLAnchorElement>(null);
+
+  const focusRow = useCallback(() => {
+    // Keep react-arborist's notion of the focused node in sync…
+    node.focus();
+    /**
+     * …but move the DOM focus ourselves. The library only does it from an
+     * effect keyed on `isFocused` *changing*, and it is already true whenever
+     * focus sits on one of this row's own buttons — so `node.focus()` alone
+     * would leave focus right where it is.
+     */
+    itemRef.current?.closest<HTMLElement>('.c__tree-view--row')?.focus();
+  }, [node]);
+
+  /**
+   * F2 / arrows step through the item's actions (emoji button, then the toolbar
+   * buttons) and Escape leaves them; the very first F2 is handled by the
+   * ui-components row itself (row → emoji button).
+   */
+  const {
+    areActionsVisible,
+    onMenuOpenChange,
+    handleActionsKeyDown,
+    itemProps,
+  } = useTreeItemActions({
+    isActive: node.isFocused,
+    focusItem: focusRow,
+  });
 
   const afterCreate = (createdDoc: Doc) => {
     const actualChildren = node.data.children ?? [];
@@ -144,39 +172,13 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
     }
   };
 
-  const docTitle = doc.title || untitledDocument;
   const isCurrentPage = router.query?.id === doc.id;
   const isDeleted = !!doc.deleted_at;
-  const actionsRef = useRef<HTMLDivElement>(null);
-  const buttonOptionRef = useRef<ButtonElement | null>(null);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    const target = e.target as HTMLElement | null;
-    const isInActions = !!target?.closest('.light-doc-item-actions');
-    const isOnEmojiButton = !!target?.closest('.--docs--doc-icon');
-
-    const shouldOpenActions =
-      !menuOpen && !isInActions && (node.isFocused || isOnEmojiButton);
-    if (e.key === 'F2' && shouldOpenActions) {
-      buttonOptionRef.current?.focus();
-      e.stopPropagation();
-      e.preventDefault();
-      return;
-    }
-  };
-
-  const handleActionsOpenChange = (isOpen: boolean) => {
-    setMenuOpen(isOpen);
-
-    // When the menu closes (via Escape or activating an option),
-    // return focus to the tree item so focus is not lost.
-    if (!isOpen) {
-      node.focus();
-    }
-  };
 
   return (
     <StyledLink
+      {...itemProps}
+      ref={itemRef}
       className="--docs-sub-page-item"
       /**
        * Conflict with the react-arborist DND.
@@ -187,12 +189,12 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
       tabIndex={-1}
       aria-label={
         isDeleted
-          ? t('{{title}} (deleted)', { title: docTitle })
-          : t('Open document {{title}}', { title: docTitle })
+          ? t('{{title}} (deleted)', { title: displayTitle })
+          : t('Open document {{title}}', { title: displayTitle })
       }
       aria-current={isCurrentPage ? 'page' : undefined}
       data-testid={`doc-sub-page-item-${doc.id}`}
-      onKeyDown={handleKeyDown}
+      onKeyDown={handleActionsKeyDown}
       aria-disabled={isDeleted}
       onClick={(e) => {
         if (isDeleted) {
@@ -221,10 +223,6 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
         display: block;
         width: 100%;
         border-radius: var(--c--globals--spacings--st);
-        .light-doc-item-actions {
-          display: ${menuOpen || !isLargeScreen ? 'flex' : 'none'};
-          right: var(--c--globals--spacings--0);
-        }
         .c__tree-view--node {
           padding-right: var(--c--globals--spacings--xxxs);
           height: 32px;
@@ -232,12 +230,12 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
         .c__tree-view--node.isFocused {
           outline: none !important;
           border-radius: var(--c--globals--spacings--st);
-          .light-doc-item-actions {
-            display: flex;
-          }
         }
-        /* Remove visual focus from the tree item when focus is on actions or emoji button */
-        &:has(.light-doc-item-actions *:focus, .--docs--doc-icon:focus-visible)
+        /* Only one focus ring at a time: the toolbar and emoji draw their own. */
+        &:has(
+            .doc-tree-root-item-actions *:focus,
+            .--docs--doc-icon:focus-visible
+          )
           .c__tree-view--node.isFocused {
           box-shadow: none !important;
         }
@@ -245,14 +243,6 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
           background-color: var(
             --c--contextuals--background--semantic--gray--tertiary
           );
-          .light-doc-item-actions {
-            display: flex;
-          }
-        }
-        &:focus-within {
-          .light-doc-item-actions {
-            display: flex;
-          }
         }
         .row.preview & {
           background-color: inherit;
@@ -294,32 +284,14 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
           <Text $css={ItemTextCss} $size="sm">
             {displayTitle}
           </Text>
-          {doc.nb_accesses_direct >= 1 && (
-            <Icon
-              variant="filled"
-              iconName="group"
-              $size="md"
-              aria-label={t('Shared with others')}
-            />
-          )}
         </Box>
-        <Box
-          $direction="row"
-          $align="center"
-          className="light-doc-item-actions actions"
-          role="toolbar"
-          aria-label={t('Actions for {{title}}', { title: docTitle })}
-        >
+        {areActionsVisible && (
           <DocTreeItemActions
             doc={doc}
-            isOpen={menuOpen}
-            onOpenChange={handleActionsOpenChange}
-            parentId={node.data.parentKey}
+            onOpenChange={onMenuOpenChange}
             onCreateSuccess={afterCreate}
-            actionsRef={actionsRef}
-            buttonOptionRef={buttonOptionRef}
           />
-        </Box>
+        )}
       </TreeViewItem>
     </StyledLink>
   );

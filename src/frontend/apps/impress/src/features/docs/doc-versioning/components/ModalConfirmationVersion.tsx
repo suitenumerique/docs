@@ -4,7 +4,7 @@ import {
   ModalSize,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+} from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 

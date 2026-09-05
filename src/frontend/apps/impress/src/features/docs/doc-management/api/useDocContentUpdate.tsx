@@ -16,23 +16,50 @@ export interface UpdateDocContentParams {
   id: Doc['id'];
   content: string; // Base64 encoded content
   websocket?: boolean;
+  /**
+   * Hand the request over to the browser process so it survives the page
+   * being torn down. Needed when saving from "beforeunload": a regular fetch
+   * is aborted with the document, and the server never sees the request.
+   */
+  keepalive?: boolean;
 }
+
+/**
+ * The fetch spec caps the body of a keepalive request. Over that limit the
+ * browser rejects the request outright, so we fall back to a regular fetch.
+ */
+const KEEPALIVE_MAX_BODY_SIZE = 64 * 1024;
+
+const buildContentBody = ({
+  content,
+  websocket,
+}: Pick<UpdateDocContentParams, 'content' | 'websocket'>) =>
+  JSON.stringify({
+    content,
+    websocket,
+  });
+
+/** Whether the doc is small enough to be saved with a keepalive request. */
+export const canKeepaliveContent = (
+  params: Pick<UpdateDocContentParams, 'content' | 'websocket'>,
+) => buildContentBody(params).length <= KEEPALIVE_MAX_BODY_SIZE;
 
 export const updateDocContent = async ({
   id,
   content,
   websocket,
+  keepalive,
 }: UpdateDocContentParams): Promise<void> => {
   if (!uuidValidate(id)) {
     throw new Error(`Invalid doc id in updateDocContent: ${id}`);
   }
 
+  const body = buildContentBody({ content, websocket });
+
   const response = await fetchAPI(`documents/${id}/content/`, {
     method: 'PATCH',
-    body: JSON.stringify({
-      content,
-      websocket,
-    }),
+    body,
+    keepalive: keepalive && body.length <= KEEPALIVE_MAX_BODY_SIZE,
   });
 
   if (!response.ok) {

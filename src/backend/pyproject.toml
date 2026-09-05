@@ -7,7 +7,7 @@ build-backend = "uv_build"
 
 [project]
 name = "impress"
-version = "5.5.0"
+version = "5.6.1"
 authors = [{ "name" = "DINUM", "email" = "dev@mail.numerique.gouv.fr" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -42,7 +42,7 @@ dependencies = [
     "django-timezone-field>=5.1",
     "django<6.0.0",
     "django-treebeard<5.0.0",
-    "djangorestframework==3.17.1",
+    "djangorestframework==3.17.2",
     "django-waffle==5.0.0",
     "drf_spectacular==0.30.0",
     "dockerflow==2026.3.4",
@@ -67,8 +67,8 @@ dependencies = [
     "redis<6.0.0",
     "requests==2.34.2",
     "sentry-sdk==2.66.1",
+    "servestatic==4.3.3",
     "uvicorn==0.51.0",
-    "whitenoise==6.12.0",
 ]
 
 [project.urls]

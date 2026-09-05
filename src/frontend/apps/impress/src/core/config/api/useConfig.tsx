@@ -1,4 +1,4 @@
-import { LaGaufreV2Props } from '@gouvfr-lasuite/ui-kit';
+import { LaGaufreV2Props } from '@gouvfr-lasuite/ui-components';
 import { useQuery } from '@tanstack/react-query';
 import type { Resource } from 'i18next';
 import Image from 'next/image';

@@ -1,4 +1,4 @@
-import { Button, Tooltip, useModal } from '@gouvfr-lasuite/cunningham-react';
+import { Button, Tooltip, useModal } from '@gouvfr-lasuite/ui-components';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 

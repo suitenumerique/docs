@@ -1,10 +1,20 @@
 import {
+  TreeContext,
+  TreeContextType,
   TreeDataItem,
   TreeViewDataType,
   TreeViewNodeTypeEnum,
-} from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
+import { useContext } from 'react';
 
 import { Doc } from '../doc-management';
+
+export const CLASS_TREE_ITEM_ACTIONS = 'doc-tree-root-item-actions';
+
+export const isWithinTreeItemActions = (event: React.SyntheticEvent) =>
+  !!(event.target as HTMLElement | null)?.closest(
+    `.${CLASS_TREE_ITEM_ACTIONS}`,
+  );
 
 /**
  * Type guard to check if a tree node value is a Doc (as opposed to a
@@ -22,6 +32,41 @@ export const subPageToTree = (children: Doc[]): TreeViewDataType<Doc>[] => {
     subPageToTree(child.children ?? []);
   });
   return children;
+};
+
+export const useTreeContextOrNull = <T = Doc>(): TreeContextType<T> | null =>
+  useContext(TreeContext);
+
+/**
+ * The doc tree keeps its own copy of each doc (`treeContext.treeData` /
+ * `treeContext.root`), which react-query cache invalidations don't reach. Code
+ * mutating a doc from a tree item must sync the changed fields into the tree by
+ * hand, otherwise the tree UI stays stale until it is reloaded.
+ *
+ * No-op when there is no tree context (e.g. the doc grid or the doc header),
+ * where the react-query cache is the single source of truth.
+ */
+export const syncDocInTree = (
+  treeContext: TreeContextType<Doc> | null,
+  docId: string,
+  data: Partial<Doc>,
+) => {
+  if (!treeContext) {
+    return;
+  }
+
+  const { root } = treeContext;
+  if (root && root.id === docId) {
+    treeContext.setRoot({ ...root, ...data });
+  } else if (treeContext.treeData.getNode(docId)) {
+    treeContext.treeData.updateNode(docId, data);
+  }
+
+  treeContext.treeApiRef.current?.focus(docId);
+};
+
+export const reloadTree = (treeContext: TreeContextType<Doc | null> | null) => {
+  treeContext?.setRoot(null);
 };
 
 export const findIndexInTree = (

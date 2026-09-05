@@ -7,8 +7,7 @@ import {
   useDroppable,
 } from '@dnd-kit/core';
 import { getEventCoordinates } from '@dnd-kit/utilities';
-import { useModal } from '@gouvfr-lasuite/cunningham-react';
-import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-kit';
+import { TreeViewMoveModeEnum, useModal } from '@gouvfr-lasuite/ui-components';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -25,9 +24,11 @@ import { DocsGridItem } from './DocsGridItem';
 
 const ModalConfirmationMoveDoc = dynamic(
   () =>
-    import('./ModalConfimationMoveDoc').then((mod) => ({
-      default: mod.ModalConfirmationMoveDoc,
-    })),
+    import('@/docs/doc-management/components/ModalConfimationMoveDoc').then(
+      (mod) => ({
+        default: mod.ModalConfirmationMoveDoc,
+      }),
+    ),
   { ssr: false },
 );
 

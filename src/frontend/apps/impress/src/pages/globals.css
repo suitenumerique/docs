@@ -3,7 +3,7 @@
 @import url('@fontsource/material-icons-outlined');
 @import url('@fontsource-variable/material-symbols-outlined');
 @import url('@fontsource-variable/inter');
-@import url('@gouvfr-lasuite/ui-kit/fonts/Marianne');
+@import url('@gouvfr-lasuite/ui-components/fonts/marianne');
 
 body {
   margin: 0;

@@ -1,8 +1,11 @@
+import { getDiagramBlockTypeSelectItems } from '@blocknote/diagram-block';
+import { getMathBlockTypeSelectItems } from '@blocknote/math-block';
 import {
   FormattingToolbar,
   FormattingToolbarController,
   blockTypeSelectItems,
   getFormattingToolbarItems,
+  useBlockNoteEditor,
   useDictionary,
 } from '@blocknote/react';
 import dynamic from 'next/dynamic';
@@ -30,6 +33,7 @@ const ModalConfirmDownloadUnsafe = dynamic(
 const AIToolbarButton = BlockNoteAI?.AIToolbarButton;
 
 export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
+  const editor = useBlockNoteEditor();
   const dict = useDictionary();
   const [confirmOpen, setIsConfirmOpen] = useState(false);
   const [onConfirm, setOnConfirm] = useState<() => void | Promise<void>>();
@@ -40,6 +44,8 @@ export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
     let toolbarItems = getFormattingToolbarItems([
       ...blockTypeSelectItems(dict),
       getCalloutFormattingToolbarItems(t),
+      ...getMathBlockTypeSelectItems(editor),
+      ...getDiagramBlockTypeSelectItems(editor),
     ]);
 
     // Find the index of the file download button
@@ -75,7 +81,7 @@ export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
     });
 
     return toolbarItems;
-  }, [dict, t]);
+  }, [dict, editor, t]);
 
   const formattingToolbar = useCallback(() => {
     return (

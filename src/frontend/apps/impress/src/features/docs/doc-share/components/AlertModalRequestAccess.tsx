@@ -1,4 +1,4 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/ui-components';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { AlertModal, Box, Icon, Text } from '@/components';

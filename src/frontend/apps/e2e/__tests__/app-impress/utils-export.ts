@@ -45,7 +45,7 @@ export const overrideDocContent = async ({
     1,
   );
 
-  await page.waitForTimeout(1000);
+  await expect(page.getByText('copy/pasting out of doc')).toBeVisible();
 
   // Add Image SVG
   await openSuggestionMenu({
@@ -178,7 +178,7 @@ export const comparePDFWithAssetFolder = async ({
     const maxDiffRatio = 0.0005;
 
     try {
-      expect(numDiffPixels).toBeLessThan(0.0005);
+      expect(diffRatio).toBeLessThan(maxDiffRatio);
     } catch {
       if (testInfo) {
         const pageNo = String(i + 1).padStart(2, '0');

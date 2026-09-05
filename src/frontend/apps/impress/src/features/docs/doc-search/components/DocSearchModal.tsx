@@ -1,5 +1,8 @@
-import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
-import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
+import {
+  Modal,
+  ModalSize,
+  useTreeContext,
+} from '@gouvfr-lasuite/ui-components';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';

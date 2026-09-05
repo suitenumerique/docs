@@ -446,16 +446,16 @@ wheels = [
 
 [[package]]
 name = "django"
-version = "5.2.14"
+version = "5.2.17"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asgiref" },
     { name = "sqlparse" },
     { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/65/95/95f7faa0950867afaa0bef2460c6263afd6a2c78cc9434046ed28160b015/django-5.2.14.tar.gz", hash = "sha256:58a63ba841662e5c686b57ba1fec52ddd68c0b93bd96ac3029d55728f00bf8a2", size = 10895118, upload-time = "2026-05-05T13:57:31.104Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/d8/43e9d000519adceb189620b6869ff88031e046df91c2e9da72f8f6918399/django-5.2.17.tar.gz", hash = "sha256:9d4d93be539a18ab80d058eb515900e10951e04c537c5a6b394fc49528d3251f", size = 10889740, upload-time = "2026-08-04T15:04:03.173Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/44/f172870cf87aa25afef48fb72adba89ee8b77fcab6f3b23d240b923f1528/django-5.2.14-py3-none-any.whl", hash = "sha256:6f712143bd3064310d1f50fac859c3e9a274bdcfc9595339853be7779297fc76", size = 8311320, upload-time = "2026-05-05T13:57:25.795Z" },
+    { url = "https://files.pythonhosted.org/packages/df/f8/ce120525ca78f12b07daf65786679c5d0b54a75285a8958d3ae55e39da35/django-5.2.17-py3-none-any.whl", hash = "sha256:f04fb3b36ee119e1af4fa1d397d5fd6cf12700f49321e84d4f4c642c5b1973db", size = 8315563, upload-time = "2026-08-04T15:03:59.1Z" },
 ]
 
 [[package]]
@@ -663,14 +663,14 @@ wheels = [
 
 [[package]]
 name = "djangorestframework"
-version = "3.17.1"
+version = "3.17.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ca/d7/c016e69fac19ff8afdc89db9d31d9ae43ae031e4d1993b20aca179b8301a/djangorestframework-3.17.1.tar.gz", hash = "sha256:a6def5f447fe78ff853bff1d47a3c59bf38f5434b031780b351b0c73a62db1a5", size = 905742, upload-time = "2026-03-24T16:58:33.705Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3b/35/c96055e700fdff25da3a7b7756cfd1d4dc54f38b9bc6d6c5e19e3a0fdc20/djangorestframework-3.17.2.tar.gz", hash = "sha256:89ed713b6dc83e1539f214b7d10808ae19bb8511004beba886225da6d5c9dafa", size = 906683, upload-time = "2026-08-05T07:47:22.5Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5a/e1/2c516bdc83652b1a60c6119366ac2c0607b479ed05cd6093f916ca8928f8/djangorestframework-3.17.1-py3-none-any.whl", hash = "sha256:c3c74dd3e83a5a3efc37b3c18d92bd6f86a6791c7b7d4dff62bb068500e76457", size = 898844, upload-time = "2026-03-24T16:58:31.845Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/46/c14108e400b208c394325eb63fbae06c81341b6447fa1a6f9da718b17fe7/djangorestframework-3.17.2-py3-none-any.whl", hash = "sha256:cb0546a7415d5b46c04e0f4fe0a54b2109f4fdd5e83ca773c8c6183a6493d042", size = 899109, upload-time = "2026-08-05T07:47:20.853Z" },
 ]
 
 [[package]]
@@ -948,7 +948,7 @@ wheels = [
 
 [[package]]
 name = "impress"
-version = "5.5.0"
+version = "5.6.1"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -994,8 +994,8 @@ dependencies = [
     { name = "redis" },
     { name = "requests" },
     { name = "sentry-sdk" },
+    { name = "servestatic" },
     { name = "uvicorn" },
-    { name = "whitenoise" },
 ]
 
 [package.optional-dependencies]
@@ -1043,7 +1043,7 @@ requires-dist = [
     { name = "django-timezone-field", specifier = ">=5.1" },
     { name = "django-treebeard", specifier = "<5.0.0" },
     { name = "django-waffle", specifier = "==5.0.0" },
-    { name = "djangorestframework", specifier = "==3.17.1" },
+    { name = "djangorestframework", specifier = "==3.17.2" },
     { name = "dockerflow", specifier = "==2026.3.4" },
     { name = "drf-spectacular", specifier = "==0.30.0" },
     { name = "drf-spectacular-sidecar", marker = "extra == 'dev'", specifier = "==2026.7.1" },
@@ -1082,9 +1082,9 @@ requires-dist = [
     { name = "responses", marker = "extra == 'dev'", specifier = "==0.26.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.16.0" },
     { name = "sentry-sdk", specifier = "==2.66.1" },
+    { name = "servestatic", specifier = "==4.3.3" },
     { name = "types-requests", marker = "extra == 'dev'", specifier = "==2.33.0.20260712" },
     { name = "uvicorn", specifier = "==0.51.0" },
-    { name = "whitenoise", specifier = "==6.12.0" },
 ]
 provides-extras = ["dev"]
 
@@ -2378,6 +2378,18 @@ wheels = [
 ]
 
 [[package]]
+name = "servestatic"
+version = "4.3.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asgiref" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6c/6b/ccfd794c446b61a191848337dc2757219152b142879dd50ff93b0e7290a7/servestatic-4.3.3.tar.gz", hash = "sha256:87628989eed8b6594ceed052bb185593df1fb3ff2db7c0c69b05bb8b2f7393d0", size = 33426, upload-time = "2026-09-02T21:55:49.492Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ce/fb/222b40a47f1f5736728c00485758ca35ffa8535a16f75e22e1a05205f614/servestatic-4.3.3-py3-none-any.whl", hash = "sha256:d46d374eef87a48b3b55379bf693613420e186c5b823f3e8fcceeda65c0c6e30", size = 40519, upload-time = "2026-09-02T21:55:48.302Z" },
+]
+
+[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2593,15 +2605,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/2c/ee/afaf0f85a9a18fe47a67f1e4422ed6cf1fe642f0ae0a2f81166231303c52/wcwidth-0.7.0.tar.gz", hash = "sha256:90e3a7ea092341c44b99562e75d09e4d5160fe7a3974c6fb842a101a95e7eed0", size = 182132, upload-time = "2026-05-02T16:04:12.653Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/41/52/e465037f5375f43533d1a80b6923955201596a99142ed524d77b571a1418/wcwidth-0.7.0-py3-none-any.whl", hash = "sha256:5d69154c429a82910e241c738cd0e2976fac8a2dd47a1a805f4afed1c0f136f2", size = 110825, upload-time = "2026-05-02T16:04:11.033Z" },
-]
-
-[[package]]
-name = "whitenoise"
-version = "6.12.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/cb/2a/55b3f3a4ec326cd077c1c3defeee656b9298372a69229134d930151acd01/whitenoise-6.12.0.tar.gz", hash = "sha256:f723ebb76a112e98816ff80fcea0a6c9b8ecde835f8ddda25df7a30a3c2db6ad", size = 26841, upload-time = "2026-02-27T00:05:42.028Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/db/eb/d5583a11486211f3ebd4b385545ae787f32363d453c19fffd81106c9c138/whitenoise-6.12.0-py3-none-any.whl", hash = "sha256:fc5e8c572e33ebf24795b47b6a7da8da3c00cff2349f5b04c02f28d0cc5a3cc2", size = 20302, upload-time = "2026-02-27T00:05:40.086Z" },
 ]
 
 [[package]]

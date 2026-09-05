@@ -1,13 +1,8 @@
-import { DEFAULT_LOCALE } from '@gouvfr-lasuite/cunningham-react';
+import { DEFAULT_LOCALE, Locales } from '@gouvfr-lasuite/ui-components';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api/useConfig';
-
-enum Locales {
-  enUS = 'en-US',
-  frFR = 'fr-FR',
-}
 
 export function useLocales() {
   const { i18n } = useTranslation();

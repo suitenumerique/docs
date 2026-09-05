@@ -6,6 +6,7 @@ import {
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Access, KEY_DOC, KEY_LIST_DOC, Role } from '@/docs/doc-management';
+import { KEY_DOC_TREE } from '@/docs/doc-tree/api/useDocTree';
 
 import { KEY_LIST_DOC_ACCESSES } from './useDocAccesses';
 
@@ -58,6 +59,10 @@ export const useUpdateDocAccess = (options?: UseUpdateDocAccessOptions) => {
 
       void queryClient.invalidateQueries({
         queryKey: [KEY_LIST_DOC],
+      });
+
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_DOC_TREE],
       });
 
       if (options?.onSuccess) {

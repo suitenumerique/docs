@@ -1,4 +1,4 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/ui-components';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';

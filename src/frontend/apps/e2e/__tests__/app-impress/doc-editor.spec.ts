@@ -622,13 +622,7 @@ test.describe('Doc Editor', () => {
     page,
     browserName,
   }) => {
-    const [docTitle] = await createDoc(
-      page,
-      'doc-viewport-test',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, docTitle);
+    await createDoc(page, 'doc-viewport-test', browserName, 1);
 
     const editor = await writeInEditor({
       page,
@@ -658,11 +652,64 @@ test.describe('Doc Editor', () => {
     await expect(editor.getByText('Mobile Text')).toBeVisible();
   });
 
+  test('it searches and replaces occurrences', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-search-replace', browserName);
+
+    const editor = await writeInEditor({
+      page,
+      text: 'World',
+    });
+
+    await writeInEditor({
+      page,
+      text: 'Hello World - Hello World',
+    });
+
+    // Open the find and replace panel
+    await page.keyboard.press('Control+f');
+
+    // Search for "Hello" and check that the occurrences are highlighted
+    await page.getByRole('textbox', { name: 'Find in document' }).fill('Hello');
+    await expect(page.getByText('1 / 2')).toBeVisible();
+    await expect(
+      editor
+        .locator('.find-and-replace-result-current')
+        .first()
+        .getByText('Hello'),
+    ).toBeVisible();
+    await expect(editor.locator('.find-and-replace-result')).toHaveCount(2);
+
+    await page.getByRole('button', { name: 'Next match' }).click();
+    await expect(page.getByText('2 / 2')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    // Select World then press Ctrl+f to check if the selected text is prefilled in the find input
+    await page.getByText('World').first().selectText();
+    await page.keyboard.press('Control+f');
+    await expect(
+      page.getByRole('textbox', { name: 'Find in document' }),
+    ).toHaveValue('World');
+
+    // Replace occurrences
+    await page.getByRole('button', { name: 'Next match' }).click();
+    await page.getByRole('button', { name: 'Toggle replace' }).click();
+    await page.getByRole('textbox', { name: 'Replace with' }).fill('Docs');
+    await page.getByRole('button', { name: 'Replace', exact: true }).click();
+    await expect(editor.getByText('Hello Docs - Hello World')).toBeVisible();
+    await page.getByRole('button', { name: 'Replace all' }).click();
+    await expect(editor.getByText('Docs', { exact: true })).toBeVisible();
+    await expect(editor.getByText('Hello Docs - Hello Docs')).toBeVisible();
+  });
+
   test('it checks "Copy link to block" feature', async ({
     page,
     browserName,
   }) => {
-    await createDoc(page, 'doc-scroll', browserName, 1);
+    await createDoc(page, 'doc-copy-link-to-block', browserName, 1);
 
     const editor = await writeInEditor({ page, text: 'First Block' });
 
@@ -697,5 +744,46 @@ test.describe('Doc Editor', () => {
     await page.goto(clipboardContent);
     await expect(editor.getByText('First Block')).not.toBeInViewport();
     await expect(editor.getByText('My Block')).toBeInViewport();
+  });
+
+  test('it checks "Equation block" feature', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-equation', browserName, 1);
+
+    const { editor } = await openSuggestionMenu({
+      page,
+      suggestion: 'Block Equation',
+    });
+
+    await editor.getByLabel('E = mc^2').fill('E = mc^2');
+    await editor.locator('.bn-code-block-source-popup-ok-button').click();
+    await expect(
+      editor.locator('.katex-html').filter({ hasText: 'E=mc2' }),
+    ).toBeVisible();
+  });
+
+  test('it checks "Diagram block" feature', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-diagram', browserName, 1);
+
+    const { editor } = await openSuggestionMenu({
+      page,
+      suggestion: 'Diagram',
+    });
+
+    await editor.getByRole('img', { name: 'Mermaid diagram' }).click();
+
+    const diagramCode = editor.getByLabel('Enter diagram code');
+    await diagramCode.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.press('Backspace');
+
+    await page.keyboard.type('graph TD');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('    A[Hello] --> B[World]');
+
+    await editor.locator('.bn-code-block-source-popup-ok-button').click();
+
+    await expect(
+      editor.getByLabel('Mermaid diagram').filter({ hasText: 'HelloWorld' }),
+    ).toBeVisible();
   });
 });
