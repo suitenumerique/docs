@@ -58,9 +58,9 @@ this server holds no credentials of its own.
   Validates incoming tokens against Keycloak's JWKS (`src/auth/jwtVerifier.ts`) and forwards
   them to Django (`src/docsApiClient.ts`).
 - `env.d/development/mcp`, `compose.yml` (`mcp-development` service) — how it runs locally.
-- `.mcp.json`, `.codex/config.toml`, `.gemini/settings.json`, `.cursor/mcp.json` — per-client
-  config pinning `docs-mcp-client` for Claude Code, Codex CLI, Gemini CLI, and Cursor (see
-  "Connecting other MCP clients" below).
+- `Makefile` (`mcp-claude`/`mcp-codex`/`mcp-gemini`/`mcp-cursor` targets) — generate each
+  client's local, gitignored config pinning `docs-mcp-client` on first run (see "Connecting
+  other MCP clients" below).
 
 ## Environment variables (`src/frontend/servers/mcp`)
 
@@ -171,8 +171,7 @@ configured on this realm.
 
 This realm does not expose Dynamic Client Registration (DCR) — `docker/auth/realm.json` only
 declares `docs-mcp-client` statically. Clients that support pinning a static `client_id` (no
-DCR, no client secret needed since it's a public client) can still connect. Each has a
-project-level config file and a `make` target that launches it:
+DCR, no client secret needed since it's a public client) can still connect. A `make` target generates each client's config on first run and launches it:
 
 | Client | Config | Makefile target |
 | --- | --- | --- |
@@ -181,14 +180,14 @@ project-level config file and a `make` target that launches it:
 | Gemini CLI | `.gemini/settings.json` | `make mcp-gemini` |
 | Cursor | `.cursor/mcp.json` | `make mcp-cursor` |
 
-Each config pins `docs-mcp-client` as the OAuth client and a fixed local callback port/URL,
-which is why that port needs to be a registered redirect URI on `docs-mcp-client` (see
-`docker/auth/realm.json`): `8090` (Claude Code), `8091` (Codex CLI), `8092` (Gemini CLI), and
-Cursor's own fixed `8787` (not configurable on Cursor's side). None of these tools authenticate
-automatically on launch — trigger the OAuth login once per client (Claude Code: `/mcp` inside
-the session; Codex CLI: `codex mcp login docs-mcp`; Gemini CLI and Cursor: accept the OAuth
-prompt on first tool call). Codex CLI additionally requires the project to be marked as trusted
-before it reads `.codex/config.toml`.
+Each config pins `docs-mcp-client` as the OAuth client and a fixed local callback port/URL
+(`8090` for Claude Code, `8091` for Codex CLI, `8092` for Gemini CLI, Cursor's own fixed
+`8787`). `docs-mcp-client`'s `redirectUris` is `["*"]` in this dev realm, so none of these need
+registering individually — don't carry that wildcard into a non-dev realm. None of these tools
+authenticate automatically on launch — trigger the OAuth login once per client (Claude Code:
+`/mcp` inside the session; Codex CLI: `codex mcp login docs-mcp`; Gemini CLI and Cursor: accept
+the OAuth prompt on first tool call). Codex CLI additionally requires the project to be marked
+as trusted before it reads `.codex/config.toml`.
 
 These are external, fast-moving CLIs — if a `make mcp-*` target fails to connect, check that
 tool's current MCP/OAuth flag names against its own docs before assuming the Keycloak side is

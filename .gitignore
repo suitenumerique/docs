@@ -93,5 +93,8 @@ CLAUDE.md
 .windsurfrules
 .aider*
 .copilot/
+.mcp.json
+.codex/
+.gemini/
 .github/copilot-instructions.md
 .playwright-mcp
