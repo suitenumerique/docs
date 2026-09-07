@@ -8,25 +8,41 @@ WORKDIR /app
 COPY ./src/yhub-server/package.json ./src/yhub-server/yarn.lock ./
 
 
-# ---- Development image ----
-FROM base AS yhub-development
+# ---- Dependencies + sources ----
+# Dev dependencies included (typescript, nodemon, eslint): this stage is the
+# base of both the development image and the build stage. `make migrate-yhub`
+# also runs its one-off `yarn init-db` here.
+FROM base AS yhub-deps
 
-# dev dependencies included: nodemon, plus this is where one-off scripts run
-# (`make migrate-yhub` runs `yarn init-db` in it)
 RUN yarn install --frozen-lockfile
 
-# server.js, migration.js, env.js — glob so a new module cannot be forgotten.
-# compose bind-mounts the sources over /app on top of this copy, so an edit on
-# the host is seen immediately; the copy keeps the image usable on its own.
-COPY ./src/yhub-server/*.js ./
+# whole directories rather than a glob, so a new module or tsconfig cannot be
+# forgotten
+COPY ./src/yhub-server/tsconfig.json ./src/yhub-server/tsconfig.build.json ./
+COPY ./src/yhub-server/src ./src
+
+
+# ---- Development image ----
+FROM yhub-deps AS yhub-development
+
+# compose bind-mounts the sources over /app on top of this copy, so a host edit
+# is seen immediately; these keep the image usable on its own.
+COPY ./src/yhub-server/nodemon.json ./src/yhub-server/eslint.config.mjs ./src/yhub-server/vitest.config.mts ./
+COPY ./src/yhub-server/__tests__ ./__tests__
 
 EXPOSE 3002
 
-# `yarn dev` restarts the server on every source change, no rebuild needed.
-# nodemon rather than node's own --watch: the latter watches inodes, so it goes
-# deaf as soon as a file is replaced by a rename — which is what `git checkout`
-# and most editors do when saving.
+# `yarn dev` recompiles (tsc) and restarts the server on every change under
+# src/. nodemon rather than node's own --watch: the latter watches inodes, so
+# it goes deaf as soon as a file is replaced by a rename — which is what `git
+# checkout` and most editors do when saving.
 CMD ["yarn", "dev"]
+
+
+# ---- Build stage ----
+FROM yhub-deps AS yhub-builder
+
+RUN yarn build
 
 
 # ---- Production image ----
@@ -34,7 +50,7 @@ FROM base AS yhub
 
 RUN yarn install --frozen-lockfile --production
 
-COPY ./src/yhub-server/*.js ./
+COPY --from=yhub-builder /app/dist ./dist
 
 EXPOSE 3002
 
@@ -54,4 +70,4 @@ USER ${DOCKER_USER}
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
 
-CMD ["node", "server.js"]
+CMD ["node", "dist/server.js"]
