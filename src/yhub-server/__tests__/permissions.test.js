@@ -1,24 +1,22 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-// Reached by path rather than by name on purpose. `@y/hub`'s export map exposes
-// only the package index, which pulls in uws, redis and postgres — and the two
-// functions this test needs to run yhub's real pipeline (normalize the plugin's
-// answer, then ask it the gate's question) are not on it. Importing the module
-// directly keeps the test to plain objects, and if yhub ever moves the file the
-// failure is loud rather than silently vacuous.
+// `@y/hub/permissions` is a subpath export of its own (since 0.9.0): the two
+// functions this test needs to run yhub's real pipeline — normalize the
+// plugin's answer, then ask it the gate's question — without the package index
+// pulling in uws, redis and postgres.
 import {
   createDocumentPermissions,
   hasPermissions,
   normalizePermissions,
-} from './node_modules/@y/hub/src/permissions.js';
+} from '@y/hub/permissions';
 
 import {
   adminDocumentPermissions,
   browserDocumentPermissions,
   publicGlobalPermissions,
   resolveHistoryFrom,
-} from './permissions.js';
+} from '../permissions.js';
 
 /**
  * These tables are Docs' entire access policy, and yhub reads them literally —
