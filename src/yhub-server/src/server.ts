@@ -11,6 +11,8 @@ import {
   logger,
 } from '@y/hub';
 import { S3PersistenceV1 } from '@y/hub/plugins/s3';
+import type { DocRef, YHub } from './yhub.js';
+import type { JWK, JWTPayload } from 'jose';
 import {
   calculateJwkThumbprint,
   createRemoteJWKSet,
@@ -21,14 +23,15 @@ import {
 } from 'jose';
 
 import { secret } from './env.js';
-// Docs' access policy as yhub permission objects — see permissions.test.js
+// Docs' access policy as yhub permission objects — see permissions.spec.ts
+import type { DocumentAbilities } from './permissions.js';
 import {
   adminDocumentPermissions,
   browserDocumentPermissions,
   publicGlobalPermissions,
   resolveHistoryFrom,
 } from './permissions.js';
-// legacy Django/S3 document store — see migration.js and README.md
+// legacy Django/S3 document store — see migration.ts and README.md
 import {
   SOFT_MIGRATION,
   fullMigrate,
@@ -37,13 +40,50 @@ import {
   migrationLog,
 } from './migration.js';
 
+// The caller identity `authenticate` returns and `authorize` is handed. yhub
+// only requires `userid`; the rest is Docs' own, read back off `req.authInfo`
+// (typed by yhub as the bare `{ userid }`, hence the cast at those sites).
+interface AppAuthInfo {
+  userid: string;
+  admin?: boolean;
+  endpoint?: string;
+  cookie?: string;
+  origin?: string;
+}
+
+// The shape of the backend payload a caller name resolves to.
+interface BackendUser {
+  id: string | number;
+}
+// `GET /api/v1.0/documents/{id}/` — only the abilities the policy reads.
+interface BackendDocument {
+  abilities?: DocumentAbilities;
+}
+
+// Read the ad-hoc tags the error paths below switch on without trusting the
+// error's runtime shape.
+const errStatus = (err: unknown): number | undefined =>
+  typeof err === 'object' &&
+  err !== null &&
+  'status' in err &&
+  typeof (err as { status: unknown }).status === 'number'
+    ? (err as { status: number }).status
+    : undefined;
+const errCode = (err: unknown): string | undefined =>
+  typeof err === 'object' &&
+  err !== null &&
+  'code' in err &&
+  typeof (err as { code: unknown }).code === 'string'
+    ? (err as { code: string }).code
+    : undefined;
+
 // A numeric setting, read from the environment and refused rather than guessed
 // when it is not a whole number at or above `min`: `Number()` reads a typo as
 // NaN, which yhub takes as-is and turns into a worker that claims nothing or a
 // stream that is never trimmed — a deployment that looks healthy and is not.
 // An unset or empty variable is the default, so a kubernetes env var left blank
 // behaves as if it had not been set at all.
-const intEnv = (name, dflt, min = 1) => {
+const intEnv = (name: string, dflt: number, min = 1): number => {
   const raw = process.env[name];
   const value = raw == null || raw === '' ? dflt : Number(raw);
   if (!Number.isInteger(value) || value < min) {
@@ -117,7 +157,7 @@ const TASK_CONCURRENCY = intEnv('YHUB_TASK_CONCURRENCY', 5, 1);
 // reading alone. See README.md.
 const S3_PERSISTENCE = process.env.YHUB_S3_PERSISTENCE === 'true';
 // Its own bucket, named apart from the backend's `AWS_S3_*` and from the legacy
-// document store's `LEGACY_S3_*` (migration.js): three buckets that may sit on
+// document store's `LEGACY_S3_*` (migration.ts): three buckets that may sit on
 // three providers with credentials of their own, each read by the process it
 // belongs to.
 const YHUB_S3_ENDPOINT_URL = process.env.YHUB_S3_ENDPOINT_URL;
@@ -199,7 +239,7 @@ if (backendSigningKey == null) {
 // the key is rolled. Every token we sign carries it, which is how the backend
 // picks the matching key — and how it knows to fetch the set again when it
 // does not know the key yet, so rolling this key needs no change on its side.
-const backendPublicJwk =
+const backendPublicJwk: (JWK & { kid: string }) | null =
   backendSigningKey == null
     ? null
     : await (async () => {
@@ -214,16 +254,19 @@ const backendPublicJwk =
         };
       })();
 
-/**
- * @type {{ token: string, expiresAt: number } | null}
- */
-let backendToken = null;
+let backendToken: { token: string; expiresAt: number } | null = null;
 
 // The token carries no per-document claim, so one is reused until it is about
 // to expire rather than signing on every notification.
-const getBackendToken = async () => {
+const getBackendToken = async (): Promise<string> => {
+  if (backendSigningKey == null || backendPublicJwk == null) {
+    throw new Error('no backend signing key is configured');
+  }
   const now = Date.now();
-  if (backendToken != null && backendToken.expiresAt - BACKEND_TOKEN_MARGIN_MS > now) {
+  if (
+    backendToken != null &&
+    backendToken.expiresAt - BACKEND_TOKEN_MARGIN_MS > now
+  ) {
     return backendToken.token;
   }
   const token = await new SignJWT({})
@@ -245,7 +288,10 @@ const JWKS = createRemoteJWKSet(
   new URL(`${COLLABORATION_BACKEND_BASE_URL}/api/v1.0/jwks`),
 );
 
-const backendFetch = async (path, { cookie, origin }) => {
+const backendFetch = async <T = unknown>(
+  path: string,
+  { cookie, origin }: { cookie?: string; origin?: string },
+): Promise<T> => {
   const res = await fetch(`${COLLABORATION_BACKEND_BASE_URL}${path}`, {
     headers: {
       // an anonymous caller may have no session at all; `cookie: undefined` would
@@ -258,11 +304,13 @@ const backendFetch = async (path, { cookie, origin }) => {
     },
   });
   if (!res.ok) {
-    const err = new Error(`Failed to fetch ${path}: ${res.status}`);
+    const err: Error & { status?: number } = new Error(
+      `Failed to fetch ${path}: ${res.status}`,
+    );
     err.status = res.status;
     throw err;
   }
-  return res.json();
+  return res.json() as Promise<T>;
 };
 
 // First access to a room yhub does not know: seed it from the legacy Django S3
@@ -281,7 +329,7 @@ const backendFetch = async (path, { cookie, origin }) => {
 //   the legacy store could not be reached (timeout, network, backpressure) —
 //     the same request later may well succeed, so it answers 503 rather than
 //     silently starting an empty document on top of content that exists.
-const seedFromLegacyStore = async (docRef) => {
+const seedFromLegacyStore = async (docRef: DocRef): Promise<void> => {
   try {
     // `yhub` is declared at the bottom of this file — safe: auth callbacks only
     // fire once the server is up, i.e. after that assignment
@@ -292,13 +340,17 @@ const seedFromLegacyStore = async (docRef) => {
     }
     // why it failed was logged once, at the attempt, inside maybeMigrate
     migrationLog.warn(
-      { event: 'seed.skipped', docid: docRef.docid, err: err?.message },
+      {
+        event: 'seed.skipped',
+        docid: docRef.docid,
+        err: err instanceof Error ? err.message : undefined,
+      },
       'admitting caller to a document that could not be migrated; it opens as new',
     );
   }
 };
 
-const auth = createAuthPlugin({
+const auth = createAuthPlugin<AppAuthInfo>({
   /**
    * Who is asking. Returning `null` here would mean "an anonymous caller" — it is
    * not a refusal, and `authorize` is still asked — so every rejection below is a
@@ -329,7 +381,7 @@ const auth = createAuthPlugin({
       const token = authorization.startsWith('Bearer ')
         ? authorization.slice('Bearer '.length)
         : authorization;
-      let payload;
+      let payload: JWTPayload;
       try {
         // clockTolerance absorbs Django's cache-at-exp race (the admin token
         // is cached for exactly its lifetime, so it can arrive here moments
@@ -347,10 +399,11 @@ const auth = createAuthPlugin({
         // such code (or ERR_JWKS_TIMEOUT): the token may be perfectly valid and
         // we simply cannot check it, so report it as retryable instead of
         // accusing the caller of forging it.
+        const code = errCode(err);
         if (
-          err?.code === 'ERR_JWKS_TIMEOUT' ||
-          typeof err?.code !== 'string' ||
-          !err.code.startsWith('ERR_J')
+          code === 'ERR_JWKS_TIMEOUT' ||
+          typeof code !== 'string' ||
+          !code.startsWith('ERR_J')
         ) {
           throw apiError(503, 'Token verification keys are unavailable');
         }
@@ -377,7 +430,7 @@ const auth = createAuthPlugin({
       return { userid: ANONYMOUS_USERID, origin, endpoint };
     }
     try {
-      const user = await backendFetch('/api/v1.0/users/me/', {
+      const user = await backendFetch<BackendUser>('/api/v1.0/users/me/', {
         cookie,
         origin,
       });
@@ -389,7 +442,8 @@ const auth = createAuthPlugin({
       // to the targeted reset-connections recheck (users: [<uuid>]) for the
       // connection's whole lifetime — but report it as retryable rather than as
       // an authentication failure the client should give up on.
-      if (err?.status !== 401 && err?.status !== 403) {
+      const status = errStatus(err);
+      if (status !== 401 && status !== 403) {
         throw apiError(503, 'Authentication backend is unavailable');
       }
       // the cookie is kept: it is a session the backend still answers document
@@ -404,7 +458,7 @@ const auth = createAuthPlugin({
    * disconnects with the transient close code 1013 instead of the revoke code
    * 4401.
    */
-  authorize: createAuthorize({
+  authorize: createAuthorize<AppAuthInfo>({
     async document({ org, docid, branch }, user) {
       if (user?.admin === true) {
         // Django's admin token: full access. It still goes through the legacy
@@ -435,12 +489,16 @@ const auth = createAuthPlugin({
       if (org !== ORG || branch !== 'main' || !UUID4.test(docid)) {
         return null;
       }
-      let doc;
+      let doc: BackendDocument;
       try {
-        doc = await backendFetch(`/api/v1.0/documents/${docid}/`, user);
+        doc = await backendFetch<BackendDocument>(
+          `/api/v1.0/documents/${docid}/`,
+          user ?? {},
+        );
       } catch (err) {
         // the backend answered "no": a real, permanent denial (403 Forbidden)
-        if (err?.status === 401 || err?.status === 403 || err?.status === 404) {
+        const status = errStatus(err);
+        if (status === 401 || status === 403 || status === 404) {
           return null;
         }
         // it did not answer at all — say so, so the caller retries instead of
@@ -458,17 +516,20 @@ const auth = createAuthPlugin({
 
       // When this caller was given access, which is where the history they may
       // read starts. `resolveHistoryFrom` decides whether to ask for it at all
-      // and what an unusable answer means — see permissions.js.
-      let accessSince;
+      // and what an unusable answer means — see permissions.ts.
+      let accessSince: number | null;
       try {
         accessSince = await resolveHistoryFrom(doc.abilities, () =>
-          backendFetch(`/api/v1.0/documents/${docid}/accesses/me/`, user),
+          backendFetch(`/api/v1.0/documents/${docid}/accesses/me/`, user ?? {}),
         );
       } catch {
         // the backend did not answer; same treatment as the document fetch above
         throw apiError(503, 'Document authorization backend is unavailable');
       }
-      return browserDocumentPermissions(doc.abilities.update === true, accessSince);
+      return browserDocumentPermissions(
+        doc.abilities.update === true,
+        accessSince,
+      );
     },
     async global() {
       return publicGlobalPermissions;
@@ -478,7 +539,7 @@ const auth = createAuthPlugin({
 
 // Mimic the old y-provider REST responses (JSON, not yhub's lib0-any
 // encoding) so the Django caller keeps its historical contract.
-const jsonResponse = (status, body) =>
+const jsonResponse = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), {
     status,
     headers: { 'content-type': 'application/json' },
@@ -487,8 +548,8 @@ const jsonResponse = (status, body) =>
 // Does the room hold anything? Covers persisted rows and the messages still on
 // the stream, which is what makes it an answer about the content rather than
 // about the storage.
-const hasContent = async (yhub, docRef) => {
-  const { gcDoc } = await yhub.getDoc(
+const hasContent = async (yhubApi: YHub, docRef: DocRef): Promise<boolean> => {
+  const { gcDoc } = await yhubApi.getDoc(
     docRef,
     { gc: true, nongc: false },
     { gcOnMerge: false },
@@ -509,9 +570,13 @@ const hasContent = async (yhub, docRef) => {
 // yhub has no such operation, a hard deletion is final for the room and even
 // `restoreDoc` refuses it. Here the document id belongs to a Django document
 // that goes on living, so the room has to be usable again.
-const eraseContent = async (yhub, docRef, by) => {
-  await yhub.deleteDoc(docRef, { hard: true, by });
-  await yhub.persistence.deleteTombstone(docRef);
+const eraseContent = async (
+  yhubApi: YHub,
+  docRef: DocRef,
+  by: string,
+): Promise<void> => {
+  await yhubApi.deleteDoc(docRef, { hard: true, by });
+  await yhubApi.persistence.deleteTombstone(docRef);
 };
 
 const readyLog = logger.child({ module: 'readiness' });
@@ -519,8 +584,11 @@ const readyLog = logger.child({ module: 'readiness' });
 // One readiness check: is that store answering? The error never leaves the
 // server — the route is unauthenticated, and a postgres client is happy to put
 // its connection string, password included, in the message it raises.
-const checkStore = async (name, probe) => {
-  let timer;
+const checkStore = async (
+  name: string,
+  probe: () => PromiseLike<unknown>,
+): Promise<[string, string]> => {
+  let timer: NodeJS.Timeout | undefined;
   try {
     await Promise.race([
       probe(),
@@ -533,7 +601,10 @@ const checkStore = async (name, probe) => {
     ]);
     return [name, 'ok'];
   } catch (err) {
-    readyLog.warn({ store: name, err: err?.message }, 'store is unreachable');
+    readyLog.warn(
+      { store: name, err: err instanceof Error ? err.message : String(err) },
+      'store is unreachable',
+    );
     return [name, 'unreachable'];
   } finally {
     clearTimeout(timer);
@@ -637,7 +708,7 @@ const api = [
           return jsonResponse(400, { error: 'Unknown branch' });
         }
         if (!SOFT_MIGRATION) {
-          // the flag is what configures the S3 client (migration.js)
+          // the flag is what configures the S3 client (migration.ts)
           return jsonResponse(503, { error: 'Legacy store is not configured' });
         }
         // ?force=true replays a document that is already in the migrated set.
@@ -652,7 +723,7 @@ const api = [
         // 'nothing' (versions exist, none readable). All four are done, hence
         // one 2xx; `message` says the same thing to a human, `migrated`
         // whether this call is the one that wrote the history.
-        const messages = {
+        const messages: Record<typeof status, string> = {
           already: 'Already migrated',
           empty: 'No legacy document in s3',
           nothing: 'No usable content in the legacy versions',
@@ -742,9 +813,13 @@ const api = [
         // user; regular callers always author as themselves — honoring a
         // client-supplied header would let any editor forge the attribution
         // history (the ws path likewise stamps the server-side identity).
+        const authInfo = req.authInfo as AppAuthInfo | null;
+        if (authInfo == null) {
+          return jsonResponse(401, { error: 'Authentication required' });
+        }
         const userid =
-          (req.authInfo.admin === true && req.headers['x-user-id']) ||
-          req.authInfo.userid;
+          (authInfo.admin === true && req.headers['x-user-id']) ||
+          authInfo.userid;
         let result;
         try {
           // diffs the posted update against the (empty) current doc and
@@ -808,7 +883,9 @@ const api = [
         // Error for a document whose content was erased, and that is a
         // conflict to report as one — catching around the call would turn
         // every failure alike, a database outage included, into the same answer
-        const tombstone = await req.yhub.persistence.retrieveTombstone(req.docRef);
+        const tombstone = await req.yhub.persistence.retrieveTombstone(
+          req.docRef,
+        );
         if (tombstone == null) {
           // not an error: the backend restores a whole subtree, of which only
           // the part that was deleted with it has anything to put back
@@ -849,7 +926,11 @@ const api = [
         if (req.branch !== 'main') {
           return jsonResponse(400, { error: 'Unknown branch' });
         }
-        const by = req.headers['x-user-id'] || req.authInfo.userid;
+        const authInfo = req.authInfo as AppAuthInfo | null;
+        const by = req.headers['x-user-id'] || authInfo?.userid;
+        if (!by) {
+          return jsonResponse(401, { error: 'Authentication required' });
+        }
         // No `checkPermissions` here, deliberately. The honest facet for what
         // follows would be `delete: ['hard']`, and the admin grant withholds
         // `'hard'` on purpose so that `DELETE /ydoc?hard=true` stays refused over
@@ -892,7 +973,7 @@ const api = [
 
 // Django orders the document lists by `updated_at` and no edit goes through it
 // anymore, so it is told here that a document moved on.
-const touchDocument = async (docid) => {
+const touchDocument = async (docid: string): Promise<void> => {
   if (backendSigningKey == null) return;
   try {
     const res = await fetch(
@@ -904,7 +985,10 @@ const touchDocument = async (docid) => {
       },
     );
     if (!res.ok) {
-      touchLog.warn({ docid, status: res.status }, 'backend refused the notification');
+      touchLog.warn(
+        { docid, status: res.status },
+        'backend refused the notification',
+      );
     }
   } catch (err) {
     // best effort: a lost notification only leaves `updated_at` behind until
@@ -918,7 +1002,7 @@ const touchDocument = async (docid) => {
 // traffic of someone merely opening a document never reaches it. Since yhub
 // 0.5.0 it is handed the room of the task alongside the merged document.
 const workerEvents = {
-  docUpdate: ({ docRef }) => {
+  docUpdate: ({ docRef }: { docRef: DocRef }) => {
     // Django knows the documents of this org, on the main branch, by their uuid
     if (
       docRef.org !== ORG ||
@@ -928,7 +1012,7 @@ const workerEvents = {
       return;
     }
     // deliberately not awaited: a slow backend must not hold the worker
-    touchDocument(docRef.docid);
+    void touchDocument(docRef.docid);
   },
 };
 
@@ -948,7 +1032,7 @@ const workerEvents = {
 // compaction, which is a background task — the failure would show up as
 // documents quietly not being persisted.
 const persistencePlugins = () => {
-  const settings = [
+  const settings: Array<[string, string | undefined]> = [
     ['YHUB_S3_ENDPOINT_URL', YHUB_S3_ENDPOINT_URL],
     ['YHUB_S3_ACCESS_KEY_ID', YHUB_S3_ACCESS_KEY_ID],
     ['YHUB_S3_SECRET_ACCESS_KEY', YHUB_S3_SECRET_ACCESS_KEY],
@@ -969,7 +1053,8 @@ const persistencePlugins = () => {
     );
   }
 
-  const url = new URL(YHUB_S3_ENDPOINT_URL);
+  // every entry of `settings` was checked non-empty just above
+  const url = new URL(YHUB_S3_ENDPOINT_URL as string);
   if (url.pathname !== '/' && url.pathname !== '') {
     // the client is given a host and a port, so a base path would be dropped
     // without a word and the objects written next to where they belong
@@ -984,23 +1069,26 @@ const persistencePlugins = () => {
 
   return [
     new S3PersistenceV1({
-      bucket: YHUB_S3_BUCKET_NAME,
+      bucket: YHUB_S3_BUCKET_NAME as string,
       endPoint: url.hostname,
       // an implicit port parses as "", which the client reads as 0 — its way
       // of saying "whatever the scheme defaults to"
       port: Number(url.port),
       useSSL,
-      accessKey: YHUB_S3_ACCESS_KEY_ID,
-      secretKey: YHUB_S3_SECRET_ACCESS_KEY,
-      // left out rather than passed empty: unset, the client discovers the
-      // region of the bucket instead of validating an empty string
-      ...(YHUB_S3_REGION_NAME ? { region: YHUB_S3_REGION_NAME } : {}),
+      accessKey: YHUB_S3_ACCESS_KEY_ID as string,
+      secretKey: YHUB_S3_SECRET_ACCESS_KEY as string,
       // The branches whose blobs are written here: all of them, or none, which
       // is how the plugin is kept for reading while the writing goes back to
       // postgres. `store` declines a branch it is not given and yhub falls
       // through to the database, while `retrieve` and `delete` go on answering
       // for every object already in the bucket.
       branches: S3_PERSISTENCE ? true : [],
+      // minio's Client — which the plugin spreads this whole object into —
+      // discovers the bucket's region when it is not given one; passed only
+      // when set, so an empty string cannot fail that discovery. Not part of
+      // the plugin's published `S3Conf`, so it rides in through the conditional
+      // spread rather than as a named key.
+      ...(YHUB_S3_REGION_NAME ? { region: YHUB_S3_REGION_NAME } : {}),
       // On a versioned bucket a plain delete deletes nothing: it writes a
       // delete marker over the object and keeps every version underneath it.
       // Each compaction supersedes the blobs of the one before, so that would
@@ -1017,14 +1105,16 @@ const persistencePlugins = () => {
 
 // the instance is referenced by the soft-migration helpers above — safe: auth
 // callbacks only fire once the server is up, i.e. after this assignment
-const yhub = await createYHub({
+const yhub: YHub = (await createYHub({
   redis: {
-    url: REDIS,
+    // yhub validates that both stores are configured and fails with a clear
+    // message when they are not
+    url: REDIS as string,
     prefix: REDIS_PREFIX,
     taskDebounce: TASK_DEBOUNCE_MS,
     minMessageLifetime: MIN_MESSAGE_LIFETIME_MS,
   },
-  postgres: POSTGRES,
+  postgres: POSTGRES as string,
   // where the blobs live: nothing here keeps them in yhub's postgres
   persistence: persistencePlugins(),
   // Both halves are declared, and YHUB_ROLE decides which are built: a null
@@ -1050,7 +1140,7 @@ const yhub = await createYHub({
   worker: RUNS_WORKER
     ? { taskConcurrency: TASK_CONCURRENCY, events: workerEvents }
     : null,
-});
+})) as YHub;
 
 // What this process was configured to be, in one line: yhub's own startup log
 // reports neither the role nor the stream settings, and every one of them is an

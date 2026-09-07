@@ -1,14 +1,19 @@
-// migration.js — the legacy Django/S3 document store reader.
+// migration.ts — the legacy Django/S3 document store reader.
 //
-// The two entry points server.js calls are exercised end to end here:
+// The two entry points server.ts calls are exercised end to end here:
 //   maybeMigrate — the lazy seed on first access to an unknown room
 //   fullMigrate  — the version-history backfill
 // with `@aws-sdk/client-s3` and the yhub instance faked, and `@y/y` real, so the
 // content maps these build are the real ones.
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vitest';
 
 import * as Y from '@y/y';
+
+// the faked yhub methods are `vi.fn()`s behind a `YHub` cast — reach their
+// recorded calls through this rather than sprinkling casts
+const mockCalls = (fn: unknown): unknown[][] => (fn as Mock).mock.calls;
 
 import {
   makeUpdate,
@@ -17,9 +22,9 @@ import {
   fakeRedis,
   s3Body,
   s3NotFound,
-} from './_helpers.mjs';
+} from './_helpers.js';
 
-// migration.js reads these once, at import time, and builds its S3 client from
+// migration.ts reads these once, at import time, and builds its S3 client from
 // them. Set before the module is ever imported (below), overriding the floor
 // vitest.config.mts puts down.
 process.env.SOFT_MIGRATION = 'true';
@@ -34,28 +39,30 @@ delete process.env.LEGACY_S3_REGION_NAME;
 // here. `s3configs` captures each client's constructor config.
 const { s3send, s3configs } = vi.hoisted(() => ({
   s3send: vi.fn(),
-  s3configs: [],
+  s3configs: [] as any[],
 }));
 
 vi.mock('@aws-sdk/client-s3', () => ({
   S3Client: class {
-    constructor(config) {
+    constructor(config: unknown) {
       s3configs.push(config);
     }
-    send(command, options) {
+    send(command: unknown, options: unknown) {
       return s3send(command, options);
     }
   },
   GetObjectCommand: class {
-    constructor(input) {
+    input: unknown;
+    kind = 'get';
+    constructor(input: unknown) {
       this.input = input;
-      this.kind = 'get';
     }
   },
   ListObjectVersionsCommand: class {
-    constructor(input) {
+    input: unknown;
+    kind = 'list';
+    constructor(input: unknown) {
       this.input = input;
-      this.kind = 'list';
     }
   },
 }));
@@ -66,7 +73,7 @@ vi.mock('@y/hub', () => {
   return { logger: { ...rec, child } };
 });
 
-const load = () => import('../migration.js');
+const load = () => import('../src/migration.js');
 const docRef = (docid = 'doc-1') => ({ org: 'docs', docid, branch: 'main' });
 const LOCK_KEY = 'yhub:softmigrate:docs:doc-1:main';
 const MIGRATED_SET = 'yhub:migrated:v1';
@@ -74,8 +81,13 @@ const MIGRATED_SET = 'yhub:migrated:v1';
 // Route S3 by command. `getByVersion` maps a VersionId to a Body (or an Error to
 // throw); `get` handles the versionless "newest object" read; `list` is the
 // ListObjectVersions response (or a function of its input).
-const routeS3 = ({ getByVersion, get, list } = {}) => {
-  s3send.mockImplementation(async (command) => {
+interface RouteS3Opts {
+  getByVersion?: Record<string, unknown>;
+  get?: (input: any) => unknown;
+  list?: unknown;
+}
+const routeS3 = ({ getByVersion, get, list }: RouteS3Opts = {}) => {
+  s3send.mockImplementation(async (command: any) => {
     if (command.kind === 'get') {
       const versionId = command.input.VersionId;
       if (versionId != null && getByVersion) {
@@ -97,10 +109,13 @@ const routeS3 = ({ getByVersion, get, list } = {}) => {
 };
 
 // The [name, value] attribute pairs a stored/seeded content map carries.
-const attrsOf = (contentmapBytes) => {
-  const decoded = Y.decodeContentMap(contentmapBytes);
-  const out = { inserts: [], deletes: [] };
-  for (const side of ['inserts', 'deletes']) {
+const attrsOf = (contentmapBytes: Uint8Array) => {
+  const decoded = Y.decodeContentMap(contentmapBytes) as any;
+  const out: { inserts: unknown[][]; deletes: unknown[][] } = {
+    inserts: [],
+    deletes: [],
+  };
+  for (const side of ['inserts', 'deletes'] as const) {
     for (const [, entry] of decoded[side].clients) {
       for (const id of entry._ids) {
         for (const attr of id.attrs) out[side].push([attr.name, attr.val]);
@@ -192,13 +207,16 @@ describe('maybeMigrate — the lazy seed', () => {
     await maybeMigrate(yhub, docRef());
 
     expect(yhub.stream.addMessage).toHaveBeenCalledTimes(1);
-    const [ref, message] = yhub.stream.addMessage.mock.calls[0];
+    const [ref, message] = mockCalls(yhub.stream.addMessage)[0] as [
+      unknown,
+      any,
+    ];
     expect(ref).toEqual(docRef());
     expect(message.type).toBe('ydoc:update:v1');
     expect(Buffer.from(message.update)).toEqual(Buffer.from(update));
     expect(message.contentmap).toBeInstanceOf(Uint8Array);
 
-    const get = s3send.mock.calls.find(([c]) => c.kind === 'get')[0];
+    const get = s3send.mock.calls.find(([c]: any) => c.kind === 'get')![0];
     expect(get.input).toEqual({ Bucket: 'legacy-media', Key: 'doc-1/file' });
   });
 
@@ -209,7 +227,7 @@ describe('maybeMigrate — the lazy seed', () => {
 
     await maybeMigrate(yhub, docRef());
 
-    const { contentmap } = yhub.stream.addMessage.mock.calls[0][1];
+    const { contentmap } = mockCalls(yhub.stream.addMessage)[0][1] as any;
     const { inserts } = attrsOf(contentmap);
     expect(inserts).toContainEqual(['insert', 'system']);
     expect(inserts).toContainEqual(['insert:migration', 's3']);
@@ -372,7 +390,9 @@ describe('maybeMigrate — the lazy seed', () => {
 });
 
 describe('fullMigrate — the version-history backfill', () => {
-  const listNewestFirst = (entries) => ({
+  const listNewestFirst = (
+    entries: Array<{ versionId: string; ms: number }>,
+  ) => ({
     Versions: entries.map(({ versionId, ms }) => ({
       Key: 'doc-1/file',
       VersionId: versionId,
@@ -422,7 +442,7 @@ describe('fullMigrate — the version-history backfill', () => {
     expect(fetchedVersionIds).toEqual(['ver-1', 'ver-2']);
 
     expect(yhub.persistence.store).toHaveBeenCalledTimes(1);
-    const [ref, row] = yhub.persistence.store.mock.calls[0];
+    const [ref, row] = mockCalls(yhub.persistence.store)[0] as [unknown, any];
     expect(ref).toEqual(docRef());
     expect(row.lastClock).toBe('0');
     expect(row.contentmap).toBeInstanceOf(Uint8Array);
@@ -445,7 +465,9 @@ describe('fullMigrate — the version-history backfill', () => {
 
     await fullMigrate(yhub, docRef());
 
-    const { inserts } = attrsOf(yhub.persistence.store.mock.calls[0][1].contentmap);
+    const { inserts } = attrsOf(
+      (mockCalls(yhub.persistence.store)[0][1] as any).contentmap,
+    );
     expect(inserts).toContainEqual(['insert', 'system']);
     expect(inserts).toContainEqual(['insertAt', 1000]);
     expect(inserts).toContainEqual(['insertAt', 2000]);
@@ -563,7 +585,7 @@ describe('fullMigrate — the version-history backfill', () => {
     ];
     let call = 0;
     routeS3({
-      list: (input) => {
+      list: (input: any) => {
         const page = pages[call++];
         if (call === 2) {
           expect(input.KeyMarker).toBe('key-marker');
