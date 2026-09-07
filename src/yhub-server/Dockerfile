@@ -5,15 +5,15 @@ WORKDIR /app
 
 # built from the repository root, like every other image here — the entrypoint
 # below lives outside this directory
-COPY ./src/yhub-server/package.json ./src/yhub-server/package-lock.json ./
+COPY ./src/yhub-server/package.json ./src/yhub-server/yarn.lock ./
 
 
 # ---- Development image ----
 FROM base AS yhub-development
 
 # dev dependencies included: nodemon, plus this is where one-off scripts run
-# (`make migrate-yhub` runs `npm run init-db` in it)
-RUN npm ci
+# (`make migrate-yhub` runs `yarn init-db` in it)
+RUN yarn install --frozen-lockfile
 
 # server.js, migration.js, env.js — glob so a new module cannot be forgotten.
 # compose bind-mounts the sources over /app on top of this copy, so an edit on
@@ -22,17 +22,17 @@ COPY ./src/yhub-server/*.js ./
 
 EXPOSE 3002
 
-# `npm run dev` restarts the server on every source change, no rebuild needed.
+# `yarn dev` restarts the server on every source change, no rebuild needed.
 # nodemon rather than node's own --watch: the latter watches inodes, so it goes
 # deaf as soon as a file is replaced by a rename — which is what `git checkout`
 # and most editors do when saving.
-CMD ["npm", "run", "dev"]
+CMD ["yarn", "dev"]
 
 
 # ---- Production image ----
 FROM base AS yhub
 
-RUN npm ci --omit=dev
+RUN yarn install --frozen-lockfile --production
 
 COPY ./src/yhub-server/*.js ./
 

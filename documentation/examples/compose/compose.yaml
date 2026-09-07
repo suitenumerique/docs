@@ -62,7 +62,7 @@ services:
 
   # The collaboration server: it serves everything under /collaboration/, the
   # websocket included, and holds the content of the documents. Its schema is
-  # not created when it starts — run `docker compose run --rm yhub npm run
+  # not created when it starts — run `docker compose run --rm yhub yarn
   # init-db` once before the first start, and again after every upgrade.
   yhub:
     image: lasuite/impress-yhub:latest
