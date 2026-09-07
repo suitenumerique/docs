@@ -7,13 +7,20 @@ server that synchronizes Yjs documents between editors in real time.
 It is not a fork of yhub — it is a thin wrapper, written in TypeScript under
 `src/` and compiled to `dist/` with `yarn build` (see "Container image" below):
 
-- `src/server.ts` — configuration, the auth plugin, and the custom REST endpoints,
+- `src/server.ts` — wires the pieces below into one yhub instance: the auth
+  plugin, the legacy-store seed, the persistence plugins and the worker events,
+- `src/config.ts` — every environment variable the server reads, parsed and
+  validated at startup,
+- `src/backend.ts` — the calls this server makes to the Docs Django backend, and
+  the keys both ends verify each other with,
+- `src/api.ts` — the custom REST endpoints mounted under `/collaboration/`,
 - `src/permissions.ts` — Docs' access policy as yhub permission objects (see
   "Access control" below),
 - `src/migration.ts` — everything that reads the legacy Django/S3 document store
   (both migrations described below),
 - `src/env.ts` — the `*_FILE` secret indirection shared by the rest,
-- `src/yhub.ts` — the couple of `@y/hub` types its package index does not export.
+- `src/yhub.ts` — the couple of `@y/hub` types its package index does not export,
+  plus the `AppAuthInfo` identity shape `server.ts` and `api.ts` share.
 
 `src/server.ts`:
 
@@ -393,9 +400,16 @@ from an `mc` container on the stack's network.
   end with `@aws-sdk/client-s3` and the yhub instance faked and `@y/y` real, so
   the content maps under assertion are the real ones — plus the module-load
   validation (`SOFT_MIGRATION`, the `LEGACY_S3_*` checks, addressing style),
-- `__tests__/server.spec.ts` covers the boot contract: the environment
-  `src/server.ts` refuses (`YHUB_ROLE`, the numeric knobs, a half-configured
-  bucket) and the configuration it hands `createYHub` when it accepts,
+- `__tests__/config.spec.ts` loads `src/config.ts` against a stubbed environment
+  and checks what it parses and what it refuses (`YHUB_ROLE`, the numeric knobs,
+  the origin allowlist, `PORT`),
+- `__tests__/backend.spec.ts` covers `src/backend.ts` with `global.fetch` spied:
+  the headers `backendFetch` sends, the status it tags on a failure, and the
+  public-only JWK derived from `YHUB_JWT_PRIVATE_KEY`,
+- `__tests__/server.spec.ts` covers the boot contract of the composition root:
+  the S3 configuration `src/server.ts` refuses (a half-configured bucket) and the
+  configuration it hands `createYHub` when it accepts (the role split, the
+  persistence plugins, the endpoint array),
 - `__tests__/permissions.spec.ts` asks the policy tables the same questions
   yhub's gates ask, through the real `@y/hub/permissions` pipeline (a subpath
   export, no redis/postgres pulled in).

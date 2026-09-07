@@ -1,10 +1,11 @@
-// server.ts — configuration, the auth plugin, the custom REST endpoints.
+// server.ts — the composition root: it builds the persistence plugins and wires
+// the auth plugin and the endpoint array into one `await createYHub(...)` call.
+// It has no exports, so what a unit test holds onto is that boot contract — the
+// S3 configuration it refuses, and the config object it hands yhub.
 //
-// The module has no exports and ends on `await createYHub(...)`, so what a unit
-// test can hold onto is its boot contract: the environment it refuses, and the
-// configuration it hands yhub when it accepts. `@y/hub`, its S3 plugin and
-// `./migration.ts` are faked; the config object passed to `createYHub` and the
-// args passed to `S3PersistenceV1` are captured.
+// `@y/hub`, its S3 plugin and `./migration.ts` are faked; the config passed to
+// `createYHub` and the args passed to `S3PersistenceV1` are captured. Env
+// parsing and validation is `config.ts`'s concern — see config.spec.ts.
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -108,38 +109,16 @@ describe('a valid, minimal environment', () => {
     expect(config.persistence).toEqual([]);
   });
 
-  it('passes the stream tuning through with Docs’ defaults', async () => {
+  it('threads config.ts’ stream tuning and concurrency into the yhub config', async () => {
     await boot();
-    const { redis } = createYHub.lastConfig;
+    const { redis, worker } = createYHub.lastConfig;
     expect(redis.taskDebounce).toBe(10000);
     expect(redis.minMessageLifetime).toBe(60000);
-  });
-
-  it('splits the origin allowlist on commas', async () => {
-    vi.stubEnv(
-      'COLLABORATION_SERVER_ORIGIN',
-      'https://a.example,https://b.example',
-    );
-    await boot();
-    expect(createYHub.lastConfig.server.cors.origin).toEqual([
-      'https://a.example',
-      'https://b.example',
-    ]);
-  });
-
-  it('honours PORT', async () => {
-    vi.stubEnv('PORT', '4000');
-    await boot();
-    expect(createYHub.lastConfig.server.port).toBe(4000);
+    expect(worker.taskConcurrency).toBe(5);
   });
 });
 
-describe('YHUB_ROLE', () => {
-  it('refuses an unknown role at boot', async () => {
-    vi.stubEnv('YHUB_ROLE', 'bogus');
-    await expect(boot()).rejects.toThrow(/YHUB_ROLE must be one of/);
-  });
-
+describe('the process role', () => {
   it('a server role binds the port and claims no task', async () => {
     vi.stubEnv('YHUB_ROLE', 'server');
     await boot();
@@ -153,34 +132,14 @@ describe('YHUB_ROLE', () => {
     expect(createYHub.lastConfig.server).toBeNull();
     expect(createYHub.lastConfig.worker).not.toBeNull();
   });
-});
 
-describe('the numeric tuning knobs', () => {
-  it('refuses a non-integer concurrency', async () => {
-    vi.stubEnv('YHUB_TASK_CONCURRENCY', 'abc');
-    await expect(boot()).rejects.toThrow(
-      /YHUB_TASK_CONCURRENCY must be an integer >= 1/,
-    );
-  });
-
-  it('refuses a concurrency below one', async () => {
-    vi.stubEnv('YHUB_TASK_CONCURRENCY', '0');
-    await expect(boot()).rejects.toThrow(/YHUB_TASK_CONCURRENCY/);
-  });
-
-  it('accepts a debounce of zero but not of minus one', async () => {
-    vi.stubEnv('YHUB_TASK_DEBOUNCE_MS', '0');
-    await expect(boot()).resolves.toBeDefined();
-
-    vi.resetModules();
-    vi.stubEnv('YHUB_TASK_DEBOUNCE_MS', '-1');
-    await expect(boot()).rejects.toThrow(/YHUB_TASK_DEBOUNCE_MS/);
-  });
-
-  it('treats a blank variable as the default', async () => {
-    vi.stubEnv('YHUB_TASK_CONCURRENCY', '');
+  it('the endpoint array is handed to the server half', async () => {
     await boot();
-    expect(createYHub.lastConfig.worker.taskConcurrency).toBe(5);
+    // createApiEndpoint is faked to `{ name, opts }` — assert the routes are wired
+    const names = createYHub.lastConfig.server.api.map((e: { name: string }) => e.name);
+    expect(names).toEqual(
+      expect.arrayContaining(['ping', 'ready', 'jwks', 'create-ydoc']),
+    );
   });
 });
 
