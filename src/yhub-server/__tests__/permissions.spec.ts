@@ -1,15 +1,17 @@
-// permissions.js — Docs' access policy as yhub permission objects.
+// src/permissions.ts — Docs' access policy as yhub permission objects.
 //
-// `permissions.test.js` (node:test) covers the same ground reaching into
-// `@y/hub` by path; this is the vitest-suite counterpart, phrased as the
-// questions yhub's gates ask (`hasPermissions`) rather than as a snapshot of
-// the tables — a mask may be respelled, but it may not start answering
+// The assertions run yhub's real permission pipeline (`@y/hub/permissions`, a
+// subpath export that pulls in neither redis nor postgres) and are phrased as
+// the questions yhub's gates ask (`hasPermissions`) rather than as a snapshot
+// of the tables — a mask may be respelled, but it may not start answering
 // differently.
 
 import { describe, expect, it } from 'vitest';
 
+import type { DocumentPermissionsV1Normalized } from '@y/hub/permissions';
 import {
   createDocumentPermissions,
+  createGlobalPermissions,
   hasPermissions,
   normalizePermissions,
 } from '@y/hub/permissions';
@@ -19,18 +21,23 @@ import {
   browserDocumentPermissions,
   publicGlobalPermissions,
   resolveHistoryFrom,
-} from '../permissions.js';
+} from '../src/permissions.js';
 
 const ACCESS_SINCE = 1_700_000_000_000;
 
-const reader = normalizePermissions(browserDocumentPermissions(false, ACCESS_SINCE));
-const editor = normalizePermissions(browserDocumentPermissions(true, ACCESS_SINCE));
-const linkReader = normalizePermissions(browserDocumentPermissions(false));
-const linkEditor = normalizePermissions(browserDocumentPermissions(true));
-const admin = normalizePermissions(adminDocumentPermissions);
+const norm = (p: Parameters<typeof normalizePermissions>[0]) =>
+  normalizePermissions(p) as DocumentPermissionsV1Normalized;
 
-const grants = (permissions, required) =>
-  hasPermissions(permissions, createDocumentPermissions(required));
+const reader = norm(browserDocumentPermissions(false, ACCESS_SINCE));
+const editor = norm(browserDocumentPermissions(true, ACCESS_SINCE));
+const linkReader = norm(browserDocumentPermissions(false));
+const linkEditor = norm(browserDocumentPermissions(true));
+const admin = norm(adminDocumentPermissions);
+
+const grants = (
+  permissions: DocumentPermissionsV1Normalized,
+  required: Parameters<typeof createDocumentPermissions>[0],
+) => hasPermissions(permissions, createDocumentPermissions(required));
 
 describe('presence', () => {
   it('lets a reader receive presence but never broadcast it', () => {
@@ -88,8 +95,9 @@ describe('the history a user may read', () => {
 
   it('never grants the full ray that would unlock gc=false', () => {
     for (const who of [reader, editor]) {
-      expect(who.history).not.toBe(false);
-      expect(who.history.from).toBeGreaterThan(0);
+      const history = who.history;
+      expect(history).not.toBe(false);
+      expect(history === false ? -1 : history.from).toBeGreaterThan(0);
     }
   });
 
@@ -126,11 +134,12 @@ describe('rollback', () => {
   });
 
   it('is a dead grant without the write it rides on', () => {
-    const readerWithRollback = normalizePermissions({
+    const readerWithRollback = norm({
       ...browserDocumentPermissions(false, ACCESS_SINCE),
       history: { from: ACCESS_SINCE, rollback: true },
     });
-    expect(readerWithRollback.history.rollback).toBe(false);
+    const history = readerWithRollback.history;
+    expect(history === false ? null : history.rollback).toBe(false);
   });
 
   it('is withheld from the admin token', () => {
@@ -192,8 +201,9 @@ describe('the admin token', () => {
 
 describe('the public global routes', () => {
   const globalPerms = normalizePermissions(publicGlobalPermissions);
-  const globalGrants = (required) =>
-    hasPermissions(globalPerms, { type: 'permissions:global:v1', ...required });
+  const globalGrants = (
+    required: Parameters<typeof createGlobalPermissions>[0],
+  ) => hasPermissions(globalPerms, createGlobalPermissions(required));
 
   it.each(['ping', 'ready', 'jwks'])('serves %s to anyone, read only', (name) => {
     expect(globalGrants({ endpoint: { [name]: '-r--' } })).toBe(true);
@@ -206,7 +216,7 @@ describe('the public global routes', () => {
 });
 
 describe('resolveHistoryFrom', () => {
-  const httpError = (status) =>
+  const httpError = (status: number) =>
     Object.assign(new Error(`HTTP ${status}`), { status });
   const never = () => {
     throw new Error('the access must not be fetched');

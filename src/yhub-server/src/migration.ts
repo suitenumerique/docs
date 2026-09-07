@@ -31,11 +31,12 @@ import { logger } from '@y/hub';
 import * as Y from '@y/y';
 
 import { secret } from './env.js';
+import type { DocRef, YHub } from './yhub.js';
 
 export const SOFT_MIGRATION = process.env.SOFT_MIGRATION === 'true';
 // The legacy Django media bucket, the one documents are migrated *out of*. It
 // carries a prefix of its own because it is not the only bucket in play: the
-// S3 persistence plugin (`YHUB_S3_*`, server.js) persists *into* a bucket that
+// S3 persistence plugin (`YHUB_S3_*`, server.ts) persists *into* a bucket that
 // may sit on another provider with credentials of its own, and the backend's
 // `AWS_S3_*` settings — which a pod may perfectly well carry — name a third.
 // Each set is read by exactly the process it belongs to.
@@ -57,7 +58,7 @@ const LEGACY_S3_SIGNATURE_VERSION =
 // SigV4 are the whole set: a value asking for SigV2 (`s3`, boto3's other
 // choice) is refused at boot rather than silently signed the other way and
 // bounced by the provider as a credentials error.
-const SIGNATURE_VERSIONS = { s3v4: 'sigv4', v4: 'sigv4' };
+const SIGNATURE_VERSIONS: Record<string, string> = { s3v4: 'sigv4', v4: 'sigv4' };
 const S3_FETCH_TIMEOUT_MS = 10000;
 const MIGRATE_LOCK_TTL_MS = 30000;
 const MAX_CONCURRENT_SEEDS = 20;
@@ -70,8 +71,6 @@ const S3_LIST_TIMEOUT_MS = 30000;
 // response reports how many were dropped. The replay runs on the main thread,
 // so the cap also bounds how long the event loop is blocked.
 const MAX_MIGRATE_VERSIONS = 500;
-// an empty Yjs update, what patchYdoc diffs the first snapshot against
-const EMPTY_YDOC = Y.encodeStateAsUpdate(new Y.Doc());
 
 if (
   SOFT_MIGRATION &&
@@ -84,9 +83,9 @@ if (
     'SOFT_MIGRATION=true requires LEGACY_S3_ENDPOINT_URL, LEGACY_S3_ACCESS_KEY_ID and LEGACY_S3_SECRET_ACCESS_KEY',
   );
 }
-const s3 = SOFT_MIGRATION
+const s3: S3Client | null = SOFT_MIGRATION
   ? (() => {
-      const url = new URL(LEGACY_S3_ENDPOINT_URL);
+      const url = new URL(LEGACY_S3_ENDPOINT_URL as string);
       if (url.pathname !== '/' && url.pathname !== '') {
         // boto3 accepts path-prefixed endpoints but an S3 endpoint cannot
         // carry a base path — dropping it silently would probe the wrong keys
@@ -108,8 +107,8 @@ const s3 = SOFT_MIGRATION
         // what every S3-compatible implementation answers to by default
         region: LEGACY_S3_REGION_NAME || 'us-east-1',
         credentials: {
-          accessKeyId: LEGACY_S3_ACCESS_KEY_ID,
-          secretAccessKey: LEGACY_S3_SECRET_ACCESS_KEY,
+          accessKeyId: LEGACY_S3_ACCESS_KEY_ID as string,
+          secretAccessKey: LEGACY_S3_SECRET_ACCESS_KEY as string,
         },
         // `sigv4` today, and the client is built from the setting rather than
         // from the default so that the value is what decides
@@ -121,27 +120,65 @@ const s3 = SOFT_MIGRATION
       });
     })()
   : null;
+
+// Reach the S3 client only from a path that has already checked SOFT_MIGRATION;
+// this turns "used it anyway" into a loud error rather than a null dereference.
+const requireS3 = (): S3Client => {
+  if (s3 == null) {
+    throw new Error('the legacy S3 document store is not configured');
+  }
+  return s3;
+};
+
 // exported so the auth path can report, under the same module name, that it
 // admitted a caller to a document it could not migrate
 export const migrationLog = logger.child({ module: 'soft-migration' });
+
+/** An error carrying the ad-hoc shape the helpers below tag onto it. */
+interface TaggedError {
+  name?: string;
+  message?: string;
+  permanent?: boolean;
+  noCache?: boolean;
+}
+const asTagged = (err: unknown): TaggedError =>
+  typeof err === 'object' && err !== null ? (err as TaggedError) : {};
+
+// Is this legacy object beyond saving, as opposed to merely out of reach right
+// now? Only a failure raised while *interpreting* bytes we already hold
+// qualifies: the object does not decode, or it is larger than we will load.
+// Those are marked at the throw site, and nothing else counts — an allowlist
+// of retryable errors would have to enumerate every way S3 can say no
+// (AccessDenied on a rotated key, NoSuchBucket on a misconfigured name, a
+// region redirect), and each one it missed would be read as "this document has
+// no content" and open the room empty over content that is alive in S3.
+// Guessing wrong in this direction costs a retry; guessing wrong in the other
+// costs the document.
+export const isPermanentFailure = (err: unknown): boolean =>
+  asTagged(err).permanent === true;
 
 // Both keys are derived from the prefix yhub itself resolved, so they cannot
 // drift from the room keys, and both sit outside its scanned `:room:*` pattern.
 //
 // One seeder per room:
-const migrateLockKey = (yhub, docRef) =>
+const migrateLockKey = (yhub: YHub, docRef: DocRef): string =>
   `${yhub.stream.prefix}:softmigrate:${docRef.org}:${docRef.docid}:${docRef.branch}`;
 // Documents whose version history has been replayed into postgres. Membership
 // is permanent: a second replay of the same versions would attribute the same
 // content twice (see fullMigrate).
-const migratedSetKey = (yhub) => `${yhub.stream.prefix}:migrated:v1`;
+const migratedSetKey = (yhub: YHub): string =>
+  `${yhub.stream.prefix}:migrated:v1`;
 
 // An aborted request surfaces as whatever the sdk or the body stream raises
 // when the socket goes away ("aborted", TimeoutError, …). Say what actually
 // happened instead, and leave it unmarked so it stays retryable — a slow S3
 // may well recover.
-const asTimeout = (err, signal, what, ms) =>
-  signal.aborted ? new Error(`${what} timed out after ${ms}ms`) : err;
+const asTimeout = (
+  err: unknown,
+  signal: AbortSignal,
+  what: string,
+  ms: number,
+): unknown => (signal.aborted ? new Error(`${what} timed out after ${ms}ms`) : err);
 
 // Legacy Django document store: object `{docid}/file`, body = UTF-8 text that
 // is the base64 encoding of a raw Yjs update. With `versionId`, reads that
@@ -149,14 +186,17 @@ const asTimeout = (err, signal, what, ms) =>
 // object (or version) does not exist — a document that never had content
 // saved, e.g. brand new. Throws on any other failure (network, auth, timeout);
 // corrupt base64 decodes leniently to garbage that the callers reject.
-const fetchLegacyDoc = async (docid, versionId = null) => {
+const fetchLegacyDoc = async (
+  docid: string,
+  versionId: string | null = null,
+): Promise<Uint8Array<ArrayBuffer> | null> => {
   // One budget for the whole read, headers and body alike: the sdk aborts the
   // request when it fires and the body stream dies with it, so a stalled
   // transfer cannot hold the ws upgrade open.
   const abortSignal = AbortSignal.timeout(S3_FETCH_TIMEOUT_MS);
   let body;
   try {
-    ({ Body: body } = await s3.send(
+    ({ Body: body } = await requireS3().send(
       new GetObjectCommand({
         Bucket: LEGACY_S3_BUCKET_NAME,
         Key: `${docid}/file`,
@@ -169,43 +209,57 @@ const fetchLegacyDoc = async (docid, versionId = null) => {
     // NotFound is the bare 404 some S3-compatible providers answer with
     // instead; a missing *bucket* has a name of its own and is not caught
     // here — that one is a misconfiguration, not an absent document.
+    const name = asTagged(err).name;
     if (
-      err?.name === 'NoSuchKey' ||
-      err?.name === 'NoSuchVersion' ||
-      err?.name === 'NotFound'
+      name === 'NoSuchKey' ||
+      name === 'NoSuchVersion' ||
+      name === 'NotFound'
     ) {
       return null;
     }
     throw asTimeout(err, abortSignal, 's3 fetch', S3_FETCH_TIMEOUT_MS);
   }
-  let encoded;
+  let encoded: string;
   try {
     // the object whole, whatever its size: it is one document's content, and
     // refusing to read it is refusing to migrate that document at all
-    encoded = await body.transformToString('utf8');
+    encoded = (await body?.transformToString('utf8')) ?? '';
   } catch (err) {
     throw asTimeout(err, abortSignal, 's3 fetch', S3_FETCH_TIMEOUT_MS);
   }
   const decoded = Buffer.from(encoded, 'base64');
   // compute-task schema requires an exact Uint8Array (lib0 compares the
-  // constructor) — re-view the Buffer without copying
-  return new Uint8Array(decoded.buffer, decoded.byteOffset, decoded.byteLength);
+  // constructor) — re-view the Buffer without copying. A Node Buffer is always
+  // backed by a plain ArrayBuffer (never a SharedArrayBuffer), which the
+  // `.buffer` type does not narrow to on its own.
+  return new Uint8Array(
+    decoded.buffer as ArrayBuffer,
+    decoded.byteOffset,
+    decoded.byteLength,
+  );
 };
+
+interface LegacyVersion {
+  versionId: string;
+  timestamp: number;
+}
 
 // Every version of the legacy object, oldest first. Delete markers are skipped
 // (they record a deletion and carry no body), and so are keys that merely share
 // the prefix — S3 has no exact-key version listing.
-const listLegacyVersions = async (docid) => {
+const listLegacyVersions = async (
+  docid: string,
+): Promise<{ versions: LegacyVersion[]; dropped: number }> => {
   const key = `${docid}/file`;
   // one budget for the whole listing, however many pages it takes
   const abortSignal = AbortSignal.timeout(S3_LIST_TIMEOUT_MS);
-  const found = [];
+  const found: LegacyVersion[] = [];
   try {
-    let keyMarker;
-    let versionIdMarker;
+    let keyMarker: string | undefined;
+    let versionIdMarker: string | undefined;
     let truncated = true;
     while (truncated) {
-      const page = await s3.send(
+      const page = await requireS3().send(
         new ListObjectVersionsCommand({
           Bucket: LEGACY_S3_BUCKET_NAME,
           Prefix: key,
@@ -265,16 +319,20 @@ const listLegacyVersions = async (docid) => {
 // the stream but carry no content) — then the SELECT again, which closes the
 // store-before-trim compaction race (and the worst case of a miss is only a
 // redundant, idempotent re-seed).
-const ydocExists = async (yhub, docRef) => {
+const ydocExists = async (yhub: YHub, docRef: DocRef): Promise<boolean> => {
   if ((await yhub.persistence.retrieveDoc(docRef, {})).lastClock !== '0') {
     return true;
   }
   const streams = await yhub.stream.getMessages([{ docRef, clock: '0' }]);
-  if ((streams[0]?.messages ?? []).some((m) => m.type === 'ydoc:update:v1')) {
+  if (
+    (streams[0]?.messages ?? []).some((m) => m.type === 'ydoc:update:v1')
+  ) {
     return true;
   }
   return (await yhub.persistence.retrieveDoc(docRef, {})).lastClock !== '0';
 };
+
+type Verdict = 'exists' | 'empty' | 'failed';
 
 // Per-docid migration verdicts, in-memory (per replica). 'exists' is monotone
 // in normal operation — its TTL only bounds staleness after an operator
@@ -283,34 +341,36 @@ const ydocExists = async (yhub, docRef) => {
 // rechecks off S3; 'failed' breaks the retry-refetch storm a permanently
 // corrupt object would otherwise sustain (y-websocket retries denied upgrades
 // forever).
-const VERDICT_TTL_MS = { exists: 600000, empty: 60000, failed: 300000 };
+const VERDICT_TTL_MS: Record<Verdict, number> = {
+  exists: 600000,
+  empty: 60000,
+  failed: 300000,
+};
 // transient failures (network blips, timeouts, S3 restarting) are cached just
 // long enough to blunt a retry storm without turning a hiccup into a lockout
 const TRANSIENT_TTL_MS = 15000;
-// Is this legacy object beyond saving, as opposed to merely out of reach right
-// now? Only a failure raised while *interpreting* bytes we already hold
-// qualifies: the object does not decode, or it is larger than we will load.
-// Those are marked at the throw site, and nothing else counts — an allowlist
-// of retryable errors would have to enumerate every way S3 can say no
-// (AccessDenied on a rotated key, NoSuchBucket on a misconfigured name, a
-// region redirect), and each one it missed would be read as "this document has
-// no content" and open the room empty over content that is alive in S3.
-// Guessing wrong in this direction costs a retry; guessing wrong in the other
-// costs the document.
-export const isPermanentFailure = (err) => err?.permanent === true;
 const VERDICT_CACHE_MAX = 50000;
-const verdicts = new Map(); // docid -> { verdict, error, expires }
+
+interface CachedVerdict {
+  verdict: Verdict;
+  error: unknown;
+  expires: number;
+}
+const verdicts = new Map<string, CachedVerdict>();
 const rememberVerdict = (
-  docid,
-  verdict,
-  error = null,
-  ttl = VERDICT_TTL_MS[verdict],
-) => {
+  docid: string,
+  verdict: Verdict,
+  error: unknown = null,
+  ttl: number = VERDICT_TTL_MS[verdict],
+): void => {
   // delete-then-set keeps Map insertion order ≈ recency, so the FIFO eviction
   // drops the stalest entry — and re-setting an existing docid never evicts
   // an unrelated one
   if (!verdicts.delete(docid) && verdicts.size >= VERDICT_CACHE_MAX) {
-    verdicts.delete(verdicts.keys().next().value);
+    const oldest = verdicts.keys().next().value;
+    if (oldest !== undefined) {
+      verdicts.delete(oldest);
+    }
   }
   verdicts.set(docid, {
     verdict,
@@ -318,15 +378,17 @@ const rememberVerdict = (
     expires: Date.now() + ttl,
   });
 };
-const inflightMigrations = new Map(); // docid -> Promise<void>
+const inflightMigrations = new Map<string, Promise<void>>();
 let activeSeeds = 0;
 
-const migrate = async (yhub, docRef) => {
+const migrate = async (yhub: YHub, docRef: DocRef): Promise<Verdict> => {
   // A fully migrated room holds a single row at clock 0, which leaves
   // `lastClock` at '0' — so ydocExists cannot see it and would seed on top of a
   // complete history. Harmless (the seed's attributions are excluded as already
   // known) but a pointless S3 round-trip per document during a backfill.
-  if (await yhub.stream.redis.sIsMember(migratedSetKey(yhub), docRef.docid)) {
+  if (
+    await yhub.stream.redis.sIsMember(migratedSetKey(yhub), docRef.docid)
+  ) {
     return 'exists';
   }
   if (await ydocExists(yhub, docRef)) return 'exists';
@@ -346,7 +408,10 @@ const migrate = async (yhub, docRef) => {
       // fetch failed), fall through and seed ourselves: duplicate seeds use
       // byte-identical updates from one lineage and merge as CRDT no-ops.
       const deadline = Date.now() + MIGRATE_LOCK_TTL_MS + 5000;
-      while (Date.now() < deadline && (await redis.exists(lockKey)) === 1) {
+      while (
+        Date.now() < deadline &&
+        (await redis.exists(lockKey)) === 1
+      ) {
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
       if (await ydocExists(yhub, docRef)) return 'exists';
@@ -356,7 +421,9 @@ const migrate = async (yhub, docRef) => {
       // backoff spreads the load. Probes above stay uncapped. noCache:
       // momentary per-replica backpressure must deny once, not be cached as
       // a failure — a slot frees up within seconds
-      const err = new Error('too many concurrent soft migrations');
+      const err: Error & { noCache?: boolean } = new Error(
+        'too many concurrent soft migrations',
+      );
       err.noCache = true;
       throw err;
     }
@@ -378,7 +445,7 @@ const migrate = async (yhub, docRef) => {
       try {
         contentids = Y.createContentIdsFromUpdate(update);
       } catch (err) {
-        err.permanent = true;
+        asTagged(err).permanent = true;
         throw err;
       }
       await yhub.stream.addMessage(docRef, {
@@ -436,7 +503,10 @@ const migrate = async (yhub, docRef) => {
 // Resolves when the room is usable (already known, freshly seeded, or
 // legitimately empty); rejects to deny access. Idempotent and safe to
 // re-enter — it also runs on rechecks and default-purpose REST calls.
-export const maybeMigrate = async (yhub, docRef) => {
+export const maybeMigrate = async (
+  yhub: YHub,
+  docRef: DocRef,
+): Promise<void> => {
   const cached = verdicts.get(docRef.docid);
   if (cached != null && cached.expires > Date.now()) {
     if (cached.verdict === 'failed') throw cached.error;
@@ -447,7 +517,7 @@ export const maybeMigrate = async (yhub, docRef) => {
     migration = migrate(yhub, docRef)
       .then(
         (verdict) => rememberVerdict(docRef.docid, verdict),
-        (err) => {
+        (err: unknown) => {
           // The one place the *cause* is recorded, once per attempt rather
           // than per access: a cached verdict re-raises this error without
           // logging again until it expires.
@@ -465,7 +535,7 @@ export const maybeMigrate = async (yhub, docRef) => {
               ? 'soft migration is not possible for this legacy object'
               : 'soft migration failed; the caller is asked to retry',
           );
-          if (err?.noCache !== true) {
+          if (asTagged(err).noCache !== true) {
             // a retryable failure is remembered only briefly, so a hiccup
             // cannot lock a document out for the full poison-object window
             rememberVerdict(
@@ -484,6 +554,16 @@ export const maybeMigrate = async (yhub, docRef) => {
   return migration;
 };
 
+interface FullMigrateResult {
+  status: 'already' | 'empty' | 'nothing' | 'ok';
+  versions?: number;
+  applied?: number;
+  skipped?: number;
+  dropped?: number;
+  bytes?: number;
+  durationMs?: number;
+}
+
 // Add the legacy version history to the room. Returns a `status` the endpoint
 // maps to a response:
 //   'already' — already replayed for this docid; the room is left untouched
@@ -500,14 +580,21 @@ export const maybeMigrate = async (yhub, docRef) => {
 // messages a live editor is writing; and the history is genuinely the oldest
 // thing in the room. The next compact task merges the row into the room's
 // normal state and drops it — yhub needs no special case for any of this.
-export const fullMigrate = async (yhub, docRef, { force = false } = {}) => {
+export const fullMigrate = async (
+  yhub: YHub,
+  docRef: DocRef,
+  { force = false }: { force?: boolean } = {},
+): Promise<FullMigrateResult> => {
   const start = Date.now();
   const redis = yhub.stream.redis;
   // Membership is the guard against attributing the same content twice: once
   // compaction has folded the clock-0 row into a normal one and deleted it,
   // a second replay would insert a second contentmap for ids that already
   // carry one, and the two timestamps would both survive the merge.
-  if (!force && (await redis.sIsMember(migratedSetKey(yhub), docRef.docid))) {
+  if (
+    !force &&
+    (await redis.sIsMember(migratedSetKey(yhub), docRef.docid))
+  ) {
     return { status: 'already' };
   }
   const { versions, dropped } = await listLegacyVersions(docRef.docid);
@@ -520,7 +607,7 @@ export const fullMigrate = async (yhub, docRef, { force = false } = {}) => {
   const ydoc = new Y.Doc({ gc: false });
   // ids already attributed, so each version is credited only with what it added
   let seen = Y.createContentIds();
-  const contentmaps = [];
+  const contentmaps: Y.ContentMap[] = [];
   let bytes = 0;
   let skipped = 0;
   try {
@@ -566,7 +653,7 @@ export const fullMigrate = async (yhub, docRef, { force = false } = {}) => {
       // 'system' identity (as the lazy seed is). The timestamp is what makes an
       // entry identifiable: it is the version's S3 `LastModified`, so activity
       // entries line up with the backend's version listing by time.
-      const attrs = (verb) => [
+      const attrs = (verb: string) => [
         Y.createContentAttribute(verb, 'system'),
         Y.createContentAttribute(`${verb}At`, version.timestamp),
       ];
@@ -603,7 +690,7 @@ export const fullMigrate = async (yhub, docRef, { force = false } = {}) => {
     ydoc.destroy();
   }
   await redis.sAdd(migratedSetKey(yhub), docRef.docid);
-  const result = {
+  const result: FullMigrateResult = {
     status: 'ok',
     versions: versions.length,
     applied: contentmaps.length,

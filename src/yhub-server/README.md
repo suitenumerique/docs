@@ -4,14 +4,18 @@ This directory contains the La Suite Docs-specific configuration for
 [yhub](https://www.npmjs.com/package/@y/hub) (`@y/hub`), the collaboration
 server that synchronizes Yjs documents between editors in real time.
 
-It is not a fork of yhub — it is a thin wrapper:
+It is not a fork of yhub — it is a thin wrapper, written in TypeScript under
+`src/` and compiled to `dist/` with `yarn build` (see "Container image" below):
 
-- `server.js` — configuration, the auth plugin, and the custom REST endpoints,
-- `migration.js` — everything that reads the legacy Django/S3 document store
+- `src/server.ts` — configuration, the auth plugin, and the custom REST endpoints,
+- `src/permissions.ts` — Docs' access policy as yhub permission objects (see
+  "Access control" below),
+- `src/migration.ts` — everything that reads the legacy Django/S3 document store
   (both migrations described below),
-- `env.js` — the `*_FILE` secret indirection shared by the two.
+- `src/env.ts` — the `*_FILE` secret indirection shared by the rest,
+- `src/yhub.ts` — the couple of `@y/hub` types its package index does not export.
 
-`server.js`:
+`src/server.ts`:
 
 - starts a yhub instance (websocket sync on port 3002, backed by Redis/Valkey
   and PostgreSQL — and, when `YHUB_S3_PERSISTENCE` asks for it, a bucket the
@@ -98,10 +102,10 @@ hides, so they stay in-cluster on their own.
 yhub 0.8 replaced the `'r' | 'rw' | null` access vocabulary with **permission
 objects**: the auth plugin answers, per facet, what a subject may do with one
 document, and yhub enforces every facet itself — on the websocket and on the
-REST routes alike. Docs' whole policy is three tables in `permissions.js`, kept
-out of `server.js` so they can be read and tested without redis and postgres.
-`__tests__/permissions.test.js` asks them the same questions yhub's gates ask;
-run it with `yarn test` (see "Tests" below).
+REST routes alike. Docs' whole policy is three tables in `src/permissions.ts`,
+kept out of `src/server.ts` so they can be read and tested without redis and
+postgres. `__tests__/permissions.spec.ts` asks them the same questions yhub's
+gates ask; run it with `yarn test` (see "Tests" below).
 
 Masks are positional `crud` strings where `-` denies, so `'-r--'` is read-only.
 
@@ -382,45 +386,42 @@ from an `mc` container on the stack's network.
 
 ## Tests
 
-`yarn test` runs two suites, neither of which needs redis, postgres or S3:
+`yarn test` runs the **vitest** suite under `__tests__/*.spec.ts`
+(`yarn test:watch` for the watcher), none of which needs redis, postgres or S3:
 
-- `__tests__/permissions.test.js` on node's own runner (`node:test`) — it
-  imports `@y/hub/permissions` (a subpath export, no redis/postgres pulled in)
-  to run the real permission pipeline, and is kept on `node:test` on purpose,
-- the `__tests__/*.spec.mjs` files on **vitest** (`yarn test:watch` for the
-  watcher):
-  - `__tests__/migration.spec.mjs` drives `maybeMigrate` and `fullMigrate` end
-    to end with `@aws-sdk/client-s3` and the yhub instance faked and `@y/y`
-    real, so the content maps under assertion are the real ones — plus the
-    module-load validation (`SOFT_MIGRATION`, the `LEGACY_S3_*` checks,
-    addressing style),
-  - `__tests__/server.spec.mjs` covers the boot contract: the environment
-    `server.js` refuses (`YHUB_ROLE`, the numeric knobs, a half-configured
-    bucket) and the configuration it hands `createYHub` when it accepts,
-  - `__tests__/permissions.spec.mjs` is the vitest counterpart of
-    `permissions.test.js`.
+- `__tests__/migration.spec.ts` drives `maybeMigrate` and `fullMigrate` end to
+  end with `@aws-sdk/client-s3` and the yhub instance faked and `@y/y` real, so
+  the content maps under assertion are the real ones — plus the module-load
+  validation (`SOFT_MIGRATION`, the `LEGACY_S3_*` checks, addressing style),
+- `__tests__/server.spec.ts` covers the boot contract: the environment
+  `src/server.ts` refuses (`YHUB_ROLE`, the numeric knobs, a half-configured
+  bucket) and the configuration it hands `createYHub` when it accepts,
+- `__tests__/permissions.spec.ts` asks the policy tables the same questions
+  yhub's gates ask, through the real `@y/hub/permissions` pipeline (a subpath
+  export, no redis/postgres pulled in).
 
-The `__tests__/` directory (and the `.mjs` extension) keeps the specs out of
-`node --test`'s discovery and out of the Docker image (`COPY *.js`); shared
-fakes live in `__tests__/_helpers.mjs`. CI does not run these yet — it installs with `yarn install --frozen-lockfile --production`, so `vitest` is absent
-there; the pytest-driven integration suite in `.github/workflows/impress.yml` is
-what exercises a real collaboration server.
+Shared fakes live in `__tests__/_helpers.ts`. `yarn typecheck` type-checks
+`src/` and the specs; `yarn lint` runs ESLint. CI does not run the unit suite
+yet; the pytest-driven integration suite in `.github/workflows/impress.yml`
+exercises a real collaboration server (built with `yarn build`).
 
 ## Container image
 
 The `Dockerfile` has two final stages, like the other services of this
-repository:
+repository, both fed by a shared `yhub-deps` stage (full install + `src/`) and,
+for production, a `yhub-builder` stage that runs `yarn build`:
 
 - `yhub-development` — what the `yhub` service of `compose.yml` builds. It
-  installs the dev dependencies and starts the server through `yarn dev`
-  (nodemon), and compose bind-mounts `src/yhub-server` over `/app`: **editing
-  `server.js`, `migration.js` or `env.js` restarts the server, no rebuild**.
-  Watch it happen with `docker compose logs -f yhub`. A syntax error stops at
+  starts the server through `yarn dev` (nodemon), and compose bind-mounts
+  `src/yhub-server` over `/app`: **editing anything under `src/` recompiles
+  (`tsc`) and restarts the server**. Watch it happen with
+  `docker compose logs -f yhub`. A type or syntax error stops at
   `app crashed - waiting for file changes` and the next save starts the server
   again,
-- `yhub` — the production image: production dependencies only, `node
-  server.js`, sources baked in, and the un-privileged user and the entrypoint
-  the other services use (kubernetes runs the pod with `runAsNonRoot`).
+- `yhub` — the production image: production dependencies only, the compiled
+  `dist/` copied from the builder, `node dist/server.js`, and the un-privileged
+  user and the entrypoint the other services use (kubernetes runs the pod with
+  `runAsNonRoot`).
 
 Both are built **from the repository root**, like every other image here — the
 entrypoint they share lives outside this directory:
@@ -431,13 +432,13 @@ docker build -f src/yhub-server/Dockerfile --target yhub .
 
 nodemon rather than node's own `--watch`: the latter watches inodes, so it
 stops seeing a file as soon as it is replaced by a rename — which is what `git
-checkout` and most editors do when saving. The one-second `--delay` debounces
-partial writes, so a branch switch restarts the server once, after the files
-have settled.
+checkout` and most editors do when saving. The one-second `delay` (in
+`nodemon.json`) debounces partial writes, so a branch switch recompiles and
+restarts the server once, after the files have settled.
 
 Only source edits are picked up live. A dependency change (`package.json`) is a
-rebuild, and `node_modules` lives in an anonymous volume that survives a plain
-recreate, so it needs renewing:
+rebuild, and `node_modules` and the compiled `dist/` live in anonymous volumes
+that survive a plain recreate, so they need renewing:
 
 ```
 make build-yhub
@@ -776,8 +777,9 @@ This directory depends on `@y/hub`, which is licensed under the
 the rest of this repository (MIT), the code in this directory is loaded into
 the same process as AGPL-licensed code. As a consequence:
 
-- **Any modification to the code in this directory (in particular `server.js`
-  and `migration.js`) must be released under an AGPL-compatible license** if
+- **Any modification to the code in this directory (in particular
+  `src/server.ts` and `src/migration.ts`) must be released under an
+  AGPL-compatible license** if
   you run or distribute the resulting server, including making it available to
   users over a network (AGPL section 13).
 - See the [LICENSE](./LICENSE) file in this directory for details.

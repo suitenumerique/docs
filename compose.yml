@@ -263,11 +263,12 @@ services:
       - env.d/development/yhub.local
     volumes:
       - ./data/jwt:/data/jwt:ro
-      # editing a source file restarts the server (nodemon), no rebuild
+      # editing a source file recompiles and restarts the server (nodemon)
       - ./src/yhub-server:/app
-      # node_modules is installed in the image, not in the source tree: keep
-      # the bind mount above from hiding it
+      # installed / built in the image, not in the source tree: keep the bind
+      # mount above from hiding node_modules, and the compiled output out of it
       - /app/node_modules
+      - /app/dist
     restart: unless-stopped
     ports:
       - "3002:3002"
