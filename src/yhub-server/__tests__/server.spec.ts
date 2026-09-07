@@ -1,20 +1,20 @@
-// server.js — configuration, the auth plugin, the custom REST endpoints.
+// server.ts — configuration, the auth plugin, the custom REST endpoints.
 //
 // The module has no exports and ends on `await createYHub(...)`, so what a unit
 // test can hold onto is its boot contract: the environment it refuses, and the
 // configuration it hands yhub when it accepts. `@y/hub`, its S3 plugin and
-// `./migration.js` are faked; the config object passed to `createYHub` and the
+// `./migration.ts` are faked; the config object passed to `createYHub` and the
 // args passed to `S3PersistenceV1` are captured.
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createYHub, s3PluginArgs } = vi.hoisted(() => ({
-  createYHub: vi.fn(async (config) => {
+const { createYHub, s3PluginArgs } = vi.hoisted(() => {
+  const createYHub = vi.fn(async (config: any) => {
     createYHub.lastConfig = config;
     return { stream: { taskDebounce: 0, minMessageLifetime: 0 } };
-  }),
-  s3PluginArgs: [],
-}));
+  }) as ReturnType<typeof vi.fn> & { lastConfig?: any };
+  return { createYHub, s3PluginArgs: [] as any[] };
+});
 
 vi.mock('@y/hub', () => {
   const logger = {
@@ -26,25 +26,27 @@ vi.mock('@y/hub', () => {
   return {
     createYHub,
     logger,
-    apiError: (status, message) => Object.assign(new Error(message), { status }),
+    apiError: (status: number, message: string) =>
+      Object.assign(new Error(message), { status }),
     checkPermissions: vi.fn(),
-    createApiEndpoint: (name, opts) => ({ name, opts }),
-    createAuthPlugin: (plugin) => plugin,
-    createAuthorize: (handlers) => handlers,
-    createDocumentPermissions: (x) => x,
+    createApiEndpoint: (name: string, opts: unknown) => ({ name, opts }),
+    createAuthPlugin: (plugin: unknown) => plugin,
+    createAuthorize: (handlers: unknown) => handlers,
+    createDocumentPermissions: (x: unknown) => x,
   };
 });
 
 vi.mock('@y/hub/plugins/s3', () => ({
   S3PersistenceV1: class {
-    constructor(args) {
+    args: unknown;
+    constructor(args: unknown) {
       this.args = args;
       s3PluginArgs.push(args);
     }
   },
 }));
 
-vi.mock('../migration.js', () => ({
+vi.mock('../src/migration.js', () => ({
   SOFT_MIGRATION: false,
   fullMigrate: vi.fn(),
   isPermanentFailure: vi.fn(() => false),
@@ -61,7 +63,7 @@ const BASE_ENV = {
   SOFT_MIGRATION: 'false',
 };
 
-const boot = () => import('../server.js');
+const boot = () => import('../src/server.js');
 
 beforeEach(() => {
   vi.unstubAllEnvs();
