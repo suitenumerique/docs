@@ -234,9 +234,13 @@ jobs:
         with:
           node-version: "22.x"
 
-      - name: Install the collaboration server
+      - name: Install and build the collaboration server
         working-directory: src/yhub-server
-        run: yarn install --frozen-lockfile --production
+        # a full install (typescript is a dev dependency) so `yarn build` can
+        # compile src/ to the dist/ started below
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
 
       # yhub ships its own DDL and creates the database as well, so this needs
       # the dependencies installed above — hence its place after them
@@ -271,7 +275,7 @@ jobs:
           LEGACY_S3_SECRET_ACCESS_KEY: password
           LEGACY_S3_BUCKET_NAME: impress-media-storage
         run: |
-          nohup node server.js > /tmp/yhub.log 2>&1 &
+          nohup node dist/server.js > /tmp/yhub.log 2>&1 &
           dockerize -wait tcp://localhost:3002 -timeout 30s
 
       - name: Run tests

@@ -1,7 +1,7 @@
 /**
  * Docs' access policy, as yhub 0.8 permission objects.
  *
- * Kept apart from `server.js` so it can be read — and tested — without standing
+ * Kept apart from `server.ts` so it can be read — and tested — without standing
  * up redis and postgres: these three tables *are* the policy, and they are the
  * only thing between a reader and someone else's document.
  *
@@ -10,6 +10,26 @@
  * routes alike. Masks are positional `crud` strings where `-` denies, so
  * `'-r--'` is read-only and `'----'` grants nothing.
  */
+
+import type {
+  DocumentPermissionsV1,
+  GlobalPermissionsV1,
+} from '@y/hub/permissions';
+
+/**
+ * The backend's verdict on a document (`GET /api/v1.0/documents/{id}/`), of
+ * which only the abilities the policy reads are named here.
+ */
+export interface DocumentAbilities {
+  retrieve?: boolean;
+  update?: boolean;
+  versions_list?: boolean;
+}
+
+/** The `GET /api/v1.0/documents/{id}/accesses/me/` payload, likewise trimmed. */
+export interface AccessPayload {
+  created_at?: string | null;
+}
 
 /**
  * What a browser may do with a document, from the backend's verdict on it.
@@ -50,7 +70,7 @@
  * A bounded ray is not a wall-clock-relative grant: it comes from a stored
  * `created_at`, so it re-derives identically on every websocket recheck, which is
  * what yhub's determinism contract asks for. And it never unlocks a `gc=false`
- * connection, which requires `from === 0` exactly — see the guard in server.js.
+ * connection, which requires `from === 0` exactly — see the guard in server.ts.
  *
  * No `delete` facet: deleting a document is Django's, through the admin token.
  *
@@ -83,12 +103,20 @@
  * `purpose != null` check in `getAccessType`, which `create-ydoc` slipped through
  * by declaring no purpose.
  */
-export const browserDocumentPermissions = (canEdit, historyFrom = null) => ({
+export const browserDocumentPermissions = (
+  canEdit: boolean,
+  historyFrom: number | null = null,
+): DocumentPermissionsV1 => ({
   type: 'permissions:document:v1',
   ydoc: canEdit ? '-ru-' : '-r--',
   awareness: canEdit ? '-ru-' : '-r--',
   ...(historyFrom
-    ? { history: { from: historyFrom, ...(canEdit && { rollback: true }) } }
+    ? {
+        history: {
+          from: historyFrom,
+          ...(canEdit ? { rollback: true } : null),
+        },
+      }
     : null),
   endpoint: {
     // `r` opens the socket, `u` admits document updates over it
@@ -102,7 +130,7 @@ export const browserDocumentPermissions = (canEdit, historyFrom = null) => ({
       ? {
           activity: '-r--',
           changeset: '-r--',
-          ...(canEdit && { rollback: 'c---' }),
+          ...(canEdit ? { rollback: 'c---' } : null),
         }
       : null),
   },
@@ -114,7 +142,7 @@ export const browserDocumentPermissions = (canEdit, historyFrom = null) => ({
  * for the first time, and Docs keeps irreversible erasure programmatic, behind
  * `reset-ydoc`, exactly as `yhub_services.delete_ydoc` describes.
  */
-export const adminDocumentPermissions = {
+export const adminDocumentPermissions: DocumentPermissionsV1 = {
   type: 'permissions:document:v1',
   ydoc: 'cru-',
   awareness: '-ru-',
@@ -130,7 +158,7 @@ export const adminDocumentPermissions = {
  * only, and named individually — a global endpoint added later is denied until it
  * is listed here.
  */
-export const publicGlobalPermissions = {
+export const publicGlobalPermissions: GlobalPermissionsV1 = {
   type: 'permissions:global:v1',
   endpoint: { ping: '-r--', ready: '-r--', jwks: '-r--' },
 };
@@ -153,7 +181,7 @@ export const publicGlobalPermissions = {
  * Two ways this ends with no history rather than with a date. The backend refusing
  * (401/403/404) means the abilities and the access disagree — a race with a
  * revocation, most likely — and the safe reading of that is no history. And
- * anything unparseable is *no* history rather than full history, zero refused with
+ * anything unparsable is *no* history rather than full history, zero refused with
  * it: `from: 0` is the one value that also unlocks a `gc=false` websocket, and no
  * real access date is ever zero, so a zero here could only ever be a bug upstream.
  *
@@ -162,16 +190,20 @@ export const publicGlobalPermissions = {
  * Silently dropping the history there would cost the connection its version panel
  * for as long as it lives, on a blip.
  */
-export const resolveHistoryFrom = async (abilities, fetchAccess) => {
+export const resolveHistoryFrom = async (
+  abilities: DocumentAbilities | null | undefined,
+  fetchAccess: () => Promise<AccessPayload | null | undefined>,
+): Promise<number | null> => {
   if (abilities?.versions_list !== true) {
     return null;
   }
 
-  let access;
+  let access: AccessPayload | null | undefined;
   try {
     access = await fetchAccess();
   } catch (err) {
-    if (err?.status === 401 || err?.status === 403 || err?.status === 404) {
+    const status = errStatus(err);
+    if (status === 401 || status === 403 || status === 404) {
       return null;
     }
     throw err;
@@ -180,3 +212,14 @@ export const resolveHistoryFrom = async (abilities, fetchAccess) => {
   const from = Date.parse(access?.created_at ?? '');
   return Number.isFinite(from) && from > 0 ? from : null;
 };
+
+// `backendFetch` (server.ts) is the only thing that rejects `fetchAccess`, and it
+// tags its rejections with the HTTP status — read it back without trusting the
+// error's shape.
+const errStatus = (err: unknown): number | undefined =>
+  typeof err === 'object' &&
+  err !== null &&
+  'status' in err &&
+  typeof (err as { status: unknown }).status === 'number'
+    ? (err as { status: number }).status
+    : undefined;
