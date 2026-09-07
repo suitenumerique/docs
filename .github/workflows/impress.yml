@@ -236,7 +236,7 @@ jobs:
 
       - name: Install the collaboration server
         working-directory: src/yhub-server
-        run: npm ci --omit=dev
+        run: yarn install --frozen-lockfile --production
 
       # yhub ships its own DDL and creates the database as well, so this needs
       # the dependencies installed above — hence its place after them
@@ -244,7 +244,7 @@ jobs:
         working-directory: src/yhub-server
         env:
           POSTGRES: postgres://dinum:pass@localhost:5432/yhub
-        run: npm run init-db
+        run: yarn init-db
 
       - name: Start the backend for the collaboration server to authenticate against
         env:

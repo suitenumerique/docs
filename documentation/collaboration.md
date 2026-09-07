@@ -14,7 +14,7 @@ REDIS: redis://{redis-host}:6379/0
 POSTGRES: postgres://{user}:{password}@{postgres-host}:5432/yhub
 ```
 
-Nothing creates that schema at startup: the server never runs DDL. Run the script yhub ships (`npm run init-db`, which the helm chart runs as a job) once before starting it, and again after every upgrade that adds a table. It creates the database when it is missing, it is idempotent, and until it has run every document read fails with `relation "..." does not exist`.
+Nothing creates that schema at startup: the server never runs DDL. Run the script yhub ships (`yarn init-db`, which the helm chart runs as a job) once before starting it, and again after every upgrade that adds a table. It creates the database when it is missing, it is idempotent, and until it has run every document read fails with `relation "..." does not exist`.
 
 The Django backend reads and writes document content there too, so point it at the service:
 
