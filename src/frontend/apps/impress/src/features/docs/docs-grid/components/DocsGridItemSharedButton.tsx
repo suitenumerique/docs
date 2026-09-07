@@ -40,35 +40,43 @@ export const DocsGridItemSharedButton = ({ doc, disabled }: Props) => {
         placement="top"
         className="--docs--doc-tooltip-grid-item-shared-button"
       >
-        <Button
-          className="--docs--doc-grid-item-shared-button"
-          aria-label={t('Open the sharing settings for the document')}
-          data-testid={`docs-grid-item-shared-button-${doc.id}`}
-          style={{
-            padding: `0 var(--c--globals--spacings--xxxs) 0 var(--c--globals--spacings--xxxs)`,
-          }}
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            addLastFocus(event.currentTarget);
-            shareModal.open();
-          }}
-          color="brand"
-          variant="secondary"
-          size="nano"
-          icon={
-            <Icon
-              $theme="brand"
-              $variation="secondary"
-              iconName="group"
-              disabled={disabled}
-              variant="filled"
-            />
-          }
-          disabled={disabled}
-        >
-          {sharedCount}
-        </Button>
+        {/*
+          Tooltip clones its child and overwrites tabIndex. Keep the trigger
+          on a non-interactive wrapper so the button can stay out of the
+          tab order (reached from the row's actions menu).
+        */}
+        <span>
+          <Button
+            className="--docs--doc-grid-item-shared-button"
+            aria-label={t('Open the sharing settings for the document')}
+            data-testid={`docs-grid-item-shared-button-${doc.id}`}
+            tabIndex={-1}
+            style={{
+              padding: `0 var(--c--globals--spacings--xxxs) 0 var(--c--globals--spacings--xxxs)`,
+            }}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              addLastFocus(event.currentTarget);
+              shareModal.open();
+            }}
+            color="brand"
+            variant="secondary"
+            size="nano"
+            icon={
+              <Icon
+                $theme="brand"
+                $variation="secondary"
+                iconName="group"
+                disabled={disabled}
+                variant="filled"
+              />
+            }
+            disabled={disabled}
+          >
+            {sharedCount}
+          </Button>
+        </span>
       </Tooltip>
       {shareModal.isOpen && (
         <DocShareModal
