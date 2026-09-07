@@ -52,7 +52,7 @@ upgrade, in the order they are done, and end with the API changes.
   rest of what it reads.
 
 - ⚠️ **Its schema is not created when it starts.** The server never runs DDL:
-  run the script it ships, `npm run init-db` (`node
+  run the script it ships, `yarn init-db` (`node
   node_modules/@y/hub/bin/init-db.js` in the image), once before starting it
   and again after every upgrade that adds a table. It creates the database when
   it is missing, and it is idempotent, so re-running it is always safe. The

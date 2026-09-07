@@ -260,7 +260,7 @@ The collaboration server never runs DDL itself, so its schema has to be created
 before it starts:
 
 ```bash
-docker compose run --rm yhub npm run init-db
+docker compose run --rm yhub yarn init-db
 ```
 
 It creates the `yhub` database when it is missing, and every table the version
@@ -319,7 +319,7 @@ docker compose run --rm backend python manage.py migrate
 ```
 and the collaboration server's, which is the same command as at install time:
 ```bash
-docker compose run --rm yhub npm run init-db
+docker compose run --rm yhub yarn init-db
 ```
 
 ## Upgrading from a release without the collaboration server

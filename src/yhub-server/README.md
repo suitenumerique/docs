@@ -101,7 +101,7 @@ document, and yhub enforces every facet itself — on the websocket and on the
 REST routes alike. Docs' whole policy is three tables in `permissions.js`, kept
 out of `server.js` so they can be read and tested without redis and postgres.
 `__tests__/permissions.test.js` asks them the same questions yhub's gates ask;
-run it with `npm test` (see "Tests" below).
+run it with `yarn test` (see "Tests" below).
 
 Masks are positional `crud` strings where `-` denies, so `'-r--'` is read-only.
 
@@ -382,12 +382,12 @@ from an `mc` container on the stack's network.
 
 ## Tests
 
-`npm test` runs two suites, neither of which needs redis, postgres or S3:
+`yarn test` runs two suites, neither of which needs redis, postgres or S3:
 
 - `__tests__/permissions.test.js` on node's own runner (`node:test`) — it
   imports `@y/hub/permissions` (a subpath export, no redis/postgres pulled in)
   to run the real permission pipeline, and is kept on `node:test` on purpose,
-- the `__tests__/*.spec.mjs` files on **vitest** (`npm run test:watch` for the
+- the `__tests__/*.spec.mjs` files on **vitest** (`yarn test:watch` for the
   watcher):
   - `__tests__/migration.spec.mjs` drives `maybeMigrate` and `fullMigrate` end
     to end with `@aws-sdk/client-s3` and the yhub instance faked and `@y/y`
@@ -402,7 +402,7 @@ from an `mc` container on the stack's network.
 
 The `__tests__/` directory (and the `.mjs` extension) keeps the specs out of
 `node --test`'s discovery and out of the Docker image (`COPY *.js`); shared
-fakes live in `__tests__/_helpers.mjs`. CI does not run these yet — it installs with `npm ci --omit=dev`, so `vitest` is absent
+fakes live in `__tests__/_helpers.mjs`. CI does not run these yet — it installs with `yarn install --frozen-lockfile --production`, so `vitest` is absent
 there; the pytest-driven integration suite in `.github/workflows/impress.yml` is
 what exercises a real collaboration server.
 
@@ -412,7 +412,7 @@ The `Dockerfile` has two final stages, like the other services of this
 repository:
 
 - `yhub-development` — what the `yhub` service of `compose.yml` builds. It
-  installs the dev dependencies and starts the server through `npm run dev`
+  installs the dev dependencies and starts the server through `yarn dev`
   (nodemon), and compose bind-mounts `src/yhub-server` over `/app`: **editing
   `server.js`, `migration.js` or `env.js` restarts the server, no rebuild**.
   Watch it happen with `docker compose logs -f yhub`. A syntax error stops at
@@ -444,11 +444,11 @@ make build-yhub
 docker compose up -d --force-recreate --renew-anon-volumes yhub
 ```
 
-## Database schema (`npm run init-db`)
+## Database schema (`yarn init-db`)
 
 yhub never runs DDL from the server or the worker, so the schema is created by
 the script it ships (`node_modules/@y/hub/bin/init-db.js`), wrapped here as
-`npm run init-db`. It reads `POSTGRES` from the environment, creates the
+`yarn init-db`. It reads `POSTGRES` from the environment, creates the
 database when it does not exist, then every table and index the **installed**
 yhub version needs. It is idempotent, so re-running it is always safe.
 

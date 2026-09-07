@@ -133,7 +133,7 @@ The collaboration server needs a key of its own (`YHUB_JWT_PRIVATE_KEY`), the
 backend it calls (`COLLABORATION_BACKEND_BASE_URL`), the origins a browser may
 open a websocket from (`COLLABORATION_SERVER_ORIGIN`), and its two stores
 (`POSTGRES`, `REDIS`). Its schema is created by the script it ships,
-`npm run init-db`, which has to run once before it starts and again after every
+`yarn init-db`, which has to run once before it starts and again after every
 upgrade. Its variables are listed in [env.md](../env.md), and
 `src/yhub-server/README.md` documents what each of them changes.
 
@@ -250,7 +250,7 @@ scalingo logs --tail
 3. **Static files not served**: Ensure the buildpack post-frontend script ran successfully
 4. **OIDC errors**: Verify your OIDC provider configuration and callback URLs
 5. **Theme not updating**: Clear Redis cache with `scalingo run python -c "from django.core.cache import cache; cache.clear()"`
-6. **Collaboration not working, or documents opening empty**: the collaboration server is a separate deployment. Verify it is running, that `COLLABORATION_WS_URL` and `YHUB_API_BASE_URL` point at it, that `JWT_PRIVATE_KEY` is set on this app and `YHUB_JWT_PRIVATE_KEY` on that one, and that its `npm run init-db` has been run
+6. **Collaboration not working, or documents opening empty**: the collaboration server is a separate deployment. Verify it is running, that `COLLABORATION_WS_URL` and `YHUB_API_BASE_URL` point at it, that `JWT_PRIVATE_KEY` is set on this app and `YHUB_JWT_PRIVATE_KEY` on that one, and that its `yarn init-db` has been run
 7. **Conversion not working** (export, markdown import): verify the y-provider process is running and `Y_PROVIDER_API_BASE_URL` points at it
 
 ### Useful Commands

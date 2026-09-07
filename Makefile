@@ -343,7 +343,7 @@ migrate:  ## run django migrations for the impress project.
 	@$(MANAGE) migrate
 .PHONY: migrate
 
-# Runs the DDL script yhub ships (`bin/init-db.js`, wrapped as `npm run
+# Runs the DDL script yhub ships (`bin/init-db.js`, wrapped as `yarn
 # init-db`): it creates the yhub database when missing, then every table the
 # installed @y/hub version needs. yhub never runs DDL from the server or the
 # worker, so this is what applies a schema change after an upgrade.
@@ -354,7 +354,7 @@ migrate:  ## run django migrations for the impress project.
 migrate-yhub:  ## create or upgrade the collaboration server (yhub) schema.
 	@echo "$(BOLD)Running yhub migrations$(RESET)"
 	@$(COMPOSE) up -d yhub-postgres yhub-valkey
-	@$(COMPOSE_RUN) --no-deps yhub npm run init-db
+	@$(COMPOSE_RUN) --no-deps yhub yarn init-db
 .PHONY: migrate-yhub
 
 superuser: ## Create an admin superuser with password "admin"

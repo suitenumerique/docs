@@ -51,7 +51,7 @@ spec:
           command:
             {{- toYaml .Values.yhub.initDb.command | nindent 12 }}
           {{- else }}
-          # The script yhub ships, wrapped as `npm run init-db`, retried until
+          # The script yhub ships, wrapped as `yarn init-db`, retried until
           # the postgres server answers: nothing here creates it, and a chart
           # sync does not wait for whatever does. Retrying the whole script
           # rather than probing the port first — it is idempotent, so a run

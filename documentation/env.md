@@ -175,7 +175,7 @@ documents what each of them changes.
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
 | PORT                          | Port the server listens on                                                                                                                              | 3002                   |
 | REDIS                         | **Required.** Redis/Valkey url holding the live state of the documents. Not a cache: it holds what no worker has persisted yet                          |                        |
-| POSTGRES                      | **Required.** Url of the yhub database. Created by `npm run init-db`, never by the server                                                               |                        |
+| POSTGRES                      | **Required.** Url of the yhub database. Created by `yarn init-db`, never by the server                                                               |                        |
 | REDIS_PREFIX                  | Namespace of the redis keys, when the instance is shared                                                                                                | yhub                   |
 | COLLABORATION_BACKEND_BASE_URL | Base url of the Docs backend, which answers who a user is and what they may do with a document                                                         | http://app-dev:8000    |
 | COLLABORATION_SERVER_ORIGIN   | Comma separated list of the origins allowed to open a websocket                                                                                         | http://localhost:3000  |

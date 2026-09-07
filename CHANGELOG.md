@@ -182,6 +182,8 @@ and this project adheres to
   `/external_api/{version}/jwks`
 - 🔒️(collaboration) reject admin jwts not issued for the yhub audience
 - 🔧(collaboration) adapt docker stack for development purpose
+- 🔧(yhub) manage the collaboration server dependencies with yarn like the rest
+  of the project (`package-lock.json` replaced by `yarn.lock`)
 - ⏪️(backend) reintroduce the reset connection mechanism
 
 ### Fixed
