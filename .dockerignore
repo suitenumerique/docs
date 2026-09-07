@@ -5,6 +5,8 @@ __pycache__
 **/*.pyc
 venv
 .venv
+**/.venv
+**/venv
 
 # System-specific files
 .DS_Store
