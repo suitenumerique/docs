@@ -100,8 +100,8 @@ objects**: the auth plugin answers, per facet, what a subject may do with one
 document, and yhub enforces every facet itself — on the websocket and on the
 REST routes alike. Docs' whole policy is three tables in `permissions.js`, kept
 out of `server.js` so they can be read and tested without redis and postgres.
-`permissions.test.js` asks them the same questions yhub's gates ask; run it with
-`npm test`.
+`__tests__/permissions.test.js` asks them the same questions yhub's gates ask;
+run it with `npm test` (see "Tests" below).
 
 Masks are positional `crud` strings where `-` denies, so `'-r--'` is read-only.
 
@@ -379,6 +379,32 @@ made by the `createbuckets` job of `compose.yml` rather than by this server, and
 made *versioned*, so what is exercised is what a deployment runs rather than a
 simpler case. Watch it with `mc ls --versions --recursive impress/yhub-storage`
 from an `mc` container on the stack's network.
+
+## Tests
+
+`npm test` runs two suites, neither of which needs redis, postgres or S3:
+
+- `__tests__/permissions.test.js` on node's own runner (`node:test`) — it
+  imports `@y/hub/permissions` (a subpath export, no redis/postgres pulled in)
+  to run the real permission pipeline, and is kept on `node:test` on purpose,
+- the `__tests__/*.spec.mjs` files on **vitest** (`npm run test:watch` for the
+  watcher):
+  - `__tests__/migration.spec.mjs` drives `maybeMigrate` and `fullMigrate` end
+    to end with `@aws-sdk/client-s3` and the yhub instance faked and `@y/y`
+    real, so the content maps under assertion are the real ones — plus the
+    module-load validation (`SOFT_MIGRATION`, the `LEGACY_S3_*` checks,
+    addressing style),
+  - `__tests__/server.spec.mjs` covers the boot contract: the environment
+    `server.js` refuses (`YHUB_ROLE`, the numeric knobs, a half-configured
+    bucket) and the configuration it hands `createYHub` when it accepts,
+  - `__tests__/permissions.spec.mjs` is the vitest counterpart of
+    `permissions.test.js`.
+
+The `__tests__/` directory (and the `.mjs` extension) keeps the specs out of
+`node --test`'s discovery and out of the Docker image (`COPY *.js`); shared
+fakes live in `__tests__/_helpers.mjs`. CI does not run these yet — it installs with `npm ci --omit=dev`, so `vitest` is absent
+there; the pytest-driven integration suite in `.github/workflows/impress.yml` is
+what exercises a real collaboration server.
 
 ## Container image
 
