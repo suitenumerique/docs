@@ -26,12 +26,6 @@
       "allowedVersions": "<6.0.0"
     },
     {
-      "groupName": "allowed celery versions",
-      "matchManagers": ["pep621"],
-      "matchPackageNames": ["celery"],
-      "allowedVersions": "<5.6.0"
-    },
-    {
       "groupName": "allowed langfuse versions",
       "matchManagers": ["pep621"],
       "matchPackageNames": ["langfuse"],

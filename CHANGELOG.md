@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ⬆️(backend) upgrade celery to version 5.6.3
+
 ### Fixed
 
 - 🐛(backend) skip session creation for the liveness probe
