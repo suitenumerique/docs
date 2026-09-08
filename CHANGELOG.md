@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- 🔧(backend) fine tune redis cache options
+
 ### Changed
 
 - ⬆️(backend) upgrade celery to version 5.6.3

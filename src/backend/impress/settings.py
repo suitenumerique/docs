@@ -413,6 +413,16 @@ class Base(Configuration):
     CACHES = {
         "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
     }
+    DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = values.BooleanValue(
+        default=True,
+        environ_name="DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS",
+        environ_prefix=None,
+    )
+    DJANGO_REDIS_LOGGER = values.Value(
+        default="core.cache.redis",
+        environ_name="DJANGO_REDIS_LOGGER",
+        environ_prefix=None,
+    )
 
     REST_FRAMEWORK = {
         "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -1469,6 +1479,21 @@ class Production(Base):
             ),
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "SOCKET_CONNECT_TIMEOUT": values.FloatValue(
+                    default=0.5,
+                    environ_name="CACHES_DEFAULT_SOCKET_CONNECT_TIMEOUT",
+                    environ_prefix=None,
+                ),
+                "SOCKET_TIMEOUT": values.FloatValue(
+                    default=1,
+                    environ_name="CACHES_DEFAULT_SOCKET_TIMEOUT",
+                    environ_prefix=None,
+                ),
+                "IGNORE_EXCEPTIONS": values.BooleanValue(
+                    default=True,
+                    environ_name="CACHES_DEFAULT_IGNORE_EXCEPTIONS",
+                    environ_prefix=None,
+                ),
             },
             "KEY_PREFIX": values.Value(
                 "docs",
@@ -1490,6 +1515,21 @@ class Production(Base):
             ),
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "SOCKET_CONNECT_TIMEOUT": values.FloatValue(
+                    default=0.5,
+                    environ_name="CACHES_SESSION_SOCKET_CONNECT_TIMEOUT",
+                    environ_prefix=None,
+                ),
+                "SOCKET_TIMEOUT": values.FloatValue(
+                    default=1,
+                    environ_name="CACHES_SESSION_SOCKET_TIMEOUT",
+                    environ_prefix=None,
+                ),
+                "IGNORE_EXCEPTIONS": values.BooleanValue(
+                    default=False,
+                    environ_name="CACHES_SESSION_IGNORE_EXCEPTIONS",
+                    environ_prefix=None,
+                ),
             },
         },
     }
