@@ -30,6 +30,8 @@ and this project adheres to
 - ✨(backend) serve `documents/{id}/formatted-content/` from yhub
 - ✨(collaboration) notify the backend when the worker persists new content
 - 🐛(frontend) stop reconnecting to the websocket based on the status code
+- ✨(collaboration) let a user read the document's editing history
+- ✨(frontend) fall back to http polling when the websocket cannot be opened.
 
 ### Changed
 
@@ -37,11 +39,7 @@ and this project adheres to
 - 💥(y-provider) y-provider becomes converter-only
 - 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
   `/external_api/{version}/jwks`
-- 🔒️(collaboration) reject admin jwts not issued for the yhub audience
 - 🔧(collaboration) adapt docker stack for development purpose
-- 🔧(yhub) manage the collaboration server dependencies with yarn like the rest
-  of the project (`package-lock.json` replaced by `yarn.lock`)
-- ⏪️(backend) reintroduce the reset connection mechanism
 
 ### Fixed
 
@@ -52,39 +50,15 @@ and this project adheres to
 
 ### Removed
 
-- 🔥(backend) remove the document version endpoints. `GET
-  /documents/{id}/versions/` and `GET, DELETE /documents/{id}/versions/{id}/`
-  listed S3 object versions of the legacy `{id}/file` key. Nothing has written
-  that key since the migration to the collaboration server, so the list was
-  frozen at each document's migration date, and nothing has called the
-  endpoints since the history panel started reading the collaboration server's
-  `activity` and `changeset` routes instead. Gone with them:
-  `Document.get_versions_slice`, `Document.delete_version`, the `version_id`
-  argument of `get_content_response`, the `DOCUMENT_VERSIONS_PAGE_SIZE`
-  setting, and the `versions_retrieve` and `versions_destroy` abilities
-- 🔥(backend) remove `Document.content`. The collaboration server has owned the
-  content of the documents since the migration, and the version endpoints
-  removed above were the last thing in Django that read the legacy `{id}/file`
-  object; nothing had written it for as long. Gone with the property: its
-  setter, `Document.save_content`, `Document.get_content_response` and the
-  `save()` override that existed only to write the content — a document is
-  saved by `Model.save` alone now, and creating one no longer costs a `HEAD`
-  and a `PUT` against the object storage
 - 🔥(backend) remove the unused `CollaborationService`
-- 💥(backend) remove the `documents/{id}/can-edit/` endpointt
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
 - 💥(backend) remove the `documents/{id}/content/` endpoint
+- 🔥(backend) remove the document version endpoints.
+- 🔥(backend) remove `Document.content`
 
 ### Security
 
-- 🔒️(collaboration) stop read-only users from sharing their cursor #2544. A
-  read-only connection could still propagate awareness updates — the cursor and
-  the selection — to everyone else in the document, even though its document
-  updates were already dropped. Presence is now a permission of its own,
-  separate from the right to edit: a reader receives it and never publishes it.
-  The collaboration server enforces it rather than trusting the editor to stay
-  quiet, dropping a read-only connection's presence on the websocket and
-  refusing the awareness field of an http fallback request, so a modified or
-  stale client changes nothing
+- 🔒️(collaboration) stop read-only users from sharing their cursor
 
 ## [v5.7.0] - 2026-09-15
 
