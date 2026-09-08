@@ -2,11 +2,13 @@
 
 from django.utils.deprecation import MiddlewareMixin
 
-# Paths that must never touch the session store. The liveness probe is called
-# by the kubelet every few seconds and has to keep answering even when the
-# session backend (Redis) is slow or down, otherwise every backend container
-# gets killed and restarted in a loop as soon as Redis hangs.
-SESSION_EXEMPT_PATHS = ("/__lbheartbeat__",)
+# Paths that must never touch the session store. Liveness and readiness
+# probes should never create a new session in redis. Also, the liveness probe
+# should never reach redis before returning its answer.
+SESSION_EXEMPT_PATHS = (
+    "/__lbheartbeat__",
+    "/__heartbeat__",
+)
 
 
 class ForceSessionMiddleware(MiddlewareMixin):

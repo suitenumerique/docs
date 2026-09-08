@@ -55,6 +55,39 @@ def test_middleware_force_session_liveness_probe_skips_session(path):
     assert request.session.session_key is None
 
 
+def test_middleware_force_session_readiness_probe_end_to_end():
+    """A readiness probe request answers 200 without touching the session store."""
+    client = APIClient()
+
+    with (
+        patch.object(SessionStore, "create") as mock_create,
+        patch.object(SessionStore, "load") as mock_load,
+    ):
+        response = client.get("/__heartbeat__")
+
+    assert response.status_code == 200
+    mock_create.assert_not_called()
+    mock_load.assert_not_called()
+    assert "docs_sessionid" not in response.cookies
+
+
+@pytest.mark.parametrize("path", ["/__heartbeat__", "/__heartbeat__/"])
+def test_middleware_force_session_readiness_probe_skips_session(path):
+    """
+    The readiness probe must never create a session nor load one: it has to keep
+    answering when the session backend is unavailable.
+    """
+    with (
+        patch.object(SessionStore, "create") as mock_create,
+        patch.object(SessionStore, "load") as mock_load,
+    ):
+        request = _process(path, AnonymousUser())
+
+    mock_create.assert_not_called()
+    mock_load.assert_not_called()
+    assert request.session.session_key is None
+
+
 def test_middleware_force_session_liveness_probe_end_to_end():
     """A liveness probe request answers 200 without touching the session store."""
     client = APIClient()
