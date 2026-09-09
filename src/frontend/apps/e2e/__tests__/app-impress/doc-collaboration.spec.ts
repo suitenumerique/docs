@@ -118,7 +118,7 @@ test.describe('Doc Collaboration', () => {
     await writeInEditor({ page, text: 'Hello after the reset' });
 
     await expect(otherPage.getByText('Hello after the reset')).toBeVisible({
-      timeout: 15000,
+      timeout: 10000,
     });
 
     await cleanup();

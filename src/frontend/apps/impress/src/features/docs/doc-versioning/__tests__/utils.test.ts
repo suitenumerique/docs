@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { ActivityEntry } from '../types';
-import { VERSION_GRANULARITY_MS, mergeActivityEntries } from '../utils';
+import {
+  VERSION_GRANULARITY_MS_FALLBACK as G,
+  mergeActivityEntries,
+} from '../utils';
 
 /**
  * `mergeActivityEntries` is the only part of the history policy that lives in
@@ -14,8 +17,6 @@ const entry = (from: number, to: number, by: string | null): ActivityEntry => ({
   to,
   by,
 });
-
-const G = VERSION_GRANULARITY_MS;
 
 describe('mergeActivityEntries', () => {
   it('has nothing to say about an empty timeline', () => {

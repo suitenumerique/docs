@@ -6,12 +6,13 @@ import {
   UseQueryOptionsAPI,
   fetchCollaborationAPI,
 } from '@/api';
+import { useConfig } from '@/core/config/api';
 import { useCollaborationTarget } from '@/core/config/hooks/useCollaborationUrl';
 
 import { APIActivity, DocVersion } from '../types';
 import {
   UNGROUPED_AUTHORS,
-  VERSION_GRANULARITY_MS,
+  VERSION_GRANULARITY_MS_FALLBACK,
   mergeActivityEntries,
 } from '../utils';
 
@@ -35,6 +36,7 @@ export type DocActivityParam = {
 const getDocActivity = async (
   target: CollaborationTarget,
   { docId }: DocActivityParam,
+  granularityMs: number,
 ): Promise<DocVersion[]> => {
   const { activity } = await fetchCollaborationAPI<APIActivity>(
     target,
@@ -43,8 +45,8 @@ const getDocActivity = async (
     {
       query: {
         group: true,
-        groupMaxGap: VERSION_GRANULARITY_MS,
-        groupMaxDuration: VERSION_GRANULARITY_MS,
+        groupMaxGap: granularityMs,
+        groupMaxDuration: granularityMs,
         // the imported history is shown save by save — see UNGROUPED_AUTHORS.
         // The panel applies this again, on both sides of an entry.
         groupExclude: UNGROUPED_AUTHORS.join(','),
@@ -53,7 +55,7 @@ const getDocActivity = async (
   );
 
   // ascending from the server, newest first for the panel
-  return mergeActivityEntries(activity).reverse();
+  return mergeActivityEntries(activity, granularityMs).reverse();
 };
 
 export const KEY_DOC_ACTIVITY = 'doc-activity';
@@ -63,12 +65,17 @@ export function useDocActivity(
   queryConfig?: Omit<UseQueryOptionsAPI<DocVersion[]>, 'queryKey' | 'queryFn'>,
 ) {
   const target = useCollaborationTarget();
+  const { data: conf } = useConfig();
+  const granularityMs =
+    conf?.COLLABORATION_VERSION_GRANULARITY_MS ??
+    VERSION_GRANULARITY_MS_FALLBACK;
 
   return useQuery<DocVersion[], APIError, DocVersion[]>({
-    // `target` belongs in the key: it arrives with the configuration, so a
-    // query started before it resolved must not be reused after
-    queryKey: [KEY_DOC_ACTIVITY, params, target],
-    queryFn: () => getDocActivity(target as CollaborationTarget, params),
+    // `target` and `granularityMs` belong in the key: both arrive with the
+    // configuration, so a query started before they resolved must not be reused
+    queryKey: [KEY_DOC_ACTIVITY, params, target, granularityMs],
+    queryFn: () =>
+      getDocActivity(target as CollaborationTarget, params, granularityMs),
     enabled: !!target,
     /**
      * Against the application's three-minute default, which is wrong for this
