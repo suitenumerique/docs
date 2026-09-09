@@ -157,6 +157,8 @@ test.describe('Doc Routing', () => {
       RELEASE_VERSION: '0.0.0',
     });
 
+    await page.goto('/');
+
     let counterReload = 0;
     await page.route(/.*\/users\/me\/$/, async (route) => {
       counterReload += 1;
