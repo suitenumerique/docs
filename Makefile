@@ -44,6 +44,7 @@ DOCKER_USER         := $(DOCKER_UID):$(DOCKER_GID)
 endif
 COMPOSE             = DOCKER_USER=$(DOCKER_USER) docker compose
 COMPOSE_E2E         = DOCKER_USER=$(DOCKER_USER) docker compose -f compose.yml -f compose-e2e.yml
+COMPOSE_DEMO        = $(COMPOSE)
 COMPOSE_EXEC        = $(COMPOSE) exec
 COMPOSE_EXEC_APP    = $(COMPOSE_EXEC) app-dev
 COMPOSE_RUN         = $(COMPOSE) run --rm
@@ -53,6 +54,7 @@ COMPOSE_RUN_CROWDIN = $(COMPOSE_RUN) crowdin crowdin
 # -- Backend
 MANAGE              = $(COMPOSE_RUN_APP) python manage.py
 MAIL_YARN           = $(COMPOSE_RUN) -w //app/src/mail node yarn
+YHUB_SERVICE       = yhub
 
 # -- Frontend
 PATH_FRONT          = ./src/frontend
@@ -193,6 +195,8 @@ bootstrap: \
 .PHONY: bootstrap
 
 bootstrap-e2e: ## Prepare Docker production images to be used for e2e tests
+bootstrap-e2e: COMPOSE_DEMO = $(COMPOSE_E2E)
+bootstrap-e2e: YHUB_SERVICE = yhub-e2e
 bootstrap-e2e: \
 	pre-bootstrap \
 	build-e2e \
@@ -233,7 +237,7 @@ build-frontend: ## build the frontend container
 build-e2e: cache ?=
 build-e2e: ## build the e2e container
 	@$(MAKE) build-backend cache=$(cache)
-	@$(MAKE) build-yhub cache=$(cache)
+	@$(COMPOSE_E2E) build yhub-e2e $(cache)
 	@$(COMPOSE_E2E) build frontend $(cache)
 	@$(COMPOSE_E2E) build y-provider-converter $(cache)
 .PHONY: build-e2e
@@ -253,6 +257,7 @@ logs: ## display app-dev logs (follow mode)
 run-backend: ## Start only the backend application and all needed services
 	@$(MAKE) create-docker-network
 	@$(MAKE) data/jwt/private.pem
+	@$(MAKE) data/jwt/yhub-private.pem
 	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider-development-converter
@@ -268,9 +273,15 @@ run:
 
 run-e2e: ## start the e2e server
 run-e2e:
-	@$(MAKE) run-backend
-	@$(COMPOSE_E2E) up --force-recreate -d frontend
+	@$(MAKE) create-docker-network
+	@$(MAKE) data/jwt/private.pem
+	@$(MAKE) data/jwt/yhub-private.pem
+	@$(COMPOSE) up --force-recreate -d docspec
+	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE_E2E) up --force-recreate -d y-provider-converter
+	@$(COMPOSE_E2E) up --force-recreate -d yhub-e2e
+	@$(COMPOSE) up --force-recreate -d nginx
+	@$(COMPOSE_E2E) up --force-recreate -d frontend
 .PHONY: run-e2e
 
 status: ## an alias for "docker compose ps"
@@ -285,7 +296,7 @@ stop: ## stop the development server using Docker
 
 demo: ## flush db then create a demo for load testing purpose
 	@echo "$(BOLD)Waiting for the backend and the collaboration server (yhub)$(RESET)"
-	@$(COMPOSE) up -d --wait app-dev yhub
+	@$(COMPOSE_DEMO) up -d --wait app-dev $(YHUB_SERVICE)
 	@$(MAKE) resetdb
 	@$(MANAGE) create_demo
 .PHONY: demo
