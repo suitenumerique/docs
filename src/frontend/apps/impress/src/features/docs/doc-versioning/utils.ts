@@ -9,7 +9,7 @@ import { ActivityEntry, DocVersion } from './types';
  * at typing speed is far finer than anything worth listing — a history of every
  * few keystrokes is not a history.
  */
-export const VERSION_GRANULARITY_MS = 60_000;
+export const VERSION_GRANULARITY_MS_FALLBACK = 60_000;
 
 /**
  * Authors whose changes are never merged into a version with anything else.
@@ -56,7 +56,7 @@ export const UNGROUPED_AUTHORS = ['system'];
  */
 export const mergeActivityEntries = (
   activity: ActivityEntry[],
-  granularityMs: number = VERSION_GRANULARITY_MS,
+  granularityMs: number = VERSION_GRANULARITY_MS_FALLBACK,
 ): DocVersion[] => {
   const versions: DocVersion[] = [];
   const authors: Set<string>[] = [];

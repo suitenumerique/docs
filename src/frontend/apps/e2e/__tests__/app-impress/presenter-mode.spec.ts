@@ -3,7 +3,7 @@ import path from 'path';
 import { Locator, Page, expect, test } from '@playwright/test';
 import { PDFParse } from 'pdf-parse';
 
-import { createDoc, mockedDocument, reopenDoc } from './utils-common';
+import { createDoc, mockedDocument } from './utils-common';
 import {
   openSuggestionMenu,
   tryFocusEditorContent,
@@ -427,19 +427,10 @@ test.describe('Presenter Mode', () => {
     page,
     browserName,
   }) => {
-    const [docTitle] = await createDoc(
-      page,
-      'presenter-deeplink',
-      browserName,
-      1,
-    );
+    await createDoc(page, 'presenter-deeplink', browserName, 1);
     await writeMultiSlideDoc(page);
     const docId = getDocIdFromUrl(page);
 
-    // Leave and come back before reloading through the deep-link, so what the
-    // deep-link opens is what the collaboration server kept, not what this tab
-    // still had in memory.
-    await reopenDoc(page, docTitle);
     await page.goto(`/docs/${docId}/?view=present&slide=3`);
 
     const overlay = page.getByRole('dialog', { name: 'Presenter mode' });

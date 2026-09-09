@@ -9,10 +9,11 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
 import { Box, Text } from '@/components';
-import { Doc } from '@/docs/doc-management/';
+import { useThreadStore } from '@/docs/doc-comments/stores/useThreadStore';
+import { type Doc } from '@/docs/doc-management/';
 
 import { useRestoreDocVersion } from '../api';
-import { DocVersion } from '../types';
+import { type DocVersion } from '../types';
 
 const ModalStyle = createGlobalStyle`
   .c__modal__title {
@@ -35,6 +36,7 @@ export const ModalConfirmationVersion = ({
 }: ModalConfirmationVersionProps) => {
   const { t } = useTranslation();
   const { toast } = useToastProvider();
+  const { threadStore } = useThreadStore();
 
   /**
    * The collaboration server undoes everything after this version and hands the
@@ -45,6 +47,8 @@ export const ModalConfirmationVersion = ({
     onSuccess: () => {
       toast(t('Version restored successfully'), VariantType.SUCCESS);
       onSuccess();
+
+      threadStore?.refreshThreads();
     },
   });
 
