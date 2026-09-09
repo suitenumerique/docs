@@ -5,7 +5,7 @@ import cs from 'convert-stream';
 
 import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
 import { getEditor, openSuggestionMenu, writeInEditor } from './utils-editor';
-import { updateShareLink } from './utils-share';
+import { connectOtherUserToDoc, updateShareLink } from './utils-share';
 import {
   createRootSubPage,
   getTreeRow,
@@ -744,6 +744,21 @@ test.describe('Doc Editor', () => {
     await page.goto(clipboardContent);
     await expect(editor.getByText('First Block')).not.toBeInViewport();
     await expect(editor.getByText('My Block')).toBeInViewport();
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(page, 'Public', 'Reading');
+
+    // Check link on read-only view for another user
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      browserName,
+      docUrl: clipboardContent,
+      withoutSignIn: true,
+    });
+
+    await expect(otherPage.getByText('First Block')).not.toBeInViewport();
+    await expect(otherPage.getByText('My Block')).toBeInViewport();
+
+    await cleanup();
   });
 
   test('it checks "Equation block" feature', async ({ page, browserName }) => {

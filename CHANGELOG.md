@@ -23,6 +23,7 @@ and this project adheres to
 
 - 🐛(backend) skip session creation for the liveness probe
 - 🐛(frontend) preserve page titles when adding an emoji #2586
+- 🐛(frontend) scroll to the linked block in read-only documents #2663
 - 🐛(frontend) hide the selection highlight on presenter images #2665
 - 🐛(y-provider) prevent process crash on malformed websocket frames #2673
 - 🐛(docker) pull minio images from quay.io #2675
