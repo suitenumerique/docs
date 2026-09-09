@@ -33,6 +33,23 @@ const doc = {
   },
 } as any;
 
+describe('DocHeader - emoji button labels', () => {
+  test('uses emoji wording instead of icon', () => {
+    const { rerender } = render(<DocHeader doc={doc} />, {
+      wrapper: AppWrapper,
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Add emoji' }),
+    ).toBeInTheDocument();
+    rerender(<DocHeader doc={{ ...doc, title: '📄 My document' }} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Remove emoji' }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe('DocHeader - Add emoji (April Fools easter egg)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -54,7 +71,7 @@ describe('DocHeader - Add emoji (April Fools easter egg)', () => {
 
       render(<DocHeader doc={doc} />, { wrapper: AppWrapper });
 
-      fireEvent.click(screen.getByRole('button', { name: 'Add icon' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Add emoji' }));
 
       expect(mockUpdateDocEmoji).toHaveBeenCalledWith(
         'doc-1',
@@ -74,7 +91,7 @@ describe('DocHeader - Add emoji (April Fools easter egg)', () => {
     const titleInput = screen.getByRole('textbox', { name: 'Document title' });
     titleInput.textContent = 'My new document';
     fireEvent.blur(titleInput);
-    fireEvent.click(screen.getByRole('button', { name: 'Add icon' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add emoji' }));
 
     expect(mockUpdateDocEmoji).toHaveBeenCalledWith(
       'doc-1',
