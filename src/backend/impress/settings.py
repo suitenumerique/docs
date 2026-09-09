@@ -990,6 +990,12 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    DOCUMENT_NB_ACCESSES_CACHE_TIMEOUT = values.IntegerValue(
+        default=600,
+        environ_name="DOCUMENT_NB_ACCESSES_CACHE_TIMEOUT",
+        environ_prefix=None,
+    )
+
     # Logging
     # We want to make it easy to log to console but by default we log production
     # to Sentry and don't want to log to console.

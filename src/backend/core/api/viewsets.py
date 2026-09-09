@@ -1049,6 +1049,9 @@ class DocumentViewSet(
                     defaults={"role": models.RoleChoices.OWNER},
                 )
 
+        # Invalidate the nb_accesses cache, the value has probably changed after the move.
+        document.invalidate_nb_accesses_cache()
+
         posthog_capture(
             PosthogEventName.DOC_MOVED,
             user,

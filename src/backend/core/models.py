@@ -1193,7 +1193,9 @@ class Document(MP_Node, BaseModel):
                     document__ancestors_deleted_at__isnull=True,
                 ).count(),
             )
-            cache.set(cache_key, nb_accesses)
+            cache.set(
+                cache_key, nb_accesses, settings.DOCUMENT_NB_ACCESSES_CACHE_TIMEOUT
+            )
 
         return nb_accesses
 
