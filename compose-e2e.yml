@@ -24,3 +24,36 @@ services:
     env_file:
       - env.d/development/common
       - env.d/development/common.local
+
+  yhub-e2e:
+    user: ${DOCKER_USER:-1000}
+    networks:
+      default:
+        aliases:
+          - yhub
+    build:
+      context: .
+      dockerfile: ./src/yhub-server/Dockerfile
+      target: yhub
+    image: impress:yhub-e2e
+    environment:
+      HOME: /tmp
+    env_file:
+      - env.d/development/yhub-postgres
+      - env.d/development/yhub-postgres.local
+      - env.d/development/yhub
+      - env.d/development/yhub.local
+    restart: unless-stopped
+    volumes:
+      - ./data/jwt:/data/jwt:ro
+    ports:
+      - "3002:3002"
+    depends_on:
+      yhub-valkey:
+        condition: service_healthy
+      yhub-postgres:
+        condition: service_healthy
+      createbuckets:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
