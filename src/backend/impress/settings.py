@@ -539,6 +539,13 @@ class Base(Configuration):
         environ_name="COLLABORATION_WS_INACTIVITY_TIMEOUT",
         environ_prefix=None,
     )
+    # Granularity of the document version history, in milliseconds.
+    # Increase or decrease this value to adjust the granularity of version history.
+    COLLABORATION_VERSION_GRANULARITY_MS = values.IntegerValue(
+        60000,
+        environ_name="COLLABORATION_VERSION_GRANULARITY_MS",
+        environ_prefix=None,
+    )
     # Base url of the collaboration server's REST api, including its route
     # prefix (e.g. "http://yhub:3002/collaboration"). Server-to-server only:
     # used with an admin JWT to migrate legacy documents and, later, to kick

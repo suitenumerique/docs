@@ -18,6 +18,7 @@ export const CONFIG = {
   AI_FEATURE_BLOCKNOTE_ENABLED: false,
   AI_FEATURE_LEGACY_ENABLED: true,
   API_USERS_SEARCH_QUERY_MIN_LENGTH: 3,
+  COLLABORATION_VERSION_GRANULARITY_MS: 60000,
   COLLABORATION_WS_INACTIVITY_TIMEOUT: 15,
   COLLABORATION_WS_URL: process.env.COLLABORATION_WS_URL,
   CONVERSION_UPLOAD_ENABLED: true,
@@ -275,25 +276,6 @@ export const waitForResponseCreateDoc = (page: Page) => {
       response.url().includes('/children/') &&
       response.request().method() === 'POST',
   );
-};
-
-/**
- * Leaves the doc and comes back to it, so that what follows reads the document
- * from the collaboration server rather than from the editor that just wrote it.
- *
- * There is nothing to save: the collaboration server receives every change as
- * it is typed, and the backend holds no copy of the content to be pushed to.
- * (This used to wait for a `PATCH /content/`, which stopped existing with the
- * migration — and so waited forever.) What makes the round trip meaningful is
- * therefore the assertion that follows it: content still on the page after
- * leaving and returning is content the server kept.
- */
-export const reopenDoc = async (page: Page, title: string) => {
-  await page.getByRole('button', { name: 'Back to homepage' }).click();
-  await expect(page.getByTestId('docs-grid')).toBeVisible();
-  await expect(page.getByTestId('grid-loader')).toBeHidden();
-
-  await goToGridDoc(page, { title });
 };
 
 export const mockedDocument = async (page: Page, data: object) => {

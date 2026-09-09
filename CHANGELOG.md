@@ -24,6 +24,8 @@ and this project adheres to
 - ✨(collaboration) notify the backend when the worker persists new content
 - ✨(collaboration) let a user read the document's editing history
 - ✨(frontend) fall back to http polling when the websocket cannot be opened.
+- 🔧(collaboration) make the version-history granularity configurable through
+  `COLLABORATION_VERSION_GRANULARITY_MS`
 
 ### Changed
 
