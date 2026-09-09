@@ -225,7 +225,7 @@ test.describe('Presenter Mode', () => {
     const presenterImage = overlay.locator('img.bn-visual-media').first();
     await expect(presenterImage).toBeAttached({ timeout: 10000 });
 
-    const outline = await presenterImage.evaluate((img) => {
+    const selectionChrome = await presenterImage.evaluate((img) => {
       const blockContent = img.closest('.bn-block-content');
       blockContent?.classList.add('ProseMirror-selectednode');
 
@@ -237,12 +237,16 @@ test.describe('Presenter Mode', () => {
       return {
         outlineStyle: style.outlineStyle,
         outlineWidth: style.outlineWidth,
+        // BlockNote also paints the selection as an ::after overlay, which
+        // an outline reset alone leaves visible.
+        overlayContent: getComputedStyle(outlinedElement, '::after').content,
       };
     });
 
-    expect(outline).toEqual({
+    expect(selectionChrome).toEqual({
       outlineStyle: 'none',
       outlineWidth: '0px',
+      overlayContent: 'none',
     });
   });
 
