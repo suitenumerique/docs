@@ -189,9 +189,12 @@ test.describe('Doc Header', () => {
     await createDoc(page, 'doc-update-emoji', browserName, 1);
 
     const emojiPicker = page.locator('.--docs--doc-title').getByRole('button');
-    const addEmoji = page.getByRole('button', { name: 'Add icon' });
-    const removeEmoji = page.getByRole('button', {
-      name: 'Remove icon',
+    const docHeader = page.getByLabel(
+      'It is the card information about the document.',
+    );
+    const addEmoji = docHeader.getByRole('button', { name: 'Add emoji' });
+    const removeEmoji = docHeader.getByRole('button', {
+      name: 'Remove emoji',
     });
 
     // Top parent should not have emoji picker
