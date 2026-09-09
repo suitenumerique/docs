@@ -1729,3 +1729,59 @@ def test_models_documents_compute_ancestors_links_paths_mapping_structure(
                 {"link_reach": sibling.link_reach, "link_role": sibling.link_role},
             ],
         }
+
+
+def test_models_documents_get_self_and_ancestors_paths_root():
+    """A root document should only return its own path."""
+    document = factories.DocumentFactory()
+
+    assert len(document.path) == models.Document.steplen
+    assert document.get_self_and_ancestors_paths() == [document.path]
+
+
+def test_models_documents_get_self_and_ancestors_paths_tree(
+    django_assert_num_queries,
+):
+    """
+    The method should return the paths of the document and all its ancestors,
+    ordered from the root down to the document itself, without hitting the database.
+    """
+    root = factories.DocumentFactory()
+    factories.DocumentFactory(parent=root)  # sibling branch, should be ignored
+    parent = factories.DocumentFactory(parent=root)
+    document = factories.DocumentFactory(parent=parent)
+    child = factories.DocumentFactory(parent=document)
+
+    with django_assert_num_queries(0):
+        paths = child.get_self_and_ancestors_paths()
+
+    assert paths == [root.path, parent.path, document.path, child.path]
+
+    # Should match what treebeard computes with a database query
+    ancestors_paths = list(
+        child.get_ancestors().order_by("path").values_list("path", flat=True)
+    )
+    assert paths == ancestors_paths + [child.path]
+
+    # Filtering on these paths should return exactly the ancestors and the document
+    assert set(
+        models.Document.objects.filter(path__in=paths).values_list("id", flat=True)
+    ) == {root.id, parent.id, document.id, child.id}
+
+
+def test_models_documents_get_self_and_ancestors_paths_from_path_only():
+    """
+    The method should only rely on the materialized path and the step length,
+    so it can be used on an unsaved instance.
+    """
+    steplen = models.Document.steplen
+    document = models.Document(path="0000001" + "000000A" + "00000Zz")
+
+    assert document.get_self_and_ancestors_paths() == [
+        "0000001",
+        "0000001000000A",
+        "0000001000000A00000Zz",
+    ]
+    assert all(
+        len(path) % steplen == 0 for path in document.get_self_and_ancestors_paths()
+    )

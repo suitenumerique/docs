@@ -1158,6 +1158,20 @@ class Document(MP_Node, BaseModel):
             Bucket=default_storage.bucket_name, Key=self.file_key, VersionId=version_id
         )
 
+    def get_self_and_ancestors_paths(self):
+        """
+        Return the paths of the document and of all its ancestors, computed from
+        the materialized path without querying the database.
+
+        Filtering on `path__in` with this list hits the unique index on `path`,
+        whereas comparing `path` with `LEFT(value, LENGTH(path))` forces a
+        sequential scan of the whole table.
+        """
+        return [
+            self.path[:pos]
+            for pos in range(self.steplen, len(self.path) + 1, self.steplen)
+        ]
+
     def get_nb_accesses_cache_key(self):
         """Generate a unique cache key for each document."""
         return f"document_{self.id!s}_nb_accesses"
@@ -1175,9 +1189,7 @@ class Document(MP_Node, BaseModel):
             nb_accesses = (
                 DocumentAccess.objects.filter(document=self).count(),
                 DocumentAccess.objects.filter(
-                    document__path=Left(
-                        models.Value(self.path), Length("document__path")
-                    ),
+                    document__path__in=self.get_self_and_ancestors_paths(),
                     document__ancestors_deleted_at__isnull=True,
                 ).count(),
             )
@@ -1217,7 +1229,7 @@ class Document(MP_Node, BaseModel):
         except AttributeError:
             roles = DocumentAccess.objects.filter(
                 models.Q(user=user) | models.Q(team__in=user.teams),
-                document__path=Left(models.Value(self.path), Length("document__path")),
+                document__path__in=self.get_self_and_ancestors_paths(),
             ).values_list("role", flat=True)
 
         return RoleChoices.max(*roles)

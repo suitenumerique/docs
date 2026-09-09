@@ -13,6 +13,7 @@ and this project adheres to
 ### Changed
 
 - ⬆️(backend) upgrade celery to version 5.6.3
+- ⚡️(backend) stop using LEFT(value, LENGTH(path)) in sql queries
 
 ### Fixed
 

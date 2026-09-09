@@ -23,7 +23,7 @@ from django.core.validators import URLValidator
 from django.db import DatabaseError, connection, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
-from django.db.models.functions import Greatest, Left, Length
+from django.db.models.functions import Greatest
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils import timezone
@@ -1752,7 +1752,7 @@ class DocumentViewSet(
         # document. Filter to get the minimum access date for the logged-in user
         access_queryset = models.DocumentAccess.objects.filter(
             db.Q(user=user) | db.Q(team__in=user.teams),
-            document__path=Left(db.Value(document.path), Length("document__path")),
+            document__path__in=document.get_self_and_ancestors_paths(),
         ).aggregate(min_date=db.Min("created_at"))
 
         # Handle the case where the user has no accesses
@@ -1792,7 +1792,7 @@ class DocumentViewSet(
             access.created_at
             for access in models.DocumentAccess.objects.filter(
                 db.Q(user=user) | db.Q(team__in=user.teams),
-                document__path=Left(db.Value(document.path), Length("document__path")),
+                document__path__in=document.get_self_and_ancestors_paths(),
             )
         )
 
