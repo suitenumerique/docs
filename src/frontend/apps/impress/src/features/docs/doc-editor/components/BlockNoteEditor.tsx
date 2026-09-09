@@ -419,6 +419,8 @@ export const BlockNoteReader = ({
 
   useHeadings(editor);
 
+  useScrollToBlockAnchor();
+
   return (
     <Box>
       <DocsEditorStyle />

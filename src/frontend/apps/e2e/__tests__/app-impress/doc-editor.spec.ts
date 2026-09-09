@@ -5,7 +5,7 @@ import cs from 'convert-stream';
 
 import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
 import { getEditor, openSuggestionMenu, writeInEditor } from './utils-editor';
-import { updateShareLink } from './utils-share';
+import { connectOtherUserToDoc, updateShareLink } from './utils-share';
 import {
   createRootSubPage,
   getTreeRow,
@@ -744,6 +744,73 @@ test.describe('Doc Editor', () => {
     await page.goto(clipboardContent);
     await expect(editor.getByText('First Block')).not.toBeInViewport();
     await expect(editor.getByText('My Block')).toBeInViewport();
+  });
+
+  test('it checks "Copy link to block" for a read only viewer', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName === 'webkit',
+      'navigator.clipboard is not working with webkit and playwright',
+    );
+
+    // Sharing the doc then loading it in a second browser needs more than the
+    // default timeout.
+    test.slow();
+
+    await createDoc(page, 'doc-link-to-block-readonly', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'First Block' });
+
+    for (let i = 0; i < 30; i++) {
+      await page.keyboard.press('Enter');
+    }
+
+    await writeInEditor({ page, text: 'My Block' });
+
+    await editor
+      .locator('.bn-block-outer')
+      .filter({ hasText: 'My Block' })
+      .first()
+      .hover();
+
+    await page.locator('.bn-side-menu > button').last().click();
+    await page.getByRole('menuitem', { name: 'Link to block' }).click();
+    await expect(page.getByText('Link Copied !')).toBeVisible();
+
+    const handle = await page.evaluateHandle(() =>
+      navigator.clipboard.readText(),
+    );
+    const blockUrl = await handle.jsonValue();
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(page, 'Public', 'Reading');
+    await page.getByRole('button', { name: 'Close the share modal' }).click();
+
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      browserName,
+      docUrl: blockUrl,
+      withoutSignIn: true,
+    });
+
+    // The recipient of the link cannot edit, so the doc is rendered by the
+    // reader instead of the editor.
+    await expect(
+      otherPage.locator('.--docs--editor-container.--docs--doc-readonly'),
+    ).toBeVisible();
+
+    // Focusing the editor would scroll it, which would defeat the assertions
+    // below, so the locator is built without getEditor().
+    const otherEditor = otherPage.locator(
+      '.--docs--editor-container .ProseMirror',
+    );
+    await expect(otherEditor).toHaveAttribute('contenteditable', 'false');
+
+    await expect(otherEditor.getByText('My Block')).toBeInViewport();
+    await expect(otherEditor.getByText('First Block')).not.toBeInViewport();
+
+    await cleanup();
   });
 
   test('it checks "Equation block" feature', async ({ page, browserName }) => {

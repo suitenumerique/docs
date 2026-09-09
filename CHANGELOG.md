@@ -10,6 +10,7 @@ and this project adheres to
 
 - 🐛(backend) skip session creation for the liveness probe
 - 🐛(frontend) preserve page titles when adding an emoji #2586
+- 🐛(frontend) scroll to the linked block in read-only documents #2663
 
 ## [v5.6.1] - 2026-09-04
 
