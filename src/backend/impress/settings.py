@@ -356,6 +356,7 @@ class Base(Configuration):
 
     MIDDLEWARE = [
         "django.middleware.security.SecurityMiddleware",
+        "dockerflow.django.middleware.DockerflowMiddleware",
         "servestatic.middleware.ServeStaticMiddleware",
         "django.contrib.sessions.middleware.SessionMiddleware",
         "django.middleware.locale.LocaleMiddleware",
@@ -367,7 +368,6 @@ class Base(Configuration):
         "core.middleware.ForceSessionMiddleware",
         "core.middleware.SaveRawBodyMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
-        "dockerflow.django.middleware.DockerflowMiddleware",
         "csp.middleware.CSPMiddleware",
         "waffle.middleware.WaffleMiddleware",
     ]
