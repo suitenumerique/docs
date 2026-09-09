@@ -581,22 +581,27 @@ class DocumentViewSet(
         queryset = queryset.filter(ancestors_deleted_at__isnull=True)
 
         # Filter documents to which the current user has access...
-        access_documents_ids = models.DocumentAccess.objects.filter(
-            db.Q(user=user) | db.Q(team__in=user.teams)
-        ).values_list("document_id", flat=True)
+        access_documents_ids = (
+            models.DocumentAccess.objects.filter(
+                db.Q(user=user) | db.Q(team__in=user.teams)
+            )
+            .order_by()
+            .values_list("document_id", flat=True)
+        )
 
         # ...or that were previously accessed and are not restricted
-        traced_documents_ids = models.LinkTrace.objects.filter(user=user).values_list(
-            "document_id", flat=True
+        traced_documents_ids = (
+            models.LinkTrace.objects.filter(user=user)
+            .exclude(document__link_reach=models.LinkReachChoices.RESTRICTED)
+            .order_by()
+            .values_list("document_id", flat=True)
         )
 
-        return queryset.filter(
-            db.Q(id__in=access_documents_ids)
-            | (
-                db.Q(id__in=traced_documents_ids)
-                & ~db.Q(link_reach=models.LinkReachChoices.RESTRICTED)
-            )
-        )
+        # A single `IN (... UNION ...)` lets PostgreSQL drive the query from the
+        # (small) set of document ids and probe the primary key index. The
+        # equivalent `id IN (...) OR (id IN (...) AND ...)` results in a sequential
+        # scan of the whole document table.
+        return queryset.filter(id__in=access_documents_ids.union(traced_documents_ids))
 
     def filter_queryset(self, queryset):
         """Override to apply annotations to generic views."""
