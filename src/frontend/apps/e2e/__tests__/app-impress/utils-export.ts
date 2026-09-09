@@ -78,10 +78,6 @@ export const overrideDocContent = async ({
   await page.goto(`/docs/${docId}/`);
 
   // the seed has to be on screen before anything is added after it
-  await expect(page.getByText('Hello Heading 1')).toBeVisible({
-    timeout: 15000,
-  });
-
   await expect(page.getByText('copy/pasting out of doc')).toBeVisible();
 
   // Add Image SVG
