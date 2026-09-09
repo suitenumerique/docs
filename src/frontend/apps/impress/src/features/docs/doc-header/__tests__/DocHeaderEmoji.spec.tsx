@@ -54,7 +54,7 @@ describe('DocHeader - Add emoji (April Fools easter egg)', () => {
 
       render(<DocHeader doc={doc} />, { wrapper: AppWrapper });
 
-      fireEvent.click(screen.getByRole('button', { name: 'Add icon' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Add emoji' }));
 
       expect(mockUpdateDocEmoji).toHaveBeenCalledWith(
         'doc-1',
@@ -74,7 +74,7 @@ describe('DocHeader - Add emoji (April Fools easter egg)', () => {
     const titleInput = screen.getByRole('textbox', { name: 'Document title' });
     titleInput.textContent = 'My new document';
     fireEvent.blur(titleInput);
-    fireEvent.click(screen.getByRole('button', { name: 'Add icon' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add emoji' }));
 
     expect(mockUpdateDocEmoji).toHaveBeenCalledWith(
       'doc-1',
