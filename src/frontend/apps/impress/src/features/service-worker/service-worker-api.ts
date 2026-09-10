@@ -27,6 +27,9 @@ export const isApiUrl = (href: string) => {
 const isDocumentApiUrl = (url: URL) =>
   isApiUrl(url.href) && /.*\/documents\/([a-z0-9-]+)\/$/g.test(url.href);
 
+const isDocumentTreeApiUrl = (url: URL) =>
+  isApiUrl(url.href) && /\/documents\/[a-z0-9-]+\/tree\/$/.test(url.href);
+
 const isCollaborationUrl = (url: URL, endpoint: string) =>
   new RegExp(`/${endpoint}/v1/[^/]+/[^/]+/?$`).test(url.pathname);
 
@@ -85,6 +88,24 @@ registerRoute(
       new ApiPlugin({
         tableName: 'doc-item',
         type: 'item',
+        syncManager,
+      }),
+      new OfflinePlugin(),
+    ],
+  }),
+  'GET',
+);
+
+/**
+ * Cache the document tree so it renders offline.
+ */
+registerRoute(
+  ({ url }) => isDocumentTreeApiUrl(url),
+  new NetworkOnly({
+    plugins: [
+      new ApiPlugin({
+        tableName: 'doc-tree',
+        type: 'tree',
         syncManager,
       }),
       new OfflinePlugin(),
