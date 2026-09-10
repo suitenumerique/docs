@@ -30,13 +30,13 @@
     "@ai-sdk/provider-utils" "4.0.15"
     "@vercel/oidc" "3.1.0"
 
-"@ai-sdk/openai@3.0.71":
-  version "3.0.71"
-  resolved "https://registry.yarnpkg.com/@ai-sdk/openai/-/openai-3.0.71.tgz#3fc9ff336c0b267b150c042a172b102af3c96e6b"
-  integrity sha512-j6eBAa5oHFZ4U5CxpIV3T4zXNM/BviodNCZCL1qHkA4aqkwK9iQ18TWYz2DZcXpw4BO5pikKzqpXORxb1EnZGA==
+"@ai-sdk/openai@3.0.106":
+  version "3.0.106"
+  resolved "https://registry.yarnpkg.com/@ai-sdk/openai/-/openai-3.0.106.tgz#8fada61b97f977971f8820538b3cb1ccb1c81e59"
+  integrity sha512-sfqRcDDAeoAqA7RbVihZ10obDOia8+mZKjBdpFK95wpvsF0Izkqtne2MP2yeMnWI0DHBT3gGLT9+YUyG00DZmg==
   dependencies:
-    "@ai-sdk/provider" "3.0.10"
-    "@ai-sdk/provider-utils" "4.0.29"
+    "@ai-sdk/provider" "3.0.15"
+    "@ai-sdk/provider-utils" "4.0.50"
 
 "@ai-sdk/provider-utils@4.0.15", "@ai-sdk/provider-utils@^4.0.2":
   version "4.0.15"
@@ -56,10 +56,27 @@
     "@standard-schema/spec" "^1.1.0"
     eventsource-parser "^3.0.8"
 
+"@ai-sdk/provider-utils@4.0.50":
+  version "4.0.50"
+  resolved "https://registry.yarnpkg.com/@ai-sdk/provider-utils/-/provider-utils-4.0.50.tgz#f21061a898a3fd98a3254914a06199926cf99183"
+  integrity sha512-YAcB+7M1JhAYsHorTrWyldCyZihjCKr/QRXH2vFrara/+lwqNE7q5KzoucKLZ7ktFiUonhnhFhRoiymsq/2K2Q==
+  dependencies:
+    "@ai-sdk/provider" "3.0.15"
+    "@standard-schema/spec" "^1.1.0"
+    eventsource-parser "^3.0.8"
+    undici "^6.28.0"
+
 "@ai-sdk/provider@3.0.10":
   version "3.0.10"
   resolved "https://registry.yarnpkg.com/@ai-sdk/provider/-/provider-3.0.10.tgz#abfb6776f699951f9b8ac20cf1d42a3fc7d79752"
   integrity sha512-Q3BZ27qfpYqnCYGvE3vt+Qi6LGOF9R5Nmzn+9JoM1lCRsD9mYaIhfJLkSunN48nfGXJ6n+XNV0J/XVpqGQl7Dw==
+  dependencies:
+    json-schema "^0.4.0"
+
+"@ai-sdk/provider@3.0.15":
+  version "3.0.15"
+  resolved "https://registry.yarnpkg.com/@ai-sdk/provider/-/provider-3.0.15.tgz#baada1bc3783e2b8ebcff0cd5ce8b1db4425a96d"
+  integrity sha512-XeZW1CcDF2GMbH4wejW6xBRI2QCOgnkVYUnxoeDadB1mf85riL2bMUeDoh+6gJ/r4mjNfzUPW8OjLjvwTP0u1Q==
   dependencies:
     json-schema "^0.4.0"
 
@@ -15487,6 +15504,11 @@ undici-types@~7.18.0:
   version "7.18.2"
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-7.18.2.tgz#29357a89e7b7ca4aef3bf0fd3fd0cd73884229e9"
   integrity sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==
+
+undici@^6.28.0:
+  version "6.28.1"
+  resolved "https://registry.yarnpkg.com/undici/-/undici-6.28.1.tgz#aa9d2c44aef3840bef80216f2a50f337543a3fbd"
+  integrity sha512-zWpdTVD54H48CIybL0rWQ3ukpb9d23wM7eH5RtfdmeP70cWHNjtfo7P4vZX+5CoDcO53J4Pu5uXp7lNfjc6DRA==
 
 undici@^7.12.0, undici@^7.25.0:
   version "7.29.0"

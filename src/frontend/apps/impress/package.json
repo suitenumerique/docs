@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@ag-media/react-pdf-table": "2.0.3",
-    "@ai-sdk/openai": "3.0.71",
+    "@ai-sdk/openai": "3.0.106",
     "@blocknote/code-block": "0.54.0",
     "@blocknote/core": "0.54.0",
     "@blocknote/diagram-block": "0.54.0",
