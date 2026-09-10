@@ -12,7 +12,9 @@ import {
   useDocTitleUpdate,
   useDocUtils,
 } from '@/docs/doc-management';
+import { useIsOffline } from '@/features/service-worker/hooks/useOffline';
 
+import { AlertOffline } from './AlertOffline';
 import { AlertRestore } from './AlertRestore';
 import { DocHeaderInfo } from './DocHeaderInfo';
 import { DocTitle } from './DocTitle';
@@ -24,9 +26,11 @@ interface DocHeaderProps {
 export const DocHeader = ({ doc }: DocHeaderProps) => {
   const { t } = useTranslation();
   const isDeletedDoc = !!doc.deleted_at;
-  // Emoji Management
+  const isOffline = useIsOffline((state) => state.isOffline);
+
   const { emoji } = getEmojiAndTitle(doc.title ?? '');
   const { updateDocEmoji } = useDocTitleUpdate();
+
   const { isTopRoot } = useDocUtils(doc);
   const displayEmojiButton = doc.abilities.partial_update && !isTopRoot;
   const latestTitleRef = useRef(doc.title ?? '');
@@ -64,6 +68,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
           }}
         >
           {isDeletedDoc && <AlertRestore doc={doc} />}
+          {isOffline && <AlertOffline />}
         </Box>
         <Box $gap="sm">
           <Box>
