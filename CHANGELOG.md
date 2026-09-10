@@ -10,6 +10,10 @@ and this project adheres to
 
 - ✨(helm) allow disallowing search engine indexing per instance #2694
 
+### Fixed
+
+- 🐛(export) keep image aspect ratio in PDF columns #2670
+
 ## [v5.7.0] - 2026-09-15
 
 ### Added
@@ -23,7 +27,7 @@ and this project adheres to
 - ⬆️(backend) upgrade celery to version 5.6.3 #2658
 - ⚡️(backend) stop using LEFT(value, LENGTH(path)) in sql queries #2668
 - 🚚(project) switch docspec image to ghcr.io/docspec/api #2553
-- 🚚(global) move favorite documents API endpoint 
+- 🚚(global) move favorite documents API endpoint
   to `/documents/favorites/` #2540
 
 ### Fixed
