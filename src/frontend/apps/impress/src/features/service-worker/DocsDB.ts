@@ -20,6 +20,10 @@ interface IDocsDB extends DBSchema {
     key: string;
     value: Doc;
   };
+  'doc-tree': {
+    key: string;
+    value: Doc;
+  };
   'doc-mutation': {
     key: string;
     value: DBRequest;
@@ -30,7 +34,7 @@ interface IDocsDB extends DBSchema {
   };
 }
 
-type TableName = 'doc-list' | 'doc-item' | 'doc-mutation';
+type TableName = 'doc-list' | 'doc-item' | 'doc-tree' | 'doc-mutation';
 
 /**
  * IndexDB prefers incremental versioning when upgrading the database,
@@ -71,6 +75,9 @@ export class DocsDB {
           }
           if (!db.objectStoreNames.contains('doc-item')) {
             db.createObjectStore('doc-item');
+          }
+          if (!db.objectStoreNames.contains('doc-tree')) {
+            db.createObjectStore('doc-tree');
           }
           if (!db.objectStoreNames.contains('doc-mutation')) {
             db.createObjectStore('doc-mutation');
@@ -125,6 +132,7 @@ export class DocsDB {
 
       await DocsDB.deleteAll('doc-item');
       await DocsDB.deleteAll('doc-list');
+      await DocsDB.deleteAll('doc-tree');
       await DocsDB.deleteAll('doc-mutation');
       await db.put('doc-version', currentVersion, 'version');
     }

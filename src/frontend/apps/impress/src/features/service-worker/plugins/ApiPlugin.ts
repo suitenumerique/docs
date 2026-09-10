@@ -8,8 +8,8 @@ import { RequestSerializer } from '../RequestSerializer';
 import { SyncManager } from '../SyncManager';
 
 interface OptionsReadonly {
-  tableName: 'doc-list' | 'doc-item';
-  type: 'list' | 'item';
+  tableName: 'doc-list' | 'doc-item' | 'doc-tree';
+  type: 'list' | 'item' | 'tree';
 }
 
 interface OptionsMutate {
@@ -22,6 +22,45 @@ interface OptionsSync {
 
 type Options = (OptionsReadonly | OptionsMutate | OptionsSync) & {
   syncManager: SyncManager;
+};
+
+/**
+ * A cached `documents/{id}/tree/` response with `patch` merged into every node
+ * whose id matches — the root included. Returns a new tree; the input is left
+ * alone.
+ */
+export const patchTreeNode = (
+  node: Doc,
+  docId: string,
+  patch: Partial<Doc>,
+): Doc => {
+  const next = node.id === docId ? { ...node, ...patch } : node;
+
+  if (!node.children?.length) {
+    return next;
+  }
+
+  return {
+    ...next,
+    children: node.children.map((child) => patchTreeNode(child, docId, patch)),
+  };
+};
+
+/**
+ * The same walk, dropping the node whose id matches from its parent's
+ * `children`. A tree rooted on that node is the caller's to discard.
+ */
+export const pruneTreeNode = (node: Doc, docId: string): Doc => {
+  if (!node.children?.length) {
+    return node;
+  }
+
+  return {
+    ...node,
+    children: node.children
+      .filter((child) => child.id !== docId)
+      .map((child) => pruneTreeNode(child, docId)),
+  };
 };
 
 export class ApiPlugin implements WorkboxPlugin {
@@ -56,7 +95,11 @@ export class ApiPlugin implements WorkboxPlugin {
         return response;
       }
 
-      if (this.options.type === 'list' || this.options.type === 'item') {
+      if (
+        this.options.type === 'list' ||
+        this.options.type === 'item' ||
+        this.options.type === 'tree'
+      ) {
         const tableName = this.options.tableName;
         const body = (await response.clone().json()) as DocsResponse | Doc;
         await DocsDB.cacheResponse(request.url, body, tableName);
@@ -135,6 +178,7 @@ export class ApiPlugin implements WorkboxPlugin {
         return this.handlerDidErrorUpdate(request);
       case 'list':
       case 'item':
+      case 'tree':
         return this.handlerDidErrorRead(this.options.tableName, request.url);
     }
 
@@ -255,6 +299,15 @@ export class ApiPlugin implements WorkboxPlugin {
     );
 
     /**
+     * Seed the tree for the new document, so the doc tree renders it offline
+     */
+    await DocsDB.cacheResponse(
+      `${request.url}${uuid}/tree/`,
+      { ...newResponse, children: [] },
+      'doc-tree',
+    );
+
+    /**
      * Add the new entry to the cache list.
      */
     const db = await DocsDB.open();
@@ -315,6 +368,30 @@ export class ApiPlugin implements WorkboxPlugin {
       list.results = list.results.filter((result) => result.id !== docId);
 
       await DocsDB.cacheResponse(key, list, 'doc-list');
+    }
+
+    /**
+     * Drop the doc from every cached tree, and discard a tree rooted on it —
+     * the same reason as the list loop above: the tree carries its own copies.
+     */
+    if (docId && db.objectStoreNames.contains('doc-tree')) {
+      for (const key of await db.getAllKeys('doc-tree')) {
+        const tree = await db.get('doc-tree', key);
+
+        if (!tree) {
+          continue;
+        }
+
+        if (tree.id === docId) {
+          await db.delete('doc-tree', key);
+        } else {
+          await DocsDB.cacheResponse(
+            key,
+            pruneTreeNode(tree, docId),
+            'doc-tree',
+          );
+        }
+      }
     }
 
     db.close();
@@ -385,6 +462,24 @@ export class ApiPlugin implements WorkboxPlugin {
       });
 
       await DocsDB.cacheResponse(key, list, 'doc-list');
+    }
+
+    /**
+     * Update the doc wherever a cached tree holds a copy of it — its own root,
+     * or nested under an ancestor — for the same reason as the list loop above.
+     */
+    if (docId && db.objectStoreNames.contains('doc-tree')) {
+      for (const key of await db.getAllKeys('doc-tree')) {
+        const tree = await db.get('doc-tree', key);
+
+        if (tree) {
+          await DocsDB.cacheResponse(
+            key,
+            patchTreeNode(tree, docId, bodyMutate),
+            'doc-tree',
+          );
+        }
+      }
     }
 
     db.close();
