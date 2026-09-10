@@ -1,10 +1,13 @@
 import { HttpProvider, createWebsocketFallback } from '@y/yhub-http-fallback';
+import { IndexeddbPersistence } from 'y-indexeddb';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 import { create } from 'zustand';
 
 import { collaborationHttpTarget } from '@/core/config/hooks/useCollaborationUrl';
 import { Base64 } from '@/docs/doc-management';
+
+import { rememberLocalDoc } from '../localDocs';
 
 /**
  * `readOnly` decides whether this client may publish presence. It has to be known
@@ -29,6 +32,7 @@ export interface UseCollaborationStore {
   resumeFromInactivity: () => void;
   provider: WebsocketProvider | undefined;
   httpProvider: HttpProvider | undefined;
+  persistence: IndexeddbPersistence | undefined;
   isConnected: boolean;
   isReady: boolean;
   isSynced: boolean;
@@ -42,6 +46,7 @@ export interface UseCollaborationStore {
 const defaultValues = {
   provider: undefined,
   httpProvider: undefined,
+  persistence: undefined,
   isConnected: false,
   isReady: false,
   isSynced: false,
@@ -89,6 +94,35 @@ const suspendFallback = (httpProvider: HttpProvider | undefined) => {
   httpProvider?.disconnect();
 };
 
+/**
+ * What a reader's `PATCH /ydoc` becomes: dropped here, and reported as accepted.
+ * A reader may not write.
+ */
+const readerWriteDropped = () =>
+  Promise.resolve(new Response(null, { status: 204 }));
+
+/**
+ * Keep a local copy of the document, when the browser lets us.
+ *
+ * `indexedDB` is absent more often than it looks - a browser told to block site
+ * data, some private windows, and every non-browser context this module is
+ * imported into. Local persistence is a convenience, so a browser without it
+ * gets an editor that works exactly as it did before rather than no editor:
+ * `undefined` here, and every caller treats that as "no local copy".
+ */
+const createPersistence = (storeId: string, doc: Y.Doc) => {
+  if (typeof indexedDB === 'undefined') {
+    return undefined;
+  }
+
+  try {
+    return new IndexeddbPersistence(storeId, doc);
+  } catch (error) {
+    console.error('Failed to open the local copy of the document', error);
+    return undefined;
+  }
+};
+
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
   ...defaultValues,
   createProvider: (wsUrl, storeId, initialDoc, { readOnly = false } = {}) => {
@@ -98,6 +132,23 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
 
     if (initialDoc) {
       Y.applyUpdate(doc, Buffer.from(initialDoc, 'base64'));
+    }
+
+    /**
+     * Used for the offline mode, it keeps a local copy of the document in IndexedDB so that
+     * the editor can display the last known state even when the network is unavailable.
+     */
+    const persistence = createPersistence(storeId, doc);
+
+    if (persistence) {
+      // Record the local copy immediately to prevent it from being swept as an orphan.
+      void rememberLocalDoc(storeId);
+
+      /**
+       * The editor waits on `isReady` (see `DocEditor`), and local content is enough to render:
+       * whatever the connection then brings merges into what is already on screen.
+       */
+      persistence.on('synced', () => set({ isReady: true }));
     }
 
     const provider = new WebsocketProvider(wsUrl, storeId, doc, {
@@ -149,7 +200,9 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
             gc: true,
             // the session cookie is the credential here too, exactly as on the ws upgrade
             fetch: (input, init) =>
-              fetch(input, { ...init, credentials: 'include' }),
+              readOnly && init?.method === 'PATCH'
+                ? readerWriteDropped()
+                : fetch(input, { ...init, credentials: 'include' }),
           },
         )
       : undefined;
@@ -185,9 +238,21 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
         return;
       }
 
-      // The editor renders from the last snapshot, and the http fallback takes over, while
-      // y-websocket retries
-      set({ isConnected: false, isReady: true });
+      const { isConnected: wasConnected, isReady: wasReady } = get();
+
+      // This also fires on every failed reconnect attempt - forever, on a network that never
+      // lets the socket open. Skip the `set()` once these are already at this value, or a
+      // same-value write still hands every no-selector subscriber a new object to re-render on.
+      if (wasConnected || !wasReady) {
+        set({ isConnected: false, isReady: true });
+      }
+
+      // Only a connection that had actually opened can have been *lost* in a way that means
+      // our access changed. A socket that never opens retries forever; refetching the document
+      // on each attempt would only thrash the query while the http fallback carries it fine.
+      if (!wasConnected) {
+        return;
+      }
 
       clearTimeout(lostConnectionTimeout);
       // Jitter spreading: Math.random() generates a random delay to avoid
@@ -230,18 +295,22 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     set({
       provider,
       httpProvider,
+      persistence,
     });
 
     return provider;
   },
   destroyProvider: () => {
-    const { provider, httpProvider } = get();
+    const { provider, httpProvider, persistence } = get();
 
     stopFallback?.();
     stopFallback = undefined;
 
     // publishes a farewell awareness state, best effort, so the others see us leave
     httpProvider?.destroy();
+
+    // Destroy the persistence layer, which keeps the local copy of the document.
+    void persistence?.destroy();
 
     if (provider) {
       /**

@@ -6,7 +6,7 @@ import { useConfig } from '../api';
  * Where the collaboration server's rooms live, independent of which document is
  * being opened. Kept apart so the two hooks below cannot answer differently.
  */
-const useCollaborationBaseUrl = () => {
+export const useCollaborationUrl = () => {
   const { data: conf } = useConfig();
 
   return (
@@ -15,17 +15,6 @@ const useCollaborationBaseUrl = () => {
       ? `wss://${window.location.host}/collaboration/ws/v1/docs`
       : '')
   );
-};
-
-export const useCollaborationUrl = (room?: string) => {
-  const baseUrl = useCollaborationBaseUrl();
-
-  if (!room) {
-    return;
-  }
-
-  // The room is appended to the base URL by the provider (y-websocket)
-  return baseUrl;
 };
 
 /**
@@ -65,7 +54,7 @@ export const collaborationHttpTarget = (wsUrl: string) => {
  * serves.
  */
 export const useCollaborationTarget = (): CollaborationTarget | undefined => {
-  const baseUrl = useCollaborationBaseUrl();
+  const baseUrl = useCollaborationUrl();
 
   return baseUrl ? collaborationHttpTarget(baseUrl) : undefined;
 };
