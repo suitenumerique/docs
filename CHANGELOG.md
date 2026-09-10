@@ -18,6 +18,7 @@ and this project adheres to
 
 - 🐛(backend) skip session creation for the liveness probe
 - 🐛(frontend) preserve page titles when adding an emoji #2586
+- 🐛(export) keep image aspect ratio in PDF columns- #2670
 
 ## [v5.6.1] - 2026-09-04
 
@@ -57,7 +58,7 @@ and this project adheres to
 - 🐛(backend) fix duplicating a document that has no content #2609
 - 📄(frontend) allowed partially export when MIT #2551
 - 🐛(backend) manage async support for Docs custom middleware #2619
-- 🐛(frontend) save the doc with a keepalive 
+- 🐛(frontend) save the doc with a keepalive
   request when leaving the page #2619
 - 🐛(frontend) export any raster image supported by the browser to a PDF #2530
 
