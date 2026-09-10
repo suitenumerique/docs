@@ -57,7 +57,16 @@ function makeExporter(blob: Blob) {
 type PDFElementProps = {
   children?: React.ReactNode;
   src?: string;
-  style?: { width?: number; height?: number };
+  wrap?: boolean;
+  style?: {
+    width?: number | string;
+    height?: number | string;
+    maxWidth?: string;
+    aspectRatio?: number;
+    objectFit?: string;
+    objectPosition?: string;
+    alignSelf?: string;
+  };
 };
 
 // Walk the React element tree to find the first node of a given type.
@@ -220,6 +229,14 @@ describe('blockMappingImagePDF', () => {
     expect(imageEl).toBeDefined();
     expect(imageEl?.props.style?.width).toBe(225);
     expect(imageEl?.props.style?.height).toBe(112.5);
+    expect(imageEl?.props.style?.objectFit).toBe('contain');
+    expect(imageEl?.props.style?.objectPosition).toBe('0% 0%');
+    expect(imageEl?.props.style?.aspectRatio).toBe(2);
+    expect(imageEl?.props.style?.maxWidth).toBe('100%');
+
+    const viewEl = result as React.ReactElement<PDFElementProps>;
+    expect(viewEl.props.style?.alignSelf).toBe('flex-start');
+    expect(viewEl.props.style?.maxWidth).toBe('100%');
   });
 
   it('scales rendered style to previewWidth when it is within MAX_WIDTH', async () => {

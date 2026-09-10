@@ -7,6 +7,10 @@ import { convertBlobToPng, convertSvgToPng } from '../utils';
 const PIXELS_PER_POINT = 0.75;
 const FONT_SIZE = 16;
 const MAX_WIDTH = 600;
+const imageBoxStyle = {
+  alignSelf: 'flex-start' as const,
+  maxWidth: '100%' as const,
+};
 
 /**
  * Renders an image block as a PDF element.
@@ -55,14 +59,20 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
     const finalWidth = Math.min(previewWidth || width, MAX_WIDTH);
     const finalHeight = (finalWidth / width) * height;
 
+    // Columns are flex containers: children stretch to the column width, and
+    // react-pdf then paints the bitmap with objectFit "fill". That distorts
+    // photos (print is fine because the editor CSS keeps the ratio).
     return (
-      <View wrap={false}>
+      <View wrap={false} style={imageBoxStyle}>
         <Image
           src={result.png}
           style={{
             width: finalWidth * PIXELS_PER_POINT,
             height: finalHeight * PIXELS_PER_POINT,
             maxWidth: '100%',
+            aspectRatio: width / height,
+            objectFit: 'contain',
+            objectPosition: '0% 0%',
           }}
         />
         {caption(block.props)}
