@@ -96,6 +96,66 @@ Documents are never in conflict either way: both transports publish from the sam
 Yjs merges. Before the fallback existed, users who could not open a websocket edited a document that
 was saved wholesale and erased each other's modifications; that is what this removes.
 
+## Working offline
+
+Every document this browser opens is kept locally, as a Yjs document in IndexedDB
+(`IndexeddbPersistence`, one database per document id). Opening a document offline shows what was
+written last time instead of an empty editor, and what is written offline survives a reload.
+
+It lives next to the `Y.Doc`, in `useProviderStore`, and not in the service worker — which is where
+it looks like it belongs, since the service worker is already what serves the page and the document
+metadata offline. A service worker only sees http, and content that arrives over the websocket
+never passes through one, so a worker-side cache would be empty for exactly the clients whose
+connection works. Hooking the document instead means it does not matter which transport filled it.
+
+Nothing extra publishes those changes. Both providers answer the collaboration server's sync step 1
+with everything the server is missing, so the next connection that opens carries whatever was
+written offline, and Yjs merges it — no replay queue, and no wholesale save that could erase someone
+else's work.
+
+Three consequences worth knowing:
+
+- A browser with no `indexedDB` — one told to block site data, some private windows — gets an editor
+  that behaves exactly as it did before, not a broken one. Local persistence is treated as absent.
+- Local content is enough to render, so the editor appears before the socket has finished opening,
+  online as well as offline.
+- A reader's `PATCH /ydoc` is now dropped client-side rather than sent. The collaboration server
+  enforces read-only differently per transport: the socket drops a reader's document updates and
+  stays open, while http refuses them with a 403 — and a 4xx is permanent, so the provider would
+  stop *before* its first `GET`, since the `PATCH` comes first in a round. That never arose while a
+  reader's document stayed empty until the first `GET` filled it, which is exactly what a local copy
+  changes. Nothing is lost by dropping it: a reader's content came from the server to begin with.
+
+### What is kept, and for how long
+
+A copy is dropped once nobody has opened that document for thirty days, swept once on startup
+(`sweepLocalDocs`). `IndexeddbPersistence` has no expiry of its own, so without this every document
+ever opened would be kept until the browser evicted it under storage pressure — which it does
+without asking and without order.
+
+When each copy was last opened is tracked in a small IndexedDB database of its own
+(`docs-local-index`), not in local storage — so it shares one fate with the copies it tracks. A
+browser clears site data and evicts storage per origin, so the index and the documents it indexes
+are wiped together or kept together, never one without the other. Where the browser can enumerate
+its databases (`indexedDB.databases()` — Chromium and WebKit, never Firefox), the sweep also drops
+any document-shaped database the index has lost track of, so an index that was somehow lost cannot
+strand copies on disk.
+
+**Content is not cleared on logout.** A local copy outlives the session that created it, so on a
+shared machine the next person to use that browser profile has the documents of the last one. This
+is a deliberate gap, not an oversight — clearing on logout, and on a document whose access the
+server has revoked, is still to do.
+
+### The service worker's part
+
+The collaboration server's rest api is never cached: `ydoc`, `activity`, `changeset` and `rollback`
+are all `NetworkOnly`. This is not the default — the collaboration server is on the application's
+own origin unless an instance moves it, so without a route of its own a poll for the live document
+falls through to the catch-all `StaleWhileRevalidate` and is answered from a cache: a room frozen at
+the moment it was first read, and, offline, one the provider would take for a successful round and
+report as synced. A version list read from a cache has the same problem, missing every version made
+since.
+
 ## Who may share a cursor
 
 Presence — the coloured cursors and selections of the other people in a document — is a permission

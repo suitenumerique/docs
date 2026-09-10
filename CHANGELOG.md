@@ -28,6 +28,8 @@ and this project adheres to
 - ✨(frontend) fall back to http polling when the websocket cannot be opened.
 - 🔧(collaboration) make the version-history granularity configurable through
   `COLLABORATION_VERSION_GRANULARITY_MS`
+- ✨(frontend) keep a local copy of documents, so they open and stay editable
+  offline
 
 ### Changed
 
@@ -53,6 +55,8 @@ and this project adheres to
 - 🐛(docker) pull minio images from quay.io #2675
 - 🐛(frontend) stop reconnecting to the collaboration server when it has 
   refused the connection for good.
+- 🐛(frontend) stop the service worker from caching the collaboration server's
+  rest api
 
 ### Removed
 
