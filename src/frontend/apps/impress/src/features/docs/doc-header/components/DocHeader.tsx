@@ -87,7 +87,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                         isAprilFools ? '🐟' : '📄',
                       );
                 }}
-                aria-label={emoji ? t('Remove icon') : t('Add icon')}
+                aria-label={emoji ? t('Remove emoji') : t('Add emoji')}
                 color="neutral"
                 variant="tertiary"
                 icon={
@@ -99,7 +99,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                 }
                 style={{ width: 'fit-content' }}
               >
-                {emoji ? t('Remove icon') : t('Add icon')}
+                {emoji ? t('Remove emoji') : t('Add emoji')}
               </Button>
             )}
           </Box>
