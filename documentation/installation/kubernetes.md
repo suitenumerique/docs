@@ -220,7 +220,7 @@ Internet Content Adaptation Protocol (ICAP), see
 (c-icap with ClamAV) is provided by the dev dependencies chart, so you can
 install a local testing environment as follow:
 
-```
+```text
 $ helm install --repo https://suitenumerique.github.io/helm-dev-backend -f documentation/examples/helm/cicap.values.yaml cicap dev-backend
 $ kubectl get pods
 NAME                                       READY   STATUS    RESTARTS   AGE
