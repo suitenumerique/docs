@@ -16,7 +16,7 @@ import { useBroadcastStore } from '@/stores/useBroadcastStore';
  * been permitted to send — but never looser.
  */
 export const useCollaboration = (room: string, readOnly = false) => {
-  const collaborationUrl = useCollaborationUrl(room);
+  const collaborationUrl = useCollaborationUrl();
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();
   const { data: config } = useConfig();

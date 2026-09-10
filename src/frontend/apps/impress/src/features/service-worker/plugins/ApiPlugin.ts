@@ -12,8 +12,6 @@ interface OptionsReadonly {
   type: 'list' | 'item';
 }
 
-// TODO(yhub): Used to work offline, we need to implement the patch mechanism
-// It will be probably linked to the HTTP fallback mechanism of yhub
 interface OptionsMutate {
   type: 'update' | 'delete' | 'create';
 }

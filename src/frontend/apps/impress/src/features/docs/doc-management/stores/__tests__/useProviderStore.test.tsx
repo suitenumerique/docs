@@ -74,8 +74,28 @@ class FakeHttpProvider {
   }
 }
 
+/**
+ * A stand-in for `IndexeddbPersistence`. What the store asks of it is that it exists, that its
+ * `synced` reaches `isReady` - local content is enough to render an editor - and that it is
+ * detached with the document.
+ */
+class FakePersistence {
+  public destroy = vi.fn().mockResolvedValue(undefined);
+
+  private listeners: Record<string, ((...args: unknown[]) => void)[]> = {};
+
+  on(event: string, listener: (...args: unknown[]) => void) {
+    (this.listeners[event] ??= []).push(listener);
+  }
+
+  emit(event: string, ...args: unknown[]) {
+    this.listeners[event]?.forEach((listener) => listener(...args));
+  }
+}
+
 let provider: FakeProvider;
 let httpProvider: FakeHttpProvider;
+let persistence: FakePersistence;
 let stopFallback: ReturnType<typeof vi.fn>;
 
 vi.mock('y-websocket', () => ({
@@ -83,6 +103,27 @@ vi.mock('y-websocket', () => ({
   WebsocketProvider: vi.fn(function () {
     return provider;
   }),
+}));
+
+const { IndexeddbPersistenceMock } = vi.hoisted(() => ({
+  IndexeddbPersistenceMock: vi.fn(function (..._args: unknown[]) {
+    return undefined as never;
+  }),
+}));
+
+vi.mock('y-indexeddb', () => ({
+  IndexeddbPersistence: IndexeddbPersistenceMock,
+  clearDocument: vi.fn().mockResolvedValue(undefined),
+}));
+
+// its own IndexedDB plumbing is exercised in localDocs.test — here we only
+// check that opening a document records it
+const { rememberLocalDocMock } = vi.hoisted(() => ({
+  rememberLocalDocMock: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../../localDocs', () => ({
+  rememberLocalDoc: rememberLocalDocMock,
 }));
 
 /**
@@ -123,7 +164,15 @@ describe('useProviderStore', () => {
     vi.useFakeTimers();
     provider = new FakeProvider();
     httpProvider = new FakeHttpProvider();
+    persistence = new FakePersistence();
     stopFallback = vi.fn();
+    // jsdom has none, and the store treats its absence as "no local copy"
+    vi.stubGlobal('indexedDB', {});
+    IndexeddbPersistenceMock.mockClear();
+    IndexeddbPersistenceMock.mockImplementation(function () {
+      return persistence as never;
+    });
+    rememberLocalDocMock.mockClear();
     createWebsocketFallback.mockClear();
     HttpProviderMock.mockClear();
     // the store is a module-level singleton: put it back to its defaults, or
@@ -137,9 +186,12 @@ describe('useProviderStore', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('keeps reconnecting when the connection is merely lost', () => {
+    // the socket had opened before it dropped
+    provider.emit('status', { status: 'connected' });
     closeWith(1006);
     vi.runAllTimers();
 
@@ -151,6 +203,33 @@ describe('useProviderStore', () => {
     expect(useProviderStore.getState().hasLostConnection).toBe(true);
     // and the http fallback is left in place to take over
     expect(stopFallback).not.toHaveBeenCalled();
+  });
+
+  it('does not refetch the document while a socket that never opened retries', () => {
+    // a network that blocks websocket upgrades: the socket never connects, and
+    // `connection-close` fires on every failed attempt
+    closeWith(1006);
+    closeWith(1006);
+    vi.runAllTimers();
+
+    expect(provider.shouldConnect).toBe(true);
+    expect(useProviderStore.getState().isPermanentlyClosed).toBe(false);
+    // no refetch storm on the retry cadence — the http fallback carries the doc
+    expect(useProviderStore.getState().hasLostConnection).toBe(false);
+    expect(stopFallback).not.toHaveBeenCalled();
+  });
+
+  it('does not re-render subscribers of the store on a repeat retry that changes nothing', () => {
+    // components that read the store without a selector (most of them, here) get a new
+    // object on every `set()` — even a same-value one — so a redundant `set()` on this
+    // retry loop would flicker every one of them, forever
+    closeWith(1006);
+    const listener = vi.fn();
+    useProviderStore.subscribe(listener);
+
+    closeWith(1006);
+
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -283,6 +362,83 @@ describe('useProviderStore', () => {
     expect(provider.destroy).toHaveBeenCalled();
     expect(provider.awareness.destroy).toHaveBeenCalled();
     expect(provider.doc.destroy).toHaveBeenCalled();
+    // detached before the document is, so the last updates are written
+    expect(persistence.destroy).toHaveBeenCalled();
     expect(useProviderStore.getState().httpProvider).toBeUndefined();
+    expect(useProviderStore.getState().persistence).toBeUndefined();
+  });
+
+  it('keeps a local copy of the document, under its own id', () => {
+    expect(IndexeddbPersistenceMock).toHaveBeenCalledTimes(1);
+    expect(IndexeddbPersistenceMock.mock.calls[0][0]).toBe('doc-id');
+    expect(useProviderStore.getState().persistence).toBe(persistence);
+  });
+
+  it('renders as soon as the local copy is loaded, without waiting for a connection', () => {
+    expect(useProviderStore.getState().isReady).toBe(false);
+
+    persistence.emit('synced');
+
+    expect(useProviderStore.getState().isReady).toBe(true);
+    // nothing was connected: this is the offline path
+    expect(useProviderStore.getState().isConnected).toBe(false);
+  });
+
+  it('remembers the document, so the sweep leaves its copy alone', () => {
+    expect(rememberLocalDocMock).toHaveBeenCalledWith('doc-id');
+  });
+
+  it("drops a reader's http writes instead of letting the server refuse them", async () => {
+    useProviderStore.getState().destroyProvider();
+    HttpProviderMock.mockClear();
+    const realFetch = vi.fn().mockResolvedValue(new Response(null));
+    vi.stubGlobal('fetch', realFetch);
+
+    useProviderStore
+      .getState()
+      .createProvider(
+        'ws://localhost/collaboration/ws/v1/docs',
+        'doc-id',
+        undefined,
+        {
+          readOnly: true,
+        },
+      );
+
+    const { fetch: providerFetch } = HttpProviderMock.mock.calls[0][3] as {
+      fetch: (input: string, init?: RequestInit) => Promise<Response>;
+    };
+
+    /**
+     * A reader's PATCH would take a 403, and a 4xx stops the provider for good -
+     * before its first GET, since the PATCH comes first in a round. The socket
+     * drops a reader's updates and stays open; this makes http agree.
+     */
+    const patched = await providerFetch('http://collab/ydoc/v1/docs/doc-id', {
+      method: 'PATCH',
+    });
+
+    expect(patched.status).toBe(204);
+    expect(realFetch).not.toHaveBeenCalled();
+
+    // reading is what a reader is allowed to do, and still goes to the network
+    await providerFetch('http://collab/ydoc/v1/docs/doc-id');
+
+    expect(realFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('still builds an editor in a browser that has no indexeddb', () => {
+    useProviderStore.getState().destroyProvider();
+    vi.stubGlobal('indexedDB', undefined);
+    IndexeddbPersistenceMock.mockClear();
+
+    useProviderStore
+      .getState()
+      .createProvider('ws://localhost/collaboration/ws/v1/docs', 'doc-id');
+
+    expect(IndexeddbPersistenceMock).not.toHaveBeenCalled();
+    expect(useProviderStore.getState().persistence).toBeUndefined();
+    // the connection still drives the editor, exactly as before
+    expect(useProviderStore.getState().provider).toBe(provider);
   });
 });

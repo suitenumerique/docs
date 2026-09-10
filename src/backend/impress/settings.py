@@ -546,6 +546,14 @@ class Base(Configuration):
         environ_name="COLLABORATION_VERSION_GRANULARITY_MS",
         environ_prefix=None,
     )
+    # How long a browser keeps its local (offline) copy of a document after the
+    # last time it was opened, in days. The frontend drops copies older than this
+    # on startup.
+    COLLABORATION_LOCAL_DOC_RETENTION_DAYS = values.IntegerValue(
+        30,
+        environ_name="COLLABORATION_LOCAL_DOC_RETENTION_DAYS",
+        environ_prefix=None,
+    )
     # Base url of the collaboration server's REST api, including its route
     # prefix (e.g. "http://yhub:3002/collaboration"). Server-to-server only:
     # used with an admin JWT to migrate legacy documents and, later, to kick
