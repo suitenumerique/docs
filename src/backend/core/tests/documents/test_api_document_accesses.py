@@ -180,6 +180,8 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                     "set_role_to": [],
                     "update": False,
                 },
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+                "created_at": access.created_at.isoformat().replace("+00:00", "Z"),
             }
             for access in privileged_accesses
         ],
@@ -280,6 +282,8 @@ def test_api_document_accesses_list_authenticated_related_privileged(
                 "team": access.team,
                 "role": access.role,
                 "abilities": access.get_abilities(user),
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+                "created_at": access.created_at.isoformat().replace("+00:00", "Z"),
             }
             for access in ancestors_accesses + document_accesses
         ],
@@ -646,6 +650,8 @@ def test_api_document_accesses_retrieve_authenticated_related(
             "max_ancestors_role": None,
             "max_role": access.role,
             "abilities": access.get_abilities(user),
+            "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+            "created_at": access.created_at.isoformat().replace("+00:00", "Z"),
         }
 
 
@@ -808,9 +814,13 @@ def test_api_document_accesses_update_administrator_except_owner(
                 **old_values,
                 "role": new_values["role"],
                 "max_role": new_values["role"],
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
             }
         else:
-            assert updated_values == old_values
+            assert updated_values == {
+                **old_values,
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+            }
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -857,7 +867,10 @@ def test_api_document_accesses_update_administrator_from_owner(via, mock_user_te
         assert response.status_code == 403
         access.refresh_from_db()
         updated_values = serializers.DocumentAccessSerializer(instance=access).data
-        assert updated_values == old_values
+        assert updated_values == {
+            **old_values,
+            "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+        }
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -922,7 +935,10 @@ def test_api_document_accesses_update_administrator_to_owner(
 
         access.refresh_from_db()
         updated_values = serializers.DocumentAccessSerializer(instance=access).data
-        assert updated_values == old_values
+        assert updated_values == {
+            **old_values,
+            "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+        }
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -985,9 +1001,13 @@ def test_api_document_accesses_update_owner(
                 **old_values,
                 "role": new_values["role"],
                 "max_role": new_values["role"],
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
             }
         else:
-            assert updated_values == old_values
+            assert updated_values == {
+                **old_values,
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+            }
 
 
 @pytest.mark.parametrize("via", VIA)

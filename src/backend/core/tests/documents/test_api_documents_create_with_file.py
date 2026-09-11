@@ -2,7 +2,6 @@
 Tests for Documents API endpoint in impress's core app: create with file upload
 """
 
-from base64 import b64decode, binascii
 from io import BytesIO
 from unittest.mock import patch
 
@@ -15,6 +14,9 @@ from core.services import mime_types
 from core.services.converter_services import (
     ConversionError,
     ServiceUnavailableError,
+)
+from core.services.yhub_services import (
+    ServiceUnavailableError as YHubServiceUnavailableError,
 )
 from core.utils.analytics import PosthogEventName
 
@@ -40,8 +42,9 @@ def test_api_documents_create_with_file_anonymous():
     assert not Document.objects.exists()
 
 
+@patch("core.api.viewsets.YHubService")
 @patch("core.services.converter_services.Converter.convert")
-def test_api_documents_create_with_docx_file_success(mock_convert, settings):
+def test_api_documents_create_with_docx_file_success(mock_convert, mock_yhub, settings):
     """
     Authenticated users should be able to create documents by uploading a DOCX file.
     The file should be converted to YJS format and the title should be set from filename.
@@ -53,7 +56,7 @@ def test_api_documents_create_with_docx_file_success(mock_convert, settings):
     settings.CONVERSION_UPLOAD_ENABLED = True
 
     # Mock the conversion
-    converted_yjs = "base64encodedyjscontent"
+    converted_yjs = b"\x01\x02raw yjs update"
     mock_convert.return_value = converted_yjs
 
     # Create a fake DOCX file
@@ -73,8 +76,11 @@ def test_api_documents_create_with_docx_file_success(mock_convert, settings):
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "My Important Document.docx"
-    assert document.content == converted_yjs
     assert document.accesses.filter(role="owner", user=user).exists()
+
+    # the content is saved by the collaboration server, not by Django
+    mock_yhub.assert_called_once_with(user=user)
+    mock_yhub.return_value.create_ydoc.assert_called_once_with(document, converted_yjs)
 
     # Verify the converter was called correctly
     mock_convert.assert_called_once_with(
@@ -134,8 +140,11 @@ def test_api_documents_create_with_docx_file_disabled(mock_convert, settings):
     mock_capture.assert_not_called()
 
 
+@patch("core.api.viewsets.YHubService")
 @patch("core.services.converter_services.Converter.convert")
-def test_api_documents_create_with_markdown_file_success(mock_convert, settings):
+def test_api_documents_create_with_markdown_file_success(
+    mock_convert, mock_yhub, settings
+):
     """
     Authenticated users should be able to create documents by uploading a Markdown file.
     """
@@ -146,7 +155,7 @@ def test_api_documents_create_with_markdown_file_success(mock_convert, settings)
     settings.CONVERSION_UPLOAD_ENABLED = True
 
     # Mock the conversion
-    converted_yjs = "base64encodedyjscontent"
+    converted_yjs = b"\x01\x02raw yjs update"
     mock_convert.return_value = converted_yjs
 
     # Create a fake Markdown file
@@ -166,8 +175,10 @@ def test_api_documents_create_with_markdown_file_success(mock_convert, settings)
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "readme.md"
-    assert document.content == converted_yjs
     assert document.accesses.filter(role="owner", user=user).exists()
+
+    # the content is saved by the collaboration server, not by Django
+    mock_yhub.return_value.create_ydoc.assert_called_once_with(document, converted_yjs)
 
     # Verify the converter was called correctly
     mock_convert.assert_called_once_with(
@@ -204,7 +215,7 @@ def test_api_documents_create_with_file_and_explicit_title(mock_convert, setting
     settings.CONVERSION_UPLOAD_ENABLED = True
 
     # Mock the conversion
-    converted_yjs = "base64encodedyjscontent"
+    converted_yjs = b"\x01\x02raw yjs update"
     mock_convert.return_value = converted_yjs
 
     # Create a fake DOCX file
@@ -212,7 +223,10 @@ def test_api_documents_create_with_file_and_explicit_title(mock_convert, setting
     file = BytesIO(file_content)
     file.name = "Uploaded Document.docx"
 
-    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+    with (
+        patch("core.api.viewsets.posthog_capture") as mock_capture,
+        patch("core.api.viewsets.YHubService"),
+    ):
         response = client.post(
             "/api/v1.0/documents/",
             {
@@ -367,7 +381,6 @@ def test_api_documents_create_without_file_still_works():
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "Regular document without file"
-    assert document.content is None
     assert document.accesses.filter(role="owner", user=user).exists()
 
     mock_capture.assert_called_once_with(
@@ -412,12 +425,13 @@ def test_api_documents_create_with_file_null_value(mock_convert, settings):
     )
 
 
+@patch("core.api.viewsets.YHubService")
 @patch("core.services.converter_services.Converter.convert")
 def test_api_documents_create_with_file_preserves_content_format(
-    mock_convert, settings
+    mock_convert, mock_yhub, settings
 ):
     """
-    Verify that the converted content is stored correctly in the document.
+    Verify that the converted content reaches the collaboration server as it is.
     """
     user = factories.UserFactory()
     client = APIClient()
@@ -425,8 +439,8 @@ def test_api_documents_create_with_file_preserves_content_format(
 
     settings.CONVERSION_UPLOAD_ENABLED = True
 
-    # Mock the conversion with realistic base64-encoded YJS data
-    converted_yjs = "AQMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICA="
+    # Mock the conversion with a raw Yjs update, not encodable as text
+    converted_yjs = b"\x01\x03\x04\x05\x06\x07"
     mock_convert.return_value = converted_yjs
 
     # Create a fake DOCX file
@@ -446,8 +460,8 @@ def test_api_documents_create_with_file_preserves_content_format(
     assert response.status_code == 201
     document = Document.objects.get()
 
-    # Verify the content is stored as returned by the converter
-    assert document.content == converted_yjs
+    # The update is sent untouched, it is not base64 encoded on the way
+    mock_yhub.return_value.create_ydoc.assert_called_once_with(document, converted_yjs)
 
     # The successful conversion should be tracked in PostHog
     mock_capture.assert_any_call(
@@ -464,12 +478,6 @@ def test_api_documents_create_with_file_preserves_content_format(
 
     assert mock_capture.call_count == 2
 
-    # Verify it's valid base64 (can be decoded)
-    try:
-        b64decode(converted_yjs)
-    except binascii.Error:
-        pytest.fail("Content should be valid base64-encoded data")
-
 
 @patch("core.services.converter_services.Converter.convert")
 def test_api_documents_create_with_file_unicode_filename(mock_convert, settings):
@@ -483,7 +491,7 @@ def test_api_documents_create_with_file_unicode_filename(mock_convert, settings)
     settings.CONVERSION_UPLOAD_ENABLED = True
 
     # Mock the conversion
-    converted_yjs = "base64encodedyjscontent"
+    converted_yjs = b"\x01\x02raw yjs update"
     mock_convert.return_value = converted_yjs
 
     # Create a file with Unicode characters in the name
@@ -491,7 +499,10 @@ def test_api_documents_create_with_file_unicode_filename(mock_convert, settings)
     file = BytesIO(file_content)
     file.name = "文档-télécharger-документ.docx"
 
-    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+    with (
+        patch("core.api.viewsets.posthog_capture") as mock_capture,
+        patch("core.api.viewsets.YHubService"),
+    ):
         response = client.post(
             "/api/v1.0/documents/",
             {
@@ -580,3 +591,39 @@ def test_api_documents_create_with_file_extension_not_allowed(settings):
     }
 
     mock_capture.assert_not_called()
+
+
+@patch("core.api.viewsets.YHubService")
+@patch("core.services.converter_services.Converter.convert")
+def test_api_documents_create_with_file_collaboration_server_unavailable(
+    mock_convert, mock_yhub, settings
+):
+    """
+    A document whose content could not be saved by the collaboration server
+    should not be created at all, the uploaded file would be lost.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    settings.CONVERSION_UPLOAD_ENABLED = True
+
+    mock_convert.return_value = b"\x01\x02raw yjs update"
+    mock_yhub.return_value.create_ydoc.side_effect = YHubServiceUnavailableError(
+        "Failed to connect to the yhub service"
+    )
+
+    file = BytesIO(b"fake docx content")
+    file.name = "document.docx"
+
+    response = client.post(
+        "/api/v1.0/documents/",
+        {
+            "file": file,
+        },
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"file": ["Could not save the imported file content"]}
+    assert not Document.objects.exists()

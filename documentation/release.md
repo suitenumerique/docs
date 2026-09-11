@@ -28,6 +28,12 @@ Whenever we are cooking a new release (e.g. `4.18.1`) we should follow a standar
               repository: lasuite/impress-y-provider
               pullPolicy: Always
               tag: "v4.18.1" 
+
+          yhub:
+            image:
+              repository: lasuite/impress-yhub
+              pullPolicy: Always
+              tag: "v4.18.1" 
          ```
 
          The new images don't exist _yet_: they will be created automatically later in the process.

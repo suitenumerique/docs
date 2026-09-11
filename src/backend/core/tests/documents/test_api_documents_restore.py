@@ -3,6 +3,7 @@ Test restoring documents after a soft delete via the detail action API endpoint.
 """
 
 from datetime import timedelta
+from unittest import mock
 
 from django.utils import timezone
 
@@ -145,3 +146,35 @@ def test_api_documents_restore_authenticated_owner_not_deleted():
     document.refresh_from_db()
     assert document.deleted_at is None
     assert document.ancestors_deleted_at is None
+
+
+def test_api_documents_restore_reports_the_restoration_to_the_collaboration_server(
+    django_capture_on_commit_callbacks,
+):
+    """
+    Restoring a document should tell the collaboration server, which answers
+    404 for it as long as it believes it deleted.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory()
+    child = factories.DocumentFactory(parent=document)
+    factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
+    document.soft_delete()
+
+    # the report is made once the restoration is committed: the task reads it back
+    with (
+        mock.patch("core.tasks.documents.YHubService") as mock_service,
+        django_capture_on_commit_callbacks(execute=True),
+    ):
+        response = client.post(f"/api/v1.0/documents/{document.id!s}/restore/")
+
+    assert response.status_code == 200
+    # the subtree comes back with it
+    assert mock_service.return_value.restore_ydoc.call_args_list == [
+        mock.call(document),
+        mock.call(child),
+    ]
+    mock_service.return_value.delete_ydoc.assert_not_called()

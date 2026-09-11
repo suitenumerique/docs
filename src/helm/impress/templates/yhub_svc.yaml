@@ -1,0 +1,22 @@
+{{- if .Values.yhub.enabled -}}
+{{- $fullName := include "impress.yhub.fullname" . -}}
+{{- $component := "yhub" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+  annotations:
+    {{- toYaml $.Values.yhub.service.annotations | nindent 4 }}
+spec:
+  type: {{ .Values.yhub.service.type }}
+  ports:
+    - port: {{ .Values.yhub.service.port }}
+      targetPort: {{ .Values.yhub.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "impress.common.selectorLabels" (list . $component) | nindent 4 }}
+{{- end }}

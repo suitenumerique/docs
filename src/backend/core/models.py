@@ -4,7 +4,6 @@ Declare and configure the models for the impress core application
 
 # pylint: disable=too-many-lines
 
-import hashlib
 import smtplib
 import uuid
 from datetime import timedelta
@@ -17,8 +16,6 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.sites.models import Site
 from django.core.cache import cache
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.db import models, transaction
 from django.db.models import Count
@@ -29,7 +26,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import get_language, override
 from django.utils.translation import gettext_lazy as _
 
-from botocore.exceptions import ClientError
 from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
 from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
@@ -41,6 +37,7 @@ from core.choices import (
     RoleChoices,
     get_equivalent_link_definition,
 )
+from core.services.yhub_services import YHubError, YHubService
 from core.utils.treebeard import create_tree_node_with_retry
 from core.validators import sub_validator
 
@@ -315,6 +312,10 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         """
         If the user is new and there is a sandbox document configured,
         duplicate the sandbox document for the user
+
+        The content of the template is read from the collaboration server, which
+        owns it, and seeded into the copy under the identity of the user: the
+        sandbox is theirs from its very first revision.
         """
         if settings.USER_ONBOARDING_SANDBOX_DOCUMENT:
             sandbox_id = settings.USER_ONBOARDING_SANDBOX_DOCUMENT
@@ -326,19 +327,36 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
                     sandbox_id,
                 )
                 return
-            with transaction.atomic():
-                sandbox_document = create_tree_node_with_retry(
-                    lambda: Document.add_root(
-                        title=template_document.title,
-                        content=template_document.content,
-                        attachments=template_document.attachments,
-                        duplicated_from=template_document,
-                        creator=self,
-                    )
-                )
 
-                DocumentAccess.objects.create(
-                    user=self, document=sandbox_document, role=RoleChoices.OWNER
+            service = YHubService(user=self)
+            try:
+                # a template the collaboration server holds nothing for is an
+                # empty template: the sandbox is created, empty as well
+                ydoc_update = service.get_ydoc(template_document)
+
+                with transaction.atomic():
+                    sandbox_document = create_tree_node_with_retry(
+                        lambda: Document.add_root(
+                            title=template_document.title,
+                            attachments=template_document.attachments,
+                            duplicated_from=template_document,
+                            creator=self,
+                        )
+                    )
+
+                    DocumentAccess.objects.create(
+                        user=self, document=sandbox_document, role=RoleChoices.OWNER
+                    )
+
+                    if ydoc_update:
+                        service.create_ydoc(sandbox_document, ydoc_update)
+            except YHubError:
+                # Onboarding is not worth failing a signup for, and a sandbox
+                # the content of which could not be copied is not one we want
+                # to leave behind: the transaction takes it back.
+                logger.exception(
+                    "Onboarding sandbox document with id %s could not be copied. Skipping.",
+                    sandbox_id,
                 )
 
     def _convert_valid_invitations(self):
@@ -933,7 +951,7 @@ class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
 
 # pylint: disable=too-many-public-methods
 class Document(MP_Node, BaseModel):
-    """Pad document carrying the content."""
+    """Pad document, the content of which lives in the collaboration server."""
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
     excerpt = models.TextField(_("excerpt"), max_length=300, null=True, blank=True)
@@ -970,8 +988,6 @@ class Document(MP_Node, BaseModel):
         blank=True,
         null=True,
     )
-
-    _content = None
 
     # Tree structure
     alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -1011,39 +1027,6 @@ class Document(MP_Node, BaseModel):
         self._ancestors_link_definition = None
         self._computed_link_definition = None
 
-    def save(self, *args, **kwargs):
-        """Write content to object storage only if _content has changed."""
-        super().save(*args, **kwargs)
-        if self._content:
-            self.save_content(self._content)
-
-    def save_content(self, content):
-        """Save content to object storage."""
-
-        file_key = self.file_key
-        bytes_content = content.encode("utf-8")
-
-        # Attempt to directly check if the object exists using the storage client.
-        try:
-            response = default_storage.connection.meta.client.head_object(
-                Bucket=default_storage.bucket_name, Key=file_key
-            )
-        except ClientError as excpt:
-            # If the error is a 404, the object doesn't exist, so we should create it.
-            if excpt.response["Error"]["Code"] == "404":
-                has_changed = True
-            else:
-                raise
-        else:
-            # Compare the existing ETag with the MD5 hash of the new content.
-            has_changed = (
-                response["ETag"].strip('"') != hashlib.md5(bytes_content).hexdigest()  # noqa: S324
-            )
-
-        if has_changed:
-            content_file = ContentFile(bytes_content)
-            default_storage.save(file_key, content_file)
-
     def is_leaf(self):
         """
         :returns: True if the node is has no children
@@ -1061,102 +1044,16 @@ class Document(MP_Node, BaseModel):
 
     @property
     def file_key(self):
-        """Key of the object storage file to which the document content is stored"""
+        """
+        Key of the legacy object storage file that used to hold the content.
+
+        The collaboration server owns the content now, and Django neither reads
+        nor writes this object any more. The key outlives it: the collaboration
+        server seeds a room from that object on first access and replays its
+        versions to rebuild the history, and `clean_document` purges it so that
+        a document it reset cannot be seeded back from what it left behind.
+        """
         return f"{self.key_base}/file"
-
-    @property
-    def content(self):
-        """Return the json content from object storage if available"""
-        if self._content is None and self.id:
-            try:
-                response = self.get_content_response()
-            except FileNotFoundError, ClientError:
-                pass
-            else:
-                self._content = response["Body"].read().decode("utf-8")
-        return self._content
-
-    @content.setter
-    def content(self, content):
-        """Cache the content, don't write to object storage yet"""
-        if not isinstance(content, str):
-            raise ValueError("content should be a string.")
-
-        self._content = content
-
-    def get_content_response(self, version_id=""):
-        """Get the content in a specific version of the document"""
-        params = {
-            "Bucket": default_storage.bucket_name,
-            "Key": self.file_key,
-        }
-        if version_id:
-            params["VersionId"] = version_id
-        return default_storage.connection.meta.client.get_object(**params)
-
-    def get_versions_slice(self, from_version_id="", min_datetime=None, page_size=None):
-        """Get document versions from object storage with pagination and starting conditions"""
-        # /!\ Trick here /!\
-        # The "KeyMarker" and "VersionIdMarker" fields must either be both set or both not set.
-        # The error we get otherwise is not helpful at all.
-        markers = {}
-        if from_version_id:
-            markers.update(
-                {"KeyMarker": self.file_key, "VersionIdMarker": from_version_id}
-            )
-
-        real_page_size = (
-            min(page_size, settings.DOCUMENT_VERSIONS_PAGE_SIZE)
-            if page_size
-            else settings.DOCUMENT_VERSIONS_PAGE_SIZE
-        )
-
-        response = default_storage.connection.meta.client.list_object_versions(
-            Bucket=default_storage.bucket_name,
-            Prefix=self.file_key,
-            # compensate the latest version that we exclude below and get one more to
-            # know if there are more pages
-            MaxKeys=real_page_size + 2,
-            **markers,
-        )
-
-        min_last_modified = min_datetime or self.created_at
-        versions = [
-            {
-                key_snake: version[key_camel]
-                for key_snake, key_camel in [
-                    ("etag", "ETag"),
-                    ("is_latest", "IsLatest"),
-                    ("last_modified", "LastModified"),
-                    ("version_id", "VersionId"),
-                ]
-            }
-            for version in response.get("Versions", [])
-            if version["LastModified"] >= min_last_modified
-            and version["IsLatest"] is False
-        ]
-        results = versions[:real_page_size]
-
-        count = len(results)
-        if count == len(versions):
-            is_truncated = False
-            next_version_id_marker = ""
-        else:
-            is_truncated = True
-            next_version_id_marker = versions[count - 1]["version_id"]
-
-        return {
-            "next_version_id_marker": next_version_id_marker,
-            "is_truncated": is_truncated,
-            "versions": results,
-            "count": count,
-        }
-
-    def delete_version(self, version_id):
-        """Delete a version from object storage given its version id"""
-        return default_storage.connection.meta.client.delete_object(
-            Bucket=default_storage.bucket_name, Key=self.file_key, VersionId=version_id
-        )
 
     def get_nb_accesses_cache_key(self):
         """Generate a unique cache key for each document."""
@@ -1326,6 +1223,13 @@ class Document(MP_Node, BaseModel):
         # want anonymous users to access versions (we wouldn't know from
         # which date to allow them anyway)
         # Anonymous users should also not see document accesses
+        #
+        # This is what `versions_list` reports. The history itself lives in the
+        # collaboration server, which reads the ability to decide whether to ask
+        # this backend for the caller's access — the `created_at` it answers with
+        # bounds what it serves. So the ability and `accesses/me/` have to agree,
+        # and a test holds them to it
+        # (test_api_document_accesses_me_agrees_with_the_versions_list_ability).
         has_access_role = bool(role) and not is_deleted
         can_update_from_access = (
             is_owner_or_admin or role == RoleChoices.EDITOR
@@ -1392,14 +1296,11 @@ class Document(MP_Node, BaseModel):
             "ai_translate": ai_access,
             "attachment_upload": can_update,
             "media_check": can_get,
-            "can_edit": can_update,
             "children_list": can_get,
             "children_create": can_create_children,
             "collaboration_auth": can_get,
             "comment": can_comment,
             "formatted_content": can_get,
-            "content_patch": can_update,
-            "content_retrieve": retrieve,
             "cors_proxy": can_get,
             "descendants": can_get,
             "destroy": can_destroy,
@@ -1416,9 +1317,7 @@ class Document(MP_Node, BaseModel):
             "link_select_options": link_select_options,
             "tree": retrieve,
             "update": can_update,
-            "versions_destroy": is_owner_or_admin,
             "versions_list": has_access_role,
-            "versions_retrieve": has_access_role,
             "search": can_get,
         }
 
@@ -2120,3 +2019,66 @@ class Invitation(BaseModel):
             "partial_update": is_admin_or_owner,
             "retrieve": is_admin_or_owner,
         }
+
+
+class DocumentMigrationStatus(models.TextChoices):
+    """What became of a document handed to the collaboration server to migrate."""
+
+    MIGRATED = "ok", _("Migrated")
+    ALREADY = "already", _("Already migrated")
+    EMPTY = "empty", _("Nothing in the object storage")
+    NOTHING = "nothing", _("No readable version")
+    FAILED = "failed", _("Failed")
+
+
+class DocumentMigration(models.Model):
+    """
+    What the collaboration server did with the legacy content of a document.
+
+    The ledger of the backfill: the collaboration server keeps its own set of
+    the documents it migrated, but only of those it actually wrote history for.
+    A document it found nothing for is not in it and would be handed over again
+    on every run, and a valkey configured to evict would lose the set entirely.
+    This table is what the command reads to know what is left to do, and what
+    an operator reads to know how it went.
+    """
+
+    document = models.OneToOneField(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="migration",
+        primary_key=True,
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=DocumentMigrationStatus.choices,
+        verbose_name=_("status"),
+    )
+    versions = models.PositiveIntegerField(default=0, verbose_name=_("versions"))
+    applied = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("applied"),
+        help_text=_("versions that added content, one activity entry each"),
+    )
+    skipped = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("skipped"),
+        help_text=_("versions that could not be read"),
+    )
+    dropped = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("dropped"),
+        help_text=_("versions older than the ones the server replays"),
+    )
+    duration_ms = models.PositiveIntegerField(default=0, verbose_name=_("duration"))
+    error = models.TextField(blank=True, default="", verbose_name=_("error"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("updated on"))
+
+    class Meta:
+        db_table = "impress_document_migration"
+        verbose_name = _("Document migration")
+        verbose_name_plural = _("Document migrations")
+        indexes = [models.Index(fields=["status"])]
+
+    def __str__(self):
+        return f"{self.document_id!s}: {self.status:s}"

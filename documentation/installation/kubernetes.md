@@ -6,9 +6,29 @@ This document is a step-by-step guide that describes how to install Docs on a k8
 
 - k8s cluster with an nginx-ingress controller
 - an OIDC provider (if you don't have one, we provide an example)
-- a PostgreSQL server (if you don't have one, we provide an example)
+- a PostgreSQL server (if you don't have one, we provide an example). Two databases are created on it, one for the backend and one for the collaboration server
 - a Redis server (if you don't have one, we provide an example)
 - a S3 bucket (if you don't have one, we provide an example)
+
+## What gets deployed
+
+The chart deploys four services:
+
+| Deployment | What it does |
+| ---------- | ------------ |
+| `frontend` | Serves the editor |
+| `backend` (and `celery-worker`) | The Django application: documents, users, accesses, search |
+| `yhub` | The collaboration server. It holds the **content** of the documents, syncs the editors over the websocket, and the backend reads and writes documents through it |
+| `y-provider` | The conversion service (markdown, html, pdf, docx). It served the collaboration in the previous releases, it does not anymore |
+
+plus two jobs that run before them: the Django `migrate` job, and the `yhub`
+`init-db` job creating the schema of the collaboration server — it never runs
+DDL itself. Both wait for the PostgreSQL server, which nothing in this chart
+creates.
+
+The content of a document is not in the S3 bucket: it is in the collaboration
+server, in a PostgreSQL database of its own. The bucket keeps the attachments
+and the version history.
 
 ### Test cluster
 
@@ -118,7 +138,7 @@ You can install it on your cluster to deploy keycloak, minio, postgresql and red
 Docs uses OIDC, so if you already have an OIDC provider, obtain the necessary information to use it. In the next step, we will see how to configure Django (and thus Docs) to use it. If you do not have a provider, we will show you how to deploy a local Keycloak instance (this is not a production deployment, just a demo).
 
 ```
-$ helm install --repo https://suitenumerique.github.io/helm-dev-backend -f docs/examples/helm/keycloak.values.yaml keycloak dev-backend
+$ helm install --repo https://suitenumerique.github.io/helm-dev-backend -f documentation/examples/helm/keycloak.values.yaml keycloak dev-backend
 $ #wait until
 $ kubectl get pods
 NAME                                 READY   STATUS    RESTARTS   AGE
@@ -140,14 +160,14 @@ OIDC_RP_SIGN_ALGO: RS256
 OIDC_RP_SCOPES: "openid email"
 ```
 
-You can find these values in **examples/helm/keycloak.values.yaml**
+You can find these values in **documentation/examples/helm/keycloak.values.yaml**
 
 ### Find redis server connection values
 
 Docs needs a redis so we start by deploying one:
 
 ```
-$ helm install --repo https://suitenumerique.github.io/helm-dev-backend -f docs/examples/helm/redis.values.yaml redis dev-backend
+$ helm install --repo https://suitenumerique.github.io/helm-dev-backend -f documentation/examples/helm/redis.values.yaml redis dev-backend
 $ kubectl get pods
 NAME                                       READY   STATUS    RESTARTS   AGE
 keycloak-dev-backend-keycloak-0            1/1     Running   0          113s
@@ -162,12 +182,25 @@ REDIS_URL: redis://user:pass@redis-dev-backend-redis:6379/1
 DJANGO_CELERY_BROKER_URL: redis://user:pass@redis-dev-backend-redis:6379/1
 ```
 
+The collaboration server needs one too, under `yhub.envVars.REDIS`. This example
+puts it in another database of the same server:
+
+```yaml
+REDIS: redis://user:pass@redis-dev-backend-redis:6379/2
+REDIS_PREFIX: yhub
+```
+
+> [!NOTE]
+> In production, give it an instance of its own. It is not a cache: it holds the
+> updates that no worker has written to PostgreSQL yet, so it has to be durable
+> and must never evict a key it was not told to expire.
+
 ### Find postgresql connection values
 
 Docs uses a postgresql database as backend, so if you have a provider, obtain the necessary information to use it. If you don't, you can install a postgresql testing environment as follow:
 
 ```
-$ helm install --repo https://suitenumerique.github.io/helm-dev-backend -f docs/examples/helm/postgresql.values.yaml postgresql dev-backend
+$ helm install --repo https://suitenumerique.github.io/helm-dev-backend -f documentation/examples/helm/postgresql.values.yaml postgresql dev-backend
 $ kubectl get pods
 NAME                                       READY   STATUS    RESTARTS   AGE
 keycloak-dev-backend-keycloak-0            1/1     Running   0          3m42s
@@ -196,12 +229,24 @@ DB_PASSWORD:
 DB_PORT: 5432
 ```
 
+The collaboration server keeps its own database on that same server, configured
+as a single url under `yhub.envVars.POSTGRES`:
+
+```yaml
+POSTGRES: postgres://dinum:pass@postgresql-dev-backend-postgres:5432/yhub
+```
+
+Being one url, the credentials are in it — put the whole url in a secret and
+reference it with `secretKeyRef` if you would rather not have it in your values
+file. The `init-db` job creates that database when the user is allowed to;
+otherwise create an empty `yhub` database beforehand and grant it on that one.
+
 ### Find s3 bucket connection values
 
 Docs uses an s3 bucket to store documents, so if you have a provider obtain the necessary information to use it. If you don't, you can install a local minio testing environment as follow:
 
 ```
-$ helm install --repo https://suitenumerique.github.io/helm-dev-backend -f docs/examples/helm/minio.values.yaml minio dev-backend
+$ helm install --repo https://suitenumerique.github.io/helm-dev-backend -f documentation/examples/helm/minio.values.yaml minio dev-backend
 $ kubectl get pods
 NAME                                       READY   STATUS    RESTARTS   AGE
 keycloak-dev-backend-keycloak-0            1/1     Running   0          6m12s
@@ -212,6 +257,28 @@ redis-dev-backend-redis-68c9f66786-4dgxj   1/1     Running   0          4m21s
 
 ```
 
+### Signing keys of the services
+
+The backend and the collaboration server call each other, and sign those calls:
+each has an RSA key of its own and verifies the other against the JWKS it
+publishes, so neither holds a copy of the other's key and no shared secret is
+involved. The chart generates both for you:
+
+```yaml
+jwtKeys:
+  enabled: true
+```
+
+A job creates them once, with `openssl`, in a secret that the backend and the
+collaboration server mount read-only — no key is written in a values file or
+templated into a manifest. It leaves an existing secret alone, so it is safe on
+every sync, and rolling the keys is deleting the secret and letting the next run
+create it again. If you already hold your keys in a secret,
+`jwtKeys.existingSecret` points at it instead and the job is not created at all.
+
+This is in **documentation/examples/helm/impress.values.yaml**, and the
+[collaboration documentation](../collaboration.md) covers it in more detail.
+
 ## Deployment
 
 Now you are ready to deploy Docs without AI. AI requires more dependencies (OpenAI API). To deploy Docs you need to provide all previous information to the helm chart.
@@ -219,18 +286,30 @@ Now you are ready to deploy Docs without AI. AI requires more dependencies (Open
 ```
 $ helm repo add impress https://suitenumerique.github.io/docs/
 $ helm repo update
-$ helm install impress impress/docs -f docs/examples/helm/impress.values.yaml
+$ helm install impress impress/docs -f documentation/examples/helm/impress.values.yaml
 $ kubectl get po
 NAME                                          READY   STATUS    RESTARTS   AGE
 impress-docs-backend-8494fb797d-8k8wt         1/1     Running   0          6m45s
 impress-docs-celery-worker-764b5dd98f-9qd6v   1/1     Running   0          6m45s
 impress-docs-frontend-5b69b65cc4-s8pps        1/1     Running   0          6m45s
 impress-docs-y-provider-5fc7ccd8cc-6ttrf      1/1     Running   0          6m45s
+impress-docs-yhub-6d84f9b7c5-2xqzp            1/1     Running   0          6m45s
 keycloak-dev-backend-keycloak-0               1/1     Running   0          24m
 keycloak-dev-backend-keycloak-pg-0            1/1     Running   0          24m
 minio-dev-backend-minio-0                     1/1     Running   0          8m24s
 postgresql-dev-backend-postgres-0             1/1     Running   0          20m
 redis-dev-backend-redis-68c9f66786-4dgxj      1/1     Running   0          22m
+```
+
+The jobs are not in that list anymore: the `migrate` one, the `jwt-keys` one and
+the `yhub` `init-db` one ran and were removed, 30 seconds after they finished.
+If the collaboration server never becomes ready, that is where to look first —
+raise `yhub.jobs.ttlSecondsAfterFinished` to keep the job around long enough to
+read it:
+
+```
+$ kubectl get jobs
+$ kubectl logs job/impress-docs-yhub-init-db
 ```
 
 ## Test your deployment

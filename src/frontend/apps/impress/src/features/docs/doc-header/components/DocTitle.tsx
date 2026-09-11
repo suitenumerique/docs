@@ -11,7 +11,6 @@ import {
   useDocStore,
   useDocTitleUpdate,
   useDocUtils,
-  useIsCollaborativeEditable,
   useTrans,
 } from '@/docs/doc-management';
 import SimpleFileIcon from '@/features/docs/doc-management/assets/simple-document.svg';
@@ -25,8 +24,7 @@ interface DocTitleProps {
 }
 
 export const DocTitle = ({ doc, onTitleUpdate }: DocTitleProps) => {
-  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
-  const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
+  const readOnly = !doc.abilities.partial_update;
 
   if (readOnly) {
     return <DocTitleText />;

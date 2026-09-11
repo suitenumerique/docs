@@ -14,8 +14,13 @@ import pytest
 from core import factories, models
 from core.enums import SearchType
 from core.services.search_indexers import FindDocumentIndexer
+from core.utils.yjs import base64_yjs_to_text
 
 pytestmark = pytest.mark.django_db
+
+# The documents of this module all carry the content of the factory, which the
+# fake collaboration server of the indexer_settings fixture serves back.
+CONTENT = base64_yjs_to_text(factories.YDOC_HELLO_WORLD_BASE64)
 
 
 def reset_batch_indexer_throttle():
@@ -49,9 +54,9 @@ def test_models_documents_post_save_indexer(mock_push):
     # One call
     assert sorted(data[0], key=itemgetter("id")) == sorted(
         [
-            indexer.serialize_document(doc1, accesses),
-            indexer.serialize_document(doc2, accesses),
-            indexer.serialize_document(doc3, accesses),
+            indexer.serialize_document(doc1, CONTENT, accesses),
+            indexer.serialize_document(doc2, CONTENT, accesses),
+            indexer.serialize_document(doc3, CONTENT, accesses),
         ],
         key=itemgetter("id"),
     )
@@ -81,9 +86,9 @@ def test_models_documents_post_save_indexer_no_batches(indexer_settings):
     # all documents are indexed
     assert sorted([d[0] for d in data], key=itemgetter("id")) == sorted(
         [
-            indexer.serialize_document(doc1, accesses),
-            indexer.serialize_document(doc2, accesses),
-            indexer.serialize_document(doc3, accesses),
+            indexer.serialize_document(doc1, CONTENT, accesses),
+            indexer.serialize_document(doc2, CONTENT, accesses),
+            indexer.serialize_document(doc3, CONTENT, accesses),
         ],
         key=itemgetter("id"),
     )
@@ -151,9 +156,9 @@ def test_models_documents_post_save_indexer_with_accesses(mock_push):
     assert len(data) == 1
     assert sorted(data[0], key=itemgetter("id")) == sorted(
         [
-            indexer.serialize_document(doc1, accesses),
-            indexer.serialize_document(doc2, accesses),
-            indexer.serialize_document(doc3, accesses),
+            indexer.serialize_document(doc1, CONTENT, accesses),
+            indexer.serialize_document(doc2, CONTENT, accesses),
+            indexer.serialize_document(doc3, CONTENT, accesses),
         ],
         key=itemgetter("id"),
     )
@@ -215,9 +220,9 @@ def test_models_documents_post_save_indexer_deleted(mock_push):
     # First indexation on document creation
     assert sorted(data[0], key=itemgetter("id")) == sorted(
         [
-            indexer.serialize_document(doc, accesses),
-            indexer.serialize_document(main_doc, accesses),
-            indexer.serialize_document(child_doc, accesses),
+            indexer.serialize_document(doc, CONTENT, accesses),
+            indexer.serialize_document(main_doc, CONTENT, accesses),
+            indexer.serialize_document(child_doc, CONTENT, accesses),
         ],
         key=itemgetter("id"),
     )
@@ -225,8 +230,10 @@ def test_models_documents_post_save_indexer_deleted(mock_push):
     # Even deleted items are re-indexed : only update their status in the future
     assert sorted(data[1], key=itemgetter("id")) == sorted(
         [
-            indexer.serialize_document(main_doc_deleted, accesses),  # soft_delete()
-            indexer.serialize_document(child_doc_deleted, accesses),
+            indexer.serialize_document(
+                main_doc_deleted, CONTENT, accesses
+            ),  # soft_delete()
+            indexer.serialize_document(child_doc_deleted, CONTENT, accesses),
         ],
         key=itemgetter("id"),
     )
@@ -317,9 +324,9 @@ def test_models_documents_post_save_indexer_restored(mock_push):
     # First indexation on items creation & soft delete (in the same transaction)
     assert sorted(data[0], key=itemgetter("id")) == sorted(
         [
-            indexer.serialize_document(doc, accesses),
-            indexer.serialize_document(doc_deleted, accesses),
-            indexer.serialize_document(doc_ancestor_deleted, accesses),
+            indexer.serialize_document(doc, CONTENT, accesses),
+            indexer.serialize_document(doc_deleted, CONTENT, accesses),
+            indexer.serialize_document(doc_ancestor_deleted, CONTENT, accesses),
         ],
         key=itemgetter("id"),
     )
@@ -327,8 +334,8 @@ def test_models_documents_post_save_indexer_restored(mock_push):
     # Restored items are re-indexed : only update their status in the future
     assert sorted(data[1], key=itemgetter("id")) == sorted(
         [
-            indexer.serialize_document(doc_restored, accesses),  # restore()
-            indexer.serialize_document(doc_ancestor_restored, accesses),
+            indexer.serialize_document(doc_restored, CONTENT, accesses),  # restore()
+            indexer.serialize_document(doc_ancestor_restored, CONTENT, accesses),
         ],
         key=itemgetter("id"),
     )
@@ -376,9 +383,9 @@ def test_models_documents_post_save_indexer_throttle():
 
         assert sorted(data[0], key=itemgetter("id")) == sorted(
             [
-                indexer.serialize_document(docs[0], accesses),
-                indexer.serialize_document(docs[2], accesses),
-                indexer.serialize_document(docs[3], accesses),
+                indexer.serialize_document(docs[0], CONTENT, accesses),
+                indexer.serialize_document(docs[2], CONTENT, accesses),
+                indexer.serialize_document(docs[3], CONTENT, accesses),
             ],
             key=itemgetter("id"),
         )

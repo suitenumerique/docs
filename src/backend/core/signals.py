@@ -21,7 +21,9 @@ def document_post_save(sender, instance, **kwargs):  # pylint: disable=unused-ar
     Note : Within the transaction we can have an empty content and a serialization
     error.
     """
-    transaction.on_commit(partial(trigger_batch_document_indexer, instance))
+    transaction.on_commit(
+        partial(trigger_batch_document_indexer, instance.pk, instance.updated_at)
+    )
 
 
 @receiver(signals.post_save, sender=models.DocumentAccess)
@@ -31,8 +33,9 @@ def document_access_post_save(sender, instance, created, **kwargs):  # pylint: d
     Clear cache for the affected user.
     """
     if not created:
+        document = instance.document
         transaction.on_commit(
-            partial(trigger_batch_document_indexer, instance.document)
+            partial(trigger_batch_document_indexer, document.pk, document.updated_at)
         )
 
     # Invalidate cache for the user

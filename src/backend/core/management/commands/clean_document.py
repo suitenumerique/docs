@@ -20,6 +20,7 @@ from core.models import (
     LinkTrace,
     Thread,
 )
+from core.services.yhub_services import YHubError, YHubService
 
 logger = logging.getLogger("impress.commands.clean_document")
 
@@ -142,7 +143,55 @@ class Command(BaseCommand):
                 logger.warning("Failed to delete S3 attachment %s", key)
 
         self.stdout.write(f"Deleted {len(all_attachment_keys)} attachment(s) from S3.")
+
+        # After the object storage, never before: what is erased here can be
+        # seeded back from a legacy object that is still in the bucket, and the
+        # first read of the document is all it takes.
+        self._erase_collaboration_content(all_documents)
+
         self.stdout.write("Done.")
+
+    def _erase_collaboration_content(self, documents):
+        """
+        Erase the content of the documents on the collaboration server.
+
+        That is where the content lives: without this the reset only clears the
+        database and the object storage, and the next editor to connect is
+        served the document that was supposed to be gone.
+
+        The room is emptied and left usable rather than deleted — the root
+        document keeps its id and goes on being edited. Its descendants are
+        deleted for good by then and would not mind either way.
+
+        The editors are disconnected, but each of them holds a copy of the
+        document: one that reconnects with it syncs the content back into the
+        emptied room. Run this when nobody is editing, and have anyone who was
+        reload the page.
+        """
+        service = YHubService()
+        failed = []
+
+        for doc in documents:
+            try:
+                service.reset_ydoc(doc)
+            except YHubError:
+                logger.warning(
+                    "Failed to erase the collaboration content of document %s", doc.id
+                )
+                failed.append(doc.id)
+
+        erased = len(documents) - len(failed)
+        self.stdout.write(f"Erased collaboration content for {erased} document(s).")
+
+        if failed:
+            # loud, and by id: the content of these documents is still being
+            # served, so the reset is not done until they are dealt with
+            self.stderr.write(
+                "Collaboration content NOT erased for "
+                f"{len(failed)} document(s): {', '.join(str(id) for id in failed)}. "
+                "Their content is still served by the collaboration server, "
+                "run the command again."
+            )
 
     def _clean_root_relations(self, document):
         """
