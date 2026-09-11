@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - 🔧(backend) fine tune redis cache options
+- ✨(mcp) add the docs-mcp server #2646
 
 ### Changed
 

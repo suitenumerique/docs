@@ -78,6 +78,7 @@ create-env-local-files:
 	@touch env.d/development/postgresql.local
 	@touch env.d/development/kc_auth.local
 	@touch env.d/development/kc_postgresql.local
+	@touch env.d/development/mcp.local
 .PHONY: create-env-local-files
 
 generate-secret-keys:
@@ -191,6 +192,7 @@ build: cache ?=
 build: ## build the project containers
 	@$(MAKE) build-backend cache=$(cache)
 	@$(MAKE) build-yjs-provider cache=$(cache)
+	@$(MAKE) build-mcp cache=$(cache)
 	@$(MAKE) build-frontend cache=$(cache)
 .PHONY: build
 
@@ -208,6 +210,11 @@ build-frontend: cache ?=
 build-frontend: ## build the frontend container
 	@$(COMPOSE) build frontend-development $(cache)
 .PHONY: build-frontend
+
+build-mcp: cache ?=
+build-mcp: ## build the mcp container
+	@$(COMPOSE) build mcp-development $(cache)
+.PHONY: build-mcp
 
 build-e2e: cache ?=
 build-e2e: ## build the e2e container
@@ -234,6 +241,7 @@ run-backend: ## Start only the backend application and all needed services
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider-development
 	@$(COMPOSE) up --force-recreate -d y-provider-development-converter
+	@$(COMPOSE) up --force-recreate -d mcp-development
 	@$(COMPOSE) up --force-recreate -d nginx
 .PHONY: run-backend
 
@@ -416,7 +424,8 @@ help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(GREEN)%-30s$(RESET) %s\n", $$1, $$2}'
 .PHONY: help
 
-# Front
+# -- Frontend
+
 frontend-development-install: ## install the frontend locally
 	cd $(PATH_FRONT_IMPRESS) && yarn
 .PHONY: frontend-development-install
@@ -447,6 +456,79 @@ frontend-i18n-generate: \
 frontend-i18n-compile: ## Format the crowin json files used deploy to the apps
 	cd $(PATH_FRONT) && yarn i18n:deploy
 .PHONY: frontend-i18n-compile
+
+# -- MCP
+## Helpful targets to connect various MCP clients to docs-mcp (localhost:4455/mcp) for development.
+
+mcp-claude: ## Connect Claude Code to docs-mcp and launch it (authenticate with `/mcp` on first use)
+	@test -f .mcp.json || printf '%s\n' \
+	  '{' \
+	  '  "mcpServers": {' \
+	  '    "docs-mcp": {' \
+	  '      "type": "http",' \
+	  '      "url": "http://localhost:4455/mcp",' \
+	  '      "oauth": {' \
+	  '        "clientId": "docs-mcp-client",' \
+	  '        "callbackPort": 8090' \
+	  '      }' \
+	  '    }' \
+	  '  }' \
+	  '}' \
+	  > .mcp.json
+	claude
+.PHONY: mcp-claude
+
+mcp-codex: ## Connect Codex CLI to docs-mcp and launch it (authenticate with `codex mcp login docs-mcp` on first use)
+	@mkdir -p .codex
+	@test -f .codex/config.toml || printf '%s\n' \
+	  '# docs-mcp: fixes the local OAuth callback port so it can be pre-registered as a' \
+	  '# Keycloak redirect URI (docker/auth/realm.json, docs-mcp-client). See' \
+	  '# documentation/mcp_server.md.' \
+	  'mcp_oauth_callback_port = 8091' \
+	  > .codex/config.toml
+	codex mcp add docs-mcp --url http://localhost:4455/mcp --oauth-client-id docs-mcp-client 2>/dev/null || true
+	codex
+.PHONY: mcp-codex
+
+mcp-cursor: ## Open this project in Cursor with docs-mcp connected (authenticate docs-mcp from Cursor's MCP settings on first use)
+	@mkdir -p .cursor
+	@test -f .cursor/mcp.json || printf '%s\n' \
+	  '{' \
+	  '  "mcpServers": {' \
+	  '    "docs-mcp": {' \
+	  '      "url": "http://localhost:4455/mcp",' \
+	  '      "auth": {' \
+	  '        "CLIENT_ID": "docs-mcp-client"' \
+	  '      }' \
+	  '    }' \
+	  '  }' \
+	  '}' \
+	  > .cursor/mcp.json
+	cursor .
+.PHONY: mcp-cursor
+
+mcp-gemini: ## Connect Gemini CLI to docs-mcp and launch it (approve the OAuth prompt on first use)
+	@mkdir -p .gemini
+	@test -f .gemini/settings.json || printf '%s\n' \
+	  '{' \
+	  '  "mcpServers": {' \
+	  '    "docs-mcp": {' \
+	  '      "httpUrl": "http://localhost:4455/mcp",' \
+	  '      "oauth": {' \
+	  '        "enabled": true,' \
+	  '        "clientId": "docs-mcp-client",' \
+	  '        "redirectUri": "http://localhost:8092/oauth/callback"' \
+	  '      }' \
+	  '    }' \
+	  '  }' \
+	  '}' \
+	  > .gemini/settings.json
+	gemini
+.PHONY: mcp-gemini
+
+mcp-inspector: ## Launch the MCP Inspector against docs-mcp with the client/scopes pre-filled
+	cd src/frontend/servers/mcp && yarn mcp-inspector
+.PHONY: mcp-inspector
 
 # -- K8S
 build-k8s-cluster: ## build the kubernetes cluster using kind
