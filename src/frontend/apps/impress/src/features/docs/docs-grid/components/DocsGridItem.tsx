@@ -33,11 +33,9 @@ export const DocsGridItem = ({
   const searchParams = useSearchParams();
   const target = searchParams.get('target');
   const isInTrashbin = target === 'trashbin';
-  const { untitledDocument } = useTrans();
 
-  const { t } = useTranslation();
   const { isSmallMobile, isLargeScreen } = useResponsiveStore();
-  const dateToDisplay = useDateToDisplay(doc, isInTrashbin);
+  const docItemAriaLabel = useDocItemAriaLabel(doc, isInTrashbin);
   const { openPanel } = useLeftPanelStore();
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -78,15 +76,11 @@ export const DocsGridItem = ({
         ${$css}
       `}
       className="--docs--doc-grid-item"
-      aria-label={t('Open document: {{title}}', {
-        title: doc.title || untitledDocument,
-      })}
       {...boxProps}
       role="listitem"
       tabIndex={-1}
     >
       <Box
-        tabIndex={0}
         $display="grid"
         $direction="row"
         $align="center"
@@ -122,22 +116,16 @@ export const DocsGridItem = ({
             href={`/docs/${doc.id}`}
             onKeyDown={handleKeyDown}
             onClick={handleClick}
+            aria-label={docItemAriaLabel}
           >
             <DocsGridItemTitle doc={doc} withTooltip={!dragMode} />
           </StyledLink>
         </Box>
 
         {!isSmallMobile && (
-          <StyledLink
-            href={`/docs/${doc.id}`}
-            tabIndex={-1}
-            aria-label={t('{{title}}, updated {{date}}', {
-              title: doc.title || untitledDocument,
-              date: dateToDisplay,
-            })}
-          >
+          <Box aria-hidden="true">
             <DocsGridItemDate doc={doc} isInTrashbin={isInTrashbin} />
-          </StyledLink>
+          </Box>
         )}
 
         <Box
@@ -241,12 +229,15 @@ const IconPublic = ({ isPublic }: { isPublic: boolean }) => {
   );
 };
 
+/**
+ * In the trashbin the date column counts down to the permanent deletion
+ * instead of showing the last update, so callers need to know which of the
+ * two `dateToDisplay` carries before wording it.
+ */
 const useDateToDisplay = (doc: Doc, isInTrashbin: boolean) => {
   const { data: config } = useConfig();
   const { t } = useTranslation();
   const { relativeDate, calculateDaysLeft } = useDate();
-
-  let dateToDisplay = relativeDate(doc.updated_at);
 
   if (isInTrashbin && config?.TRASHBIN_CUTOFF_DAYS && doc.deleted_at) {
     const daysLeft = calculateDaysLeft(
@@ -254,10 +245,34 @@ const useDateToDisplay = (doc: Doc, isInTrashbin: boolean) => {
       config.TRASHBIN_CUTOFF_DAYS,
     );
 
-    dateToDisplay = `${daysLeft} ${t('days', { count: daysLeft })}`;
+    return {
+      dateToDisplay: `${daysLeft} ${t('days', { count: daysLeft })}`,
+      isDaysLeft: true,
+    };
   }
 
-  return dateToDisplay;
+  return { dateToDisplay: relativeDate(doc.updated_at), isDaysLeft: false };
+};
+
+const useDocItemAriaLabel = (doc: Doc, isInTrashbin: boolean) => {
+  const { t } = useTranslation();
+  const { untitledDocument } = useTrans();
+  const { dateToDisplay, isDaysLeft } = useDateToDisplay(doc, isInTrashbin);
+  const title = doc.title || untitledDocument;
+  // Matches the count shown by the shared button and its tooltip.
+  const count = doc.nb_accesses_direct;
+
+  if (isDaysLeft) {
+    return t(
+      '{{title}}, {{date}} left before deletion, shared with {{count}} participant(s)',
+      { title, date: dateToDisplay, count },
+    );
+  }
+
+  return t(
+    '{{title}}, updated {{date}}, shared with {{count}} participant(s)',
+    { title, date: dateToDisplay, count },
+  );
 };
 
 export const DocsGridItemDate = ({
@@ -267,7 +282,7 @@ export const DocsGridItemDate = ({
   doc: Doc;
   isInTrashbin: boolean;
 }) => {
-  const dateToDisplay = useDateToDisplay(doc, isInTrashbin);
+  const { dateToDisplay } = useDateToDisplay(doc, isInTrashbin);
 
   return (
     <Text
