@@ -1,0 +1,15 @@
+cicap:
+  enabled: true
+  name: cicap
+  #serviceNameOverride: cicap
+  registry: registry.opencode.de
+  repository: bmi/opendesk/components/platform-development/images/clamav-icap
+  tag: "0.6.4"
+  clamd:
+    image: clamav/clamav:stable
+  port: 1344
+  # MaxObjectSize limits the size of files scanned by the ICAP service
+  maxObjectSize: 100M
+  # StreamMaxLength limits the size of files scanned by clamd
+  streamMaxLength: 100M
+  resources: {}
