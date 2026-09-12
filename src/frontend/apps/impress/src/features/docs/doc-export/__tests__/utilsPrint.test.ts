@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, test } from 'vitest';
 
-import { wrapInterlinksWithAnchor, wrapMediaWithLink } from '../utils_print';
+import {
+  PRINT_ONLY_CONTENT_CSS,
+  wrapInterlinksWithAnchor,
+  wrapMediaWithLink,
+} from '../utils_print';
 
 describe('print DOM helpers', () => {
   afterEach(() => {
@@ -66,5 +70,18 @@ describe('print DOM helpers', () => {
     cleanup();
 
     expect(document.querySelectorAll('a[data-print-link]')).toHaveLength(0);
+  });
+});
+
+describe('print stylesheet', () => {
+  test('takes the blend mode off the comment mark, not only its colours', () => {
+    // Gecko cannot express a blended run in PDF and falls back to a bitmap of
+    // it. Hiding the highlight while leaving mix-blend-mode in place turned
+    // every commented sentence into a 72 dpi image in the exported file.
+    const rule =
+      PRINT_ONLY_CONTENT_CSS.split('.bn-thread-mark')[1]?.split('}')[0];
+
+    expect(rule).toContain('mix-blend-mode: normal !important');
+    expect(rule).toContain('background-color: transparent !important');
   });
 });
