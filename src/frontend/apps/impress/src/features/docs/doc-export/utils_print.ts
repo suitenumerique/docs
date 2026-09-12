@@ -35,11 +35,12 @@ const PRINT_ONLY_CONTENT_CSS = `
     display: none !important;
   }
 
-  /* Hide selection highlights */
+  /* Hide selection highlights. */
   .ProseMirror-yjs-selection,
   .bn-thread-mark {
     background-color: transparent !important;
     border-bottom: none !important;
+    mix-blend-mode: normal !important;
   }
 
   /* Reset all layout containers for print flow */
