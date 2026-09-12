@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, test } from 'vitest';
 
-import { wrapInterlinksWithAnchor, wrapMediaWithLink } from '../utils_print';
+import {
+  PRINT_ONLY_CONTENT_CSS,
+  wrapInterlinksWithAnchor,
+  wrapMediaWithLink,
+} from '../utils_print';
 
 describe('print DOM helpers', () => {
   afterEach(() => {
@@ -66,5 +70,50 @@ describe('print DOM helpers', () => {
     cleanup();
 
     expect(document.querySelectorAll('a[data-print-link]')).toHaveLength(0);
+  });
+});
+
+describe('print stylesheet', () => {
+  const printDeclarationsMatching = (element: Element) => {
+    const styles = document.createElement('style');
+    styles.textContent = PRINT_ONLY_CONTENT_CSS;
+    document.head.appendChild(styles);
+
+    const declarations = Array.from(styles.sheet?.cssRules ?? [])
+      .filter((rule) => rule instanceof CSSMediaRule)
+      .filter((rule) => rule.media.mediaText === 'print')
+      .flatMap((rule) => Array.from(rule.cssRules))
+      .filter((rule) => rule instanceof CSSStyleRule)
+      .filter((rule) => element.matches(rule.selectorText))
+      .map((rule) => rule.style);
+
+    styles.remove();
+
+    return declarations;
+  };
+
+  const declaredValues = (
+    declarations: CSSStyleDeclaration[],
+    property: string,
+  ) =>
+    declarations
+      .map((declaration) => ({
+        value: declaration.getPropertyValue(property),
+        priority: declaration.getPropertyPriority(property),
+      }))
+      .filter(({ value }) => value !== '');
+
+  test('takes the blend mode off the comment mark, not only its colours', () => {
+    const mark = document.createElement('span');
+    mark.className = 'bn-thread-mark';
+
+    const declarations = printDeclarationsMatching(mark);
+
+    expect(declaredValues(declarations, 'mix-blend-mode')).toEqual([
+      { value: 'normal', priority: 'important' },
+    ]);
+    expect(declaredValues(declarations, 'background-color')).toEqual([
+      { value: 'transparent', priority: 'important' },
+    ]);
   });
 });

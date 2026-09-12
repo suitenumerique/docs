@@ -3,7 +3,7 @@ import { isSafeUrl } from '@/utils/url';
 const PRINT_ONLY_CONTENT_STYLES_ID = 'print-only-content-styles';
 const PRINT_APPLY_DELAY_MS = 200;
 const PRINT_CLEANUP_DELAY_MS = 1000;
-const PRINT_ONLY_CONTENT_CSS = `
+export const PRINT_ONLY_CONTENT_CSS = `
 @media print {
   /* Reset body and html for proper pagination */
   html, body {
@@ -35,11 +35,16 @@ const PRINT_ONLY_CONTENT_CSS = `
     display: none !important;
   }
 
-  /* Hide selection highlights */
+  /* Hide selection highlights.
+     mix-blend-mode has to go with them: Gecko cannot express a blended run in
+     PDF, so it falls back to a bitmap of that run. Hiding the highlight alone
+     left the blend in place, and every commented sentence came out as a 72 dpi
+     image while the rest of the page stayed text. */
   .ProseMirror-yjs-selection,
   .bn-thread-mark {
     background-color: transparent !important;
     border-bottom: none !important;
+    mix-blend-mode: normal !important;
   }
 
   /* Reset all layout containers for print flow */
