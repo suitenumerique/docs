@@ -74,14 +74,46 @@ describe('print DOM helpers', () => {
 });
 
 describe('print stylesheet', () => {
-  test('takes the blend mode off the comment mark, not only its colours', () => {
-    // Gecko cannot express a blended run in PDF and falls back to a bitmap of
-    // it. Hiding the highlight while leaving mix-blend-mode in place turned
-    // every commented sentence into a 72 dpi image in the exported file.
-    const rule =
-      PRINT_ONLY_CONTENT_CSS.split('.bn-thread-mark')[1]?.split('}')[0];
+  const printDeclarationsMatching = (element: Element) => {
+    const styles = document.createElement('style');
+    styles.textContent = PRINT_ONLY_CONTENT_CSS;
+    document.head.appendChild(styles);
 
-    expect(rule).toContain('mix-blend-mode: normal !important');
-    expect(rule).toContain('background-color: transparent !important');
+    const declarations = Array.from(styles.sheet?.cssRules ?? [])
+      .filter((rule) => rule instanceof CSSMediaRule)
+      .filter((rule) => rule.media.mediaText === 'print')
+      .flatMap((rule) => Array.from(rule.cssRules))
+      .filter((rule) => rule instanceof CSSStyleRule)
+      .filter((rule) => element.matches(rule.selectorText))
+      .map((rule) => rule.style);
+
+    styles.remove();
+
+    return declarations;
+  };
+
+  const declaredValues = (
+    declarations: CSSStyleDeclaration[],
+    property: string,
+  ) =>
+    declarations
+      .map((declaration) => ({
+        value: declaration.getPropertyValue(property),
+        priority: declaration.getPropertyPriority(property),
+      }))
+      .filter(({ value }) => value !== '');
+
+  test('takes the blend mode off the comment mark, not only its colours', () => {
+    const mark = document.createElement('span');
+    mark.className = 'bn-thread-mark';
+
+    const declarations = printDeclarationsMatching(mark);
+
+    expect(declaredValues(declarations, 'mix-blend-mode')).toEqual([
+      { value: 'normal', priority: 'important' },
+    ]);
+    expect(declaredValues(declarations, 'background-color')).toEqual([
+      { value: 'transparent', priority: 'important' },
+    ]);
   });
 });
