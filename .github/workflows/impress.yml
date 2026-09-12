@@ -166,13 +166,13 @@ jobs:
 
       - name: Start MinIO
         run: |
-          docker pull minio/minio
+          docker pull quay.io/minio/minio
           docker run -d --name minio \
             -p 9000:9000 \
             -e "MINIO_ACCESS_KEY=impress" \
             -e "MINIO_SECRET_KEY=password" \
             -v /data/media:/data \
-            minio/minio server --console-address :9001 /data
+            quay.io/minio/minio server --console-address :9001 /data
 
       # Tool to wait for a service to be ready
       - name: Install Dockerize
