@@ -15,7 +15,7 @@ redis:
   password: pass
 minio:
   enabled: true
-  image: minio/minio
+  image: quay.io/minio/minio
   name: minio
   ingress:
     enabled: true
@@ -53,9 +53,8 @@ keycloak:
     database: keycloak
     size: 5Gi
     image: postgres:16-alpine
-  realm: 
+  realm:
     name: docs
     username: docs
     password: docs
     email: docs@example.com
-

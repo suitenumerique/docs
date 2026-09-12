@@ -23,6 +23,7 @@ and this project adheres to
 - 🐛(frontend) preserve page titles when adding an emoji #2586
 - 🐛(frontend) hide the selection highlight on presenter images #2665
 - 🐛(y-provider) prevent process crash on malformed websocket frames #2673
+- 🐛(docker) pull minio images from quay.io #2675
 - ♿️(frontend) restore presenter focus trapping after share links #2533
 
 ## [v5.6.1] - 2026-09-04

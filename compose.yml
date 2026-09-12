@@ -26,7 +26,7 @@ services:
 
   minio:
     user: ${DOCKER_USER:-1000}
-    image: minio/minio
+    image: quay.io/minio/minio
     environment:
       - MINIO_ROOT_USER=impress
       - MINIO_ROOT_PASSWORD=password
@@ -44,7 +44,7 @@ services:
       - ./data/media:/data
 
   createbuckets:
-    image: minio/mc
+    image: quay.io/minio/mc
     depends_on:
       minio:
         condition: service_healthy
