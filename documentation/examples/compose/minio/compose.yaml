@@ -1,6 +1,6 @@
 services:
   minio:
-    image: minio/minio
+    image: quay.io/minio/minio
     environment:
       - MINIO_ROOT_USER=<set minio root username>
       - MINIO_ROOT_PASSWORD=<set minio root password>
