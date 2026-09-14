@@ -335,7 +335,7 @@ export const DocsCommentsStyle = createGlobalStyle<{
         max-width: 100%;
         width: 100%;
         min-width: 0;
-        overflow: visible;
+        overflow: hidden;
         padding: var(--c--globals--spacings--xxs) var(--c--globals--spacings--xxxs);
         border: none;
         border-radius: 0;
