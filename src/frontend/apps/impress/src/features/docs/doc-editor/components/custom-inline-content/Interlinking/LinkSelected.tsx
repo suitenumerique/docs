@@ -132,25 +132,14 @@ export const LinkSelected = ({
         $position="relative"
         $css={css`
           margin-left: 2px;
+          text-decoration: underline;
+          text-decoration-color: var(
+            --c--contextuals--border--semantic--neutral--tertiary
+          );
+          text-underline-offset: 0.2em;
         `}
       >
-        <Box
-          className="--docs-interlinking-underline"
-          as="span"
-          $height="1px"
-          $width="100%"
-          $background="var(--c--contextuals--border--semantic--neutral--tertiary)"
-          $position="absolute"
-          $hasTransition
-          $radius="2px"
-          $css={css`
-            left: 0;
-            bottom: 0px;
-          `}
-        />
-        <Box as="span" $zIndex="1" $position="relative">
-          {titleWithoutEmoji}
-        </Box>
+        {titleWithoutEmoji}
       </Text>
     </Box>
   );
