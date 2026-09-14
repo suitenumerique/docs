@@ -532,6 +532,9 @@ class Base(Configuration):
 
     # Sentry
     SENTRY_DSN = values.Value(None, environ_name="SENTRY_DSN", environ_prefix=None)
+    SENTRY_TRACES_SAMPLE_RATE = values.FloatValue(
+        0.0, environ_name="SENTRY_TRACES_SAMPLE_RATE", environ_prefix=None
+    )
 
     # Collaboration
     COLLABORATION_API_URL = values.Value(
@@ -1242,7 +1245,14 @@ class Base(Configuration):
                 dsn=cls.SENTRY_DSN,
                 environment=cls.__name__.lower(),
                 release=get_release(),
-                integrations=[DjangoIntegration()],
+                traces_sample_rate=cls.SENTRY_TRACES_SAMPLE_RATE,
+                integrations=[
+                    DjangoIntegration(
+                        transaction_style="url",
+                        middleware_spans=True,
+                        cache_spans=True,
+                    )
+                ],
             )
             sentry_sdk.set_tag("application", "backend")
 
