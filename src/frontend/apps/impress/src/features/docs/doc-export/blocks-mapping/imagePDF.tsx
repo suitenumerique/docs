@@ -59,9 +59,6 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
     const finalWidth = Math.min(previewWidth || width, MAX_WIDTH);
     const finalHeight = (finalWidth / width) * height;
 
-    // Columns are flex containers: children stretch to the column width, and
-    // react-pdf then paints the bitmap with objectFit "fill". That distorts
-    // photos (print is fine because the editor CSS keeps the ratio).
     return (
       <View wrap={false} style={imageBoxStyle}>
         <Image
