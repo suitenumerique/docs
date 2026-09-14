@@ -15,6 +15,7 @@ export type MoveDocParam = {
   sourceDocumentId: string;
   targetDocumentId: string;
   position: TreeViewMoveModeEnum;
+  skipTreeInvalidation?: boolean;
 };
 
 export const moveDoc = async ({
@@ -48,7 +49,9 @@ export function useMoveDoc(options?: UseMoveDocOptions) {
     onSuccess(data, variables, onMutateResult, context) {
       void queryClient.invalidateQueries({ queryKey: [KEY_LIST_DOC] });
       void queryClient.invalidateQueries({ queryKey: [KEY_DOC] });
-      void queryClient.invalidateQueries({ queryKey: [KEY_DOC_TREE] });
+      if (!variables.skipTreeInvalidation) {
+        void queryClient.invalidateQueries({ queryKey: [KEY_DOC_TREE] });
+      }
 
       if (options?.onSuccess) {
         void options.onSuccess(data, variables, onMutateResult, context);

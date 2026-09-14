@@ -58,6 +58,7 @@ export const DocTreeSubpages = memo(function DocTreeSubpages({
         sourceDocumentId: result.sourceId,
         targetDocumentId: result.targetModeId,
         position: result.mode,
+        skipTreeInvalidation: true,
       });
 
       treeContext?.treeData.handleMove(result);
