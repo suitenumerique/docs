@@ -573,6 +573,14 @@ frontend:
   ## @param frontend.serviceAccountName Optional service account name to use for frontend pods
   serviceAccountName: null
 
+  ## @param frontend.robotsTxt.enabled Enable serving a custom robots.txt file from the frontend, e.g. to disallow indexing of non-production instances
+  ## @param frontend.robotsTxt.content Content of the robots.txt file
+  robotsTxt:
+    enabled: false
+    content: |
+      User-agent: *
+      Allow: /
+
 ## @section posthog
 
 posthog:

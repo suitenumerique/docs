@@ -216,6 +216,8 @@
 | `frontend.extraVolumes`                                | Additional volumes to mount on the frontend.                                        | `[]`                       |
 | `frontend.pdb.enabled`                                 | Enable pdb on frontend                                                              | `true`                     |
 | `frontend.serviceAccountName`                          | Optional service account name to use for frontend pods                              | `nil`                      |
+| `frontend.robotsTxt.enabled`                           | Enable serving a custom robots.txt file from the frontend, e.g. to disallow indexing of non-production instances | `false`                      |
+| `frontend.robotsTxt.content`                           | Content of the robots.txt file                                                      | `"User-agent: *\nAllow: /\n"` |
 
 ### posthog
 
