@@ -216,6 +216,45 @@ build-e2e: ## build the e2e container
 	@$(COMPOSE_E2E) build y-provider $(cache)
 .PHONY: build-e2e
 
+### 
+### Soft mode targets
+###
+bootstrap-soft-mode: ## Prepare the project for local development in soft mode (set without_frontend=true to skip installing/running the frontend locally)
+bootstrap-soft-mode: \
+	pre-beautiful-bootstrap \
+	pre-bootstrap \
+	build-soft-mode \
+	post-bootstrap \
+	run-soft-mode
+	@$(MAKE) post-beautiful-bootstrap
+.PHONY: bootstrap-soft-mode
+
+build-soft-mode: cache ?=
+build-soft-mode: ## build the project containers in soft mode
+	@$(MAKE) build-backend cache=$(cache)
+	@$(MAKE) build-yjs-provider cache=$(cache)
+	@$(MAKE) frontend-development-install
+.PHONY: build-soft-mode
+
+without_frontend    ?= false
+run-soft-mode: ## Start both the backend and frontend in soft mode
+	@$(MAKE) run-soft-mode-backend
+ifeq ($(without_frontend),false)
+	@$(MAKE) run-soft-mode-frontend
+endif
+.PHONY: run-soft-mode
+
+run-soft-mode-backend: ## Start only the backend application and all needed services
+	@$(MAKE) create-docker-network
+	@$(COMPOSE) up --force-recreate -d celery-dev
+	@$(COMPOSE) up --force-recreate -d y-provider-development
+	@$(COMPOSE) up --force-recreate -d nginx
+.PHONY: run-soft-mode-backend
+
+run-soft-mode-frontend: ## Start only the frontend application and all needed services
+	@$(MAKE) run-frontend-development
+.PHONY: run-soft-mode-frontend
+
 nginx-frontend: ## build the nginx-frontend container
 	@$(COMPOSE) up --force-recreate -d nginx-frontend
 .PHONY: nginx-frontend
