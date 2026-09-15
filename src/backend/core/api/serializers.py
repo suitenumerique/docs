@@ -1051,13 +1051,20 @@ class MentionSerializer(serializers.ModelSerializer):
         ]
 
     def validate_mentioned_user_id(self, user):
-        """Ensure the mentioned user has access to the document."""
+        """Ensure the mentioned user is allowed to comment on the document."""
         document = models.Document.objects.annotate_user_roles(user).get(
             pk=self.context["document"].pk
         )
-        if document.get_role(user) is None:
+        role = document.get_role(user)
+        if role is None:
             raise serializers.ValidationError(
                 "This user does not have access to the document."
+            )
+
+        # A reader cannot see comments, mentioning them would lead nowhere
+        if role not in choices.COMMENTING_ROLES:
+            raise serializers.ValidationError(
+                "This user is not allowed to comment on the document."
             )
         return user
 

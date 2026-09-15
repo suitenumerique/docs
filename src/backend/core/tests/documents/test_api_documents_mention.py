@@ -13,7 +13,7 @@ from django.utils import timezone
 import pytest
 from rest_framework.test import APIClient
 
-from core import factories, models
+from core import choices, factories, models
 
 pytestmark = pytest.mark.django_db
 
@@ -22,7 +22,9 @@ def test_api_documents_mention_anonymous():
     """Anonymous users should not be allowed to mention users on a document."""
     document = factories.DocumentFactory()
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
 
     response = APIClient().post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
@@ -41,7 +43,9 @@ def test_api_documents_mention_anonymous_public_document():
     """
     document = factories.DocumentFactory(link_reach="public", link_role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
 
     response = APIClient().post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
@@ -60,7 +64,9 @@ def test_api_documents_mention_authenticated_no_access():
     user = factories.UserFactory()
     document = factories.DocumentFactory(link_reach="restricted")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
 
     client = APIClient()
     client.force_login(user)
@@ -79,7 +85,9 @@ def test_api_documents_mention_authenticated_reader():
     document = factories.DocumentFactory(link_reach="restricted")
     factories.UserDocumentAccessFactory(document=document, user=user, role="reader")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
 
     client = APIClient()
     client.force_login(user)
@@ -102,7 +110,9 @@ def test_api_documents_mention_authenticated_success(role):
     document = factories.DocumentFactory(link_reach="restricted", title="My doc")
     factories.UserDocumentAccessFactory(document=document, user=user, role=role)
     mentioned_user = factories.UserFactory(language="en-us")
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
     anchor_id = str(uuid4())
 
     client = APIClient()
@@ -149,13 +159,16 @@ def test_api_documents_mention_authenticated_success(role):
 
 def test_api_documents_mention_via_link_role():
     """
-    Authenticated users allowed to comment via the document link role should be
-    allowed to mention collaborators.
+    Authenticated users allowed to comment only via the document link role
+    should not be allowed to mention: they cannot list the accesses, and it
+    would let any link holder email the collaborators.
     """
     user = factories.UserFactory()
     document = factories.DocumentFactory(link_reach="public", link_role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
 
     client = APIClient()
     client.force_login(user)
@@ -164,8 +177,8 @@ def test_api_documents_mention_via_link_role():
         {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
 
-    assert response.status_code == 201
-    assert len(mail.outbox) == 1
+    assert response.status_code == 403
+    assert models.Mention.objects.exists() is False
 
 
 def test_api_documents_mention_missing_anchor_id():
@@ -174,7 +187,9 @@ def test_api_documents_mention_missing_anchor_id():
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
 
     client = APIClient()
     client.force_login(user)
@@ -195,7 +210,9 @@ def test_api_documents_mention_invalid_anchor_id(anchor_id):
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
 
     client = APIClient()
     client.force_login(user)
@@ -253,6 +270,52 @@ def test_api_documents_mention_user_without_access():
     assert len(mail.outbox) == 0
 
 
+@pytest.mark.parametrize("role", choices.COMMENTING_ROLES)
+def test_api_documents_mention_user_allowed_to_comment(role):
+    """Users with a role allowing them to comment on the document can be mentioned."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory()
+    factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
+    mentioned_user = factories.UserFactory()
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role=role
+    )
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/mention/",
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
+    )
+
+    assert response.status_code == 201
+    assert len(mail.outbox) == 1
+
+
+def test_api_documents_mention_user_with_reader_role():
+    """Readers cannot see comments on the document and should not be mentionable."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory()
+    factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
+    mentioned_user = factories.UserFactory()
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="reader"
+    )
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/mention/",
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "mentioned_user_id": ["This user is not allowed to comment on the document."]
+    }
+    assert models.Mention.objects.exists() is False
+
+
 def test_api_documents_mention_user_with_access_on_ancestor():
     """Users with access inherited from an ancestor document can be mentioned."""
     user = factories.UserFactory()
@@ -260,7 +323,9 @@ def test_api_documents_mention_user_with_access_on_ancestor():
     document = factories.DocumentFactory(parent=parent)
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=parent, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=parent, user=mentioned_user, role="commenter"
+    )
 
     client = APIClient()
     client.force_login(user)
@@ -281,7 +346,9 @@ def test_api_documents_mention_user_with_access_via_team(mock_user_teams):
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.TeamDocumentAccessFactory(document=document, team="lasuite")
+    factories.TeamDocumentAccessFactory(
+        document=document, team="lasuite", role="commenter"
+    )
 
     client = APIClient()
     client.force_login(user)
@@ -303,7 +370,9 @@ def test_api_documents_mention_thread():
     document = factories.DocumentFactory(title="My doc")
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
     thread = factories.ThreadFactory(document=document)
     anchor_id = str(uuid4())
 
@@ -344,7 +413,9 @@ def test_api_documents_mention_thread_other_document():
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
     other_thread = factories.ThreadFactory()
 
     client = APIClient()
@@ -374,7 +445,9 @@ def test_api_documents_mention_cooldown_same_context():
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
     anchor_id1, anchor_id2 = str(uuid4()), str(uuid4())
 
     client = APIClient()
@@ -406,7 +479,9 @@ def test_api_documents_mention_cooldown_distinct_contexts():
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
     thread1, thread2 = factories.ThreadFactory.create_batch(2, document=document)
 
     client = APIClient()
@@ -442,7 +517,9 @@ def test_api_documents_mention_cooldown_distinct_contexts():
 
     # The cooldown should apply per mentioned user
     other_mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=other_mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=other_mentioned_user, role="commenter"
+    )
     anchor_id = str(uuid4())
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
@@ -464,7 +541,9 @@ def test_api_documents_mention_cooldown_expired(settings):
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
 
     client = APIClient()
     client.force_login(user)
@@ -504,7 +583,9 @@ def test_api_documents_mention_cooldown_only_considers_notified_mentions():
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
     existing_mention = factories.MentionFactory(
         document=document,
         mentioned_user=mentioned_user,
@@ -531,7 +612,9 @@ def test_api_documents_mention_soft_deleted_document():
     document = factories.DocumentFactory(link_reach="restricted")
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
     document.soft_delete()
 
     client = APIClient()
@@ -554,7 +637,9 @@ def test_api_documents_mention_throttling(settings):
     document = factories.DocumentFactory(link_reach="restricted")
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
 
     client = APIClient()
     client.force_login(user)
@@ -586,7 +671,9 @@ def test_api_documents_mention_throttling_y_provider_exempted(settings):
     document = factories.DocumentFactory(link_reach="restricted")
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
-    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    factories.UserDocumentAccessFactory(
+        document=document, user=mentioned_user, role="commenter"
+    )
 
     client = APIClient()
     client.force_login(user)

@@ -97,9 +97,10 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
     via, role, mock_user_teams, django_assert_num_queries
 ):
     """
-    Authenticated users with no privileged role should be able to list all document
-    accesses, including from ancestors, but with limited user information, so that
-    any collaborator allowed to comment can mention the others.
+    Authenticated users with no privileged role should only be able to list document
+    accesses associated with privileged roles, including from ancestors. Users allowed
+    to comment should also see the accesses of the other roles allowed to comment, with
+    limited user information, so that they can mention each other.
     """
     user = factories.UserFactory()
     client = APIClient()
@@ -151,9 +152,17 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
     assert response.status_code == 200
     content = response.json()
 
-    # All accesses on the document and its ancestors are returned
-    all_accesses = [*accesses, user_access]
-    assert len(content) == len(all_accesses)
+    # Readers only see privileged accesses, users allowed to comment
+    # see the accesses of every role allowed to comment
+    visible_roles = (
+        choices.COMMENTING_ROLES
+        if role in choices.COMMENTING_ROLES
+        else choices.PRIVILEGED_ROLES
+    )
+    visible_accesses = [
+        access for access in [*accesses, user_access] if access.role in visible_roles
+    ]
+    assert len(content) == len(visible_accesses)
 
     assert sorted(content, key=lambda x: x["id"]) == sorted(
         [
@@ -183,7 +192,7 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                     "update": False,
                 },
             }
-            for access in all_accesses
+            for access in visible_accesses
         ],
         key=lambda x: x["id"],
     )

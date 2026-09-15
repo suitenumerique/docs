@@ -2799,10 +2799,15 @@ class DocumentAccessViewSet(
             | models.Document.objects.filter(pk=self.document.pk)
         ).filter(ancestors_deleted_at__isnull=True)
 
-        # All users with access see the full list of accesses (with limited
-        # user details for unprivileged roles) so that any collaborator
-        # allowed to comment can mention the others.
         queryset = self.get_queryset().filter(document__in=ancestors)
+
+        # Readers only see privileged accesses. Users allowed to comment also
+        # see the other roles allowed to comment (with limited user details)
+        # so that they can mention each other. Privileged users see everything.
+        if role not in choices.COMMENTING_ROLES:
+            queryset = queryset.filter(role__in=choices.PRIVILEGED_ROLES)
+        elif role not in choices.PRIVILEGED_ROLES:
+            queryset = queryset.filter(role__in=choices.COMMENTING_ROLES)
 
         accesses = list(queryset.order_by("document__path"))
 
