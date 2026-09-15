@@ -52,12 +52,9 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
       return <View wrap={false} />;
     }
 
-    const { width, height } = result;
-
     // Ensure the final width never exceeds MAX_WIDTH to prevent images
     // from overflowing the page width in the exported document
-    const finalWidth = Math.min(previewWidth || width, MAX_WIDTH);
-    const finalHeight = (finalWidth / width) * height;
+    const finalWidth = Math.min(previewWidth || result.width, MAX_WIDTH);
 
     return (
       <View wrap={false} style={imageBoxStyle}>
@@ -65,11 +62,7 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
           src={result.png}
           style={{
             width: finalWidth * PIXELS_PER_POINT,
-            height: finalHeight * PIXELS_PER_POINT,
             maxWidth: '100%',
-            aspectRatio: width / height,
-            objectFit: 'contain',
-            objectPosition: '0% 0%',
           }}
         />
         {caption(block.props)}

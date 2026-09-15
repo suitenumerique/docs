@@ -156,7 +156,7 @@ describe('blockMappingImagePDF', () => {
   it('clamps previewWidth to MAX_WIDTH (600) before conversion and rendering', async () => {
     // previewWidth=800 is clamped to 600 before being passed to convertBlobToPng.
     // The converter returns 600×300 (already at the clamped size).
-    // Rendered: width = 600*PIXELS_PER_POINT(0.75) = 450, height = 300*PIXELS_PER_POINT(0.75) = 225.
+    // Rendered: width = 600*PIXELS_PER_POINT(0.75) = 450.
     vi.mocked(convertBlobToPng).mockResolvedValue({
       png: CANVAS_PNG_URL,
       width: 600,
@@ -173,7 +173,6 @@ describe('blockMappingImagePDF', () => {
     const imageEl = findInTree(result as React.ReactNode, 'pdfImage');
     expect(imageEl).toBeDefined();
     expect(imageEl?.props.style?.width).toBe(450);
-    expect(imageEl?.props.style?.height).toBe(225);
   });
 
   it('passes previewWidth to convertBlobToPng so it can resize during transcoding', async () => {
@@ -211,8 +210,8 @@ describe('blockMappingImagePDF', () => {
   });
 
   it('uses natural image dimensions for the rendered style when no previewWidth is set', async () => {
-    // naturalWidth=300, naturalHeight=150 → finalWidth=300, finalHeight=150.
-    // Rendered: width = 300*PIXELS_PER_POINT(0.75) = 225, height = 150*PIXELS_PER_POINT(0.75) = 112.5.
+    // naturalWidth=300, naturalHeight=150 → finalWidth=300.
+    // Rendered: width = 300*PIXELS_PER_POINT(0.75) = 225.
     vi.mocked(convertBlobToPng).mockResolvedValue({
       png: CANVAS_PNG_URL,
       width: 300,
@@ -228,10 +227,6 @@ describe('blockMappingImagePDF', () => {
     const imageEl = findInTree(result as React.ReactNode, 'pdfImage');
     expect(imageEl).toBeDefined();
     expect(imageEl?.props.style?.width).toBe(225);
-    expect(imageEl?.props.style?.height).toBe(112.5);
-    expect(imageEl?.props.style?.objectFit).toBe('contain');
-    expect(imageEl?.props.style?.objectPosition).toBe('0% 0%');
-    expect(imageEl?.props.style?.aspectRatio).toBe(2);
     expect(imageEl?.props.style?.maxWidth).toBe('100%');
 
     const viewEl = result as React.ReactElement<PDFElementProps>;
@@ -241,8 +236,7 @@ describe('blockMappingImagePDF', () => {
 
   it('scales rendered style to previewWidth when it is within MAX_WIDTH', async () => {
     // previewWidth=400 (< MAX_WIDTH=600), natural size 300×150.
-    // finalWidth=400, finalHeight=(400/300)*150≈200.
-    // Rendered: width = 400*PIXELS_PER_POINT(0.75) = 300, height ≈ 200*PIXELS_PER_POINT(0.75) = 150.
+    // Rendered: width = 400*PIXELS_PER_POINT(0.75) = 300.
     vi.mocked(convertBlobToPng).mockResolvedValue({
       png: CANVAS_PNG_URL,
       width: 300,
@@ -258,7 +252,24 @@ describe('blockMappingImagePDF', () => {
     const imageEl = findInTree(result as React.ReactNode, 'pdfImage');
     expect(imageEl).toBeDefined();
     expect(imageEl?.props.style?.width).toBe(300);
-    expect(imageEl?.props.style?.height).toBe(150);
+  });
+
+  it('leaves the height unset so a column-shrunk image keeps its ratio', async () => {
+    vi.mocked(convertBlobToPng).mockResolvedValue({
+      png: CANVAS_PNG_URL,
+      width: 400,
+      height: 640,
+    });
+
+    const result = await blockMappingImagePDF(
+      makeBlock({ previewWidth: 470 }),
+      makeExporter(new Blob(['fake-png'], { type: 'image/png' })),
+      0,
+    );
+
+    const imageEl = findInTree(result as React.ReactNode, 'pdfImage');
+    expect(imageEl?.props.style?.height).toBeUndefined();
+    expect(imageEl?.props.style?.aspectRatio).toBeUndefined();
   });
 
   it('returns an empty View when convertBlobToPng returns undefined', async () => {
