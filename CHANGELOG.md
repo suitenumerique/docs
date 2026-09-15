@@ -8,11 +8,13 @@ and this project adheres to
 
 ### Added
 
+- ✨(backend) add mention endpoint with cooldown-limited email notification
 - 🔧(backend) fine tune redis cache options
 - ✨(frontend) make the full last-update date available #1215
 
 ### Changed
 
+- 🛂(backend) let users allowed to comment list each other's accesses
 - ⬆️(backend) upgrade celery to version 5.6.3
 - ⚡️(backend) stop using LEFT(value, LENGTH(path)) in sql queries
 - 🚚(project) switch docspec image to ghcr.io/docspec/api #2553

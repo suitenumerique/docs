@@ -98,7 +98,9 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
 ):
     """
     Authenticated users with no privileged role should only be able to list document
-    accesses associated with privileged roles for a document, including from ancestors.
+    accesses associated with privileged roles, including from ancestors. Users allowed
+    to comment should also see the accesses of the other roles allowed to comment, with
+    limited user information, so that they can mention each other.
     """
     user = factories.UserFactory()
     client = APIClient()
@@ -125,18 +127,20 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
     factories.UserDocumentAccessFactory(document=child)
 
     if via == USER:
-        models.DocumentAccess.objects.create(
+        user_access = models.DocumentAccess.objects.create(
             document=document,
             user=user,
             role=role,
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
-        models.DocumentAccess.objects.create(
+        user_access = models.DocumentAccess.objects.create(
             document=document,
             team="lasuite",
             role=role,
         )
+    else:
+        raise RuntimeError()
 
     # Accesses for other documents to which the user is related should not be listed either
     other_access = factories.UserDocumentAccessFactory(user=user)
@@ -148,11 +152,17 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
     assert response.status_code == 200
     content = response.json()
 
-    # Make sure only privileged roles are returned
-    privileged_accesses = [
-        acc for acc in accesses if acc.role in choices.PRIVILEGED_ROLES
+    # Readers only see privileged accesses, users allowed to comment
+    # see the accesses of every role allowed to comment
+    visible_roles = (
+        choices.COMMENTING_ROLES
+        if role in choices.COMMENTING_ROLES
+        else choices.PRIVILEGED_ROLES
+    )
+    visible_accesses = [
+        access for access in [*accesses, user_access] if access.role in visible_roles
     ]
-    assert len(content) == len(privileged_accesses)
+    assert len(content) == len(visible_accesses)
 
     assert sorted(content, key=lambda x: x["id"]) == sorted(
         [
@@ -164,6 +174,7 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                     "depth": access.document.depth,
                 },
                 "user": {
+                    "id": str(access.user.id),
                     "full_name": access.user.full_name,
                     "short_name": access.user.short_name,
                 }
@@ -176,12 +187,12 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                 "abilities": {
                     "destroy": False,
                     "partial_update": False,
-                    "retrieve": False,
+                    "retrieve": access.user is not None and access.user.id == user.id,
                     "set_role_to": [],
                     "update": False,
                 },
             }
-            for access in privileged_accesses
+            for access in visible_accesses
         ],
         key=lambda x: x["id"],
     )
