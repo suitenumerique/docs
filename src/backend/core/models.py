@@ -1422,7 +1422,7 @@ class Document(MP_Node, BaseModel):
             "link_configuration": is_owner_or_admin,
             "invite_owner": is_owner and not is_deleted,
             "leave": can_leave,
-            "mention": can_comment and user.is_authenticated,
+            "mention": has_access_role and can_comment,
             "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
             "restore": is_owner and bool(self.deleted_at),
