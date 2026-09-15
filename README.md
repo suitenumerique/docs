@@ -1,3 +1,25 @@
+## Quick start (LAN)
+
+**Setup**
+
+```bash
+make bootstrap
+```
+
+**Run** — login and password: `impress`
+
+```bash
+LAN_HOST="$(hostname -I | awk '{print $1}')" ./run-docs-lan.sh
+```
+
+**Stop (preserving data)**
+
+```bash
+docker compose -f compose.yml -f compose.lan.yml down
+```
+
+---
+
 <p align="center">
   <a href="https://github.com/suitenumerique/docs">
     <img alt="Docs" src="documentation/assets/banner-docs.png" width="100%" />

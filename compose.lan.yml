@@ -1,0 +1,43 @@
+services:
+  app-dev:
+    environment:
+      DJANGO_CSRF_TRUSTED_ORIGINS: "http://${LAN_HOST}:3000,http://localhost:3000,http://127.0.0.1:3000"
+      IMPRESS_BASE_URL: "http://${LAN_HOST}:8071"
+      MEDIA_BASE_URL: "http://${LAN_HOST}:8083"
+      OIDC_OP_AUTHORIZATION_ENDPOINT: "http://${LAN_HOST}:8083/realms/impress/protocol/openid-connect/auth"
+      OIDC_OP_URL: "http://${LAN_HOST}:8083/realms/docs"
+      OIDC_REDIRECT_ALLOWED_HOSTS: "${LAN_HOST}:8071,${LAN_HOST}:3000,localhost:8071,localhost:3000"
+      LOGIN_REDIRECT_URL: "http://${LAN_HOST}:3000"
+      LOGIN_REDIRECT_URL_FAILURE: "http://${LAN_HOST}:3000"
+      LOGOUT_REDIRECT_URL: "http://${LAN_HOST}:3000"
+      USER_RECONCILIATION_FORM_URL: "http://${LAN_HOST}:3000"
+      COLLABORATION_SERVER_ORIGIN: "http://${LAN_HOST}:3000"
+      COLLABORATION_WS_URL: "ws://${LAN_HOST}:4444/collaboration/ws/"
+
+  celery-dev:
+    environment:
+      IMPRESS_BASE_URL: "http://${LAN_HOST}:8071"
+      MEDIA_BASE_URL: "http://${LAN_HOST}:8083"
+      LOGIN_REDIRECT_URL: "http://${LAN_HOST}:3000"
+      LOGIN_REDIRECT_URL_FAILURE: "http://${LAN_HOST}:3000"
+      LOGOUT_REDIRECT_URL: "http://${LAN_HOST}:3000"
+
+  frontend-development:
+    environment:
+      NEXT_PUBLIC_API_ORIGIN: "http://${LAN_HOST}:8071"
+      NEXT_PUBLIC_ALLOWED_DEV_ORIGIN: "${LAN_HOST}"
+      NEXT_PUBLIC_SW_DEACTIVATED: "true"
+
+  keycloak:
+    environment:
+      # Keep Keycloak's form actions, cookies and OIDC issuer on the same LAN host.
+      # The default localhost hostname makes remote browser login sessions expire.
+      KC_HOSTNAME: "http://${LAN_HOST}:8083"
+
+  y-provider-development:
+    environment:
+      COLLABORATION_SERVER_ORIGIN: "http://${LAN_HOST}:3000"
+
+  y-provider-development-converter:
+    environment:
+      COLLABORATION_SERVER_ORIGIN: "http://${LAN_HOST}:3000"
