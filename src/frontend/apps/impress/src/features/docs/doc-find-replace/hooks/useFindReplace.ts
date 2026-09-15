@@ -9,7 +9,9 @@ export const useFindReplace = (editor: DocsBlockNoteEditor | undefined) => {
   const [matchCount, setMatchCount] = useState(0);
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  const tiptapEditor = editor?._tiptapEditor;
+  const isSupported =
+    typeof editor?._tiptapEditor.commands.clearSearch === 'function';
+  const tiptapEditor = isSupported ? editor?._tiptapEditor : undefined;
 
   const syncFromStorage = useCallback(() => {
     if (!tiptapEditor) {
@@ -111,6 +113,7 @@ export const useFindReplace = (editor: DocsBlockNoteEditor | undefined) => {
   }, [tiptapEditor]);
 
   return {
+    isSupported,
     query,
     setQuery,
     replacement,
