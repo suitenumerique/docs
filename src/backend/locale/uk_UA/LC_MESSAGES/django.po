@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-03 06:55+0000\n"
-"PO-Revision-Date: 2026-09-03 12:26\n"
+"POT-Creation-Date: 2026-09-14 19:00+0000\n"
+"PO-Revision-Date: 2026-09-15 11:54\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -78,12 +78,12 @@ msgstr "Це поле є обов’язковим."
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr "Доступ до посилання '%(link_reach)s' заборонено на основі конфігурації батьківського документа."
 
-#: core/api/viewsets.py:1389
+#: core/api/viewsets.py:1398
 #, python-brace-format
 msgid "copy of {title}"
 msgstr "копія {title}"
 
-#: core/api/viewsets.py:3328
+#: core/api/viewsets.py:3337
 #, python-format
 msgid "A comment can have a maximum of %(max)d distinct reactions."
 msgstr "Коментарі можуть мати максимум %(max)d різних реакцій."
@@ -379,145 +379,145 @@ msgstr "Документ"
 msgid "Documents"
 msgstr "Документи"
 
-#: core/models.py:1006 core/models.py:1436
+#: core/models.py:1006 core/models.py:1450
 msgid "Untitled Document"
 msgstr "Документ без назви"
 
-#: core/models.py:1437
+#: core/models.py:1451
 msgid "Open"
 msgstr "Відкрити"
 
-#: core/models.py:1472
+#: core/models.py:1486
 #, python-brace-format
 msgid "{name} shared a document with you!"
 msgstr "{name} ділиться з вами документом!"
 
-#: core/models.py:1476
+#: core/models.py:1490
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
 msgstr "{name} запрошує вас для роботи з документом із роллю \"{role}\":"
 
-#: core/models.py:1482
+#: core/models.py:1496
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
 msgstr "{name} ділиться з вами документом: {title}"
 
-#: core/models.py:1582
+#: core/models.py:1596
 msgid "Document/user link trace"
 msgstr "Трасування посилання Документ/користувач"
 
-#: core/models.py:1583
+#: core/models.py:1597
 msgid "Document/user link traces"
 msgstr "Трасування посилань Документ/користувач"
 
-#: core/models.py:1589
+#: core/models.py:1603
 msgid "A link trace already exists for this document/user."
 msgstr "Відстеження вже існуючих посилань для цього документа/користувача."
 
-#: core/models.py:1612
+#: core/models.py:1626
 msgid "Document favorite"
 msgstr "Обраний документ"
 
-#: core/models.py:1613
+#: core/models.py:1627
 msgid "Document favorites"
 msgstr "Обрані документи"
 
-#: core/models.py:1619
+#: core/models.py:1633
 msgid "This document is already targeted by a favorite relation instance for the same user."
 msgstr "Цей документ вже вказаний як обраний для одного користувача."
 
-#: core/models.py:1641
+#: core/models.py:1655
 msgid "Document/user relation"
 msgstr "Відносини документ/користувач"
 
-#: core/models.py:1642
+#: core/models.py:1656
 msgid "Document/user relations"
 msgstr "Відносини документ/користувач"
 
-#: core/models.py:1648
+#: core/models.py:1662
 msgid "This user is already in this document."
 msgstr "Цей користувач вже має доступ до цього документу."
 
-#: core/models.py:1654
+#: core/models.py:1668
 msgid "This team is already in this document."
 msgstr "Ця команда вже має доступ до цього документа."
 
-#: core/models.py:1660
+#: core/models.py:1674
 msgid "Either user or team must be set, not both."
 msgstr "Вкажіть користувача або команду, а не обох."
 
-#: core/models.py:1811
+#: core/models.py:1825
 msgid "Document ask for access"
 msgstr "Запит доступу до документа"
 
-#: core/models.py:1812
+#: core/models.py:1826
 msgid "Document ask for accesses"
 msgstr "Запит доступу для документа"
 
-#: core/models.py:1818
+#: core/models.py:1832
 msgid "This user has already asked for access to this document."
 msgstr "Цей користувач вже попросив доступ до цього документа."
 
-#: core/models.py:1875
+#: core/models.py:1889
 #, python-brace-format
 msgid "{name} would like access to a document!"
 msgstr "{name} хоче отримати доступ до документа!"
 
-#: core/models.py:1879
+#: core/models.py:1893
 #, python-brace-format
 msgid "{name} would like access to the following document:"
 msgstr "{name} бажає отримати доступ до наступного документа:"
 
-#: core/models.py:1885
+#: core/models.py:1899
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
 msgstr "{name} запитує доступ до документа: {title}"
 
-#: core/models.py:1927
+#: core/models.py:1941
 msgid "Thread"
 msgstr "Обговорення"
 
-#: core/models.py:1928
+#: core/models.py:1942
 msgid "Threads"
 msgstr "Обговорення"
 
-#: core/models.py:1931 core/models.py:1984
+#: core/models.py:1945 core/models.py:1998
 msgid "Anonymous"
 msgstr "Анонім"
 
-#: core/models.py:1979
+#: core/models.py:1993
 msgid "Comment"
 msgstr "Коментар"
 
-#: core/models.py:1980
+#: core/models.py:1994
 msgid "Comments"
 msgstr "Коментарі"
 
-#: core/models.py:2030
+#: core/models.py:2044
 msgid "This emoji has already been reacted to this comment."
 msgstr "Цим емодзі вже відреагували на цей коментар."
 
-#: core/models.py:2034
+#: core/models.py:2048
 msgid "Reaction"
 msgstr "Реакція"
 
-#: core/models.py:2035
+#: core/models.py:2049
 msgid "Reactions"
 msgstr "Реакції"
 
-#: core/models.py:2045
+#: core/models.py:2059
 msgid "email address"
 msgstr "електронна адреса"
 
-#: core/models.py:2064
+#: core/models.py:2078
 msgid "Document invitation"
 msgstr "Запрошення до редагування документа"
 
-#: core/models.py:2065
+#: core/models.py:2079
 msgid "Document invitations"
 msgstr "Запрошення до редагування документів"
 
-#: core/models.py:2085
+#: core/models.py:2099
 msgid "This email is already associated to a registered user."
 msgstr "Ця електронна пошта вже пов'язана з зареєстрованим користувачем."
 
@@ -537,7 +537,7 @@ msgstr " Docs, ваш новий важливий інструмент для о
 msgid " Brought to you by %(brandname)s "
 msgstr " Запрошення отримане від %(brandname)s "
 
-#: impress/settings.py:875
+#: impress/settings.py:892
 msgid "Docs AI"
 msgstr "Docs ШІ"
 
