@@ -10,6 +10,7 @@ and this project adheres to
 
 - 🔧(backend) fine tune redis cache options
 - ✨(frontend) make the full last-update date available #1215
+- ✨(helm) allow disallowing search engine indexing per instance #2694
 
 ### Changed
 
