@@ -7,6 +7,10 @@ import { convertBlobToPng, convertSvgToPng } from '../utils';
 const PIXELS_PER_POINT = 0.75;
 const FONT_SIZE = 16;
 const MAX_WIDTH = 600;
+const imageBoxStyle = {
+  alignSelf: 'flex-start' as const,
+  maxWidth: '100%' as const,
+};
 
 /**
  * Renders an image block as a PDF element.
@@ -48,20 +52,16 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
       return <View wrap={false} />;
     }
 
-    const { width, height } = result;
-
     // Ensure the final width never exceeds MAX_WIDTH to prevent images
     // from overflowing the page width in the exported document
-    const finalWidth = Math.min(previewWidth || width, MAX_WIDTH);
-    const finalHeight = (finalWidth / width) * height;
+    const finalWidth = Math.min(previewWidth || result.width, MAX_WIDTH);
 
     return (
-      <View wrap={false}>
+      <View wrap={false} style={imageBoxStyle}>
         <Image
           src={result.png}
           style={{
             width: finalWidth * PIXELS_PER_POINT,
-            height: finalHeight * PIXELS_PER_POINT,
             maxWidth: '100%',
           }}
         />
