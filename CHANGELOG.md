@@ -6,22 +6,25 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.7.0] - 2026-09-15
+
 ### Added
 
-- 🔧(backend) fine tune redis cache options
+- 🔧(backend) fine tune redis cache options #2658
 - ✨(frontend) make the full last-update date available #1215
+- 💄(frontend) redesign email confirmation standalone page #2601
 
 ### Changed
 
-- ⬆️(backend) upgrade celery to version 5.6.3
-- ⚡️(backend) stop using LEFT(value, LENGTH(path)) in sql queries
+- ⬆️(backend) upgrade celery to version 5.6.3 #2658
+- ⚡️(backend) stop using LEFT(value, LENGTH(path)) in sql queries #2668
 - 🚚(project) switch docspec image to ghcr.io/docspec/api #2553
 - 🚚(global) move favorite documents API endpoint 
   to `/documents/favorites/` #2540
 
 ### Fixed
 
-- 🐛(backend) skip session creation for the liveness probe
+- 🐛(backend) skip session creation for the liveness probe #2654
 - 🐛(frontend) preserve page titles when adding an emoji #2586
 - 🐛(frontend) scroll to the linked block in read-only documents #2663
 - 🐛(frontend) hide the selection highlight on presenter images #2665
@@ -30,6 +33,7 @@ and this project adheres to
 - 🐛(frontend) keep commented text sharp when printing to PDF #2674
 - 🐛(docker) pull minio images from quay.io #2675
 - ♿️(frontend) restore presenter focus trapping after share links #2533
+- 🐛(frontend) export any raster image supported by the browser to a PDF #2530
 - 🐛(frontend) fix find & replace crash when editor becomes read-only #2684
 
 ## [v5.6.1] - 2026-09-04
@@ -37,13 +41,12 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) export presenter slides as PDF #2487
-- 💄(frontend) redesign email confirmation standalone page #2601
 
 ### Fixed
 
 - 🐛(frontend) hide Leave in the doc menu when not logged in #2626
-- 🐛(backend) allow to configure settings DATA_UPLOAD_MAX_MEMORY_SIZE
-- ➕(backend) add servestatic dependency
+- 🐛(backend) allow to configure settings DATA_UPLOAD_MAX_MEMORY_SIZE #2639
+- ➕(backend) add servestatic dependency #2644
 
 ## [v5.6.0] - 2026-09-03
 
@@ -72,7 +75,6 @@ and this project adheres to
 - 🐛(backend) manage async support for Docs custom middleware #2619
 - 🐛(frontend) save the doc with a keepalive
   request when leaving the page #2619
-- 🐛(frontend) export any raster image supported by the browser to a PDF #2530
 
 ### Removed
 
@@ -1520,8 +1522,9 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.6.1...main
-[v5.6.1]: https://github.com/suitenumerique/docs/releases/v5.6.0
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.7.0...main
+[v5.7.0]: https://github.com/suitenumerique/docs/releases/v5.7.0
+[v5.6.1]: https://github.com/suitenumerique/docs/releases/v5.6.1
 [v5.6.0]: https://github.com/suitenumerique/docs/releases/v5.6.0
 [v5.5.0]: https://github.com/suitenumerique/docs/releases/v5.5.0
 [v5.4.1]: https://github.com/suitenumerique/docs/releases/v5.4.1
