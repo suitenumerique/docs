@@ -8,7 +8,10 @@ const buildId = crypto.randomBytes(256).toString('hex').slice(0, 8);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ['docs.127.0.0.1.nip.io'],
+  // Next.js expects explicit hostnames here ("*" is not treated as a wildcard).
+  allowedDevOrigins: [
+    process.env.NEXT_PUBLIC_ALLOWED_DEV_ORIGIN || 'docs.127.0.0.1.nip.io',
+  ],
   output: 'export',
   trailingSlash: true,
   // `@blocknote/math-block` imports `katex/dist/katex.min.css` from its entry
