@@ -30,6 +30,7 @@ and this project adheres to
 - 🐛(frontend) keep commented text sharp when printing to PDF #2674
 - 🐛(docker) pull minio images from quay.io #2675
 - ♿️(frontend) restore presenter focus trapping after share links #2533
+- 🐛(frontend) fix find & replace crash when editor becomes read-only #2684
 
 ## [v5.6.1] - 2026-09-04
 

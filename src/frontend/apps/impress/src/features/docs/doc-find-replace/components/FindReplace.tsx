@@ -36,6 +36,7 @@ export const FindReplace = () => {
   const findInputRef = useRef<HTMLInputElement>(null);
 
   const {
+    isSupported,
     query,
     setQuery,
     replacement,
@@ -69,6 +70,16 @@ export const FindReplace = () => {
     findInputRef.current?.focus();
     findInputRef.current?.select();
   }, [editor?._tiptapEditor, setQuery, openCount]);
+
+  // The editor can lose find & replace support while the panel is open, e.g.
+  // when a collaborative doc briefly turns read-only after a WebSocket
+  // disconnect. Close the panel so the floating bar falls back to its normal
+  // controls instead of rendering nothing.
+  useEffect(() => {
+    if (!isSupported) {
+      close();
+    }
+  }, [isSupported, close]);
 
   const handleClose = () => {
     close();
@@ -150,6 +161,10 @@ export const FindReplace = () => {
     event.preventDefault();
     handleReplaceCurrent();
   };
+
+  if (!isSupported) {
+    return null;
+  }
 
   return (
     <Card
