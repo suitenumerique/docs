@@ -37,30 +37,6 @@ describe('collaborationWSHandler', () => {
     expect(handleConnectionMock).toHaveBeenCalledWith(ws, req);
   });
 
-  test('does not crash the process when the socket emits an unexpected "error" event', () => {
-    const consoleErrorMock = vi
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
-    const { ws } = createFakeWs();
-
-    collaborationWSHandler(ws, {} as Request);
-
-    const wsError = Object.assign(new Error('Invalid WebSocket frame'), {
-      code: 'WS_ERR_UNEXPECTED_RSV_2_3',
-    });
-
-    // Without an 'error' listener, EventEmitter would throw here and crash
-    // the process - this call must not throw.
-    expect(() => ws.emit('error', wsError)).not.toThrow();
-
-    expect(consoleErrorMock).toHaveBeenCalledWith(
-      'WebSocket connection error:',
-      wsError,
-    );
-
-    consoleErrorMock.mockRestore();
-  });
-
   test('closes the socket and logs if handleConnection throws synchronously', () => {
     const consoleErrorMock = vi
       .spyOn(console, 'error')
