@@ -134,6 +134,12 @@ frontend:
 
   replicas: 1
 
+  robotsTxt:
+    enabled: true
+    content: |
+      User-agent: *
+      Disallow: /
+
   image:
     repository: lasuite/impress-frontend
     pullPolicy: Always

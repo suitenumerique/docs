@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(helm) allow disallowing search engine indexing per instance #2694
+
 ## [v5.7.0] - 2026-09-15
 
 ### Added
