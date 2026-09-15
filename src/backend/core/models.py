@@ -2159,6 +2159,10 @@ class Mention(BaseModel):
         Set `notified_at` on the mention and return True if an email was sent,
         return False otherwise.
         """
+
+        if self.mentioned_user_id == self.mentioned_by_user_id:
+            return False
+
         user = self.mentioned_user
         if user is None or not user.email or self.is_notification_in_cooldown():
             return False

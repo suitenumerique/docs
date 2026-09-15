@@ -606,6 +606,27 @@ def test_api_documents_mention_cooldown_only_considers_notified_mentions():
     assert len(mail.outbox) == 1
 
 
+def test_api_documents_mention_self():
+    """
+    Users mentioning themselves should get the mention recorded without
+    being notified.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory()
+    factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/mention/",
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(user.id)},
+    )
+
+    assert response.status_code == 201
+    assert models.Mention.objects.get().notified_at is None
+    assert len(mail.outbox) == 0
+
+
 def test_api_documents_mention_soft_deleted_document():
     """Mentions should not be allowed on soft deleted documents."""
     user = factories.UserFactory()
