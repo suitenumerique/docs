@@ -1,4 +1,4 @@
-import { Server } from 'node:net';
+import { Server, Socket } from 'node:net';
 
 import {
   HocuspocusProvider,
@@ -40,6 +40,7 @@ console.log = vi.fn();
 import * as CollaborationBackend from '@/api/collaborationBackend';
 import { COLLABORATION_SERVER_ORIGIN as origin, PORT as port } from '@/env';
 import { promiseDone } from '@/helpers';
+import { routes } from '@/routes';
 import { hocuspocusServer, initApp } from '@/servers';
 
 describe('Server Tests', () => {
@@ -92,6 +93,52 @@ describe('Server Tests', () => {
     };
 
     return promise;
+  });
+
+  [
+    {
+      title: 'rejected for a bad origin',
+      path: routes.COLLABORATION_WS,
+      headers: { Origin: 'http://bad-origin.com' },
+    },
+    {
+      title: 'rejected for missing cookies',
+      path: routes.COLLABORATION_WS,
+      headers: { Origin: origin },
+    },
+    {
+      title: 'on an unknown route',
+      path: '/unknown-route/',
+      headers: { Origin: origin, Cookie: 'docs_sessionid=abc' },
+    },
+  ].forEach(({ title, path, headers }) => {
+    test(`Malformed frame on a WebSocket ${title} does not crash the server`, () => {
+      const { promise, done } = promiseDone();
+      const ws = new WebSocket(
+        `ws://localhost:${port}${path}?room=${uuidv4()}`,
+        { headers },
+      );
+
+      ws.onopen = () => {
+        // Masked text frame with the reserved RSV2 bit set: the server has
+        // already started closing the socket but still reads this frame.
+        (ws as unknown as { _socket: Socket })._socket.write(
+          Buffer.from([0xa1, 0x80, 0x00, 0x00, 0x00, 0x00]),
+        );
+      };
+
+      ws.onclose = () => {
+        expect(console.error).toHaveBeenCalledWith(
+          'WebSocket connection error:',
+          expect.objectContaining({
+            message: expect.stringContaining('RSV2 and RSV3 must be clear'),
+          }),
+        );
+        done();
+      };
+
+      return promise;
+    });
   });
 
   test('WebSocket connection not allowed if room not matching provider name', () => {

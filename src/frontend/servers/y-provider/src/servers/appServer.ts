@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/node';
 import express from 'express';
 import expressWebsockets from 'express-ws';
+import * as ws from 'ws';
 
 import { CONVERSION_FILE_MAX_SIZE } from '@/env';
 import {
@@ -19,7 +20,19 @@ import { logger } from '@/utils';
  * @returns An object containing the Express app, Hocuspocus server, and HTTP server instance.
  */
 export const initApp = () => {
-  const { app } = expressWebsockets(express());
+  const { app, getWss } = expressWebsockets(express());
+
+  /**
+   * Handle socket errors on every WebSocket, before any middleware runs.
+   * Sockets rejected by `wsSecurity` or by express-ws (unknown route) are
+   * closed with a closing handshake and keep reading frames meanwhile: an
+   * unhandled 'error' from a malformed frame would crash the process.
+   */
+  getWss().prependListener('connection', (socket: ws.WebSocket) => {
+    socket.on('error', (error) => {
+      console.error('WebSocket connection error:', error);
+    });
+  });
 
   app.use(corsMiddleware);
 

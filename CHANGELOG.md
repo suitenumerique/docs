@@ -26,6 +26,7 @@ and this project adheres to
 - 🐛(frontend) scroll to the linked block in read-only documents #2663
 - 🐛(frontend) hide the selection highlight on presenter images #2665
 - 🐛(y-provider) prevent process crash on malformed websocket frames #2673
+- 🐛(y-provider) prevent crash on malformed frames from rejected websockets
 - 🐛(frontend) keep commented text sharp when printing to PDF #2674
 - 🐛(docker) pull minio images from quay.io #2675
 - ♿️(frontend) restore presenter focus trapping after share links #2533
