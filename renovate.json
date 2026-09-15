@@ -56,6 +56,12 @@
       "allowedVersions": "<7.0.0"
     },
     {
+      "description": "yhub-server pins @y/y while @y/hub depends on it by range: bumped apart, they install two copies of Yjs, which breaks its constructor checks",
+      "groupName": "@y packages",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["@y/*"]
+    },
+    {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
