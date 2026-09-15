@@ -2177,15 +2177,15 @@ class Mention(BaseModel):
         with override(language):
             title = self.document.title or str(_("Untitled Document"))
             if self.thread_id:
-                subject = _(
-                    "You were mentioned in a comment on the document {title}"
-                ).format(title=title)
+                subject = _('{name} mentioned you in a comment in "{title}"').format(
+                    name=sender_name, title=title
+                )
                 message = _(
-                    "{name} mentioned you in a comment on the following document:"
+                    "{name} mentioned you in a comment in the following document:"
                 ).format(name=sender_name)
             else:
-                subject = _("You were mentioned in the document {title}").format(
-                    title=title
+                subject = _('{name} mentioned you in "{title}"').format(
+                    name=sender_name, title=title
                 )
                 message = _("{name} mentioned you in the following document:").format(
                     name=sender_name
