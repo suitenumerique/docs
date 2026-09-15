@@ -523,7 +523,8 @@ class DocumentViewSet(
     16. **Mention**: Mention a user on the document and notify them by email.
         Example: POST /documents/{id}/mention/
         Expected data:
-        - anchor_id (str): The location of the mention, used for the email deeplink.
+        - anchor_id (uuid): The block or comment id of the mention, used for
+          the email deeplink.
         - mentioned_user_id (uuid): The user being mentioned, must have access
           to the document.
         - thread_id (uuid, optional): The comment thread in which the mention

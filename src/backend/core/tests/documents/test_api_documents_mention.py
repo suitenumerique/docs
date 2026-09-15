@@ -4,6 +4,7 @@ Tests for Documents API endpoint in impress's core app: mention
 
 import random
 from datetime import timedelta
+from uuid import uuid4
 
 from django.core import mail
 from django.core.cache import cache
@@ -25,7 +26,7 @@ def test_api_documents_mention_anonymous():
 
     response = APIClient().post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
 
     assert response.status_code == 401
@@ -44,7 +45,7 @@ def test_api_documents_mention_anonymous_public_document():
 
     response = APIClient().post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
 
     assert response.status_code == 401
@@ -65,7 +66,7 @@ def test_api_documents_mention_authenticated_no_access():
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
 
     assert response.status_code == 403
@@ -84,7 +85,7 @@ def test_api_documents_mention_authenticated_reader():
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
 
     assert response.status_code == 403
@@ -102,19 +103,20 @@ def test_api_documents_mention_authenticated_success(role):
     factories.UserDocumentAccessFactory(document=document, user=user, role=role)
     mentioned_user = factories.UserFactory(language="en-us")
     factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    anchor_id = str(uuid4())
 
     client = APIClient()
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": anchor_id, "mentioned_user_id": str(mentioned_user.id)},
     )
 
     assert response.status_code == 201
 
     mention = models.Mention.objects.get()
     assert mention.document == document
-    assert mention.anchor_id == "block-1"
+    assert mention.anchor_id == anchor_id
     assert mention.thread is None
     assert mention.mentioned_user == mentioned_user
     assert mention.mentioned_by_user == user
@@ -124,7 +126,7 @@ def test_api_documents_mention_authenticated_success(role):
     assert content == {
         "id": str(mention.id),
         "document_id": str(document.id),
-        "anchor_id": "block-1",
+        "anchor_id": anchor_id,
         "thread_id": None,
         "mentioned_user_id": str(mentioned_user.id),
         "mentioned_by_user_id": str(user.id),
@@ -140,7 +142,7 @@ def test_api_documents_mention_authenticated_success(role):
     assert "you were mentioned in the document my doc" in email.subject.lower()
     email_content = " ".join(email.body.split())
     assert "Mentioning User mentioned you in the following document" in email_content
-    assert f"docs/{document.id!s}/#block-1" in email_content
+    assert f"docs/{document.id!s}/#{anchor_id}" in email_content
 
 
 def test_api_documents_mention_via_link_role():
@@ -157,7 +159,7 @@ def test_api_documents_mention_via_link_role():
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
 
     assert response.status_code == 201
@@ -184,6 +186,28 @@ def test_api_documents_mention_missing_anchor_id():
     assert models.Mention.objects.exists() is False
 
 
+@pytest.mark.parametrize("anchor_id", ["block-1", '"><script>alert(1)</script>'])
+def test_api_documents_mention_invalid_anchor_id(anchor_id):
+    """The anchor_id field should only accept UUIDs."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory()
+    factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
+    mentioned_user = factories.UserFactory()
+    factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/mention/",
+        {"anchor_id": anchor_id, "mentioned_user_id": str(mentioned_user.id)},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"anchor_id": ["Must be a valid UUID."]}
+    assert models.Mention.objects.exists() is False
+    assert len(mail.outbox) == 0
+
+
 def test_api_documents_mention_unknown_user():
     """Mentioning a user that does not exist should receive a 400 error."""
     user = factories.UserFactory()
@@ -195,7 +219,7 @@ def test_api_documents_mention_unknown_user():
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
         {
-            "anchor_id": "block-1",
+            "anchor_id": str(uuid4()),
             "mentioned_user_id": "8f850ee5-86b2-4c9f-acdb-ef9ccb8a4bbc",
         },
     )
@@ -216,7 +240,7 @@ def test_api_documents_mention_user_without_access():
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
 
     assert response.status_code == 400
@@ -240,7 +264,7 @@ def test_api_documents_mention_user_with_access_on_ancestor():
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
 
     assert response.status_code == 201
@@ -261,7 +285,7 @@ def test_api_documents_mention_user_with_access_via_team(mock_user_teams):
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
 
     assert response.status_code == 201
@@ -279,13 +303,14 @@ def test_api_documents_mention_thread():
     mentioned_user = factories.UserFactory()
     factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
     thread = factories.ThreadFactory(document=document)
+    anchor_id = str(uuid4())
 
     client = APIClient()
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
         {
-            "anchor_id": "comment-1",
+            "anchor_id": anchor_id,
             "mentioned_user_id": str(mentioned_user.id),
             "thread_id": str(thread.id),
         },
@@ -308,7 +333,7 @@ def test_api_documents_mention_thread():
         "Mentioning User mentioned you in a comment on the following document"
         in email_content
     )
-    assert f"docs/{document.id!s}/#comment-1" in email_content
+    assert f"docs/{document.id!s}/#{anchor_id}" in email_content
 
 
 def test_api_documents_mention_thread_other_document():
@@ -325,7 +350,7 @@ def test_api_documents_mention_thread_other_document():
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
         {
-            "anchor_id": "comment-1",
+            "anchor_id": str(uuid4()),
             "mentioned_user_id": str(mentioned_user.id),
             "thread_id": str(other_thread.id),
         },
@@ -348,22 +373,23 @@ def test_api_documents_mention_cooldown_same_context():
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
     mentioned_user = factories.UserFactory()
     factories.UserDocumentAccessFactory(document=document, user=mentioned_user)
+    anchor_id1, anchor_id2 = str(uuid4()), str(uuid4())
 
     client = APIClient()
     client.force_login(user)
-    payload = {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)}
+    payload = {"anchor_id": anchor_id1, "mentioned_user_id": str(mentioned_user.id)}
 
     response = client.post(f"/api/v1.0/documents/{document.id!s}/mention/", payload)
     assert response.status_code == 201
-    assert models.Mention.objects.get(anchor_id="block-1").notified_at is not None
+    assert models.Mention.objects.get(anchor_id=anchor_id1).notified_at is not None
     assert len(mail.outbox) == 1
 
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-2", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": anchor_id2, "mentioned_user_id": str(mentioned_user.id)},
     )
     assert response.status_code == 201
-    assert models.Mention.objects.get(anchor_id="block-2").notified_at is None
+    assert models.Mention.objects.get(anchor_id=anchor_id2).notified_at is None
     assert len(mail.outbox) == 1
 
     assert models.Mention.objects.count() == 2
@@ -384,47 +410,48 @@ def test_api_documents_mention_cooldown_distinct_contexts():
     client = APIClient()
     client.force_login(user)
 
-    for i, thread_id in enumerate([None, str(thread1.id), str(thread2.id)]):
+    for thread_id in [None, str(thread1.id), str(thread2.id)]:
+        anchor_id = str(uuid4())
         payload = {
-            "anchor_id": f"block-{i}",
+            "anchor_id": anchor_id,
             "mentioned_user_id": str(mentioned_user.id),
         }
         if thread_id:
             payload["thread_id"] = thread_id
         response = client.post(f"/api/v1.0/documents/{document.id!s}/mention/", payload)
         assert response.status_code == 201
-        assert (
-            models.Mention.objects.get(anchor_id=f"block-{i}").notified_at is not None
-        )
+        assert models.Mention.objects.get(anchor_id=anchor_id).notified_at is not None
 
     assert len(mail.outbox) == 3
 
     # Mentioning again in one of the contexts should not send a new email
+    anchor_id = str(uuid4())
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
         {
-            "anchor_id": "block-4",
+            "anchor_id": anchor_id,
             "mentioned_user_id": str(mentioned_user.id),
             "thread_id": str(thread1.id),
         },
     )
     assert response.status_code == 201
-    assert models.Mention.objects.get(anchor_id="block-4").notified_at is None
+    assert models.Mention.objects.get(anchor_id=anchor_id).notified_at is None
     assert len(mail.outbox) == 3
 
     # The cooldown should apply per mentioned user
     other_mentioned_user = factories.UserFactory()
     factories.UserDocumentAccessFactory(document=document, user=other_mentioned_user)
+    anchor_id = str(uuid4())
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
         {
-            "anchor_id": "block-5",
+            "anchor_id": anchor_id,
             "mentioned_user_id": str(other_mentioned_user.id),
             "thread_id": str(thread1.id),
         },
     )
     assert response.status_code == 201
-    assert models.Mention.objects.get(anchor_id="block-5").notified_at is not None
+    assert models.Mention.objects.get(anchor_id=anchor_id).notified_at is not None
     assert len(mail.outbox) == 4
 
 
@@ -442,7 +469,7 @@ def test_api_documents_mention_cooldown_expired(settings):
 
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
     assert response.status_code == 201
     assert len(mail.outbox) == 1
@@ -456,12 +483,13 @@ def test_api_documents_mention_cooldown_expired(settings):
     models.Mention.objects.update(created_at=expired, notified_at=expired)
     cache.delete(first_mention.notification_guard_key)
 
+    anchor_id = str(uuid4())
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-2", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": anchor_id, "mentioned_user_id": str(mentioned_user.id)},
     )
     assert response.status_code == 201
-    assert models.Mention.objects.get(anchor_id="block-2").notified_at is not None
+    assert models.Mention.objects.get(anchor_id=anchor_id).notified_at is not None
     assert len(mail.outbox) == 2
 
 
@@ -486,7 +514,7 @@ def test_api_documents_mention_cooldown_only_considers_notified_mentions():
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
 
     assert response.status_code == 201
@@ -508,7 +536,7 @@ def test_api_documents_mention_soft_deleted_document():
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/mention/",
-        {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)},
+        {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)},
     )
 
     assert response.status_code == 404
@@ -528,7 +556,7 @@ def test_api_documents_mention_throttling(settings):
 
     client = APIClient()
     client.force_login(user)
-    payload = {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)}
+    payload = {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)}
 
     # The first three requests within the minute are allowed.
     for _i in range(3):
@@ -560,7 +588,7 @@ def test_api_documents_mention_throttling_y_provider_exempted(settings):
 
     client = APIClient()
     client.force_login(user)
-    payload = {"anchor_id": "block-1", "mentioned_user_id": str(mentioned_user.id)}
+    payload = {"anchor_id": str(uuid4()), "mentioned_user_id": str(mentioned_user.id)}
 
     # More requests than the rate allows all succeed with the y-provider key.
     for _i in range(5):

@@ -1014,6 +1014,7 @@ class MentionSerializer(serializers.ModelSerializer):
     """
 
     document_id = serializers.PrimaryKeyRelatedField(source="document", read_only=True)
+    anchor_id = serializers.UUIDField()
     mentioned_user_id = serializers.PrimaryKeyRelatedField(
         queryset=models.User.objects.filter(is_active=True),
         source="mentioned_user",

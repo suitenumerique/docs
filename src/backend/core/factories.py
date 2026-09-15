@@ -255,6 +255,6 @@ class MentionFactory(factory.django.DjangoModelFactory):
         model = models.Mention
 
     document = factory.SubFactory(DocumentFactory)
-    anchor_id = factory.Sequence(lambda n: f"block-{n}")
+    anchor_id = factory.Faker("uuid4")
     mentioned_user = factory.SubFactory(UserFactory)
     mentioned_by_user = factory.SubFactory(UserFactory)
