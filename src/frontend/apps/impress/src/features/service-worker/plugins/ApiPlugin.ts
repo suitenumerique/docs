@@ -2,19 +2,18 @@ import { WorkboxPlugin } from 'workbox-core';
 
 import { Doc, DocsResponse } from '@/docs/doc-management';
 import { LinkReach, LinkRole, Role } from '@/docs/doc-management/types';
-import { UpdateDocContentParams } from '@/features/docs/doc-management/api/useDocContentUpdate';
 
 import { DBRequest, DocsDB } from '../DocsDB';
 import { RequestSerializer } from '../RequestSerializer';
 import { SyncManager } from '../SyncManager';
 
 interface OptionsReadonly {
-  tableName: 'doc-list' | 'doc-item' | 'doc-content';
-  type: 'list' | 'item' | 'content';
+  tableName: 'doc-list' | 'doc-item' | 'doc-tree';
+  type: 'list' | 'item' | 'tree';
 }
 
 interface OptionsMutate {
-  type: 'update' | 'delete' | 'create' | 'content-update';
+  type: 'update' | 'delete' | 'create';
 }
 
 interface OptionsSync {
@@ -23,6 +22,45 @@ interface OptionsSync {
 
 type Options = (OptionsReadonly | OptionsMutate | OptionsSync) & {
   syncManager: SyncManager;
+};
+
+/**
+ * A cached `documents/{id}/tree/` response with `patch` merged into every node
+ * whose id matches — the root included. Returns a new tree; the input is left
+ * alone.
+ */
+export const patchTreeNode = (
+  node: Doc,
+  docId: string,
+  patch: Partial<Doc>,
+): Doc => {
+  const next = node.id === docId ? { ...node, ...patch } : node;
+
+  if (!node.children?.length) {
+    return next;
+  }
+
+  return {
+    ...next,
+    children: node.children.map((child) => patchTreeNode(child, docId, patch)),
+  };
+};
+
+/**
+ * The same walk, dropping the node whose id matches from its parent's
+ * `children`. A tree rooted on that node is the caller's to discard.
+ */
+export const pruneTreeNode = (node: Doc, docId: string): Doc => {
+  if (!node.children?.length) {
+    return node;
+  }
+
+  return {
+    ...node,
+    children: node.children
+      .filter((child) => child.id !== docId)
+      .map((child) => pruneTreeNode(child, docId)),
+  };
 };
 
 export class ApiPlugin implements WorkboxPlugin {
@@ -53,46 +91,18 @@ export class ApiPlugin implements WorkboxPlugin {
     response,
   }) => {
     try {
-      // For content requests, a 304 means the document hasn't changed:
-      // transparently serve the cached version from IDB.
-      if (this.options.type === 'content' && response.status === 304) {
-        const db = await DocsDB.open();
-        const entry = await db.get('doc-content', request.url);
-        db.close();
-        if (entry) {
-          return new Response(entry.content, {
-            status: 200,
-            statusText: 'OK',
-            headers: {
-              'Content-Type': 'text/plain',
-              ...(entry.etag && { ETag: entry.etag }),
-              ...(entry.lastModified && {
-                'Last-Modified': entry.lastModified,
-              }),
-            },
-          });
-        }
-      }
-
       if (response.status !== 200) {
         return response;
       }
 
-      if (this.options.type === 'list' || this.options.type === 'item') {
+      if (
+        this.options.type === 'list' ||
+        this.options.type === 'item' ||
+        this.options.type === 'tree'
+      ) {
         const tableName = this.options.tableName;
         const body = (await response.clone().json()) as DocsResponse | Doc;
         await DocsDB.cacheResponse(request.url, body, tableName);
-      } else if (this.options.type === 'content') {
-        // Cache the content response with its ETag / Last-Modified to be
-        // able to use it for conditional requests and offline access.
-        const content = await response.clone().text();
-        const etag = response.headers.get('ETag') ?? '';
-        const lastModified = response.headers.get('Last-Modified') ?? '';
-        await DocsDB.cacheResponse(
-          request.url,
-          { etag, lastModified, content },
-          'doc-content',
-        );
       } else if (this.options.type === 'update') {
         const db = await DocsDB.open();
         const storedResponse = await db.get('doc-item', request.url);
@@ -135,7 +145,6 @@ export class ApiPlugin implements WorkboxPlugin {
   requestWillFetch: WorkboxPlugin['requestWillFetch'] = async ({ request }) => {
     if (
       this.options.type === 'update' ||
-      this.options.type === 'content-update' ||
       this.options.type === 'create' ||
       this.options.type === 'delete'
     ) {
@@ -143,27 +152,6 @@ export class ApiPlugin implements WorkboxPlugin {
     }
 
     await this.options.syncManager.sync();
-
-    // For content requests, add If-None-Match / If-Modified-Since from IDB
-    // so the backend can return a 304 when the document hasn't changed.
-    if (this.options.type === 'content') {
-      try {
-        const db = await DocsDB.open();
-        const entry = await db.get('doc-content', request.url);
-        db.close();
-        if (entry?.etag || entry?.lastModified) {
-          const headers = new Headers(request.headers);
-          if (entry.etag) {
-            headers.set('If-None-Match', entry.etag);
-          } else {
-            headers.set('If-Modified-Since', entry.lastModified);
-          }
-          return new Request(request, { headers });
-        }
-      } catch (error) {
-        console.error('SW: ApiPlugin requestWillFetch content error', error);
-      }
-    }
 
     return Promise.resolve(request);
   };
@@ -188,13 +176,10 @@ export class ApiPlugin implements WorkboxPlugin {
         return this.handlerDidErrorDelete(request);
       case 'update':
         return this.handlerDidErrorUpdate(request);
-      case 'content-update':
-        return this.handlerDidErrorContentUpdate(request);
       case 'list':
       case 'item':
+      case 'tree':
         return this.handlerDidErrorRead(this.options.tableName, request.url);
-      case 'content':
-        return this.handlerDidErrorContent(request);
     }
 
     return Promise.resolve(ApiPlugin.getApiCatchHandler());
@@ -286,9 +271,7 @@ export class ApiPlugin implements WorkboxPlugin {
         retrieve: true,
         search: true,
         update: true,
-        versions_destroy: true,
         versions_list: true,
-        versions_retrieve: true,
         link_select_options: {
           public: [LinkRole.READER, LinkRole.EDITOR],
           authenticated: [LinkRole.READER, LinkRole.EDITOR],
@@ -316,13 +299,12 @@ export class ApiPlugin implements WorkboxPlugin {
     );
 
     /**
-     * Create an empty content for the new document in the cache, so the client can use it while offline,
-     * and it will be updated later when the request will be synced.
+     * Seed the tree for the new document, so the doc tree renders it offline
      */
     await DocsDB.cacheResponse(
-      `${request.url}${uuid}/content/`,
-      { etag: '', lastModified: '', content: '' },
-      'doc-content',
+      `${request.url}${uuid}/tree/`,
+      { ...newResponse, children: [] },
+      'doc-tree',
     );
 
     /**
@@ -367,7 +349,6 @@ export class ApiPlugin implements WorkboxPlugin {
      */
     const db = await DocsDB.open();
     await db.delete('doc-item', request.url);
-    await db.delete('doc-content', `${request.url}content/`);
 
     /**
      * Delete entry from the cache list.
@@ -387,6 +368,30 @@ export class ApiPlugin implements WorkboxPlugin {
       list.results = list.results.filter((result) => result.id !== docId);
 
       await DocsDB.cacheResponse(key, list, 'doc-list');
+    }
+
+    /**
+     * Drop the doc from every cached tree, and discard a tree rooted on it —
+     * the same reason as the list loop above: the tree carries its own copies.
+     */
+    if (docId && db.objectStoreNames.contains('doc-tree')) {
+      for (const key of await db.getAllKeys('doc-tree')) {
+        const tree = await db.get('doc-tree', key);
+
+        if (!tree) {
+          continue;
+        }
+
+        if (tree.id === docId) {
+          await db.delete('doc-tree', key);
+        } else {
+          await DocsDB.cacheResponse(
+            key,
+            pruneTreeNode(tree, docId),
+            'doc-tree',
+          );
+        }
+      }
     }
 
     db.close();
@@ -459,6 +464,24 @@ export class ApiPlugin implements WorkboxPlugin {
       await DocsDB.cacheResponse(key, list, 'doc-list');
     }
 
+    /**
+     * Update the doc wherever a cached tree holds a copy of it — its own root,
+     * or nested under an ancestor — for the same reason as the list loop above.
+     */
+    if (docId && db.objectStoreNames.contains('doc-tree')) {
+      for (const key of await db.getAllKeys('doc-tree')) {
+        const tree = await db.get('doc-tree', key);
+
+        if (tree) {
+          await DocsDB.cacheResponse(
+            key,
+            patchTreeNode(tree, docId, bodyMutate),
+            'doc-tree',
+          );
+        }
+      }
+    }
+
     db.close();
 
     /**
@@ -490,58 +513,6 @@ export class ApiPlugin implements WorkboxPlugin {
       headers: {
         'Content-Type': 'application/json',
       },
-    });
-  };
-
-  private handlerDidErrorContent = async (request: Request) => {
-    const db = await DocsDB.open();
-    const entry = await db.get('doc-content', request.url);
-    db.close();
-
-    if (!entry) {
-      return Promise.resolve(ApiPlugin.getApiCatchHandler());
-    }
-
-    return new Response(entry.content, {
-      status: 200,
-      statusText: 'OK',
-      headers: {
-        'Content-Type': 'text/plain',
-        ...(entry.etag && { ETag: entry.etag }),
-        ...(entry.lastModified && { 'Last-Modified': entry.lastModified }),
-      },
-    });
-  };
-
-  /**
-   * When the content update fails, we save the new content in the cache, and we will sync it later with the SyncManager.
-   * We return a 204 to the client to say that the update is successful, and we update the content in the cache so the
-   * client can see the new content while offline.
-   */
-  private handlerDidErrorContentUpdate = async (request: Request) => {
-    const db = await DocsDB.open();
-    const entry = await db.get('doc-content', request.url);
-    db.close();
-
-    if (!entry || !this.initialRequest) {
-      return new Response('Not found', { status: 404 });
-    }
-
-    await this.queueMutation(this.initialRequest);
-
-    const bodyMutate = (await this.initialRequest
-      .clone()
-      .json()) as Partial<UpdateDocContentParams>;
-    const newContent = bodyMutate.content ?? entry.content;
-    await DocsDB.cacheResponse(
-      request.url,
-      { etag: '', lastModified: '', content: newContent },
-      'doc-content',
-    );
-
-    return new Response(null, {
-      status: 204,
-      statusText: 'No Content',
     });
   };
 }

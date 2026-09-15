@@ -9,7 +9,8 @@ import pytest
 import responses
 
 from core import factories
-from core.tests.utils.urls import reload_urls
+from core.services.yhub_services import YHubService
+from core.tests.utils.urls import reload_urls, restore_urls
 
 USER = "user"
 TEAM = "team"
@@ -22,6 +23,25 @@ def clear_cache():
     cache.clear()
 
 
+@pytest.fixture(autouse=True)
+def restore_urlconf():
+    """
+    Put the URLs back after a test that reloaded them.
+
+    Reloading is how a test makes the resource server routes appear or checks
+    that they are absent, but the URLconf belongs to the process: without this,
+    a test asserting a 404 on `/external_api/` and one asserting a 401 pass or
+    fail depending on which ran first in their worker.
+
+    Autouse and asking for nothing, so it is set up before the `settings`
+    fixture and torn down after it: the reload then sees the settings of the
+    project, not the ones of the test.
+    """
+    yield
+
+    restore_urls()
+
+
 @pytest.fixture
 def mock_user_teams():
     """Mock for the "teams" property on the User model."""
@@ -31,10 +51,32 @@ def mock_user_teams():
         yield mock_teams
 
 
+@pytest.fixture(name="yhub_content")
+def yhub_content_fixture():
+    """
+    Serve the content of every document, as the collaboration server does.
+
+    It owns the content: a document built by the factories has none in the
+    database, and what it holds is whatever this fake answers for it. The mock
+    is yielded, so a test can serve another document (`return_value`), none at
+    all (`return_value = None`) or a different one per document
+    (`side_effect`).
+    """
+    with mock.patch.object(
+        YHubService, "get_ydoc", return_value=factories.YDOC_HELLO_WORLD_UPDATE
+    ) as mock_get_ydoc:
+        yield mock_get_ydoc
+
+
 @pytest.fixture(name="indexer_settings")
 def indexer_settings_fixture(settings):
     """
     Setup valid settings for the document indexer. Clear the indexer cache.
+
+    The indexer reads the content of a document from the collaboration server,
+    which is faked here: it holds the same content for every document, and a
+    test wanting one without content answers `None` for it (see the
+    `yhub_content` fixture, this is the same fake).
     """
 
     # pylint: disable-next=import-outside-toplevel
@@ -50,7 +92,10 @@ def indexer_settings_fixture(settings):
     settings.SEARCH_URL = "http://localhost:8081/api/v1.0/documents/search/"
     settings.SEARCH_INDEXER_COUNTDOWN = 1
 
-    yield settings
+    with mock.patch.object(
+        YHubService, "get_ydoc", return_value=factories.YDOC_HELLO_WORLD_UPDATE
+    ):
+        yield settings
 
     # clear cache to prevent issues with other tests
     get_document_indexer.cache_clear()
