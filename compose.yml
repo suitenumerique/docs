@@ -264,6 +264,7 @@ services:
       - "4000:3000"
 
 networks:
+  default: {}
   lasuite:
     name: lasuite-network
     driver: bridge
