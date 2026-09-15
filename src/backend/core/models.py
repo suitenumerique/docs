@@ -2055,6 +2055,12 @@ class Reaction(BaseModel):
         return f"Reaction {self.emoji} on comment {self.comment.id}"
 
 
+# The notification guard only has to cover the window between the cooldown
+# check and the `notified_at` save: a leaked key (e.g. killed worker) must not
+# silence a context for the whole cooldown period
+MENTION_NOTIFICATION_GUARD_TIMEOUT_SECONDS = 60
+
+
 class Mention(BaseModel):
     """A mention of a user in a document body or in a comment thread.
 
@@ -2163,7 +2169,7 @@ class Mention(BaseModel):
         if not cache.add(
             self.notification_guard_key,
             str(self.pk),
-            timeout=settings.MENTION_NOTIFICATION_COOLDOWN_MINUTES * 60,
+            timeout=MENTION_NOTIFICATION_GUARD_TIMEOUT_SECONDS,
         ):
             return False
 
@@ -2196,10 +2202,17 @@ class Mention(BaseModel):
                 "link": f"{domain}/docs/{self.document_id}/#{self.anchor_id}",
             }
 
-        self.document.send_email(subject, [user.email], context, language)
+        sent = False
+        try:
+            self.document.send_email(subject, [user.email], context, language)
+            self.notified_at = timezone.now()
+            self.save(update_fields=["notified_at", "updated_at"])
+            sent = True
+        finally:
+            # Release the context so the next mention can notify
+            if not sent:
+                cache.delete(self.notification_guard_key)
 
-        self.notified_at = timezone.now()
-        self.save(update_fields=["notified_at", "updated_at"])
         return True
 
 

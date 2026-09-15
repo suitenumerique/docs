@@ -2,7 +2,10 @@
 Unit tests for the Mention model
 """
 
+from unittest import mock
+
 from django.core import mail
+from django.core.cache import cache
 
 import pytest
 from rest_framework.exceptions import ValidationError
@@ -104,5 +107,31 @@ def test_models_mentions_notify_concurrent_duplicate():
 
     assert second.notify() is False
     assert second.notified_at is None
+    # pylint: disable-next=no-member
+    assert len(mail.outbox) == 1
+
+
+def test_models_mentions_notify_failure_releases_guard():
+    """A failed notification should release the context guard.
+
+    Otherwise the next mention in the same context would be silently dropped
+    until the guard expires, although nobody was notified.
+    """
+    document = factories.DocumentFactory()
+    mentioned_user = factories.UserFactory()
+    first = factories.MentionFactory(document=document, mentioned_user=mentioned_user)
+    second = factories.MentionFactory(document=document, mentioned_user=mentioned_user)
+
+    with (
+        mock.patch.object(models.Document, "send_email", side_effect=RuntimeError),
+        pytest.raises(RuntimeError),
+    ):
+        first.notify()
+
+    first.refresh_from_db()
+    assert first.notified_at is None
+    assert cache.get(first.notification_guard_key) is None
+
+    assert second.notify() is True
     # pylint: disable-next=no-member
     assert len(mail.outbox) == 1
