@@ -46,7 +46,12 @@ export const DocTitleText = () => {
 
   return (
     <Box className={CLASS_DOC_TITLE} $direction="row" $align="center">
-      <Text as="h2" $margin="none" $size={isMobile ? 'h4' : 'h2'}>
+      <Text
+        as="h2"
+        $margin="none"
+        $size={isMobile ? 'h4' : 'h2'}
+        $display="unset"
+      >
         {emoji && <span aria-hidden="true">{emoji} </span>}
         {displayTitle}
       </Text>
