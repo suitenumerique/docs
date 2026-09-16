@@ -1,0 +1,59 @@
+# The Valkey resource is named after the release: clients reach the current
+# primary through the `rfr-<release>-readwrite` service the operator keeps
+# pointed at it.
+
+# One of the versions the operator supports
+version: "9.0"
+
+# Valkey pods: one primary, the others replicate it
+replicas: 2
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+# Without storage the data lives in an emptyDir and is gone with the pod
+storage:
+  capacity: 1Gi
+
+customConfigs:
+  # only keys with a TTL are evicted: celery queues and yhub streams have none
+  maxmemory-policy: volatile-lru
+  appendonly: "yes"
+  appendfsync: everysec
+
+# The operator requires every Valkey pod, and every Sentinel pod, on a node of
+# its own, which a one-node kind cluster cannot schedule: only prefer it
+softAntiAffinity: true
+
+# The IP family of the services. The operator compares the services it
+# generates with the live ones: left empty, it never matches the family the API
+# server filled in, and every reconcile updates a service and deletes its pod
+ipFamily: IPv4
+
+sentinel:
+  replicas: 3
+  monitorConfig:
+    down-after-milliseconds: "5000"
+    failover-timeout: "60000"
+    parallel-syncs: "1"
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+# The account the applications connect with. The operator refuses a password
+# shorter than 8 characters, or without a letter, a digit and one of
+# ~!@#$%^&*()-_=+?
+user:
+  username: user
+  password: password-1
+  aclRules: "+@all -acl -flushall -flushdb -keys ~* &*"
+
+exporter:
+  disable: true

@@ -31,10 +31,31 @@ and this project adheres to
 - 🐛(frontend) stop the service worker from caching the collaboration server's
   rest api
 
+### Changed
+
+- ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub
+- 💥(y-provider) y-provider becomes converter-only
+- 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
+  `/external_api/{version}/jwks`
+- 🔧(collaboration) adapt docker stack for development purpose
+- 🔧(tilt) run two valkey sentinel instances through valkey-operator
+
 ### Fixed
 
 - 🐛(frontend) stop reconnecting to the collaboration server when it has 
   refused the connection for good.
+
+### Removed
+
+- 🔥(backend) remove the unused `CollaborationService`
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
+- 💥(backend) remove the `documents/{id}/content/` endpoint
+- 🔥(backend) remove the document version endpoints.
+- 🔥(backend) remove `Document.content`
+
+### Security
+
+- 🔒️(collaboration) stop read-only users from sharing their cursor
 
 ## [v5.7.0] - 2026-09-15
 
@@ -51,11 +72,6 @@ and this project adheres to
 - 🚚(project) switch docspec image to ghcr.io/docspec/api #2553
 - 🚚(global) move favorite documents API endpoint 
   to `/documents/favorites/` #2540
-- ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub
-- 💥(y-provider) y-provider becomes converter-only
-- 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
-  `/external_api/{version}/jwks`
-- 🔧(collaboration) adapt docker stack for development purpose
 
 ### Fixed
 
@@ -70,19 +86,6 @@ and this project adheres to
 - ♿️(frontend) restore presenter focus trapping after share links #2533
 - 🐛(frontend) export any raster image supported by the browser to a PDF #2530
 - 🐛(frontend) fix find & replace crash when editor becomes read-only #2684
-
-### Removed
-
-- 🔥(backend) remove the unused `CollaborationService`
-- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
-- 💥(backend) remove the `documents/{id}/content/` endpoint
-- 🔥(backend) remove the document version endpoints.
-- 🔥(backend) remove `Document.content`
-
-### Security
-
-- 🔒️(collaboration) stop read-only users from sharing their cursor
-- ♿️(frontend) restore presenter focus trapping after share links #2533
 
 ## [v5.6.1] - 2026-09-04
 
