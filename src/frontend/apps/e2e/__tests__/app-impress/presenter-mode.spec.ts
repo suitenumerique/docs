@@ -286,15 +286,13 @@ test.describe('Presenter Mode', () => {
     await expect(overlay.getByText('Slide two')).toBeVisible();
   });
 
-  test('navigates between slides via keyboard shortcuts', async ({
-    page,
-    browserName,
-  }) => {
+  test('navigates via keyboard shortcuts', async ({ page, browserName }) => {
     await createDoc(page, 'presenter-nav-keyboard', browserName, 1);
     await writeMultiSlideDoc(page);
 
-    const overlay = await openPresenter(page);
+    await page.keyboard.press('Control+Alt+KeyP');
 
+    const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
     await expect(overlay.getByText('1 / 4')).toBeVisible();
 
     await page.keyboard.press('ArrowRight');
