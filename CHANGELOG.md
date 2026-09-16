@@ -30,6 +30,7 @@ and this project adheres to
 - 🚚(project) switch docspec image to ghcr.io/docspec/api #2553
 - 🚚(global) move favorite documents API endpoint
   to `/documents/favorites/` #2540
+- 💄(frontend) redesign 404 error standalone page #2696
 
 ### Fixed
 
