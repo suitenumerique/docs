@@ -31,6 +31,7 @@ and this project adheres to
 - 🔧(backend) fine tune redis cache options #2658
 - ✨(frontend) make the full last-update date available #1215
 - 💄(frontend) redesign email confirmation standalone page #2601
+- ✨(frontend) add markdown download option #2608
 
 ### Changed
 
