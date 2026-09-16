@@ -462,6 +462,8 @@ test.describe('Doc Tree', () => {
 
     const row = await getTreeRow(page, docChild);
 
+    await page.waitForTimeout(500);
+
     // Update the emoji from the tree
     await row.locator('.--docs--doc-icon').click();
     await page.getByRole('button', { name: '😀' }).first().click();

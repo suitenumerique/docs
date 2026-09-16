@@ -15,9 +15,13 @@ import { Text } from '@/components/Text';
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { getWordCount } from '@/docs/doc-editor/utils';
 import { printDocumentWithStyles } from '@/docs/doc-export/utils_print';
+import { useDuplicatedDoc } from '@/docs/doc-management/components/ConfirmationDuplicateModal';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useDetachDoc } from '@/docs/doc-tree/api/useDetach';
-import { useTreeContextOrNull } from '@/docs/doc-tree/utils';
+import {
+  deleteDocFromTreeAfterNavigate,
+  useTreeContextOrNull,
+} from '@/docs/doc-tree/utils';
 import { useAuth } from '@/features/auth';
 import ContentCopyIcon from '@/icons/copy.svg';
 import DocMoveInIcon from '@/icons/doc-move-in.svg';
@@ -40,10 +44,19 @@ import {
   KEY_LIST_FAVORITE_DOC,
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
-  useDuplicateDoc,
 } from '../api';
 import { useCopyDocLink, useTrans } from '../hooks';
 import { Doc, Role } from '../types';
+
+const ConfirmationDuplicateModal = dynamic(
+  () =>
+    import('@/docs/doc-management/components/ConfirmationDuplicateModal').then(
+      (mod) => ({
+        default: mod.ConfirmationDuplicateModal,
+      }),
+    ),
+  { ssr: false },
+);
 
 const DocMoveModal = dynamic(
   () =>
@@ -117,6 +130,7 @@ const DocToolBoxComponent = ({
   const isTopParent = !treeContext || doc.id === treeContext?.root?.id; // it can be a child but not for the current user
   const { authenticated } = useAuth();
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [isModalDuplicateOpen, setIsModalDuplicateOpen] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const [isModalShareOpen, setIsModalShareOpen] = useState(false);
@@ -148,12 +162,11 @@ const DocToolBoxComponent = ({
   const addLastFocus = useFocusStore((state) => state.addLastFocus);
   const isMobile = useResponsiveStore((state) => state.isMobile);
   const copyDocLink = useCopyDocLink(doc.id);
-
   const openPresenter = usePresenterStore((state) => state.open);
-  const { mutate: duplicateDoc } = useDuplicateDoc({
-    onSuccess: (data) => {
-      void router.push(`/docs/${data.id}`);
-    },
+  const { mutate: duplicateDoc } = useDuplicatedDoc({
+    doc,
+    treeContext,
+    isCurrentDoc,
   });
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
@@ -244,11 +257,14 @@ const DocToolBoxComponent = ({
       icon: <ContentCopyIcon width={18} height={18} aria-hidden="true" />,
       isDisabled: !doc.abilities.duplicate,
       callback: () => {
-        duplicateDoc({
-          docId: doc.id,
-          with_accesses: false,
-          canSave: doc.abilities.partial_update,
-        });
+        if (doc.numchild) {
+          setIsModalDuplicateOpen(true);
+        } else {
+          duplicateDoc({
+            docId: doc.id,
+            canSave: doc.abilities.partial_update,
+          });
+        }
       },
       isHidden: !doc.abilities.duplicate,
     },
@@ -267,11 +283,11 @@ const DocToolBoxComponent = ({
             onSuccess: () => {
               if (treeContext.root) {
                 treeContext.treeData.setSelectedNode(treeContext.root);
-                void router.push(`/docs/${treeContext.root.id}`).then(() => {
-                  setTimeout(() => {
-                    treeContext?.treeData.deleteNode(doc.id);
-                  }, 100);
-                });
+                deleteDocFromTreeAfterNavigate(
+                  treeContext,
+                  doc.id,
+                  router.push(`/docs/${treeContext.root.id}`),
+                );
               }
             },
           },
@@ -389,13 +405,23 @@ const DocToolBoxComponent = ({
             if (isTopParent && isCurrentDoc) {
               void router.push(`/`);
             } else if (parentId) {
-              void router.push(`/docs/${parentId}`).then(() => {
-                setTimeout(() => {
-                  treeContext?.treeData.deleteNode(doc.id);
-                }, 100);
-              });
+              deleteDocFromTreeAfterNavigate(
+                treeContext,
+                doc.id,
+                router.push(`/docs/${parentId}`),
+              );
             }
           }}
+        />
+      )}
+      {isModalDuplicateOpen && (
+        <ConfirmationDuplicateModal
+          onClose={() => {
+            setIsModalDuplicateOpen(false);
+            restoreFocus();
+          }}
+          doc={doc}
+          treeContext={treeContext}
         />
       )}
       {isModalHistoryOpen && (
