@@ -60,8 +60,6 @@ def test_external_api_documents_link_configuration_not_allowed(
             ],
         },
     },
-    COLLABORATION_API_URL="http://example.com/",
-    COLLABORATION_SERVER_SECRET="secret-token",
 )
 @patch("core.api.viewsets.reset_service_connections_in_cascade.delay")
 def test_external_api_documents_link_configuration_can_be_allowed(

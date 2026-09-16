@@ -6,6 +6,57 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) add a service generating cached RS256 JWT tokens
+- ✨(backend) publish the JWT public key on a JWKS endpoint
+- 🔧(dev) generate the JWT signing key when bootstrapping the dev stack
+- ✨(collaboration) add an admin reset-connections endpoint on yhub
+- ✨(collaboration) add a create-ydoc endpoint on yhub
+- 🔧(backend) fine tune redis cache options
+- ✨(collaboration) soft-migrate legacy S3 documents into yhub
+- ✨(collaboration) replay legacy s3 version history into yhub
+- ✨(backend) add a service to call the yhub REST API
+- ✨(backend) call YHubService to seed initial document content
+- ✨(collaboration) add a get-ydoc endpoint on yhub
+- ✨(backend) duplicate a document through the collaboration server
+- ✨(backend) serve `documents/{id}/formatted-content/` from yhub
+- ✨(collaboration) notify the backend when the worker persists new content
+- ✨(collaboration) let a user read the document's editing history
+- ✨(frontend) fall back to http polling when the websocket cannot be opened.
+- 🔧(collaboration) make the version-history granularity configurable through
+  `COLLABORATION_VERSION_GRANULARITY_MS`
+- ✨(frontend) keep a local copy of documents, so they open and stay editable
+  offline
+- 🐛(frontend) stop the service worker from caching the collaboration server's
+  rest api
+
+### Changed
+
+- ♻️(collaboration) migrate the collaboration server from hocuspocus to yhub
+- 💥(y-provider) y-provider becomes converter-only
+- 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
+  `/external_api/{version}/jwks`
+- 🔧(collaboration) adapt docker stack for development purpose
+- 🔧(tilt) run two valkey sentinel instances through valkey-operator
+
+### Fixed
+
+- 🐛(frontend) stop reconnecting to the collaboration server when it has 
+  refused the connection for good.
+
+### Removed
+
+- 🔥(backend) remove the unused `CollaborationService`
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint
+- 💥(backend) remove the `documents/{id}/content/` endpoint
+- 🔥(backend) remove the document version endpoints.
+- 🔥(backend) remove `Document.content`
+
+### Security
+
+- 🔒️(collaboration) stop read-only users from sharing their cursor
+
 ## [v5.7.0] - 2026-09-15
 
 ### Added

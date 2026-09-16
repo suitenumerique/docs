@@ -1,7 +1,11 @@
+# Conversion service (y-provider), and the backend side of it: this file is
+# loaded by both. It serves the format conversion and nothing else — the
+# collaboration moved to the yhub service, see env.d/yhub.
 Y_PROVIDER_API_BASE_URL=http://${YPROVIDER_HOST}:4444/api/
+# Exempts the calls the collaboration server makes to the backend from the API
+# throttling. Repeat the value in env.d/yhub, which is what sends it.
 Y_PROVIDER_API_KEY=<generate a random key>
-COLLABORATION_SERVER_SECRET=<generate a random key>
 COLLABORATION_SERVER_ORIGIN=https://${DOCS_HOST}
-COLLABORATION_API_URL=https://${DOCS_HOST}/collaboration/api/ 
+# The backend it fetches the JWKS from, to verify the tokens it is called with.
 COLLABORATION_BACKEND_BASE_URL=https://${DOCS_HOST}
 COLLABORATION_LOGGING=true

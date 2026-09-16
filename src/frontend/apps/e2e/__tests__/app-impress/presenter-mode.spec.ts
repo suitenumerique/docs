@@ -3,7 +3,7 @@ import path from 'path';
 import { Locator, Page, expect, test } from '@playwright/test';
 import { PDFParse } from 'pdf-parse';
 
-import { createDoc, mockedDocument, saveContent } from './utils-common';
+import { createDoc, mockedDocument } from './utils-common';
 import {
   openSuggestionMenu,
   tryFocusEditorContent,
@@ -427,18 +427,10 @@ test.describe('Presenter Mode', () => {
     page,
     browserName,
   }) => {
-    const [docTitle] = await createDoc(
-      page,
-      'presenter-deeplink',
-      browserName,
-      1,
-    );
+    await createDoc(page, 'presenter-deeplink', browserName, 1);
     await writeMultiSlideDoc(page);
     const docId = getDocIdFromUrl(page);
 
-    // Ensure the typed content is persisted (awaits the PATCH /content/) before
-    // reloading the page through the deep-link, instead of using a fixed sleep.
-    await saveContent(page, docTitle);
     await page.goto(`/docs/${docId}/?view=present&slide=3`);
 
     const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
@@ -668,9 +660,7 @@ test.describe('Presenter Mode mobile', () => {
       abilities: {
         destroy: true,
         link_configuration: true,
-        versions_destroy: true,
         versions_list: true,
-        versions_retrieve: true,
         accesses_manage: true,
         accesses_view: true,
         update: true,
