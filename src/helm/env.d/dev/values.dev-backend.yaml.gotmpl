@@ -8,11 +8,8 @@ postgres:
   database: docs
   size: 1Gi
 redis:
-  enabled: true
-  name: redis
-  image: redis:8.2-alpine
-  username: user
-  password: pass
+  # replaced by the valkey-docs and valkey-yhub releases
+  enabled: false
 minio:
   enabled: true
   image: quay.io/minio/minio
