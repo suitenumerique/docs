@@ -22,6 +22,37 @@ releases:
     values:
       - env.d/{{ .Environment.Name }}/values.dev-backend.yaml.gotmpl
 
+  # One Valkey instance for the backend (cache, sessions, celery) and
+  # one for yhub, each a primary, a replica and three Sentinels
+  - name: valkey-operator
+    namespace: {{ .Namespace }}
+    chart: git::https://github.com/chideat/valkey-operator.git@charts/valkey-operator?ref=v2.0.1
+    # webhooks off: no cert-manager needed, and a User is not refused for being
+    # created before the operator made the Failover of its instance. The chart
+    # alone cannot turn them off: the ytt overlay
+    # extra/valkey-operator/disable-webhooks.ytt.yaml does the rest in argocd,
+    # bin/Tiltfile in the local stack
+    values:
+      - webhook:
+          enabled: false
+        certManager:
+          enabled: false
+
+  - name: valkey-docs
+    namespace: {{ .Namespace }}
+    chart: ./extra/valkey
+    needs:
+      - valkey-operator
+    values:
+      - env.d/{{ .Environment.Name }}/values.valkey.yaml.gotmpl
+
+  - name: valkey-yhub
+    namespace: {{ .Namespace }}
+    chart: ./extra/valkey
+    needs:
+      - valkey-operator
+    values:
+      - env.d/{{ .Environment.Name }}/values.valkey.yaml.gotmpl
 
   - name: impress
     version: {{ .Values.version }}

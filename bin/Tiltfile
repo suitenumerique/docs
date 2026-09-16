@@ -56,10 +56,44 @@ docker_build(
 
 k8s_resource('impress-docs-backend-migrate', resource_deps=['dev-backend-postgres'])
 k8s_resource('impress-docs-backend-createsuperuser', resource_deps=['impress-docs-backend-migrate'])
-k8s_resource('impress-docs-yhub-init-db', resource_deps=['dev-backend-postgres'])
+k8s_resource('impress-docs-yhub-init-db', resource_deps=['dev-backend-postgres', 'valkey-yhub'])
 k8s_resource('dev-backend-keycloak', resource_deps=['dev-backend-keycloak-pg'])
-k8s_resource('impress-docs-backend', resource_deps=['impress-docs-backend-migrate', 'dev-backend-redis', 'dev-backend-keycloak', 'dev-backend-postgres', 'dev-backend-minio:statefulset'])
-k8s_yaml(local('cd ../src/helm && helmfile -n impress -e dev template .'))
+k8s_resource('impress-docs-backend', resource_deps=['impress-docs-backend-migrate', 'valkey-docs', 'dev-backend-keycloak', 'dev-backend-postgres', 'dev-backend-minio:statefulset'])
+k8s_resource('impress-docs-celery-worker', resource_deps=['valkey-docs'])
+k8s_resource('impress-docs-yhub', resource_deps=['valkey-yhub'])
+k8s_resource('impress-docs-yhub-worker', resource_deps=['valkey-yhub'])
+
+# the operator needs its CRDs, which land in uncategorized
+k8s_resource('valkey-operator', resource_deps=['uncategorized'])
+# The pods of a Valkey instance are created by the operator: group them with the
+# objects they come from, and wait for them
+for instance in ['valkey-docs', 'valkey-yhub']:
+    k8s_resource(
+        new_name=instance,
+        objects=['%s:valkey' % instance, '%s-user:user' % instance, '%s-user:secret' % instance],
+        extra_pod_selectors=[{'buf.red/name': instance}],
+        pod_readiness='wait',
+        resource_deps=['valkey-operator'],
+    )
+
+# without --include-crds, the CRDs of the valkey-operator chart are left out
+manifests = decode_yaml_stream(local('cd ../src/helm && helmfile -n impress -e dev template --include-crds .'))
+for manifest in manifests:
+    if not manifest:
+        continue
+    # tilt down leaves the operator and its CRDs in place: deleted along with the
+    # Valkey resources, nothing would remain to clear their finalizers, and the
+    # stuck resources would block the CRDs of the next tilt up
+    if ((manifest['kind'] == 'CustomResourceDefinition' and manifest['spec']['group'].endswith('valkey.buf.red')) or
+            manifest['metadata'].get('labels', {}).get('app.kubernetes.io/instance') == 'valkey-operator'):
+        manifest['metadata'].setdefault('annotations', {})['tilt.dev/down-policy'] = 'keep'
+    # The chart's webhook.enabled=false only drops the webhook configuration: the
+    # operator still serves its webhooks and crashes on the missing certificate
+    # unless ENABLE_WEBHOOKS=false, which the chart cannot set (argocd gets it
+    # from src/helm/extra/valkey-operator/disable-webhooks.ytt.yaml)
+    if manifest['kind'] == 'Deployment' and manifest['metadata']['name'] == 'valkey-operator':
+        manifest['spec']['template']['spec']['containers'][0]['env'].append({'name': 'ENABLE_WEBHOOKS', 'value': 'false'})
+k8s_yaml(encode_yaml_stream(manifests))
 
 migration = '''
 set -eu

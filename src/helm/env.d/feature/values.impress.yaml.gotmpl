@@ -62,8 +62,9 @@ backend:
         name: dev-backend-postgres
         key: password
     DB_PORT: 5432
-    REDIS_URL: redis://user:pass@dev-backend-redis:6379/1
-    DJANGO_CELERY_BROKER_URL: redis://user:pass@dev-backend-redis:6379/1
+    # the operator keeps the readwrite service pointed at the current primary
+    REDIS_URL: redis://user:password-1@rfr-valkey-docs-readwrite:6379/0
+    DJANGO_CELERY_BROKER_URL: redis://user:password-1@rfr-valkey-docs-readwrite:6379/0
     AWS_S3_ENDPOINT_URL: http://dev-backend-minio.{{ .Namespace }}.svc.cluster.local:9000
     AWS_S3_ACCESS_KEY_ID: dinum
     AWS_S3_SECRET_ACCESS_KEY: password
@@ -181,7 +182,9 @@ yhub:
     # its own logical database on the dev-backend postgres, created by the
     # init-db job; redis /2, the backend cache and celery live in /1
     POSTGRES: postgres://dinum:pass@dev-backend-postgres:5432/yhub
-    REDIS: redis://user:pass@dev-backend-redis:6379/2
+    # a valkey instance of its own too — the backend cache and celery live on
+    # valkey-docs
+    REDIS: redis://user:password-1@rfr-valkey-yhub-readwrite:6379/0
     REDIS_PREFIX: yhub
     COLLABORATION_BACKEND_BASE_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     COLLABORATION_SERVER_ORIGIN: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
