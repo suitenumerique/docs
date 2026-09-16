@@ -108,6 +108,8 @@ def test_api_documents_duplicate_success(index):
         users=[user, factories.UserFactory()],
         title="document with an image",
         attachments=[key for key, _ in image_refs],
+        # The original document is a favorite: the duplicate should not be one
+        favorited_by=[user],
     )
     factories.DocumentFactory(id=document_ids[(index + 1) % 3])
     # Don't create document for third ID to check that it doesn't impact access to attachments
@@ -130,6 +132,30 @@ def test_api_documents_duplicate_success(index):
     ]  # Only the first image key
     assert duplicated_document.get_parent() == document.get_parent()
     assert duplicated_document.path == document.get_last_sibling().path
+
+    assert response.json() == {
+        "id": str(duplicated_document.id),
+        "abilities": duplicated_document.get_abilities(user),
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
+        "computed_link_reach": duplicated_document.computed_link_reach,
+        "computed_link_role": duplicated_document.computed_link_role,
+        "created_at": duplicated_document.created_at.isoformat().replace("+00:00", "Z"),
+        "creator": str(user.id),
+        "deleted_at": None,
+        "depth": duplicated_document.depth,
+        "excerpt": duplicated_document.excerpt,
+        "is_favorite": False,
+        "link_reach": duplicated_document.link_reach,
+        "link_role": duplicated_document.link_role,
+        "nb_accesses_ancestors": duplicated_document.nb_accesses_ancestors,
+        "nb_accesses_direct": duplicated_document.nb_accesses_direct,
+        "numchild": 0,
+        "path": duplicated_document.path,
+        "title": "Copy of document with an image",
+        "updated_at": duplicated_document.updated_at.isoformat().replace("+00:00", "Z"),
+        "user_role": "owner",
+    }
 
     mock_capture.assert_called_once_with(
         "doc_duplicated",
