@@ -21,15 +21,17 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useConfig } from '@/core/config';
 import { useCunninghamTheme } from '@/cunningham';
 import { useAuth } from '@/features/auth';
 
-// Environment configuration
-const VAULT_URL = process.env.NEXT_PUBLIC_VAULT_URL ?? 'http://localhost:7201';
-const INTERFACE_URL =
-  process.env.NEXT_PUBLIC_INTERFACE_URL ?? 'http://localhost:7202';
-
 export interface VaultClientContextValue {
+  /**
+   * Runtime feature flag (ENCRYPTION_FEATURE_ENABLED on the backend). When
+   * false the SDK script is never loaded, `client` stays null and every
+   * encryption entry point must stay hidden.
+   */
+  isEnabled: boolean;
   /** The VaultClient instance, or null if not yet initialized */
   client: VaultClient | null;
   /** True once the vault iframe is ready AND auth context has been set */
@@ -47,6 +49,7 @@ export interface VaultClientContextValue {
 }
 
 const VaultClientContext = createContext<VaultClientContextValue>({
+  isEnabled: false,
   client: null,
   isReady: false,
   isLoading: true,
@@ -57,7 +60,7 @@ const VaultClientContext = createContext<VaultClientContextValue>({
 });
 
 /** Load the encryption client SDK script from the vault domain */
-function loadClientScript(): Promise<void> {
+function loadClientScript(vaultUrl: string): Promise<void> {
   return new Promise((resolve, reject) => {
     // Check if already loaded
     if (window.EncryptionClient?.VaultClient) {
@@ -68,7 +71,7 @@ function loadClientScript(): Promise<void> {
 
     // Check if script tag already exists
     const existing = document.querySelector(
-      `script[src="${VAULT_URL}/client.js"]`,
+      `script[src="${vaultUrl}/client.js"]`,
     );
 
     if (existing) {
@@ -81,7 +84,7 @@ function loadClientScript(): Promise<void> {
     }
 
     const script = document.createElement('script');
-    script.src = `${VAULT_URL}/client.js`;
+    script.src = `${vaultUrl}/client.js`;
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () =>
@@ -95,7 +98,8 @@ export function VaultClientProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, authenticated } = useAuth();
+  const { user, authenticated, isLoading: authLoading } = useAuth();
+  const { data: config } = useConfig();
   const { i18n } = useTranslation();
   const { theme: cunninghamTheme } = useCunninghamTheme();
   const clientRef = useRef<VaultClient | null>(null);
@@ -107,26 +111,44 @@ export function VaultClientProvider({
   const [publicKey, setPublicKey] = useState<ArrayBuffer | null>(null);
   const initRef = useRef(false);
 
-  // Load script + initialize VaultClient once
+  // The flag and both URLs come from the backend config so one frontend build
+  // serves every environment; `isEnabled` stays false until the config is
+  // known, which keeps `isLoading` true rather than flashing a disabled state.
+  const configLoaded = config !== undefined;
+  const vaultUrl = config?.ENCRYPTION_VAULT_URL ?? null;
+  const interfaceUrl = config?.ENCRYPTION_INTERFACE_URL ?? null;
+  const isEnabled =
+    config?.ENCRYPTION_FEATURE_ENABLED === true && !!vaultUrl && !!interfaceUrl;
+
+  // Load script + initialize VaultClient once, and only when the feature is on
   useEffect(() => {
-    if (initRef.current) {
+    if (!configLoaded || initRef.current) {
       return;
     }
+
+    if (!isEnabled || !vaultUrl || !interfaceUrl) {
+      setIsLoading(false);
+
+      return;
+    }
+
     initRef.current = true;
 
+    const resolvedVaultUrl: string = vaultUrl;
+    const resolvedInterfaceUrl: string = interfaceUrl;
     let destroyed = false;
 
     async function init() {
       try {
-        await loadClientScript();
+        await loadClientScript(resolvedVaultUrl);
 
         if (destroyed) {
           return;
         }
 
         const client = new window.EncryptionClient.VaultClient({
-          vaultUrl: VAULT_URL,
-          interfaceUrl: INTERFACE_URL,
+          vaultUrl: resolvedVaultUrl,
+          interfaceUrl: resolvedInterfaceUrl,
           theme: cunninghamTheme,
           lang: i18n.language,
         });
@@ -190,19 +212,24 @@ export function VaultClientProvider({
     // One-time init: theme and language are read from the first render only,
     // re-initializing the client on those changes is intentionally avoided.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [configLoaded, isEnabled, vaultUrl, interfaceUrl]);
 
   // Set auth context whenever user changes or client finishes initializing
   useEffect(() => {
     const client = clientRef.current;
 
-    if (
-      !client ||
-      !clientInitialized ||
-      !authenticated ||
-      !user?.id ||
-      !user?.suite_user_id
-    ) {
+    if (!client || !clientInitialized) {
+      return;
+    }
+
+    if (!authenticated || !user?.id || !user?.suite_user_id) {
+      // Anonymous visitor (public doc) or a user the vault cannot identify:
+      // there is nothing to set up, so stop reporting "loading" or every
+      // document page would wait forever.
+      if (!authLoading) {
+        setIsLoading(false);
+      }
+
       return;
     }
 
@@ -242,7 +269,13 @@ export function VaultClientProvider({
     return () => {
       cancelled = true;
     };
-  }, [clientInitialized, authenticated, user?.id, user?.suite_user_id]);
+  }, [
+    clientInitialized,
+    authenticated,
+    authLoading,
+    user?.id,
+    user?.suite_user_id,
+  ]);
 
   const refreshKeyState = useCallback(async () => {
     const client = clientRef.current;
@@ -269,6 +302,7 @@ export function VaultClientProvider({
   return (
     <VaultClientContext.Provider
       value={{
+        isEnabled,
         client: isReady ? clientRef.current : null,
         isReady,
         isLoading,

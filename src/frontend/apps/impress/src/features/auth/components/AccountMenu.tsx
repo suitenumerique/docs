@@ -14,7 +14,7 @@ import { ModalEncryptionSettings } from './ModalEncryptionSettings';
 export const AccountMenu = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { hasKeys } = useVaultClient();
+  const { hasKeys, isEnabled: isEncryptionEnabled } = useVaultClient();
 
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -22,7 +22,11 @@ export const AccountMenu = () => {
   // hasKeys comes from the vault — true if the user has encryption keys on this device
   const hasEncryptionSetup = hasKeys === true;
 
-  const encryptionOption: DropdownMenuOption = useMemo(() => {
+  const encryptionOption: DropdownMenuOption | null = useMemo(() => {
+    if (!isEncryptionEnabled) {
+      return null;
+    }
+
     if (hasEncryptionSetup) {
       return {
         label: t('Encryption settings'),
@@ -38,11 +42,11 @@ export const AccountMenu = () => {
       callback: () => setIsOnboardingOpen(true),
       showSeparator: true,
     };
-  }, [hasEncryptionSetup, t]);
+  }, [isEncryptionEnabled, hasEncryptionSetup, t]);
 
   const options: DropdownMenuOption[] = useMemo(
     () => [
-      encryptionOption,
+      ...(encryptionOption ? [encryptionOption] : []),
       {
         label: t('Logout'),
         icon: 'logout',

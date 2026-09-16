@@ -19,6 +19,7 @@ import {
   useUserEncryption,
 } from '@/docs/doc-collaboration';
 import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
+import { useVaultClient } from '@/docs/doc-collaboration/vault';
 import Export from '@/docs/doc-export/';
 import {
   Doc,
@@ -66,6 +67,7 @@ export const DocToolBox = ({
 
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { encryptionSettings } = useUserEncryption();
+  const { isEnabled: isEncryptionEnabled } = useVaultClient();
 
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
@@ -152,7 +154,7 @@ export const DocToolBox = ({
       callback: () => {
         setIsModalEncryptOpen(true);
       },
-      show: !doc.is_encrypted && doc.abilities.update,
+      show: isEncryptionEnabled && !doc.is_encrypted && doc.abilities.update,
       showSeparator: isTopRoot ? true : false,
     },
     {

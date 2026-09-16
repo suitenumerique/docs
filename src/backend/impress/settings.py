@@ -515,6 +515,18 @@ class Base(Configuration):
     FRONTEND_SILENT_LOGIN_ENABLED = values.BooleanValue(
         default=False, environ_name="FRONTEND_SILENT_LOGIN_ENABLED", environ_prefix=None
     )
+
+    ENCRYPTION_FEATURE_ENABLED = values.BooleanValue(
+        default=False,
+        environ_name="ENCRYPTION_FEATURE_ENABLED",
+        environ_prefix=None,
+    )
+    ENCRYPTION_VAULT_URL = values.Value(
+        None, environ_name="ENCRYPTION_VAULT_URL", environ_prefix=None
+    )
+    ENCRYPTION_INTERFACE_URL = values.Value(
+        None, environ_name="ENCRYPTION_INTERFACE_URL", environ_prefix=None
+    )
     THEME_CUSTOMIZATION_FILE_PATH = values.Value(
         os.path.join(BASE_DIR, "impress/configuration/theme/default.json"),
         environ_name="THEME_CUSTOMIZATION_FILE_PATH",

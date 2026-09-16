@@ -64,6 +64,9 @@ These are the environment variables you can set for the `impress-backend` contai
 | DJANGO_SERVER_TO_SERVER_API_TOKENS              |                                                                                                                                                                            | []                                                                      |
 | DOCSPEC_API_URL                               | URL to endpoint of DocSpec conversion API    |            |
 | DOCUMENT_IMAGE_MAX_SIZE                         | Maximum size of document in bytes                                                                                                                                          | 10485760                                                                |
+| ENCRYPTION_FEATURE_ENABLED                      | Enable end-to-end encryption of documents through the encryption service (see the dedicated section below). Use with caution                                               | false                                                                   |
+| ENCRYPTION_INTERFACE_URL                        | Origin of the encryption service interface host (e.g. https://encryption.example.com). Required when the feature is enabled                                                |                                                                         |
+| ENCRYPTION_VAULT_URL                            | Origin of the encryption service vault host, which serves the client SDK (e.g. https://data.encryption.example.com). Required when the feature is enabled                  |                                                                         |
 | FRONTEND_CSS_URL                                | To add a external css file to the app                                                                                                                                      |                                                                         |
 | FRONTEND_JS_URL                                | To add a external js file to the app                                                                                                                                      |                                                                         |
 | FRONTEND_HOMEPAGE_FEATURE_ENABLED               | Frontend feature flag to display the homepage                                                                                                                              | false                                                                   |
@@ -122,6 +125,15 @@ These are the environment variables you can set for the `impress-backend` contai
 | Y_PROVIDER_API_BASE_URL                         | Y Provider url                                                                                                                                                             |                                                                         |
 | Y_PROVIDER_API_KEY                              | Y provider API key                                                                                                                                                         |                                                                         |
 
+### End-to-end encryption
+
+`ENCRYPTION_FEATURE_ENABLED` turns on client-side end-to-end encryption of documents through the shared encryption service ([suitenumerique/encryption](https://github.com/suitenumerique/encryption)). It is **off by default**, and the flag is read at runtime, so the same image can run with the feature enabled in one environment (e.g. pre-production) and disabled in another (e.g. production). When it is off, the frontend never loads the encryption SDK and shows no encryption option at all.
+
+Enabling it implies:
+
+- **A deployed instance of the encryption service.** Users' browsers must reach it at `ENCRYPTION_VAULT_URL` (its `data.` host, which serves the SDK and the vault iframe) and `ENCRYPTION_INTERFACE_URL` (its interface host). Both must be set, otherwise the feature stays off.
+- **That instance must be configured for this frontend**: its `ALLOWED_FRAME_ANCESTORS` must list this application's origin, it must use the same OIDC provider (users are matched on the `sub` claim), and it must share the same registrable domain as the other products for the browser to share keys between them (for example `docs.example.com`, `drive.example.com`, `encryption.example.com` and `data.encryption.example.com` all sit under `example.com`; an encryption service hosted on `encryption.other-domain.com` would keep a separate key store per product).
+- **Use with caution.** Encrypted content can only be read by users holding the keys: the server cannot recover it, and a user who loses both their device keys and their backup loses access to their encrypted documents. Do not enable it in production without a validated deployment of the encryption service and a tested recovery process.
 
 ## impress-frontend image
 

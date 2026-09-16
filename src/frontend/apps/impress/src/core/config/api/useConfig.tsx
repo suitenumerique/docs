@@ -21,6 +21,9 @@ export interface ConfigResponse {
   CONVERSION_FILE_EXTENSIONS_ALLOWED: string[];
   CONVERSION_FILE_MAX_SIZE: number;
   CRISP_WEBSITE_ID?: string;
+  ENCRYPTION_FEATURE_ENABLED?: boolean;
+  ENCRYPTION_INTERFACE_URL?: string | null;
+  ENCRYPTION_VAULT_URL?: string | null;
   ENVIRONMENT: string;
   FRONTEND_CSS_URL?: string;
   FRONTEND_HOMEPAGE_FEATURE_ENABLED?: boolean;
