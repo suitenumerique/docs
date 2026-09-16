@@ -5,7 +5,7 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
 export DOCKER_USER="${DOCKER_USER:-$(id -u)}"
-export LAN_HOST="${LAN_HOST:-$(ip route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([^ ]*\).*/\1/p' | head -n 1)}"
+export LAN_HOST="${LAN_HOST:-$(hostname -I 2>/dev/null | awk '{print $1}')}"
 LAN_HOST="${LAN_HOST:-127.0.0.1}"
 
 action="${1:-start}"

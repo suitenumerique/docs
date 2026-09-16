@@ -9,7 +9,7 @@ make bootstrap
 **Run** — login and password: `impress`
 
 ```bash
-LAN_HOST="$(hostname -I | awk '{print $1}')" ./run-docs-lan.sh
+./run-docs-lan.sh
 ```
 
 **Stop (preserving data)**
