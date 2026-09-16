@@ -18,7 +18,7 @@ releases:
   - name: dev-backend
     namespace: {{ .Namespace }}
     chart: dev-backends/dev-backend
-    version: 0.0.4
+    version: 0.0.10
     values:
       - env.d/{{ .Environment.Name }}/values.dev-backend.yaml.gotmpl
 
