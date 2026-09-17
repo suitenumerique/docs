@@ -1,11 +1,12 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
+import { useToast } from '@/hooks';
 
 export const useCopyCurrentEditorToClipboard = () => {
   const { editor } = useEditorStore();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { t } = useTranslation();
 
   return async (asFormat: 'html' | 'markdown') => {

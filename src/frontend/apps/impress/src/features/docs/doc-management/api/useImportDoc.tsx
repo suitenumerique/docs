@@ -1,4 +1,4 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import {
   UseMutationOptions,
   useMutation,
@@ -12,6 +12,7 @@ import {
   errorCauses,
   fetchAPI,
 } from '@/api';
+import { useToast } from '@/hooks';
 
 import { Doc } from '../types';
 
@@ -71,7 +72,7 @@ export const importDoc = async ([file, mimeType]: [
 type UseImportDocOptions = UseMutationOptions<Doc, APIError, [File, string]>;
 
 export function useImportDoc(props?: UseImportDocOptions) {
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 

@@ -1,11 +1,12 @@
 import { Block } from '@blocknote/core';
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { captureException } from '@sentry/nextjs';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { backendUrl } from '@/api';
 import { useConfig } from '@/core';
+import { useToast } from '@/hooks';
 import { formatFileSize } from '@/utils';
 import { isSafeUrl } from '@/utils/url';
 
@@ -17,7 +18,7 @@ const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // Default to 10MB
 
 export const useUploadFile = (docId: string) => {
   const { t } = useTranslation();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { data: config } = useConfig();
   const {
     mutateAsync: createDocAttachment,

@@ -3,7 +3,6 @@ import {
   Modal,
   ModalSize,
   VariantType,
-  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
@@ -12,6 +11,7 @@ import { Box, Text } from '@/components';
 import { useThreadStore } from '@/docs/doc-comments/stores/useThreadStore';
 import { Doc, base64ToYDoc, useProviderStore } from '@/docs/doc-management/';
 import { useDocContentUpdate } from '@/docs/doc-management/api/useDocContentUpdate';
+import { useToast } from '@/hooks';
 
 import { useDocVersion } from '../api';
 import { KEY_LIST_DOC_VERSIONS } from '../api/useDocVersions';
@@ -42,7 +42,7 @@ export const ModalConfirmationVersion = ({
     versionId,
   });
   const { t } = useTranslation();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { provider } = useProviderStore();
   const { threadStore } = useThreadStore();
   const { mutate: updateDocContent } = useDocContentUpdate({

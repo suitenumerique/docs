@@ -1,4 +1,4 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -15,6 +15,7 @@ import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
+import { useToast } from '@/hooks';
 
 import { useDocInvitationsInfinite, useUpdateDocInvitation } from '../api';
 import { Invitation } from '../types';
@@ -42,7 +43,7 @@ export const DocShareInvitationItem = ({
     is_first_connection: false,
   };
 
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const canUpdate = doc.abilities.accesses_manage;
 
   const { mutate: updateDocInvitation } = useUpdateDocInvitation({

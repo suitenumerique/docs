@@ -5,7 +5,6 @@ import {
   ModalSize,
   Select,
   VariantType,
-  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import i18next from 'i18next';
 import JSZip from 'jszip';
@@ -17,6 +16,7 @@ import { Box, ButtonCloseModal, Text } from '@/components';
 import { useMediaUrl } from '@/core';
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { type Doc, useTrans } from '@/docs/doc-management';
+import { useToast } from '@/hooks';
 import { fallbackLng } from '@/i18n/config';
 
 import ModulesExport from '../hooks/';
@@ -36,7 +36,7 @@ interface ModalExportProps {
 
 export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const { t } = useTranslation();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { editor } = useEditorStore();
   const [isExporting, setIsExporting] = useState(false);
   const { untitledDocument } = useTrans();

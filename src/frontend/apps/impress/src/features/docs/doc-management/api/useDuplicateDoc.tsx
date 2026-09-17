@@ -1,4 +1,4 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import {
   UseMutationOptions,
   useMutation,
@@ -9,6 +9,7 @@ import * as Y from 'yjs';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning/api/useDocVersions';
+import { useToast } from '@/hooks';
 import { toBase64 } from '@/utils/string';
 
 import { useProviderStore } from '../stores';
@@ -55,7 +56,7 @@ type DuplicateDocOptions = UseMutationOptions<
 
 export function useDuplicateDoc(options?: DuplicateDocOptions) {
   const queryClient = useQueryClient();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { t } = useTranslation();
   const { provider } = useProviderStore();
 

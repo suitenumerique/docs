@@ -1,8 +1,4 @@
-import {
-  Button,
-  VariantType,
-  useToastProvider,
-} from '@gouvfr-lasuite/ui-components';
+import { Button, VariantType } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Card, Icon } from '@/components';
@@ -16,10 +12,11 @@ import {
 } from '@/docs/doc-management';
 import { KEY_DOC_TREE } from '@/docs/doc-tree';
 import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid';
+import { useToast } from '@/hooks';
 
 export const AlertRestore = ({ doc }: { doc: Doc }) => {
   const { t } = useTranslation();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { spacingsTokens } = useCunninghamTheme();
   const { mutate: restoreDoc, error } = useRestoreDoc({
     listInvalidQueries: [

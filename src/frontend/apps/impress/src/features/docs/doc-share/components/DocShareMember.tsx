@@ -1,4 +1,4 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,6 +7,7 @@ import { QuickSearchData } from '@/components/quick-search';
 import { QuickSearchGroup } from '@/components/quick-search/QuickSearchGroup';
 import { useCunninghamTheme } from '@/cunningham';
 import { Access, Doc, Role } from '@/docs/doc-management/';
+import { useToast } from '@/hooks';
 
 import { useDocAccesses, useUpdateDocAccess } from '../api';
 import { useWhoAmI } from '../hooks/';
@@ -26,7 +27,7 @@ export const DocShareMemberItem = ({
 }: Props) => {
   const { t } = useTranslation();
   const { isLastOwner } = useWhoAmI(access);
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { spacingsTokens } = useCunninghamTheme();
 
   const message = isLastOwner
