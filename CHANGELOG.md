@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(helm) allow disallowing search engine indexing per instance #2694
+- 🐛(frontend) reduce PostHog volume from web vitals and opt_in spam #2701
 
 ### Fixed
 
