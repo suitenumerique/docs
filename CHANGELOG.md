@@ -15,6 +15,10 @@ and this project adheres to
 
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 
+### Changed
+
+- 💄(frontend) redesign 404 error standalone page #2696
+
 ## [v5.7.0] - 2026-09-15
 
 ### Added
@@ -30,7 +34,6 @@ and this project adheres to
 - 🚚(project) switch docspec image to ghcr.io/docspec/api #2553
 - 🚚(global) move favorite documents API endpoint
   to `/documents/favorites/` #2540
-- 💄(frontend) redesign 404 error standalone page #2696
 
 ### Fixed
 
