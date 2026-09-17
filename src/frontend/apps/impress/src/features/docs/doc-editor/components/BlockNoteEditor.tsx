@@ -133,7 +133,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       ? DEFAULT_LOCALE
       : i18n.resolvedLanguage;
 
-  const { uploadFile, errorAttachment } = useUploadFile(doc.id);
+  const { uploadFile, errorAttachment, errorKey } = useUploadFile(doc.id);
   const conf = useConfig().data;
   const { isFeatureFlagActivated } = useAnalytics();
   const aiBlockNoteAllowed = !!(
@@ -236,7 +236,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         }),
       },
       pasteHandler: ({ event, defaultPasteHandler }) => {
-        // Get clipboard data
         const blocknoteData = event.clipboardData?.getData('blocknote/html');
 
         /**
@@ -323,7 +322,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       />
       <DocsFindReplaceStyle />
       {errorAttachment && (
-        <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
+        <Box
+          key={errorKey}
+          $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}
+        >
           <TextErrors
             causes={errorAttachment.cause}
             canClose

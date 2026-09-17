@@ -12,10 +12,12 @@
  *   - `data`: The optional data passed in
  */
 export const errorCauses = async (response: Response, data?: unknown) => {
-  const errorsBody = (await response.json()) as Record<
-    string,
-    string | string[]
-  > | null;
+  let errorsBody: Record<string, string | string[]> | null = null;
+  try {
+    errorsBody = await response.json();
+  } catch {
+    // response body is not JSON (e.g. HTML error page from Nginx)
+  }
 
   const causes = errorsBody
     ? Object.entries(errorsBody)
