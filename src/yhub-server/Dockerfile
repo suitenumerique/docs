@@ -70,4 +70,6 @@ USER ${DOCKER_USER}
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
 
-CMD ["node", "dist/server.js"]
+# sentry.js is preloaded so that error reporting is in place before anything else
+# is imported; it does nothing without a SENTRY_DSN
+CMD ["node", "--import", "./dist/sentry.js", "dist/server.js"]
