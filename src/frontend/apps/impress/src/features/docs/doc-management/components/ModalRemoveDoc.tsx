@@ -74,15 +74,11 @@ export const ModalRemoveDoc = ({
 
   const keyboardAction = useKeyboardAction();
 
-  const handleClose = () => {
-    onClose();
-  };
-
   const handleDelete = () => {
     removeDoc({ docId: doc.id });
   };
 
-  const handleCloseKeyDown = keyboardAction(handleClose);
+  const handleCloseKeyDown = keyboardAction(onClose);
   const handleDeleteKeyDown = keyboardAction(handleDelete);
 
   return (
@@ -90,7 +86,7 @@ export const ModalRemoveDoc = ({
       isOpen
       closeOnClickOutside
       hideCloseButton
-      onClose={handleClose}
+      onClose={onClose}
       aria-label={t('Delete a doc')}
       rightActions={
         <>
@@ -100,7 +96,7 @@ export const ModalRemoveDoc = ({
             variant="secondary"
             fullWidth
             autoFocus
-            onClick={handleClose}
+            onClick={onClose}
             onKeyDown={handleCloseKeyDown}
           >
             {t('Cancel')}
@@ -131,7 +127,7 @@ export const ModalRemoveDoc = ({
           <Box $position="absolute" $css="top: 4px; right: 4px;">
             <ButtonCloseModal
               aria-label={t('Close the delete modal')}
-              onClick={handleClose}
+              onClick={onClose}
               onKeyDown={handleCloseKeyDown}
             />
           </Box>

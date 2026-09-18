@@ -386,7 +386,7 @@ const DocToolBoxComponent = ({
               treeContext?.treeData.getParentId(doc.id) ||
               treeContext?.root?.id;
 
-            if (isTopParent) {
+            if (isTopParent && isCurrentDoc) {
               void router.push(`/`);
             } else if (parentId) {
               void router.push(`/docs/${parentId}`).then(() => {
