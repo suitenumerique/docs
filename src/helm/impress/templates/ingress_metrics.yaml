@@ -1,6 +1,7 @@
 {{- /*
-Publishes the Prometheus metrics of the backend (PROMETHEUS_METRICS_ENABLED) and
-nothing else: one exact path, on a host of its own. The main ingress sends every
+Publishes the Prometheus metrics of the backend (PROMETHEUS_METRICS_ENABLED), and
+those of yhub with `yhub.metrics.enabled`, and nothing else: exact paths, on a
+host of its own. The main ingress sends every
 path but /api and /external_api to the frontend, so without this one the metrics
 are not reachable from outside the cluster. Restrict who may call it with the
 annotations of your ingress controller; the bearer token is the second lock.
@@ -53,38 +54,12 @@ spec:
     - host: {{ .Values.ingressMetrics.host | quote }}
       http:
         paths:
-          - path: {{ .Values.ingressMetrics.path | quote }}
-            {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
-            pathType: Exact
-            {{- end }}
-            backend:
-              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
-              service:
-                name: {{ include "impress.backend.fullname" . }}
-                port:
-                  number: {{ .Values.backend.service.port }}
-              {{- else }}
-              serviceName: {{ include "impress.backend.fullname" . }}
-              servicePort: {{ .Values.backend.service.port }}
-            {{- end }}
+          {{- include "impress.ingressMetrics.paths" . | nindent 10 }}
     {{- end }}
     {{- range .Values.ingressMetrics.hosts }}
     - host: {{ . | quote }}
       http:
         paths:
-          - path: {{ $.Values.ingressMetrics.path | quote }}
-            {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
-            pathType: Exact
-            {{- end }}
-            backend:
-              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
-              service:
-                name: {{ include "impress.backend.fullname" $ }}
-                port:
-                  number: {{ $.Values.backend.service.port }}
-              {{- else }}
-              serviceName: {{ include "impress.backend.fullname" $ }}
-              servicePort: {{ $.Values.backend.service.port }}
-            {{- end }}
+          {{- include "impress.ingressMetrics.paths" $ | nindent 10 }}
     {{- end }}
 {{- end }}

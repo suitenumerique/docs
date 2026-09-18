@@ -186,10 +186,10 @@ ingressAdmin:
     secretName: null
     additional: []
 
-## @param ingressMetrics.enabled whether to enable the Ingress publishing the Prometheus metrics of the backend (requires PROMETHEUS_METRICS_ENABLED and PROMETHEUS_API_KEY in backend.envVars)
+## @param ingressMetrics.enabled whether to enable the Ingress publishing the Prometheus metrics of the backend (requires PROMETHEUS_METRICS_ENABLED and PROMETHEUS_API_KEY in backend.envVars) and, with yhub.metrics.enabled, those of yhub
 ## @param ingressMetrics.className IngressClass to use for the Ingress
 ## @param ingressMetrics.host Host for the Ingress. Use a host of its own, and add it to DJANGO_ALLOWED_HOSTS
-## @param ingressMetrics.path Path to use for the Ingress, matched exactly
+## @param ingressMetrics.path Path of the backend metrics, matched exactly. The yhub ones are published at yhub.metrics.path and yhub.metrics.workerPath
 ingressMetrics:
   enabled: false
   className: null
@@ -997,6 +997,16 @@ yhub:
   ## travel through redis. Each replica also runs a worker unless the worker is
   ## deployed apart, see below.
   replicas: 3
+
+  ## @param yhub.metrics.enabled Serve the prometheus metrics of yhub on a port of their own, in the server and in the worker. Requires PROMETHEUS_API_KEY in yhub.envVars
+  ## @param yhub.metrics.port Port the metrics are served on. Added to the yhub Service, and to a Service of its own for the worker
+  ## @param yhub.metrics.path Path the server serves its metrics on, which is the path ingressMetrics publishes them at
+  ## @param yhub.metrics.workerPath Path the worker serves its metrics on, which is the path ingressMetrics publishes them at
+  metrics:
+    enabled: false
+    port: 9464
+    path: /metrics/yhub
+    workerPath: /metrics/yhub-worker
 
   ## @param yhub.worker.enabled Deploy the worker apart from the server, each scaling on its own
   ## @param yhub.worker.replicas Amount of yhub worker replicas

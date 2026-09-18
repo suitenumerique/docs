@@ -55,13 +55,15 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- $roleEnv := include "impress.yhub.roleEnv" (dict "root" . "role" "server") }}
-          {{- if or $envVars .Values.jwtKeys.enabled $roleEnv }}
+          {{- $metricsEnv := include "impress.yhub.metrics.env" (dict "root" . "path" .Values.yhub.metrics.path) }}
+          {{- if or $envVars .Values.jwtKeys.enabled $roleEnv $metricsEnv }}
           env:
             {{- $envVars | indent 12 }}
             {{- if .Values.jwtKeys.enabled }}
             {{- include "impress.jwtKeys.yhubEnv" . | nindent 12 }}
             {{- end }}
             {{- $roleEnv | indent 12 }}
+            {{- $metricsEnv | nindent 12 }}
           {{- end }}
           {{- if .Values.yhub.envFrom }}
           envFrom:
@@ -75,6 +77,11 @@ spec:
             - name: http
               containerPort: {{ .Values.yhub.service.targetPort }}
               protocol: TCP
+            {{- if .Values.yhub.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.yhub.metrics.port }}
+              protocol: TCP
+            {{- end }}
           {{- if .Values.yhub.probes.liveness }}
           livenessProbe:
             {{- include "impress.probes.abstract" (merge .Values.yhub.probes.liveness (dict "targetPort" .Values.yhub.service.targetPort )) | nindent 12 }}

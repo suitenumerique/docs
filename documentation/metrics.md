@@ -1,4 +1,12 @@
-# Prometheus metrics of the backend
+# Prometheus metrics
+
+This page is about the backend. The collaboration server (yhub) has metrics of
+its own, served the same way — a bearer token, outside of what the ingress of
+the application publishes — and documented in the "Metrics" section of
+`src/yhub-server/README.md`. The [Helm section](#kubernetes-helm-chart) below
+covers both.
+
+## Backend
 
 The backend ships an **opt-in** instrumentation,
 [django-prometheus](https://github.com/django-commons/django-prometheus). It is
@@ -116,6 +124,30 @@ ingressMetrics:
 
 `ingressMetrics` routes the exact path `/metrics` of that host to the backend
 and nothing else. Its host has to be in `DJANGO_ALLOWED_HOSTS`.
+
+With yhub, the same ingress also publishes the server and the worker, each on an
+exact path of its own:
+
+```yaml
+yhub:
+  envVars:
+    PROMETHEUS_API_KEY:          # the worker inherits it
+      secretKeyRef:
+        name: yhub
+        key: PROMETHEUS_API_KEY
+  metrics:
+    enabled: true                # /metrics/yhub and /metrics/yhub-worker
+```
+
+| Path | Served by |
+|---|---|
+| `/metrics` | backend |
+| `/metrics/yhub` | yhub server (websockets, authorizations, backend calls) |
+| `/metrics/yhub-worker` | yhub worker (compactions), when `yhub.worker.enabled` |
+
+That is three scrape jobs on one host, differing by `metrics_path`. What is said
+above about [several replicas](#several-replicas-behind-one-address) applies to
+each of them: yhub labels its samples with `hostname` too.
 
 The celery worker receives `backend.envVars` too. It serves no request, so its
 metrics are never read: turn them off there with

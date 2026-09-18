@@ -17,6 +17,12 @@ spec:
       targetPort: {{ .Values.yhub.service.targetPort }}
       protocol: TCP
       name: http
+    {{- if .Values.yhub.metrics.enabled }}
+    - port: {{ .Values.yhub.metrics.port }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+    {{- end }}
   selector:
     {{- include "impress.common.selectorLabels" (list . $component) | nindent 4 }}
 {{- end }}
