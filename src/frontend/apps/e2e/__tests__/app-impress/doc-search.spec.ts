@@ -257,6 +257,7 @@ test.describe('Document search', () => {
     ).toBeVisible();
 
     // Ctrl+Click should open in a new tab
+    const searchPageUrl = page.url();
     const newPagePromise = context.waitForEvent('page');
     await listSearch
       .getByRole('option')
@@ -268,6 +269,9 @@ test.describe('Document search', () => {
 
     // Verify the new tab navigated to the document
     expect(newPage.url()).toContain('/docs/');
+
+    // Verify the original page was not navigated away
+    await expect(page).toHaveURL(searchPageUrl);
 
     await newPage.close();
   });
