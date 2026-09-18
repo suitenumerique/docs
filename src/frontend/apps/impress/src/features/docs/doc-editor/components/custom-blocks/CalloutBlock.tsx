@@ -17,6 +17,8 @@ import { getEmojidata } from '@/components/Emoji/initEmojiCallout';
 
 import type { DocsBlockNoteEditor } from '../../types';
 
+import { CalloutBlockShortcuts } from './CalloutBlockShortcuts';
+
 const CalloutBlockStyle = createGlobalStyle`
   .bn-block-content[data-content-type="callout"][data-background-color] {
     padding: var(--c--globals--spacings--3xs) var(--c--globals--spacings--3xs);
@@ -172,6 +174,7 @@ export const CalloutBlock = createReactBlockSpec(
       <CalloutComponent block={block} editor={editor} contentRef={contentRef} />
     ),
   },
+  [CalloutBlockShortcuts],
 );
 
 export const getCalloutReactSlashMenuItems = (
