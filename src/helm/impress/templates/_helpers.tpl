@@ -349,3 +349,59 @@ data:
   .dockerconfigjson: {{ template "impress.secret.dockerconfigjson.data" .imageCredentials }}
 {{- end -}}
 {{- end }}
+
+{{/*
+Environment serving the prometheus metrics of a yhub pod on a port of its own.
+The bearer token (PROMETHEUS_API_KEY) is not set here: it is a secret, given
+through `yhub.envVars`, which the worker inherits.
+
+Requires a dict with "root" (top level scope) and "path" (where to serve them)
+*/}}
+{{- define "impress.yhub.metrics.env" -}}
+{{- if .root.Values.yhub.metrics.enabled }}
+- name: PROMETHEUS_METRICS_ENABLED
+  value: "true"
+- name: PROMETHEUS_METRICS_PORT
+  value: {{ .root.Values.yhub.metrics.port | quote }}
+- name: PROMETHEUS_METRICS_PATH
+  value: {{ .path | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+One exact path of the metrics ingress.
+
+Requires a dict with "root", "path", "service" and "port"
+*/}}
+{{- define "impress.ingressMetrics.path" -}}
+- path: {{ .path | quote }}
+  {{- if semverCompare ">=1.18-0" .root.Capabilities.KubeVersion.GitVersion }}
+  pathType: Exact
+  {{- end }}
+  backend:
+    {{- if semverCompare ">=1.19-0" .root.Capabilities.KubeVersion.GitVersion }}
+    service:
+      name: {{ .service }}
+      port:
+        number: {{ .port }}
+    {{- else }}
+    serviceName: {{ .service }}
+    servicePort: {{ .port }}
+    {{- end }}
+{{- end }}
+
+{{/*
+Every path of the metrics ingress: the backend, and the two halves of yhub when
+their metrics are enabled. Distinct exact paths on one host, so that one ingress
+and one address filter cover them all without rewriting anything — each service
+is told to serve its metrics on the path it is published at.
+*/}}
+{{- define "impress.ingressMetrics.paths" -}}
+{{ include "impress.ingressMetrics.path" (dict "root" . "path" .Values.ingressMetrics.path "service" (include "impress.backend.fullname" .) "port" .Values.backend.service.port) }}
+{{- if and .Values.yhub.enabled .Values.yhub.metrics.enabled }}
+{{ include "impress.ingressMetrics.path" (dict "root" . "path" .Values.yhub.metrics.path "service" (include "impress.yhub.fullname" .) "port" .Values.yhub.metrics.port) }}
+{{- if .Values.yhub.worker.enabled }}
+{{ include "impress.ingressMetrics.path" (dict "root" . "path" .Values.yhub.metrics.workerPath "service" (printf "%s-metrics" (include "impress.yhub.worker.fullname" .)) "port" .Values.yhub.metrics.port) }}
+{{- end }}
+{{- end }}
+{{- end }}

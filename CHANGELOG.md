@@ -14,12 +14,14 @@ and this project adheres to
 - 🐛(frontend) reduce PostHog volume from web vitals and opt_in spam #2701
 - ✨(backend) expose the attachment max size in the config endpoint #2577
 - ✨(frontend) warn before uploading an attachment over the size limit #2577
-- ✨(frontend) add keyboard shortcut to open presentation mode #2697
+- ✨(collaboration) add opt-in prometheus metrics to yhub, server and worker,
+  protected by a bearer token
 - ✨(collaboration) report yhub errors to sentry, configured through
   `SENTRY_*`
 - ✨(backend) add opt-in prometheus metrics on `/metrics`, protected by a
   bearer token
-- ✨(helm) add a dedicated ingress for the prometheus metrics
+- ✨(helm) add a dedicated ingress for the prometheus metrics of the backend
+  and of yhub
 - ✨(backend) add a service generating cached RS256 JWT tokens
 - ✨(backend) publish the JWT public key on a JWKS endpoint
 - 🔧(dev) generate the JWT signing key when bootstrapping the dev stack

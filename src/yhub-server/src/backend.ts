@@ -35,6 +35,7 @@ import {
   Y_PROVIDER_API_KEY,
   YHUB_JWT_PRIVATE_KEY,
 } from './config.js';
+import { timedBackendRequest } from './metrics.js';
 
 // The shape of the backend payload a caller name resolves to.
 export interface BackendUser {
@@ -117,17 +118,19 @@ export const backendFetch = async <T = unknown>(
   path: string,
   { cookie, origin }: { cookie?: string; origin?: string },
 ): Promise<T> => {
-  const res = await fetch(`${COLLABORATION_BACKEND_BASE_URL}${path}`, {
-    headers: {
-      // an anonymous caller may have no session at all; `cookie: undefined` would
-      // reach the backend as the literal string "undefined"
-      ...(cookie ? { cookie } : {}),
-      // a same-origin request carries no `Origin` — forwarded when there is one, omitted
-      // rather than sent empty, which is not a value the header is allowed to take
-      ...(origin ? { origin } : {}),
-      'X-Y-Provider-Key': Y_PROVIDER_API_KEY,
-    },
-  });
+  const res = await timedBackendRequest(path, () =>
+    fetch(`${COLLABORATION_BACKEND_BASE_URL}${path}`, {
+      headers: {
+        // an anonymous caller may have no session at all; `cookie: undefined` would
+        // reach the backend as the literal string "undefined"
+        ...(cookie ? { cookie } : {}),
+        // a same-origin request carries no `Origin` — forwarded when there is one, omitted
+        // rather than sent empty, which is not a value the header is allowed to take
+        ...(origin ? { origin } : {}),
+        'X-Y-Provider-Key': Y_PROVIDER_API_KEY,
+      },
+    }),
+  );
   if (!res.ok) {
     const err: Error & { status?: number } = new Error(
       `Failed to fetch ${path}: ${res.status}`,
@@ -143,13 +146,14 @@ export const backendFetch = async <T = unknown>(
 export const touchDocument = async (docid: string): Promise<void> => {
   if (backendSigningKey == null) return;
   try {
-    const res = await fetch(
-      `${COLLABORATION_BACKEND_BASE_URL}/api/v1.0/documents/${docid}/content-updated/`,
-      {
+    const path = `/api/v1.0/documents/${docid}/content-updated/`;
+    const token = await getBackendToken();
+    const res = await timedBackendRequest(path, () =>
+      fetch(`${COLLABORATION_BACKEND_BASE_URL}${path}`, {
         method: 'POST',
-        headers: { authorization: `Bearer ${await getBackendToken()}` },
+        headers: { authorization: `Bearer ${token}` },
         signal: AbortSignal.timeout(BACKEND_NOTIFY_TIMEOUT_MS),
-      },
+      }),
     );
     if (!res.ok) {
       touchLog.warn(

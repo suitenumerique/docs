@@ -119,3 +119,49 @@ describe('PORT', () => {
     expect((await load()).PORT).toBe(4000);
   });
 });
+
+describe('PROMETHEUS_METRICS_*', () => {
+  beforeEach(() => {
+    for (const key of [
+      'PROMETHEUS_METRICS_ENABLED',
+      'PROMETHEUS_API_KEY',
+      'PROMETHEUS_API_KEY_FILE',
+      'PROMETHEUS_METRICS_PORT',
+      'PROMETHEUS_METRICS_PATH',
+    ]) {
+      vi.stubEnv(key, '');
+    }
+  });
+
+  it('is off by default, and then asks for no key', async () => {
+    const config = await load();
+    expect(config.PROMETHEUS_METRICS_ENABLED).toBe(false);
+    expect(config.PROMETHEUS_METRICS_PORT).toBe(9464);
+    expect(config.PROMETHEUS_METRICS_PATH).toBe('/metrics');
+  });
+
+  it('refuses to start enabled without a key: the metrics would be public', async () => {
+    vi.stubEnv('PROMETHEUS_METRICS_ENABLED', 'true');
+    await expect(load()).rejects.toThrow(
+      'PROMETHEUS_METRICS_ENABLED requires PROMETHEUS_API_KEY to be set',
+    );
+  });
+
+  it('starts enabled with a key', async () => {
+    vi.stubEnv('PROMETHEUS_METRICS_ENABLED', 'true');
+    vi.stubEnv('PROMETHEUS_API_KEY', 'a-key');
+    vi.stubEnv('PROMETHEUS_METRICS_PORT', '9500');
+    vi.stubEnv('PROMETHEUS_METRICS_PATH', '/metrics/yhub');
+    const config = await load();
+    expect(config.PROMETHEUS_METRICS_ENABLED).toBe(true);
+    expect(config.PROMETHEUS_METRICS_PORT).toBe(9500);
+    expect(config.PROMETHEUS_METRICS_PATH).toBe('/metrics/yhub');
+  });
+
+  it('refuses a path that is not one', async () => {
+    vi.stubEnv('PROMETHEUS_METRICS_PATH', 'metrics');
+    await expect(load()).rejects.toThrow(
+      'PROMETHEUS_METRICS_PATH must start with "/" (got "metrics")',
+    );
+  });
+});
