@@ -207,12 +207,22 @@ test.describe('Doc Tree', () => {
       { steps: 20 },
     );
 
+    const responsePromiseMoveDoc = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/move/`) &&
+        response.status() === 200 &&
+        response.request().method() === 'POST',
+    );
+
     await page.mouse.up();
 
     // Wait for the reorder to be reflected in the tree before reloading —
     // this also ensures the API call has had time to persist the new order.
     await expect(allSubPageItems.nth(0).getByText(docChild2)).toBeVisible();
     await expect(allSubPageItems.nth(1).getByText(docChild1)).toBeVisible();
+
+    const responseMoveDoc = await responsePromiseMoveDoc;
+    expect(responseMoveDoc.ok()).toBeTruthy();
 
     // reload the page
     await page.reload();

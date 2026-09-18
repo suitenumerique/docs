@@ -12,7 +12,8 @@
     "test:ui": "yarn test --ui",
     "test:ui::firefox": "yarn test:ui --project=firefox",
     "test:ui::webkit": "yarn test:ui --project=webkit",
-    "test:ui::chromium": "yarn test:ui --project=chromium"
+    "test:ui::chromium": "yarn test:ui --project=chromium",
+    "show-report": "npx playwright show-report report"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

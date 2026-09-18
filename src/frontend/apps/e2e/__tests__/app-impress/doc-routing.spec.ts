@@ -157,24 +157,25 @@ test.describe('Doc Routing', () => {
       RELEASE_VERSION: '0.0.0',
     });
 
-    await page.goto('/');
-
     let counterReload = 0;
     await page.route(/.*\/users\/me\/$/, async (route) => {
       counterReload += 1;
       await route.continue();
     });
 
-    await page.waitForTimeout(1000);
+    await page.goto('/');
+
+    await expect.poll(() => counterReload, { timeout: 10000 }).toBe(2);
+
+    await page.waitForLoadState('load');
 
     // The sessionStorage guard should be set to the mismatched backend version.
-    const reloadVersion = await page.evaluate(() =>
-      sessionStorage.getItem('reload-version'),
-    );
-    expect(reloadVersion).toBe('0.0.0');
-
-    // The page should have reloaded once
-    expect(counterReload).toBe(2);
+    await expect
+      .poll(
+        () => page.evaluate(() => sessionStorage.getItem('reload-version')),
+        { timeout: 10000 },
+      )
+      .toBe('0.0.0');
   });
 });
 
