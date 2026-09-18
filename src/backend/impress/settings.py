@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 import os
+import stat
+import tempfile
 import tomllib
 from socket import gethostbyname, gethostname
 
@@ -1233,6 +1235,39 @@ class Base(Configuration):
     SILKY_MAX_REQUEST_BODY_SIZE = 0
     SILKY_MAX_RESPONSE_BODY_SIZE = 0
 
+    # -- Metrics (django-prometheus) -----------------------------------------
+    # Opt-in Prometheus instrumentation, OFF by default. When enabled,
+    # `django_prometheus` is added to INSTALLED_APPS and its two middlewares
+    # wrap MIDDLEWARE (see setup_prometheus_metrics below) to count and time
+    # every request, labelled by view name, method and status — never by path,
+    # user or document, so no identifier leaves the application through a label.
+    #
+    # The metrics are served on /metrics, outside of /api/ so that the ingress
+    # of the application does not publish them: a deployment that wants them
+    # reachable from outside routes that path on purpose, and filters who may
+    # call it. Whoever reaches it still has to present PROMETHEUS_API_KEY as a
+    # bearer token (core.middleware.PrometheusAuthMiddleware), and the
+    # application refuses to start with the metrics enabled and no key.
+    PROMETHEUS_METRICS_ENABLED = values.BooleanValue(
+        False, environ_name="PROMETHEUS_METRICS_ENABLED", environ_prefix=None
+    )
+    PROMETHEUS_API_KEY = SecretFileValue(
+        None, environ_name="PROMETHEUS_API_KEY", environ_prefix=None
+    )
+    # Also count and time the SQL queries, by swapping the database engine for
+    # django-prometheus' instrumented subclass of it.
+    PROMETHEUS_DB_METRICS_ENABLED = values.BooleanValue(
+        True, environ_name="PROMETHEUS_DB_METRICS_ENABLED", environ_prefix=None
+    )
+    # uvicorn runs several worker processes, and a scrape is answered by one of
+    # them: they all write their numbers to this directory so that whichever
+    # answers can add them up. It has to be the same for every worker, hence a
+    # fixed default rather than a random one. Defaults to a directory of the
+    # system's temporary directory, named after the user running the application.
+    PROMETHEUS_MULTIPROC_DIR = values.Value(
+        None, environ_name="PROMETHEUS_MULTIPROC_DIR", environ_prefix=None
+    )
+
     # pylint: disable=invalid-name
     @property
     def ENVIRONMENT(self):
@@ -1262,6 +1297,62 @@ class Base(Configuration):
                 "hide_untranslated": False,
             },
         }
+
+    @classmethod
+    def setup_prometheus_metrics(cls):
+        """Wire django-prometheus into the settings (PROMETHEUS_METRICS_ENABLED)."""
+        if not cls.PROMETHEUS_API_KEY:
+            # fail closed: without a key the endpoint would answer to anybody
+            raise ValueError(
+                "PROMETHEUS_METRICS_ENABLED requires PROMETHEUS_API_KEY to be set."
+            )
+
+        # prometheus_client decides whether the workers share their numbers
+        # when it is first imported, by looking for this variable in the
+        # environment of the process: a setting alone would come too late.
+        multiproc_dir = cls.PROMETHEUS_MULTIPROC_DIR or os.path.join(
+            tempfile.gettempdir(), f"impress-prometheus-{os.getuid()}"
+        )
+        try:
+            os.makedirs(multiproc_dir, mode=0o700, exist_ok=True)
+            stat_result = os.lstat(multiproc_dir)
+        except OSError as error:
+            raise ValueError(
+                f"PROMETHEUS_MULTIPROC_DIR ({multiproc_dir}) cannot be created: {error}"
+            ) from error
+        # A shared temporary directory is writable by every local user: refuse a
+        # directory somebody else prepared, or a link to somewhere else.
+        if not stat.S_ISDIR(stat_result.st_mode) or stat_result.st_uid != os.getuid():
+            raise ValueError(
+                f"PROMETHEUS_MULTIPROC_DIR ({multiproc_dir}) must be a directory "
+                "owned by the user running the application."
+            )
+        cls.PROMETHEUS_MULTIPROC_DIR = multiproc_dir
+        os.environ["PROMETHEUS_MULTIPROC_DIR"] = multiproc_dir
+
+        # Edited in place, like silk above: post_setup runs once the settings
+        # have been handed to Django, which only sees an assignment made
+        # here through the objects it already holds.
+        if "django_prometheus" not in cls.INSTALLED_APPS:
+            cls.INSTALLED_APPS.append("django_prometheus")
+        # The measuring middlewares go first and last, so that the time spent in
+        # every other middleware is part of what is measured. The authentication
+        # goes before them all: a refused scrape costs nothing and touches
+        # neither the session store nor the database.
+        auth = "core.middleware.PrometheusAuthMiddleware"
+        before = "django_prometheus.middleware.PrometheusBeforeMiddleware"
+        after = "django_prometheus.middleware.PrometheusAfterMiddleware"
+        if before not in cls.MIDDLEWARE:
+            cls.MIDDLEWARE.insert(0, before)
+            cls.MIDDLEWARE.insert(0, auth)
+            cls.MIDDLEWARE.append(after)
+
+        default_database = cls.DATABASES["default"]
+        if (
+            cls.PROMETHEUS_DB_METRICS_ENABLED
+            and default_database.get("ENGINE") == "django.db.backends.postgresql"
+        ):
+            default_database["ENGINE"] = "django_prometheus.db.backends.postgresql"
 
     @classmethod
     def post_setup(cls):
@@ -1353,6 +1444,9 @@ class Base(Configuration):
             # SecurityMiddleware) satisfies both.
             if "silk.middleware.SilkyMiddleware" not in cls.MIDDLEWARE:
                 cls.MIDDLEWARE.insert(1, "silk.middleware.SilkyMiddleware")
+
+        if cls.PROMETHEUS_METRICS_ENABLED:
+            cls.setup_prometheus_metrics()
 
 
 class Build(Base):

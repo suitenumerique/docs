@@ -571,6 +571,19 @@ wheels = [
 ]
 
 [[package]]
+name = "django-prometheus"
+version = "2.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "prometheus-client" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7b/c7/dc39c4c19f7b35e827a486d08376de1fad31c50decb26c56e32668314f13/django_prometheus-2.5.0.tar.gz", hash = "sha256:4837b3c3734d8350880839ab8235aafd250b668c348e159d4aecc3cbefeee53e", size = 26465, upload-time = "2026-05-26T19:04:00.77Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5d/5d/6ec3083ba69545696c962ae505a0e52e280e7592d4c278c2f3803cabb688/django_prometheus-2.5.0-py2.py3-none-any.whl", hash = "sha256:f15efb526cd53f9cf12da72dc55506322f5566b017a819ff27be1da302303134", size = 31801, upload-time = "2026-05-26T19:03:59.505Z" },
+]
+
+[[package]]
 name = "django-redis"
 version = "7.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -965,6 +978,7 @@ dependencies = [
     { name = "django-filter" },
     { name = "django-lasuite", extra = ["all"] },
     { name = "django-parler" },
+    { name = "django-prometheus" },
     { name = "django-redis" },
     { name = "django-silk" },
     { name = "django-storages", extra = ["s3"] },
@@ -987,11 +1001,12 @@ dependencies = [
     { name = "nested-multipart-parser" },
     { name = "openai" },
     { name = "posthog" },
+    { name = "prometheus-client" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pycrdt" },
     { name = "pydantic" },
     { name = "pydantic-ai-slim", extra = ["logfire", "mistral", "openai", "web"] },
-    { name = "pyjwt" , extra = ["crypto"] },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "python-magic" },
     { name = "redis" },
     { name = "requests" },
@@ -1038,6 +1053,7 @@ requires-dist = [
     { name = "django-filter", specifier = "==26.1" },
     { name = "django-lasuite", extras = ["all"], specifier = "==0.0.27" },
     { name = "django-parler", specifier = "==2.4" },
+    { name = "django-prometheus", specifier = "==2.5.0" },
     { name = "django-redis", specifier = "==7.0.0" },
     { name = "django-silk", specifier = "==5.5.2" },
     { name = "django-storages", extras = ["s3"], specifier = "==1.14.6" },
@@ -1056,7 +1072,7 @@ requires-dist = [
     { name = "gunicorn", specifier = "==26.0.0" },
     { name = "ipdb", marker = "extra == 'dev'", specifier = "==0.13.13" },
     { name = "ipython", marker = "extra == 'dev'", specifier = "==9.15.0" },
-     { name = "joserfc", specifier = "==1.6.5" },
+    { name = "joserfc", specifier = "==1.6.5" },
     { name = "jsonschema", specifier = "==4.26.0" },
     { name = "langfuse", specifier = "==3.11.2" },
     { name = "lxml", specifier = "==6.1.1" },
@@ -1065,6 +1081,7 @@ requires-dist = [
     { name = "nested-multipart-parser", specifier = "==1.6.0" },
     { name = "openai", specifier = "==2.48.0" },
     { name = "posthog", specifier = "==7.29.0" },
+    { name = "prometheus-client", specifier = "==0.26.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = "==3.3.4" },
     { name = "pycrdt", specifier = "==0.14.1" },
     { name = "pydantic", specifier = "==2.13.4" },
@@ -1721,6 +1738,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/06/1a/7737e7a0774da3c3824d654993cf57adc915cb04660212f03406334d8c0b/pprintpp-0.4.0.tar.gz", hash = "sha256:ea826108e2c7f49dc6d66c752973c3fc9749142a798d6b254e1e301cfdbc6403", size = 17995, upload-time = "2018-07-01T01:42:34.87Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4e/d1/e4ed95fdd3ef13b78630280d9e9e240aeb65cc7c544ec57106149c3942fb/pprintpp-0.4.0-py2.py3-none-any.whl", hash = "sha256:b6b4dcdd0c0c0d75e4d7b2f21a9e933e5b2ce62b26e1a54537f9651ae5a5c01d", size = 16952, upload-time = "2018-07-01T01:42:36.496Z" },
+]
+
+[[package]]
+name = "prometheus-client"
+version = "0.26.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/73/f1334c29c2af4cd9dba6c7817e61b611bd0215e2eb5565c6064a4de18802/prometheus_client-0.26.0.tar.gz", hash = "sha256:04a91bcf94e2cf74a44a1a874d651a2e853ed354b6e822f3b7487751465d5c2b", size = 92910, upload-time = "2026-07-24T19:36:41.893Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/eb/a3/b69efbf4143b5b9859b977770bbbabcc2796b702fa69dc40271e45cd5a56/prometheus_client-0.26.0-py3-none-any.whl", hash = "sha256:fa93d06737aa02bacd05794768508bb97d2fbee28cb3bca04eaae92f0ca953d6", size = 64494, upload-time = "2026-07-24T19:36:40.854Z" },
 ]
 
 [[package]]

@@ -1,0 +1,90 @@
+{{- /*
+Publishes the Prometheus metrics of the backend (PROMETHEUS_METRICS_ENABLED) and
+nothing else: one exact path, on a host of its own. The main ingress sends every
+path but /api and /external_api to the frontend, so without this one the metrics
+are not reachable from outside the cluster. Restrict who may call it with the
+annotations of your ingress controller; the bearer token is the second lock.
+*/ -}}
+{{- if .Values.ingressMetrics.enabled -}}
+{{- $fullName := include "impress.fullname" . -}}
+{{- if and .Values.ingressMetrics.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
+  {{- if not (hasKey .Values.ingressMetrics.annotations "kubernetes.io/ingress.class") }}
+  {{- $_ := set .Values.ingressMetrics.annotations "kubernetes.io/ingress.class" .Values.ingressMetrics.className}}
+  {{- end }}
+{{- end }}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-metrics
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "impress.labels" . | nindent 4 }}
+  {{- with .Values.ingressMetrics.annotations }}
+  annotations:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if and .Values.ingressMetrics.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+  ingressClassName: {{ .Values.ingressMetrics.className }}
+  {{- end }}
+  {{- if .Values.ingressMetrics.tls.enabled }}
+  tls:
+    {{- if .Values.ingressMetrics.host }}
+    - secretName: {{ .Values.ingressMetrics.tls.secretName | default (printf "%s-tls" $fullName) | quote }}
+      hosts:
+        - {{ .Values.ingressMetrics.host | quote }}
+    {{- end }}
+    {{- range .Values.ingressMetrics.tls.additional }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- if .Values.ingressMetrics.host }}
+    - host: {{ .Values.ingressMetrics.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.ingressMetrics.path | quote }}
+            {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
+            pathType: Exact
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ include "impress.backend.fullname" . }}
+                port:
+                  number: {{ .Values.backend.service.port }}
+              {{- else }}
+              serviceName: {{ include "impress.backend.fullname" . }}
+              servicePort: {{ .Values.backend.service.port }}
+            {{- end }}
+    {{- end }}
+    {{- range .Values.ingressMetrics.hosts }}
+    - host: {{ . | quote }}
+      http:
+        paths:
+          - path: {{ $.Values.ingressMetrics.path | quote }}
+            {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
+            pathType: Exact
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ include "impress.backend.fullname" $ }}
+                port:
+                  number: {{ $.Values.backend.service.port }}
+              {{- else }}
+              serviceName: {{ include "impress.backend.fullname" $ }}
+              servicePort: {{ $.Values.backend.service.port }}
+            {{- end }}
+    {{- end }}
+{{- end }}
