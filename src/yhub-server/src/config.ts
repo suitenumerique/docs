@@ -183,3 +183,28 @@ export const SENTRY_PROFILES_SAMPLE_RATE = rateEnv(
   'SENTRY_PROFILES_SAMPLE_RATE',
   0,
 );
+
+// Prometheus metrics, served by `metrics.ts` on a port of their own: the worker
+// binds no port at all, and the routes under /collaboration/ are the ones an
+// ingress publishes. Off by default.
+export const PROMETHEUS_METRICS_ENABLED =
+  process.env.PROMETHEUS_METRICS_ENABLED === 'true';
+// The bearer token a scraper has to present, the same contract as the backend's
+// /metrics. There is no running without it: an unset key would publish the
+// metrics to whoever reaches the port, so it is a startup error instead.
+export const PROMETHEUS_API_KEY = secret('PROMETHEUS_API_KEY', '');
+if (PROMETHEUS_METRICS_ENABLED && !PROMETHEUS_API_KEY) {
+  throw new Error(
+    'PROMETHEUS_METRICS_ENABLED requires PROMETHEUS_API_KEY to be set',
+  );
+}
+export const PROMETHEUS_METRICS_PORT = intEnv('PROMETHEUS_METRICS_PORT', 9464);
+// Configurable so that one ingress can publish the server, the worker and the
+// backend side by side on distinct exact paths, without rewriting anything.
+export const PROMETHEUS_METRICS_PATH =
+  process.env.PROMETHEUS_METRICS_PATH || '/metrics';
+if (!PROMETHEUS_METRICS_PATH.startsWith('/')) {
+  throw new Error(
+    `PROMETHEUS_METRICS_PATH must start with "/" (got "${PROMETHEUS_METRICS_PATH}")`,
+  );
+}

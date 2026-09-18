@@ -64,13 +64,15 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- $roleEnv := include "impress.yhub.roleEnv" (dict "root" . "role" "worker") }}
-          {{- if or $envVars .Values.jwtKeys.enabled $roleEnv }}
+          {{- $metricsEnv := include "impress.yhub.metrics.env" (dict "root" . "path" .Values.yhub.metrics.workerPath) }}
+          {{- if or $envVars .Values.jwtKeys.enabled $roleEnv $metricsEnv }}
           env:
             {{- $envVars | indent 12 }}
             {{- if .Values.jwtKeys.enabled }}
             {{- include "impress.jwtKeys.yhubEnv" . | nindent 12 }}
             {{- end }}
             {{- $roleEnv | indent 12 }}
+            {{- $metricsEnv | nindent 12 }}
           {{- end }}
           {{- if .Values.yhub.envFrom }}
           envFrom:
@@ -79,6 +81,13 @@ spec:
           {{- with .Values.yhub.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.yhub.metrics.enabled }}
+          # the only port a worker binds: it serves no route and no websocket
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.yhub.metrics.port }}
+              protocol: TCP
           {{- end }}
           {{- with ($worker.resources | default .Values.yhub.resources) }}
           resources:

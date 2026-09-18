@@ -31,6 +31,7 @@ import { logger } from '@y/hub';
 import * as Y from '@y/y';
 
 import { secret } from './env.js';
+import { seedDuration, seedRejectedTotal, seedsInflight } from './metrics.js';
 import type { DocRef, YHub } from './yhub.js';
 
 export const SOFT_MIGRATION = process.env.SOFT_MIGRATION === 'true';
@@ -425,9 +426,13 @@ const migrate = async (yhub: YHub, docRef: DocRef): Promise<Verdict> => {
         'too many concurrent soft migrations',
       );
       err.noCache = true;
+      seedRejectedTotal.inc();
       throw err;
     }
     activeSeeds++;
+    seedsInflight.inc();
+    const endSeed = seedDuration.startTimer();
+    let seedResult: 'seeded' | 'empty' | 'failed' = 'failed';
     try {
       const start = Date.now();
       const update = await fetchLegacyDoc(docRef.docid);
@@ -436,6 +441,7 @@ const migrate = async (yhub: YHub, docRef: DocRef): Promise<Verdict> => {
           { event: 'seed.empty', docid: docRef.docid },
           'no legacy s3 object; room starts empty',
         );
+        seedResult = 'empty';
         return 'empty';
       }
       // Decode before writing anything: a legacy object that is not a valid
@@ -482,9 +488,12 @@ const migrate = async (yhub: YHub, docRef: DocRef): Promise<Verdict> => {
         },
         'seeded legacy doc from s3',
       );
+      seedResult = 'seeded';
       return 'exists';
     } finally {
       activeSeeds--;
+      seedsInflight.dec();
+      endSeed({ result: seedResult });
     }
   } finally {
     if (acquired != null) {

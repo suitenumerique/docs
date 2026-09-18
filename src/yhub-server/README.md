@@ -391,6 +391,52 @@ made *versioned*, so what is exercised is what a deployment runs rather than a
 simpler case. Watch it with `mc ls --versions --recursive impress/yhub-storage`
 from an `mc` container on the stack's network.
 
+## Metrics (Prometheus)
+
+Off by default. With `PROMETHEUS_METRICS_ENABLED=true` every process — the
+server and the worker alike — serves its metrics on a port of its own:
+
+| Variable | Default | What it changes |
+| -------- | ------- | --------------- |
+| `PROMETHEUS_METRICS_ENABLED` | `false` | `true` to collect the runtime metrics and start the listener |
+| `PROMETHEUS_API_KEY` | — | Bearer token a scraper has to present (or `…_FILE`). **Required** when enabled: starting without it is an error |
+| `PROMETHEUS_METRICS_PORT` | `9464` | Port of the listener |
+| `PROMETHEUS_METRICS_PATH` | `/metrics` | Path it answers on, and the only one |
+
+The listener is not yhub's server. The worker role binds no port, so a route
+under `/collaboration/` would leave the persistence half without metrics; and
+what is under `/collaboration/` is what an ingress publishes. It answers `GET`
+on that one path to `Authorization: Bearer <PROMETHEUS_API_KEY>`, compared in
+constant time, and `401` to anything else — the contract of the backend's
+`/metrics` (`documentation/metrics.md`). The path is configurable so that one
+ingress can publish the backend, the server and the worker side by side on
+distinct exact paths, without rewriting anything.
+
+What is measured, every sample labelled with the `hostname` and the `role` of
+the process, and **never** with a document or a user:
+
+| Metric | Labels | What it tells |
+| ------ | ------ | ------------- |
+| `yhub_ws_connections`, `yhub_rooms` | | Websockets, and documents with at least one, on this replica |
+| `yhub_auth_duration_seconds` | `phase` (`authenticate`, `authorize`), `endpoint`, `result` (`ok`, `denied`, `unavailable`, `error`) | What admitting a caller costs — backend calls and legacy seed included. It runs on every websocket upgrade, recheck, REST call and fallback poll |
+| `yhub_backend_request_duration_seconds` | `route` (`users_me`, `document`, `accesses_me`, `content_updated`), `status` (http status, `timeout`, `error`) | The calls made to the Docs backend |
+| `yhub_backend_requests_inflight` | `route` | Backend calls not answered yet: what piles up when the backend slows down |
+| `yhub_worker_pending_tasks` | | Compactions waiting on the redis queue. One queue for the whole deployment: read it with `max`, never `sum` |
+| `yhub_worker_task_duration_seconds` | `result` (`ok`, `error`) | Duration of the compactions |
+| `yhub_worker_tasks_inflight` | | Compactions running, out of `YHUB_TASK_CONCURRENCY` |
+| `yhub_doc_updates_total` | | Compactions that found new content, i.e. `content-updated` notifications |
+| `yhub_seed_duration_seconds` | `result` (`seeded`, `empty`, `failed`) | Soft migrations, from the S3 read to the stream write |
+| `yhub_seeds_inflight`, `yhub_seed_rejected_total` | | Soft migrations running, and refused because the replica was at its maximum |
+| `nodejs_*`, `process_*` | | The node runtime. `nodejs_eventloop_lag_seconds` is the one to watch: one thread serves every socket of a replica |
+
+`yhub_ws_connections` and `yhub_rooms` are read off yhub's own bookkeeping of
+its subscriptions (`stream.subs`), which is not a published API: a yhub upgrade
+that renames it turns both into zeros rather than failing anything.
+
+Not measured, because yhub has no hook for it: messages and bytes per
+connection, and close codes. Read those off the ingress controller and the
+valkey exporter.
+
 ## Error reporting (Sentry)
 
 `src/sentry.ts` is preloaded by the start command

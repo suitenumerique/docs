@@ -20,6 +20,9 @@ import {
   ORG,
   PORT,
   POSTGRES,
+  PROMETHEUS_METRICS_ENABLED,
+  PROMETHEUS_METRICS_PATH,
+  PROMETHEUS_METRICS_PORT,
   REDIS,
   REDIS_PREFIX,
   ROLE,
@@ -37,6 +40,13 @@ import {
   YHUB_S3_SECRET_ACCESS_KEY,
   allowedOrigins,
 } from './config.js';
+import {
+  docUpdatesTotal,
+  startMetricsServer,
+  timedAuth,
+  workerTaskDuration,
+  workerTasksInflight,
+} from './metrics.js';
 // legacy Django/S3 document store — see migration.ts and README.md
 import {
   SOFT_MIGRATION,
@@ -294,12 +304,49 @@ const auth = createAuthPlugin<AppAuthInfo>({
   }),
 });
 
+// The same plugin, timed from the outside: what a connection costs is these two
+// callbacks — the backend calls they make, and the legacy seed — and wrapping
+// them here leaves the policy above exactly as it reads. `authorize` is generic
+// over the scope it is asked about, which a wrapper cannot carry: hence the cast
+// back to the type it was given.
+const timedAuthPlugin = createAuthPlugin<AppAuthInfo>({
+  authenticate: timedAuth(
+    'authenticate',
+    // `/collaboration/{name}/{version}/...` → index 2, as `authenticate` reads it
+    (req) => req.getUrl().split('/')[2],
+    (req) => auth.authenticate(req),
+  ),
+  authorize: timedAuth(
+    'authorize',
+    (_scope, _resourceId, user) => user?.endpoint,
+    (...args: Parameters<typeof auth.authorize>) => auth.authorize(...args),
+  ) as typeof auth.authorize,
+});
+
 // `docUpdate` is the worker event for "this compaction found new content": the
 // task returns before it when it has nothing to persist, so the awareness-only
 // traffic of someone merely opening a document never reaches it. Since yhub
 // 0.5.0 it is handed the room of the task alongside the merged document.
 const workerEvents = {
+  taskStart: () => {
+    workerTasksInflight.inc();
+  },
+  // yhub reports the duration in milliseconds
+  taskComplete: ({
+    duration,
+    error,
+  }: {
+    duration: number;
+    error: Error | null;
+  }) => {
+    workerTasksInflight.dec();
+    workerTaskDuration.observe(
+      { result: error == null ? 'ok' : 'error' },
+      duration / 1000,
+    );
+  },
   docUpdate: ({ docRef }: { docRef: DocRef }) => {
+    docUpdatesTotal.inc();
     // Django knows the documents of this org, on the main branch, by their uuid
     if (
       docRef.org !== ORG ||
@@ -423,7 +470,7 @@ const yhub: YHub = (await createYHub({
   server: RUNS_SERVER
     ? {
         port: PORT,
-        auth,
+        auth: timedAuthPlugin,
         api,
         apiPrefix: API_PREFIX,
         // What a browser may reach this server from, applied by yhub to the websocket upgrade
@@ -438,6 +485,10 @@ const yhub: YHub = (await createYHub({
     ? { taskConcurrency: TASK_CONCURRENCY, events: workerEvents }
     : null,
 })) as YHub;
+
+if (PROMETHEUS_METRICS_ENABLED) {
+  await startMetricsServer(yhub);
+}
 
 // What this process was configured to be, in one line: yhub's own startup log
 // reports neither the role nor the stream settings, and every one of them is an
@@ -455,6 +506,10 @@ logger.info(
     // postgres — a bucket with `s3Writes` false is one that is only read
     s3Bucket: YHUB_S3_BUCKET_NAME ?? null,
     s3Writes: S3_PERSISTENCE,
+    // where the metrics are served, null when they are not
+    metrics: PROMETHEUS_METRICS_ENABLED
+      ? `:${PROMETHEUS_METRICS_PORT}${PROMETHEUS_METRICS_PATH}`
+      : null,
     taskDebounceMs: yhub.stream.taskDebounce,
     minMessageLifetimeMs: yhub.stream.minMessageLifetime,
   },
