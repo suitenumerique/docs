@@ -186,6 +186,33 @@ ingressAdmin:
     secretName: null
     additional: []
 
+## @param ingressMetrics.enabled whether to enable the Ingress publishing the Prometheus metrics of the backend (requires PROMETHEUS_METRICS_ENABLED and PROMETHEUS_API_KEY in backend.envVars)
+## @param ingressMetrics.className IngressClass to use for the Ingress
+## @param ingressMetrics.host Host for the Ingress. Use a host of its own, and add it to DJANGO_ALLOWED_HOSTS
+## @param ingressMetrics.path Path to use for the Ingress, matched exactly
+ingressMetrics:
+  enabled: false
+  className: null
+  host: metrics.impress.example.com
+  path: /metrics
+  ## @param ingressMetrics.hosts Additional host to configure for the Ingress
+  hosts: []
+  ## @param ingressMetrics.tls.enabled Whether to enable TLS for the Ingress
+  ## @param ingressMetrics.tls.secretName Secret name for TLS config
+  ## @skip ingressMetrics.tls.additional
+  ## @extra ingressMetrics.tls.additional[].secretName Secret name for additional TLS config
+  ## @extra ingressMetrics.tls.additional[].hosts[] Hosts for additional TLS config
+  tls:
+    enabled: true
+    secretName: null
+    additional: []
+
+  ## @param ingressMetrics.annotations Annotations of the Ingress. Restrict the callers by address here
+  ## The bearer token travels in a header: keep TLS on, and filter the source
+  ## addresses, e.g. with ingress-nginx:
+  ##   nginx.ingress.kubernetes.io/whitelist-source-range: "203.0.113.10/32"
+  annotations: {}
+
 ## @param ingressMedia.enabled whether to enable the Ingress or not
 ## @param ingressMedia.className IngressClass to use for the Ingress
 ## @param ingressMedia.host Host for the Ingress
