@@ -652,6 +652,20 @@ test.describe('Presenter Mode', () => {
       timeout: 5000,
     });
   });
+
+  test('opens the presenter with the keyboard shortcut', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-shortcut', browserName, 1);
+    await writeInEditor({ page, text: 'Hello shortcut' });
+
+    await page.keyboard.press('Control+Alt+KeyP');
+
+    await expect(
+      page.getByRole('dialog', { name: 'Presenter mode' }),
+    ).toBeVisible();
+  });
 });
 
 test.describe('Presenter Mode mobile', () => {
