@@ -152,7 +152,7 @@ services:
       dockerfile: ./src/frontend/Dockerfile
       target: impress-dev
       args:
-        API_ORIGIN: "http://localhost:8071"
+        API_ORIGIN: "${API_ORIGIN:-http://localhost:8071}"
         PUBLISH_AS_MIT: "false"
         SW_DEACTIVATED: "true"
     image: impress:frontend-development
