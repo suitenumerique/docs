@@ -24,6 +24,17 @@ const intEnv = (name: string, dflt: number, min = 1): number => {
   return value;
 };
 
+// A sampling rate, refused rather than guessed when it is not a number between
+// 0 and 1: Sentry reads anything else as "drop everything" and says so nowhere.
+const rateEnv = (name: string, dflt: number): number => {
+  const raw = process.env[name];
+  const value = raw == null || raw === '' ? dflt : Number(raw);
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error(`${name} must be a number between 0 and 1 (got "${raw}")`);
+  }
+  return value;
+};
+
 export const PORT = Number(process.env.PORT || 3002);
 export const REDIS = process.env.REDIS;
 export const POSTGRES = process.env.POSTGRES;
@@ -155,3 +166,20 @@ export const BACKEND_TOKEN_MARGIN_MS = 10000;
 // signs to call us: no long-lived shared secret, only our private key here and
 // its public half published on the JWKS endpoint.
 export const YHUB_JWT_PRIVATE_KEY = secret('YHUB_JWT_PRIVATE_KEY', '');
+
+// Error reporting, set up by `sentry.ts` before anything else is loaded. No DSN,
+// no Sentry: the SDK is not even imported.
+export const SENTRY_DSN = secret('SENTRY_DSN', '');
+// Left to the SDK when unset: it reports "production", and reads the release
+// from what the platform exposes.
+export const SENTRY_ENVIRONMENT = process.env.SENTRY_ENVIRONMENT || undefined;
+export const SENTRY_RELEASE = process.env.SENTRY_RELEASE || undefined;
+// Both off by default, like the backend. The websocket server is not an http
+// server the SDK knows how to trace, so a trace here is the outgoing calls (the
+// backend, postgres, redis) rather than a request from end to end.
+export const SENTRY_TRACES_SAMPLE_RATE = rateEnv('SENTRY_TRACES_SAMPLE_RATE', 0);
+// Relative to the traces: the share of sampled traces that are also profiled.
+export const SENTRY_PROFILES_SAMPLE_RATE = rateEnv(
+  'SENTRY_PROFILES_SAMPLE_RATE',
+  0,
+);

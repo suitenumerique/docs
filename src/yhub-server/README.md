@@ -391,6 +391,43 @@ made *versioned*, so what is exercised is what a deployment runs rather than a
 simpler case. Watch it with `mc ls --versions --recursive impress/yhub-storage`
 from an `mc` container on the stack's network.
 
+## Error reporting (Sentry)
+
+`src/sentry.ts` is preloaded by the start command
+(`node --import ./dist/sentry.js dist/server.js`), the way y-provider does it:
+the SDK hooks the modules it instruments as they are loaded, so it has to be
+there before `server.ts` imports anything. A deployment that overrides the
+command of the container has to keep the `--import`.
+
+| Variable | Default | What it changes |
+| -------- | ------- | --------------- |
+| `SENTRY_DSN` | — | Where to report. Unset: nothing is reported and the SDK is not loaded (or `…_FILE`) |
+| `SENTRY_ENVIRONMENT` | `production` | Environment the events are reported under |
+| `SENTRY_RELEASE` | detected | Release the events are reported under |
+| `SENTRY_TRACES_SAMPLE_RATE` | `0` | Share of the traces that are sent, `0` to `1` |
+| `SENTRY_PROFILES_SAMPLE_RATE` | `0` | Share of the sampled traces that are profiled, `0` to `1` |
+
+A rate that is not a number between 0 and 1 is a startup error.
+
+What is reported:
+
+- uncaught exceptions and unhandled rejections. The process still ends on an
+  unhandled rejection, as it does without Sentry: the SDK's default would
+  report it and carry on;
+- every `error` and `fatal` line of the logger, with its fields as context.
+  yhub and this wrapper share one pino logger, and that is where a failed
+  upgrade, compaction or migration ends up — none of them is thrown to anything
+  that could report it. `warn` lines (a backend that did not answer, a lost
+  `content-updated` notification) are not sent.
+
+Every event carries the tags `application: yhub-server` and `role` (the
+`YHUB_ROLE` of the process), the server and the worker being one image.
+
+Traces are of limited use here: the websocket server is uWebSockets.js, which
+the SDK does not instrument, so there is no span for an upgrade or a message.
+What is traced is the outgoing side — the calls to the backend, postgres,
+redis — when something starts a trace around them.
+
 ## Tests
 
 `yarn test` runs the **vitest** suite under `__tests__/*.spec.ts`
