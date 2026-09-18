@@ -21,12 +21,12 @@ const Page: NextPageWithLayout = () => {
       </Head>
       <Box
         $align="center"
-        $gap="xs"
+        $gap="md"
         $padding={{ horizontal: 'base' }}
         className="--docs--error-404"
       >
-        <Error404Svg aria-hidden="true" />
-        <Box $align="center" $gap="3xs">
+        <Box $align="center" $gap="xs">
+          <Error404Svg aria-hidden="true" />
           <Text
             as="h1"
             $size="md"
