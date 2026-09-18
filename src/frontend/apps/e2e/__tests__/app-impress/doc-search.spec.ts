@@ -230,4 +230,49 @@ test.describe('Document search', () => {
 
     await cleanup();
   });
+
+  test('it opens search result in new tab with ctrl+click', async ({
+    page,
+    browserName,
+    context,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'My ctrl click search',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docTitle);
+    await page.goto('/');
+
+    // Open the search modal
+    await page.getByTestId('search-docs-button').click();
+    const inputSearch = page.getByPlaceholder('Type the name of a document');
+    await inputSearch.fill('My ctrl click search');
+
+    // Wait for search results
+    const listSearch = page.getByRole('listbox').getByRole('group');
+    await expect(
+      listSearch.getByRole('option').getByText(docTitle),
+    ).toBeVisible();
+
+    // Ctrl+Click should open in a new tab
+    const searchPageUrl = page.url();
+    const newPagePromise = context.waitForEvent('page');
+    await listSearch
+      .getByRole('option')
+      .getByText(docTitle)
+      .click({ modifiers: ['ControlOrMeta'] });
+
+    const newPage = await newPagePromise;
+    await newPage.waitForLoadState();
+
+    // Verify the new tab navigated to the document
+    expect(newPage.url()).toContain('/docs/');
+
+    // Verify the original page was not navigated away
+    await expect(page).toHaveURL(searchPageUrl);
+
+    await newPage.close();
+  });
 });

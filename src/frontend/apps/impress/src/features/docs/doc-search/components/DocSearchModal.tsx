@@ -176,6 +176,7 @@ const DocSearchModalGlobal = ({
                 filterResults={filterResults}
                 search={search}
                 onSelect={handleSelect}
+                onClose={modalProps.onClose}
                 onResults={setResults}
                 onLoadingChange={setLoading}
                 parentDocId={filter === 'current' ? parentDocId : undefined}

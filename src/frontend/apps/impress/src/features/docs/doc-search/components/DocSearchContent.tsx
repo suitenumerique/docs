@@ -16,6 +16,7 @@ type DocSearchContentProps = {
   search: string;
   filterResults?: (doc: DocSearch) => boolean;
   isSearchNotMandatory?: boolean;
+  onClose?: () => void;
   onResults?: (results: DocSearch[]) => void;
   onSelect: (doc: DocSearch) => void;
   onLoadingChange?: (loading: boolean) => void;
@@ -27,6 +28,7 @@ export const DocSearchContent = ({
   groupName,
   search,
   filterResults,
+  onClose,
   onResults,
   onSelect,
   onLoadingChange,
@@ -127,7 +129,8 @@ export const DocSearchContent = ({
       onSelect={onSelect}
       group={docsData}
       renderElement={
-        renderSearchElement ?? ((doc) => <DocSearchItem doc={doc} />)
+        renderSearchElement ??
+        ((doc) => <DocSearchItem doc={doc} onClose={onClose} />)
       }
     />
   );
