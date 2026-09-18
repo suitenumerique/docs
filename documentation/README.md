@@ -19,6 +19,7 @@ Use the section below to quickly find what you are looking for.
 
 - Configuration
   - [Environment variables](env.md)
+  - [Malware detection](malware_detection.md)
   - [Object storage](s3.md)
   - [Collaboration](collaboration.md)
   - [Format conversion](format_conversion.md)
