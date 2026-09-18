@@ -164,6 +164,31 @@ describe('convertSvgToPng', () => {
     expect(result).toEqual({ png: CANVAS_PNG_URL, width: 420, height: 220 });
   });
 
+  it.each(
+    ['0', '-1', 'Infinity', '1e309', 'NaN'].flatMap((dimension) => [
+      `<svg width="${dimension}" height="100"></svg>`,
+      `<svg width="200" height="${dimension}"></svg>`,
+      `<svg viewBox="0 0 ${dimension} 100"></svg>`,
+      `<svg viewBox="0 0 200 ${dimension}"></svg>`,
+    ]),
+  )('does not scale invalid dimensions in %s', async (svg) => {
+    const result = await convertSvgToPng(svg, 400);
+
+    expect(svgInstance().resize).not.toHaveBeenCalled();
+    expect(result.width).toBe(400);
+    expect(Number.isFinite(result.height)).toBe(true);
+    expect(result.height).toBeGreaterThan(0);
+  });
+
+  it('uses fallback dimensions when both SVG dimensions are invalid', async () => {
+    const result = await convertSvgToPng(
+      '<svg width="Infinity" height="-1"></svg>',
+    );
+
+    expect(svgInstance().resize).toHaveBeenCalledWith(536, undefined, true);
+    expect(result).toEqual({ png: CANVAS_PNG_URL, width: 536, height: 536 });
+  });
+
   it('resizes to the given width, preserving the SVG aspect ratio', async () => {
     // SVG is 300×150 (ratio 0.5), requested width=600 → height=300
     await convertSvgToPng('<svg width="300" height="150"></svg>', 600);

@@ -66,8 +66,18 @@ export async function convertSvgToPng(
     .split(/[\s,]+/)
     .map(Number);
 
-  const originalWidth = svgWidth ? parseFloat(svgWidth) : viewBox?.[2];
-  const originalHeight = svgHeight ? parseFloat(svgHeight) : viewBox?.[3];
+  const parsedWidth = svgWidth ? parseFloat(svgWidth) : viewBox?.[2];
+  const parsedHeight = svgHeight ? parseFloat(svgHeight) : viewBox?.[3];
+  const originalWidth =
+    parsedWidth !== undefined && Number.isFinite(parsedWidth) && parsedWidth > 0
+      ? parsedWidth
+      : undefined;
+  const originalHeight =
+    parsedHeight !== undefined &&
+    Number.isFinite(parsedHeight) &&
+    parsedHeight > 0
+      ? parsedHeight
+      : undefined;
 
   const svg = Canvg.fromString(ctx, svgText);
 
