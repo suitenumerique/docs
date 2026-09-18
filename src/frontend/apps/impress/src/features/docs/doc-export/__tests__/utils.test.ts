@@ -129,6 +129,41 @@ describe('convertSvgToPng', () => {
     expect(result).toEqual({ png: CANVAS_PNG_URL, width: 200, height: 100 });
   });
 
+  it.each([
+    '0,0,200,100',
+    '0  0  200  100',
+    ' 0 0 200 100 ',
+    '0, 0, 200, 100',
+    '0\t0\t200\t100',
+    '0\n0\n200\n100',
+  ])('preserves the aspect ratio for viewBox %j', async (viewBox) => {
+    const result = await convertSvgToPng(
+      `<svg viewBox="${viewBox}"></svg>`,
+      400,
+    );
+
+    expect(svgInstance().resize).toHaveBeenCalledWith(400, 200, true);
+    expect(result).toEqual({ png: CANVAS_PNG_URL, width: 400, height: 200 });
+  });
+
+  it('preserves fractional natural dimensions', async () => {
+    const result = await convertSvgToPng(
+      '<svg width="10.5" height="5.25"></svg>',
+    );
+
+    expect(result).toEqual({ png: CANVAS_PNG_URL, width: 10.5, height: 5.25 });
+  });
+
+  it('preserves the aspect ratio when resizing fractional dimensions', async () => {
+    const result = await convertSvgToPng(
+      '<svg width="10.5px" height="5.5px"></svg>',
+      420,
+    );
+
+    expect(svgInstance().resize).toHaveBeenCalledWith(420, 220, true);
+    expect(result).toEqual({ png: CANVAS_PNG_URL, width: 420, height: 220 });
+  });
+
   it('resizes to the given width, preserving the SVG aspect ratio', async () => {
     // SVG is 300×150 (ratio 0.5), requested width=600 → height=300
     await convertSvgToPng('<svg width="300" height="150"></svg>', 600);

@@ -60,10 +60,14 @@ export async function convertSvgToPng(
   let calculatedHeight: number | undefined;
   const svgWidth = svgElement.getAttribute?.('width');
   const svgHeight = svgElement.getAttribute?.('height');
-  const viewBox = svgElement.getAttribute('viewBox')?.split(' ').map(Number);
+  const viewBox = svgElement
+    .getAttribute('viewBox')
+    ?.trim()
+    .split(/[\s,]+/)
+    .map(Number);
 
-  const originalWidth = svgWidth ? parseInt(svgWidth) : viewBox?.[2];
-  const originalHeight = svgHeight ? parseInt(svgHeight) : viewBox?.[3];
+  const originalWidth = svgWidth ? parseFloat(svgWidth) : viewBox?.[2];
+  const originalHeight = svgHeight ? parseFloat(svgHeight) : viewBox?.[3];
 
   const svg = Canvg.fromString(ctx, svgText);
 
