@@ -202,6 +202,11 @@ const DocTitleInput = ({ doc, onTitleUpdate }: DocTitleProps) => {
       $align="center"
       $gap="4px"
       $minHeight="40px"
+      $css={css`
+        &:focus-within {
+          outline: none;
+        }
+      `}
     >
       {!isTopRoot && <DocTitleEmojiPicker doc={doc} />}
       {/**

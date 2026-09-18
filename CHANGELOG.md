@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) duplicate with subdocuments #2584
 - ✨(helm) allow disallowing search engine indexing per instance #2694
 - 🐛(frontend) reduce PostHog volume from web vitals and opt_in spam #2701
 - ✨(backend) expose the attachment max size in the config endpoint #2577

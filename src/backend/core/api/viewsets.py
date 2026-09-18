@@ -1349,9 +1349,15 @@ class DocumentViewSet(
             document=duplicated_document,
         )
 
-        return drf_response.Response(
-            {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
+        # Set the `is_favorite` attribute to False for the duplicated document, as it
+        # cannot be a favorite immediately after creation.
+        duplicated_document.is_favorite = False
+
+        serializer = serializers.DocumentSerializer(
+            duplicated_document, context=self.get_serializer_context()
         )
+
+        return drf_response.Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def _duplicate_document(
         self,
