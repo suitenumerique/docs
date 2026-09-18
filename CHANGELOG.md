@@ -17,6 +17,10 @@ and this project adheres to
 
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 
+### Changed
+
+- 💄(frontend) redesign 404 error standalone page #2696
+
 ## [v5.7.0] - 2026-09-15
 
 ### Added
