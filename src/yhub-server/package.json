@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "start": "node dist/server.js",
+    "start": "node --import ./dist/sentry.js dist/server.js",
     "dev": "nodemon --config nodemon.json",
     "init-db": "node node_modules/@y/hub/bin/init-db.js",
     "lint": "eslint",
@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1110.0",
+    "@sentry/node": "10.70.0",
+    "@sentry/profiling-node": "10.70.0",
     "@y/hub": "0.9.0",
     "@y/y": "14.0.0-rc.25",
     "jose": "6.2.8"
