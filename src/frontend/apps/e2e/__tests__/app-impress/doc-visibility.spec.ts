@@ -49,7 +49,7 @@ test.describe('Doc Visibility', () => {
     ).toBeHidden();
 
     await selectVisibility.click();
-    await page.getByRole('menuitemradio', { name: 'Connected' }).click();
+    await page.getByRole('menuitemradio', { name: 'Internal' }).click();
 
     await expect(page.getByTestId('doc-access-mode')).toBeVisible();
 
@@ -342,7 +342,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await page.getByRole('button', { name: 'Share' }).click();
     const selectVisibility = page.getByTestId('doc-visibility');
     await selectVisibility.click();
-    await page.getByRole('menuitemradio', { name: 'Connected' }).click();
+    await page.getByRole('menuitemradio', { name: 'Internal' }).click();
 
     await expect(
       page.getByText('The document visibility has been updated.'),
@@ -385,7 +385,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await page.getByRole('button', { name: 'Share' }).click();
     const selectVisibility = page.getByTestId('doc-visibility');
     await selectVisibility.click();
-    await page.getByRole('menuitemradio', { name: 'Connected' }).click();
+    await page.getByRole('menuitemradio', { name: 'Internal' }).click();
 
     await expect(
       page.getByText('The document visibility has been updated.'),
@@ -466,7 +466,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await page.getByRole('button', { name: 'Share' }).click();
     const selectVisibility = page.getByTestId('doc-visibility');
     await selectVisibility.click();
-    await page.getByRole('menuitemradio', { name: 'Connected' }).click();
+    await page.getByRole('menuitemradio', { name: 'Internal' }).click();
 
     await expect(
       page.getByText('The document visibility has been updated.'),

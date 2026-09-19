@@ -43,7 +43,7 @@ test.describe('Inherited share accesses', () => {
 
     // Update share link
     await page.getByRole('button', { name: 'Share' }).click();
-    await updateShareLink(page, 'Connected', 'Reading');
+    await updateShareLink(page, 'Internal', 'Reading');
     await page.getByRole('button', { name: 'OK' }).click();
 
     // Create sub page
@@ -53,7 +53,7 @@ test.describe('Inherited share accesses', () => {
     await page.getByRole('button', { name: 'Share' }).click();
     const docVisibilityCard = page.getByLabel('Doc visibility card');
 
-    await expect(docVisibilityCard.getByText('Connected')).toBeVisible();
+    await expect(docVisibilityCard.getByText('Internal')).toBeVisible();
     await expect(docVisibilityCard.getByText('Reading')).toBeVisible();
 
     await docVisibilityCard.getByText('Reading').click();
@@ -63,7 +63,7 @@ test.describe('Inherited share accesses', () => {
     await expect(docVisibilityCard.getByText('Editing')).toBeVisible();
 
     // Verify inherited link
-    await docVisibilityCard.getByText('Connected').click();
+    await docVisibilityCard.getByText('Internal').click();
     await expect(
       page.getByRole('menuitemradio', { name: 'Private' }),
     ).toBeDisabled();
@@ -71,7 +71,7 @@ test.describe('Inherited share accesses', () => {
     // Update child link
     await page.getByRole('menuitemradio', { name: 'Public' }).click();
 
-    await expect(docVisibilityCard.getByText('Connected')).toBeHidden();
+    await expect(docVisibilityCard.getByText('Internal')).toBeHidden();
     await expect(
       docVisibilityCard.getByText('Public', {
         exact: true,
@@ -87,7 +87,7 @@ test.describe('Inherited share accesses', () => {
     // Restore inherited link
     await page.getByRole('button', { name: 'Restore' }).click();
 
-    await expect(docVisibilityCard.getByText('Connected')).toBeVisible();
+    await expect(docVisibilityCard.getByText('Internal')).toBeVisible();
     await expect(docVisibilityCard.getByText('Reading')).toBeVisible();
     await expect(docVisibilityCard.getByText('Public')).toBeHidden();
     await expect(docVisibilityCard.getByText('Editing')).toBeHidden();

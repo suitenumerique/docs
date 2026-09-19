@@ -8,7 +8,7 @@ import {
 import { SignIn } from './utils-signin';
 
 export type Role = 'Administrator' | 'Owner' | 'Editor' | 'Reader';
-export type LinkReach = 'Private' | 'Connected' | 'Public';
+export type LinkReach = 'Private' | 'Internal' | 'Public';
 export type LinkRole = 'Reading' | 'Editing';
 
 export const addNewMember = async (
