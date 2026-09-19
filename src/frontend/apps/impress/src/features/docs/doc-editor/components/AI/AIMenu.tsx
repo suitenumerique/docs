@@ -105,6 +105,18 @@ export const AIMenu = (props: AIMenuProps) => {
   // menu tell the user it's a rate limit instead of a generic failure.
   const isRateLimited =
     aiError instanceof Error && /throttled/i.test(aiError.message);
+  // xl-ai's own client (filterNewOrUpdatedOperations.ts) throws a plain
+  // `Error("No operations seen")` when the model's applyDocumentOperations
+  // call carries no operations at all -- a legitimate "nothing to change"
+  // answer, not a real failure. That plain Error isn't a `ChunkExecutionError`,
+  // so xl-ai's own catch-all (chatHandlers.ts) can't attribute it to a chunk
+  // and rethrows it as this generic, differently-worded message instead --
+  // verified live against the actual `aiMenuState.error.message` (matching
+  // "No operations seen" itself never fires). It's a gap in that library we
+  // can't patch, so at least tell the user plainly instead of "An error
+  // occurred...".
+  const isNoOperationsError =
+    aiError instanceof Error && /no chunkexecutionerror/i.test(aiError.message);
 
   const { items: externalItems } = props;
   // note, technically there might be a bug with this useMemo when quickly changing the selection and opening the menu
@@ -215,13 +227,19 @@ export const AIMenu = (props: AIMenuProps) => {
     } else if (aiResponseStatus === 'ai-writing') {
       return t('Writing...');
     } else if (aiResponseStatus === 'error') {
-      return isRateLimited
-        ? t('Too many requests. Please wait a moment and try again.')
-        : t('An error occurred...');
+      if (isRateLimited) {
+        return t('Too many requests. Please wait a moment and try again.');
+      }
+      if (isNoOperationsError) {
+        return t(
+          "The AI didn't find anything to change. Try rephrasing your request.",
+        );
+      }
+      return t('An error occurred...');
     }
 
     return t('Ask anything...');
-  }, [aiResponseStatus, isRateLimited, t]);
+  }, [aiResponseStatus, isRateLimited, isNoOperationsError, t]);
 
   const ariaLiveMessage = useMemo(() => {
     if (aiResponseStatus === 'thinking') {
@@ -234,13 +252,19 @@ export const AIMenu = (props: AIMenuProps) => {
       return t('AI response ready for review');
     }
     if (aiResponseStatus === 'error') {
-      return isRateLimited
-        ? t('Too many requests. Please wait a moment and try again.')
-        : t('AI request failed');
+      if (isRateLimited) {
+        return t('Too many requests. Please wait a moment and try again.');
+      }
+      if (isNoOperationsError) {
+        return t(
+          "The AI didn't find anything to change. Try rephrasing your request.",
+        );
+      }
+      return t('AI request failed');
     }
 
     return '';
-  }, [aiResponseStatus, isRateLimited, t]);
+  }, [aiResponseStatus, isRateLimited, isNoOperationsError, t]);
 
   const ariaLiveMode = aiResponseStatus === 'error' ? 'assertive' : 'polite';
 
