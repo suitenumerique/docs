@@ -212,6 +212,16 @@ describe('convertSvgToPng', () => {
     },
   );
 
+  it('does not resize when a fractional requested width rounds height to zero', async () => {
+    const result = await convertSvgToPng(
+      '<svg width="1000" height="1"></svg>',
+      0.1,
+    );
+
+    expect(svgInstance().resize).not.toHaveBeenCalled();
+    expect(result).toEqual({ png: CANVAS_PNG_URL, width: 1000, height: 1 });
+  });
+
   it('resizes to the given width, preserving the SVG aspect ratio', async () => {
     // SVG is 300×150 (ratio 0.5), requested width=600 → height=300
     await convertSvgToPng('<svg width="300" height="150"></svg>', 600);

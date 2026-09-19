@@ -90,15 +90,21 @@ export async function convertSvgToPng(
   // Resize if width provided, preserving aspect ratio
   if (originalWidth && originalHeight && requestedWidth) {
     const aspectRatio = originalHeight / originalWidth;
-    calculatedHeight = Math.round(requestedWidth * aspectRatio);
-    svg.resize(requestedWidth, calculatedHeight, true);
+    const scaledHeight = Math.round(requestedWidth * aspectRatio);
+    if (Number.isFinite(scaledHeight) && scaledHeight > 0) {
+      calculatedHeight = scaledHeight;
+      svg.resize(requestedWidth, calculatedHeight, true);
+    }
   } else if (!requestedWidth && !originalWidth) {
     svg.resize(FALLBACK_WIDTH, undefined, true);
   }
 
   await svg.render();
 
-  const returnWidth = requestedWidth || originalWidth || FALLBACK_WIDTH;
+  const returnWidth =
+    calculatedHeight || !originalHeight
+      ? requestedWidth || originalWidth || FALLBACK_WIDTH
+      : originalWidth || requestedWidth || FALLBACK_WIDTH;
   const returnHeight = calculatedHeight || originalHeight || returnWidth;
 
   return {
