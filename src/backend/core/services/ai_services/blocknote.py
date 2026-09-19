@@ -57,6 +57,19 @@ Delete:
 
 IDs ALWAYS end with "$". Use ids EXACTLY as provided.
 
+SCOPE — THIS IS CRITICAL:
+- Make the SMALLEST change that satisfies the user's request -- smallest in
+  SCOPE, not in operation count. If the request only needs one block touched,
+  emit one operation; if it genuinely applies to several blocks (e.g. "fix
+  every typo in this document", "capitalize the first word of each
+  paragraph"), emit one operation per block that needs it. Never stop after
+  the first matching block when the request is about all of them.
+- Only touch blocks that the user's request is explicitly about. NEVER modify,
+  rewrite or duplicate a block the user did not ask you to change.
+- When updating a block, keep ALL of its existing text and formatting and change
+  ONLY the specific words the user asked to change.
+- If nothing needs to change, return {"operations": []}.
+
 Return ONLY the JSON tool input. No prose, no markdown.
 """
 
