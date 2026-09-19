@@ -163,6 +163,41 @@ class AIService:
     """Service class for AI-related operations."""
 
     @staticmethod
+    def sanitize_dangling_tool_calls(
+        messages: list[UIMessage],
+    ) -> list[UIMessage]:
+        """Drop tool-call parts that never resolved to a result.
+
+        xl-ai's client can crash while consuming a tool-call response before it
+        writes a matching result back into its local chat history (e.g. an
+        `applyDocumentOperations` call with an empty `operations` array makes
+        `filterNewOrUpdatedOperations.ts` throw `Error("No operations seen")`
+        mid-stream -- a real gap in that library, not something we control).
+        If the browser then resends that history, it carries an assistant
+        message whose tool call was never followed by a result -- OpenAI
+        rejects that outright ("An assistant message with 'tool_calls' must
+        be followed by tool messages"), turning one client-side hiccup into a
+        session that keeps 400-ing on every retry. Drop any such unresolved
+        tool part -- and the message entirely if nothing else is left -- so
+        the history sent to the model is always well-formed, regardless of
+        why the client failed to close out a tool call.
+        """
+        unresolved_states = {"input-streaming", "input-available"}
+        sanitized: list[UIMessage] = []
+        for message in messages:
+            kept_parts = [
+                part
+                for part in message.parts
+                if not (
+                    getattr(part, "tool_call_id", None) is not None
+                    and getattr(part, "state", None) in unresolved_states
+                )
+            ]
+            if kept_parts:
+                sanitized.append(message.model_copy(update={"parts": kept_parts}))
+        return sanitized
+
+    @staticmethod
     def inject_document_state_messages(
         messages: list[UIMessage],
     ) -> list[UIMessage]:
@@ -297,6 +332,9 @@ class AIService:
         accept = request.META.get("HTTP_ACCEPT", SSE_CONTENT_TYPE)
 
         run_input = VercelAIAdapter.build_run_input(request.raw_body)
+
+        # Guard against a poisoned history before doing anything else with it
+        run_input.messages = self.sanitize_dangling_tool_calls(run_input.messages)
 
         # Inject document state context into the conversation
         run_input.messages = self.inject_document_state_messages(run_input.messages)
