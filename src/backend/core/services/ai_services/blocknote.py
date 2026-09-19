@@ -61,6 +61,25 @@ Return ONLY the JSON tool input. No prose, no markdown.
 """
 
 
+def _force_document_operations_tool(ctx) -> Dict[str, Any]:
+    """Per-step `model_settings` resolver: force `applyDocumentOperations`.
+
+    Passed to `Agent(model_settings=...)` as a callable (pydantic-ai rejects a
+    static `tool_choice` list because it also hides the text-output path, but
+    trusts a per-step callable to adapt). We only force the tool on the first
+    model request; the run then completes via the deferred external tool call.
+    """
+    # `temperature=0` / no parallel calls: small models (gpt-4o-mini) otherwise
+    # hallucinate multi-block rewrites for a one-line edit.
+    if getattr(ctx, "run_step", 1) <= 1:
+        return {
+            "tool_choice": ["applyDocumentOperations"],
+            "temperature": 0,
+            "parallel_tool_calls": False,
+        }
+    return {"temperature": 0, "parallel_tool_calls": False}
+
+
 def convert_async_generator_to_sync(async_gen: AsyncIterator[str]) -> Iterator[str]:
     """Convert an async generator to a sync generator."""
     q: queue.Queue[str | object] = queue.Queue()
@@ -279,11 +298,23 @@ class AIService:
             self.tool_definitions_to_toolset(raw_tool_defs) if raw_tool_defs else None
         )
 
+        instructions = self.build_instructions(raw_tool_defs) if raw_tool_defs else None
+
+        # When editing the document, BlockNote's client only applies changes that
+        # arrive as a structured `applyDocumentOperations` tool call. Smaller
+        # models (e.g. gpt-4o-mini) intermittently inline the operations JSON as
+        # a plain assistant text message instead of calling the tool, which the
+        # client silently ignores (no suggestion shown). Force the tool call on
+        # the first model request to remove that failure mode; the strict prompt
+        # alone was not enough.
+        edits_document = bool(
+            raw_tool_defs and "applyDocumentOperations" in raw_tool_defs
+        )
+
         agent = Agent(
             configure_pydantic_model_provider(),
-            instructions=self.build_instructions(raw_tool_defs)
-            if raw_tool_defs
-            else None,
+            instructions=instructions,
+            model_settings=_force_document_operations_tool if edits_document else None,
             capabilities=capabilities,
         )
 
