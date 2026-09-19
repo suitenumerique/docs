@@ -170,12 +170,16 @@ export const AIMenu = (props: AIMenuProps) => {
 
   const onManualPromptSubmitDefault = useCallback(
     async (userPrompt: string) => {
-      await ai.invokeAI({
-        userPrompt,
-        useSelection: editor.getSelection() !== undefined,
-      });
+      // `useSelection: true` makes xl-ai cut the selected range into its own
+      // block and apply operations only within it. That only works if the model
+      // returns *just the replacement for the selected text* — but the server
+      // prompt (BLOCKNOTE_TOOL_STRICT_PROMPT) forces whole-block `update` ops,
+      // so a partial selection ends up with the whole new block spliced between
+      // the preserved prefix/suffix (duplicated, garbled content). Until the
+      // server prompt is made selection-aware, always operate on whole blocks.
+      await ai.invokeAI({ userPrompt, useSelection: false });
     },
-    [ai, editor],
+    [ai],
   );
 
   useEffect(() => {
