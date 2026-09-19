@@ -90,6 +90,21 @@ export const AIMenu = (props: AIMenuProps) => {
     selector: (state) =>
       state.aiMenuState !== 'closed' ? state.aiMenuState.status : 'closed',
   });
+  // Only meaningful when aiResponseStatus === 'error'; xl-ai types it `any`,
+  // narrowed below via `instanceof Error` instead of trusting that.
+  const aiError: unknown = useExtensionState(AIExtension, {
+    selector: (state) =>
+      state.aiMenuState !== 'closed' && state.aiMenuState.status === 'error'
+        ? (state.aiMenuState.error as unknown)
+        : undefined,
+  });
+  // documents/{id}/ai-proxy/ throttles requests (settings.AI_USER_RATE_THROTTLE_RATES
+  // / AI_DOCUMENT_RATE_THROTTLE_RATES) and returns DRF's default 429 body —
+  // `{"detail": "Request was throttled. Expected available in N seconds."}` — which
+  // the `ai` package turns into `new Error(<that body text>)`. Detecting it lets the
+  // menu tell the user it's a rate limit instead of a generic failure.
+  const isRateLimited =
+    aiError instanceof Error && /throttled/i.test(aiError.message);
 
   const { items: externalItems } = props;
   // note, technically there might be a bug with this useMemo when quickly changing the selection and opening the menu
@@ -200,11 +215,13 @@ export const AIMenu = (props: AIMenuProps) => {
     } else if (aiResponseStatus === 'ai-writing') {
       return t('Writing...');
     } else if (aiResponseStatus === 'error') {
-      return t('An error occurred...');
+      return isRateLimited
+        ? t('Too many requests. Please wait a moment and try again.')
+        : t('An error occurred...');
     }
 
     return t('Ask anything...');
-  }, [aiResponseStatus, t]);
+  }, [aiResponseStatus, isRateLimited, t]);
 
   const ariaLiveMessage = useMemo(() => {
     if (aiResponseStatus === 'thinking') {
@@ -217,11 +234,13 @@ export const AIMenu = (props: AIMenuProps) => {
       return t('AI response ready for review');
     }
     if (aiResponseStatus === 'error') {
-      return t('AI request failed');
+      return isRateLimited
+        ? t('Too many requests. Please wait a moment and try again.')
+        : t('AI request failed');
     }
 
     return '';
-  }, [aiResponseStatus, t]);
+  }, [aiResponseStatus, isRateLimited, t]);
 
   const ariaLiveMode = aiResponseStatus === 'error' ? 'assertive' : 'polite';
 
