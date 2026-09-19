@@ -82,19 +82,23 @@ export async function convertSvgToPng(
   const svg = Canvg.fromString(ctx, svgText);
 
   const FALLBACK_WIDTH = 536;
+  const requestedWidth =
+    width !== undefined && Number.isFinite(width) && width > 0
+      ? width
+      : undefined;
 
   // Resize if width provided, preserving aspect ratio
-  if (originalWidth && originalHeight && width) {
+  if (originalWidth && originalHeight && requestedWidth) {
     const aspectRatio = originalHeight / originalWidth;
-    calculatedHeight = Math.round(width * aspectRatio);
-    svg.resize(width, calculatedHeight, true);
-  } else if (!width && !originalWidth) {
+    calculatedHeight = Math.round(requestedWidth * aspectRatio);
+    svg.resize(requestedWidth, calculatedHeight, true);
+  } else if (!requestedWidth && !originalWidth) {
     svg.resize(FALLBACK_WIDTH, undefined, true);
   }
 
   await svg.render();
 
-  const returnWidth = width || originalWidth || FALLBACK_WIDTH;
+  const returnWidth = requestedWidth || originalWidth || FALLBACK_WIDTH;
   const returnHeight = calculatedHeight || originalHeight || returnWidth;
 
   return {

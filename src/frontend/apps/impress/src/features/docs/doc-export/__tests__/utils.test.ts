@@ -189,6 +189,29 @@ describe('convertSvgToPng', () => {
     expect(result).toEqual({ png: CANVAS_PNG_URL, width: 536, height: 536 });
   });
 
+  it.each([-1, 0, Infinity, -Infinity, NaN])(
+    'treats an invalid requested width %s as omitted',
+    async (width) => {
+      const result = await convertSvgToPng(
+        '<svg width="200" height="100"></svg>',
+        width,
+      );
+
+      expect(svgInstance().resize).not.toHaveBeenCalled();
+      expect(result).toEqual({ png: CANVAS_PNG_URL, width: 200, height: 100 });
+    },
+  );
+
+  it.each([-1, 0, Infinity, -Infinity, NaN])(
+    'uses fallback dimensions for requested width %s without SVG dimensions',
+    async (width) => {
+      const result = await convertSvgToPng('<svg></svg>', width);
+
+      expect(svgInstance().resize).toHaveBeenCalledWith(536, undefined, true);
+      expect(result).toEqual({ png: CANVAS_PNG_URL, width: 536, height: 536 });
+    },
+  );
+
   it('resizes to the given width, preserving the SVG aspect ratio', async () => {
     // SVG is 300×150 (ratio 0.5), requested width=600 → height=300
     await convertSvgToPng('<svg width="300" height="150"></svg>', 600);
