@@ -18,7 +18,12 @@ from pydantic_ai.capabilities import Instrumentation
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.models.mistral import MistralModel
 from pydantic_ai.models.openai import OpenAIChatModel
-from pydantic_ai.ui.vercel_ai.request_types import TextUIPart, UIMessage
+from pydantic_ai.ui.vercel_ai.request_types import (
+    TextUIPart,
+    ToolInputAvailablePart,
+    ToolOutputAvailablePart,
+    UIMessage,
+)
 
 from core.services.ai_services.blocknote import (
     BLOCKNOTE_TOOL_STRICT_PROMPT,
@@ -290,6 +295,95 @@ def test_convert_async_generator_to_sync_exception():
 
     with pytest.raises(ValueError, match="async error"):
         next(sync_iter)
+
+
+# -- AIService.sanitize_dangling_tool_calls --
+
+
+def test_sanitize_dangling_tool_calls_no_tool_parts():
+    """Messages without tool parts should pass through unchanged."""
+    messages = [
+        UIMessage(role="user", id="msg-1", parts=[TextUIPart(text="Hello")]),
+    ]
+
+    result = AIService.sanitize_dangling_tool_calls(messages)
+
+    assert len(result) == 1
+    assert result[0].id == "msg-1"
+
+
+def test_sanitize_dangling_tool_calls_resolved_tool_call_kept():
+    """A tool call that already has a result must be left untouched."""
+    messages = [
+        UIMessage(
+            role="assistant",
+            id="msg-1",
+            parts=[
+                ToolOutputAvailablePart(
+                    type="tool-applyDocumentOperations",
+                    tool_call_id="call-1",
+                    input={"operations": []},
+                    output={"result": "ok"},
+                )
+            ],
+        ),
+    ]
+
+    result = AIService.sanitize_dangling_tool_calls(messages)
+
+    assert len(result) == 1
+    assert len(result[0].parts) == 1
+
+
+def test_sanitize_dangling_tool_calls_drops_unresolved_part():
+    """An unresolved tool call part must be dropped, other parts kept."""
+    messages = [
+        UIMessage(
+            role="assistant",
+            id="msg-1",
+            parts=[
+                TextUIPart(text="Let me check that"),
+                ToolInputAvailablePart(
+                    type="tool-applyDocumentOperations",
+                    tool_call_id="call-1",
+                    input={"operations": []},
+                ),
+            ],
+        ),
+    ]
+
+    result = AIService.sanitize_dangling_tool_calls(messages)
+
+    assert len(result) == 1
+    assert len(result[0].parts) == 1
+    assert result[0].parts[0].type == "text"
+
+
+def test_sanitize_dangling_tool_calls_drops_message_left_empty():
+    """A message left with no parts after sanitizing must be dropped entirely."""
+    messages = [
+        UIMessage(
+            role="user",
+            id="msg-1",
+            parts=[TextUIPart(text="Hello")],
+        ),
+        UIMessage(
+            role="assistant",
+            id="msg-2",
+            parts=[
+                ToolInputAvailablePart(
+                    type="tool-applyDocumentOperations",
+                    tool_call_id="call-1",
+                    input={"operations": []},
+                ),
+            ],
+        ),
+    ]
+
+    result = AIService.sanitize_dangling_tool_calls(messages)
+
+    assert len(result) == 1
+    assert result[0].id == "msg-1"
 
 
 # -- AIService.inject_document_state_messages --
