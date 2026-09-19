@@ -60,27 +60,51 @@ export async function convertSvgToPng(
   let calculatedHeight: number | undefined;
   const svgWidth = svgElement.getAttribute?.('width');
   const svgHeight = svgElement.getAttribute?.('height');
-  const viewBox = svgElement.getAttribute('viewBox')?.split(' ').map(Number);
+  const viewBox = svgElement
+    .getAttribute('viewBox')
+    ?.trim()
+    .split(/[\s,]+/)
+    .map(Number);
 
-  const originalWidth = svgWidth ? parseInt(svgWidth) : viewBox?.[2];
-  const originalHeight = svgHeight ? parseInt(svgHeight) : viewBox?.[3];
+  const parsedWidth = svgWidth ? parseFloat(svgWidth) : viewBox?.[2];
+  const parsedHeight = svgHeight ? parseFloat(svgHeight) : viewBox?.[3];
+  const originalWidth =
+    parsedWidth !== undefined && Number.isFinite(parsedWidth) && parsedWidth > 0
+      ? parsedWidth
+      : undefined;
+  const originalHeight =
+    parsedHeight !== undefined &&
+    Number.isFinite(parsedHeight) &&
+    parsedHeight > 0
+      ? parsedHeight
+      : undefined;
 
   const svg = Canvg.fromString(ctx, svgText);
 
   const FALLBACK_WIDTH = 536;
+  const requestedWidth =
+    width !== undefined && Number.isFinite(width) && width > 0
+      ? width
+      : undefined;
 
   // Resize if width provided, preserving aspect ratio
-  if (originalWidth && originalHeight && width) {
+  if (originalWidth && originalHeight && requestedWidth) {
     const aspectRatio = originalHeight / originalWidth;
-    calculatedHeight = Math.round(width * aspectRatio);
-    svg.resize(width, calculatedHeight, true);
-  } else if (!width && !originalWidth) {
+    const scaledHeight = Math.round(requestedWidth * aspectRatio);
+    if (Number.isFinite(scaledHeight) && scaledHeight > 0) {
+      calculatedHeight = scaledHeight;
+      svg.resize(requestedWidth, calculatedHeight, true);
+    }
+  } else if (!requestedWidth && !originalWidth) {
     svg.resize(FALLBACK_WIDTH, undefined, true);
   }
 
   await svg.render();
 
-  const returnWidth = width || originalWidth || FALLBACK_WIDTH;
+  const returnWidth =
+    calculatedHeight || !originalHeight
+      ? requestedWidth || originalWidth || FALLBACK_WIDTH
+      : originalWidth || requestedWidth || FALLBACK_WIDTH;
   const returnHeight = calculatedHeight || originalHeight || returnWidth;
 
   return {
