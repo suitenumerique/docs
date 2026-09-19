@@ -53,7 +53,7 @@ test.describe('Doc Collaboration', () => {
     const wsClosePromise = webSocket.waitForEvent('close');
 
     await selectVisibility.click();
-    await page.getByRole('menuitemradio', { name: 'Connected' }).click();
+    await page.getByRole('menuitemradio', { name: 'Internal' }).click();
 
     // Assert that the doc reconnects to the ws
     const wsClose = await wsClosePromise;
