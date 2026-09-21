@@ -1269,6 +1269,13 @@ class Base(Configuration):
     PROMETHEUS_DB_METRICS_ENABLED = values.BooleanValue(
         True, environ_name="PROMETHEUS_DB_METRICS_ENABLED", environ_prefix=None
     )
+    # Report the length of the Celery queue on /metrics. It is asked to the
+    # broker at every scrape, by whichever replica answers it.
+    PROMETHEUS_CELERY_QUEUE_METRICS_ENABLED = values.BooleanValue(
+        True,
+        environ_name="PROMETHEUS_CELERY_QUEUE_METRICS_ENABLED",
+        environ_prefix=None,
+    )
     # uvicorn runs several worker processes, and a scrape is answered by one of
     # them: they all write their numbers to this directory so that whichever
     # answers can add them up. It has to be the same for every worker, hence a

@@ -7,6 +7,7 @@ from django.conf import settings
 
 import requests
 
+from core.instrumentation import outgoing_request
 from core.services import mime_types
 from core.services.jwt_services import Audiences, JWTService
 
@@ -64,16 +65,18 @@ class DocSpecConverter:
     def _request(self, url, data, content_type):
         """Make a request to the DocSpec API."""
 
-        response = requests.post(
-            url,
-            headers={
-                "Content-Type": content_type,
-                "Accept": mime_types.BLOCKNOTE,
-            },
-            data=data,
-            timeout=settings.CONVERSION_API_TIMEOUT,
-            verify=settings.CONVERSION_API_SECURE,
-        )
+        with outgoing_request("docspec", "convert") as observed:
+            response = requests.post(
+                url,
+                headers={
+                    "Content-Type": content_type,
+                    "Accept": mime_types.BLOCKNOTE,
+                },
+                data=data,
+                timeout=settings.CONVERSION_API_TIMEOUT,
+                verify=settings.CONVERSION_API_SECURE,
+            )
+            observed.status = response.status_code
         if not response.ok:
             logger.error(
                 "DocSpec API error: url=%s, status=%d, response=%s",
@@ -114,17 +117,19 @@ class YdocConverter:
 
     def _request(self, url, data, content_type, accept):
         """Make a request to the Y-Provider API."""
-        response = requests.post(
-            url,
-            data=data,
-            headers={
-                "Authorization": self.auth_header,
-                "Content-Type": content_type,
-                "Accept": accept,
-            },
-            timeout=settings.CONVERSION_API_TIMEOUT,
-            verify=settings.CONVERSION_API_SECURE,
-        )
+        with outgoing_request("y-provider", "convert") as observed:
+            response = requests.post(
+                url,
+                data=data,
+                headers={
+                    "Authorization": self.auth_header,
+                    "Content-Type": content_type,
+                    "Accept": accept,
+                },
+                timeout=settings.CONVERSION_API_TIMEOUT,
+                verify=settings.CONVERSION_API_SECURE,
+            )
+            observed.status = response.status_code
         if not response.ok:
             logger.error(
                 "Y-Provider API error: url=%s, status=%d, response=%s",

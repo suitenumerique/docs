@@ -13,7 +13,10 @@ class CoreConfig(AppConfig):
 
     def ready(self):
         """
-        Import signals when the app is ready.
+        Import signals when the app is ready, and wire the measurements driven
+        by Django's own signals (a no-op unless the metrics are enabled).
         """
         # pylint: disable=import-outside-toplevel, unused-import
-        from . import signals  # noqa: PLC0415
+        from . import instrumentation, signals  # noqa: PLC0415
+
+        instrumentation.connect_signals()
