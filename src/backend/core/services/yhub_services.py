@@ -35,6 +35,7 @@ from django.conf import settings
 
 import requests
 
+from core.instrumentation import outgoing_request
 from core.services.jwt_services import Audiences, JWKSClient, JWTService
 
 logger = logging.getLogger(__name__)
@@ -193,19 +194,23 @@ class YHubService:
         endpoints do not all answer with the same payload. An endpoint doing
         more than answering a document passes its own timeout.
         """
+        # the endpoint is what the call is measured under: `{base}/{prefix}/{endpoint}/…`
+        endpoint = url.removeprefix(f"{self.base_url}/{self.api_prefix}/").split("/")[0]
         try:
-            response = requests.request(
-                method,
-                url,
-                data=data,
-                headers={
-                    "Authorization": self.auth_header,
-                    # what makes yhub answer JSON rather than its lib0 encoding
-                    "Accept": "application/json",
-                    **(headers or {}),
-                },
-                timeout=timeout or self.timeout,
-            )
+            with outgoing_request("yhub", endpoint, method) as observed:
+                response = requests.request(
+                    method,
+                    url,
+                    data=data,
+                    headers={
+                        "Authorization": self.auth_header,
+                        # what makes yhub answer JSON rather than its lib0 encoding
+                        "Accept": "application/json",
+                        **(headers or {}),
+                    },
+                    timeout=timeout or self.timeout,
+                )
+                observed.status = response.status_code
         except requests.RequestException as err:
             logger.exception("yhub service error: url=%s", url)
             raise ServiceUnavailableError(

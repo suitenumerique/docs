@@ -2,10 +2,11 @@
 Test the Prometheus metrics endpoint and the instrumentation of the application.
 """
 
+import re
 import socket
 from importlib import reload
+from unittest import mock
 
-from django.test import override_settings
 from django.urls import clear_url_caches, resolve
 
 import pytest
@@ -149,9 +150,9 @@ def test_prometheus_metrics_other_routes_need_no_api_key():
     assert APIClient().get("/api/v1.0/config/").status_code == 200
 
 
-@override_settings(MIDDLEWARE=[BEFORE_MIDDLEWARE, AFTER_MIDDLEWARE])
-def test_prometheus_metrics_requests_are_labelled_by_view():
+def test_prometheus_metrics_requests_are_labelled_by_view(settings):
     """A request should be counted under the name of its view, never under its path."""
+    settings.MIDDLEWARE = [BEFORE_MIDDLEWARE, AFTER_MIDDLEWARE]
     path = "/api/v1.0/config/"
     labels = {"status": "200", "view": resolve(path).view_name, "method": "GET"}
     metric = "django_http_responses_total_by_status_view_method_total"
@@ -168,3 +169,26 @@ def test_prometheus_metrics_requests_are_labelled_by_view():
         for sample in family.samples
         for value in sample.labels.values()
     )
+
+
+@pytest.mark.usefixtures("metrics_enabled")
+def test_prometheus_metrics_celery_queue_length(settings):
+    """The length of the Celery queue is asked at scrape time, unless it is turned off."""
+    path = "core.metrics.CeleryQueueCollector.queue_length"
+
+    with mock.patch(path, return_value=7) as mock_queue_length:
+        response = APIClient().get("/metrics", HTTP_AUTHORIZATION=f"Bearer {API_KEY}")
+    assert response.status_code == 200
+    assert re.search(
+        # the text format sorts the labels
+        rf'docs_celery_queue_length{{hostname="{socket.gethostname()}",queue="celery"}} 7\.0',
+        response.content.decode(),
+    )
+    mock_queue_length.assert_called_once()
+
+    settings.PROMETHEUS_CELERY_QUEUE_METRICS_ENABLED = False
+    with mock.patch(path, return_value=7) as mock_queue_length:
+        response = APIClient().get("/metrics", HTTP_AUTHORIZATION=f"Bearer {API_KEY}")
+    assert response.status_code == 200
+    assert "docs_celery_queue_length" not in response.content.decode()
+    mock_queue_length.assert_not_called()

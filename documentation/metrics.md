@@ -49,6 +49,34 @@ scrape_configs:
   With `DB_PSYCOPG_POOL_ENABLED`, `django_db_new_connections_total` counts the
   connections taken from the pool, not the connections opened to Postgres.
 
+- Calls to the other services, in
+  `docs_outgoing_request_duration_seconds{service,operation,method,status}` and
+  `docs_outgoing_requests_inflight{service,operation,method}`. `service` is
+  `yhub`, `y-provider` or `docspec`; `operation` is the endpoint (`ydoc`,
+  `create-ydoc`, `reset-connections`, `convert`, ...), never the url; `status`
+  is the http status, `timeout` when the call was given up on, `error` when it
+  never got an answer. These calls are made inside requests (`duplicate`,
+  `formatted-content`, document creation from a file) and from the Celery
+  tasks: the in-flight gauge is what piles up when the collaboration server
+  slows down.
+- The psycopg pool, when `DB_PSYCOPG_POOL_ENABLED` is on:
+  `docs_db_pool_size`, `docs_db_pool_available` and
+  `docs_db_pool_requests_waiting` (what the pool of each worker looked like at
+  the end of its last request, added up), and the exact counters of the pool:
+  `docs_db_pool_requests_total`, `docs_db_pool_requests_queued_total`,
+  `docs_db_pool_requests_wait_seconds_total`,
+  `docs_db_pool_requests_errors_total`, `docs_db_pool_connections_total`,
+  `docs_db_pool_connections_errors_total`. A rising
+  `rate(docs_db_pool_requests_queued_total)` with
+  `rate(docs_db_pool_requests_wait_seconds_total)` is the application waiting
+  for connections, before Postgres shows anything.
+- `docs_celery_queue_length{queue}`: tasks waiting on the default Celery queue,
+  asked to the broker when the metrics are scraped (Redis/Valkey brokers only;
+  turn it off with `PROMETHEUS_CELERY_QUEUE_METRICS_ENABLED=False`). It is one
+  queue for the whole deployment, so every replica reports the same number:
+  read it with `max`, never `sum`. The Celery workers have no endpoint of
+  their own, which is why the backend reports it.
+
 No label ever carries a path, a user or a document identifier. A request that
 matches no route is counted under `<unnamed view>`.
 
@@ -81,6 +109,11 @@ them up. Nothing has to be configured: the directory defaults to
 application refuses a directory owned by another user or a symbolic link. Set
 `PROMETHEUS_MULTIPROC_DIR` to put it elsewhere — it must be writable, and local
 to the host or the pod: it is **not** shared between replicas.
+
+The gauges (in-flight calls, pool state) are kept per worker process and added
+up over the living ones. uvicorn has no hook telling when a worker is gone, so
+whichever worker answers a scrape first drops the gauge files of the processes
+that no longer exist.
 
 Known limit: uvicorn recycles its workers (`--limit-max-requests`) and has no
 hook to tell when one is gone. Every new worker writes two new 64 KiB files,
