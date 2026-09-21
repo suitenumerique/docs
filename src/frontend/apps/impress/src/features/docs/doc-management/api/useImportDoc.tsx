@@ -12,6 +12,7 @@ import {
   errorCauses,
   fetchAPI,
 } from '@/api';
+import { useConfig } from '@/core';
 import { useToast } from '@/hooks';
 
 import { Doc } from '../types';
@@ -75,6 +76,7 @@ export function useImportDoc(props?: UseImportDocOptions) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const { data: config } = useConfig();
 
   return useMutation<Doc, APIError, [File, string]>({
     mutationFn: importDoc,
@@ -123,6 +125,8 @@ export function useImportDoc(props?: UseImportDocOptions) {
       toast(
         t('The document "{{documentName}}" has been successfully imported', {
           documentName: importedDoc.title || '',
+          description:
+            'Toast message when the document has been successfully imported',
         }),
         VariantType.SUCCESS,
       );
@@ -130,12 +134,64 @@ export function useImportDoc(props?: UseImportDocOptions) {
       props?.onSuccess?.(...successProps);
     },
     onError: (...errorProps) => {
-      toast(
-        t(`The document "{{documentName}}" import has failed`, {
-          documentName: errorProps?.[1][0].name || '',
-        }),
-        VariantType.ERROR,
-      );
+      const [error, [file]] = errorProps;
+      const documentName = file?.name || '';
+
+      if (error.status === 415) {
+        const allowedExtensions =
+          config?.CONVERSION_FILE_EXTENSIONS_ALLOWED?.join(', ') || '';
+        toast(
+          allowedExtensions
+            ? t(
+                `The document "{{documentName}}" import has failed (only {{allowedExtensions}} files are allowed)`,
+                {
+                  documentName,
+                  allowedExtensions,
+                  description:
+                    'Toast message when the document import has failed due to unsupported media type',
+                },
+              )
+            : t(`The document "{{documentName}}" import has failed`, {
+                documentName,
+                description:
+                  'Toast message when the document import has failed due to unsupported media type',
+              }),
+          VariantType.ERROR,
+        );
+      } else if (error.status === 422) {
+        toast(
+          t(
+            `The import of the document « {{documentName}} » failed because something is wrong with the file.`,
+            {
+              documentName,
+              description:
+                'Toast message when the document import has failed due to unprocessable entity',
+            },
+          ),
+          VariantType.ERROR,
+        );
+      } else if (error.status === 500) {
+        toast(
+          t(
+            `The import of the document « {{documentName}} » failed due to a technical issue`,
+            {
+              documentName,
+              description:
+                'Toast message when the document import has failed due to a technical issue',
+            },
+          ),
+          VariantType.ERROR,
+        );
+      } else {
+        toast(
+          t(`The document "{{documentName}}" import has failed`, {
+            documentName,
+            description:
+              'Toast message when the document import has failed due to an unknown error',
+          }),
+          VariantType.ERROR,
+        );
+      }
 
       props?.onError?.(...errorProps);
     },

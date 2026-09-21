@@ -58,6 +58,12 @@ from core.services.converter_services import (
     ServiceUnavailableError as YProviderServiceUnavailableError,
 )
 from core.services.converter_services import (
+    UnprocessableContentError as YProviderUnprocessableContentError,
+)
+from core.services.converter_services import (
+    UnsupportedMediaTypeError as YProviderUnsupportedMediaTypeError,
+)
+from core.services.converter_services import (
     ValidationError as YProviderValidationError,
 )
 from core.services.jwt_services import (
@@ -730,9 +736,21 @@ class DocumentViewSet(
                 self.request.user,
                 {"content_type": uploaded_file.content_type},
             )
+        except YProviderUnsupportedMediaTypeError as err:
+            logger.error("could not convert file content with error: %s", err)
+            exc = drf.exceptions.APIException({"file": ["File type is not supported"]})
+            exc.status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+            raise exc from err
+        except YProviderUnprocessableContentError as err:
+            logger.error("could not convert file content with error: %s", err)
+            exc = drf.exceptions.APIException(
+                {"file": ["Could not process file content"]}
+            )
+            exc.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+            raise exc from err
         except ConversionError as err:
             logger.error("could not convert file content with error: %s", err)
-            raise drf.exceptions.ValidationError(
+            raise drf.exceptions.APIException(
                 {"file": ["Could not convert file content"]}
             ) from err
 

@@ -73,6 +73,7 @@ and this project adheres to
   `/external_api/{version}/jwks`
 - 🔧(collaboration) adapt docker stack for development purpose
 - 🔧(helm) run a valkey for the backend and one for yhub in dev and feature
+- ✨(docspec) handle DocSpec 4xx/5xx import errors distinctly #2552
 
 ### Fixed
 
