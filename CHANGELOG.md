@@ -55,7 +55,7 @@ and this project adheres to
 - 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
   `/external_api/{version}/jwks`
 - 🔧(collaboration) adapt docker stack for development purpose
-- 🔧(tilt) run two valkey sentinel instances through valkey-operator
+- 🔧(helm) run a valkey for the backend and one for yhub in dev and feature
 
 ### Fixed
 

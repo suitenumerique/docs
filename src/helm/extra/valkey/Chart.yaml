@@ -1,5 +1,0 @@
-apiVersion: v2
-name: valkey
-description: A Valkey primary with its replicas and Sentinels, managed by the valkey-operator, for local development
-type: application
-version: 0.1.0
