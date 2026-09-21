@@ -1235,6 +1235,16 @@ class Base(Configuration):
     SILKY_MAX_REQUEST_BODY_SIZE = 0
     SILKY_MAX_RESPONSE_BODY_SIZE = 0
 
+    # -- Load-test tooling ---------------------------------------------------
+    # The `loadtest` application mints sessions for existing users, which is
+    # what lets a load generator act as thousands of them without going through
+    # the OIDC login. It is not in INSTALLED_APPS: only the `LoadTest`
+    # configuration below installs it and turns this on. Deliberately not read
+    # from the environment — no variable can enable it on another configuration —
+    # and pinned to False again in `Production`, which every deployed
+    # configuration inherits from.
+    LOAD_TEST_TOOLS_ENABLED = False
+
     # -- Metrics (django-prometheus) -----------------------------------------
     # Opt-in Prometheus instrumentation, OFF by default. When enabled,
     # `django_prometheus` is added to INSTALLED_APPS and its two middlewares
@@ -1606,6 +1616,11 @@ class Production(Base):
     SESSION_COOKIE_SECURE = True
     SESSION_CACHE_ALIAS = "session"
 
+    # Never in production: sessions are only minted for a load test, with the
+    # `LoadTest` configuration. Everything that tooling adds is switched off
+    # here explicitly, whatever the defaults of `Base` become.
+    LOAD_TEST_TOOLS_ENABLED = False
+
     # Privacy
     SECURE_REFERRER_POLICY = "same-origin"
 
@@ -1706,6 +1721,22 @@ class PreProduction(Production):
 
     nota bene: it should inherit from the Production environment.
     """
+
+
+class LoadTest(Production):
+    """
+    Load-test environment settings: a production-like deployment, on anonymised
+    data, that a load generator can log into.
+
+    It is `Production` plus the `loadtest` application, whose commands mint
+    sessions for existing users (see `documentation/stress-test-plan.md`). Select
+    it with DJANGO_CONFIGURATION=LoadTest, and never on an instance holding real
+    users: anybody able to run a command there can act as any of them.
+    """
+
+    LOAD_TEST_TOOLS_ENABLED = True
+    # a list of its own: the one of `Base` is shared by every configuration
+    INSTALLED_APPS = [*Production.INSTALLED_APPS, "loadtest"]
 
 
 class Demo(Production):

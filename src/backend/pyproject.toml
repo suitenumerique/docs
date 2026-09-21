@@ -109,7 +109,8 @@ typeCheckingMode = "standard"
 module-name = [
     "core",
     "demo",
-    "impress"
+    "impress",
+    "loadtest"
 ]
 module-root = ""
 source-exclude = [
