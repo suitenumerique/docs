@@ -1,3 +1,12 @@
-# Both valkey-docs and valkey-yhub
-storage:
-  capacity: 1Gi
+valkeyConfig: |
+  # only keys with a TTL are evicted: celery queues and yhub streams have none
+  maxmemory-policy volatile-lru
+  appendonly yes
+  appendfsync everysec
+
+auth:
+  enabled: true
+  # an ACL line rather than aclUsers, whose passwords make the chart render a
+  # helm test pod that Tilt would run as a plain pod
+  aclConfig: |
+    user default on >pass ~* &* +@all
