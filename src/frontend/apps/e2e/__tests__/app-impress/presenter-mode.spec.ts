@@ -12,8 +12,10 @@ import {
 
 const openPresenter = async (page: Page) => {
   await page.getByLabel('Open the document options').first().click();
-  await page.getByRole('menuitem', { name: 'Present' }).click();
-
+  await page
+    .getByRole('menuitem')
+    .getByText(/Present/)
+    .click();
   const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
   await expect(overlay).toBeVisible();
   return overlay;

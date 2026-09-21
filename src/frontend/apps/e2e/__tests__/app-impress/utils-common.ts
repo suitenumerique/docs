@@ -445,7 +445,10 @@ export const clickInEditorShareButton = async (page: Page) => {
     .click();
 };
 
-export const clickInEditorMenu = async (page: Page, textButton: string) => {
+export const clickInEditorMenu = async (
+  page: Page,
+  textButton: string | RegExp,
+) => {
   await clickInDocOptionMenu(
     page,
     page.getByTestId('floating-bar'),
@@ -456,7 +459,7 @@ export const clickInEditorMenu = async (page: Page, textButton: string) => {
 export const clickInDocOptionMenu = async (
   page: Page,
   selector: Locator,
-  textButton: string,
+  textButton: string | RegExp,
 ) => {
   await selector
     .getByRole('button', { name: /Open the document options/ })

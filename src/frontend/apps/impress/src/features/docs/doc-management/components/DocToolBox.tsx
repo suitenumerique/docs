@@ -3,14 +3,17 @@ import {
   ButtonProps,
   DropdownMenu,
   DropdownMenuItem,
+  DropdownMenuOption,
+  MenuItemSeparator,
 } from '@gouvfr-lasuite/ui-components';
 import { Present } from '@gouvfr-lasuite/ui-components/icons';
 import { announce } from '@react-aria/live-announcer';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { ReactNode, memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Box } from '@/components/Box';
 import { Text } from '@/components/Text';
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { getWordCount } from '@/docs/doc-editor/utils';
@@ -37,6 +40,7 @@ import StarSlashIcon from '@/icons/star-slash.svg';
 import StarIcon from '@/icons/star.svg';
 import DeleteIcon from '@/icons/trash.svg';
 import { useFocusStore, useResponsiveStore } from '@/stores';
+import { isMacOS } from '@/utils/userAgent';
 
 import {
   KEY_DOC,
@@ -108,6 +112,18 @@ const ModalExport = dynamic(
   { ssr: false },
 );
 
+/**
+ * We widen the type of `DropdownMenuOption.label` to accept
+ * `ReactNode` instead of just `string`.
+ * @todo Widen the label type in the ui-kit package itself.
+ * This is a temporary workaround until the ui-kit package is updated.
+ */
+type MenuOptionWithNodeLabel = Omit<DropdownMenuOption, 'label'> & {
+  label: ReactNode;
+};
+type DropdownMenuItemWithNodeLabel =
+  MenuOptionWithNodeLabel | MenuItemSeparator;
+
 interface DocToolBoxProps {
   doc: Doc;
   isCurrentDoc: boolean;
@@ -176,7 +192,7 @@ const DocToolBoxComponent = ({
     listInvalidQueries: [KEY_LIST_DOC, KEY_DOC, KEY_LIST_FAVORITE_DOC],
   });
 
-  const options: DropdownMenuItem[] = [
+  const options: DropdownMenuItemWithNodeLabel[] = [
     {
       label: t('Copy link', {
         description: 'Dropdown menu item to copy the document link',
@@ -199,10 +215,38 @@ const DocToolBoxComponent = ({
       showSeparator: isCurrentDoc,
     },
     {
-      label: t('Present', {
-        description:
-          'Dropdown menu item to open the document in presentation mode',
-      }),
+      label: (
+        <Box $direction="row" $gap="xxs">
+          <Text>
+            {t('Present', {
+              description:
+                'Dropdown menu item to open the document in presentation mode',
+            })}
+          </Text>
+          <Text
+            $variation="tertiary"
+            $size="xs"
+            $css={`
+              opacity: 0;
+              transition: opacity 0.2s;
+              .c__dropdown-menu-item:hover &,
+              .c__dropdown-menu-item[data-focused] & {
+                opacity: 1;
+              }
+            `}
+          >
+            {isMacOS
+              ? t('Cmd+Alt+P', {
+                  description:
+                    'Dropdown menu item to open the document in presentation mode, macOS shortcut',
+                })
+              : t('Ctrl+Alt+P', {
+                  description:
+                    'Dropdown menu item to open the document in presentation mode, Windows/Linux shortcut',
+                })}
+          </Text>
+        </Box>
+      ),
       icon: <Present width={18} height={18} aria-hidden="true" />,
       callback: () => {
         openPresenter(0);
@@ -347,7 +391,7 @@ const DocToolBoxComponent = ({
   return (
     <>
       <DropdownMenu
-        options={optionsDefault ?? options}
+        options={(optionsDefault ?? options) as DropdownMenuItem[]}
         isOpen={openDropdown}
         shouldCloseOnInteractOutside={() => true}
         onOpenChange={(isOpen) => {
