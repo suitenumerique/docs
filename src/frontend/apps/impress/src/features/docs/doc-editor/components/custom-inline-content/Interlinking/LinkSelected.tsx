@@ -1,47 +1,39 @@
+import { Loader } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
 import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
-import { getEmojiAndTitle, useDoc, useDocStore } from '@/docs/doc-management/';
+import {
+  KEY_DOC,
+  getEmojiAndTitle,
+  useDoc,
+  useDocStore,
+  useTrans,
+} from '@/docs/doc-management/';
 
 interface LinkSelectedProps {
   docId: string;
-  title: string;
+  blockId?: string;
   isEditable: boolean;
-  onUpdateTitle: (title: string) => void;
 }
-export const LinkSelected = ({
-  docId,
-  title,
-  isEditable,
-  onUpdateTitle,
-}: LinkSelectedProps) => {
-  const { data: doc } = useDoc({ id: docId });
-
-  /**
-   * Update the content title if the referenced doc title changes
-   */
-  useEffect(() => {
-    if (isEditable && doc?.title && doc.title !== title) {
-      onUpdateTitle(doc.title);
-    }
-
-    /**
-     * ⚠️ When doing collaborative editing, doc?.title might be out of sync
-     * causing an infinite loop of updates.
-     * To prevent this, we only run this effect when doc?.title changes,
-     * not when inlineContent.props.title changes.
-     */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doc?.title, docId, isEditable]);
-
-  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(title);
+export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
+  const { data: doc, isLoading } = useDoc(
+    { id: docId },
+    {
+      queryKey: [KEY_DOC, { id: docId }],
+      refetchOnWindowFocus: (query) => query.state.error?.status !== 403,
+    },
+  );
+  const { untitledDocument } = useTrans();
+  const href = `/docs/${docId}/${blockId ? `#${blockId}` : ''}`;
+  const visualHref = `/${docId}/`;
+  const label = doc ? doc.title || untitledDocument : visualHref;
+  const isHrefFallback = !isLoading && !doc;
+  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(label);
   const { currentDoc } = useDocStore();
   const isDeletedDoc = !!currentDoc?.deleted_at;
   const router = useRouter();
-  const href = `/docs/${docId}/`;
 
   const handleClick = (e: React.MouseEvent<HTMLSpanElement>) => {
     e.preventDefault();
@@ -127,7 +119,7 @@ export const LinkSelected = ({
       <Text
         $weight="500"
         spellCheck="false"
-        $size="16px"
+        $size={isHrefFallback ? 'sm' : 'md'}
         $display="inline"
         $position="relative"
         $css={css`
@@ -139,7 +131,23 @@ export const LinkSelected = ({
           text-underline-offset: 0.2em;
         `}
       >
-        {titleWithoutEmoji}
+        {isLoading ? (
+          <Box
+            as="span"
+            $display="inline-flex"
+            $css={css`
+              vertical-align: middle;
+              & .c__loader--small {
+                width: 14px;
+                height: 14px;
+              }
+            `}
+          >
+            <Loader size="small" />
+          </Box>
+        ) : (
+          titleWithoutEmoji
+        )}
       </Text>
     </Box>
   );
