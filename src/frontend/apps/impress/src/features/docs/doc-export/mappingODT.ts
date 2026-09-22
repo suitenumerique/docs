@@ -10,14 +10,16 @@ import {
   blockMappingImageODT,
   blockMappingUploadLoaderODT,
 } from './blocks-mapping';
-import { inlineContentMappingInterlinkingLinkODT } from './inline-content-mapping';
+import { createInlineContentMappingInterlinkingLinkODT } from './inline-content-mapping';
 import { DocsExporterODT } from './types';
 
 // Align default inline mappings to our editor inline schema without using `any`
 const baseInlineMappings =
   odtDefaultSchemaMappings.inlineContentMapping as unknown as DocsExporterODT['mappings']['inlineContentMapping'];
 
-export const odtDocsSchemaMappings: DocsExporterODT['mappings'] = {
+export const getOdtDocsSchemaMappings = (
+  interlinkTitles: Map<string, string>,
+): DocsExporterODT['mappings'] => ({
   ...odtDefaultSchemaMappings,
   blockMapping: {
     ...odtDefaultSchemaMappings.blockMapping,
@@ -36,8 +38,9 @@ export const odtDocsSchemaMappings: DocsExporterODT['mappings'] = {
 
   inlineContentMapping: {
     ...baseInlineMappings,
-    interlinkingLinkInline: inlineContentMappingInterlinkingLinkODT,
+    interlinkingLinkInline:
+      createInlineContentMappingInterlinkingLinkODT(interlinkTitles),
     // Renders inline math as a native (editable) ODF formula object.
     math: inlineMathMapping,
   },
-};
+});

@@ -1,6 +1,6 @@
 import { Paragraph, TextRun } from 'docx';
 
-import { DocsExporterDocx } from '../types';
+import { type DocsExporterDocx } from '../types';
 
 export const blockMappingUploadLoaderDocx: DocsExporterDocx['mappings']['blockMapping']['uploadLoader'] =
   (block) => {

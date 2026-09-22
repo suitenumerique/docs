@@ -11,10 +11,12 @@ import {
   blockMappingQuoteDocx,
   blockMappingUploadLoaderDocx,
 } from './blocks-mapping';
-import { inlineContentMappingInterlinkingLinkDocx } from './inline-content-mapping';
+import { createInlineContentMappingInterlinkingLinkDocx } from './inline-content-mapping';
 import { DocsExporterDocx } from './types';
 
-export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
+export const getDocxDocsSchemaMappings = (
+  interlinkTitles: Map<string, string>,
+): DocsExporterDocx['mappings'] => ({
   ...docxDefaultSchemaMappings,
   blockMapping: {
     ...docxDefaultSchemaMappings.blockMapping,
@@ -56,7 +58,8 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
   },
   inlineContentMapping: {
     ...docxDefaultSchemaMappings.inlineContentMapping,
-    interlinkingLinkInline: inlineContentMappingInterlinkingLinkDocx,
+    interlinkingLinkInline:
+      createInlineContentMappingInterlinkingLinkDocx(interlinkTitles),
     // Renders inline math as a native (editable) Word equation.
     math: inlineMathMapping,
   },
@@ -72,4 +75,4 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
           }
         : {},
   },
-};
+});
