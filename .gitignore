@@ -15,6 +15,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!src/loadtest/k6/lib/
 lib64/
 parts/
 sdist/
