@@ -1,20 +1,30 @@
-import { Button } from '@gouvfr-lasuite/ui-components';
 import Head from 'next/head';
-import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { ReactElement, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import img401 from '@/assets/icons/icon-401.png';
+import Error401Svg from '@/assets/icons/error-401.svg';
 import { Box, Text } from '@/components';
-import { gotoLogin, useAuth } from '@/features/auth';
-import { PageLayout } from '@/layouts';
+import { ButtonLogin, useAuth } from '@/features/auth';
+import { StandalonePageLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
+
+const HeaderAuthActions = () => {
+  const { t } = useTranslation();
+
+  return (
+    <Box $direction="row" $align="center" $gap="sm">
+      <ButtonLogin variant="tertiary">{t('Try it now')}</ButtonLogin>
+      <ButtonLogin />
+    </Box>
+  );
+};
 
 const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
   const { authenticated } = useAuth();
   const { replace } = useRouter();
+  const pageTitle = `${t('401 Unauthorized')} - ${t('Docs')}`;
 
   useEffect(() => {
     if (authenticated) {
@@ -26,49 +36,52 @@ const Page: NextPageWithLayout = () => {
     <>
       <Head>
         <meta name="robots" content="noindex" />
-        <title>{`${t('401 Unauthorized')} - ${t('Docs')}`}</title>
-        <meta
-          property="og:title"
-          content={`${t('401 Unauthorized')} - ${t('Docs')}`}
-          key="title"
-        />
+        <title>{pageTitle}</title>
+        <meta property="og:title" content={pageTitle} key="title" />
       </Head>
       <Box
         $align="center"
-        $margin="auto"
-        $gap="1rem"
-        $padding={{ bottom: '2rem' }}
+        $gap="base"
+        $padding={{ horizontal: 'base', bottom: 'lg' }}
+        className="--docs--error-401"
       >
-        <Text as="h1" $textAlign="center" className="sr-only">
-          {t('401 Unauthorized')} - {t('Docs')}
-        </Text>
-        <Image
-          src={img401}
-          alt=""
-          width={300}
-          height={300}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-          }}
-        />
-
-        <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
-            {t('Log in to access the document.')}
+        <Box $align="center" $gap="xxxs">
+          <Error401Svg aria-hidden="true" />
+          <Text
+            as="h1"
+            $size="md"
+            $weight="bold"
+            $textAlign="center"
+            $margin="0"
+            $theme="neutral"
+            $variation="primary"
+          >
+            {t('Please sign in')}
           </Text>
-
-          <Button onClick={() => gotoLogin(false)} aria-label={t('Login')}>
-            {t('Login')}
-          </Button>
+          <Text
+            as="p"
+            $textAlign="center"
+            $maxWidth="228px"
+            $theme="neutral"
+            $variation="secondary"
+            $margin="0"
+            $size="xs"
+          >
+            {t('You need to sign in before accessing the document')}
+          </Text>
         </Box>
+        <ButtonLogin />
       </Box>
     </>
   );
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <PageLayout withFooter={false}>{page}</PageLayout>;
+  return (
+    <StandalonePageLayout headerActions={<HeaderAuthActions />}>
+      {page}
+    </StandalonePageLayout>
+  );
 };
 
 export default Page;
