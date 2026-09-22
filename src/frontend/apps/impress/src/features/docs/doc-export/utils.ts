@@ -7,8 +7,97 @@ import { Canvg } from 'canvg';
 import { IParagraphOptions, ShadingType } from 'docx';
 import React from 'react';
 
+import { getDoc } from '@/docs/doc-management/api/useDoc';
+
 const WINDOWS_RESERVED_FILENAME =
   /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+/**
+ * Recursively collects the distinct doc ids referenced by
+ * `interlinkingLinkInline` inline content nodes across a block tree,
+ * including nested blocks (lists, callouts) and table cells.
+ */
+export function collectInterlinkingDocIds(blocks: unknown[]): string[] {
+  const docIds = new Set<string>();
+
+  const collectFromInlineContent = (content: unknown) => {
+    if (!Array.isArray(content)) {
+      return;
+    }
+    content.forEach((item) => {
+      if (!isRecord(item) || item.type !== 'interlinkingLinkInline') {
+        return;
+      }
+      const props = item.props;
+      if (isRecord(props) && typeof props.docId === 'string' && props.docId) {
+        docIds.add(props.docId);
+      }
+    });
+  };
+
+  const walkBlocks = (items: unknown[]) => {
+    items.forEach((block) => {
+      if (!isRecord(block)) {
+        return;
+      }
+
+      const content = block.content;
+      if (Array.isArray(content)) {
+        collectFromInlineContent(content);
+      } else if (isRecord(content) && Array.isArray(content.rows)) {
+        // Table content: { type: "tableContent", rows: [{ cells: [...] }] }
+        content.rows.forEach((row) => {
+          if (!isRecord(row) || !Array.isArray(row.cells)) {
+            return;
+          }
+          row.cells.forEach((cell) => {
+            collectFromInlineContent(isRecord(cell) ? cell.content : cell);
+          });
+        });
+      }
+
+      if (Array.isArray(block.children)) {
+        walkBlocks(block.children);
+      }
+    });
+  };
+
+  walkBlocks(blocks);
+
+  return Array.from(docIds);
+}
+
+/**
+ * Resolves the titles of every doc referenced by an `interlinkingLinkInline`
+ * node in a block tree. Export mappings call inline content mappings
+ * synchronously, so this must run once up front rather than inside the
+ * mapping functions themselves; a doc with no title, or that fails to
+ * resolve (deleted, no access, ...), falls back to its relative URL, same
+ * as the live editor's `LinkSelected` display.
+ */
+export async function resolveInterlinkTitles(
+  blocks: unknown[],
+): Promise<Map<string, string>> {
+  const docIds = collectInterlinkingDocIds(blocks);
+  const titleMap = new Map<string, string>();
+
+  await Promise.all(
+    docIds.map(async (docId) => {
+      const href = `/docs/${docId}/`;
+      try {
+        const linkedDoc = await getDoc({ id: docId });
+        titleMap.set(docId, linkedDoc.title || href);
+      } catch {
+        titleMap.set(docId, href);
+      }
+    }),
+  );
+
+  return titleMap;
+}
 
 /**
  * Converts a document title into a safe filename for exported files.
