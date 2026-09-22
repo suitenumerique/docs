@@ -14,7 +14,11 @@ const FooterActionsGlobalStyle = createGlobalStyle`
   }
 `;
 
-export const FooterActions = () => {
+type FooterActionsProps = {
+  withLogin?: boolean;
+};
+
+export const FooterActions = ({ withLogin }: FooterActionsProps) => {
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -42,7 +46,7 @@ export const FooterActions = () => {
             withMobileView={false}
           />
           <Waffle />
-          <ButtonLogin />
+          {withLogin && <ButtonLogin />}
         </Box>
         <HelpMenu />
       </Box>

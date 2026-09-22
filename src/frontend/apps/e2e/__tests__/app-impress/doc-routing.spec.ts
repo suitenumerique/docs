@@ -132,7 +132,9 @@ test.describe('Doc Routing', () => {
 
     await page.reload();
 
-    await expect(page.getByText('Log in to access the document.')).toBeVisible({
+    await expect(
+      page.getByText('You need to sign in before accessing the document'),
+    ).toBeVisible({
       timeout: 10000,
     });
 
@@ -196,7 +198,7 @@ test.describe('Doc Routing: Not logged', () => {
     await expect(
       page2
         .getByRole('main', { name: 'Main content' })
-        .getByRole('button', { name: 'Login' }),
+        .getByRole('link', { name: 'Sign in' }),
     ).toBeVisible({
       timeout: 10000,
     });
@@ -206,7 +208,7 @@ test.describe('Doc Routing: Not logged', () => {
     await expect(
       page
         .getByRole('main', { name: 'Main content' })
-        .getByRole('button', { name: 'Login' }),
+        .getByRole('link', { name: 'Sign in' }),
     ).toBeVisible({
       timeout: 10000,
     });
@@ -214,7 +216,7 @@ test.describe('Doc Routing: Not logged', () => {
     // Reconnected
     await page
       .getByRole('main', { name: 'Main content' })
-      .getByRole('button', { name: 'Login' })
+      .getByRole('link', { name: 'Sign in' })
       .click();
     await SignIn(page, browserName, false);
 
