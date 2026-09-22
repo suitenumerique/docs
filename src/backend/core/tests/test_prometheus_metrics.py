@@ -14,6 +14,7 @@ from prometheus_client import REGISTRY, Counter, values
 from rest_framework.test import APIClient
 
 from impress import urls
+from impress.settings import Production
 
 pytestmark = pytest.mark.django_db
 
@@ -122,6 +123,38 @@ def test_prometheus_metrics_served_with_the_api_key():
         in response.content.decode()
     )
     assert not response.cookies
+
+
+@pytest.mark.usefixtures("metrics_enabled")
+def test_prometheus_metrics_redirected_to_https_by_default(settings):
+    """
+    Where the application is reached directly, a scrape over plain http should be sent
+    to https like everything else: the bearer token must not travel in clear.
+    """
+    settings.SECURE_SSL_REDIRECT = True
+    settings.SECURE_REDIRECT_EXEMPT = Production.SECURE_REDIRECT_EXEMPT
+
+    response = APIClient().get("/metrics", HTTP_AUTHORIZATION=f"Bearer {API_KEY}")
+
+    assert response.status_code == 301
+    assert response["Location"] == "https://testserver/metrics"
+
+
+@pytest.mark.usefixtures("metrics_enabled")
+def test_prometheus_metrics_exempt_from_the_ssl_redirect(settings):
+    """
+    With PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT (what setup_prometheus_metrics adds to
+    the exemptions), a Prometheus reaching the pods over plain http should be served,
+    and every other path still sent to https.
+    """
+    settings.SECURE_SSL_REDIRECT = True
+    settings.SECURE_REDIRECT_EXEMPT = [*Production.SECURE_REDIRECT_EXEMPT, "^metrics$"]
+
+    response = APIClient().get("/metrics", HTTP_AUTHORIZATION=f"Bearer {API_KEY}")
+    assert response.status_code == 200
+
+    response = APIClient().get("/api/v1.0/config/")
+    assert response.status_code == 301
 
 
 @pytest.mark.usefixtures("metrics_enabled")

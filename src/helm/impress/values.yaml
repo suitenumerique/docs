@@ -186,7 +186,7 @@ ingressAdmin:
     secretName: null
     additional: []
 
-## @param ingressMetrics.enabled whether to enable the Ingress publishing the Prometheus metrics of the backend (requires PROMETHEUS_METRICS_ENABLED and PROMETHEUS_API_KEY in backend.envVars) and, with yhub.metrics.enabled, those of yhub
+## @param ingressMetrics.enabled whether to enable the Ingress publishing the Prometheus metrics of the backend (backend.metrics.enabled) and of yhub (yhub.metrics.enabled) to a Prometheus outside of the cluster. One inside it scrapes the pods directly with serviceMonitor or podMonitor instead
 ## @param ingressMetrics.className IngressClass to use for the Ingress
 ## @param ingressMetrics.host Host for the Ingress. Use a host of its own, and add it to DJANGO_ALLOWED_HOSTS
 ## @param ingressMetrics.path Path of the backend metrics, matched exactly. The yhub ones are published at yhub.metrics.path and yhub.metrics.workerPath
@@ -212,6 +212,60 @@ ingressMetrics:
   ## addresses, e.g. with ingress-nginx:
   ##   nginx.ingress.kubernetes.io/whitelist-source-range: "203.0.113.10/32"
   annotations: {}
+
+## Prometheus Operator. A monitor is created for each component whose metrics
+## are enabled — the backend (backend.metrics.enabled), the yhub server and the
+## yhub worker (yhub.metrics.enabled) — so that a Prometheus inside the cluster
+## scrapes every pod directly, each pod a target of its own, rather than one
+## replica at random through the ingress. The scrape presents the bearer token
+## of the component, read from the Secret its PROMETHEUS_API_KEY comes from
+## (backend.metrics.apiKeySecret, yhub.metrics.apiKeySecret). The Prometheus
+## Operator reads that Secret itself: it has to live in the namespace of the
+## monitors, and the operator's service account be allowed to read it, as the
+## kube-prometheus-stack one is.
+##
+## A ServiceMonitor finds the pods through their Services, a PodMonitor through
+## their labels. They give the same targets: pick the kind your Prometheus is
+## configured to select, or both.
+## @param serviceMonitor.enabled Create a ServiceMonitor for each component whose metrics are enabled
+## @param serviceMonitor.namespace Namespace the ServiceMonitors are created in, the release one when empty
+## @param serviceMonitor.labels Labels of the ServiceMonitors, which the Prometheus Operator selects them by (e.g. release: kube-prometheus-stack)
+## @param serviceMonitor.annotations Annotations of the ServiceMonitors
+## @param serviceMonitor.interval Scrape interval, the Prometheus default when empty
+## @param serviceMonitor.scrapeTimeout Scrape timeout, the Prometheus default when empty
+## @param serviceMonitor.honorLabels Keep the labels of the scraped samples when they clash with the target ones
+## @param serviceMonitor.relabelings Relabelings of the targets, before the scrape
+## @param serviceMonitor.metricRelabelings Relabelings of the samples, after the scrape
+serviceMonitor:
+  enabled: false
+  namespace: ""
+  labels: {}
+  annotations: {}
+  interval: ""
+  scrapeTimeout: ""
+  honorLabels: false
+  relabelings: []
+  metricRelabelings: []
+
+## @param podMonitor.enabled Create a PodMonitor for each component whose metrics are enabled
+## @param podMonitor.namespace Namespace the PodMonitors are created in, the release one when empty
+## @param podMonitor.labels Labels of the PodMonitors, which the Prometheus Operator selects them by (e.g. release: kube-prometheus-stack)
+## @param podMonitor.annotations Annotations of the PodMonitors
+## @param podMonitor.interval Scrape interval, the Prometheus default when empty
+## @param podMonitor.scrapeTimeout Scrape timeout, the Prometheus default when empty
+## @param podMonitor.honorLabels Keep the labels of the scraped samples when they clash with the target ones
+## @param podMonitor.relabelings Relabelings of the targets, before the scrape
+## @param podMonitor.metricRelabelings Relabelings of the samples, after the scrape
+podMonitor:
+  enabled: false
+  namespace: ""
+  labels: {}
+  annotations: {}
+  interval: ""
+  scrapeTimeout: ""
+  honorLabels: false
+  relabelings: []
+  metricRelabelings: []
 
 ## @param ingressMedia.enabled whether to enable the Ingress or not
 ## @param ingressMedia.className IngressClass to use for the Ingress
@@ -318,6 +372,19 @@ backend:
   django:
     envVars: {}
     envFrom: []
+
+  ## @param backend.metrics.enabled Serve the prometheus metrics of the backend on /metrics of the web pods, scraped over plain http inside the cluster. Sets PROMETHEUS_METRICS_ENABLED and PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT on the django container, and not on celery, unless backend.envVars sets them. Requires PROMETHEUS_API_KEY in backend.envVars
+  ## @param backend.metrics.apiKeySecret.name Secret the monitors read the bearer token from. Defaults to the secretKeyRef of backend.envVars.PROMETHEUS_API_KEY
+  ## @param backend.metrics.apiKeySecret.key Key of the bearer token in that Secret
+  ##
+  ## The token has to come from a Secret for a monitor to present it: either a
+  ## secretKeyRef in backend.envVars.PROMETHEUS_API_KEY, which is enough, or
+  ## PROMETHEUS_API_KEY_FILE pointing at a mounted one, named here.
+  metrics:
+    enabled: false
+    apiKeySecret:
+      name: ""
+      key: ""
 
   ## @param backend.podAnnotations Annotations to add to the backend Pod
   podAnnotations: {}
@@ -1002,11 +1069,16 @@ yhub:
   ## @param yhub.metrics.port Port the metrics are served on. Added to the yhub Service, and to a Service of its own for the worker
   ## @param yhub.metrics.path Path the server serves its metrics on, which is the path ingressMetrics publishes them at
   ## @param yhub.metrics.workerPath Path the worker serves its metrics on, which is the path ingressMetrics publishes them at
+  ## @param yhub.metrics.apiKeySecret.name Secret the monitors read the bearer token from. Defaults to the secretKeyRef of PROMETHEUS_API_KEY in yhub.envVars (yhub.worker.envVars for the worker)
+  ## @param yhub.metrics.apiKeySecret.key Key of the bearer token in that Secret
   metrics:
     enabled: false
     port: 9464
     path: /metrics/yhub
     workerPath: /metrics/yhub-worker
+    apiKeySecret:
+      name: ""
+      key: ""
 
   ## @param yhub.worker.enabled Deploy the worker apart from the server, each scaling on its own
   ## @param yhub.worker.replicas Amount of yhub worker replicas

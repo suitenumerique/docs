@@ -1,0 +1,129 @@
+# A Prometheus scraping the dev cluster, to see the metrics of the backend and
+# of yhub through the ServiceMonitors the impress chart builds. Trimmed down to
+# the Prometheus Operator, its CRDs and one Prometheus: no Grafana, no
+# Alertmanager, no exporter, and none of the monitors and rules of the
+# kubernetes control plane, which a kind cluster has nothing to show for.
+# UI: https://docs-prometheus.127.0.0.1.nip.io (Status > Targets lists the pods)
+#
+# It also serves the example console of django-prometheus, the graphs of
+# https://docs-prometheus.127.0.0.1.nip.io/consoles/django.html, fed by its
+# recording rules: both are in the prometheus/ directory next to this file.
+# Console templates draw with the classic UI, which Prometheus 3 removed along
+# with the console libraries, so this Prometheus is the last 2.x release.
+fullnameOverride: prometheus
+
+defaultRules:
+  create: false
+alertmanager:
+  enabled: false
+grafana:
+  enabled: false
+nodeExporter:
+  enabled: false
+kubeStateMetrics:
+  enabled: false
+kubernetesServiceMonitors:
+  enabled: false
+kubeApiServer:
+  enabled: false
+kubelet:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+coreDns:
+  enabled: false
+kubeDns:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+prometheusOperator:
+  # the webhooks validate the monitors and rules: not worth the certificate
+  # patch jobs in a dev cluster
+  admissionWebhooks:
+    enabled: false
+  tls:
+    enabled: false
+  kubeletService:
+    enabled: false
+  serviceMonitor:
+    selfMonitor: false
+
+prometheus:
+  serviceMonitor:
+    selfMonitor: false
+  prometheusSpec:
+    image:
+      tag: v2.55.1
+    # the console, in the directory the operator points --web.console.templates
+    # at (/etc/prometheus/consoles is a symlink to it in the image). Only the
+    # console libraries of the image are left next to it, which is all it needs
+    volumes:
+      - name: django-console
+        configMap:
+          name: django-console
+    volumeMounts:
+      - name: django-console
+        mountPath: /usr/share/prometheus/consoles
+        readOnly: true
+    # every ServiceMonitor and PodMonitor of the namespace, whatever its labels
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
+    scrapeInterval: 15s
+    retention: 2d
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+  ingress:
+    enabled: true
+    hosts:
+      - docs-prometheus.127.0.0.1.nip.io
+    paths:
+      - /
+    pathType: Prefix
+    tls:
+      - secretName: docs-tls
+        hosts:
+          - docs-prometheus.127.0.0.1.nip.io
+
+# The bearer token the backend and yhub check on their metrics endpoints, and
+# the Prometheus Operator reads to scrape them with (values.impress: the
+# PROMETHEUS_API_KEY of both, and the monitors). A Secret of the release that
+# needs it first, dev only: a real deployment keeps it with its other secrets.
+extraManifests:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: docs-metrics
+    stringData:
+      PROMETHEUS_API_KEY: ThisIsAnExampleMetricsTokenForDevPurposeOnly
+  # The recording rules the console reads, selected like the monitors are
+  - apiVersion: monitoring.coreos.com/v1
+    kind: PrometheusRule
+    metadata:
+      name: django
+    spec:
+      {{- readFile "prometheus/django.rules" | nindent 6 }}
+  # The console itself. The chart passes every extra manifest through helm's
+  # tpl, which would render the actions of the console template: each opening
+  # delimiter is escaped so that tpl writes it back as is (the closing one is
+  # spelled in two halves so that it does not end this action)
+  {{- $open := "{{" }}
+  {{- $escaped := printf "%s %q %s" $open $open (print "}" "}") }}
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: django-console
+    data:
+      django.html: |
+        {{- readFile "prometheus/django.html" | replace $open $escaped | nindent 8 }}

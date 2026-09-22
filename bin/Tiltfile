@@ -63,8 +63,43 @@ k8s_resource('impress-docs-celery-worker', resource_deps=['valkey-docs'])
 k8s_resource('impress-docs-yhub', resource_deps=['valkey-yhub'])
 k8s_resource('impress-docs-yhub-worker', resource_deps=['valkey-yhub'])
 
-# the valkey chart leaves its objects without a namespace
-k8s_yaml(namespace_inject(local('cd ../src/helm && helmfile -n impress -e dev template .'), 'impress'))
+# The Prometheus Operator carries the CRDs of its release, and the Prometheus
+# it runs (a workload of its own kind, whose pods the operator creates). The
+# ServiceMonitors of the application are a resource apart, applied once the
+# operator is up: their kind does not exist before its CRDs do, and nothing of
+# the application waits for them. The kind is a regular expression, matched
+# anywhere in the name: anchored, or it takes the PrometheusRule too.
+k8s_kind('^Prometheus$', pod_readiness='ignore')
+k8s_resource('prometheus-operator', objects=[
+    'alertmanagerconfigs.monitoring.coreos.com:customresourcedefinition',
+    'alertmanagers.monitoring.coreos.com:customresourcedefinition',
+    'podmonitors.monitoring.coreos.com:customresourcedefinition',
+    'probes.monitoring.coreos.com:customresourcedefinition',
+    'prometheusagents.monitoring.coreos.com:customresourcedefinition',
+    'prometheuses.monitoring.coreos.com:customresourcedefinition',
+    'prometheusrules.monitoring.coreos.com:customresourcedefinition',
+    'scrapeconfigs.monitoring.coreos.com:customresourcedefinition',
+    'servicemonitors.monitoring.coreos.com:customresourcedefinition',
+    'thanosrulers.monitoring.coreos.com:customresourcedefinition',
+])
+k8s_resource('prometheus-prometheus', objects=[
+    'prometheus-prometheus:ingress',
+    # the example console of django-prometheus and the rules feeding it
+    'django-console:configmap',
+    'django:prometheusrule',
+], resource_deps=['prometheus-operator'], links=[
+    'https://docs-prometheus.127.0.0.1.nip.io/targets',
+    'https://docs-prometheus.127.0.0.1.nip.io/consoles/django.html',
+])
+k8s_resource(new_name='impress-docs-monitors', objects=[
+    'impress-docs-backend:servicemonitor',
+    'impress-docs-yhub:servicemonitor',
+    'impress-docs-yhub-worker:servicemonitor',
+], resource_deps=['prometheus-operator'])
+
+# the valkey chart leaves its objects without a namespace, and the CRDs of the
+# prometheus release only come with --include-crds
+k8s_yaml(namespace_inject(local('cd ../src/helm && helmfile -n impress -e dev template --include-crds .'), 'impress'))
 
 migration = '''
 set -eu

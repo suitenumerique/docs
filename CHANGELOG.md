@@ -29,6 +29,12 @@ and this project adheres to
   bearer token
 - ✨(helm) add a dedicated ingress for the prometheus metrics of the backend
   and of yhub
+- ✨(helm) add a ServiceMonitor and a PodMonitor per component whose metrics
+  are enabled, and `backend.metrics.enabled`
+- 🔧(helm) scrape the metrics of the dev cluster with a trimmed
+  kube-prometheus-stack and the ServiceMonitors of the chart
+- 🔧(helm) serve the example console of django-prometheus on the dev
+  Prometheus
 - ✨(backend) add a service generating cached RS256 JWT tokens
 - ✨(backend) publish the JWT public key on a JWKS endpoint
 - 🔧(dev) generate the JWT signing key when bootstrapping the dev stack

@@ -14,7 +14,14 @@ image:
 
 backend:
   replicas: 1
+  # scraped by the Prometheus of the cluster, see serviceMonitor below
+  metrics:
+    enabled: true
   envVars:
+    PROMETHEUS_API_KEY:
+      secretKeyRef:
+        name: docs-metrics
+        key: PROMETHEUS_API_KEY
     CONVERSION_UPLOAD_ENABLED: True
     DJANGO_CSRF_TRUSTED_ORIGINS: https://docs.127.0.0.1.nip.io
     DJANGO_CONFIGURATION: Feature
@@ -203,6 +210,11 @@ yhub:
     enabled: true
     replicas: 2
 
+  # scraped by the Prometheus of the cluster, server and worker apart, see
+  # serviceMonitor below
+  metrics:
+    enabled: true
+
   image:
     repository: localhost:5001/impress-yhub
     pullPolicy: Always
@@ -216,6 +228,10 @@ yhub:
     # valkey-docs
     REDIS: redis://default:pass@valkey-yhub:6379/0
     REDIS_PREFIX: yhub
+    PROMETHEUS_API_KEY:
+      secretKeyRef:
+        name: docs-metrics
+        key: PROMETHEUS_API_KEY
     COLLABORATION_BACKEND_BASE_URL: https://docs.127.0.0.1.nip.io
     COLLABORATION_SERVER_ORIGIN: https://docs.127.0.0.1.nip.io
     NODE_EXTRA_CA_CERTS: /cert/cacert.pem
@@ -295,3 +311,11 @@ ingressMedia:
 serviceMedia:
   host: dev-backend-minio.impress.svc.cluster.local
   port: 9000
+
+# One ServiceMonitor per component whose metrics are enabled above — backend,
+# yhub, yhub-worker — for the Prometheus of the prometheus release
+# (values.prometheus.yaml.gotmpl), which selects every monitor of the
+# namespace. The docs-metrics Secret the scrapes present is created there too.
+serviceMonitor:
+  enabled: true
+  interval: 15s

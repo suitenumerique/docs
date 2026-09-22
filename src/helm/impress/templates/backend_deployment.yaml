@@ -49,12 +49,14 @@ spec:
           args:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if or $envVars .Values.jwtKeys.enabled }}
+          {{- $metricsEnv := include "impress.backend.metrics.env" . }}
+          {{- if or $envVars .Values.jwtKeys.enabled $metricsEnv }}
           env:
             {{- $envVars | indent 12 }}
             {{- if .Values.jwtKeys.enabled }}
             {{- include "impress.jwtKeys.backendEnv" . | nindent 12 }}
             {{- end }}
+            {{- $metricsEnv | nindent 12 }}
           {{- end }}
           {{- $envFrom := concat (.Values.backend.envFrom | default list) ((.Values.backend.django | default dict).envFrom | default list) }}
           {{- if $envFrom }}

@@ -24,6 +24,12 @@ PROMETHEUS_API_KEY=<a long random secret>   # or PROMETHEUS_API_KEY_FILE
 The application **refuses to start** with the metrics enabled and no key: the
 endpoint would otherwise answer to anybody.
 
+In production the endpoint follows `SECURE_SSL_REDIRECT` like every other
+path: a scrape over plain http is redirected to https, so that the key never
+travels in clear. `PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT=True` lifts that for
+`/metrics` only, for a scraper that reaches the process past the proxy
+terminating TLS, see [several replicas](#several-replicas-behind-one-address).
+
 Then scrape `GET /metrics` with the key as a bearer token:
 
 ```yaml
@@ -133,19 +139,101 @@ average: use a short scrape interval and rate windows of several minutes, and
 aggregate with `sum without (hostname) (rate(...[5m]))`.
 
 This degrades as the number of replicas grows. A Prometheus running inside the
-cluster should scrape each pod directly instead (a `PodMonitor` or pod
-discovery on the `http` port, same path, same bearer token).
+cluster should scrape each pod directly instead: same path, same bearer token,
+one target per pod. The chart builds the `ServiceMonitor` or `PodMonitor` for
+it, see [below](#kubernetes-helm-chart). Such a scrape reaches the pod over
+plain http, past the ingress that terminates TLS, and the Production settings
+redirect it to https like anything else — where it gets nothing. Set
+`PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT=True` to take `/metrics` out of that
+redirect, the way the probes are; the pod's own address is already in
+`ALLOWED_HOSTS`. Leave it off wherever the application is reached directly,
+without a proxy in front: the redirect is then what keeps the bearer token off
+the wire in clear.
 
 ## Kubernetes (Helm chart)
 
 ```yaml
 backend:
+  metrics:
+    enabled: true              # PROMETHEUS_METRICS_ENABLED on the web pods, not on celery
   envVars:
-    PROMETHEUS_METRICS_ENABLED: "True"
     PROMETHEUS_API_KEY:
       secretKeyRef:
         name: backend
         key: PROMETHEUS_API_KEY
+
+yhub:
+  envVars:
+    PROMETHEUS_API_KEY:        # the worker inherits it
+      secretKeyRef:
+        name: yhub
+        key: PROMETHEUS_API_KEY
+  metrics:
+    enabled: true              # a port of its own, in the server and in the worker
+```
+
+`backend.metrics.enabled` sets `PROMETHEUS_METRICS_ENABLED` on the django
+container only: the celery worker serves no request, so its metrics would never
+be read. It sets `PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT` there too, since a pod
+is only ever scraped over plain http. A value given in `backend.envVars` still
+wins, and still reaches celery.
+
+### Prometheus Operator, inside the cluster
+
+```yaml
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack   # whatever your Prometheus selects monitors by
+```
+
+`serviceMonitor.enabled` (or `podMonitor.enabled`, or both) creates one monitor
+per component whose metrics are enabled:
+
+| Monitor | Scrapes | Port | Path | Job |
+|---|---|---|---|---|
+| `<release>-backend` | every backend web pod | `http` | `/metrics` | `backend` |
+| `<release>-yhub` | every yhub server pod | `metrics` | `yhub.metrics.path` | `yhub` |
+| `<release>-yhub-worker` | every yhub worker pod, when `yhub.worker.enabled` | `metrics` | `yhub.metrics.workerPath` | `yhub-worker` |
+
+Each pod is a target of its own, so every sample of every replica is taken at
+every interval, nothing goes through an ingress, and the `hostname` label is
+simply the pod. The scrape presents the bearer token of the component, which
+the Prometheus Operator reads from the Secret `PROMETHEUS_API_KEY` comes from
+in the `envVars` above (or from the one named in `backend.metrics.apiKeySecret`
+and `yhub.metrics.apiKeySecret`, for a token given as `PROMETHEUS_API_KEY_FILE`).
+A token that is not in a Secret is refused at render time. That Secret has to
+live in the namespace of the monitors, and the service account of the operator
+be allowed to read it, as the kube-prometheus-stack one is.
+
+A `ServiceMonitor` finds the pods through their Services, a `PodMonitor` through
+their labels; they give the same targets. `interval`, `scrapeTimeout`,
+`honorLabels`, `relabelings`, `metricRelabelings`, `labels`, `annotations` and
+`namespace` are the same on both.
+
+The dev cluster (`make start-tilt`, or `helmfile -e dev apply`) does exactly
+this: its helmfile installs a trimmed
+[kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
+(`src/helm/env.d/dev/values.prometheus.yaml.gotmpl`: the operator, its CRDs
+and one Prometheus, nothing else), the metrics of the backend and of yhub are
+on with a token in the `docs-metrics` Secret, and `serviceMonitor.enabled`
+builds the three monitors. The targets are at
+https://docs-prometheus.127.0.0.1.nip.io/targets.
+
+That Prometheus also serves the
+[example console of django-prometheus](https://github.com/django-commons/django-prometheus/tree/master/examples/prometheus)
+at https://docs-prometheus.127.0.0.1.nip.io/consoles/django.html: requests per
+second, by view, median and tail latency, model writes and database queries,
+drawn from its recording rules. Both files are in
+`src/helm/env.d/dev/prometheus/`, the rules verbatim and the console with its
+job renamed to `backend`. Console templates draw with the classic UI, which
+Prometheus 3 removed, so the dev Prometheus is the last 2.x release.
+
+### A Prometheus outside of the cluster
+
+```yaml
+backend:
+  envVars:
     DJANGO_ALLOWED_HOSTS: docs.example.com,metrics.docs.example.com
 
 ingressMetrics:
@@ -156,21 +244,9 @@ ingressMetrics:
 ```
 
 `ingressMetrics` routes the exact path `/metrics` of that host to the backend
-and nothing else. Its host has to be in `DJANGO_ALLOWED_HOSTS`.
-
-With yhub, the same ingress also publishes the server and the worker, each on an
-exact path of its own:
-
-```yaml
-yhub:
-  envVars:
-    PROMETHEUS_API_KEY:          # the worker inherits it
-      secretKeyRef:
-        name: yhub
-        key: PROMETHEUS_API_KEY
-  metrics:
-    enabled: true                # /metrics/yhub and /metrics/yhub-worker
-```
+and nothing else. Its host has to be in `DJANGO_ALLOWED_HOSTS`. With
+`yhub.metrics.enabled`, the same ingress also publishes the server and the
+worker, each on an exact path of its own:
 
 | Path | Served by |
 |---|---|
@@ -180,8 +256,5 @@ yhub:
 
 That is three scrape jobs on one host, differing by `metrics_path`. What is said
 above about [several replicas](#several-replicas-behind-one-address) applies to
-each of them: yhub labels its samples with `hostname` too.
-
-The celery worker receives `backend.envVars` too. It serves no request, so its
-metrics are never read: turn them off there with
-`backend.celery.envVars.PROMETHEUS_METRICS_ENABLED: "False"`.
+each of them: yhub labels its samples with `hostname` too. Prefer the monitors
+whenever the Prometheus can reach the pods.
