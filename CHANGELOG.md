@@ -15,6 +15,8 @@ and this project adheres to
 - ✨(backend) expose the attachment max size in the config endpoint #2577
 - ✨(frontend) warn before uploading an attachment over the size limit #2577
 - ✨(loadtest) add a websocket load generator for the collaboration server
+- ✨(loadtest) add k6 scenarios for the page-open sequence and the heavy
+  endpoints
 - ✨(backend) measure the calls to yhub and to the converters, the database
   pool and the celery queue
 - ✨(backend) add a `LoadTest` configuration and its `loadtest` application,
