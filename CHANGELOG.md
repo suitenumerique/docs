@@ -14,6 +14,7 @@ and this project adheres to
 - ✨(backend) expose the attachment max size in the config endpoint #2577
 - ✨(frontend) warn before uploading an attachment over the size limit #2577
 - ✨(frontend) add keyboard shortcut to open presentation mode #2697
+- 💄(frontend) add standalone 503 error page #2714
 
 ### Fixed
 
