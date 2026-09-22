@@ -556,6 +556,15 @@ the DDL is applied (`relation "yhub_ydoc_tombstones_v1" does not exist`, for
 instance). Nothing in this repository copies the schema, so an upgrade is
 `package.json` plus this script and nothing else.
 
+The connection is not encrypted unless the url asks for it. A server that only
+has `hostssl` rules in its `pg_hba.conf` — the default of the Zalando/Spilo
+operator — answers `pg_hba.conf rejects connection for host ..., no
+encryption`: append `?sslmode=require` to `POSTGRES`
+(`postgres://user:pass@host:5432/yhub?sslmode=require`), or
+`?sslmode=verify-full` when the certificate of the server is signed by an
+authority Node trusts (`NODE_EXTRA_CA_CERTS`). The server, the worker and
+`init-db` all read the same url, so the parameter is set once.
+
 From the repository root, `make migrate-yhub` runs it against the dev stack —
 the counterpart of `make migrate` for the Django database. `make bootstrap`
 already includes it, so a fresh checkout needs nothing extra; an upgrade is

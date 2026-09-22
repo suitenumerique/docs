@@ -1084,6 +1084,7 @@ yhub:
   ## @param yhub.envVars Configure yhub container environment variables
   ## @extra yhub.envVars.REDIS Required, redis/valkey url holding the live document state (e.g. redis://valkey:6379/0)
   ## @extra yhub.envVars.POSTGRES Required, url of the yhub database, created by the init-db job (e.g. postgres://user:pass@postgres:5432/yhub)
+  ##   Append `?sslmode=require` (or `verify-full`) when the server only accepts TLS, which is the default of the Zalando/Spilo operator
   ## @extra yhub.envVars.REDIS_PREFIX Namespace of the redis keys, when the instance is shared (default: yhub)
   ## @extra yhub.envVars.COLLABORATION_BACKEND_BASE_URL Base url of the Docs backend, which yhub asks about users and document access rights
   ## @extra yhub.envVars.COLLABORATION_SERVER_ORIGIN Comma separated list of the origins allowed to open a websocket
