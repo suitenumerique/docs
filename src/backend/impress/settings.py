@@ -79,6 +79,9 @@ class Base(Configuration):
 
     # Security
     ALLOWED_HOSTS = values.ListValue([])
+    # Django's default, made explicit because setup_prometheus_metrics may add
+    # to it in place: Production redefines it with the probes
+    SECURE_REDIRECT_EXEMPT = []
     SECRET_KEY = SecretFileValue(None)
     SERVER_TO_SERVER_API_TOKENS = values.ListValue([])
 
@@ -1264,6 +1267,17 @@ class Base(Configuration):
     PROMETHEUS_API_KEY = SecretFileValue(
         None, environ_name="PROMETHEUS_API_KEY", environ_prefix=None
     )
+    # Let /metrics be scraped over plain http where SECURE_SSL_REDIRECT is on,
+    # i.e. take it out of the redirect to https the way the probes are. For a
+    # scraper that reaches the process itself, past the proxy terminating TLS
+    # — a Prometheus inside a kubernetes cluster calling the pods. Leave it off
+    # when the application is reached directly: the redirect is then what keeps
+    # the bearer token off the wire in clear.
+    PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT = values.BooleanValue(
+        False,
+        environ_name="PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT",
+        environ_prefix=None,
+    )
     # Also count and time the SQL queries, by swapping the database engine for
     # django-prometheus' instrumented subclass of it.
     PROMETHEUS_DB_METRICS_ENABLED = values.BooleanValue(
@@ -1370,6 +1384,16 @@ class Base(Configuration):
             and default_database.get("ENGINE") == "django.db.backends.postgresql"
         ):
             default_database["ENGINE"] = "django_prometheus.db.backends.postgresql"
+
+        # in place, like the lists above: a reassignment would go unseen. The
+        # path is core.middleware.METRICS_PATH, not imported here: the settings
+        # are read before the applications are.
+        metrics_pattern = "^metrics$"
+        if (
+            cls.PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT
+            and metrics_pattern not in cls.SECURE_REDIRECT_EXEMPT
+        ):
+            cls.SECURE_REDIRECT_EXEMPT.append(metrics_pattern)
 
     @classmethod
     def post_setup(cls):
@@ -1613,6 +1637,9 @@ class Production(Base):
     SECURE_HSTS_PRELOAD = True
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_SSL_REDIRECT = True
+    # The probes are called on the process itself, over plain http: a redirect
+    # to https is a probe that fails. /metrics joins them only with
+    # PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT, see setup_prometheus_metrics
     SECURE_REDIRECT_EXEMPT = [
         "^__lbheartbeat__",
         "^__heartbeat__",

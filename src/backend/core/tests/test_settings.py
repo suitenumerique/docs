@@ -7,7 +7,7 @@ import tempfile
 
 import pytest
 
-from impress.settings import Base
+from impress.settings import Base, Production
 
 
 def test_invalid_settings_oidc_email_configuration():
@@ -89,6 +89,7 @@ def _prometheus_settings(**attributes):
             "PROMETHEUS_API_KEY": "a-key",
             "INSTALLED_APPS": list(Base.INSTALLED_APPS),
             "MIDDLEWARE": list(Base.MIDDLEWARE),
+            "SECURE_REDIRECT_EXEMPT": list(Production.SECURE_REDIRECT_EXEMPT),
             "DATABASES": {"default": {"ENGINE": "django.db.backends.postgresql"}},
             **attributes,
         },
@@ -165,6 +166,26 @@ def test_settings_prometheus_metrics_enabled(monkeypatch, tmp_path):
     assert middleware.count(PROMETHEUS_AUTH_MIDDLEWARE) == 1
     assert middleware.count(PROMETHEUS_BEFORE_MIDDLEWARE) == 1
     assert middleware.count(PROMETHEUS_AFTER_MIDDLEWARE) == 1
+
+
+@pytest.mark.parametrize("exempt", [False, True])
+def test_settings_prometheus_metrics_ssl_redirect_exempt(monkeypatch, tmp_path, exempt):
+    """
+    /metrics should leave the redirect to https only when asked to, for a scraper that
+    reaches the process past the proxy terminating TLS, and the probes should stay.
+    """
+    monkeypatch.setenv("PROMETHEUS_MULTIPROC_DIR", str(tmp_path))
+    test_settings = _prometheus_settings(PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT=exempt)
+    exemptions = test_settings.SECURE_REDIRECT_EXEMPT
+
+    test_settings.post_setup()
+    # twice: the pattern must not be added a second time
+    test_settings.post_setup()
+
+    # the very object Django was handed before post_setup ran
+    assert test_settings.SECURE_REDIRECT_EXEMPT is exemptions
+    expected = ["^__lbheartbeat__", "^__heartbeat__"]
+    assert exemptions == expected + (["^metrics$"] if exempt else [])
 
 
 def test_settings_prometheus_multiproc_dir_default(monkeypatch, tmp_path):

@@ -1,0 +1,36 @@
+{{- /*
+One PodMonitor per component whose metrics are enabled — the backend, the yhub
+server, the yhub worker — for a Prometheus Operator inside the cluster. The
+same targets as the ServiceMonitors, found by the labels of the pods rather
+than through their Services. The job is named after the component.
+*/ -}}
+{{- if .Values.podMonitor.enabled -}}
+{{- $monitor := .Values.podMonitor -}}
+{{- range $target := include "impress.metrics.targets" . | fromJsonArray }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ $target.name }}
+  namespace: {{ $monitor.namespace | default $.Release.Namespace | quote }}
+  labels:
+    {{- include "impress.common.labels" (list $ $target.component) | nindent 4 }}
+    {{- with $monitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $monitor.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  jobLabel: app.kubernetes.io/component
+  namespaceSelector:
+    matchNames:
+      - {{ $.Release.Namespace | quote }}
+  selector:
+    matchLabels:
+      {{- include "impress.common.selectorLabels" (list $ $target.component) | nindent 6 }}
+  podMetricsEndpoints:
+    {{- include "impress.metrics.endpoint" (dict "target" $target "monitor" $monitor) | nindent 4 }}
+{{- end }}
+{{- end }}

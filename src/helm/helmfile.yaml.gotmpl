@@ -1,7 +1,9 @@
 environments:
   dev:
     values:
-      - version: 6.0.0-alpha.1
+      - version: 6.0.0-alpha.2
+        # a Prometheus scraping the metrics of the backend and of yhub
+        monitoring: true
   feature:
     values:
       - version: 6.0.0-alpha.1
@@ -14,6 +16,8 @@ repositories:
   url: https://suitenumerique.github.io/helm-dev-backend
 - name: valkey
   url: https://valkey.io/valkey-helm/
+- name: prometheus-community
+  url: https://prometheus-community.github.io/helm-charts
 ---
 
 releases:
@@ -40,9 +44,24 @@ releases:
     values:
       - env.d/{{ .Environment.Name }}/values.valkey.yaml.gotmpl
 
+  # The Prometheus Operator and a Prometheus, in the environments that ask for
+  # it: what the ServiceMonitors of the impress release are for
+  - name: prometheus
+    namespace: {{ .Namespace }}
+    chart: prometheus-community/kube-prometheus-stack
+    version: 91.4.1
+    installed: {{ .Values | get "monitoring" false }}
+    values:
+      - env.d/{{ .Environment.Name }}/values.prometheus.yaml.gotmpl
+
   - name: impress
     version: {{ .Values.version }}
     namespace: {{ .Namespace }}
     chart: ./impress
+    {{- if .Values | get "monitoring" false }}
+    # its ServiceMonitors need the CRDs of the operator
+    needs:
+      - {{ .Namespace }}/prometheus
+    {{- end }}
     values:
       - env.d/{{ .Environment.Name }}/values.impress.yaml.gotmpl

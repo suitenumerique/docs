@@ -405,3 +405,107 @@ is told to serve its metrics on the path it is published at.
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+Environment enabling the prometheus metrics of the backend on the django
+container, and on it only: the celery worker serves no request, so its metrics
+would never be read. A pod is only ever scraped over plain http — TLS ends at
+the ingress, and a Prometheus of the cluster calls the pods themselves — so the
+path is also taken out of the redirect to https. Each variable is skipped when
+the deployment sets it by hand, in either env map — an explicit value wins, as
+everywhere else here. The bearer token (PROMETHEUS_API_KEY) is not set here: it
+is a secret, given through `backend.envVars`.
+
+Requires top level scope
+*/}}
+{{- define "impress.backend.metrics.env" -}}
+{{- if .Values.backend.metrics.enabled -}}
+{{- $named := merge (dict) ((.Values.backend.django | default dict).envVars | default dict) (.Values.backend.envVars | default dict) -}}
+{{- range $variable := list "PROMETHEUS_METRICS_ENABLED" "PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT" -}}
+{{- if not (hasKey $named $variable) }}
+- name: {{ $variable | quote }}
+  value: "True"
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+The Secret a monitor reads the bearer token of a scrape from: the one named in
+`<component>.metrics.apiKeySecret`, or else the one PROMETHEUS_API_KEY is taken
+from in the env of the scraped process. A token that comes from nowhere the
+Prometheus Operator can read is refused at render time, rather than left to
+fail at scrape time with a 401.
+
+Requires a dict with "name" (of the monitor, for the message), "metrics" (the
+`<component>.metrics` values) and "envVars" (the env map of the scraped process)
+*/}}
+{{- define "impress.metrics.apiKeySecret" -}}
+{{- $ref := .metrics.apiKeySecret | default dict -}}
+{{- if not $ref.name -}}
+{{- $fromEnv := index (.envVars | default dict) "PROMETHEUS_API_KEY" -}}
+{{- $ref = (kindIs "map" $fromEnv) | ternary $fromEnv dict -}}
+{{- $ref = $ref.secretKeyRef | default dict -}}
+{{- end -}}
+{{- if not (and $ref.name $ref.key) -}}
+{{- fail (printf "%s: a monitor scrapes with the bearer token of PROMETHEUS_API_KEY, which has to come from a Secret. Give it as a secretKeyRef in the envVars of the component, or name the Secret in its metrics.apiKeySecret" .name) -}}
+{{- end -}}
+name: {{ $ref.name | quote }}
+key: {{ $ref.key | quote }}
+{{- end }}
+
+{{/*
+The components whose metrics are enabled, as the monitors see them: one entry
+per pod kind to scrape, with the labels selecting it (its Service and its pods
+carry the same ones), the name of the port — the same on the Service and on the
+container — and the path the process serves on.
+
+Requires top level scope
+*/}}
+{{- define "impress.metrics.targets" -}}
+{{- $targets := list -}}
+{{- if .Values.backend.metrics.enabled -}}
+{{- $envVars := merge (dict) ((.Values.backend.django | default dict).envVars | default dict) (.Values.backend.envVars | default dict) -}}
+{{- $targets = append $targets (dict "name" (include "impress.backend.fullname" .) "component" "backend" "port" "http" "path" "/metrics" "metrics" .Values.backend.metrics "envVars" $envVars) -}}
+{{- end -}}
+{{- if and .Values.yhub.enabled .Values.yhub.metrics.enabled -}}
+{{- $targets = append $targets (dict "name" (include "impress.yhub.fullname" .) "component" "yhub" "port" "metrics" "path" .Values.yhub.metrics.path "metrics" .Values.yhub.metrics "envVars" (.Values.yhub.envVars | default dict)) -}}
+{{- if .Values.yhub.worker.enabled -}}
+{{- $envVars := merge (dict) ((.Values.yhub.worker | default dict).envVars | default dict) (.Values.yhub.envVars | default dict) -}}
+{{- $targets = append $targets (dict "name" (include "impress.yhub.worker.fullname" .) "component" "yhub-worker" "port" "metrics" "path" .Values.yhub.metrics.workerPath "metrics" .Values.yhub.metrics "envVars" $envVars) -}}
+{{- end -}}
+{{- end -}}
+{{- toJson $targets -}}
+{{- end }}
+
+{{/*
+One endpoint of a ServiceMonitor or a PodMonitor: the port and path of a target,
+the scrape settings of the monitor and the bearer token of the component.
+
+Requires a dict with "target" (an entry of impress.metrics.targets) and
+"monitor" (the serviceMonitor or podMonitor values)
+*/}}
+{{- define "impress.metrics.endpoint" -}}
+- port: {{ .target.port }}
+  path: {{ .target.path | quote }}
+  scheme: http
+  {{- with .monitor.interval }}
+  interval: {{ . }}
+  {{- end }}
+  {{- with .monitor.scrapeTimeout }}
+  scrapeTimeout: {{ . }}
+  {{- end }}
+  honorLabels: {{ .monitor.honorLabels }}
+  authorization:
+    type: Bearer
+    credentials:
+      {{- include "impress.metrics.apiKeySecret" (dict "name" .target.name "metrics" .target.metrics "envVars" .target.envVars) | nindent 6 }}
+  {{- with .monitor.relabelings }}
+  relabelings:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .monitor.metricRelabelings }}
+  metricRelabelings:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
