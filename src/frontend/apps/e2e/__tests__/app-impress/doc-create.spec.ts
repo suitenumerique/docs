@@ -110,7 +110,7 @@ test.describe('Doc Create', () => {
     await page.getByRole('button', { name: 'Share' }).click();
 
     await expect(
-      page.getByTestId('doc-visibility').getByText('Connected').first(),
+      page.getByTestId('doc-visibility').getByText('Internal').first(),
     ).toBeVisible();
 
     await expect(
@@ -132,7 +132,7 @@ test.describe('Doc Create', () => {
     await otherPage.getByRole('button', { name: 'Share' }).click();
 
     await expect(
-      otherPage.getByTestId('doc-visibility').getByText('Connected').first(),
+      otherPage.getByTestId('doc-visibility').getByText('Internal').first(),
     ).toBeVisible();
 
     await expect(

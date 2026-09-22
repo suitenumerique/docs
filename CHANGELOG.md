@@ -17,6 +17,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) use consistent "Internal" label in link settings
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 - 🐛(frontend) fix redirect after deleting a document #2706
 

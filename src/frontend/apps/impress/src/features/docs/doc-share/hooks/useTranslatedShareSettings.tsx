@@ -7,7 +7,7 @@ export const useTranslatedShareSettings = () => {
 
   const linkReachTranslations = {
     [LinkReach.RESTRICTED]: t('Private'),
-    [LinkReach.AUTHENTICATED]: t('Connected'),
+    [LinkReach.AUTHENTICATED]: t('Internal'),
     [LinkReach.PUBLIC]: t('Public'),
   };
 
