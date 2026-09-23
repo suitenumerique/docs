@@ -3,7 +3,7 @@
  * frontend does it — `config`, `users/me`, the document, its tree, the list of
  * the user's documents — plus the `media-auth` subrequest nginx makes when the
  * page loads an attachment. It is the HTTP baseline of the plan
- * (`documentation/stress-test-plan.md`, scenario 2): run it against the
+ * (`documentation/load-testing.md`, scenario 2): run it against the
  * current release and against this branch, on the same data, with the same
  * options.
  *
@@ -69,9 +69,9 @@ export default function () {
     expect(get(session, `documents/${doc}/tree/`, 'documents/{id}/tree/'), 'documents/{id}/tree/', 200);
     expect(get(session, 'documents/?page=1&ordering=-updated_at', 'documents/'), 'documents/', 200);
     // the auth subrequest nginx makes for `/media/{doc}/attachments/{file}`. The
-    // file need not exist for the access check — the costly part, and what
-    // brought production down on 2026-08-18 — to run: a file the bucket does
-    // not hold answers 403 once that check has passed
+    // file need not exist for the access check — the costly part, a query
+    // over the document tree — to run: a file the bucket does not hold
+    // answers 403 once that check has passed
     const original = `${__ENV.MEDIA_BASE_URL || 'https://docs.example.com'}/media/${doc}/attachments/00000000-0000-4000-8000-000000000000.png`;
     expect(
       get(session, 'documents/media-auth/', 'documents/media-auth/', {

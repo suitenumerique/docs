@@ -184,7 +184,7 @@
     {
       "type": "stat",
       "title": "Uptime",
-      "description": "A reset is a restart: what wiped the sessions on 2026-09-07.",
+      "description": "A reset is a restart, and on valkey-docs a restart without persistence wipes the sessions.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1384,7 +1384,7 @@
     {
       "type": "timeseries",
       "title": "Sentinel: master status",
-      "description": "ok, or s_down / o_down when the sentinels have lost the master: the 2026-09-14 failover, seen from their side.",
+      "description": "ok, or s_down / o_down when the sentinels have lost the master: a failover, seen from their side.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"

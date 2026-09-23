@@ -20,6 +20,7 @@ and this project adheres to
 - ✨(loadtest) add browser canaries measuring what a user feels under load
 - ✨(loadtest) add the grafana dashboards of the load-test campaign, valkey
   included
+- 📝(documentation) add the load-testing guide
 - 🔧(helm) run grafana with those dashboards in the dev cluster, in place of
   the prometheus console
 - ✨(backend) measure the calls to yhub and to the converters, the database

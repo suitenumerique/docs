@@ -5,7 +5,7 @@ the frontend uses — `yjs`, `y-websocket`'s `WebsocketProvider` with the same
 options, a `ws` socket carrying the session cookie and the origin a browser
 would send — and measures what a user would feel: time to connect, time to the
 first sync, and how long an edit takes to reach the other clients of the same
-document. It is the collaboration half of `documentation/stress-test-plan.md`;
+document. It is the collaboration half of `documentation/load-testing.md`;
 the HTTP half is k6.
 
 It is a standalone package (its own `package.json` and `yarn.lock`, not a

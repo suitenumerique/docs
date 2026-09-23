@@ -49,7 +49,7 @@ const socketClass = (
     constructor(url: string, protocols?: string | string[]) {
       const options: SocketOptions = {
         headers: { cookie, origin },
-        // a bad certificate on preprod is not what is being tested
+        // a bad certificate on the instance under test is not what is being tested
         rejectUnauthorized: false,
       };
       super(url, protocols, options);

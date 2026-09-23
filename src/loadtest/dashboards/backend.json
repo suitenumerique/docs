@@ -470,7 +470,7 @@
     {
       "type": "timeseries",
       "title": "Requests waiting for a connection",
-      "description": "The application waiting for connections, before Postgres shows anything. What was missing in the 2026-08-18 and 2026-09-07 outages.",
+      "description": "The application waiting for connections, before Postgres shows anything: a connection storm seen from the side that suffers it.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"

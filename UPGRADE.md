@@ -35,6 +35,10 @@ upgrade, in the order they are done, and end with the API changes.
   POSTGRES: postgres://{user}:{password}@{postgres-host}:5432/yhub
   ```
 
+  The PostgreSQL connection is not encrypted unless the url asks for it: append
+  `?sslmode=require` (or `verify-full`) to `POSTGRES` for a server that only
+  accepts TLS, see "Database schema" in `src/yhub-server/README.md`.
+
   It also needs `COLLABORATION_BACKEND_BASE_URL`, the backend it asks about
   users and document access rights, and `COLLABORATION_SERVER_ORIGIN`, the
   origins allowed to open a websocket — the two the `y-provider` already had.
@@ -123,14 +127,16 @@ upgrade, in the order they are done, and end with the API changes.
   Both `/collaboration/` ingresses now point at the collaboration server. In
   the chart, `ingressCollaborationApi.path` (a single path) becomes
   `ingressCollaborationApi.paths` (a list, one ingress rule each), defaulting
-  to `/collaboration/ydoc/` and `/collaboration/jwks/`. What is not listed
-  stays in-cluster, which is how `create-ydoc`, `reset-connections`, `migrate`,
-  `restore-ydoc` and `reset-ydoc` are kept unreachable: they are
-  backend-internal, and publishing them would put document deletion and the
-  legacy migration one request away from the internet. If you route
-  `/collaboration/` by hand, publish the websocket, the browser-facing document
-  routes (`ydoc`, `rollback`, `prune`, `changeset`, `activity`) and `jwks`, and
-  keep those five in-cluster.
+  to `/collaboration/ydoc/`, `/collaboration/activity/`,
+  `/collaboration/changeset/`, `/collaboration/rollback/` and
+  `/collaboration/jwks/`. What is not listed stays in-cluster, which is how
+  `prune`, `create-ydoc`, `reset-connections`, `migrate`, `restore-ydoc` and
+  `reset-ydoc` are kept unreachable: they are backend-internal or granted to
+  nobody, and publishing them would put document deletion and the legacy
+  migration one request away from the internet. If you route `/collaboration/`
+  by hand, publish the websocket, the browser-facing document routes (`ydoc`,
+  `activity`, `changeset`, `rollback`) and `jwks`, and keep those six
+  in-cluster.
 
   The `nginx.ingress.kubernetes.io/upstream-hash-by: $arg_room` annotation is
   dropped from the websocket ingress, and should be dropped from yours: the
@@ -175,8 +181,7 @@ upgrade, in the order they are done, and end with the API changes.
 
   The `y-provider` verifies the same way and only needs to reach the backend
   for it: `COLLABORATION_BACKEND_BASE_URL`, from which it derives
-  `{base}/api/v1.0/jwks`, or `JWKS_URL` when that url is not the right one from
-  where it runs. In a development environment, `make generate-secret-keys`
+  `{base}/api/v1.0/jwks`. In a development environment, `make generate-secret-keys`
   creates the key in `data/jwt/`; on a cluster, `jwtKeys.enabled` makes the
   chart generate both keys in a secret the services mount read-only.
 
@@ -242,6 +247,12 @@ upgrade, in the order they are done, and end with the API changes.
   the toggle is on and have to stay in place for as long as it holds anything,
   and it is a third bucket, not the backend's `AWS_S3_*` nor the legacy one the
   migration reads.
+
+- The collaboration server reports its errors to Sentry when `SENTRY_DSN` is
+  set, like the backend and the `y-provider` do (`SENTRY_ENVIRONMENT`,
+  `SENTRY_RELEASE`, `SENTRY_TRACES_SAMPLE_RATE` and
+  `SENTRY_PROFILES_SAMPLE_RATE` alongside, all optional). Unset, nothing is
+  reported and the SDK is not loaded.
 
 - The endpoint `/api/v1.0/documents/{document_id}/content/`, added in 5.0.0, is
   removed, both its `GET` and its `PATCH`. The content of a document is now

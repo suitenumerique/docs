@@ -86,7 +86,7 @@ db.sqlite3
 
 # AI
 CLAUDE.md
-AGENTS.md
+!AGENTS.md
 .claude/
 .cursor/
 .cursorrules

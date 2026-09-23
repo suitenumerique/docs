@@ -2,8 +2,7 @@
 
 Grafana dashboards over the metrics of the campaign: the backend's and yhub's
 `/metrics`, and what the load generators export (`../swarm`, `../k6`,
-`../canary`). One board per question of `documentation/stress-test-plan.md`
-(section 0.5): what the users feel, what the collaboration server does, what
+`../canary`). One board per question of `documentation/load-testing.md`: what the users feel, what the collaboration server does, what
 the backend does. Each is laid out so that a saturation reads left to right:
 the symptom the clients see, the server-side cause, the resource that ran out.
 
@@ -55,9 +54,9 @@ with (`backend`). Take a new revision from grafana.com the same way.
 
 ## Stores
 
-Valkey is `valkey.json`. The team running it (chideat/valkey-operator) enables
-the operator's exporter, which is `redis_exporter` as a sidecar of every valkey
-pod, so the board has one target per pod: the `job` variable picks the
+Valkey is `valkey.json`, built for `redis_exporter` as a sidecar of every
+valkey pod (what chideat/valkey-operator runs, and what the dev cluster's chart
+runs), so the board has one target per pod: the `job` variable picks the
 instance, `instance` the pod. Two things about that exporter:
 
 - the operator's `exporter` spec sets an image, resources and a security
@@ -72,13 +71,13 @@ instance, `instance` the pod. Two things about that exporter:
   against valkey-yhub. The dev cluster's chart can pass the variable, and does;
 - the Sentinel row needs the sentinel pods scraped as well.
 
-Postgres is not here: that exporter belongs to the team running it. What the
+Postgres is not here: use the board of your `postgres_exporter`. What a
 campaign needs from it, per instance:
 
 - Postgres (`postgres_exporter` or pghero): connections by state and by
   application name, transactions and tuples per second, the slowest queries
   (`pg_stat_statements` by total and mean time), replication lag, and the
-  Patroni leader. On the `yhub` database as well as the backend's.
+  leader of the cluster. On the `yhub` database as well as the backend's.
 
 ## Editing
 

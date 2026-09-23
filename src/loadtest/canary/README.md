@@ -12,8 +12,7 @@ editor and the real collaboration path, and times what a user would notice:
 | `canary_iterations_total{result}`, `canary_failures_total{step}` | Iterations, and the step the failed ones died at (`page-open`, `editor-ready`, `focus`, `propagation`) |
 | `canary_console_errors_total` | Errors the pages logged |
 
-It is the "users" board of the plan (`documentation/stress-test-plan.md`,
-section 0.5): the swarm and k6 tell what the servers do, the canary tells what
+It is the "users" board of `documentation/load-testing.md`: the swarm and k6 tell what the servers do, the canary tells what
 it feels like. It is not a load generator — a few pairs of browsers, nothing
 more — and it is the collaboration half's counterpart of the e2e tests, built
 with the Playwright library rather than its test runner so that it can run for
