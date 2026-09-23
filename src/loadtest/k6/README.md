@@ -1,6 +1,6 @@
 # k6 — HTTP load scenarios for the backend
 
-The HTTP half of `documentation/stress-test-plan.md`: what a browser asks the
+The HTTP half of `documentation/load-testing.md`: what a browser asks the
 Django backend when a user opens a document, and the endpoints that call the
 collaboration server or walk a subtree inside one request. The websocket half is
 `../swarm`.
@@ -56,7 +56,7 @@ with the same options: what differs is what the new architecture costs on the
 HTTP side.
 
 The `media-auth` call names a file the bucket does not hold: the access check
-— the costly part, and what brought production down on 2026-08-18 — runs, and
+— the costly part, an access check over the document tree — runs, and
 the answer is a 403 once it has passed. That status is expected and not counted
 as a failure.
 
