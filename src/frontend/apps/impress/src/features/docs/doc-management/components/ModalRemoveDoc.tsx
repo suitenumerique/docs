@@ -11,7 +11,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
 import { useConfig } from '@/core';
 import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid';
-import { useKeyboardAction, useToast } from '@/hooks';
+import { useToast } from '@/hooks';
 
 import { KEY_DOC, KEY_LIST_FAVORITE_DOC } from '../api';
 import { KEY_LIST_DOC } from '../api/useDocs';
@@ -72,14 +72,9 @@ export const ModalRemoveDoc = ({
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const keyboardAction = useKeyboardAction();
-
   const handleDelete = () => {
     removeDoc({ docId: doc.id });
   };
-
-  const handleCloseKeyDown = keyboardAction(onClose);
-  const handleDeleteKeyDown = keyboardAction(handleDelete);
 
   return (
     <Modal
@@ -97,7 +92,6 @@ export const ModalRemoveDoc = ({
             fullWidth
             autoFocus
             onClick={onClose}
-            onKeyDown={handleCloseKeyDown}
           >
             {t('Cancel')}
           </Button>
@@ -106,7 +100,6 @@ export const ModalRemoveDoc = ({
             color="error"
             fullWidth
             onClick={handleDelete}
-            onKeyDown={handleDeleteKeyDown}
           >
             {t('Delete')}
           </Button>
@@ -124,11 +117,10 @@ export const ModalRemoveDoc = ({
           >
             {t('Delete a doc')}
           </Text>
-          <Box $position="absolute" $css="top: 4px; right: 4px;">
+          <Box $position="absolute" $css="top: 8px; right: 8px;">
             <ButtonCloseModal
               aria-label={t('Close the delete modal')}
               onClick={onClose}
-              onKeyDown={handleCloseKeyDown}
             />
           </Box>
         </>

@@ -8,15 +8,23 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) duplicate with subdocuments #2584
 - ✨(helm) allow disallowing search engine indexing per instance #2694
 - 🐛(frontend) reduce PostHog volume from web vitals and opt_in spam #2701
 - ✨(backend) expose the attachment max size in the config endpoint #2577
 - ✨(frontend) warn before uploading an attachment over the size limit #2577
+- ✨(frontend) add keyboard shortcut to open presentation mode #2697
 
 ### Fixed
 
+- 🐛(frontend) clear callout background on Backspace #2052
+
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 - 🐛(frontend) fix redirect after deleting a document #2706
+
+### Changed
+
+- 💄(frontend) redesign 404 error standalone page #2696
 
 ## [v5.7.0] - 2026-09-15
 
@@ -25,6 +33,7 @@ and this project adheres to
 - 🔧(backend) fine tune redis cache options #2658
 - ✨(frontend) make the full last-update date available #1215
 - 💄(frontend) redesign email confirmation standalone page #2601
+- ✨(frontend) add markdown download option #2608
 
 ### Changed
 

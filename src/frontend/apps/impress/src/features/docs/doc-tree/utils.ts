@@ -69,6 +69,47 @@ export const reloadTree = (treeContext: TreeContextType<Doc | null> | null) => {
   treeContext?.setRoot(null);
 };
 
+/**
+ * Inserts a newly created doc into the tree as a sibling of `parentDocId`
+ * (the doc it was created from) and selects it, avoiding a full tree reload.
+ */
+export const addDocToTree = (
+  treeContext: TreeContextType<Doc | null> | null,
+  parentDocId: string,
+  newDoc: Doc,
+) => {
+  if (!treeContext) {
+    return;
+  }
+
+  const parentId = treeContext.treeData.getParentId(parentDocId) as
+    string | null;
+
+  treeContext.treeData.addChild(parentId, {
+    ...newDoc,
+    children: [],
+    childrenCount: newDoc.numchild ?? 0,
+  });
+  treeContext.treeData.setSelectedNode(newDoc);
+};
+
+/**
+ * Removes a doc from the tree once `navigation` resolves, deferred by the
+ * same delay used elsewhere (DocToolBox move/remove) so react-arborist isn't
+ * asked to delete a node that's still selected mid route transition.
+ */
+export const deleteDocFromTreeAfterNavigate = (
+  treeContext: TreeContextType<Doc | null> | null,
+  docId: string,
+  navigation: Promise<unknown>,
+) => {
+  void navigation.then(() => {
+    setTimeout(() => {
+      treeContext?.treeData.deleteNode(docId);
+    }, 100);
+  });
+};
+
 export const findIndexInTree = (
   nodes: TreeDataItem<TreeViewDataType<Doc>>[],
   key: string,

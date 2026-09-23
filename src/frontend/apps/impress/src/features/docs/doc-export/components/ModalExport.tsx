@@ -20,12 +20,13 @@ import { useToast } from '@/hooks';
 import { fallbackLng } from '@/i18n/config';
 
 import ModulesExport from '../hooks/';
-import { downloadFile } from '../utils';
+import { downloadFile, getExportFilename } from '../utils';
 import {
   addMediaFilesToZip,
   generateHtmlDocument,
   improveHtmlAccessibility,
 } from '../utils_html';
+import { addMediaFilesToMarkdownZip } from '../utils_markdown';
 
 const useExportAGPL = ModulesExport?.useExportAGPL;
 
@@ -60,6 +61,11 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const formatSelect = useMemo(() => {
     const formatOptions = (exportAGPL?.formats || []).concat([
       {
+        label: t('Markdown'),
+        value: 'markdown',
+        labelDescription: t('.md(zip)'),
+      },
+      {
         label: t('HTML'),
         value: 'html',
         labelDescription: t('.html(zip)'),
@@ -83,6 +89,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     return { formatOptions, formatLabels, allFormatsLabel };
   }, [t, exportAGPL?.formats]);
 
+  /** Exports the selected format and always releases the loading state. */
   async function onSubmit() {
     if (!editor) {
       toast(t('The export failed'), VariantType.ERROR);
@@ -90,72 +97,101 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     }
 
     setIsExporting(true);
+    let shouldClose = false;
 
-    const filename = (doc.title || untitledDocument)
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s/g, '-');
+    try {
+      const documentTitle = doc.title || untitledDocument;
+      const filename = getExportFilename(documentTitle);
+      let downloadExtension = format === 'markdown' ? 'md' : format;
 
-    const documentTitle = doc.title || untitledDocument;
+      let blobExport = await exportAGPL?.docToBlob(format, documentTitle);
 
-    let blobExport = await exportAGPL?.docToBlob(format, documentTitle);
+      if (!blobExport && format === 'markdown') {
+        const zip = new JSZip();
+        const blocks = structuredClone(editor.document);
 
-    if (!blobExport && format === 'html') {
-      // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
-      const fullHtml = await editor.blocksToFullHTML();
+        const mediaFileCount = await addMediaFilesToMarkdownZip(
+          blocks,
+          zip,
+          mediaUrl,
+        );
 
-      // Parse HTML and fetch media so that we can package a fully offline HTML document in a ZIP.
-      const domParser = new DOMParser();
-      const parsedDocument = domParser.parseFromString(fullHtml, 'text/html');
+        const markdown = await editor.blocksToMarkdownLossy(blocks);
 
-      const zip = new JSZip();
+        if (mediaFileCount === 0) {
+          blobExport = new Blob([markdown], {
+            type: 'text/markdown;charset=utf-8',
+          });
+        } else {
+          zip.file(`${filename}.md`, markdown);
+          blobExport = await zip.generateAsync({ type: 'blob' });
+          downloadExtension = 'zip';
+        }
+      }
 
-      improveHtmlAccessibility(parsedDocument, documentTitle);
-      await addMediaFilesToZip(parsedDocument, zip, mediaUrl);
+      if (!blobExport && format === 'html') {
+        // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
+        const fullHtml = await editor.blocksToFullHTML();
 
-      const lang = i18next.language || fallbackLng;
-      const body = parsedDocument.body;
-      const editorHtmlWithLocalMedia = body ? body.innerHTML : '';
+        // Parse HTML and fetch media so that we can package a fully offline HTML document in a ZIP.
+        const domParser = new DOMParser();
+        const parsedDocument = domParser.parseFromString(fullHtml, 'text/html');
 
-      const htmlContent = generateHtmlDocument(
-        documentTitle,
-        editorHtmlWithLocalMedia,
-        lang,
+        const zip = new JSZip();
+
+        improveHtmlAccessibility(parsedDocument, documentTitle);
+        await addMediaFilesToZip(parsedDocument, zip, mediaUrl);
+
+        const lang = i18next.language || fallbackLng;
+        const body = parsedDocument.body;
+        const editorHtmlWithLocalMedia = body ? body.innerHTML : '';
+
+        const htmlContent = generateHtmlDocument(
+          documentTitle,
+          editorHtmlWithLocalMedia,
+          lang,
+        );
+
+        zip.file('index.html', htmlContent);
+
+        // CSS Styles
+        const cssResponse = await fetch(
+          new URL(
+            '../assets/export-html-styles.txt',
+            import.meta.url,
+          ).toString(),
+        );
+        const cssContent = await cssResponse.text();
+        zip.file('styles.css', cssContent);
+
+        blobExport = await zip.generateAsync({ type: 'blob' });
+        downloadExtension = 'zip';
+      }
+
+      if (!blobExport) {
+        toast(t('The export failed'), VariantType.ERROR);
+        return;
+      }
+
+      downloadFile(blobExport, `${filename}.${downloadExtension}`);
+
+      toast(
+        t('Your {{format}} was downloaded succesfully', {
+          format,
+        }),
+        VariantType.SUCCESS,
       );
 
-      zip.file('index.html', htmlContent);
-
-      // CSS Styles
-      const cssResponse = await fetch(
-        new URL('../assets/export-html-styles.txt', import.meta.url).toString(),
-      );
-      const cssContent = await cssResponse.text();
-      zip.file('styles.css', cssContent);
-
-      blobExport = await zip.generateAsync({ type: 'blob' });
-    }
-
-    if (!blobExport) {
+      shouldClose = true;
+    } catch {
       toast(t('The export failed'), VariantType.ERROR);
+    } finally {
       setIsExporting(false);
-      return;
     }
 
-    const downloadExtension = format === 'html' ? 'zip' : format;
-
-    downloadFile(blobExport, `${filename}.${downloadExtension}`);
-
-    toast(
-      t('Your {{format}} was downloaded succesfully', {
-        format,
-      }),
-      VariantType.SUCCESS,
-    );
-
-    setIsExporting(false);
-
-    onClose();
+    if (shouldClose) {
+      onClose();
+    }
   }
 
   return (
@@ -204,7 +240,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           >
             {t('Export')}
           </Text>
-          <Box $position="absolute" $css="top: 4px; right: 4px;">
+          <Box $position="absolute" $css="top: 8px; right: 8px;">
             <ButtonCloseModal
               aria-label={t('Close the download modal')}
               onClick={() => onClose()}

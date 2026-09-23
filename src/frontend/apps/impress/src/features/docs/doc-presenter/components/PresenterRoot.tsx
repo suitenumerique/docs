@@ -8,6 +8,7 @@ import { useEditorStore } from '@/docs/doc-editor/stores';
 import { useDocStore } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
+import { useOpenPresenterShortcut } from '../hooks/useOpenPresenterShortcut';
 import { usePresenterStore } from '../stores';
 
 const coverCss = css`
@@ -92,19 +93,7 @@ export const PresenterRoot = () => {
   const active = !isMobile && (isOpen || wantsPresent);
   const isBooting = active && (!editor || !currentDoc);
 
-  // Let users escape the boot cover if the editor never finishes loading.
-  useEffect(() => {
-    if (!isBooting) {
-      return;
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        handleClose();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isBooting, handleClose]);
+  useOpenPresenterShortcut(!isBooting, handleClose);
 
   if (!active) {
     return null;

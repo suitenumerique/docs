@@ -12,8 +12,10 @@ import {
 
 const openPresenter = async (page: Page) => {
   await page.getByLabel('Open the document options').first().click();
-  await page.getByRole('menuitem', { name: 'Present' }).click();
-
+  await page
+    .getByRole('menuitem')
+    .getByText(/Present/)
+    .click();
   const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
   await expect(overlay).toBeVisible();
   return overlay;
@@ -286,15 +288,13 @@ test.describe('Presenter Mode', () => {
     await expect(overlay.getByText('Slide two')).toBeVisible();
   });
 
-  test('navigates between slides via keyboard shortcuts', async ({
-    page,
-    browserName,
-  }) => {
+  test('navigates via keyboard shortcuts', async ({ page, browserName }) => {
     await createDoc(page, 'presenter-nav-keyboard', browserName, 1);
     await writeMultiSlideDoc(page);
 
-    const overlay = await openPresenter(page);
+    await page.keyboard.press('Control+Alt+KeyP');
 
+    const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
     await expect(overlay.getByText('1 / 4')).toBeVisible();
 
     await page.keyboard.press('ArrowRight');

@@ -1,89 +1,95 @@
-import { Button } from '@gouvfr-lasuite/ui-components';
 import Head from 'next/head';
-import Image from 'next/image';
 import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
+import { css } from 'styled-components';
 
-import error_img from '@/assets/icons/error-planetes.png';
+import Error404Svg from '@/assets/icons/error-404.svg';
 import { Box, Icon, StyledLink, Text } from '@/components';
-import { PageLayout } from '@/layouts';
+import HomeSvg from '@/icons/house-rounded.svg';
+import { StandalonePageLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
-
-const StyledButton = styled(Button)`
-  width: fit-content;
-`;
 
 const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
+  const pageTitle = `${t('Page Not Found - Error 404')} - ${t('Docs')}`;
 
   return (
     <>
       <Head>
-        <title>
-          {t('Page Not Found - Error 404')} - {t('Docs')}
-        </title>
-        <meta
-          property="og:title"
-          content={`${t('Page Not Found - Error 404')} - ${t('Docs')}`}
-          key="title"
-        />
+        <title>{pageTitle}</title>
+        <meta property="og:title" content={pageTitle} key="title" />
       </Head>
       <Box
         $align="center"
-        $margin="auto"
-        $gap="md"
-        $padding={{ bottom: '2rem' }}
+        $gap="base"
+        $padding={{ horizontal: 'base', bottom: 'lg' }}
+        className="--docs--error-404"
       >
-        <Text as="h1" $textAlign="center" className="sr-only">
-          {t('Page Not Found - Error 404')} - {t('Docs')}
-        </Text>
-        <Image
-          src={error_img}
-          alt=""
-          width={300}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-          }}
-          loading="eager"
-        />
-
-        <Text
-          as="p"
-          $textAlign="center"
-          $maxWidth="350px"
-          $theme="neutral"
-          $margin="0"
-        >
-          {t(
-            'It seems that the page you are looking for does not exist or cannot be displayed correctly.',
-          )}
-        </Text>
-
-        <Box $direction="row" $gap="sm">
-          <StyledLink href="/">
-            <StyledButton
-              color="neutral"
-              icon={
-                <Icon
-                  iconName="house"
-                  variant="symbols-outlined"
-                  $withThemeInherited
-                />
-              }
-            >
-              {t('Home')}
-            </StyledButton>
-          </StyledLink>
+        <Box $align="center" $gap="xxxs">
+          <Error404Svg aria-hidden="true" />
+          <Text
+            as="h1"
+            $size="md"
+            $weight="bold"
+            $textAlign="center"
+            $margin="0"
+            $theme="neutral"
+            $variation="primary"
+          >
+            {t('Error 404')}
+          </Text>
+          <Text
+            as="p"
+            $textAlign="center"
+            $maxWidth="228px"
+            $theme="neutral"
+            $variation="secondary"
+            $margin="0"
+            $size="xs"
+          >
+            {t(
+              'It seems that the page you are looking for does not exist or cannot be displayed correctly.',
+            )}
+          </Text>
         </Box>
+        <StyledLink
+          href="/"
+          $css={css`
+            display: flex;
+            align-items: center;
+            flex-direction: row;
+            gap: var(--c--globals--spacings--3xs);
+            outline: none;
+            &:focus-visible {
+              outline: 2px solid
+                var(--c--contextuals--content--semantic--neutral--tertiary);
+              border-radius: 1px;
+              outline-offset: var(--c--globals--spacings--st);
+            }
+          `}
+        >
+          <Icon
+            icon={<HomeSvg width={16} height={16} />}
+            $theme="neutral"
+            $variation="tertiary"
+          />
+          <Text
+            $size="sm"
+            $weight={500}
+            $theme="neutral"
+            $variation="tertiary"
+            $margin="0"
+          >
+            {t('Home')}
+          </Text>
+        </StyledLink>
       </Box>
     </>
   );
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <PageLayout withFooter={false}>{page}</PageLayout>;
+  return <StandalonePageLayout>{page}</StandalonePageLayout>;
 };
 
 export default Page;
