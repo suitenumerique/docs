@@ -18,6 +18,10 @@ and this project adheres to
 - ✨(loadtest) add k6 scenarios for the page-open sequence and the heavy
   endpoints
 - ✨(loadtest) add browser canaries measuring what a user feels under load
+- ✨(loadtest) add the grafana dashboards of the load-test campaign, valkey
+  included
+- 🔧(helm) run grafana with those dashboards in the dev cluster, in place of
+  the prometheus console
 - ✨(backend) measure the calls to yhub and to the converters, the database
   pool and the celery queue
 - ✨(backend) add a `LoadTest` configuration and its `loadtest` application,

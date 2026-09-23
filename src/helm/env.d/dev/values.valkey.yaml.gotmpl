@@ -10,3 +10,19 @@ auth:
   # helm test pod that Tilt would run as a plain pod
   aclConfig: |
     user default on >pass ~* &* +@all
+
+# redis_exporter next to the pod, for the Prometheus of the prometheus release
+# (values.prometheus.yaml.gotmpl) and the valkey board of src/loadtest/dashboards.
+# The chart hands the exporter the password of the instance itself. The check
+# of the yhub streams (their length, the pending entries of the worker group)
+# is what the board's streams row reads; on valkey-docs it matches nothing and
+# costs nothing. The ServiceMonitor is only built with the operator's CRDs, i.e.
+# with the prometheus release (`monitoring` in the helmfile environment).
+metrics:
+  enabled: true
+  exporter:
+    extraEnvs:
+      REDIS_EXPORTER_CHECK_STREAMS: "yhub:*"
+  serviceMonitor:
+    enabled: {{ .Values | get "monitoring" false }}
+    interval: 15s

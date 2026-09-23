@@ -84,17 +84,27 @@ k8s_resource('prometheus-operator', objects=[
 ])
 k8s_resource('prometheus-prometheus', objects=[
     'prometheus-prometheus:ingress',
-    # the example console of django-prometheus and the rules feeding it
-    'django-console:configmap',
-    'django:prometheusrule',
 ], resource_deps=['prometheus-operator'], links=[
     'https://docs-prometheus.127.0.0.1.nip.io/targets',
-    'https://docs-prometheus.127.0.0.1.nip.io/consoles/django.html',
+])
+# Grafana, with the dashboards of the load-test campaign
+# (src/loadtest/dashboards) as ConfigMaps its sidecar loads
+k8s_resource('prometheus-grafana', objects=[
+    'prometheus-grafana:ingress',
+    'dashboard-users:configmap',
+    'dashboard-collaboration:configmap',
+    'dashboard-backend:configmap',
+    'dashboard-django:configmap',
+    'dashboard-valkey:configmap',
+], resource_deps=['prometheus-prometheus'], links=[
+    'https://docs-grafana.127.0.0.1.nip.io/dashboards',
 ])
 k8s_resource(new_name='impress-docs-monitors', objects=[
     'impress-docs-backend:servicemonitor',
     'impress-docs-yhub:servicemonitor',
     'impress-docs-yhub-worker:servicemonitor',
+    'valkey-docs:servicemonitor',
+    'valkey-yhub:servicemonitor',
 ], resource_deps=['prometheus-operator'])
 
 # the valkey chart leaves its objects without a namespace, and the CRDs of the
