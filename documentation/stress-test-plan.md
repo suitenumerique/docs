@@ -295,17 +295,32 @@ Rules for the load clients:
 
 ### 0.5 Dashboards
 
-One board per question, built before the first run:
+**Implemented** (2026-09-22): `src/loadtest/dashboards/` (see its README),
+loaded into the Grafana of the dev cluster
+(`src/helm/env.d/dev/values.prometheus.yaml.gotmpl`, Grafana 13, Prometheus
+3.14, in place of the django-prometheus console). Every panel query was
+checked against live data from the backend, yhub, the swarm, k6 and the canary.
 
-- users: `canary_page_open_seconds`, `canary_editor_ready_seconds`,
-  `canary_propagation_seconds`, `canary_failures_total{step}` (from
-  `src/loadtest/canary/`);
-- yhub: sockets and rooms per pod, event-loop lag, auth duration, backend
-  call duration and inflight, pending tasks, task duration, seeds;
-- Django: latency and rate per view, yhub client latency, pool waiting,
-  Celery queue length;
-- stores: Postgres connections and top queries, Valkey memory, commands and
-  evictions.
+- users: `users.json` — the canary (page open, editor ready, keystroke to the
+  other screen, failures by step), plus the swarm's connect and propagation
+  and k6's latency and failures;
+- yhub: `collaboration.json` — sockets and rooms per replica, event-loop lag,
+  auth duration and results, backend calls (duration, in flight, failures),
+  compaction backlog and duration, seeds; then the swarm's view;
+- Django: `backend.json` — requests and latency by view, 5xx, calls to yhub
+  and the converters, the psycopg pool, queries, Celery queue length; then
+  k6's view. `django.json` is the community Django dashboard (17658) for the
+  per-view detail;
+- Valkey: `valkey.json` — the two instances through the operator's
+  `redis_exporter`: memory against `maxmemory`, evictions, commands and their
+  latency, network, CPU, the yhub streams, replication, Sentinel. The streams
+  row needs `--check-streams`, which the operator's exporter spec cannot pass
+  (see the README);
+- Postgres: not here, the exporter belongs to the team running it. The README
+  lists the queries the campaign needs from it.
+
+Pod CPU and memory come from the cluster's cAdvisor, not from these boards:
+the backend exports no process metrics in multiprocess mode.
 
 ## 1. Tooling
 

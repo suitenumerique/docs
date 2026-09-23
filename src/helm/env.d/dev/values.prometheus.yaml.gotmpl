@@ -1,15 +1,11 @@
-# A Prometheus scraping the dev cluster, to see the metrics of the backend and
-# of yhub through the ServiceMonitors the impress chart builds. Trimmed down to
-# the Prometheus Operator, its CRDs and one Prometheus: no Grafana, no
-# Alertmanager, no exporter, and none of the monitors and rules of the
-# kubernetes control plane, which a kind cluster has nothing to show for.
-# UI: https://docs-prometheus.127.0.0.1.nip.io (Status > Targets lists the pods)
-#
-# It also serves the example console of django-prometheus, the graphs of
-# https://docs-prometheus.127.0.0.1.nip.io/consoles/django.html, fed by its
-# recording rules: both are in the prometheus/ directory next to this file.
-# Console templates draw with the classic UI, which Prometheus 3 removed along
-# with the console libraries, so this Prometheus is the last 2.x release.
+# A Prometheus and a Grafana for the dev cluster, to see the metrics of the
+# backend and of yhub through the ServiceMonitors the impress chart builds, and
+# the dashboards of the load-test campaign (src/loadtest/dashboards). Trimmed
+# down to the Prometheus Operator, its CRDs, one Prometheus and one Grafana: no
+# Alertmanager, no exporter, and none of the monitors, rules and dashboards of
+# the kubernetes control plane, which a kind cluster has nothing to show for.
+#   Prometheus: https://docs-prometheus.127.0.0.1.nip.io (Status > Targets)
+#   Grafana:    https://docs-grafana.127.0.0.1.nip.io (admin / admin)
 fullnameOverride: prometheus
 
 defaultRules:
@@ -17,7 +13,25 @@ defaultRules:
 alertmanager:
   enabled: false
 grafana:
-  enabled: false
+  enabled: true
+  adminPassword: admin
+  # none of the kubernetes dashboards of the chart: the boards of the campaign
+  # only, loaded from the ConfigMaps below by the sidecar
+  defaultDashboardsEnabled: false
+  sidecar:
+    dashboards:
+      folderAnnotation: grafana_folder
+      provider:
+        foldersFromFilesStructure: true
+  ingress:
+    enabled: true
+    hosts:
+      - docs-grafana.127.0.0.1.nip.io
+    path: /
+    tls:
+      - secretName: docs-tls
+        hosts:
+          - docs-grafana.127.0.0.1.nip.io
 nodeExporter:
   enabled: false
 kubeStateMetrics:
@@ -57,19 +71,6 @@ prometheus:
   serviceMonitor:
     selfMonitor: false
   prometheusSpec:
-    image:
-      tag: v2.55.1
-    # the console, in the directory the operator points --web.console.templates
-    # at (/etc/prometheus/consoles is a symlink to it in the image). Only the
-    # console libraries of the image are left next to it, which is all it needs
-    volumes:
-      - name: django-console
-        configMap:
-          name: django-console
-    volumeMounts:
-      - name: django-console
-        mountPath: /usr/share/prometheus/consoles
-        readOnly: true
     # every ServiceMonitor and PodMonitor of the namespace, whatever its labels
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
@@ -107,23 +108,25 @@ extraManifests:
       name: docs-metrics
     stringData:
       PROMETHEUS_API_KEY: ThisIsAnExampleMetricsTokenForDevPurposeOnly
-  # The recording rules the console reads, selected like the monitors are
-  - apiVersion: monitoring.coreos.com/v1
-    kind: PrometheusRule
-    metadata:
-      name: django
-    spec:
-      {{- readFile "prometheus/django.rules" | nindent 6 }}
-  # The console itself. The chart passes every extra manifest through helm's
-  # tpl, which would render the actions of the console template: each opening
-  # delimiter is escaped so that tpl writes it back as is (the closing one is
-  # spelled in two halves so that it does not end this action)
+  # The dashboards of the load-test campaign, one ConfigMap each, which the
+  # sidecar of Grafana loads by their label into the folder of the annotation.
+  # The chart passes every extra manifest through helm's tpl, which would
+  # render the legend templates of a dashboard (a label name between double
+  # braces): each opening delimiter is escaped so that tpl writes it back as is
+  # (the closing one is spelled in two halves so that it does not end this
+  # action). This file is a template too, hence no brace in this comment.
   {{- $open := "{{" }}
   {{- $escaped := printf "%s %q %s" $open $open (print "}" "}") }}
+  {{- range $name := list "users" "collaboration" "backend" "django" "valkey" }}
   - apiVersion: v1
     kind: ConfigMap
     metadata:
-      name: django-console
+      name: dashboard-{{ $name }}
+      labels:
+        grafana_dashboard: "1"
+      annotations:
+        grafana_folder: Docs
     data:
-      django.html: |
-        {{- readFile "prometheus/django.html" | replace $open $escaped | nindent 8 }}
+      {{ $name }}.json: |
+        {{- readFile (printf "../../../loadtest/dashboards/%s.json" $name) | replace $open $escaped | nindent 8 }}
+  {{- end }}

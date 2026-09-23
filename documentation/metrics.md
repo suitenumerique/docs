@@ -220,14 +220,12 @@ on with a token in the `docs-metrics` Secret, and `serviceMonitor.enabled`
 builds the three monitors. The targets are at
 https://docs-prometheus.127.0.0.1.nip.io/targets.
 
-That Prometheus also serves the
-[example console of django-prometheus](https://github.com/django-commons/django-prometheus/tree/master/examples/prometheus)
-at https://docs-prometheus.127.0.0.1.nip.io/consoles/django.html: requests per
-second, by view, median and tail latency, model writes and database queries,
-drawn from its recording rules. Both files are in
-`src/helm/env.d/dev/prometheus/`, the rules verbatim and the console with its
-job renamed to `backend`. Console templates draw with the classic UI, which
-Prometheus 3 removed, so the dev Prometheus is the last 2.x release.
+Next to it, a Grafana at https://docs-grafana.127.0.0.1.nip.io (admin /
+admin) with the dashboards of the load-test campaign, from
+`src/loadtest/dashboards/` (see its README): what the users feel, the
+collaboration server, the backend, and the generic
+[Django dashboard](https://grafana.com/grafana/dashboards/17658-django/)
+of the community for the per-view detail of django-prometheus.
 
 ### A Prometheus outside of the cluster
 
