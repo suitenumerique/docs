@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- 🚩(setting) add feature flag on Duplicate with Children #2721
 - 💄(frontend) redesign 404 error standalone page #2696
 - 💄(frontend) redesign 403 access denied page #2720
 - ✨(frontend) duplicate with subdocuments #2584

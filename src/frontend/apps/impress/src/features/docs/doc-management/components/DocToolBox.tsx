@@ -39,6 +39,7 @@ import SharedIcon from '@/icons/shared.svg';
 import StarSlashIcon from '@/icons/star-slash.svg';
 import StarIcon from '@/icons/star.svg';
 import DeleteIcon from '@/icons/trash.svg';
+import { useAnalytics } from '@/libs/Analytics';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 import { isMacOS } from '@/utils/userAgent';
 
@@ -51,6 +52,8 @@ import {
 } from '../api';
 import { useCopyDocLink, useTrans } from '../hooks';
 import { Doc, Role } from '../types';
+
+const DUPLICATE_WITH_CHILDREN_FEATURE_FLAG = 'duplicate_with_children';
 
 const ConfirmationDuplicateModal = dynamic(
   () =>
@@ -154,6 +157,10 @@ const DocToolBoxComponent = ({
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
   const [isModalMoveOpen, setIsModalMoveOpen] = useState(false);
   const { onClick: onButtonClick, ...buttonPropsLeft } = buttonProps || {};
+  const { isFeatureFlagActivated } = useAnalytics();
+  const duplicateWithChildrenAllowed = !!(
+    isFeatureFlagActivated(DUPLICATE_WITH_CHILDREN_FEATURE_FLAG) && doc.numchild
+  );
 
   const editor = useEditorStore((state) => state.editor);
   const wordCountLabel = useMemo(() => {
@@ -301,7 +308,7 @@ const DocToolBoxComponent = ({
       icon: <ContentCopyIcon width={18} height={18} aria-hidden="true" />,
       isDisabled: !doc.abilities.duplicate,
       callback: () => {
-        if (doc.numchild) {
+        if (duplicateWithChildrenAllowed) {
           setIsModalDuplicateOpen(true);
         } else {
           duplicateDoc({
