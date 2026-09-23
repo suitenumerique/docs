@@ -1,5 +1,7 @@
+import { css } from 'styled-components';
+
 import ArrowIcon from '@/assets/icons/ui-kit/enter.svg';
-import { Box, Icon } from '@/components';
+import { Box, Icon, StyledLink } from '@/components';
 import { QuickSearchItemContent } from '@/components/quick-search/';
 import { SimpleDocItem } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
@@ -16,10 +18,22 @@ export const DocSearchItem = ({ doc }: DocSearchItemProps) => {
   const { filter } = useDocSearchFilterStore();
 
   return (
-    <Box
+    <StyledLink
       data-testid={`doc-search-item-${doc.id}`}
-      $width="100%"
       className="--docs--doc-search-item"
+      href={`/docs/${doc.id}`}
+      tabIndex={-1}
+      $css={css`
+        width: 100%;
+        color: inherit;
+      `}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey) {
+          e.stopPropagation();
+          return;
+        }
+        e.preventDefault();
+      }}
     >
       <QuickSearchItemContent
         left={
@@ -42,6 +56,6 @@ export const DocSearchItem = ({ doc }: DocSearchItemProps) => {
           />
         }
       />
-    </Box>
+    </StyledLink>
   );
 };

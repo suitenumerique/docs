@@ -68,6 +68,52 @@ test.describe('Document search', () => {
     ).toBeHidden();
   });
 
+  test('it opens a search result in a new tab with ctrl+click', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'My doc search new tab',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docTitle);
+    await page.goto('/');
+    await page.getByTestId('search-docs-button').click();
+
+    const inputSearch = page.getByPlaceholder('Type the name of a document');
+    await inputSearch.fill(docTitle);
+
+    const result = page
+      .getByRole('listbox')
+      .getByRole('group')
+      .getByRole('option')
+      .getByText(docTitle);
+    await expect(result).toBeVisible();
+
+    const [newPage] = await Promise.all([
+      page.context().waitForEvent('page'),
+      result.click({ modifiers: ['ControlOrMeta'] }),
+    ]);
+
+    await verifyDocName(newPage, docTitle);
+
+    // The search stays open in the first tab
+    await expect(
+      page.getByRole('heading', { name: 'Search for a document' }),
+    ).toBeVisible();
+    await expect(result).toBeVisible();
+    await newPage.close();
+
+    // A plain click still opens the document in the current tab
+    await result.click();
+    await verifyDocName(page, docTitle);
+    await expect(
+      page.getByRole('heading', { name: 'Search for a document' }),
+    ).toBeHidden();
+  });
+
   test('it checks cmd+k modal search interaction', async ({
     page,
     browserName,
