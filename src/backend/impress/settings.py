@@ -211,6 +211,13 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # Allow duplicating a document together with its children
+    DUPLICATE_CHILDREN_FEATURE_ENABLED = values.BooleanValue(
+        default=True,
+        environ_name="DUPLICATE_CHILDREN_FEATURE_ENABLED",
+        environ_prefix=None,
+    )
+
     DATA_UPLOAD_MAX_MEMORY_SIZE = values.IntegerValue(20 * MB)  # 20 MB
 
     REACTIONS_MAX_PER_COMMENT = values.IntegerValue(

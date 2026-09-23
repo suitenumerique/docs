@@ -27,6 +27,11 @@ vi.mock('@/libs/Analytics', () => ({
   }),
 }));
 
+const useConfigMock = vi.fn();
+vi.mock('@/core/config/api', () => ({
+  useConfig: () => useConfigMock(),
+}));
+
 const duplicateDocMock = vi.fn();
 vi.mock('@/docs/doc-management/components/ConfirmationDuplicateModal', () => ({
   useDuplicatedDoc: () => ({
@@ -101,8 +106,11 @@ const openDuplicateOption = async () => {
 };
 
 describe('<DocToolBox /> - duplicate with children', () => {
-  test('opens the confirmation modal when the feature flag is active and the doc has children', async () => {
+  test('opens the confirmation modal when the posthog flag and the backend setting are both active and the doc has children', async () => {
     isFeatureFlagActivatedMock.mockReturnValue(true);
+    useConfigMock.mockReturnValue({
+      data: { DUPLICATE_CHILDREN_FEATURE_ENABLED: true },
+    });
     const doc = createDoc({ numchild: 3 });
 
     render(<DocToolBox doc={doc} isCurrentDoc />, { wrapper: AppWrapper });
@@ -117,8 +125,11 @@ describe('<DocToolBox /> - duplicate with children', () => {
     expect(duplicateDocMock).not.toHaveBeenCalled();
   });
 
-  test('duplicates directly when the feature flag is inactive, even if the doc has children', async () => {
+  test('duplicates directly when the posthog flag is inactive, even if the backend setting is active and the doc has children', async () => {
     isFeatureFlagActivatedMock.mockReturnValue(false);
+    useConfigMock.mockReturnValue({
+      data: { DUPLICATE_CHILDREN_FEATURE_ENABLED: true },
+    });
     const doc = createDoc({ numchild: 3 });
 
     render(<DocToolBox doc={doc} isCurrentDoc />, { wrapper: AppWrapper });
@@ -136,8 +147,33 @@ describe('<DocToolBox /> - duplicate with children', () => {
     ).not.toBeInTheDocument();
   });
 
-  test('duplicates directly when the feature flag is active but the doc has no children', async () => {
+  test('duplicates directly when the backend setting is inactive, even if the posthog flag is active and the doc has children', async () => {
     isFeatureFlagActivatedMock.mockReturnValue(true);
+    useConfigMock.mockReturnValue({
+      data: { DUPLICATE_CHILDREN_FEATURE_ENABLED: false },
+    });
+    const doc = createDoc({ numchild: 3 });
+
+    render(<DocToolBox doc={doc} isCurrentDoc />, { wrapper: AppWrapper });
+
+    await openDuplicateOption();
+
+    await waitFor(() => {
+      expect(duplicateDocMock).toHaveBeenCalledWith({
+        docId: doc.id,
+        canSave: doc.abilities.partial_update,
+      });
+    });
+    expect(
+      screen.queryByTestId('confirmation-duplicate-modal'),
+    ).not.toBeInTheDocument();
+  });
+
+  test('duplicates directly when both flags are active but the doc has no children', async () => {
+    isFeatureFlagActivatedMock.mockReturnValue(true);
+    useConfigMock.mockReturnValue({
+      data: { DUPLICATE_CHILDREN_FEATURE_ENABLED: true },
+    });
     const doc = createDoc({ numchild: 0 });
 
     render(<DocToolBox doc={doc} isCurrentDoc />, { wrapper: AppWrapper });

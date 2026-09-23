@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Box } from '@/components/Box';
 import { Text } from '@/components/Text';
+import { useConfig } from '@/core/config/api';
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { getWordCount } from '@/docs/doc-editor/utils';
 import { printDocumentWithStyles } from '@/docs/doc-export/utils_print';
@@ -158,8 +159,11 @@ const DocToolBoxComponent = ({
   const [isModalMoveOpen, setIsModalMoveOpen] = useState(false);
   const { onClick: onButtonClick, ...buttonPropsLeft } = buttonProps || {};
   const { isFeatureFlagActivated } = useAnalytics();
+  const { data: conf } = useConfig();
   const duplicateWithChildrenAllowed = !!(
-    isFeatureFlagActivated(DUPLICATE_WITH_CHILDREN_FEATURE_FLAG) && doc.numchild
+    isFeatureFlagActivated(DUPLICATE_WITH_CHILDREN_FEATURE_FLAG) &&
+    conf?.DUPLICATE_CHILDREN_FEATURE_ENABLED &&
+    doc.numchild
   );
 
   const editor = useEditorStore((state) => state.editor);

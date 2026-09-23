@@ -1429,7 +1429,10 @@ class DocumentViewSet(
         if `with_descendants` is set to true.
         """
         with_accesses = serializer.validated_data.get("with_accesses", False)
-        with_descendants = serializer.validated_data.get("with_descendants", False)
+        with_descendants = (
+            serializer.validated_data.get("with_descendants", False)
+            and settings.DUPLICATE_CHILDREN_FEATURE_ENABLED
+        )
 
         user_role = document_to_duplicate.get_role(user)
         is_owner_or_admin = user_role in models.PRIVILEGED_ROLES
@@ -2977,6 +2980,7 @@ class ConfigView(drf.views.APIView):
             "CONVERSION_FILE_MAX_SIZE",
             "CONVERSION_UPLOAD_ENABLED",
             "DOCUMENT_IMAGE_MAX_SIZE",
+            "DUPLICATE_CHILDREN_FEATURE_ENABLED",
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",

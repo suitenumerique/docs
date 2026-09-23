@@ -810,6 +810,55 @@ def test_api_documents_duplicate_without_descendants_should_not_duplicate_childr
     assert duplicated_root.get_children().count() == 0
 
 
+def test_api_documents_duplicate_with_descendants_disabled_by_feature_flag(settings):
+    """
+    When DUPLICATE_CHILDREN_FEATURE_ENABLED is off, requesting with_descendants=True
+    should be ignored server-side and children should not be duplicated, regardless
+    of what the client sends.
+    """
+    settings.DUPLICATE_CHILDREN_FEATURE_ENABLED = False
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create document tree
+    root = factories.DocumentFactory(
+        users=[(user, "owner")],
+        title="Root",
+    )
+    # child
+    factories.DocumentFactory(
+        parent=root,
+        title="Child",
+    )
+
+    initial_count = models.Document.objects.count()
+    assert initial_count == 2
+
+    # Duplicate requesting descendants while the feature is disabled
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{root.id!s}/duplicate/",
+            {"with_descendants": True},
+            format="json",
+        )
+
+    assert response.status_code == 201
+    duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    mock_capture.assert_called_once_with(
+        "doc_duplicated",
+        user,
+        {"duplicated_from": str(root.id)},
+        document=duplicated_root,
+    )
+
+    # Only root should be duplicated, not children
+    assert models.Document.objects.count() == 3
+    assert duplicated_root.get_children().count() == 0
+
+
 def test_api_documents_duplicate_with_descendants_preserves_link_configuration():
     """
     Duplicating with descendants should preserve link configuration (link_reach, link_role)

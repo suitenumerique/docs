@@ -56,6 +56,7 @@ export interface ConfigResponse {
   CONVERSION_FILE_MAX_SIZE: number;
   CONVERSION_UPLOAD_ENABLED?: boolean;
   DOCUMENT_IMAGE_MAX_SIZE?: number;
+  DUPLICATE_CHILDREN_FEATURE_ENABLED?: boolean;
   ENVIRONMENT: string;
   FRONTEND_CSS_URL?: string;
   FRONTEND_HOMEPAGE_FEATURE_ENABLED?: boolean;
