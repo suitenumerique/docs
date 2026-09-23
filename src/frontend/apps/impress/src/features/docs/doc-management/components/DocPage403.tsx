@@ -1,19 +1,15 @@
-import { Button } from '@gouvfr-lasuite/ui-components';
 import Head from 'next/head';
-import Image from 'next/image';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
+import { css } from 'styled-components';
 
-import img403 from '@/assets/icons/icon-403.png';
+import Error403Svg from '@/assets/icons/error-403.svg';
+import BubbleTextSvg from '@/assets/icons/ui-kit/bubble-text.svg';
 import { Box, Icon, Loading, StyledLink, Text } from '@/components';
 import { ButtonAccessRequest } from '@/docs/doc-share';
 import { useDocAccessRequests } from '@/docs/doc-share/api/useDocAccessRequest';
 import { useSkeletonStore } from '@/features/skeletons';
-
-const StyledButton = styled(Button)`
-  width: fit-content;
-`;
+import HomeSvg from '@/icons/house-rounded.svg';
 
 interface DocProps {
   id: string;
@@ -40,6 +36,7 @@ export const DocPage403 = ({ id }: DocProps) => {
   const hasRequested = !!requests?.results.find(
     (request) => request.document === id,
   );
+  const isSubDocument = docAccessError?.status === 404;
 
   if (isLoadingRequest) {
     return <Loading />;
@@ -61,55 +58,93 @@ export const DocPage403 = ({ id }: DocProps) => {
       <Box
         $align="center"
         $margin="auto"
-        $gap="1rem"
-        $padding={{ bottom: '2rem' }}
+        $gap="base"
+        $padding={{ horizontal: 'base', bottom: 'lg' }}
+        className="--docs--error-403"
       >
-        <Image
-          src={img403}
-          alt={t('Image 403')}
-          width={300}
-          height={300}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-          }}
-        />
-
-        <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
+        <Box $align="center" $gap="xxxs">
+          <Error403Svg aria-hidden="true" />
+          <Text
+            as="h1"
+            $size="md"
+            $weight="bold"
+            $textAlign="center"
+            $margin="0"
+            $theme="neutral"
+            $variation="primary"
+          >
+            {t('Access denied')}
+          </Text>
+          <Text
+            as="p"
+            $textAlign="center"
+            $maxWidth="228px"
+            $theme="neutral"
+            $variation="secondary"
+            $margin="0"
+            $size="xs"
+          >
             {hasRequested
               ? t('Your access request for this document is pending.')
               : t('Insufficient access rights to view the document.')}
           </Text>
-
-          {docAccessError?.status === 404 && (
+          {isSubDocument && (
             <Text
               as="p"
-              $maxWidth="320px"
               $textAlign="center"
-              $size="sm"
-              $margin={{ top: '0' }}
+              $maxWidth="228px"
+              $theme="neutral"
+              $variation="secondary"
+              $margin="0"
+              $size="xs"
             >
               {t(
                 "You're currently viewing a sub-document. To gain access, please request permission from the main document.",
               )}
             </Text>
           )}
-
-          <Box $direction="row" $gap="0.7rem">
-            <StyledLink href="/">
-              <StyledButton
-                icon={<Icon iconName="house" $withThemeInherited />}
-                color="brand"
-                variant="secondary"
-              >
-                {t('Home')}
-              </StyledButton>
-            </StyledLink>
-            {docAccessError?.status !== 404 && (
-              <ButtonAccessRequest docId={id} />
-            )}
-          </Box>
+        </Box>
+        <Box $direction="row" $align="center" $gap="base">
+          <StyledLink
+            href="/"
+            $css={css`
+              display: flex;
+              align-items: center;
+              flex-direction: row;
+              gap: var(--c--globals--spacings--3xs);
+              outline: none;
+              &:focus-visible {
+                outline: 2px solid
+                  var(--c--contextuals--content--semantic--neutral--tertiary);
+                border-radius: 1px;
+                outline-offset: var(--c--globals--spacings--st);
+              }
+            `}
+          >
+            <Icon
+              icon={<HomeSvg width={16} height={16} />}
+              $theme="neutral"
+              $variation="tertiary"
+            />
+            <Text
+              $size="sm"
+              $weight={500}
+              $theme="neutral"
+              $variation="tertiary"
+              $margin="0"
+            >
+              {t('Home')}
+            </Text>
+          </StyledLink>
+          {!isSubDocument && (
+            <ButtonAccessRequest
+              docId={id}
+              color="brand"
+              variant="tertiary"
+              size="small"
+              icon={<BubbleTextSvg width={16} height={16} aria-hidden="true" />}
+            />
+          )}
         </Box>
       </Box>
     </>

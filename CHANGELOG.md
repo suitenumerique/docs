@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - 💄(frontend) redesign 404 error standalone page #2696
+- 💄(frontend) redesign 403 access denied page #2720
 - ✨(frontend) duplicate with subdocuments #2584
 - ✨(helm) allow disallowing search engine indexing per instance #2694
 - 🐛(frontend) reduce PostHog volume from web vitals and opt_in spam #2701
