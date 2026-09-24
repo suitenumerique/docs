@@ -14,10 +14,6 @@ import {
   IconOptions,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import {
-  usePublicKeyRegistry,
-  useUserEncryption,
-} from '@/docs/doc-collaboration';
 import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import { useVaultClient } from '@/docs/doc-collaboration/vault';
 import Export from '@/docs/doc-export/';
@@ -66,7 +62,6 @@ export const DocToolBox = ({
   const { isChild, isTopRoot } = useDocUtils(doc);
 
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const { encryptionSettings } = useUserEncryption();
   const { isEnabled: isEncryptionEnabled } = useVaultClient();
 
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
@@ -76,11 +71,6 @@ export const DocToolBox = ({
     useState(false);
   const selectHistoryModal = useModal();
   const modalShare = useModal();
-
-  const { hasMismatches: hasKeyWarnings } = usePublicKeyRegistry(
-    undefined,
-    encryptionSettings?.userId,
-  );
 
   const { isSmallMobile, isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
@@ -243,7 +233,6 @@ export const DocToolBox = ({
           open={modalShare.open}
           isHidden={isSmallMobile}
           displayNbAccess={doc.abilities.accesses_view}
-          hasKeyWarning={hasKeyWarnings}
         />
 
         {!isSmallMobile && ModalExport && (

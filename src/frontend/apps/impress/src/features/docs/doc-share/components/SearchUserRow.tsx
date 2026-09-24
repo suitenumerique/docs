@@ -1,4 +1,6 @@
-import { Box, Icon, Text } from '@/components';
+import { useTranslation } from 'react-i18next';
+
+import { Box, BoxButton, Icon, Text } from '@/components';
 import {
   QuickSearchItemContent,
   QuickSearchItemContentProps,
@@ -11,11 +13,12 @@ type Props = {
   alwaysShowRight?: boolean;
   right?: QuickSearchItemContentProps['right'];
   isInvitation?: boolean;
-  /** A short status ("Verify key", "No encryption") shown as an icon with the text as tooltip. */
+  /** A short status ("No encryption") shown as an icon with the text as tooltip. */
   suffix?: string;
-  /** Material icon for the suffix; the shield-with-question mark by default. */
+  /** Material icon for the suffix; the crossed shield by default. */
   suffixIcon?: string;
-  onSuffixClick?: () => void;
+  /** Makes the avatar a button (the person's encryption identity). */
+  onAvatarClick?: () => void;
 };
 
 export const SearchUserRow = ({
@@ -24,9 +27,10 @@ export const SearchUserRow = ({
   alwaysShowRight = false,
   isInvitation = false,
   suffix,
-  suffixIcon = 'gpp_maybe',
-  onSuffixClick,
+  suffixIcon = 'gpp_bad',
+  onAvatarClick,
 }: Props) => {
+  const { t } = useTranslation();
   const hasFullName = !!user.full_name;
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
 
@@ -41,10 +45,31 @@ export const SearchUserRow = ({
           $gap={spacingsTokens['xs']}
           className="--docs--search-user-row"
         >
-          <UserAvatar
-            fullName={user.full_name || user.email}
-            background={isInvitation ? colorsTokens['gray-400'] : undefined}
-          />
+          {onAvatarClick ? (
+            <BoxButton
+              aria-label={t('Verify the identity of {{name}}', {
+                name: user.full_name || user.email,
+              })}
+              title={t('Verify the identity of {{name}}', {
+                name: user.full_name || user.email,
+              })}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onAvatarClick();
+              }}
+            >
+              <UserAvatar
+                fullName={user.full_name || user.email}
+                background={isInvitation ? colorsTokens['gray-400'] : undefined}
+              />
+            </BoxButton>
+          ) : (
+            <UserAvatar
+              fullName={user.full_name || user.email}
+              background={isInvitation ? colorsTokens['gray-400'] : undefined}
+            />
+          )}
           <Box $direction="column">
             <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
               <Text $size="sm" $weight="500">
@@ -54,19 +79,10 @@ export const SearchUserRow = ({
                 <Icon
                   iconName={suffixIcon}
                   $size="sm"
-                  $theme={onSuffixClick ? 'warning' : 'neutral'}
-                  $variation={onSuffixClick ? undefined : 'tertiary'}
+                  $theme="neutral"
+                  $variation="tertiary"
                   aria-label={suffix}
                   title={suffix}
-                  {...(onSuffixClick && {
-                    onClick: (e: React.MouseEvent) => {
-                      e.stopPropagation();
-                      onSuffixClick();
-                    },
-                    role: 'button',
-                    tabIndex: 0,
-                    style: { cursor: 'pointer' },
-                  })}
                 />
               )}
             </Box>

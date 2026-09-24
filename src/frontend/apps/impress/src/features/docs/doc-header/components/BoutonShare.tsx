@@ -10,7 +10,6 @@ import { Doc } from '@/docs/doc-management';
 interface BoutonShareProps {
   displayNbAccess: boolean;
   doc: Doc;
-  hasKeyWarning?: boolean;
   isDisabled?: boolean;
   isHidden?: boolean;
   open: () => void;
@@ -19,7 +18,6 @@ interface BoutonShareProps {
 export const BoutonShare = ({
   displayNbAccess,
   doc,
-  hasKeyWarning,
   isDisabled,
   isHidden,
   open,
@@ -60,10 +58,9 @@ export const BoutonShare = ({
         <Button
           aria-label={t('Share button')}
           variant="secondary"
-          color={hasKeyWarning ? 'warning' : undefined}
           icon={
             <Icon
-              iconName={hasKeyWarning ? 'warning' : 'group'}
+              iconName="group"
               $color="inherit"
               variant="filled"
               disabled={isDisabled}
@@ -81,11 +78,8 @@ export const BoutonShare = ({
 
   return (
     <Button
-      color={hasKeyWarning ? 'warning' : 'brand'}
+      color="brand"
       variant="tertiary"
-      icon={
-        hasKeyWarning ? <Icon iconName="warning" $color="inherit" /> : undefined
-      }
       onClick={open}
       size="medium"
       disabled={isDisabled}

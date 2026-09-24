@@ -7,10 +7,8 @@ import { css } from 'styled-components';
 import { Box, Icon, StyledLink, Text } from '@/components';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
-import { usePublicKeyRegistry } from '@/docs/doc-collaboration';
 import { Doc, LinkReach, SimpleDocItem } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
-import { useAuth } from '@/features/auth';
 import { useDate } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
@@ -35,11 +33,6 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const { flexLeft, flexRight } = useResponsiveDocGrid();
   const { spacingsTokens } = useCunninghamTheme();
   const shareModal = useModal();
-  const { user } = useAuth();
-  const { hasMismatches: hasKeyWarning } = usePublicKeyRegistry(
-    undefined,
-    user?.id,
-  );
   const isPublic = doc.link_reach === LinkReach.PUBLIC;
   const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
   const isShared = isPublic || isAuthenticated;
@@ -188,7 +181,6 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                 doc={doc}
                 handleClick={handleShareClick}
                 disabled={isInTrashbin}
-                hasKeyWarning={hasKeyWarning}
               />
             )}
             {isInTrashbin ? (

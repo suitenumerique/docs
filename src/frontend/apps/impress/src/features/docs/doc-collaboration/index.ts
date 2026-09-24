@@ -16,8 +16,6 @@ export {
   UserEncryptionProvider,
   useUserEncryption,
 } from './UserEncryptionProvider';
-export { useKeyFingerprint } from './hook/useKeyFingerprint';
-export { usePublicKeyRegistry } from './hook/usePublicKeyRegistry';
 export {
   exportPrivateKeyAsJwk,
   importPrivateKeyFromJwk,

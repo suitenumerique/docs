@@ -1026,24 +1026,17 @@
       "The document owner is encrypting this document. Please wait.": "Le propriétaire du document est en train de le chiffrer. Veuillez patienter.",
       "The document owner is removing encryption from this document. Please wait.": "Le propriétaire du document est en train d'en retirer le chiffrement. Veuillez patienter.",
       "This document was encrypted with a different key": "Ce document a été chiffré avec une autre clé",
-      "Verify key": "Vérifier la clé",
       "No encryption": "Pas de chiffrement",
       "Encryption required": "Chiffrement requis",
       "This person has not enabled encryption yet, so the document cannot be shared with them. Ask them to enable encryption first.": "Cette personne n'a pas encore activé le chiffrement, le document ne peut donc pas être partagé avec elle. Demandez-lui d'activer le chiffrement d'abord.",
       "Understood": "Compris",
-      "Verify encryption key": "Vérifier la clé de chiffrement",
-      "This person's encryption key has changed. Verify it before continuing.": "La clé de chiffrement de cette personne a changé. Vérifiez-la avant de continuer.",
-      "We recommend verifying with this person directly (for example on a call) that they really changed their encryption key before proceeding.": "Nous vous recommandons de vérifier directement avec cette personne (par exemple lors d'un appel) qu'elle a bien changé sa clé de chiffrement avant de continuer.",
-      "Don't trust": "Ne pas faire confiance",
-      "Trust": "Faire confiance",
-      "Previously known:": "Clé connue :",
-      "Current key:": "Clé actuelle :",
       "Action needed": "Action requise",
       "Waiting for them to enable encryption. You will be able to accept them once they have.": "En attente de l'activation du chiffrement par cette personne. Vous pourrez l'accepter une fois que ce sera fait.",
       "Accept": "Accepter",
       "Accepting…": "Acceptation…",
       "Pending encryption": "Chiffrement en attente",
-      "Encryption settings": "Paramètres de chiffrement"
+      "Encryption settings": "Paramètres de chiffrement",
+      "Verify the identity of {{name}}": "Vérifier l'identité de {{name}}"
     }
   },
   "it": {

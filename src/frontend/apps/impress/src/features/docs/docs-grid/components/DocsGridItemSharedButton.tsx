@@ -8,13 +8,11 @@ type Props = {
   doc: Doc;
   handleClick: () => void;
   disabled: boolean;
-  hasKeyWarning?: boolean;
 };
 export const DocsGridItemSharedButton = ({
   doc,
   handleClick,
   disabled,
-  hasKeyWarning,
 }: Props) => {
   const { t } = useTranslation();
   const sharedCount = doc.nb_accesses_direct;
@@ -46,14 +44,14 @@ export const DocsGridItemSharedButton = ({
           event.stopPropagation();
           handleClick();
         }}
-        color={hasKeyWarning ? 'warning' : 'brand'}
+        color="brand"
         variant="secondary"
         size="nano"
         icon={
           <Icon
-            $theme={hasKeyWarning ? 'warning' : 'brand'}
+            $theme="brand"
             $variation="secondary"
-            iconName={hasKeyWarning ? 'warning' : 'group'}
+            iconName="group"
             disabled={disabled}
             variant="filled"
           />

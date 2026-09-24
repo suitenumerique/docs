@@ -19,11 +19,13 @@ import {
 } from '@/components/quick-search/';
 import {
   useDocumentEncryption,
-  usePublicKeyRegistry,
   useUserEncryption,
 } from '@/docs/doc-collaboration';
 import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
-import type { PublicKeyMismatch } from '@/docs/doc-collaboration/hook/usePublicKeyRegistry';
+import {
+  fetchRegisteredKeys,
+  useVaultClient,
+} from '@/docs/doc-collaboration/vault';
 import { Doc } from '@/docs/doc-management';
 import { User, useAuth } from '@/features/auth';
 import {
@@ -54,7 +56,6 @@ import {
 } from './DocShareInvitation';
 import { QuickSearchGroupMember } from './DocShareMember';
 import { DocShareModalFooter } from './DocShareModalFooter';
-import { ModalKeyMismatch } from './ModalKeyMismatch';
 import { PendingEncryptionSection } from './PendingEncryptionSection';
 
 const ShareModalStyle = createGlobalStyle`
@@ -109,15 +110,6 @@ export const DocShareModal = ({
     needsDerivation && doc.is_encrypted
       ? encryptionError || documentEncryptionError
       : null;
-
-  const { mismatches: keyMismatches, acceptNewKey } = usePublicKeyRegistry(
-    undefined,
-    user?.suite_user_id ?? undefined,
-  );
-  const keyMismatchUserIds = useMemo(
-    () => new Set(keyMismatches.map((m) => m.userId)),
-    [keyMismatches],
-  );
 
   /**
    * The modal content height is calculated based on the viewport height.
@@ -395,25 +387,16 @@ export const DocShareModal = ({
                       <Box $padding={{ horizontal: 'base' }}>
                         <QuickSearchGroupAccessRequest doc={doc} />
                         <QuickSearchGroupInvitation doc={doc} />
-                        <QuickSearchGroupMember
-                          doc={doc}
-                          keyMismatchUserIds={keyMismatchUserIds}
-                          keyMismatches={keyMismatches}
-                          acceptNewKey={acceptNewKey}
-                        />
+                        <QuickSearchGroupMember doc={doc} />
                       </Box>
                     )}
 
                     {!showMemberSection && canShare && (
                       <QuickSearchInviteInputSection
-                        doc={doc}
                         searchUsersRawData={searchUsersQuery.data}
                         onSelect={onSelect}
                         userQuery={userQuery}
                         isEncrypted={doc.is_encrypted}
-                        keyMismatchUserIds={keyMismatchUserIds}
-                        keyMismatches={keyMismatches}
-                        acceptNewKey={acceptNewKey}
                       />
                     )}
                   </QuickSearch>
@@ -434,29 +417,69 @@ export const DocShareModal = ({
 };
 
 interface QuickSearchInviteInputSectionProps {
-  doc: Doc;
   onSelect: (usr: User) => void;
   searchUsersRawData: User[] | undefined;
   userQuery: string;
   isEncrypted: boolean;
-  keyMismatchUserIds?: Set<string>;
-  keyMismatches?: PublicKeyMismatch[];
-  acceptNewKey?: (userId: string) => Promise<void>;
 }
 
 const QuickSearchInviteInputSection = ({
-  doc,
   onSelect,
   searchUsersRawData,
   userQuery,
   isEncrypted,
-  keyMismatchUserIds,
-  keyMismatches,
-  acceptNewKey,
 }: QuickSearchInviteInputSectionProps) => {
   const { t } = useTranslation();
+  const { client: vaultClient } = useVaultClient();
   const [showNoKeyModal, setShowNoKeyModal] = useState(false);
-  const [mismatchUser, setMismatchUser] = useState<User | null>(null);
+  // Subs of the search results that hold a registered encryption key, from
+  // the directory; null until known (or when the lookup failed), in which
+  // case nobody is refused here and the invitation itself reports.
+  const [registeredSubs, setRegisteredSubs] = useState<Set<string> | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!isEncrypted || !vaultClient) {
+      setRegisteredSubs(null);
+      return;
+    }
+
+    const subs = (searchUsersRawData ?? [])
+      .map((user) => user.suite_user_id)
+      .filter((sub): sub is string => !!sub);
+
+    if (subs.length === 0) {
+      setRegisteredSubs(new Set());
+      return;
+    }
+
+    let cancelled = false;
+    setRegisteredSubs(null);
+    fetchRegisteredKeys(vaultClient, subs)
+      .then(({ publicKeys }) => {
+        if (!cancelled) {
+          setRegisteredSubs(new Set(Object.keys(publicKeys)));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRegisteredSubs(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEncrypted, vaultClient, searchUsersRawData]);
+
+  const hasNoKey = useCallback(
+    (user: User) =>
+      isEncrypted &&
+      (!user.suite_user_id ||
+        (registeredSubs !== null && !registeredSubs.has(user.suite_user_id))),
+    [isEncrypted, registeredSubs],
+  );
 
   const showEncryptedInviteWarning = useMemo(() => {
     const users = searchUsersRawData || [];
@@ -469,21 +492,13 @@ const QuickSearchInviteInputSection = ({
 
   const handleSelect = useCallback(
     (user: User) => {
-      if (
-        isEncrypted &&
-        (!user.suite_user_id ||
-          !doc.accesses_versions_per_user?.[user.suite_user_id])
-      ) {
+      if (hasNoKey(user)) {
         setShowNoKeyModal(true);
-        return;
-      }
-      if (user.suite_user_id && keyMismatchUserIds?.has(user.suite_user_id)) {
-        setMismatchUser(user);
         return;
       }
       onSelect(user);
     },
-    [isEncrypted, doc.accesses_versions_per_user, keyMismatchUserIds, onSelect],
+    [hasNoKey, onSelect],
   );
 
   const searchUserData: QuickSearchData<User> = useMemo(() => {
@@ -518,21 +533,28 @@ const QuickSearchInviteInputSection = ({
     };
   }, [handleSelect, searchUsersRawData, t, userQuery, isEncrypted]);
 
+  // On an encrypted document, a person's avatar opens their encryption
+  // identity (fingerprint, trust decision), registered or not.
+  const identityOf = (user: User): (() => void) | undefined => {
+    const sub = user.suite_user_id;
+    if (!isEncrypted || !vaultClient || !sub) {
+      return undefined;
+    }
+    return () =>
+      vaultClient.openRecipientProfile(sub, {
+        email: user.email,
+        name: user.full_name || undefined,
+      });
+  };
+
   const getUserSuffix = useCallback(
     (user: User): string | undefined => {
-      if (user.suite_user_id && keyMismatchUserIds?.has(user.suite_user_id)) {
-        return t('Verify key');
-      }
-      if (
-        isEncrypted &&
-        (!user.suite_user_id ||
-          !doc.accesses_versions_per_user?.[user.suite_user_id])
-      ) {
+      if (hasNoKey(user)) {
         return t('No encryption');
       }
       return undefined;
     },
-    [isEncrypted, doc.accesses_versions_per_user, keyMismatchUserIds, t],
+    [hasNoKey, t],
   );
 
   return (
@@ -547,11 +569,7 @@ const QuickSearchInviteInputSection = ({
           <DocShareModalInviteUserRow
             user={user}
             suffix={getUserSuffix(user)}
-            suffixIcon={
-              user.suite_user_id && keyMismatchUserIds?.has(user.suite_user_id)
-                ? 'gpp_maybe'
-                : 'gpp_bad'
-            }
+            onAvatarClick={identityOf(user)}
           />
         )}
       />
@@ -588,31 +606,6 @@ const QuickSearchInviteInputSection = ({
           />
         </Modal>
       )}
-      {mismatchUser &&
-        (() => {
-          const mismatch = keyMismatches?.find(
-            (m) => m.userId === mismatchUser.suite_user_id,
-          );
-          return (
-            <ModalKeyMismatch
-              onClose={() => setMismatchUser(null)}
-              onAcceptKey={
-                acceptNewKey
-                  ? () => {
-                      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                      void acceptNewKey(mismatchUser.suite_user_id!).then(
-                        () => {
-                          onSelect(mismatchUser);
-                        },
-                      );
-                    }
-                  : undefined
-              }
-              knownKey={mismatch?.knownKey}
-              currentKey={mismatch?.currentKey}
-            />
-          );
-        })()}
     </Box>
   );
 };

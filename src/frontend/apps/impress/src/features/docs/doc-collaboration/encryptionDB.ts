@@ -6,7 +6,6 @@ const DB_VERSION = 1;
 // Store names
 export const STORE_PRIVATE_KEY = 'privateKey';
 export const STORE_PUBLIC_KEY = 'publicKey';
-export const STORE_KNOWN_PUBLIC_KEYS = 'knownPublicKeys';
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
@@ -23,9 +22,6 @@ export function getEncryptionDB(): Promise<IDBPDatabase> {
         }
         if (!db.objectStoreNames.contains(STORE_PUBLIC_KEY)) {
           db.createObjectStore(STORE_PUBLIC_KEY);
-        }
-        if (!db.objectStoreNames.contains(STORE_KNOWN_PUBLIC_KEYS)) {
-          db.createObjectStore(STORE_KNOWN_PUBLIC_KEYS);
         }
       },
     });

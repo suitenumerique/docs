@@ -2,21 +2,21 @@ import {
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box } from '@/components';
 import { QuickSearchData } from '@/components/quick-search';
 import { QuickSearchGroup } from '@/components/quick-search/QuickSearchGroup';
 import { useCunninghamTheme } from '@/cunningham';
-import { PublicKeyMismatch } from '@/docs/doc-collaboration/hook/usePublicKeyRegistry';
+import { useVaultClient } from '@/docs/doc-collaboration/vault';
 import { Access, Doc, Role } from '@/docs/doc-management/';
+import { useAuth } from '@/features/auth';
 
 import { useDocAccesses, useUpdateDocAccess } from '../api';
 import { useWhoAmI } from '../hooks/';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
-import { ModalKeyMismatch } from './ModalKeyMismatch';
 import { SearchUserRow } from './SearchUserRow';
 
 type Props = {
@@ -25,7 +25,7 @@ type Props = {
   isInherited?: boolean;
   suffix?: string;
   suffixIcon?: string;
-  onSuffixClick?: () => void;
+  onAvatarClick?: () => void;
 };
 export const DocShareMemberItem = ({
   doc,
@@ -33,7 +33,7 @@ export const DocShareMemberItem = ({
   isInherited = false,
   suffix,
   suffixIcon,
-  onSuffixClick,
+  onAvatarClick,
 }: Props) => {
   const { t } = useTranslation();
   const { isLastOwner } = useWhoAmI(access);
@@ -79,7 +79,7 @@ export const DocShareMemberItem = ({
         user={access.user}
         suffix={suffix}
         suffixIcon={suffixIcon}
-        onSuffixClick={onSuffixClick}
+        onAvatarClick={onAvatarClick}
         right={
           <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
             <DocRoleDropdown
@@ -104,19 +104,14 @@ export const DocShareMemberItem = ({
 
 interface QuickSearchGroupMemberProps {
   doc: Doc;
-  keyMismatchUserIds?: Set<string>;
-  keyMismatches?: PublicKeyMismatch[];
-  acceptNewKey?: (userId: string) => Promise<void>;
 }
 
 export const QuickSearchGroupMember = ({
   doc,
-  keyMismatchUserIds,
-  keyMismatches,
-  acceptNewKey,
 }: QuickSearchGroupMemberProps) => {
   const { t } = useTranslation();
-  const [mismatchUserId, setMismatchUserId] = useState<string | null>(null);
+  const { user: me } = useAuth();
+  const { client: vaultClient } = useVaultClient();
   const membersQuery = useDocAccesses({
     docId: doc.id,
   });
@@ -144,52 +139,31 @@ export const QuickSearchGroupMember = ({
         group={membersData}
         renderElement={(access) => {
           const uid = access.user.suite_user_id;
-          const hasMismatch = uid ? keyMismatchUserIds?.has(uid) : false;
           const hasNoEncryptionKey =
             doc.is_encrypted &&
             (!uid || !doc.accesses_versions_per_user?.[uid]);
 
-          let suffix: string | undefined;
-          let suffixIcon: string | undefined;
-          if (hasMismatch) {
-            suffix = t('Verify key');
-            suffixIcon = 'gpp_maybe';
-          } else if (hasNoEncryptionKey) {
-            suffix = t('No encryption');
-            suffixIcon = 'gpp_bad';
-          }
+          // On an encrypted document, a member's avatar opens their
+          // encryption identity (fingerprint, trust decision); not one's own.
+          const identityOf =
+            doc.is_encrypted && vaultClient && uid && uid !== me?.suite_user_id
+              ? () =>
+                  vaultClient.openRecipientProfile(uid, {
+                    email: access.user.email,
+                    name: access.user.full_name || undefined,
+                  })
+              : undefined;
 
           return (
             <DocShareMemberItem
               doc={doc}
               access={access}
-              suffix={suffix}
-              suffixIcon={suffixIcon}
-              onSuffixClick={
-                hasMismatch && uid ? () => setMismatchUserId(uid) : undefined
-              }
+              suffix={hasNoEncryptionKey ? t('No encryption') : undefined}
+              onAvatarClick={identityOf}
             />
           );
         }}
       />
-      {mismatchUserId &&
-        (() => {
-          const mismatch = keyMismatches?.find(
-            (m) => m.userId === mismatchUserId,
-          );
-          return (
-            <ModalKeyMismatch
-              onClose={() => setMismatchUserId(null)}
-              onAcceptKey={
-                acceptNewKey
-                  ? () => void acceptNewKey(mismatchUserId)
-                  : undefined
-              }
-              knownKey={mismatch?.knownKey}
-              currentKey={mismatch?.currentKey}
-            />
-          );
-        })()}
     </Box>
   );
 };

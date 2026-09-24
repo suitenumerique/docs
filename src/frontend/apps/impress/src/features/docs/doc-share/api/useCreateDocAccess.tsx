@@ -71,6 +71,11 @@ export function useCreateDocAccess() {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC_ACCESSES],
       });
+      // The document carries the per-member key versions the share dialog
+      // reads, so it has to come back with the new member in it.
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_DOC],
+      });
 
       // Broadcast to every user connected to the document
       broadcast(`${KEY_DOC}-${variable.docId}`);
