@@ -12,7 +12,6 @@ import {
   DropdownMenuOption,
   Icon,
   IconOptions,
-  Text,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
@@ -239,22 +238,6 @@ export const DocToolBox = ({
         $margin={{ left: 'auto' }}
         $gap={spacingsTokens['2xs']}
       >
-        {doc.is_encrypted && (
-          <Box
-            $direction="row"
-            $align="center"
-            $gap="4px"
-            $css={css`
-              margin-right: 5px;
-            `}
-          >
-            <Icon iconName="verified_user" $size="sm" $theme="brand" />
-            <Text $size="xs" $weight="500" $theme="brand">
-              {t('Encrypted')}
-            </Text>
-          </Box>
-        )}
-
         <BoutonShare
           doc={doc}
           open={modalShare.open}

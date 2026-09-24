@@ -1,8 +1,9 @@
 import { t } from 'i18next';
 import React from 'react';
 
-import { Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 import { useConfig } from '@/core';
+import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
   Role,
@@ -22,6 +23,7 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
   const { isEditable } = useIsCollaborativeEditable(doc);
   const { relativeDate, calculateDaysLeft } = useDate();
   const { data: config } = useConfig();
+  const { spacingsTokens } = useCunninghamTheme();
 
   const childrenCount = doc.numchild ?? 0;
 
@@ -42,9 +44,33 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
 
   const hasChildren = childrenCount > 0;
 
+  const separator = (
+    <Text $variation="tertiary" $size="s">
+      &nbsp;·&nbsp;
+    </Text>
+  );
+
+  const encryptedBadge = doc.is_encrypted && (
+    <>
+      <Box
+        $direction="row"
+        $align="center"
+        $gap={spacingsTokens['4xs']}
+        data-testid="doc-header-encrypted"
+      >
+        <Icon iconName="verified_user" $size="sm" $theme="brand" />
+        <Text $size="xs" $weight="500" $theme="brand">
+          {t('Encrypted')}
+        </Text>
+      </Box>
+      {separator}
+    </>
+  );
+
   if (isDesktop) {
     return (
       <>
+        {encryptedBadge}
         <Text
           $variation="tertiary"
           $size="s"
@@ -52,8 +78,8 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
           $theme={isEditable ? 'gray' : 'warning'}
         >
           {transRole(isEditable ? doc.user_role || doc.link_role : Role.READER)}
-          &nbsp;·&nbsp;
         </Text>
+        {separator}
         <Text $variation="tertiary" $size="s">
           {dateToDisplay}
         </Text>
@@ -63,6 +89,7 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
 
   return (
     <>
+      {encryptedBadge}
       <Text $variation="tertiary" $size="s">
         {hasChildren ? relativeOnly : dateToDisplay}
       </Text>

@@ -33,7 +33,7 @@ type SimpleDocItemProps = {
 export const SimpleDocItem = ({
   doc,
   isPinned = false,
-  isEncrypted = false,
+  isEncrypted = doc.is_encrypted ?? false,
   showAccesses = false,
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
@@ -69,7 +69,6 @@ export const SimpleDocItem = ({
           <EncryptedDocumentIcon
             aria-hidden="true"
             data-testid="doc-encryption-icon"
-            color="var(--c--contextuals--content--semantic--info--tertiary)"
           />
         ) : isPinned ? (
           <PinnedDocumentIcon
