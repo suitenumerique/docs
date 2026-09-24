@@ -79,9 +79,9 @@ and this project adheres to
 - 🐛(frontend) open search results in a new tab with ctrl/cmd+click #2719
 - 🐛(docker) pull minio images from pgsty
 - 🐛(frontend) clear callout background on Backspace #2052
-
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 - 🐛(frontend) fix redirect after deleting a document #2706
+- 🐛(frontend) keep documents draggable with a mouse when zoomed #2727
 
 ### Removed
 
