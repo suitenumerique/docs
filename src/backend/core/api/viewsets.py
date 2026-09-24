@@ -5,10 +5,14 @@
 import ipaddress
 import json
 import logging
+import re
 import socket
 import uuid
+import zipfile
 from collections import defaultdict
 from functools import partial
+from io import BytesIO
+from pathlib import PurePosixPath
 from urllib.parse import unquote, urlencode, urlparse
 
 from django.conf import settings
@@ -69,6 +73,7 @@ from core.services.search_indexers import (
     get_visited_document_ids_of,
 )
 from core.services.yhub_services import YHubError, YHubService
+from core.services.zip_import import parse_zip
 from core.tasks.access import reset_service_connections_in_cascade
 from core.tasks.documents import sync_service_deletions_in_cascade
 from core.tasks.mail import send_ask_for_access_mail
@@ -434,6 +439,89 @@ class DocumentMetadata(drf.metadata.SimpleMetadata):
                 ]
             }
         return simple_metadata
+
+
+def _import_zip_create_node(node, user, converter, parent_doc=None):
+    """Create a Document (and its subtree) from a DocumentNode parsed out of a ZIP export.
+
+    Returns (doc, count) where count includes the node itself and all descendants.
+    """
+    attachment_keys = []
+    ref_to_url = {}
+    for ref, media_bytes in node.media.items():
+        ext = PurePosixPath(ref).suffix.lstrip(".")
+        file_uuid = uuid.uuid4()
+        key = f"{node.id}/{enums.ATTACHMENTS_FOLDER}/{file_uuid}.{ext}"
+        default_storage.connection.meta.client.upload_fileobj(
+            BytesIO(media_bytes),
+            default_storage.bucket_name,
+            key,
+            ExtraArgs={"ContentType": f"image/{ext}"},
+        )
+        attachment_keys.append(key)
+        ref_to_url[ref] = f"{settings.MEDIA_URL}{key}"
+
+    yjs_content = None
+    if node.content is not None:
+        text = node.content.decode("utf-8", errors="replace")
+        for ref, url in ref_to_url.items():
+            # Match the ref URL inside a markdown image/link, capturing
+            # anything between the URL and the closing paren (e.g. an
+            # Outline-style size hint: `" =1200x1600"`).
+            text = re.sub(
+                r"""
+                \]\(          # closing bracket + opening paren
+                """
+                + re.escape(ref)
+                + r"""
+                ([^)]*)       # optional title / hint before closing paren
+                \)            # closing paren
+                """,
+                lambda m, _url=url: f"]({_url}{m.group(1)})",
+                text,
+                flags=re.VERBOSE,
+            )
+        try:
+            yjs_content = converter.convert(
+                text.encode("utf-8"),
+                content_type=mime_types.MARKDOWN,
+                accept=mime_types.YJS,
+            )
+        except (ConversionError, YProviderServiceUnavailableError) as err:
+            logger.warning(
+                "ZIP import: conversion failed for '%s': %s", node.title, err
+            )
+
+    doc_kwargs = {"id": node.id, "title": node.title, "creator": user}
+    if attachment_keys:
+        doc_kwargs["attachments"] = attachment_keys
+
+    if parent_doc is None:
+        doc = create_tree_node_with_retry(
+            lambda _kw=doc_kwargs: models.Document.add_root(**_kw)
+        )
+        models.DocumentAccess.objects.create(
+            document=doc, user=user, role=models.RoleChoices.OWNER
+        )
+    else:
+        doc = create_tree_node_with_retry(
+            lambda _parent=parent_doc, _kw=doc_kwargs: _parent.add_child(**_kw)
+        )
+
+    if yjs_content is not None:
+        try:
+            YHubService(user=user).create_ydoc(doc, yjs_content)
+        except YHubError as err:
+            logger.warning(
+                "ZIP import: could not seed content for '%s': %s", node.title, err
+            )
+
+    count = 1
+    for child in node.children:
+        _, child_count = _import_zip_create_node(child, user, converter, doc)
+        count += child_count
+
+    return doc, count
 
 
 # pylint: disable=too-many-public-methods
@@ -1852,6 +1940,54 @@ class DocumentViewSet(
         return drf.response.Response(
             {"detail": "Document was already not marked as favorite"},
             status=drf.status.HTTP_200_OK,
+        )
+
+    @drf.decorators.action(detail=False, methods=["post"], url_path="import-zip")
+    def import_zip(self, request, *args, **kwargs):
+        """Import a tree of documents from a ZIP export (Outline, Notion, ...)."""
+        if not request.user.is_authenticated:
+            raise drf.exceptions.NotAuthenticated()
+
+        if not settings.CONVERSION_UPLOAD_ENABLED:
+            raise drf.exceptions.ValidationError({"zip": ["ZIP import is not allowed"]})
+
+        zip_file = request.data.get("zip")
+        if not zip_file:
+            raise drf.exceptions.ValidationError({"zip": ["This field is required."]})
+
+        try:
+            zf = zipfile.ZipFile(BytesIO(zip_file.read()))
+        except zipfile.BadZipFile as exc:
+            raise drf.exceptions.ValidationError(
+                {"zip": ["Invalid ZIP file."]}
+            ) from exc
+
+        with zf:
+            nodes = parse_zip(zf)
+
+        user = request.user
+        converter = Converter()
+
+        root_docs = []
+        pages = 0
+        with transaction.atomic():
+            for node in nodes:
+                doc, count = _import_zip_create_node(node, user, converter)
+                root_docs.append(doc)
+                pages += count - 1  # root containers are not imported pages
+
+        posthog_capture(
+            PosthogEventName.DOC_IMPORTED,
+            user,
+            {"format": "zip", "count": pages},
+        )
+
+        return drf.response.Response(
+            {
+                "count": pages,
+                "roots": [{"id": str(doc.id), "title": doc.title} for doc in root_docs],
+            },
+            status=drf.status.HTTP_201_CREATED,
         )
 
     @drf.decorators.action(detail=True, methods=["post"], url_path="attachment-upload")
