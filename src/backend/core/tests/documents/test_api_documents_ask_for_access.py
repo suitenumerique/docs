@@ -912,3 +912,28 @@ def test_api_document_ask_for_access_throttling(settings):
     settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["document_ask_for_access"] = (
         current_rate
     )
+
+
+def test_api_documents_ask_for_access_accept_resets_connections(
+    mock_reset_service_connections, django_capture_on_commit_callbacks
+):
+    """Accepting a request creates or changes an access: the user is re-checked."""
+    user = UserFactory()
+    document = DocumentFactory(users=[(user, RoleChoices.OWNER)])
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, role=RoleChoices.READER
+    )
+    mock_reset_service_connections.reset_mock()
+
+    client = APIClient()
+    client.force_login(user)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.post(
+            f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/"
+        )
+
+    assert response.status_code == 204
+    mock_reset_service_connections.assert_called_once_with(
+        str(document.id), str(document_ask_for_access.user_id)
+    )

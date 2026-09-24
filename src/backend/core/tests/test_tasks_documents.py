@@ -6,10 +6,14 @@ core.tasks.documents module.
 from unittest import mock
 
 import pytest
+from celery.exceptions import MaxRetriesExceededError
 
 from core import factories
 from core.services.yhub_services import ServiceUnavailableError
-from core.tasks.documents import sync_service_deletions_in_cascade
+from core.tasks.documents import (
+    delete_service_documents,
+    sync_service_deletions_in_cascade,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -116,3 +120,80 @@ def test_sync_service_deletions_keeps_going_on_failure(mock_service):
         mock.call(document),
         mock.call(child),
     ]
+
+
+@mock.patch("core.tasks.documents.YHubService")
+def test_delete_service_documents(mock_service):
+    """Documents deleted for good are deleted on the collaboration server by id."""
+    result = delete_service_documents.apply(args=[["first-id", "second-id"]])
+
+    assert result.successful()
+
+    assert mock_service.return_value.delete_ydoc.call_args_list == [
+        mock.call("first-id"),
+        mock.call("second-id"),
+    ]
+
+
+@mock.patch("core.tasks.documents.YHubService")
+def test_delete_service_documents_retries_the_failed_ones(mock_service):
+    """A document failing should not stop the others, and be retried, alone."""
+    mock_service.return_value.delete_ydoc.side_effect = [
+        ServiceUnavailableError("yhub is down"),
+        None,
+        ServiceUnavailableError("yhub is down"),
+    ]
+
+    with mock.patch.object(delete_service_documents, "retry") as mock_retry:
+        result = delete_service_documents.apply(
+            args=[["first-id", "second-id", "third-id"]]
+        )
+
+    assert result.successful()
+
+    assert mock_service.return_value.delete_ydoc.call_args_list == [
+        mock.call("first-id"),
+        mock.call("second-id"),
+        mock.call("third-id"),
+    ]
+    mock_retry.assert_called_once_with(args=[["first-id", "third-id"]], countdown=30)
+
+
+@mock.patch("core.tasks.documents.YHubService")
+def test_delete_service_documents_retry_countdown_doubles(mock_service):
+    """Each attempt waits twice as long as the one before, up to a ceiling."""
+    mock_service.return_value.delete_ydoc.side_effect = ServiceUnavailableError("down")
+
+    with mock.patch.object(delete_service_documents, "retry") as mock_retry:
+        result = delete_service_documents.apply(args=[["first-id"]], retries=3)
+
+    assert result.successful()
+    mock_retry.assert_called_once_with(args=[["first-id"]], countdown=240)
+
+
+@mock.patch("core.tasks.documents.YHubService")
+def test_delete_service_documents_gives_up_after_the_retries(mock_service, caplog):
+    """Once the retries are spent, the ids are logged: nothing else holds them."""
+    mock_service.return_value.delete_ydoc.side_effect = ServiceUnavailableError("down")
+
+    with mock.patch.object(
+        delete_service_documents, "retry", side_effect=MaxRetriesExceededError()
+    ):
+        result = delete_service_documents.apply(args=[["first-id", "second-id"]])
+
+    assert result.successful()
+    assert (
+        "giving up on deleting documents first-id, second-id on the collaboration "
+        "server"
+    ) in caplog.text
+
+
+@mock.patch("core.tasks.documents.YHubService")
+def test_delete_service_documents_no_retry_when_all_done(mock_service):
+    """Nothing to retry when every deletion went through."""
+    with mock.patch.object(delete_service_documents, "retry") as mock_retry:
+        result = delete_service_documents.apply(args=[["first-id"]])
+
+    assert result.successful()
+    mock_service.return_value.delete_ydoc.assert_called_once_with("first-id")
+    mock_retry.assert_not_called()

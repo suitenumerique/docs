@@ -61,6 +61,13 @@ def test_build_url():
     assert url == f"http://yhub:3002/collaboration/ydoc/v1/docs/{DOCUMENT.id!s}"
 
 
+def test_build_url_with_an_id():
+    """A document deleted for good can only be named by its id."""
+    url = YHubService().build_url("ydoc", str(DOCUMENT.id))
+
+    assert url == f"http://yhub:3002/collaboration/ydoc/v1/docs/{DOCUMENT.id!s}"
+
+
 def test_jwks_url():
     """The keys validating what yhub signs should be read from yhub itself."""
     service = YHubService()
