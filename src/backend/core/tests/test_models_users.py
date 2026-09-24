@@ -776,7 +776,6 @@ def test_models_users_delete_reports_to_the_collaboration_server(
     shared = factories.DocumentFactory(users=[(user, "owner"), (other_user, "owner")])
     member = factories.DocumentFactory(users=[(user, "editor")])
     user_id = str(user.id)
-    mock_reset_service_connections.reset_mock()
 
     user.delete()
 

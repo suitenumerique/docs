@@ -670,7 +670,7 @@ def test_process_reconciliation_updates_favorites(
 def test_process_reconciliation_resets_connections(
     user_reconciliation_users_and_docs,
     mock_reset_service_connections,
-    django_capture_on_commit_callbacks,
+    capture_service_resets,
 ):
     """
     The accesses are updated in bulk, without the signal: every document
@@ -687,9 +687,8 @@ def test_process_reconciliation_resets_connections(
         inactive_email_checked=True,
         status="ready",
     )
-    mock_reset_service_connections.reset_mock()
 
-    with django_capture_on_commit_callbacks(execute=True):
+    with capture_service_resets():
         process_reconciliation(
             None, None, models.UserReconciliation.objects.filter(id=rec.id)
         )

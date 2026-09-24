@@ -96,6 +96,7 @@ and this project adheres to
 - 🐛(backend) retry the duplicate of a document on a tree path collision
 - 🐛(frontend) keep caption and alignment when replacing an image #2730
 - 🐛(backend) reset the collaboration connections on every access change #2725
+- ⚡️(backend) coalesce and pace the resets of collaboration connections #2725
 - 🐛(frontend) clear callout background on Backspace #2052
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 - 🐛(frontend) fix redirect after deleting a document #2706
