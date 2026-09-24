@@ -9,7 +9,10 @@ import pytest
 
 from core import factories
 from core.services.yhub_services import ServiceUnavailableError
-from core.tasks.documents import sync_service_deletions_in_cascade
+from core.tasks.documents import (
+    delete_service_documents,
+    sync_service_deletions_in_cascade,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -115,4 +118,31 @@ def test_sync_service_deletions_keeps_going_on_failure(mock_service):
     assert mock_service.return_value.delete_ydoc.call_args_list == [
         mock.call(document),
         mock.call(child),
+    ]
+
+
+@mock.patch("core.tasks.documents.YHubService")
+def test_delete_service_documents(mock_service):
+    """Documents deleted for good are deleted on the collaboration server by id."""
+    delete_service_documents(["first-id", "second-id"])
+
+    assert mock_service.return_value.delete_ydoc.call_args_list == [
+        mock.call("first-id"),
+        mock.call("second-id"),
+    ]
+
+
+@mock.patch("core.tasks.documents.YHubService")
+def test_delete_service_documents_keeps_going_on_failure(mock_service):
+    """A document failing should not deprive the ones after it of their deletion."""
+    mock_service.return_value.delete_ydoc.side_effect = [
+        ServiceUnavailableError("yhub is down"),
+        None,
+    ]
+
+    delete_service_documents(["first-id", "second-id"])
+
+    assert mock_service.return_value.delete_ydoc.call_args_list == [
+        mock.call("first-id"),
+        mock.call("second-id"),
     ]

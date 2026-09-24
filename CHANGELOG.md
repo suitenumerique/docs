@@ -76,8 +76,8 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(backend) reset the collaboration connections on every access change
 - 🐛(frontend) clear callout background on Backspace #2052
-
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 - 🐛(frontend) fix redirect after deleting a document #2706
 

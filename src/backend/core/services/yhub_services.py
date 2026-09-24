@@ -169,10 +169,16 @@ class YHubService:
         return JWKSClient(self.jwks_url)
 
     def build_url(self, endpoint, document):
-        """Build the url of a document scoped endpoint of the yhub API."""
+        """
+        Build the url of a document scoped endpoint of the yhub API.
+
+        `document` is a document, or the id of one: what is deleted for good
+        from the database can only be named by its id.
+        """
+        document_id = getattr(document, "id", document)
         return (
             f"{self.base_url}/{self.api_prefix}/{endpoint}/{self.api_version}"
-            f"/{self.org}/{document.id}"
+            f"/{self.org}/{document_id}"
         )
 
     @staticmethod

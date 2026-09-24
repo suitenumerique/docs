@@ -2,7 +2,8 @@
 
 from logging import getLogger
 
-from core import models
+from django.apps import apps
+
 from core.services.yhub_services import YHubError, YHubService
 
 from impress.celery_app import app
@@ -31,13 +32,16 @@ def sync_service_deletions_in_cascade(document_id):
     A document failing is logged and does not stop the ones after it; the
     collaboration server keeps serving it until something says so again.
     """
+    # resolved at run time: the models queue these tasks, importing them here
+    # would import the models back
+    document_model = apps.get_model("core", "Document")
     try:
-        document = models.Document.objects.get(pk=document_id)
-    except models.Document.DoesNotExist:
+        document = document_model.objects.get(pk=document_id)
+    except document_model.DoesNotExist:
         logger.error("Document %s does not exists anymore", document_id)
         return
 
-    documents = models.Document.objects.filter(
+    documents = document_model.objects.filter(
         path__startswith=document.path, depth__gte=document.depth
     ).order_by("path")
 
@@ -56,4 +60,26 @@ def sync_service_deletions_in_cascade(document_id):
                 "impossible to %s document %s on the collaboration server",
                 "delete" if deleted else "restore",
                 doc.id,
+            )
+
+
+@app.task
+def delete_service_documents(document_ids):
+    """
+    Report to the collaboration server the deletion of documents that are gone
+    for good from the database.
+
+    `sync_service_deletions_in_cascade` reads the documents back to know what
+    to report, which a hard deletion leaves nothing of: the ids are all that
+    is left, and the walk down the tree is up to the caller. Each document is
+    deleted on its own, one failing is logged and does not stop the others.
+    """
+    service = YHubService()
+    for document_id in document_ids:
+        try:
+            service.delete_ydoc(document_id)
+        except YHubError:
+            logger.exception(
+                "impossible to delete document %s on the collaboration server",
+                document_id,
             )

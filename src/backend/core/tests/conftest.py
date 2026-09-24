@@ -42,6 +42,31 @@ def restore_urlconf():
     restore_urls()
 
 
+@pytest.fixture(autouse=True, name="mock_reset_service_connections")
+def mock_reset_service_connections_fixture():
+    """
+    Take the resets of connections queued for the collaboration server.
+
+    Every change of an access queues one, at the commit of the transaction: in
+    a transactional test the Celery task would then run inline and reach for
+    the collaboration server. What was queued is checked on this mock, once
+    the callbacks on commit have run (`django_capture_on_commit_callbacks`).
+    """
+    with mock.patch(
+        "core.tasks.access.reset_service_connections_in_cascade.delay"
+    ) as mock_delay:
+        yield mock_delay
+
+
+@pytest.fixture(autouse=True, name="mock_delete_service_documents")
+def mock_delete_service_documents_fixture():
+    """Take the deletions of documents queued for the collaboration server, as above."""
+    with mock.patch(
+        "core.tasks.documents.delete_service_documents.delay"
+    ) as mock_delay:
+        yield mock_delay
+
+
 @pytest.fixture
 def mock_user_teams():
     """Mock for the "teams" property on the User model."""

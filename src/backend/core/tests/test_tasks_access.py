@@ -4,12 +4,16 @@ core.tasks.access module.
 """
 
 from unittest import mock
+from uuid import uuid4
 
 import pytest
 
 from core import factories
 from core.services.yhub_services import ServiceUnavailableError
-from core.tasks.access import reset_service_connections_in_cascade
+from core.tasks.access import (
+    reset_service_connections_in_cascade,
+    reset_service_connections_on_commit,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -81,3 +85,31 @@ def test_reset_service_connections_keeps_going_on_failure(mock_service):
         mock.call(document, None),
         mock.call(child, None),
     ]
+
+
+def test_reset_service_connections_on_commit(
+    mock_reset_service_connections, django_capture_on_commit_callbacks
+):
+    """The reset should be queued once the transaction is committed, ids as strings."""
+    document_id, user_id = uuid4(), uuid4()
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        reset_service_connections_on_commit(document_id, user_id)
+        mock_reset_service_connections.assert_not_called()
+
+    assert len(callbacks) == 1
+    mock_reset_service_connections.assert_called_once_with(
+        str(document_id), str(user_id)
+    )
+
+
+def test_reset_service_connections_on_commit_without_user(
+    mock_reset_service_connections, django_capture_on_commit_callbacks
+):
+    """Naming nobody re-checks every connection."""
+    document_id = uuid4()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        reset_service_connections_on_commit(document_id)
+
+    mock_reset_service_connections.assert_called_once_with(str(document_id), None)
