@@ -950,6 +950,7 @@ class DocumentViewSet(
         detail=True,
         methods=["post"],
         permission_classes=[],
+        throttle_classes=[],
         url_path="content-updated",
     )
     def content_updated(self, request, *args, **kwargs):
