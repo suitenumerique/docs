@@ -16,6 +16,30 @@ import { DocsBlockNoteEditor } from '../types';
 
 const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // Default to 10MB
 
+const TEXT_ALIGNMENTS = ['left', 'center', 'right', 'justify'] as const;
+
+type TextAlignment = (typeof TEXT_ALIGNMENTS)[number];
+
+const fileCaption = (props: object) => {
+  if ('caption' in props && typeof props.caption === 'string') {
+    return props.caption;
+  }
+
+  return '';
+};
+
+const fileTextAlignment = (props: object): TextAlignment => {
+  if (
+    'textAlignment' in props &&
+    typeof props.textAlignment === 'string' &&
+    TEXT_ALIGNMENTS.includes(props.textAlignment as TextAlignment)
+  ) {
+    return props.textAlignment as TextAlignment;
+  }
+
+  return 'left';
+};
+
 export const useUploadFile = (docId: string) => {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -98,6 +122,8 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
       const blockUploadName = block.props.name;
       const blockUploadShowPreview =
         ('showPreview' in block.props && block.props.showPreview) || false;
+      const blockUploadCaption = fileCaption(block.props);
+      const blockUploadTextAlignment = fileTextAlignment(block.props);
 
       try {
         editor.replaceBlocks(
@@ -112,6 +138,8 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
                 blockUploadType,
                 blockUploadUrl,
                 blockUploadShowPreview,
+                blockUploadCaption,
+                blockUploadTextAlignment,
               },
             },
           ],
