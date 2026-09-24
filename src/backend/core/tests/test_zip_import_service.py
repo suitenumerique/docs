@@ -49,7 +49,7 @@ def test_parse_zip_nested_children():
     with zipfile.ZipFile(FIXTURES / "outline-export.zip") as zf:
         roots = parse_zip(zf)
 
-    by_title = {c.title: c for c in roots[0].children}
+    by_title = {child.title: child for child in roots[0].children}
     getting_started = by_title["Getting Started"]
     assert len(getting_started.children) == 1
     assert getting_started.children[0].title == "rich nested doc"
@@ -60,9 +60,35 @@ def test_parse_zip_content_present():
     with zipfile.ZipFile(FIXTURES / "outline-export.zip") as zf:
         roots = parse_zip(zf)
 
-    by_title = {c.title: c for c in roots[0].children}
+    by_title = {child.title: child for child in roots[0].children}
     assert by_title["Our Editor"].content is not None
     assert b"editor" in by_title["Our Editor"].content.lower()
+
+
+def test_parse_zip_media_attached():
+    """Image files referenced in a .md are stored in node.media keyed by their relative ref."""
+    with zipfile.ZipFile(FIXTURES / "outline-export.zip") as zf:
+        roots = parse_zip(zf)
+
+    by_title = {child.title: child for child in roots[0].children}
+    getting_started = by_title["Getting Started"]
+    rich = getting_started.children[0]
+    assert rich.title == "rich nested doc"
+    assert len(rich.media) == 1
+    ref, media_bytes = next(iter(rich.media.items()))
+    assert ref.endswith("harley-benton.jpeg")
+    assert media_bytes[:3] == b"\xff\xd8\xff"  # JPEG magic bytes
+
+
+def test_parse_zip_external_links_not_collected():
+    """Absolute http(s) image URLs are not added to node.media."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("doc.md", b"![](https://example.com/image.png)")
+    buf.seek(0)
+    with zipfile.ZipFile(buf) as zf:
+        nodes = parse_zip(zf)
+    assert nodes[0].media == {}
 
 
 def test_parse_folder_alongside_md_merges():
