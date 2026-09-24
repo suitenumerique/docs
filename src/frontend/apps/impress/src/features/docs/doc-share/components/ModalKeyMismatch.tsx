@@ -1,8 +1,15 @@
-import { Button, Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Alert,
+  Button,
+  Modal,
+  ModalSize,
+  VariantType,
+} from '@gouvfr-lasuite/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Icon, Text } from '@/components';
+import { Box, Text } from '@/components';
 import { useKeyFingerprint } from '@/docs/doc-collaboration';
+import { EncryptionModalContent } from '@/features/docs/doc-management/components/EncryptionLayout';
 
 interface ModalKeyMismatchProps {
   onClose: () => void;
@@ -10,6 +17,21 @@ interface ModalKeyMismatchProps {
   knownKey?: string;
   currentKey?: string;
 }
+
+const Fingerprint = ({ label, value }: { label: string; value: string }) => (
+  <Box $gap="3xs">
+    <Text $size="xs" $weight="600" $variation="secondary">
+      {label}
+    </Text>
+    <Text
+      $size="sm"
+      $weight="700"
+      $css="font-family: monospace; letter-spacing: 0.08em; overflow-wrap: anywhere;"
+    >
+      {value}
+    </Text>
+  </Box>
+);
 
 export const ModalKeyMismatch = ({
   onClose,
@@ -26,94 +48,60 @@ export const ModalKeyMismatch = ({
       isOpen
       closeOnClickOutside
       onClose={onClose}
-      size={ModalSize.MEDIUM}
-      rightActions={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            {t('Cancel')}
-          </Button>
-          {onAcceptKey && (
-            <Button
-              color="warning"
-              onClick={() => {
-                onAcceptKey();
-                onClose();
-              }}
-            >
-              {t('I trust this key')}
-            </Button>
-          )}
-        </>
-      }
-      title={
-        <Text
-          as="h1"
-          $gap="0.7rem"
-          $size="h6"
-          $align="flex-start"
-          $direction="row"
-          $margin="0"
-        >
-          <Icon iconName="warning" $theme="warning" />
-          {t('Public key change detected')}
-        </Text>
-      }
+      size={ModalSize.SMALL}
+      aria-label={t('Verify encryption key')}
     >
-      <Box $direction="column" $gap="0.5rem" $margin={{ top: 'sm' }}>
-        <Text $variation="secondary">
+      <EncryptionModalContent
+        title={t('Verify encryption key')}
+        description={t(
+          'We recommend verifying with this person directly (for example on a call) that they really changed their encryption key before proceeding.',
+        )}
+        actionsLayout="row"
+        actions={
+          <>
+            <Button variant="bordered" color="error" onClick={onClose}>
+              {t("Don't trust")}
+            </Button>
+            {onAcceptKey && (
+              <Button
+                onClick={() => {
+                  onAcceptKey();
+                  onClose();
+                }}
+              >
+                {t('Trust')}
+              </Button>
+            )}
+          </>
+        }
+      >
+        <Alert type={VariantType.WARNING}>
           {t(
-            "This user's encryption public key has changed since you last interacted with them.",
+            "This person's encryption key has changed. Verify it before continuing.",
           )}
-        </Text>
-        <Text $variation="secondary">
-          {t(
-            'This could mean the user has regenerated their encryption keys, but it could also indicate that their account has been compromised.',
-          )}
-        </Text>
-        <Text $variation="secondary" $weight="600">
-          {t(
-            'We recommend verifying with this person directly (e.g. via video call) that they have indeed changed their encryption key before proceeding.',
-          )}
-        </Text>
+        </Alert>
         {(knownFingerprint || currentFingerprint) && (
           <Box
-            $direction="column"
-            $gap="0.25rem"
-            $margin={{ top: 'xs' }}
-            $padding="sm"
-            $background="#f5f5f5"
-            $border="1px solid #ddd"
+            $gap="xs"
+            $padding="xs"
             $radius="4px"
+            $css="border: 1px solid var(--c--contextuals--border--surface--primary);"
           >
             {knownFingerprint && (
-              <Box $direction="row" $gap="0.5rem" $align="center">
-                <Text $size="xs" $weight="600" $variation="secondary">
-                  {t('Previously known:')}
-                </Text>
-                <Text
-                  $size="xs"
-                  style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}
-                >
-                  {knownFingerprint}
-                </Text>
-              </Box>
+              <Fingerprint
+                label={t('Previously known:')}
+                value={knownFingerprint}
+              />
             )}
             {currentFingerprint && (
-              <Box $direction="row" $gap="0.5rem" $align="center">
-                <Text $size="xs" $weight="600" $variation="secondary">
-                  {t('Current key:')}
-                </Text>
-                <Text
-                  $size="xs"
-                  style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}
-                >
-                  {currentFingerprint}
-                </Text>
-              </Box>
+              <Fingerprint
+                label={t('Current key:')}
+                value={currentFingerprint}
+              />
             )}
           </Box>
         )}
-      </Box>
+      </EncryptionModalContent>
     </Modal>
   );
 };

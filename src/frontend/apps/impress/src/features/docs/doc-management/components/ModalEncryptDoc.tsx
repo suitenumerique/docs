@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
-import { Box, ButtonCloseModal, Icon, Text, TextErrors } from '@/components';
+import { TextErrors } from '@/components';
 import { useUserEncryption } from '@/docs/doc-collaboration';
 import { createDocAttachment } from '@/docs/doc-editor/api';
 import { useAuth } from '@/features/auth';
@@ -34,6 +34,8 @@ import {
 import { useDocAccesses } from '@/features/docs/doc-share/api/useDocAccesses';
 import { useDocInvitations } from '@/features/docs/doc-share/api/useDocInvitations';
 import { useKeyboardAction } from '@/hooks';
+
+import { EncryptionModalContent } from './EncryptionLayout';
 
 /**
  * encrypt existing unencrypted attachments and return:
@@ -372,185 +374,94 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
   const handleCloseKeyDown = keyboardAction(handleClose);
   const handleEncryptKeyDown = keyboardAction(handleEncrypt);
 
+  // Only the conditions that are NOT met are worth a word: the modal describes
+  // what encrypting does, and warns about what still blocks it.
+  const blockers: string[] = [];
+  if (!hasEncryptionKeys) {
+    blockers.push(t('You must enable encryption from your account menu first'));
+  }
+  if (!isRestricted) {
+    blockers.push(
+      t('Document must be set to private (currently {{reach}})', {
+        reach:
+          effectiveReach === LinkReach.PUBLIC ? t('public') : t('connected'),
+      }),
+    );
+  }
+  if (hasPendingInvitations) {
+    blockers.push(t('Pending invitations must be resolved first'));
+  }
+
   return (
     <Modal
       isOpen
       closeOnClickOutside={!isPending}
-      hideCloseButton
       onClose={handleClose}
-      aria-describedby="modal-encrypt-doc-title"
-      rightActions={
-        <>
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={handleClose}
-            onKeyDown={handleCloseKeyDown}
-            disabled={isPending}
-          >
-            {t('Cancel')}
-          </Button>
-          <Button
-            color="warning"
-            fullWidth
-            onClick={handleEncrypt}
-            onKeyDown={handleEncryptKeyDown}
-            disabled={isPending || !canEncrypt}
-            icon={
-              isPending ? (
-                <div>
-                  <Spinner size="sm" />
-                </div>
-              ) : undefined
-            }
-          >
-            {t('Confirm')}
-          </Button>
-        </>
-      }
-      size={ModalSize.MEDIUM}
-      title={
-        <Box
-          $direction="row"
-          $justify="space-between"
-          $align="center"
-          $width="100%"
-        >
-          <Text
-            $size="h6"
-            as="h1"
-            id="modal-encrypt-doc-title"
-            $margin="0"
-            $align="flex-start"
-          >
-            {t('Encrypt document')}
-          </Text>
-          <ButtonCloseModal
-            aria-label={t('Close the encrypt modal')}
-            onClick={handleClose}
-            onKeyDown={handleCloseKeyDown}
-            disabled={isPending}
-          />
-        </Box>
-      }
+      size={ModalSize.SMALL}
+      aria-label={t('Encrypt document')}
     >
-      <Box className="--docs--modal-encrypt-doc" $gap="sm">
-        {!isError && (
-          <Box $gap="sm">
-            <Alert type={VariantType.WARNING}>
-              <Box $gap="xs">
-                <Text $size="sm">
-                  {t(
-                    'Encrypting a document ensures that only authorized members can read its content. Keep in mind before proceeding any access will then require its user to do the encryption onboarding, with the complication of ensuring keys backups.',
-                  )}
-                </Text>
-              </Box>
-            </Alert>
+      <EncryptionModalContent
+        illustration="document-shield-check"
+        title={t('Encrypt document')}
+        titleId="modal-encrypt-doc-title"
+        description={t(
+          'The document and its attachments will be encrypted end-to-end. Only people you share it with will be able to access its contents.',
+        )}
+        actions={
+          <>
+            <Button
+              fullWidth
+              onClick={handleEncrypt}
+              onKeyDown={handleEncryptKeyDown}
+              disabled={isPending || !canEncrypt}
+              icon={
+                isPending ? (
+                  <div>
+                    <Spinner size="sm" />
+                  </div>
+                ) : undefined
+              }
+            >
+              {t('Encrypt')}
+            </Button>
+            <Button
+              variant="bordered"
+              color="neutral"
+              fullWidth
+              onClick={handleClose}
+              onKeyDown={handleCloseKeyDown}
+              disabled={isPending}
+            >
+              {t('Cancel')}
+            </Button>
+          </>
+        }
+      >
+        {!isError && blockers.length > 0 && (
+          <Alert type={VariantType.ERROR}>
+            {blockers.length === 1 ? (
+              blockers[0]
+            ) : (
+              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                {blockers.map((blocker) => (
+                  <li key={blocker}>{blocker}</li>
+                ))}
+              </ul>
+            )}
+          </Alert>
+        )}
 
-            <Text $size="sm" $variation="secondary">
-              {t('Here the conditions that must be met:')}
-            </Text>
-
-            <Box $gap="xs">
-              <Box $direction="row" $align="center" $gap="xs">
-                <Icon
-                  iconName={hasEncryptionKeys ? 'check_circle' : 'cancel'}
-                  $size="sm"
-                  $theme={hasEncryptionKeys ? 'success' : 'error'}
-                />
-                <Text
-                  $size="sm"
-                  $weight={hasEncryptionKeys ? '400' : '600'}
-                  $theme={hasEncryptionKeys ? undefined : 'error'}
-                >
-                  {hasEncryptionKeys
-                    ? t('Encryption is enabled on your account')
-                    : t(
-                        'You must enable encryption from your account menu first',
-                      )}
-                </Text>
-              </Box>
-
-              <Box $direction="row" $align="center" $gap="xs">
-                <Icon
-                  iconName={isRestricted ? 'check_circle' : 'cancel'}
-                  $size="sm"
-                  $theme={isRestricted ? 'success' : 'error'}
-                />
-                <Text
-                  $size="sm"
-                  $weight={isRestricted ? '400' : '600'}
-                  $theme={isRestricted ? undefined : 'error'}
-                >
-                  {isRestricted
-                    ? t('Document access is private')
-                    : t(
-                        'Document must be set to private (currently {{reach}})',
-                        {
-                          reach:
-                            effectiveReach === LinkReach.PUBLIC
-                              ? t('public')
-                              : t('connected'),
-                        },
-                      )}
-                </Text>
-              </Box>
-
-              <Box $direction="row" $align="center" $gap="xs">
-                <Icon
-                  iconName={!hasPendingInvitations ? 'check_circle' : 'cancel'}
-                  $size="sm"
-                  $theme={!hasPendingInvitations ? 'success' : 'error'}
-                />
-                <Text
-                  $size="sm"
-                  $weight={!hasPendingInvitations ? '400' : '600'}
-                  $theme={!hasPendingInvitations ? undefined : 'error'}
-                >
-                  {!hasPendingInvitations
-                    ? t('No pending invitations')
-                    : t('Pending invitations must be resolved first')}
-                </Text>
-              </Box>
-
-              <Box $gap="3xs">
-                <Box $direction="row" $align="center" $gap="xs">
-                  <Icon
-                    iconName={
-                      othersWithoutKey.length === 0
-                        ? 'check_circle'
-                        : 'hourglass_empty'
-                    }
-                    $size="sm"
-                    $theme={
-                      othersWithoutKey.length === 0 ? 'success' : 'warning'
-                    }
-                  />
-                  <Text $size="sm">
-                    {othersWithoutKey.length === 0
-                      ? t('All members have encryption enabled')
-                      : t(
-                          '{{count}} member(s) haven’t completed encryption onboarding yet. They will be added as pending and won’t be able to decrypt the document until another validated collaborator accepts them from the share dialog.',
-                          { count: othersWithoutKey.length },
-                        )}
-                  </Text>
-                </Box>
-                {othersWithoutKey.length > 0 && (
-                  <Box $margin={{ left: 'sm' }} $gap="3xs">
-                    {othersWithoutKey.map((access) => (
-                      <Text key={access.id} $size="xs" $variation="secondary">
-                        {access.user.full_name || access.user.email}
-                      </Text>
-                    ))}
-                  </Box>
-                )}
-              </Box>
-            </Box>
-          </Box>
+        {!isError && blockers.length === 0 && othersWithoutKey.length > 0 && (
+          <Alert type={VariantType.WARNING}>
+            {t(
+              '{{count}} collaborator(s) have not enabled encryption yet. They will be added as pending and cannot open the document until someone accepts them from the share dialog.',
+              { count: othersWithoutKey.length },
+            )}
+          </Alert>
         )}
 
         {isError && <TextErrors causes={error.cause} />}
-      </Box>
+      </EncryptionModalContent>
     </Modal>
   );
 };

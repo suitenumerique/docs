@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
-import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
+import { TextErrors } from '@/components';
 import { createDocAttachment } from '@/docs/doc-editor/api';
 import { useAuth } from '@/features/auth';
 import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
@@ -24,6 +24,8 @@ import {
   useRemoveDocEncryption,
 } from '@/features/docs/doc-management';
 import { useKeyboardAction } from '@/hooks';
+
+import { EncryptionModalContent } from './EncryptionLayout';
 
 /**
  * Decrypt existing encrypted attachments using the vault and upload decrypted copies.
@@ -188,47 +190,39 @@ export const ModalRemoveDocEncryption = ({
       isOpen
       closeOnClickOutside
       onClose={handleClose}
-      size={ModalSize.MEDIUM}
-      rightActions={
-        <>
-          <Button
-            variant="secondary"
-            onClick={handleClose}
-            disabled={isPending}
-          >
-            {t('Cancel')}
-          </Button>
-          <Button
-            color="error"
-            onClick={() => void handleRemoveEncryption()}
-            disabled={isPending}
-            {...keyboardAction(() => void handleRemoveEncryption())}
-          >
-            {isPending ? <Spinner /> : t('Confirm')}
-          </Button>
-        </>
-      }
-      title={
-        <Box $direction="row" $justify="space-between" $align="center">
-          <Text as="h1" $size="h6" $align="flex-start" $margin="0">
-            {t('Remove document encryption')}
-          </Text>
-          <ButtonCloseModal
-            aria-label={t('Close the modal')}
-            onClick={handleClose}
-          />
-        </Box>
-      }
-      hideCloseButton
+      size={ModalSize.SMALL}
+      aria-label={t('Remove encryption')}
     >
-      <Box $margin={{ top: 'sm' }} $gap="sm">
-        <Text $variation="secondary">
-          {t(
-            'This will permanently remove encryption from this document. All content will be stored in plain text.',
-          )}
-        </Text>
+      <EncryptionModalContent
+        illustration="document-shield-x"
+        title={t('Remove encryption')}
+        description={t(
+          'The document will be decrypted and stored in plain text on the server.',
+        )}
+        actions={
+          <>
+            <Button
+              fullWidth
+              onClick={() => void handleRemoveEncryption()}
+              disabled={isPending}
+              {...keyboardAction(() => void handleRemoveEncryption())}
+            >
+              {isPending ? <Spinner /> : t('Remove encryption')}
+            </Button>
+            <Button
+              variant="bordered"
+              color="neutral"
+              fullWidth
+              onClick={handleClose}
+              disabled={isPending}
+            >
+              {t('Cancel')}
+            </Button>
+          </>
+        }
+      >
         {isError && error && <TextErrors causes={error.cause} />}
-      </Box>
+      </EncryptionModalContent>
     </Modal>
   );
 };

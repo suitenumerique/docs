@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Icon, Text } from '@/components';
+import { UserAvatar } from '@/features/auth';
 import type { DocumentEncryptionSettings } from '@/features/docs/doc-collaboration/hook/useDocumentEncryption';
 import {
   fetchRegisteredKeys,
@@ -167,24 +168,14 @@ export const PendingEncryptionSection = ({
 
   return (
     <Box
-      $padding="sm"
+      className="--docs--pending-encryption"
       $margin={{ horizontal: 'base', bottom: 'sm' }}
       $gap="xs"
-      $css={`
-        background: var(--c--theme--colors--warning-050, #fffbf0);
-        border: 1px solid var(--c--theme--colors--warning-300, #ffd591);
-        border-radius: 4px;
-      `}
     >
-      <Box $direction="row" $align="center" $gap="xs">
-        <Icon iconName="hourglass_empty" $size="sm" $theme="warning" />
-        <Text $weight="600" $size="sm">
-          {t('Users pending encryption access ({{count}})', {
-            count: pending.length,
-          })}
-        </Text>
-      </Box>
-      <Box $gap="2xs">
+      <Text $size="xs" $weight="700" $variation="secondary">
+        {t('Action needed')}
+      </Text>
+      <Box $gap="xs">
         {pending.map((access) => {
           const sub = access.user?.suite_user_id;
           const isBusy = inFlight.has(access.id);
@@ -195,45 +186,76 @@ export const PendingEncryptionSection = ({
             !!documentEncryptionSettings &&
             hasPublicKey === true &&
             !probing;
+          const name = access.user?.full_name || access.user?.email || '';
+
           return (
             <Box
               key={access.id}
               $direction="row"
               $align="center"
               $gap="xs"
-              $wrap="wrap"
-              $padding={{ vertical: '3xs' }}
+              $minHeight="42px"
             >
-              <Box $flex={1} $minWidth="0">
-                <Text $weight="500" $size="sm">
-                  {access.user?.full_name || access.user?.email}
-                </Text>
-                {access.user?.email && access.user?.full_name && (
-                  <Text $size="xs" $variation="secondary">
-                    {access.user.email}
+              <Box
+                $direction="row"
+                $align="center"
+                $gap="xs"
+                $flex={1}
+                $minWidth="0"
+              >
+                <UserAvatar fullName={name} />
+                <Box $minWidth="0">
+                  <Text $size="sm" $weight="500" $ellipsis>
+                    {name}
                   </Text>
-                )}
-                {!canAccept && !probing && (
-                  <Text $size="xs" $variation="secondary">
-                    {t(
-                      "Waiting for this user to complete their encryption onboarding. You'll be able to accept them once they have.",
-                    )}
-                  </Text>
-                )}
-                {error && (
-                  <Text $size="xs" $theme="error">
-                    {error}
-                  </Text>
-                )}
+                  {access.user?.email && access.user?.full_name && (
+                    <Text $size="xs" $variation="secondary" $ellipsis>
+                      {access.user.email}
+                    </Text>
+                  )}
+                  {!canAccept && !probing && (
+                    <Text $size="xs" $variation="secondary">
+                      {t(
+                        'Waiting for them to enable encryption. You will be able to accept them once they have.',
+                      )}
+                    </Text>
+                  )}
+                  {error && (
+                    <Text $size="xs" $theme="error">
+                      {error}
+                    </Text>
+                  )}
+                </Box>
               </Box>
-              {canAccept && (
+              {canAccept ? (
                 <Button
                   size="small"
+                  variant="bordered"
                   onClick={() => void handleAccept(access)}
                   disabled={isBusy}
                 >
                   {isBusy ? t('Accepting…') : t('Accept')}
                 </Button>
+              ) : (
+                <Box
+                  $direction="row"
+                  $align="center"
+                  $gap="3xs"
+                  $padding={{ horizontal: '2xs' }}
+                  $radius="4px"
+                  $height="24px"
+                  $background="var(--c--contextuals--background--surface--tertiary)"
+                >
+                  <Icon iconName="schedule" $size="sm" $variation="tertiary" />
+                  <Text
+                    $size="xs"
+                    $weight="500"
+                    $variation="tertiary"
+                    $css="white-space: nowrap;"
+                  >
+                    {t('Pending encryption')}
+                  </Text>
+                </Box>
               )}
             </Box>
           );

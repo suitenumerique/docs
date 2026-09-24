@@ -6,12 +6,17 @@
  * The product (Docs) doesn't manage public keys — it only stores fingerprints
  * on document accesses for UI purposes.
  */
-import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import { Modal } from '@gouvfr-lasuite/cunningham-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { Box } from '@/components';
 import { useUserEncryption } from '@/docs/doc-collaboration';
 import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
+
+import {
+  EncryptionHostBody,
+  useInterfaceModalSize,
+} from './EncryptionHostBody';
 
 interface ModalEncryptionOnboardingProps {
   isOpen: boolean;
@@ -24,6 +29,7 @@ export const ModalEncryptionOnboarding = ({
   onClose,
   onSuccess,
 }: ModalEncryptionOnboardingProps) => {
+  const { t } = useTranslation();
   const { client: vaultClient, refreshKeyState } = useVaultClient();
   const { refreshEncryption } = useUserEncryption();
   const onboardingOpenedRef = useRef(false);
@@ -70,10 +76,15 @@ export const ModalEncryptionOnboarding = ({
     };
   }, [vaultClient, refreshKeyState, refreshEncryption, onSuccess, onClose]);
 
+  // The modal's close control only ASKS the interface to close: it may hold an
+  // unsaved recovery phrase and answer with its own confirmation. The modal goes
+  // away on 'interface:closed', which the interface emits once really done.
   const handleClose = useCallback(() => {
-    vaultClient?.closeInterface();
-    onboardingOpenedRef.current = false;
-    onClose();
+    if (vaultClient) {
+      vaultClient.requestClose();
+    } else {
+      onClose();
+    }
   }, [vaultClient, onClose]);
 
   useEffect(() => {
@@ -82,20 +93,17 @@ export const ModalEncryptionOnboarding = ({
     }
   }, [isOpen]);
 
+  const size = useInterfaceModalSize(isOpen);
+
   return (
     <Modal
       isOpen={isOpen}
       closeOnClickOutside={false}
       onClose={handleClose}
-      size={ModalSize.LARGE}
-      hideCloseButton
+      size={size}
+      aria-label={t('Encryption')}
     >
-      <Box $minHeight="400px">
-        <div
-          ref={setContainerEl}
-          style={{ width: '100%', minHeight: '400px' }}
-        />
-      </Box>
+      <EncryptionHostBody hostRef={setContainerEl} onClose={onClose} />
     </Modal>
   );
 };

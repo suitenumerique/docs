@@ -30,7 +30,7 @@ export const AccountMenu = () => {
     if (hasEncryptionSetup) {
       return {
         label: t('Encryption settings'),
-        icon: 'lock',
+        icon: 'verified_user',
         callback: () => setIsSettingsOpen(true),
         showSeparator: true,
       };
@@ -38,7 +38,7 @@ export const AccountMenu = () => {
 
     return {
       label: t('Enable encryption'),
-      icon: 'lock_open',
+      icon: 'add_moderator',
       callback: () => setIsOnboardingOpen(true),
       showSeparator: true,
     };

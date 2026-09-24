@@ -1,4 +1,4 @@
-import { Box, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 import {
   QuickSearchItemContent,
   QuickSearchItemContentProps,
@@ -11,7 +11,10 @@ type Props = {
   alwaysShowRight?: boolean;
   right?: QuickSearchItemContentProps['right'];
   isInvitation?: boolean;
+  /** A short status ("Verify key", "No encryption") shown as an icon with the text as tooltip. */
   suffix?: string;
+  /** Material icon for the suffix; the shield-with-question mark by default. */
+  suffixIcon?: string;
   onSuffixClick?: () => void;
 };
 
@@ -21,6 +24,7 @@ export const SearchUserRow = ({
   alwaysShowRight = false,
   isInvitation = false,
   suffix,
+  suffixIcon = 'gpp_maybe',
   onSuffixClick,
 }: Props) => {
   const hasFullName = !!user.full_name;
@@ -47,10 +51,13 @@ export const SearchUserRow = ({
                 {hasFullName ? user.full_name : user.email}
               </Text>
               {suffix && (
-                <Text
-                  $size="xs"
-                  $weight="600"
-                  $color={colorsTokens['warning-600']}
+                <Icon
+                  iconName={suffixIcon}
+                  $size="sm"
+                  $theme={onSuffixClick ? 'warning' : 'neutral'}
+                  $variation={onSuffixClick ? undefined : 'tertiary'}
+                  aria-label={suffix}
+                  title={suffix}
                   {...(onSuffixClick && {
                     onClick: (e: React.MouseEvent) => {
                       e.stopPropagation();
@@ -58,14 +65,9 @@ export const SearchUserRow = ({
                     },
                     role: 'button',
                     tabIndex: 0,
-                    style: {
-                      cursor: 'pointer',
-                      textDecoration: 'underline',
-                    },
+                    style: { cursor: 'pointer' },
                   })}
-                >
-                  {suffix}
-                </Text>
+                />
               )}
             </Box>
             {hasFullName && (

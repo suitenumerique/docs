@@ -19,6 +19,14 @@ export declare interface EncryptionClientEventMap {
     };
     /** Fired when the user cancels or closes the interface */
     [MSG_INTERFACE_CLOSED]: void;
+    /**
+     * Fired when the shown screen wants a modal of another width: the product
+     * switches its modal between the design system's small (350px) and medium
+     * (600px) sizes. Emitted on every screen change, so a product can also ignore it.
+     */
+    'interface:size': {
+        size: 'small' | 'medium';
+    };
     /** Fired on errors from the vault or the interface */
     error: Error;
     /** Fired when keys changed from another tab/product (via BroadcastChannel) */
@@ -218,8 +226,7 @@ export declare class VaultClient {
      * @param keyVersion - the recipient's encryption-key VERSION this wrap was
      *   produced against, as stored by the product on the access row. The vault
      *   unwraps with exactly that retained key (a version this device no longer
-     *   holds throws WRONG_SECRET_KEY). For Drive chains it is the version of the
-     *   ENTRY-point key; the chain links themselves are symmetric.
+     *   holds throws WRONG_SECRET_KEY).
      * @param encryptedKeyChain - optional chain of wrapped keys for Drive's key hierarchy.
      *   When provided, resolves the chain from entry point to target before decrypting.
      */
@@ -386,6 +393,16 @@ export declare class VaultClient {
      */
     openRecipientProfile(container: HTMLElement, userId: string, label: RecipientLabel): void;
     /**
+     * Ask the interface to close, from the product's own close control (the X of
+     * the modal hosting the iframe). The interface owns the decision: mid-backup
+     * it shows its "cancel setup?" confirmation instead of closing, so a product
+     * must NOT unmount its modal here. It waits for the 'interface:closed' event,
+     * which fires once the interface has really closed (for this request or any
+     * other reason). With no interface open this is a no-op that still emits
+     * 'interface:closed', so a product's close handler stays uniform.
+     */
+    requestClose(): void;
+    /**
      * Close the interface iframe if it is open.
      */
     closeInterface(): void;
@@ -526,6 +543,10 @@ export declare const VaultErrorCode: {
     readonly IFRAME_REQUIRED: "IFRAME_REQUIRED";
     /** Ciphertext / encrypted-key payload too short to be valid (truncated). */
     readonly CIPHERTEXT_TOO_SHORT: "CIPHERTEXT_TOO_SHORT";
+    /** Ciphertext structure is inconsistent (e.g. a wrong length field): corrupt, not merely truncated. */
+    readonly MALFORMED_CIPHERTEXT: "MALFORMED_CIPHERTEXT";
+    /** A field cannot be represented in the canonical signed-payload encoding (length or number out of range). */
+    readonly INVALID_CANONICAL_PAYLOAD: "INVALID_CANONICAL_PAYLOAD";
     /** Blob's leading version byte doesn't match a format this build can decode. */
     readonly UNSUPPORTED_CRYPTO_VERSION: "UNSUPPORTED_CRYPTO_VERSION";
     /** A signature public key didn't have the expected Ed25519 length. */

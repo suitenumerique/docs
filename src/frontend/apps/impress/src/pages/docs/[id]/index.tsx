@@ -1,12 +1,12 @@
 import { Button } from '@gouvfr-lasuite/cunningham-react';
-import { Spinner, TreeProvider } from '@gouvfr-lasuite/ui-kit';
+import { TreeProvider } from '@gouvfr-lasuite/ui-kit';
 import { useQueryClient } from '@tanstack/react-query';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Icon, Loading, StyledLink, Text, TextErrors } from '@/components';
+import { Box, Icon, Loading, StyledLink, TextErrors } from '@/components';
 import { DEFAULT_QUERY_RETRY } from '@/core';
 import { DocEditor } from '@/docs/doc-editor';
 import {
@@ -19,11 +19,18 @@ import {
   useProviderStore,
   useTrans,
 } from '@/docs/doc-management/';
-import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
+import {
+  KEY_AUTH,
+  ModalEncryptionOnboarding,
+  setAuthUrl,
+  useAuth,
+} from '@/features/auth';
 import {
   useDocumentEncryption,
   useUserEncryption,
 } from '@/features/docs/doc-collaboration';
+import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
+import { EncryptionEmptyState } from '@/features/docs/doc-management/components/EncryptionLayout';
 import { KeyMismatchPanel } from '@/features/docs/doc-management/components/KeyMismatchPanel';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { useSkeletonStore } from '@/features/skeletons';
@@ -102,6 +109,9 @@ const DocPage = ({ id }: DocProps) => {
 
   const { authenticated, user } = useAuth();
   const [doc, setDoc] = useState<Doc>();
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const { isEnabled: isEncryptionEnabled, error: vaultClientError } =
+    useVaultClient();
   const { encryptionLoading, encryptionError } = useUserEncryption();
   const {
     documentEncryptionLoading,
@@ -295,112 +305,114 @@ const DocPage = ({ id }: DocProps) => {
     return <KeyMismatchPanel doc={doc} />;
   }
 
-  if (doc.is_encrypted && (encryptionError || documentEncryptionError)) {
+  if (doc.is_encrypted && vaultClientError) {
     return (
-      <Box $align="center" $margin="auto" $gap="md" $padding="2rem">
-        <Icon iconName="lock" $size="3rem" $theme="warning" />
-        <Text as="h2" $textAlign="center" $margin="0">
-          {t('Encryption keys unavailable')}
-        </Text>
-        <Box $maxWidth="500px" $gap="sm">
-          <Text $variation="secondary" $textAlign="center">
-            {t(
-              'This is an encrypted document, but your current device does not have the required encryption keys to decrypt it.',
-            )}
-          </Text>
-
-          {(encryptionError === 'missing_private_key' ||
-            encryptionError === 'missing_public_key') && (
-            <Text $variation="secondary" $textAlign="center">
-              {t(
-                'This usually happens when you switch to a new device or browser without restoring your encryption backup, please go to your "Encryption Settings" to fix it.',
-              )}
-            </Text>
-          )}
-
-          {documentEncryptionError === 'missing_symmetric_key' && (
-            <Text $variation="secondary" $textAlign="center">
-              {t(
-                'You do not have access to this encrypted document. Ask the document owner to share it with you again.',
-              )}
-            </Text>
-          )}
-
-          {documentEncryptionError === 'decryption_failed' && (
-            <Text $variation="secondary" $textAlign="center">
-              {t(
-                'Your encryption keys could not decrypt this document. This may happen if your keys were recreated. Ask the document owner to share it with you again.',
-              )}
-            </Text>
-          )}
-        </Box>
-
-        {(encryptionError === 'missing_private_key' ||
-          encryptionError === 'missing_public_key') && (
-          <Box $gap="xs" $maxWidth="500px">
-            <Box
-              $padding="sm"
-              $background="#f0f7ff"
-              $border="1px solid #c5ddf5"
-              $radius="4px"
-              $gap="xs"
-            >
-              <Text $weight="600" $size="sm">
-                {t('Restore from backup (recommended)')}
-              </Text>
-              <Text $size="sm" $variation="secondary">
-                {t(
-                  'If you have previously exported your encryption backup, you can restore it in your account settings to regain access to all your encrypted documents.',
-                )}
-              </Text>
-            </Box>
-            <Box
-              $padding="sm"
-              $background="#fff8f0"
-              $border="1px solid #f5dfc5"
-              $radius="4px"
-              $gap="xs"
-            >
-              <Text $weight="600" $size="sm">
-                {t('Recreate encryption keys (not recommended)')}
-              </Text>
-              <Text $size="sm" $variation="secondary">
-                {t(
-                  'Creating new encryption keys means you will lose access to all previously encrypted documents. Document owners will need to share them with you again.',
-                )}
-              </Text>
-            </Box>
-          </Box>
+      <EncryptionEmptyState
+        title={t('Encryption service unavailable')}
+        description={t(
+          'This document is encrypted and the encryption service could not be loaded. Check your connection and try again.',
         )}
+        actions={
+          <>
+            <StyledLink href="/">
+              <Button
+                size="small"
+                color="neutral"
+                variant="tertiary"
+                icon={<Icon iconName="home" $withThemeInherited />}
+              >
+                {t('Home')}
+              </Button>
+            </StyledLink>
+            <Button
+              size="small"
+              variant="tertiary"
+              onClick={() => window.location.reload()}
+              icon={<Icon iconName="refresh" $withThemeInherited />}
+            >
+              {t('Retry')}
+            </Button>
+          </>
+        }
+      />
+    );
+  }
 
-        <StyledLink href="/">
-          <Button
-            color="neutral"
-            icon={<Icon iconName="home" $withThemeInherited />}
-          >
-            {t('Back to home')}
-          </Button>
-        </StyledLink>
-      </Box>
+  if (doc.is_encrypted && (encryptionError || documentEncryptionError)) {
+    const needsSetup =
+      encryptionError === 'missing_private_key' ||
+      encryptionError === 'missing_public_key';
+
+    return (
+      <>
+        <EncryptionEmptyState
+          title={t('Encrypted document')}
+          description={
+            needsSetup
+              ? t(
+                  'This document is encrypted. You must enable encryption on your account to access it.',
+                )
+              : documentEncryptionError === 'missing_symmetric_key'
+                ? t(
+                    'You do not have access to this encrypted document. Ask the document owner to share it with you again.',
+                  )
+                : t(
+                    'You do not have the correct encryption key to decrypt this document. Ask the document owner to share it with you again.',
+                  )
+          }
+          actions={
+            <>
+              <StyledLink href="/">
+                <Button
+                  size="small"
+                  color="neutral"
+                  variant="tertiary"
+                  icon={<Icon iconName="home" $withThemeInherited />}
+                >
+                  {t('Home')}
+                </Button>
+              </StyledLink>
+              {needsSetup && isEncryptionEnabled && (
+                <Button
+                  size="small"
+                  variant="tertiary"
+                  onClick={() => setIsOnboardingOpen(true)}
+                  icon={<Icon iconName="verified_user" $withThemeInherited />}
+                >
+                  {t('Enable encryption')}
+                </Button>
+              )}
+            </>
+          }
+        />
+        {isOnboardingOpen && (
+          <ModalEncryptionOnboarding
+            isOpen
+            onClose={() => setIsOnboardingOpen(false)}
+            onSuccess={() => setIsOnboardingOpen(false)}
+          />
+        )}
+      </>
     );
   }
 
   if (encryptionTransition) {
     return (
-      <Box
-        $align="center"
-        $justify="center"
-        $height="100%"
-        $width="100%"
-        $gap="md"
-      >
-        <Spinner />
-        <Text $textAlign="center" $variation="secondary">
-          {encryptionTransition === 'encrypting'
-            ? t('Document encryption in progress, please wait...')
-            : t('Removing document encryption, please wait...')}
-        </Text>
-      </Box>
+      <EncryptionEmptyState
+        illustration="document-encrypting"
+        title={
+          encryptionTransition === 'encrypting'
+            ? t('Encryption in progress')
+            : t('Removing encryption')
+        }
+        description={
+          encryptionTransition === 'encrypting'
+            ? t('The document owner is encrypting this document. Please wait.')
+            : t(
+                'The document owner is removing encryption from this document. Please wait.',
+              )
+        }
+      />
     );
   }
 

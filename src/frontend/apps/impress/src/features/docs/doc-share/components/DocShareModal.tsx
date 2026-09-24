@@ -9,7 +9,6 @@ import {
   Box,
   ButtonCloseModal,
   HorizontalSeparator,
-  Icon,
   Loading,
   Text,
 } from '@/components';
@@ -27,6 +26,10 @@ import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/u
 import type { PublicKeyMismatch } from '@/docs/doc-collaboration/hook/usePublicKeyRegistry';
 import { Doc } from '@/docs/doc-management';
 import { User, useAuth } from '@/features/auth';
+import {
+  EncryptionEmptyState,
+  EncryptionModalContent,
+} from '@/features/docs/doc-management/components/EncryptionLayout';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 
@@ -272,39 +275,23 @@ export const DocShareModal = ({
         </div>
         {isEncryptionDeriving && <Loading />}
         {!isEncryptionDeriving && derivedEncryptionError && (
-          <Box $align="center" $gap="sm" $padding="lg">
-            <Icon iconName="lock" $size="2rem" $theme="warning" />
-            <Text as="h3" $textAlign="center" $margin="0">
-              {t('Encryption keys unavailable')}
-            </Text>
-            <Text $variation="secondary" $textAlign="center" $size="sm">
-              {t(
-                'This is an encrypted document, but your current device does not have the required encryption keys to decrypt it.',
-              )}
-            </Text>
-            {(encryptionError === 'missing_private_key' ||
-              encryptionError === 'missing_public_key') && (
-              <Text $variation="secondary" $textAlign="center" $size="sm">
-                {t(
-                  'This usually happens when you switch to a new device or browser without restoring your encryption backup, please go to your "Encryption Settings" to fix it.',
-                )}
-              </Text>
-            )}
-            {documentEncryptionError === 'missing_symmetric_key' && (
-              <Text $variation="secondary" $textAlign="center" $size="sm">
-                {t(
-                  'You do not have access to this encrypted document. Ask the document owner to share it with you again.',
-                )}
-              </Text>
-            )}
-            {documentEncryptionError === 'decryption_failed' && (
-              <Text $variation="secondary" $textAlign="center" $size="sm">
-                {t(
-                  'Your encryption keys could not decrypt this document. This may happen if your keys were recreated. Ask the document owner to share it with you again.',
-                )}
-              </Text>
-            )}
-          </Box>
+          <EncryptionEmptyState
+            title={t('Encrypted document')}
+            description={
+              encryptionError === 'missing_private_key' ||
+              encryptionError === 'missing_public_key'
+                ? t(
+                    'This document is encrypted. You must enable encryption on your account to access it.',
+                  )
+                : documentEncryptionError === 'missing_symmetric_key'
+                  ? t(
+                      'You do not have access to this encrypted document. Ask the document owner to share it with you again.',
+                    )
+                  : t(
+                      'You do not have the correct encryption key to decrypt this document. Ask the document owner to share it with you again.',
+                    )
+            }
+          />
         )}
         {!isEncryptionDeriving && !derivedEncryptionError && (
           <Box
@@ -534,14 +521,14 @@ const QuickSearchInviteInputSection = ({
   const getUserSuffix = useCallback(
     (user: User): string | undefined => {
       if (user.suite_user_id && keyMismatchUserIds?.has(user.suite_user_id)) {
-        return t('DIFFERENT PUBLIC KEY, PLEASE VERIFY');
+        return t('Verify key');
       }
       if (
         isEncrypted &&
         (!user.suite_user_id ||
           !doc.accesses_versions_per_user?.[user.suite_user_id])
       ) {
-        return t(`(encryption not enabled)`);
+        return t('No encryption');
       }
       return undefined;
     },
@@ -560,6 +547,11 @@ const QuickSearchInviteInputSection = ({
           <DocShareModalInviteUserRow
             user={user}
             suffix={getUserSuffix(user)}
+            suffixIcon={
+              user.suite_user_id && keyMismatchUserIds?.has(user.suite_user_id)
+                ? 'gpp_maybe'
+                : 'gpp_bad'
+            }
           />
         )}
       />
@@ -580,37 +572,20 @@ const QuickSearchInviteInputSection = ({
           closeOnClickOutside
           onClose={() => setShowNoKeyModal(false)}
           size={ModalSize.SMALL}
-          rightActions={
-            <Button onClick={() => setShowNoKeyModal(false)}>
-              {t('Understood')}
-            </Button>
-          }
-          title={
-            <Text
-              as="h1"
-              $gap="0.7rem"
-              $size="h6"
-              $align="flex-start"
-              $direction="row"
-              $margin="0"
-            >
-              <Icon iconName="lock" />
-              {t('Encryption required')}
-            </Text>
-          }
+          aria-label={t('Encryption required')}
         >
-          <Box $direction="column" $gap="0.35rem" $margin={{ top: 'sm' }}>
-            <Text $variation="secondary">
-              {t(
-                'This user has not enabled encryption on their account yet. It is not possible to share encrypted content with them.',
-              )}
-            </Text>
-            <Text $variation="secondary">
-              {t(
-                'Please ask them to enable encryption in their account settings first.',
-              )}
-            </Text>
-          </Box>
+          <EncryptionModalContent
+            illustration="document-shield-x"
+            title={t('Encryption required')}
+            description={t(
+              'This person has not enabled encryption yet, so the document cannot be shared with them. Ask them to enable encryption first.',
+            )}
+            actions={
+              <Button fullWidth onClick={() => setShowNoKeyModal(false)}>
+                {t('Understood')}
+              </Button>
+            }
+          />
         </Modal>
       )}
       {mismatchUser &&

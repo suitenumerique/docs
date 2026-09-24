@@ -12,6 +12,7 @@ import {
   DropdownMenuOption,
   Icon,
   IconOptions,
+  Text,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
@@ -149,7 +150,7 @@ export const DocToolBox = ({
     },
     {
       label: t('Encrypt document'),
-      icon: 'https',
+      icon: 'add_moderator',
       disabled: !doc.abilities.accesses_manage,
       callback: () => {
         setIsModalEncryptOpen(true);
@@ -158,8 +159,8 @@ export const DocToolBox = ({
       showSeparator: isTopRoot ? true : false,
     },
     {
-      label: t('Remove document encryption'),
-      icon: 'no_encryption',
+      label: t('Remove encryption'),
+      icon: 'remove_moderator',
       disabled: !doc.abilities.accesses_manage,
       callback: () => {
         setIsModalRemoveEncryptionOpen(true);
@@ -242,21 +243,15 @@ export const DocToolBox = ({
           <Box
             $direction="row"
             $align="center"
-            $gap="5px"
+            $gap="4px"
             $css={css`
               margin-right: 5px;
             `}
           >
-            <Icon
-              iconName="lock"
-              $size="md"
-              $color={colorsTokens['success-600']}
-            />
-            <span
-              style={{ fontSize: '0.8rem', color: colorsTokens['success-600'] }}
-            >
+            <Icon iconName="verified_user" $size="sm" $theme="brand" />
+            <Text $size="xs" $weight="500" $theme="brand">
               {t('Encrypted')}
-            </span>
+            </Text>
           </Box>
         )}
 

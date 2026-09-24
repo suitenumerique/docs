@@ -1000,7 +1000,50 @@
       "pdf": "pdf",
       "{{action}}, current role: {{role}}": "{{action}}, rôle actuel : {{role}}",
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "{{name}} a été ajouté à la liste d'invitation. Ajoutez plus de membres ou appuyez sur Tab pour sélectionner le rôle et inviter.",
-      "{{name}} removed from invite list": "{{name}} a été retiré de la liste d'invitation"
+      "{{name}} removed from invite list": "{{name}} a été retiré de la liste d'invitation",
+      "Encryption": "Chiffrement",
+      "Remove encryption": "Retirer le chiffrement",
+      "Encrypted": "Chiffré",
+      "Encrypt": "Chiffrer",
+      "The document and its attachments will be encrypted end-to-end. Only people you share it with will be able to access its contents.": "Le document et ses pièces jointes seront chiffrés de bout en bout. Seules les personnes avec qui vous le partagez pourront y accéder.",
+      "The document will be decrypted and stored in plain text on the server.": "Le document sera déchiffré et stocké en clair sur le serveur.",
+      "{{count}} collaborator(s) have not enabled encryption yet. They will be added as pending and cannot open the document until someone accepts them from the share dialog.": "{{count}} collaborateur(s) n'ont pas encore activé le chiffrement. Ils seront ajoutés en attente et ne pourront pas ouvrir le document tant qu'une personne ne les aura pas acceptés depuis la fenêtre de partage.",
+      "You must enable encryption from your account menu first": "Vous devez d'abord activer le chiffrement depuis le menu de votre compte",
+      "Document must be set to private (currently {{reach}})": "Le document doit être privé (actuellement {{reach}})",
+      "Pending invitations must be resolved first": "Les invitations en attente doivent d'abord être traitées",
+      "Encrypted document": "Document chiffré",
+      "Encryption service unavailable": "Service de chiffrement indisponible",
+      "The encryption service could not be loaded. Check your connection and try again.": "Le service de chiffrement n'a pas pu être chargé. Vérifiez votre connexion et réessayez.",
+      "This document is encrypted and the encryption service could not be loaded. Check your connection and try again.": "Ce document est chiffré et le service de chiffrement n'a pas pu être chargé. Vérifiez votre connexion et réessayez.",
+      "Retry": "Réessayer",
+      "Close": "Fermer",
+      "This document is encrypted. You must enable encryption on your account to access it.": "Ce document est chiffré. Vous devez activer le chiffrement sur votre compte pour y accéder.",
+      "You do not have access to this encrypted document. Ask the document owner to share it with you again.": "Vous n'avez pas accès à ce document chiffré. Demandez à son propriétaire de le partager à nouveau avec vous.",
+      "You do not have the correct encryption key to decrypt this document. Ask the document owner to share it with you again.": "Vous n'avez pas la bonne clé de chiffrement pour déchiffrer ce document. Demandez à son propriétaire de le partager à nouveau avec vous.",
+      "Enable encryption": "Activer le chiffrement",
+      "Encryption in progress": "Chiffrement en cours",
+      "Removing encryption": "Retrait du chiffrement",
+      "The document owner is encrypting this document. Please wait.": "Le propriétaire du document est en train de le chiffrer. Veuillez patienter.",
+      "The document owner is removing encryption from this document. Please wait.": "Le propriétaire du document est en train d'en retirer le chiffrement. Veuillez patienter.",
+      "This document was encrypted with a different key": "Ce document a été chiffré avec une autre clé",
+      "Verify key": "Vérifier la clé",
+      "No encryption": "Pas de chiffrement",
+      "Encryption required": "Chiffrement requis",
+      "This person has not enabled encryption yet, so the document cannot be shared with them. Ask them to enable encryption first.": "Cette personne n'a pas encore activé le chiffrement, le document ne peut donc pas être partagé avec elle. Demandez-lui d'activer le chiffrement d'abord.",
+      "Understood": "Compris",
+      "Verify encryption key": "Vérifier la clé de chiffrement",
+      "This person's encryption key has changed. Verify it before continuing.": "La clé de chiffrement de cette personne a changé. Vérifiez-la avant de continuer.",
+      "We recommend verifying with this person directly (for example on a call) that they really changed their encryption key before proceeding.": "Nous vous recommandons de vérifier directement avec cette personne (par exemple lors d'un appel) qu'elle a bien changé sa clé de chiffrement avant de continuer.",
+      "Don't trust": "Ne pas faire confiance",
+      "Trust": "Faire confiance",
+      "Previously known:": "Clé connue :",
+      "Current key:": "Clé actuelle :",
+      "Action needed": "Action requise",
+      "Waiting for them to enable encryption. You will be able to accept them once they have.": "En attente de l'activation du chiffrement par cette personne. Vous pourrez l'accepter une fois que ce sera fait.",
+      "Accept": "Accepter",
+      "Accepting…": "Acceptation…",
+      "Pending encryption": "Chiffrement en attente",
+      "Encryption settings": "Paramètres de chiffrement"
     }
   },
   "it": {
@@ -1449,7 +1492,9 @@
       "{{name}} removed from invite list": "{{name}} verwijderd uit de uitnodigingslijst"
     }
   },
-  "pt": { "translation": {} },
+  "pt": {
+    "translation": {}
+  },
   "ru": {
     "translation": {
       "\"{{email}}\" is already invited to the document.": "\"{{email}}\" уже имеет приглашение для этого документа.",

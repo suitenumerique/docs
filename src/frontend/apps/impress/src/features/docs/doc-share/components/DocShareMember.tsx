@@ -24,6 +24,7 @@ type Props = {
   access: Access;
   isInherited?: boolean;
   suffix?: string;
+  suffixIcon?: string;
   onSuffixClick?: () => void;
 };
 export const DocShareMemberItem = ({
@@ -31,6 +32,7 @@ export const DocShareMemberItem = ({
   access,
   isInherited = false,
   suffix,
+  suffixIcon,
   onSuffixClick,
 }: Props) => {
   const { t } = useTranslation();
@@ -76,6 +78,7 @@ export const DocShareMemberItem = ({
         alwaysShowRight={true}
         user={access.user}
         suffix={suffix}
+        suffixIcon={suffixIcon}
         onSuffixClick={onSuffixClick}
         right={
           <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
@@ -147,12 +150,13 @@ export const QuickSearchGroupMember = ({
             (!uid || !doc.accesses_versions_per_user?.[uid]);
 
           let suffix: string | undefined;
+          let suffixIcon: string | undefined;
           if (hasMismatch) {
-            suffix = t('DIFFERENT PUBLIC KEY, PLEASE VERIFY');
+            suffix = t('Verify key');
+            suffixIcon = 'gpp_maybe';
           } else if (hasNoEncryptionKey) {
-            suffix = t(
-              'ENCRYPTION DISABLED - consider removing this member since unable to read the document',
-            );
+            suffix = t('No encryption');
+            suffixIcon = 'gpp_bad';
           }
 
           return (
@@ -160,6 +164,7 @@ export const QuickSearchGroupMember = ({
               doc={doc}
               access={access}
               suffix={suffix}
+              suffixIcon={suffixIcon}
               onSuffixClick={
                 hasMismatch && uid ? () => setMismatchUserId(uid) : undefined
               }

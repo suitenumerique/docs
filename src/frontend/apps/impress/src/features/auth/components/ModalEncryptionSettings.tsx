@@ -4,12 +4,17 @@
  * Opens the encryption service's settings interface iframe which handles:
  * fingerprint display, key deletion, device transfer export, and server key management.
  */
-import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import { Modal } from '@gouvfr-lasuite/cunningham-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { Box } from '@/components';
 import { useUserEncryption } from '@/docs/doc-collaboration';
 import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
+
+import {
+  EncryptionHostBody,
+  useInterfaceModalSize,
+} from './EncryptionHostBody';
 
 interface ModalEncryptionSettingsProps {
   isOpen: boolean;
@@ -21,6 +26,7 @@ export const ModalEncryptionSettings = ({
   isOpen,
   onClose,
 }: ModalEncryptionSettingsProps) => {
+  const { t } = useTranslation();
   const { client: vaultClient, refreshKeyState } = useVaultClient();
   const { refreshEncryption } = useUserEncryption();
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
@@ -61,10 +67,15 @@ export const ModalEncryptionSettings = ({
     };
   }, [vaultClient, refreshKeyState, refreshEncryption, onClose]);
 
+  // The modal's close control only ASKS the interface to close: it may hold an
+  // unsaved recovery phrase and answer with its own confirmation. The modal goes
+  // away on 'interface:closed', which the interface emits once really done.
   const handleClose = useCallback(() => {
-    vaultClient?.closeInterface();
-    setSettingsOpened(false);
-    onClose();
+    if (vaultClient) {
+      vaultClient.requestClose();
+    } else {
+      onClose();
+    }
   }, [vaultClient, onClose]);
 
   useEffect(() => {
@@ -73,20 +84,17 @@ export const ModalEncryptionSettings = ({
     }
   }, [isOpen]);
 
+  const size = useInterfaceModalSize(isOpen);
+
   return (
     <Modal
       isOpen={isOpen}
       closeOnClickOutside={false}
       onClose={handleClose}
-      size={ModalSize.LARGE}
-      hideCloseButton
+      size={size}
+      aria-label={t('Encryption')}
     >
-      <Box $minHeight="400px">
-        <div
-          ref={setContainerEl}
-          style={{ width: '100%', minHeight: '400px' }}
-        />
-      </Box>
+      <EncryptionHostBody hostRef={setContainerEl} onClose={onClose} />
     </Modal>
   );
 };

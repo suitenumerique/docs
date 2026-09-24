@@ -1,7 +1,8 @@
+import { Button } from '@gouvfr-lasuite/cunningham-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Icon, Text } from '@/components';
+import { Icon, StyledLink, Text } from '@/components';
 import { useAuth } from '@/features/auth';
 import {
   fetchRegisteredKeys,
@@ -9,6 +10,8 @@ import {
 } from '@/features/docs/doc-collaboration/vault';
 
 import type { Doc } from '../types';
+
+import { EncryptionEmptyState } from './EncryptionLayout';
 
 /**
  * True when the SDK threw a `VaultError` carrying the
@@ -79,55 +82,61 @@ export const KeyMismatchPanel = ({ doc }: Props) => {
     };
   }, [vaultClient, user?.suite_user_id]);
 
+  const versionChip = (value: number) => (
+    <Text
+      as="span"
+      $css={`
+        font-family: monospace;
+        background: var(--c--contextuals--background--surface--tertiary);
+        padding: 2px 6px;
+        border-radius: 3px;
+      `}
+    >
+      {value}
+    </Text>
+  );
+
   return (
-    <Box $align="center" $margin="auto" $gap="md" $padding="2rem">
-      <Icon iconName="key_off" $size="3rem" $theme="warning" />
-      <Text as="h2" $textAlign="center" $margin="0">
-        {t('This document was encrypted with a different key')}
-      </Text>
-      <Box $maxWidth="500px" $gap="sm">
-        <Text $variation="secondary" $textAlign="center">
-          {t(
-            'The document was encrypted for you at a time when you were using a different encryption key — possibly before you reset your keys or switched device without restoring a backup. Your current key can no longer decrypt it. Ask an owner or administrator of this document to remove you from the access list and add you back so it gets re-encrypted for your current key.',
-          )}
-        </Text>
-      </Box>
+    <EncryptionEmptyState
+      title={t('This document was encrypted with a different key')}
+      description={t(
+        'The document was encrypted for you at a time when you were using a different encryption key — possibly before you reset your keys or switched device without restoring a backup. Your current key can no longer decrypt it. Ask an owner or administrator of this document to remove you from the access list and add you back so it gets re-encrypted for your current key.',
+      )}
+      actions={
+        <StyledLink href="/">
+          <Button
+            size="small"
+            color="neutral"
+            variant="tertiary"
+            icon={<Icon iconName="home" $withThemeInherited />}
+          >
+            {t('Home')}
+          </Button>
+        </StyledLink>
+      }
+    >
       {(shareTimeVersion !== null || currentVersion !== null) && (
-        <Box $gap="2xs" $maxWidth="500px" $align="center">
+        <Text
+          as="div"
+          $size="xs"
+          $variation="secondary"
+          $textAlign="center"
+          $css="display: flex; flex-direction: column; gap: 4px;"
+        >
           {shareTimeVersion !== null && (
-            <Text $variation="secondary" $size="sm" $textAlign="center">
+            <span>
               {t('Encryption key version at the time it was shared with you:')}{' '}
-              <Text
-                as="span"
-                $css={`
-                  font-family: monospace;
-                  background: var(--c--theme--colors--greyscale-100, #f4f4f5);
-                  padding: 2px 6px;
-                  border-radius: 3px;
-                `}
-              >
-                {shareTimeVersion}
-              </Text>
-            </Text>
+              {versionChip(shareTimeVersion)}
+            </span>
           )}
           {currentVersion !== null && (
-            <Text $variation="secondary" $size="sm" $textAlign="center">
+            <span>
               {t('Your current encryption key version:')}{' '}
-              <Text
-                as="span"
-                $css={`
-                  font-family: monospace;
-                  background: var(--c--theme--colors--greyscale-100, #f4f4f5);
-                  padding: 2px 6px;
-                  border-radius: 3px;
-                `}
-              >
-                {currentVersion}
-              </Text>
-            </Text>
+              {versionChip(currentVersion)}
+            </span>
           )}
-        </Box>
+        </Text>
       )}
-    </Box>
+    </EncryptionEmptyState>
   );
 };
