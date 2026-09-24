@@ -758,7 +758,7 @@ def test_tasks_user_delete_error_during_deletion_should_rollback_deletion(monkey
 
 
 def test_models_users_convert_valid_invitations_resets_connections(
-    mock_reset_service_connections, django_capture_on_commit_callbacks
+    mock_reset_service_connections, capture_service_resets
 ):
     """
     The accesses are created in bulk, without the signal: the connections of
@@ -769,9 +769,8 @@ def test_models_users_convert_valid_invitations_resets_connections(
     other_document = factories.DocumentFactory()
     factories.InvitationFactory(email=email, document=document)
     factories.InvitationFactory(email=email, document=other_document)
-    mock_reset_service_connections.reset_mock()
 
-    with django_capture_on_commit_callbacks(execute=True):
+    with capture_service_resets():
         user = factories.UserFactory(email=email)
 
     assert sorted(mock_reset_service_connections.call_args_list, key=str) == sorted(
@@ -802,7 +801,6 @@ def test_models_users_delete_reports_to_the_collaboration_server(
     shared = factories.DocumentFactory(users=[(user, "owner"), (other_user, "owner")])
     member = factories.DocumentFactory(users=[(user, "editor")])
     user_id = str(user.id)
-    mock_reset_service_connections.reset_mock()
 
     user.delete()
 

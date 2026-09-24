@@ -590,6 +590,20 @@ class Base(Configuration):
         environ_name="YHUB_MIGRATION_TIMEOUT",
         environ_prefix=None,
     )
+    # A change of accesses has the connections of a whole subtree re-checked,
+    # one call to the collaboration server per document. The walk resets this
+    # many documents per run and queues the rest after this many seconds, so
+    # that a large subtree is spread over time instead of fired at once.
+    YHUB_RESET_CONNECTIONS_BATCH_SIZE = values.PositiveIntegerValue(
+        default=50,
+        environ_name="YHUB_RESET_CONNECTIONS_BATCH_SIZE",
+        environ_prefix=None,
+    )
+    YHUB_RESET_CONNECTIONS_DELAY = values.FloatValue(
+        default=1.0,
+        environ_name="YHUB_RESET_CONNECTIONS_DELAY",
+        environ_prefix=None,
+    )
 
     # JWT
     # RSA private key (PEM) used to sign the tokens issued by

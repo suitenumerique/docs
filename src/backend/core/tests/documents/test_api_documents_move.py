@@ -839,12 +839,13 @@ def test_api_documents_move_scope_change_deletion_is_atomic(monkeypatch):
 
 
 def test_api_documents_move_resets_connections_of_the_moved_document(
-    mock_reset_service_connections, django_capture_on_commit_callbacks
+    mock_reset_service_connections, capture_service_resets
 ):
     """
     A moved document inherits the accesses of other ancestors: every
-    connection of its subtree should be re-checked, and the direct accesses
-    it loses with its scope are each reported as well.
+    connection of its subtree should be re-checked. The direct accesses it
+    loses with its scope are each reported as well, and coalesced into that
+    one reset of everybody.
     """
     user = factories.UserFactory()
     client = APIClient()
@@ -853,9 +854,8 @@ def test_api_documents_move_resets_connections_of_the_moved_document(
     document = factories.DocumentFactory(users=[(user, "owner")])
     other_access = factories.UserDocumentAccessFactory(document=document)
     target = factories.DocumentFactory(users=[(user, "owner")])
-    mock_reset_service_connections.reset_mock()
 
-    with django_capture_on_commit_callbacks(execute=True):
+    with capture_service_resets():
         response = client.post(
             f"/api/v1.0/documents/{document.id!s}/move/",
             data={
@@ -865,18 +865,12 @@ def test_api_documents_move_resets_connections_of_the_moved_document(
         )
 
     assert response.status_code == 200
-    assert sorted(mock_reset_service_connections.call_args_list, key=str) == sorted(
-        [
-            mock.call(str(document.id), None),
-            mock.call(str(document.id), str(user.id)),
-            mock.call(str(document.id), str(other_access.user_id)),
-        ],
-        key=str,
-    )
+    assert not models.DocumentAccess.objects.filter(pk=other_access.pk).exists()
+    mock_reset_service_connections.assert_called_once_with(str(document.id), None)
 
 
 def test_api_documents_move_resets_connections_when_the_scope_is_kept(
-    mock_reset_service_connections, django_capture_on_commit_callbacks
+    mock_reset_service_connections, capture_service_resets
 ):
     """
     Moving within the same tree touches no direct access, the ancestors change
@@ -888,9 +882,8 @@ def test_api_documents_move_resets_connections_when_the_scope_is_kept(
 
     root = factories.DocumentFactory(users=[(user, "owner")])
     document, sibling = factories.DocumentFactory.create_batch(2, parent=root)
-    mock_reset_service_connections.reset_mock()
 
-    with django_capture_on_commit_callbacks(execute=True):
+    with capture_service_resets():
         response = client.post(
             f"/api/v1.0/documents/{document.id!s}/move/",
             data={
@@ -904,7 +897,7 @@ def test_api_documents_move_resets_connections_when_the_scope_is_kept(
 
 
 def test_api_documents_move_resets_nothing_when_refused(
-    mock_reset_service_connections, django_capture_on_commit_callbacks
+    mock_reset_service_connections, capture_service_resets
 ):
     """A refused move changes nothing, and reports nothing."""
     user = factories.UserFactory()
@@ -913,9 +906,8 @@ def test_api_documents_move_resets_nothing_when_refused(
 
     document = factories.DocumentFactory(users=[(user, "owner")])
     child = factories.DocumentFactory(parent=document)
-    mock_reset_service_connections.reset_mock()
 
-    with django_capture_on_commit_callbacks(execute=True):
+    with capture_service_resets():
         response = client.post(
             f"/api/v1.0/documents/{document.id!s}/move/",
             data={

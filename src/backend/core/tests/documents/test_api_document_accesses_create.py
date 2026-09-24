@@ -593,7 +593,7 @@ def test_api_document_accesses_create_resets_connections(
     via,
     mock_user_teams,
     mock_reset_service_connections,
-    django_capture_on_commit_callbacks,
+    capture_service_resets,
 ):
     """
     Creating an access should have the collaboration server re-check the
@@ -603,7 +603,6 @@ def test_api_document_accesses_create_resets_connections(
     client = APIClient()
     client.force_login(user)
     document = factories.DocumentFactory(users=[(user, "owner")])
-    mock_reset_service_connections.reset_mock()
 
     if via == USER:
         other_user = factories.UserFactory()
@@ -614,7 +613,7 @@ def test_api_document_accesses_create_resets_connections(
         data = {"team": "lasuite", "role": "editor"}
         expected_user_id = None
 
-    with django_capture_on_commit_callbacks(execute=True):
+    with capture_service_resets():
         response = client.post(
             f"/api/v1.0/documents/{document.id!s}/accesses/", data, format="json"
         )

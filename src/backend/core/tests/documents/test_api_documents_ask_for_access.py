@@ -915,7 +915,7 @@ def test_api_document_ask_for_access_throttling(settings):
 
 
 def test_api_documents_ask_for_access_accept_resets_connections(
-    mock_reset_service_connections, django_capture_on_commit_callbacks
+    mock_reset_service_connections, capture_service_resets
 ):
     """Accepting a request creates or changes an access: the user is re-checked."""
     user = UserFactory()
@@ -923,12 +923,11 @@ def test_api_documents_ask_for_access_accept_resets_connections(
     document_ask_for_access = DocumentAskForAccessFactory(
         document=document, role=RoleChoices.READER
     )
-    mock_reset_service_connections.reset_mock()
 
     client = APIClient()
     client.force_login(user)
 
-    with django_capture_on_commit_callbacks(execute=True):
+    with capture_service_resets():
         response = client.post(
             f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/"
         )
