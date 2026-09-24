@@ -20,38 +20,11 @@ body > #__next > .c__app > div:has(> .c__loader) {
   box-sizing: border-box;
 }
 
-/* The modals hosting the encryption service's screens use the design system's
-   350px "small" modal; Cunningham's small is 300px. */
-.c__modal--small:has(.--docs--encryption-host),
+/* Docs' own encryption cards (encrypt a document, remove encryption, key
+   mismatch) use the design system's small modal widened to 350px, the width the
+   encryption service's own screens use. */
 .c__modal--small:has(.--docs--encryption-modal) {
   width: 350px;
-}
-
-/* The interface pads its own screens: the modal gives its iframe the bare box. */
-.c__modal:has(.--docs--encryption-host) .c__modal__scroller {
-  padding: 0;
-}
-
-/* The design system's close control is a zero-height sticky spot inside the
-   scroller: while the modal does not scroll it sits in the top padding, and once
-   it scrolls it pins elsewhere, so the cross jumps and the content shows through
-   around it. Anchoring it to the modal box itself keeps it in the same corner
-   in every case, and a halo in the modal's colour masks what scrolls under it. */
-.c__modal:has(.--docs--encryption-host) .c__modal__close,
-.c__modal:has(.--docs--encryption-modal) .c__modal__close {
-  position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
-  height: auto;
-  z-index: 1;
-}
-
-.c__modal:has(.--docs--encryption-host) .c__modal__close .c__button,
-.c__modal:has(.--docs--encryption-modal) .c__modal__close .c__button {
-  top: 0;
-  right: 0;
-  background: var(--c--components--modal--background-color);
-  box-shadow: 0 0 0 4px var(--c--components--modal--background-color);
 }
 
 main ::-webkit-scrollbar,

@@ -20,13 +20,11 @@ export declare interface EncryptionClientEventMap {
     /** Fired when the user cancels or closes the interface */
     [MSG_INTERFACE_CLOSED]: void;
     /**
-     * Fired when the shown screen wants a modal of another width: the product
-     * switches its modal between the design system's small (350px) and medium
-     * (600px) sizes. Emitted on every screen change, so a product can also ignore it.
+     * Fired when the interface opened by an open* call is on screen: the product
+     * dismisses the loader it showed meanwhile. Not fired for the overlays the SDK
+     * opens on its own (verify recipients, the emergency prompt).
      */
-    'interface:size': {
-        size: 'small' | 'medium';
-    };
+    'interface:ready': void;
     /** Fired on errors from the vault or the interface */
     error: Error;
     /** Fired when keys changed from another tab/product (via BroadcastChannel) */
@@ -106,11 +104,11 @@ export declare class VaultClient {
     private theme;
     private lang;
     private authContext;
-    private verifyOverlay;
+    private overlay;
+    private overlayWatchdog;
+    private overlayBootFailure;
     private verifyResolve;
-    private emergencyOverlay;
     private emergencySurfaced;
-    private emergencyWatchdog;
     private pendingContext;
     constructor(options: EncryptionClientOptions);
     /**
@@ -357,41 +355,42 @@ export declare class VaultClient {
     formatFingerprint(fingerprint: string): string;
     /**
      * Open the encryption interface for onboarding (key generation + backup).
-     * The product provides a container element where the interface iframe will be mounted.
-     * The product is responsible for showing/hiding this container (e.g. in a modal).
      *
-     * Listen to 'onboarding:complete' and 'interface:closed' events for results.
+     * Every open* call lays a transparent, full-viewport layer over the page and
+     * loads the interface in it; the interface draws its own modal there (card,
+     * backdrop, close control, width), so the product shows nothing but a loader
+     * until 'interface:ready', and unmounts that loader on 'interface:closed'.
+     * Listen to 'onboarding:complete' for the result.
      */
-    openOnboarding(container: HTMLElement): void;
+    openOnboarding(): void;
     /**
      * Open the encryption interface for key backup/export.
      */
-    openBackup(container: HTMLElement): void;
+    openBackup(): void;
     /**
      * Open the encryption interface for key restoration from backup.
      */
-    openRestore(container: HTMLElement): void;
+    openRestore(): void;
     /**
      * Open the encryption settings (view fingerprint, delete keys).
      */
-    openSettings(container: HTMLElement): void;
+    openSettings(): void;
     /**
      * Open device approval: enroll this device from another, or approve a new one.
      */
-    openDeviceApproval(container: HTMLElement): void;
+    openDeviceApproval(): void;
     /**
      * Open the emergency-access (trusted contacts) management screen: designate
      * contacts, accept a designation, follow or refuse a running recovery.
      */
-    openEmergencyAccess(container: HTMLElement): void;
+    openEmergencyAccess(): void;
     /**
      * Open the per-recipient profile: the recipient's current trust decision, their
      * identity fingerprint (for out-of-band comparison), and Trust / Refuse actions.
-     * Opened explicitly by the product (e.g. clicking a person in its share UI), so
-     * it mounts in a product-provided container like the other open* methods.
+     * Opened explicitly by the product (e.g. clicking a person in its share UI).
      * `userId` is the recipient's OIDC sub, like every id a product passes.
      */
-    openRecipientProfile(container: HTMLElement, userId: string, label: RecipientLabel): void;
+    openRecipientProfile(userId: string, label: RecipientLabel): void;
     /**
      * Ask the interface to close, from the product's own close control (the X of
      * the modal hosting the iframe). The interface owns the decision: mid-backup
@@ -408,7 +407,23 @@ export declare class VaultClient {
     closeInterface(): void;
     on<K extends keyof EncryptionClientEventMap>(event: K, listener: Listener<K>): void;
     off<K extends keyof EncryptionClientEventMap>(event: K, listener: Listener<K>): void;
-    private openInterface;
+    /**
+     * Lay the transparent full-viewport layer over the page and load the interface
+     * in it. The layer stays `visibility: hidden` until the app inside asks for
+     * its context (the proof it came up), and that is the only right way to hide it:
+     *  - `display: none` would stop the iframe laying out, so the app inside could
+     *    mount at zero size;
+     *  - `opacity: 0` would keep the layer in the hit-test, so this full-viewport
+     *    element would silently swallow every click on the product underneath;
+     *  - `visibility: hidden` still loads and lays the iframe out, but drops it
+     *    from hit-testing, so clicks pass through to the product until the reveal.
+     * A watchdog tears down a page that never comes up: reported to the product
+     * (an 'error' then 'interface:closed', so its loader goes) for a flow it asked
+     * for, silently for the overlays the SDK opens on its own.
+     */
+    private openOverlay;
+    /** The app inside mounted: show the layer, stand the watchdog down, tell the product. */
+    private revealOverlay;
     /**
      * Construct and configure an interface iframe for `path` (sandbox, allow,
      * theme/lang hash, context handshake). Mounting is left to the caller so the
@@ -458,14 +473,7 @@ export declare class VaultClient {
      *    load-bearing channel for all of this is email.
      */
     private surfaceEmergencyPending;
-    /**
-     * The interface app mounted. Reveal the overlay we kept hidden and stand the
-     * watchdog down. No-op for every other flow (the product owns their container).
-     */
-    private revealEmergencyOverlay;
-    private teardownEmergencyOverlay;
     private completeVerify;
-    private teardownVerifyOverlay;
     /**
      * Run a recipient-bearing operation, and on UNTRUSTED_RECIPIENT open the shared
      * verify modal for the ORIGINAL recipients (full labeled map; the interface

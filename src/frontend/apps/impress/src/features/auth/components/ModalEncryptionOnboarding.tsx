@@ -1,22 +1,19 @@
 /**
- * Encryption onboarding modal — delegates to the centralized encryption service.
+ * Encryption onboarding — delegates to the centralized encryption service.
  *
- * Opens the encryption service's interface iframe which handles everything:
- * key generation, backup, restore, device transfer, and server registration.
- * The product (Docs) doesn't manage public keys — it only stores fingerprints
- * on document accesses for UI purposes.
+ * The service's interface handles everything (key generation, backup, restore,
+ * device transfer, server registration) and draws its own modal over the page;
+ * Docs only shows a loader until it is on screen. The product doesn't manage
+ * public keys — it only stores fingerprints on document accesses for UI purposes.
  */
-import { Modal } from '@gouvfr-lasuite/cunningham-react';
+import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useUserEncryption } from '@/docs/doc-collaboration';
 import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
 
-import {
-  EncryptionHostBody,
-  useInterfaceModalSize,
-} from './EncryptionHostBody';
+import { EncryptionHostBody } from './EncryptionHostBody';
 
 interface ModalEncryptionOnboardingProps {
   isOpen: boolean;
@@ -32,27 +29,25 @@ export const ModalEncryptionOnboarding = ({
   const { t } = useTranslation();
   const { client: vaultClient, refreshKeyState } = useVaultClient();
   const { refreshEncryption } = useUserEncryption();
-  const onboardingOpenedRef = useRef(false);
-  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+  const openedRef = useRef(false);
+  const [ready, setReady] = useState(false);
 
+  // Open once the SDK is there; the interface then draws its own modal.
   useEffect(() => {
-    if (
-      !isOpen ||
-      !vaultClient ||
-      !containerEl ||
-      onboardingOpenedRef.current
-    ) {
+    if (!isOpen || !vaultClient || openedRef.current) {
       return;
     }
 
-    onboardingOpenedRef.current = true;
-    vaultClient.openOnboarding(containerEl);
-  }, [isOpen, vaultClient, containerEl]);
+    openedRef.current = true;
+    vaultClient.openOnboarding();
+  }, [isOpen, vaultClient]);
 
   useEffect(() => {
     if (!vaultClient) {
       return;
     }
+
+    const handleReady = () => setReady(true);
 
     const handleComplete = async () => {
       // The encryption service registered the public key on its central server.
@@ -63,47 +58,47 @@ export const ModalEncryptionOnboarding = ({
     };
 
     const handleClosed = () => {
-      onboardingOpenedRef.current = false;
+      openedRef.current = false;
+      setReady(false);
       onClose();
     };
 
+    vaultClient.on('interface:ready', handleReady);
     vaultClient.on('onboarding:complete', handleComplete);
     vaultClient.on('interface:closed', handleClosed);
 
     return () => {
+      vaultClient.off('interface:ready', handleReady);
       vaultClient.off('onboarding:complete', handleComplete);
       vaultClient.off('interface:closed', handleClosed);
     };
   }, [vaultClient, refreshKeyState, refreshEncryption, onSuccess, onClose]);
 
-  // The modal's close control only ASKS the interface to close: it may hold an
-  // unsaved recovery phrase and answer with its own confirmation. The modal goes
-  // away on 'interface:closed', which the interface emits once really done.
+  // Closing the loader: nothing is at stake before the interface is on screen,
+  // so the frame is torn down outright (the interface's own close control takes
+  // over from there, with its confirmations).
   const handleClose = useCallback(() => {
-    if (vaultClient) {
-      vaultClient.requestClose();
-    } else {
-      onClose();
-    }
+    vaultClient?.closeInterface();
+    openedRef.current = false;
+    onClose();
   }, [vaultClient, onClose]);
 
   useEffect(() => {
     if (!isOpen) {
-      onboardingOpenedRef.current = false;
+      openedRef.current = false;
+      setReady(false);
     }
   }, [isOpen]);
 
-  const size = useInterfaceModalSize(isOpen);
-
   return (
     <Modal
-      isOpen={isOpen}
+      isOpen={isOpen && !ready}
       closeOnClickOutside={false}
       onClose={handleClose}
-      size={size}
+      size={ModalSize.SMALL}
       aria-label={t('Encryption')}
     >
-      <EncryptionHostBody hostRef={setContainerEl} onClose={onClose} />
+      <EncryptionHostBody onClose={handleClose} />
     </Modal>
   );
 };
