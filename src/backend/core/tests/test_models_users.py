@@ -4,6 +4,7 @@ Unit tests for the User model
 
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from unittest import mock
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -754,3 +755,77 @@ def test_tasks_user_delete_error_during_deletion_should_rollback_deletion(monkey
     assert len(documents_to_delete) == 9
 
     assert models.User.objects.filter(id=user_to_delete.id).exists() is True
+
+
+def test_models_users_convert_valid_invitations_resets_connections(
+    mock_reset_service_connections, django_capture_on_commit_callbacks
+):
+    """
+    The accesses are created in bulk, without the signal: the connections of
+    the new user should be re-checked on each document all the same.
+    """
+    email = "test@example.com"
+    document = factories.DocumentFactory()
+    other_document = factories.DocumentFactory()
+    factories.InvitationFactory(email=email, document=document)
+    factories.InvitationFactory(email=email, document=other_document)
+    mock_reset_service_connections.reset_mock()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        user = factories.UserFactory(email=email)
+
+    assert sorted(mock_reset_service_connections.call_args_list, key=str) == sorted(
+        [
+            mock.call(str(document.id), str(user.id)),
+            mock.call(str(other_document.id), str(user.id)),
+        ],
+        key=str,
+    )
+
+
+@pytest.mark.django_db(transaction=True)
+def test_models_users_delete_reports_to_the_collaboration_server(
+    mock_reset_service_connections, mock_delete_service_documents
+):
+    """
+    Deleting a user removes their accesses, which are re-checked one by one,
+    and deletes the documents they solely own for good, descendants included:
+    the collaboration server is told by id.
+    """
+    user = factories.UserFactory()
+    other_user = factories.UserFactory()
+    owned = factories.DocumentFactory(users=[(user, "owner")])
+    owned_child = factories.DocumentFactory(parent=owned)
+    owned_grand_child = factories.DocumentFactory(
+        parent=owned_child, users=[(other_user, "editor")]
+    )
+    shared = factories.DocumentFactory(users=[(user, "owner"), (other_user, "owner")])
+    member = factories.DocumentFactory(users=[(user, "editor")])
+    user_id = str(user.id)
+    mock_reset_service_connections.reset_mock()
+
+    user.delete()
+
+    # the shared documents lose an access, the accesses of the deleted
+    # documents go with them (the task finds no document and does nothing)
+    assert mock.call(str(shared.id), user_id) in (
+        mock_reset_service_connections.call_args_list
+    )
+    assert mock.call(str(member.id), user_id) in (
+        mock_reset_service_connections.call_args_list
+    )
+    mock_delete_service_documents.assert_called_once()
+    assert sorted(mock_delete_service_documents.call_args.args[0]) == sorted(
+        [str(owned.id), str(owned_child.id), str(owned_grand_child.id)]
+    )
+
+
+@pytest.mark.django_db(transaction=True)
+def test_models_users_delete_nothing_owned(mock_delete_service_documents):
+    """A user owning no document has nothing to delete on the collaboration server."""
+    user = factories.UserFactory()
+    factories.DocumentFactory(users=[(user, "editor")])
+
+    user.delete()
+
+    mock_delete_service_documents.assert_not_called()

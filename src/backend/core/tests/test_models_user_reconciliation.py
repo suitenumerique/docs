@@ -4,6 +4,7 @@ Unit tests for the UserReconciliationCsvImport model
 
 import uuid
 from pathlib import Path
+from unittest import mock
 
 from django.core import mail
 from django.core.files.base import ContentFile
@@ -664,3 +665,44 @@ def test_process_reconciliation_updates_favorites(
     assert models.DocumentFavorite.objects.filter(
         user=user_1, document=doc_active_only
     ).exists()
+
+
+def test_process_reconciliation_resets_connections(
+    user_reconciliation_users_and_docs,
+    mock_reset_service_connections,
+    django_capture_on_commit_callbacks,
+):
+    """
+    The accesses are updated in bulk, without the signal: every document
+    getting an access moved or raised should have its connections re-checked,
+    both users being concerned. The accesses removed go through the signal.
+    """
+    user_1, user_2, userdocs_u1, userdocs_u2 = user_reconciliation_users_and_docs
+    rec = models.UserReconciliation.objects.create(
+        active_email=user_1.email,
+        inactive_email=user_2.email,
+        active_user=user_1,
+        inactive_user=user_2,
+        active_email_checked=True,
+        inactive_email_checked=True,
+        status="ready",
+    )
+    mock_reset_service_connections.reset_mock()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        process_reconciliation(
+            None, None, models.UserReconciliation.objects.filter(id=rec.id)
+        )
+
+    calls = mock_reset_service_connections.call_args_list
+    # moved to the active user: the documents of the inactive user alone
+    for access in userdocs_u2[6:]:
+        assert mock.call(str(access.document_id), None) in calls
+    # raised on the active user: the documents where the inactive user had more
+    for access in userdocs_u2[0:3] + userdocs_u1[3:6]:
+        assert mock.call(str(access.document_id), None) in calls
+    # the documents where the active user already had as much are untouched,
+    # only the removed access of the inactive user is reported
+    for access in userdocs_u1[0:3] + userdocs_u2[3:6]:
+        assert mock.call(str(access.document_id), None) not in calls
+        assert mock.call(str(access.document_id), str(user_2.id)) in calls

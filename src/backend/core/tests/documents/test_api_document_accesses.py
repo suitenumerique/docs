@@ -20,20 +20,23 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(name="mock_reset_connections")
-def mock_reset_connections_fixture():
+def mock_reset_connections_fixture(
+    mock_reset_service_connections, django_capture_on_commit_callbacks
+):
     """
-    Provide a context manager that patches the ``reset_service_connections_in_cascade``
-    Celery task and asserts its ``delay`` method is called exactly once for the given
-    document and user when leaving the context.
+    Provide a context manager that runs the callbacks queued on commit and
+    asserts the ``reset_service_connections_in_cascade`` Celery task is queued
+    exactly once for the given document and user when leaving the context.
     """
 
     @contextmanager
     def _mock_reset_connections(document_id, user_id=None):
-        with mock.patch(
-            "core.api.viewsets.reset_service_connections_in_cascade.delay"
-        ) as mock_delay:
-            yield mock_delay
-            mock_delay.assert_called_once_with(str(document_id), user_id)
+        mock_reset_service_connections.reset_mock()
+        with django_capture_on_commit_callbacks(execute=True):
+            yield mock_reset_service_connections
+        mock_reset_service_connections.assert_called_once_with(
+            str(document_id), user_id
+        )
 
     return _mock_reset_connections
 

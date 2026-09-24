@@ -836,3 +836,93 @@ def test_api_documents_move_scope_change_deletion_is_atomic(monkeypatch):
     document.refresh_from_db()
     assert document.accesses.count() == 2
     assert document.invitations.count() == 1
+
+
+def test_api_documents_move_resets_connections_of_the_moved_document(
+    mock_reset_service_connections, django_capture_on_commit_callbacks
+):
+    """
+    A moved document inherits the accesses of other ancestors: every
+    connection of its subtree should be re-checked, and the direct accesses
+    it loses with its scope are each reported as well.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[(user, "owner")])
+    other_access = factories.UserDocumentAccessFactory(document=document)
+    target = factories.DocumentFactory(users=[(user, "owner")])
+    mock_reset_service_connections.reset_mock()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={
+                "target_document_id": str(target.id),
+                "position": enums.MoveNodePositionChoices.LAST_CHILD,
+            },
+        )
+
+    assert response.status_code == 200
+    assert sorted(mock_reset_service_connections.call_args_list, key=str) == sorted(
+        [
+            mock.call(str(document.id), None),
+            mock.call(str(document.id), str(user.id)),
+            mock.call(str(document.id), str(other_access.user_id)),
+        ],
+        key=str,
+    )
+
+
+def test_api_documents_move_resets_connections_when_the_scope_is_kept(
+    mock_reset_service_connections, django_capture_on_commit_callbacks
+):
+    """
+    Moving within the same tree touches no direct access, the ancestors change
+    all the same: the subtree is re-checked.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    root = factories.DocumentFactory(users=[(user, "owner")])
+    document, sibling = factories.DocumentFactory.create_batch(2, parent=root)
+    mock_reset_service_connections.reset_mock()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={
+                "target_document_id": str(sibling.id),
+                "position": enums.MoveNodePositionChoices.LAST_CHILD,
+            },
+        )
+
+    assert response.status_code == 200
+    mock_reset_service_connections.assert_called_once_with(str(document.id), None)
+
+
+def test_api_documents_move_resets_nothing_when_refused(
+    mock_reset_service_connections, django_capture_on_commit_callbacks
+):
+    """A refused move changes nothing, and reports nothing."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[(user, "owner")])
+    child = factories.DocumentFactory(parent=document)
+    mock_reset_service_connections.reset_mock()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={
+                "target_document_id": str(child.id),
+                "position": enums.MoveNodePositionChoices.LAST_CHILD,
+            },
+        )
+
+    assert response.status_code == 400
+    mock_reset_service_connections.assert_not_called()

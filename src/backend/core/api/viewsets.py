@@ -69,7 +69,7 @@ from core.services.search_indexers import (
     get_visited_document_ids_of,
 )
 from core.services.yhub_services import YHubError, YHubService
-from core.tasks.access import reset_service_connections_in_cascade
+from core.tasks.access import reset_service_connections_on_commit
 from core.tasks.documents import sync_service_deletions_in_cascade
 from core.tasks.mail import send_ask_for_access_mail
 from core.tasks.search import trigger_batch_document_indexer
@@ -1089,6 +1089,11 @@ class DocumentViewSet(
         # Invalidate the nb_accesses cache, the value has probably changed after the move.
         document.invalidate_nb_accesses_cache()
 
+        # The document and its descendants now inherit the accesses and the link
+        # definition of other ancestors, whether or not a direct access was
+        # touched: every connection of the subtree is re-checked.
+        reset_service_connections_on_commit(document.id)
+
         posthog_capture(
             PosthogEventName.DOC_MOVED,
             user,
@@ -1811,10 +1816,9 @@ class DocumentViewSet(
         )
         serializer.is_valid(raise_exception=True)
 
+        # saving a changed link definition is what tells the collaboration
+        # server to re-check the connections of the document and its descendants
         serializer.save()
-
-        # Notify collaboration server about the link updated
-        reset_service_connections_in_cascade.delay(str(document.id))
 
         return drf.response.Response(serializer.data, status=drf.status.HTTP_200_OK)
 
@@ -2689,28 +2693,17 @@ class DocumentAccessViewSet(
                 or settings.LANGUAGE_CODE,
             )
 
-    def perform_update(self, serializer):
-        """Update an access to the document and notify the collaboration server."""
-        access = serializer.save()
-
-        access_user_id = None
-        if access.user:
-            access_user_id = str(access.user.id)
-
-        # Notify collaboration server about the access change
-        reset_service_connections_in_cascade.delay(
-            str(access.document.id), access_user_id
-        )
-
     def perform_destroy(self, instance):
-        """Delete an access to the document and notify the collaboration server."""
+        """
+        Delete an access to the document.
+
+        Saving or deleting an access is what notifies the collaboration server,
+        through the signals of the model: nothing to do here beyond deleting.
+        """
         # Snapshot the identifiers before deletion as Django resets the primary key
         # on the instance once it is deleted.
         access_id = str(instance.id)
         document_id = str(instance.document_id)
-        # an access is granted either to a user or to a team, only a user has
-        # connections of their own to reset
-        user_id = str(instance.user.id) if instance.user else None
 
         instance.delete()
 
@@ -2719,9 +2712,6 @@ class DocumentAccessViewSet(
             self.request.user,
             {"access_id": access_id, "document_id": document_id},
         )
-
-        # Notify collaboration server about the access removed
-        reset_service_connections_in_cascade.delay(document_id, user_id)
 
     @drf.decorators.action(
         detail=False,

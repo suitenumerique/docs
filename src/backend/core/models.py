@@ -4,9 +4,11 @@ Declare and configure the models for the impress core application
 
 # pylint: disable=too-many-lines
 
+import operator
 import smtplib
 import uuid
 from datetime import timedelta
+from functools import partial, reduce
 from logging import getLogger
 
 from django.conf import settings
@@ -256,14 +258,41 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         )
 
     def _delete_documents_single_owner(self):
-        """Delete the documents where the user is the single owner."""
-        Document.objects.filter(
+        """
+        Delete the documents where the user is the single owner.
+
+        Deleted for good, so the collaboration server, which holds their
+        content and serves them to whoever is editing them, is told by id
+        once the deletion is committed.
+        """
+        from core.tasks.documents import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            delete_service_documents,
+        )
+
+        documents = Document.objects.filter(
             accesses__user=self, accesses__role=RoleChoices.OWNER
-        ).delete()
+        )
+        # the descendants go with their ancestor, whoever they are shared with
+        paths = list(documents.values_list("path", flat=True))
+        document_ids = []
+        if paths:
+            subtrees = reduce(
+                operator.or_, (models.Q(path__startswith=path) for path in paths)
+            )
+            document_ids = [
+                str(document_id)
+                for document_id in Document.objects.filter(subtrees).values_list(
+                    "id", flat=True
+                )
+            ]
+        documents.delete()
         logger.info(
             "user_delete: documents where the user %s is the sole owner deleted",
             self.id,
         )
+
+        if document_ids:
+            transaction.on_commit(partial(delete_service_documents.delay, document_ids))
 
     def _clear_user_created_documents(self):
         """Set creator to Null for documents where the user is the creator."""
@@ -386,6 +415,16 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
 
         # Set creator of documents if not yet set (e.g. documents created via server-to-server API)
         document_ids = [invitation.document_id for invitation in valid_invitations]
+
+        # created in bulk, so without the signal that reports a new access to the
+        # collaboration server
+        from core.tasks.access import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            reset_service_connections_on_commit,
+        )
+
+        for document_id in document_ids:
+            reset_service_connections_on_commit(document_id, self.id)
+
         Document.objects.filter(id__in=document_ids, creator__isnull=True).update(
             creator=self
         )
@@ -549,6 +588,17 @@ class UserReconciliation(BaseModel):
         if removed_accesses:
             ids_to_delete = [entry.id for entry in removed_accesses]
             DocumentAccess.objects.filter(id__in=ids_to_delete).delete()
+
+        # Updated in bulk, so without the signal that reports a changed access to
+        # the collaboration server. Both users are concerned, the one gaining
+        # the accesses and the one being deactivated: every connection of the
+        # document is re-checked.
+        from core.tasks.access import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            reset_service_connections_on_commit,
+        )
+
+        for document_id in {access.document_id for access in updated_accesses}:
+            reset_service_connections_on_commit(document_id)
 
         DocumentFavorite.objects.bulk_update(update_favorites, ["user"])
         if removed_favorites:
@@ -1105,6 +1155,47 @@ class Document(MP_Node, BaseModel):
     def nb_accesses_ancestors(self):
         """Returns the number of accesses related to the document or one of its ancestors."""
         return self.get_nb_accesses()[1]
+
+    # the link definition as it was loaded from, or saved to, the database
+    _saved_link_definition = None
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        """Load a document, remembering its link definition to spot its changes."""
+        instance = super().from_db(db, field_names, values)
+        instance.remember_link_definition()  # pylint: disable=no-member
+        return instance
+
+    def refresh_from_db(self, *args, **kwargs):
+        """Reload a document, taking a new snapshot of its link definition."""
+        super().refresh_from_db(*args, **kwargs)
+        # `fields` is the second positional argument of Django's signature
+        fields = kwargs.get("fields", args[1] if len(args) > 1 else None)
+        if fields is None or {"link_reach", "link_role"} & set(fields):
+            self.remember_link_definition()
+
+    def remember_link_definition(self):
+        """
+        Snapshot the link definition as it is in the database.
+
+        Read from the instance's own state so that a deferred field is not
+        loaded for it; a field not loaded is remembered as unknown.
+        """
+        self._saved_link_definition = (
+            self.__dict__.get("link_reach"),
+            self.__dict__.get("link_role"),
+        )
+
+    def link_definition_changed(self):
+        """
+        Tell whether `link_reach` or `link_role` differ from the last snapshot.
+
+        A document that was never loaded from the database, nor saved, is
+        reported as changed: nothing is known of what its link definition was.
+        """
+        if self._saved_link_definition is None:
+            return True
+        return self._saved_link_definition != (self.link_reach, self.link_role)
 
     def invalidate_nb_accesses_cache(self):
         """
