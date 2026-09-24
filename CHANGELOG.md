@@ -83,6 +83,7 @@ and this project adheres to
 - 🐛(docker) pull minio images from pgsty
 - 🐛(backend) retry the duplicate of a document on a tree path collision
 - 🐛(backend) reset the collaboration connections on every access change
+- ⚡️(backend) coalesce and pace the resets of collaboration connections
 - 🐛(frontend) clear callout background on Backspace #2052
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 - 🐛(frontend) fix redirect after deleting a document #2706

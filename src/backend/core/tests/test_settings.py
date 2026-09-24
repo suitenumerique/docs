@@ -33,6 +33,20 @@ def test_invalid_settings_oidc_email_configuration():
     )
 
 
+def test_settings_yhub_reset_connections_batch_size_zero():
+    """A batch of zero documents would reset nothing and is refused."""
+
+    class TestSettings(Base):
+        """Fake test settings."""
+
+        YHUB_RESET_CONNECTIONS_BATCH_SIZE = 0
+
+    with pytest.raises(ValueError) as excinfo:
+        TestSettings().post_setup()
+
+    assert str(excinfo.value) == "YHUB_RESET_CONNECTIONS_BATCH_SIZE must be at least 1."
+
+
 def test_settings_psycopg_pool_not_enabled():
     """
     Test that not changing DB_PSYCOPG_POOL_ENABLED should not configure psycopg in the DATABASES

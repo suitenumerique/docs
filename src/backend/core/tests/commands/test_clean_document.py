@@ -441,11 +441,12 @@ def test_clean_document_reports_the_documents_it_could_not_erase(
 
 
 def test_clean_document_resets_connections(
-    settings, mock_reset_service_connections, django_capture_on_commit_callbacks
+    settings, mock_reset_service_connections, capture_service_resets
 ):
     """
     The link definition of the root changes and its accesses but the owners'
-    are deleted: the collaboration server should re-check its connections.
+    are deleted: the collaboration server should re-check every connection of
+    the root, once, the resets of the deleted accesses being coalesced into it.
     """
     settings.DEBUG = True
     root = factories.DocumentFactory(
@@ -457,16 +458,15 @@ def test_clean_document_resets_connections(
     readers = factories.UserDocumentAccessFactory.create_batch(
         2, document=root, role=choices.RoleChoices.READER
     )
-    mock_reset_service_connections.reset_mock()
 
     with (
         mock.patch("core.management.commands.clean_document.default_storage"),
-        django_capture_on_commit_callbacks(execute=True),
+        capture_service_resets(),
     ):
         call_command("clean_document", str(root.id), "--force")
 
-    calls = mock_reset_service_connections.call_args_list
-    assert mock.call(str(root.id), None) in calls
-    for reader in readers:
-        assert mock.call(str(root.id), str(reader.user_id)) in calls
-    assert mock.call(str(root.id), str(owner.user_id)) not in calls
+    assert not models.DocumentAccess.objects.filter(
+        pk__in=[reader.pk for reader in readers]
+    ).exists()
+    assert models.DocumentAccess.objects.filter(pk=owner.pk).exists()
+    mock_reset_service_connections.assert_called_once_with(str(root.id), None)
