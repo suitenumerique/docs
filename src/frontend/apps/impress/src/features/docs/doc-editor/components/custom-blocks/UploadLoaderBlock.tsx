@@ -29,6 +29,11 @@ type UploadLoaderPropSchema = {
     readonly default: '';
   };
   readonly blockUploadUrl: { readonly default: '' };
+  readonly blockUploadCaption: { readonly default: '' };
+  readonly blockUploadTextAlignment: {
+    readonly default: 'left';
+    readonly values: readonly ['left', 'center', 'right', 'justify'];
+  };
 };
 
 type UploadLoaderBlockConfig = BlockConfig<
@@ -90,9 +95,9 @@ const UploadLoaderBlockComponent = ({
                     url: `${mediaUrl}${response.file}`,
                     showPreview: block.props.blockUploadShowPreview,
                     name: block.props.blockUploadName,
-                    caption: '',
+                    caption: block.props.blockUploadCaption,
                     backgroundColor: 'default',
-                    textAlignment: 'left',
+                    textAlignment: block.props.blockUploadTextAlignment,
                   },
                 } as never,
               ],
@@ -160,6 +165,11 @@ export const UploadLoaderBlock = createReactBlockSpec(
         default: '',
       },
       blockUploadUrl: { default: '' },
+      blockUploadCaption: { default: '' },
+      blockUploadTextAlignment: {
+        default: 'left',
+        values: ['left', 'center', 'right', 'justify'],
+      },
     },
     content: 'none',
   },

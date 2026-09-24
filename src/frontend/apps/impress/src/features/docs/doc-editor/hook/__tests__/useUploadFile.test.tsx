@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppWrapper } from '@/tests/utils';
 
-import { useUploadFile } from '../useUploadFile';
+import { DocsBlockNoteEditor } from '../../types';
+import { useUploadFile, useUploadStatus } from '../useUploadFile';
 
 const { mockToast } = vi.hoisted(() => ({ mockToast: vi.fn() }));
 
@@ -68,6 +69,44 @@ describe('useUploadFile', () => {
     expect(mockToast).toHaveBeenCalledWith(
       'The file "video.mp4" is too large. Maximum file size is 1KB.',
       'error',
+    );
+  });
+});
+
+describe('useUploadStatus', () => {
+  it('keeps the caption and alignment while the new file is analyzed', () => {
+    const replaceBlocks = vi.fn();
+    const editor = {
+      document: [
+        {
+          id: 'img',
+          type: 'image',
+          props: {
+            url: 'https://docs.example/media-check/abc',
+            name: 'photo.png',
+            showPreview: true,
+            caption: 'Pont Neuf',
+            textAlignment: 'center',
+          },
+        },
+      ],
+      replaceBlocks,
+      onUploadEnd: vi.fn(),
+    } as unknown as DocsBlockNoteEditor;
+
+    renderHook(() => useUploadStatus(editor), { wrapper: AppWrapper });
+
+    expect(replaceBlocks).toHaveBeenCalledWith(
+      ['img'],
+      [
+        expect.objectContaining({
+          type: 'uploadLoader',
+          props: expect.objectContaining({
+            blockUploadCaption: 'Pont Neuf',
+            blockUploadTextAlignment: 'center',
+          }),
+        }),
+      ],
     );
   });
 });

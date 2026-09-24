@@ -674,6 +674,8 @@ describe('Conversion Testing', () => {
           information: 'uploading',
           type: 'loading' as const,
           blockUploadName: 'doc.pdf',
+          blockUploadCaption: 'Pont Neuf',
+          blockUploadTextAlignment: 'center' as const,
         },
       },
     ];
@@ -696,6 +698,8 @@ describe('Conversion Testing', () => {
       information: 'uploading',
       type: 'loading',
       blockUploadName: 'doc.pdf',
+      blockUploadCaption: 'Pont Neuf',
+      blockUploadTextAlignment: 'center',
     });
   });
 
