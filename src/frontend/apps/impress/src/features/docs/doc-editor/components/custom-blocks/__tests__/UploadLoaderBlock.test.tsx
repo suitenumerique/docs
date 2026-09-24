@@ -1,4 +1,3 @@
-import { createReactBlockSpec } from '@blocknote/react';
 import { render, waitFor } from '@testing-library/react';
 import { ComponentType } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -26,14 +25,22 @@ vi.mock('@blocknote/react', async () => {
 
   return {
     ...actual,
-    createReactBlockSpec: (
-      config: Parameters<typeof createReactBlockSpec>[0],
-      implementation: Parameters<typeof createReactBlockSpec>[1],
-    ) => {
-      capturedRender.current = implementation.render as ComponentType<
-        Record<string, unknown>
-      >;
-      return actual.createReactBlockSpec(config, implementation);
+    createReactBlockSpec: (config: unknown, implementation: object) => {
+      if (
+        'render' in implementation &&
+        typeof implementation.render === 'function'
+      ) {
+        capturedRender.current = implementation.render as ComponentType<
+          Record<string, unknown>
+        >;
+      }
+
+      return (
+        actual.createReactBlockSpec as (
+          blockConfig: unknown,
+          blockImplementation: object,
+        ) => ReturnType<typeof actual.createReactBlockSpec>
+      )(config, implementation);
     },
   };
 });
