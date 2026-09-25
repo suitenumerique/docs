@@ -82,6 +82,7 @@ and this project adheres to
 
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 - 🐛(frontend) fix redirect after deleting a document #2706
+- 🐛(editor) fix Ask AI edit targeting, scope, and error handling #2709
 
 ### Removed
 
