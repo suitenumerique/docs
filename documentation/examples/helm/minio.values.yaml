@@ -1,6 +1,6 @@
 minio:
   enabled: true
-  image: quay.io/minio/minio
+  image: pgsty/silo
   name: minio
   # serviceNameOverride: docs-minio
   ingress:
