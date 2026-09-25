@@ -1,11 +1,10 @@
 import { UserMenu } from '@gouvfr-lasuite/ui-components';
-import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
 import { Box } from '@/components';
 import { Waffle } from '@/components/Waffle';
-import { gotoLogout, useAuth } from '@/features/auth';
+import { ButtonLogin, gotoLogout, useAuth } from '@/features/auth';
 import { HelpMenu } from '@/features/help';
 import { LanguagePicker } from '@/features/language/components/LanguagePicker';
 
@@ -16,10 +15,10 @@ const FooterActionsGlobalStyle = createGlobalStyle`
 `;
 
 type FooterActionsProps = {
-  loginAction?: ReactNode;
+  withLogin?: boolean;
 };
 
-export const FooterActions = ({ loginAction }: FooterActionsProps) => {
+export const FooterActions = ({ withLogin }: FooterActionsProps) => {
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -47,7 +46,7 @@ export const FooterActions = ({ loginAction }: FooterActionsProps) => {
             withMobileView={false}
           />
           <Waffle />
-          {loginAction}
+          {withLogin && <ButtonLogin />}
         </Box>
         <HelpMenu />
       </Box>
