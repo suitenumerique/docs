@@ -1,5 +1,5 @@
 import { Button } from '@gouvfr-lasuite/ui-components';
-import { ReactNode } from 'react';
+import { type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -10,20 +10,15 @@ import { LOGIN_URL } from '../conf';
 import { useAuth } from '../hooks';
 import { gotoLogin } from '../utils';
 
-type ButtonLoginProps = {
-  href?: string;
-  variant?: 'primary' | 'tertiary';
-  children?: ReactNode;
-};
+type ButtonLoginProps = ComponentProps<typeof Button>;
 
 export const ButtonLogin = ({
   href = LOGIN_URL,
-  variant = 'primary',
   children,
+  ...props
 }: ButtonLoginProps) => {
   const { t } = useTranslation();
   const { authenticated } = useAuth();
-  const label = children ?? t('Sign in');
 
   if (authenticated) {
     return null;
@@ -31,14 +26,14 @@ export const ButtonLogin = ({
 
   return (
     <Button
-      href={href}
       color="brand"
       size="small"
-      variant={variant}
-      aria-label={typeof label === 'string' ? label : t('Sign in')}
+      variant="primary"
       className="--docs--button-login"
+      {...props}
+      href={href}
     >
-      {label}
+      {children ?? t('Sign in')}
     </Button>
   );
 };
