@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   blocksToMarkdownLossy: vi.fn(),
   downloadFile: vi.fn(),
   docToBlob: vi.fn(),
+  preserveImageWidthsInMarkdown: vi.fn(),
   toast: vi.fn(),
 }));
 
@@ -63,6 +64,7 @@ vi.mock('../utils', async (importOriginal) => {
 
 vi.mock('../utils_markdown', () => ({
   addMediaFilesToMarkdownZip: mocks.addMediaFilesToMarkdownZip,
+  preserveImageWidthsInMarkdown: mocks.preserveImageWidthsInMarkdown,
 }));
 
 describe('ModalExport', () => {
@@ -71,6 +73,7 @@ describe('ModalExport', () => {
     mocks.addMediaFilesToMarkdownZip.mockResolvedValue(0);
     mocks.blocksToMarkdownLossy.mockResolvedValue('# Roadmap');
     mocks.docToBlob.mockResolvedValue(undefined);
+    mocks.preserveImageWidthsInMarkdown.mockReturnValue('# Roadmap');
   });
 
   test('downloads Markdown directly when no media is archived', async () => {
@@ -93,6 +96,10 @@ describe('ModalExport', () => {
       ),
     );
     expect(onClose).toHaveBeenCalledOnce();
+    expect(mocks.preserveImageWidthsInMarkdown).toHaveBeenCalledWith(
+      '# Roadmap',
+      [],
+    );
   });
 
   test('downloads a ZIP when Markdown contains archived media', async () => {

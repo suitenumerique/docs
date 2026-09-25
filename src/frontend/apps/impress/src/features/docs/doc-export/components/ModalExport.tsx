@@ -26,7 +26,10 @@ import {
   generateHtmlDocument,
   improveHtmlAccessibility,
 } from '../utils_html';
-import { addMediaFilesToMarkdownZip } from '../utils_markdown';
+import {
+  addMediaFilesToMarkdownZip,
+  preserveImageWidthsInMarkdown,
+} from '../utils_markdown';
 
 const useExportAGPL = ModulesExport?.useExportAGPL;
 
@@ -116,7 +119,10 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           mediaUrl,
         );
 
-        const markdown = await editor.blocksToMarkdownLossy(blocks);
+        const markdown = preserveImageWidthsInMarkdown(
+          await editor.blocksToMarkdownLossy(blocks),
+          blocks,
+        );
 
         if (mediaFileCount === 0) {
           blobExport = new Blob([markdown], {

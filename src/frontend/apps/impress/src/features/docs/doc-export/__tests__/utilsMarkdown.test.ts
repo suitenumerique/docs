@@ -1,7 +1,10 @@
 import JSZip from 'jszip';
 import { describe, expect, test, vi } from 'vitest';
 
-import { addMediaFilesToMarkdownZip } from '../utils_markdown';
+import {
+  addMediaFilesToMarkdownZip,
+  preserveImageWidthsInMarkdown,
+} from '../utils_markdown';
 
 describe('addMediaFilesToMarkdownZip', () => {
   test('localizes same-origin media without mutating unrelated URLs', async () => {
@@ -70,4 +73,68 @@ describe('addMediaFilesToMarkdownZip', () => {
     expect(blocks[0].children[0].props.url).toBe('/media/nested.svg');
     expect(Object.keys(zip.files)).toHaveLength(0);
   });
+});
+
+describe('preserveImageWidthsInMarkdown', () => {
+  test('adds the CodiMD width syntax to resized images', () => {
+    const markdown = preserveImageWidthsInMarkdown(
+      '![Architecture](diagram.svg)',
+      [
+        {
+          type: 'image',
+          props: { url: 'diagram.svg', previewWidth: 480 },
+        },
+      ],
+    );
+
+    expect(markdown).toBe('![Architecture](diagram.svg =480x)');
+  });
+
+  test('preserves image URLs after they are localized for a Markdown archive', () => {
+    const markdown = preserveImageWidthsInMarkdown('![](1-photo.png)', [
+      {
+        type: 'image',
+        props: { url: '1-photo.png', previewWidth: 320 },
+      },
+    ]);
+
+    expect(markdown).toBe('![](1-photo.png =320x)');
+  });
+
+  test('handles nested images and repeated URLs in document order', () => {
+    const markdown = preserveImageWidthsInMarkdown(
+      '![](photo.png)\n\n![](photo.png)',
+      [
+        {
+          type: 'image',
+          props: { url: 'photo.png', previewWidth: 200 },
+        },
+        {
+          type: 'columnList',
+          children: [
+            {
+              type: 'image',
+              props: { url: 'photo.png', previewWidth: 400 },
+            },
+          ],
+        },
+      ],
+    );
+
+    expect(markdown).toBe('![](photo.png =200x)\n\n![](photo.png =400x)');
+  });
+
+  test.each([undefined, 0, -1, Infinity])(
+    'does not add a dimension for invalid width %s',
+    (previewWidth) => {
+      const markdown = preserveImageWidthsInMarkdown('![](photo.png)', [
+        {
+          type: 'image',
+          props: { url: 'photo.png', previewWidth },
+        },
+      ]);
+
+      expect(markdown).toBe('![](photo.png)');
+    },
+  );
 });

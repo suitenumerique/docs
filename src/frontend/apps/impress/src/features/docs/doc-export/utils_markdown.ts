@@ -12,8 +12,61 @@ interface MediaReference {
   src: string;
 }
 
+interface ResizedImageReference {
+  src: string;
+  width: number;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
+
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const collectResizedImageReferences = (
+  blocks: unknown[],
+  references: ResizedImageReference[],
+) => {
+  blocks.forEach((block) => {
+    if (!isRecord(block)) {
+      return;
+    }
+
+    const props = block.props;
+    if (
+      block.type === 'image' &&
+      isRecord(props) &&
+      typeof props.url === 'string' &&
+      typeof props.previewWidth === 'number' &&
+      Number.isFinite(props.previewWidth) &&
+      props.previewWidth > 0
+    ) {
+      references.push({ src: props.url, width: props.previewWidth });
+    }
+
+    if (Array.isArray(block.children)) {
+      collectResizedImageReferences(block.children, references);
+    }
+  });
+};
+
+/**
+ * Preserves BlockNote image widths using CodiMD's Markdown image-size syntax.
+ * BlockNote stores the height implicitly from the image's aspect ratio, so the
+ * exported syntax intentionally specifies only the width (`=WIDTHx`).
+ */
+export const preserveImageWidthsInMarkdown = (
+  markdown: string,
+  blocks: unknown[],
+) => {
+  const references: ResizedImageReference[] = [];
+  collectResizedImageReferences(blocks, references);
+
+  return references.reduce((result, { src, width }) => {
+    const image = new RegExp(`!\\[([^\\]]*)\\]\\(${escapeRegExp(src)}\\)`);
+    return result.replace(image, `![$1](${src} =${width}x)`);
+  }, markdown);
+};
 
 /** Collects media URL properties from a nested editor block tree. */
 const collectMediaReferences = (
