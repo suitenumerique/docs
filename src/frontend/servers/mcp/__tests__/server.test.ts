@@ -16,6 +16,7 @@ import { AddressInfo } from 'node:net';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import axios from 'axios';
+import request from 'supertest';
 import {
   afterAll,
   afterEach,
@@ -30,13 +31,15 @@ vi.mock('@/env.js', () => ({
   MCP_HOST: '127.0.0.1',
   MCP_PORT: 0,
   MCP_RESOURCE_URL: 'http://localhost:4455/mcp',
-  KEYCLOAK_ISSUER: 'http://localhost/realms/impress',
-  KEYCLOAK_JWKS_URL:
+  MCP_OIDC_ISSUER: 'http://localhost/realms/impress',
+  MCP_OIDC_JWKS_URL:
     'http://localhost/realms/impress/protocol/openid-connect/certs',
-  KEYCLOAK_DISCOVERY_URL:
+  MCP_OIDC_DISCOVERY_URL:
     'http://localhost/realms/impress/.well-known/openid-configuration',
   DOCS_API_URL: 'http://docs-api.test',
-  MCP_AUDIENCE: 'docs-mcp',
+  MCP_AUDIENCE_CLAIM: 'aud',
+  MCP_ALLOWED_AUDIENCES: ['docs-mcp'],
+  MCP_EXTRA_SCOPES: ['docs-mcp'],
 }));
 
 vi.mock('axios');
@@ -51,14 +54,26 @@ type FakeTokenClaims = {
 
 let verifiedClaims: FakeTokenClaims | null = null;
 
+// Stands in for jose's signature/issuer checks; the audience check is emulated so the
+// verifier's `audience` option is exercised end to end (see jwtVerifier.test.ts for the real
+// jose-backed claim checks).
 vi.mock('jose', () => ({
   createRemoteJWKSet: vi.fn(() => ({})),
-  jwtVerify: vi.fn(async (token: string) => {
-    if (!verifiedClaims || token !== 'valid-token') {
-      throw new Error('invalid token');
-    }
-    return { payload: verifiedClaims };
-  }),
+  jwtVerify: vi.fn(
+    async (
+      token: string,
+      _jwks: unknown,
+      options?: { audience?: string[] },
+    ) => {
+      if (!verifiedClaims || token !== 'valid-token') {
+        throw new Error('invalid token');
+      }
+      if (options?.audience && !options.audience.includes(verifiedClaims.aud)) {
+        throw new Error('unexpected "aud" claim value');
+      }
+      return { payload: verifiedClaims };
+    },
+  ),
 }));
 
 import { createApp } from '@/server.js';
@@ -114,9 +129,49 @@ describe('docs-mcp server', () => {
     await expect(connectClient(url)).rejects.toThrow();
   });
 
-  test('a token with the wrong audience is rejected', async () => {
-    verifiedClaims = null; // jwtVerify mock throws for anything but 'valid-token' with claims set
+  test('an invalid token is rejected with 401', async () => {
+    const response = await request(server)
+      .post('/mcp')
+      .set('Authorization', 'Bearer not-a-valid-token')
+      .send({});
+
+    expect(response.status).toBe(401);
+    expect(response.headers['www-authenticate']).toContain('invalid_token');
+  });
+
+  test('a token with the wrong audience is rejected with 401', async () => {
+    verifiedClaims = {
+      sub: 'user-1',
+      aud: 'another-app',
+      scope: 'docs:documents:search',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    };
+
+    const response = await request(server)
+      .post('/mcp')
+      .set('Authorization', 'Bearer valid-token')
+      .send({});
+
+    expect(response.status).toBe(401);
     await expect(connectClient(url, 'valid-token')).rejects.toThrow();
+  });
+
+  test('the protected resource metadata advertises the tool and extra scopes', async () => {
+    const response = await request(server).get(
+      '/.well-known/oauth-protected-resource/mcp',
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      resource: 'http://localhost:4455/mcp',
+      authorization_servers: ['http://localhost/realms/impress'],
+      scopes_supported: [
+        'docs:documents:search',
+        'docs:documents:read',
+        'docs:documents:create',
+        'docs-mcp',
+      ],
+    });
   });
 
   test('a tool call without its required scope is rejected', async () => {
