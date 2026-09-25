@@ -13,7 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1110.0",
+    "@aws-sdk/client-s3": "3.1126.0",
     "@sentry/node": "10.70.0",
     "@sentry/profiling-node": "10.70.0",
     "@y/hub": "0.9.0",
