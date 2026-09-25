@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { DocsExporterODT } from '../types';
+import { type DocsExporterODT } from '../types';
 
 export const blockMappingUploadLoaderODT: DocsExporterODT['mappings']['blockMapping']['uploadLoader'] =
   (block) => {

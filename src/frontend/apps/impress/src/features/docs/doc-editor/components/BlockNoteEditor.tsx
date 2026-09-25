@@ -42,7 +42,7 @@ import {
   useComments,
 } from '@/docs/doc-comments';
 import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
-import { Doc } from '@/docs/doc-management';
+import { type Doc } from '@/docs/doc-management/types';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 import { useAnalytics } from '@/libs/Analytics';
@@ -57,7 +57,7 @@ import {
 } from '../hook';
 import { useEditorStore } from '../stores';
 import { DocsEditorStyle } from '../styles';
-import { DocsBlockNoteEditor } from '../types';
+import { type DocsBlockNoteEditor } from '../types';
 import { randomColor, sanitizeColor } from '../utils';
 
 import BlockNoteAI from './AI';
@@ -70,7 +70,10 @@ const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
 const localesBNAI = BlockNoteAI?.localesAI || {};
 import { createSafeCodeBlockSpec } from './custom-blocks/CodeBlock';
-import { InterlinkingLinkInlineContent } from './custom-inline-content';
+import {
+  InterlinkingLinkInlineContent,
+  getPastedDocInterlink,
+} from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
 
 const localesBNMultiColumn = XLMultiColumn?.locales;
@@ -232,7 +235,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           ai: localesBNAI?.[langLocalesBNAI as keyof typeof localesBNAI],
         }),
       },
-      pasteHandler: ({ event, defaultPasteHandler }) => {
+      pasteHandler: ({ event, editor: pasteEditor, defaultPasteHandler }) => {
         // Get clipboard data
         const blocknoteData = event.clipboardData?.getData('blocknote/html');
 
@@ -248,6 +251,30 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
          */
         if (blocknoteData && blocknoteData.includes('data-bn-thread-id')) {
           void threadStore.refreshThreads();
+        }
+
+        /**
+         * When pasting a bare link to a doc on this same domain, turn it
+         * into an interlink instead of a plain link, so it benefits from
+         * the title-sync and navigation behaviour of the interlinking system.
+         */
+        const pastedInterlink = getPastedDocInterlink(
+          event,
+          pasteEditor as DocsBlockNoteEditor,
+        );
+        if (pastedInterlink?.docId) {
+          editor.insertInlineContent([
+            {
+              type: 'interlinkingLinkInline',
+              props: {
+                docId: pastedInterlink.docId,
+                ...(pastedInterlink.blockId && {
+                  blockId: pastedInterlink.blockId,
+                }),
+              },
+            },
+          ]);
+          return true;
         }
 
         return defaultPasteHandler();

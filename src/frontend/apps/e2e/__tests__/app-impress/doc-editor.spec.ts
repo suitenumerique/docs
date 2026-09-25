@@ -513,6 +513,23 @@ test.describe('Doc Editor', () => {
     await page.keyboard.press('Escape');
 
     await expect(editor.getByText('@')).toBeVisible();
+
+    // Copy current url
+    const currentUrl = page.url();
+    await page.evaluate(async (url) => {
+      await navigator.clipboard.writeText(url);
+    }, currentUrl);
+
+    // Create new doc
+    await createDoc(page, 'new-doc', browserName, 1);
+    // Paste event the copied URL into the new doc's editor
+    await editor.focus();
+    await page.keyboard.press('Control+V');
+
+    // The paste url becomes an interlink to the copied doc
+    await expect(interlinkChild).toContainText(docChild2);
+    await interlinkChild.click();
+    await verifyDocName(page, docChild2);
   });
 
   test('it checks multiple big doc scroll to the top', async ({
