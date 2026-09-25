@@ -124,6 +124,29 @@ describe('preserveImageWidthsInMarkdown', () => {
     expect(markdown).toBe('![](photo.png =200x)\n\n![](photo.png =400x)');
   });
 
+  test('matches a resized image after an unresized occurrence of the same URL', () => {
+    const markdown = preserveImageWidthsInMarkdown(
+      '![](photo.png)\n\n![](photo.png)',
+      [
+        { type: 'image', props: { url: 'photo.png' } },
+        { type: 'image', props: { url: 'photo.png', previewWidth: 400 } },
+      ],
+    );
+
+    expect(markdown).toBe('![](photo.png)\n\n![](photo.png =400x)');
+  });
+
+  test('preserves literal dollar signs in image URLs', () => {
+    const markdown = preserveImageWidthsInMarkdown('![](photo$1.png)', [
+      {
+        type: 'image',
+        props: { url: 'photo$1.png', previewWidth: 400 },
+      },
+    ]);
+
+    expect(markdown).toBe('![](photo$1.png =400x)');
+  });
+
   test.each([undefined, 0, -1, Infinity])(
     'does not add a dimension for invalid width %s',
     (previewWidth) => {

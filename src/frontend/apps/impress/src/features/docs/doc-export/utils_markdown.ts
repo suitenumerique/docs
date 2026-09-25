@@ -12,9 +12,9 @@ interface MediaReference {
   src: string;
 }
 
-interface ResizedImageReference {
+interface ImageReference {
   src: string;
-  width: number;
+  width?: number;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -23,9 +23,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const escapeRegExp = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const collectResizedImageReferences = (
+const collectImageReferences = (
   blocks: unknown[],
-  references: ResizedImageReference[],
+  references: ImageReference[],
 ) => {
   blocks.forEach((block) => {
     if (!isRecord(block)) {
@@ -36,16 +36,20 @@ const collectResizedImageReferences = (
     if (
       block.type === 'image' &&
       isRecord(props) &&
-      typeof props.url === 'string' &&
-      typeof props.previewWidth === 'number' &&
-      Number.isFinite(props.previewWidth) &&
-      props.previewWidth > 0
+      typeof props.url === 'string'
     ) {
-      references.push({ src: props.url, width: props.previewWidth });
+      const width = props.previewWidth;
+      references.push({
+        src: props.url,
+        width:
+          typeof width === 'number' && Number.isFinite(width) && width > 0
+            ? width
+            : undefined,
+      });
     }
 
     if (Array.isArray(block.children)) {
-      collectResizedImageReferences(block.children, references);
+      collectImageReferences(block.children, references);
     }
   });
 };
@@ -59,13 +63,32 @@ export const preserveImageWidthsInMarkdown = (
   markdown: string,
   blocks: unknown[],
 ) => {
-  const references: ResizedImageReference[] = [];
-  collectResizedImageReferences(blocks, references);
+  const references: ImageReference[] = [];
+  collectImageReferences(blocks, references);
+  let result = markdown;
+  let searchFrom = 0;
 
-  return references.reduce((result, { src, width }) => {
+  references.forEach(({ src, width }) => {
     const image = new RegExp(`!\\[([^\\]]*)\\]\\(${escapeRegExp(src)}\\)`);
-    return result.replace(image, `![$1](${src} =${width}x)`);
-  }, markdown);
+    const match = image.exec(result.slice(searchFrom));
+    if (!match || match.index === undefined) {
+      return;
+    }
+
+    const start = searchFrom + match.index;
+    if (!width) {
+      searchFrom = start + match[0].length;
+      return;
+    }
+
+    const replacement = `![${match[1]}](${src} =${width}x)`;
+    result = `${result.slice(0, start)}${replacement}${result.slice(
+      start + match[0].length,
+    )}`;
+    searchFrom = start + replacement.length;
+  });
+
+  return result;
 };
 
 /** Collects media URL properties from a nested editor block tree. */
