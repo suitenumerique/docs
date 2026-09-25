@@ -5,15 +5,23 @@ MCP_HOST=0.0.0.0
 MCP_PORT=4455
 MCP_RESOURCE_URL=http://localhost:4455/mcp
 
-# Keycloak: KEYCLOAK_ISSUER is the externally-visible issuer (used to validate the `iss` claim
-# and in metadata); the *_URL vars are the network-reachable endpoints from inside Docker.
-# This server only reads Keycloak's JWKS and discovery document — it holds no credentials and
-# performs no token exchange; it forwards the caller's access token to Django as-is.
-KEYCLOAK_ISSUER=http://localhost:8083/realms/impress
-KEYCLOAK_JWKS_URL=http://nginx:8083/realms/impress/protocol/openid-connect/certs
-KEYCLOAK_DISCOVERY_URL=http://nginx:8083/realms/impress/.well-known/openid-configuration
+# OIDC provider (the dev Keycloak realm here; any provider issuing JWT access tokens works).
+# MCP_OIDC_ISSUER is the externally-visible issuer (used to validate the `iss` claim and in
+# metadata); the *_URL vars are the network-reachable endpoints from inside Docker.
+# This server only reads the provider's JWKS and discovery document — it holds no credentials
+# and performs no token exchange; it forwards the caller's access token to Django as-is.
+MCP_OIDC_ISSUER=http://localhost:8083/realms/impress
+MCP_OIDC_JWKS_URL=http://nginx:8083/realms/impress/protocol/openid-connect/certs
+MCP_OIDC_DISCOVERY_URL=http://nginx:8083/realms/impress/.well-known/openid-configuration
 
 # Django is reached directly (not through nginx, which only proxies to Keycloak on :8083).
 DOCS_API_URL=http://app-dev:8000
 
-MCP_AUDIENCE=docs-mcp
+# Tokens must carry aud=docs-mcp, which the dev realm only adds when the `docs-mcp` optional
+# scope is requested (so it is advertised to clients too). For a provider that cannot add a
+# custom audience, allow-list the MCP client instead, e.g.:
+#   MCP_AUDIENCE_CLAIM=client_id    (RFC 9068 providers; Keycloak user tokens carry `azp`)
+#   MCP_ALLOWED_AUDIENCES=docs-mcp-client
+MCP_AUDIENCE_CLAIM=aud
+MCP_ALLOWED_AUDIENCES=docs-mcp
+MCP_EXTRA_SCOPES=docs-mcp

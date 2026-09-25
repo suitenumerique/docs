@@ -1,7 +1,7 @@
 /**
  * Thin client for the Docs API's MCP-facing endpoints (`core/mcp_api` on the Django side).
  *
- * The MCP server is a plain OAuth resource server: it validates the caller's Keycloak access
+ * The MCP server is a plain OAuth resource server: it validates the caller's OIDC access
  * token (see `auth/jwtVerifier.ts`) and forwards that same token, unchanged, to Django. Django
  * introspects it (django-lasuite's `ResourceServerAuthentication`), checks the token's origin
  * client is allow-listed (`OIDC_RS_ALLOWED_AUDIENCES`), resolves the user by `sub`, and its
