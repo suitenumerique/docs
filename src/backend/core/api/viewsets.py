@@ -1455,7 +1455,9 @@ class DocumentViewSet(
             extracted_attachments & set(document_to_duplicate.attachments)
         )
         title = capfirst(_("copy of {title}").format(title=document_to_duplicate.title))
-        # If parent_duplicate is provided we must add the duplicated document as a child
+        # If parent_duplicate is provided we must add the duplicated document as a child.
+        # No retry here: the parent was created by this very transaction, nobody
+        # else can add children under it, so its child paths cannot collide
         if new_parent is not None:
             duplicated_document = new_parent.add_child(
                 title=title,
@@ -1487,12 +1489,14 @@ class DocumentViewSet(
         elif not document_to_duplicate.is_root() and choices.RoleChoices.get_priority(
             user_role
         ) < choices.RoleChoices.get_priority(models.RoleChoices.EDITOR):
-            duplicated_document = models.Document.add_root(
-                creator=user,
-                title=title,
-                attachments=attachments,
-                duplicated_from=document_to_duplicate,
-                **link_kwargs,
+            duplicated_document = create_tree_node_with_retry(
+                lambda: models.Document.add_root(
+                    creator=user,
+                    title=title,
+                    attachments=attachments,
+                    duplicated_from=document_to_duplicate,
+                    **link_kwargs,
+                )
             )
             models.DocumentAccess.objects.create(
                 document=duplicated_document,
@@ -1500,13 +1504,18 @@ class DocumentViewSet(
                 role=models.RoleChoices.OWNER,
             )
         else:
-            duplicated_document = document_to_duplicate.add_sibling(
-                "last-sibling",
-                title=title,
-                attachments=attachments,
-                duplicated_from=document_to_duplicate,
-                creator=user,
-                **link_kwargs,
+            # Treebeard computes the path of the new sibling from the current
+            # last one: two requests creating a node at the same level at the
+            # same time compute the same path, the loser retries with a fresh one
+            duplicated_document = create_tree_node_with_retry(
+                lambda: document_to_duplicate.add_sibling(
+                    "last-sibling",
+                    title=title,
+                    attachments=attachments,
+                    duplicated_from=document_to_duplicate,
+                    creator=user,
+                    **link_kwargs,
+                )
             )
 
             # Always add the logged-in user as OWNER for root documents
