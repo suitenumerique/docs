@@ -6,6 +6,8 @@ because the resource server viewsets inherit from the api viewsets.
 
 """
 
+from django.test import override_settings
+
 import pytest
 from rest_framework.test import APIClient
 
@@ -75,6 +77,45 @@ def test_external_api_users_me_connected_with_invalid_token_not_allowed(
     response = client.get("/external_api/v1.0/users/me/")
 
     assert response.status_code == 401
+
+
+def test_external_api_users_onboarding_done_not_allowed(
+    user_token, resource_server_backend, user_specific_sub
+):
+    """
+    By default the "onboarding_done" action is not permitted on the external API.
+    POST to the endpoint must return 403.
+    """
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {user_token}")
+
+    response = client.post("/external_api/v1.0/users/onboarding-done/")
+
+    assert response.status_code == 403
+
+
+@override_settings(
+    EXTERNAL_API={
+        "users": {
+            "enabled": True,
+            "actions": ["get_me", "onboarding_done"],
+        },
+    }
+)
+def test_external_api_users_onboarding_done_can_be_allowed(
+    user_token, resource_server_backend, user_specific_sub
+):
+    """The onboarding-done action is available when it is configured."""
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {user_token}")
+
+    assert user_specific_sub.is_first_connection is True
+
+    response = client.post("/external_api/v1.0/users/onboarding-done/")
+
+    assert response.status_code == 200
+    user_specific_sub.refresh_from_db()
+    assert user_specific_sub.is_first_connection is False
 
 
 # Non allowed actions on resource server.

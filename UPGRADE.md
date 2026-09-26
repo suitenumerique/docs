@@ -30,6 +30,14 @@ the following command inside your docker container:
 - yhub now gives up on an authentication that takes longer than
   `YHUB_AUTH_TIMEOUT_MS` (default 30000) and asks the caller to retry. Raise it
   along with `YHUB_BACKEND_REQUEST_TIMEOUT_MS`.
+- Actions of the resource server endpoints are now denied unless they are
+  explicitly listed in the `actions` of the matching `EXTERNAL_API` setting.
+  They used to be open when their view declared `permission_classes` at the
+  action level, `favorite_list` and `duplicate` on documents and
+  `onboarding_done` on users (the `/onboarding-done/` URL), regardless of
+  their configuration. Service providers must ask the instance to add these
+  actions to its configuration. Requests to unconfigured actions now return
+  `403`.
 
 ## [6.0.0] - 2026-10-05
 

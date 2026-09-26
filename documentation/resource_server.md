@@ -54,12 +54,19 @@ EXTERNAL_API = {
 
 **Endpoints:**
 
-- `documents`: Controls `/external_api/v1.0/documents/`. Available actions: `list`, `retrieve`, `create`, `update`, `destroy`, `trashbin`, `children`,  `restore`, `move`,`versions_list`, `versions_detail`, `favorite_detail`,`link_configuration`, `attachment_upload`, `media_auth`, `ai_transform`, `ai_translate`, `ai_proxy`. Always allowed actions: `favorite_list`, `duplicate`.
+- `documents`: Controls `/external_api/v1.0/documents/`. Available actions: `list`, `retrieve`, `create`, `update`, `destroy`, `trashbin`, `children`, `restore`, `move`, `favorite_list`, `favorite`, `duplicate`, `link_configuration`, `attachment_upload`, `media_auth`, `ai_transform`, `ai_translate`, `ai_proxy`.
 - `document_access`: `/external_api/v1.0/documents/{id}/accesses/`. Available actions: `list`, `retrieve`, `create`, `update`, `partial_update`, `destroy`
 - `document_invitation`: Controls `/external_api/v1.0/documents/{id}/invitations/`. Available actions: `list`, `retrieve`, `create`, `partial_update`, `destroy`
-- `users`: Controls `/external_api/v1.0/documents/`. Available actions: `get_me`.
+- `users`: Controls `/external_api/v1.0/users/`. Available actions: `get_me`, `onboarding_done`.
 
 Each endpoint has `enabled` (boolean) and `actions` (list of allowed actions). Only actions explicitly listed are accessible.
+
+**Restricting an action further:** declare `permission_classes` on the action
+itself. They are combined with the resource server permission, which the shared
+`ResourceServerRestrictionMixin.get_permissions()` prepends to every request.
+Keep the mixin in the viewset bases and never override `get_permissions()`
+without calling `super()`: an action declaring only its own
+`permission_classes` would otherwise bypass the configured allowlist.
 
 ## Request Docs
 
