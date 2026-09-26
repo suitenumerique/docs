@@ -75,6 +75,7 @@ and this project adheres to
   `/external_api/{version}/jwks`
 - 🔧(collaboration) adapt docker stack for development purpose
 - 🔧(helm) run a valkey for the backend and one for yhub in dev and feature
+- 💄(frontend) redesign 401 error standalone page #2716
 
 ### Fixed
 

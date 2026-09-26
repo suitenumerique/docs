@@ -1,14 +1,22 @@
 import { Button } from '@gouvfr-lasuite/ui-components';
+import { type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { BoxButton } from '@/components';
 
 import ProConnectImg from '../assets/button-proconnect.svg';
+import { LOGIN_URL } from '../conf';
 import { useAuth } from '../hooks';
 import { gotoLogin } from '../utils';
 
-export const ButtonLogin = () => {
+type ButtonLoginProps = ComponentProps<typeof Button>;
+
+export const ButtonLogin = ({
+  href = LOGIN_URL,
+  children,
+  ...props
+}: ButtonLoginProps) => {
   const { t } = useTranslation();
   const { authenticated } = useAuth();
 
@@ -18,13 +26,14 @@ export const ButtonLogin = () => {
 
   return (
     <Button
-      onClick={() => gotoLogin()}
       color="brand"
       size="small"
-      aria-label={t('Sign in')}
+      variant="primary"
       className="--docs--button-login"
+      {...props}
+      href={href}
     >
-      {t('Sign in')}
+      {children ?? t('Sign in')}
     </Button>
   );
 };
