@@ -36,8 +36,9 @@ def test_reset_service_connections_forwards_the_user_id(mock_service):
     )
 
 
+@mock.patch("core.tasks.access.time.sleep")
 @mock.patch("core.tasks.access.YHubService")
-def test_reset_service_connections_in_cascade(mock_service):
+def test_reset_service_connections_in_cascade(mock_service, mock_sleep):
     """
     A document inherits the accesses of its ancestors, so the whole subtree
     should be reset, the document itself included and its ancestors left out.
@@ -55,6 +56,8 @@ def test_reset_service_connections_in_cascade(mock_service):
         mock.call(child, None),
         mock.call(grand_child, None),
     ]
+    mock_sleep.assert_has_calls([mock.call(0.1), mock.call(0.1)])
+    assert mock_sleep.call_count == 2
 
 
 @mock.patch("core.tasks.access.YHubService")
