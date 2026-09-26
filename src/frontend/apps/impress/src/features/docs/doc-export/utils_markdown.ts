@@ -12,8 +12,84 @@ interface MediaReference {
   src: string;
 }
 
+interface ImageReference {
+  src: string;
+  width?: number;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
+
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const collectImageReferences = (
+  blocks: unknown[],
+  references: ImageReference[],
+) => {
+  blocks.forEach((block) => {
+    if (!isRecord(block)) {
+      return;
+    }
+
+    const props = block.props;
+    if (
+      block.type === 'image' &&
+      isRecord(props) &&
+      typeof props.url === 'string'
+    ) {
+      const width = props.previewWidth;
+      references.push({
+        src: props.url,
+        width:
+          typeof width === 'number' && Number.isFinite(width) && width > 0
+            ? width
+            : undefined,
+      });
+    }
+
+    if (Array.isArray(block.children)) {
+      collectImageReferences(block.children, references);
+    }
+  });
+};
+
+/**
+ * Preserves BlockNote image widths using CodiMD's Markdown image-size syntax.
+ * BlockNote stores the height implicitly from the image's aspect ratio, so the
+ * exported syntax intentionally specifies only the width (`=WIDTHx`).
+ */
+export const preserveImageWidthsInMarkdown = (
+  markdown: string,
+  blocks: unknown[],
+) => {
+  const references: ImageReference[] = [];
+  collectImageReferences(blocks, references);
+  let result = markdown;
+  let searchFrom = 0;
+
+  references.forEach(({ src, width }) => {
+    const image = new RegExp(`!\\[([^\\]]*)\\]\\(${escapeRegExp(src)}\\)`);
+    const match = image.exec(result.slice(searchFrom));
+    if (!match || match.index === undefined) {
+      return;
+    }
+
+    const start = searchFrom + match.index;
+    if (!width) {
+      searchFrom = start + match[0].length;
+      return;
+    }
+
+    const replacement = `![${match[1]}](${src} =${width}x)`;
+    result = `${result.slice(0, start)}${replacement}${result.slice(
+      start + match[0].length,
+    )}`;
+    searchFrom = start + replacement.length;
+  });
+
+  return result;
+};
 
 /** Collects media URL properties from a nested editor block tree. */
 const collectMediaReferences = (
