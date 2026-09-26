@@ -1,0 +1,40 @@
+{
+  "name": "server-mcp",
+  "version": "5.4.1",
+  "description": "Remote MCP server for Docs (docs-mcp)",
+  "repository": "https://github.com/suitenumerique/docs",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "dev": "nodemon --config nodemon.json",
+    "start": "node ./dist/start-server.js",
+    "lint": "eslint",
+    "test": "vitest run",
+    "mcp-inspector": "npx @modelcontextprotocol/inspector --config mcp-inspector.config.json"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "axios": "1.18.1",
+    "express": "5.2.1",
+    "jose": "6.2.5",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/node": "*",
+    "cross-env": "10.1.0",
+    "eslint-plugin-docs": "*",
+    "nodemon": "3.1.14",
+    "supertest": "7.2.2",
+    "@types/supertest": "7.2.1",
+    "ts-node": "10.9.2",
+    "tsc-alias": "1.9.1",
+    "typescript": "*",
+    "vitest": "4.1.10"
+  },
+  "packageManager": "yarn@1.22.22"
+}
