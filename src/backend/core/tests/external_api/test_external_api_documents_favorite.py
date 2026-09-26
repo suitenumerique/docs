@@ -18,14 +18,40 @@ pytestmark = pytest.mark.django_db
 # pylint: disable=unused-argument
 
 
-def test_external_api_documents_favorites_list_allowed(
+def test_external_api_documents_favorites_list_not_allowed(
     user_token, resource_server_backend, user_specific_sub
 ):
     """
-    Connected users SHOULD be allowed to list their favorites
-    from a resource server, as favorite_list() bypasses permissions.
+    By default the "favorite_list" action is not permitted on the external API.
+    GET to the endpoint must return 403.
     """
 
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {user_token}")
+
+    factories.UserDocumentAccessFactory(
+        user=user_specific_sub,
+        role=models.RoleChoices.READER,
+        document__favorited_by=[user_specific_sub],
+    ).document
+
+    response = client.get("/external_api/v1.0/documents/favorites/")
+
+    assert response.status_code == 403
+
+
+@override_settings(
+    EXTERNAL_API={
+        "documents": {
+            "enabled": True,
+            "actions": ["list", "retrieve", "children", "favorite_list"],
+        },
+    }
+)
+def test_external_api_documents_favorites_list_can_be_allowed(
+    user_token, resource_server_backend, user_specific_sub
+):
+    """The favorites list is available when the action is configured."""
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {user_token}")
 

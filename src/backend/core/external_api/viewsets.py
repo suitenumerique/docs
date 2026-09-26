@@ -32,6 +32,16 @@ class ResourceServerRestrictionMixin:
         external_api_config = settings.EXTERNAL_API.get(resource_name, {})
         return list(external_api_config.get("actions", []))
 
+    def get_permissions(self):
+        """
+        Enforce the resource-server action allowlist for every action.
+
+        DRF action decorators can replace ``permission_classes`` on individual
+        endpoints. The resource-server permission must therefore be added here,
+        rather than relying only on a viewset-level declaration.
+        """
+        return [ResourceServerClientPermission(), *super().get_permissions()]
+
 
 class ResourceServerDocumentViewSet(ResourceServerRestrictionMixin, DocumentViewSet):
     """Resource Server Viewset for Documents."""
