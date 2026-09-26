@@ -14,6 +14,8 @@ from core.services import mime_types
 from core.services.converter_services import (
     ConversionError,
     ServiceUnavailableError,
+    UnprocessableContentError,
+    UnsupportedMediaTypeError,
 )
 from core.services.yhub_services import (
     ServiceUnavailableError as YHubServiceUnavailableError,
@@ -290,7 +292,8 @@ def test_api_documents_create_with_empty_file(settings):
 @patch("core.services.converter_services.Converter.convert")
 def test_api_documents_create_with_file_conversion_error(mock_convert, settings):
     """
-    When conversion fails, the API should return a 400 error with appropriate message.
+    When conversion fails for an unspecified reason, the API should return a 500
+    error with appropriate message.
     """
     user = factories.UserFactory()
     client = APIClient()
@@ -315,7 +318,7 @@ def test_api_documents_create_with_file_conversion_error(mock_convert, settings)
             format="multipart",
         )
 
-    assert response.status_code == 400
+    assert response.status_code == 500
     assert response.json() == {"file": ["Could not convert file content"]}
     assert not Document.objects.exists()
 
@@ -326,7 +329,8 @@ def test_api_documents_create_with_file_conversion_error(mock_convert, settings)
 @patch("core.services.converter_services.Converter.convert")
 def test_api_documents_create_with_file_service_unavailable(mock_convert, settings):
     """
-    When the conversion service is unavailable, appropriate error should be returned.
+    When the conversion service is unavailable (DocSpec crashed), the API should
+    return a 500 error.
     """
     user = factories.UserFactory()
     client = APIClient()
@@ -353,11 +357,82 @@ def test_api_documents_create_with_file_service_unavailable(mock_convert, settin
             format="multipart",
         )
 
-    assert response.status_code == 400
+    assert response.status_code == 500
     assert response.json() == {"file": ["Could not convert file content"]}
     assert not Document.objects.exists()
 
     # No event should be tracked when the conversion service is unavailable
+    mock_capture.assert_not_called()
+
+
+@patch("core.services.converter_services.Converter.convert")
+def test_api_documents_create_with_file_unsupported_media_type(mock_convert, settings):
+    """
+    When DocSpec rejects the file type (HTTP 415), the API should return a 415 error.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    settings.CONVERSION_UPLOAD_ENABLED = True
+
+    mock_convert.side_effect = UnsupportedMediaTypeError(
+        "DocSpec rejected the file type"
+    )
+
+    file_content = b"fake docx content"
+    file = BytesIO(file_content)
+    file.name = "document.docx"
+
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
+
+    assert response.status_code == 415
+    assert response.json() == {"file": ["File type is not supported"]}
+    assert not Document.objects.exists()
+
+    mock_capture.assert_not_called()
+
+
+@patch("core.services.converter_services.Converter.convert")
+def test_api_documents_create_with_file_unprocessable_content(mock_convert, settings):
+    """
+    When DocSpec cannot process the file content (HTTP 422), the API should return
+    a 422 error.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    settings.CONVERSION_UPLOAD_ENABLED = True
+
+    mock_convert.side_effect = UnprocessableContentError(
+        "DocSpec could not process the file content"
+    )
+
+    file_content = b"fake docx content"
+    file = BytesIO(file_content)
+    file.name = "document.docx"
+
+    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
+
+    assert response.status_code == 422
+    assert response.json() == {"file": ["Could not process file content"]}
+    assert not Document.objects.exists()
+
     mock_capture.assert_not_called()
 
 

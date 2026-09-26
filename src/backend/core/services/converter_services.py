@@ -26,6 +26,14 @@ class ServiceUnavailableError(ConversionError):
     """Raised when the conversion service is unavailable."""
 
 
+class UnsupportedMediaTypeError(ConversionError):
+    """Raised when the conversion service rejects the input file type (HTTP 415)."""
+
+
+class UnprocessableContentError(ConversionError):
+    """Raised when the conversion service cannot process the file content (HTTP 422)."""
+
+
 class ConverterProtocol(typing.Protocol):
     """Protocol for converter classes."""
 
@@ -99,6 +107,20 @@ class DocSpecConverter:
 
         try:
             return self._request(settings.DOCSPEC_API_URL, data, content_type).content
+        except requests.HTTPError as err:
+            status_code = err.response.status_code if err.response is not None else None
+            if status_code == 415:
+                raise UnsupportedMediaTypeError(
+                    "DocSpec rejected the file type",
+                ) from err
+            if status_code == 422:
+                raise UnprocessableContentError(
+                    "DocSpec could not process the file content",
+                ) from err
+            logger.exception("DocSpec service error: url=%s", settings.DOCSPEC_API_URL)
+            raise ServiceUnavailableError(
+                "Failed to connect to DocSpec conversion service",
+            ) from err
         except requests.RequestException as err:
             logger.exception("DocSpec service error: url=%s", settings.DOCSPEC_API_URL)
             raise ServiceUnavailableError(
