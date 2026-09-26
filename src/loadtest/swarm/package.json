@@ -15,7 +15,7 @@
   },
   "packageManager": "yarn@1.22.22",
   "dependencies": {
-    "lib0": "0.2.114",
+    "lib0": "0.2.117",
     "prom-client": "15.1.3",
     "ws": "8.18.3",
     "y-protocols": "1.0.7",
