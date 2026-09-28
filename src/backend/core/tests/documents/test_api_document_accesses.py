@@ -175,6 +175,7 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                 "max_role": access.role,
                 "abilities": {
                     "destroy": False,
+                    "encryption_key": False,
                     "partial_update": False,
                     "retrieve": False,
                     "set_role_to": [],
@@ -271,6 +272,7 @@ def test_api_document_accesses_list_authenticated_related_privileged(
                         "full_name": access.user.full_name,
                         "short_name": access.user.short_name,
                         "is_first_connection": access.user.is_first_connection,
+                        "suite_user_id": access.user.sub,
                     }
                     if access.user
                     else None
@@ -280,6 +282,8 @@ def test_api_document_accesses_list_authenticated_related_privileged(
                 "team": access.team,
                 "role": access.role,
                 "abilities": access.get_abilities(user),
+                "encryption_public_key_version": None,
+                "is_pending_encryption": False,
             }
             for access in ancestors_accesses + document_accesses
         ],
@@ -646,6 +650,8 @@ def test_api_document_accesses_retrieve_authenticated_related(
             "max_ancestors_role": None,
             "max_role": access.role,
             "abilities": access.get_abilities(user),
+            "encryption_public_key_version": None,
+            "is_pending_encryption": False,
         }
 
 

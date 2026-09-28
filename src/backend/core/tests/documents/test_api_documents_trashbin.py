@@ -13,6 +13,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.tests.utils.encryption import direct_user_subs
 
 fake = Faker()
 pytestmark = pytest.mark.django_db
@@ -93,6 +94,7 @@ def test_api_documents_trashbin_format():
                     "formatted_content": False,
                     "destroy": False,
                     "duplicate": False,
+                    "encrypt": False,
                     "favorite": False,
                     "invite_owner": False,
                     "link_configuration": False,
@@ -108,6 +110,7 @@ def test_api_documents_trashbin_format():
                     "media_check": False,
                     "move": False,  # Can't move a deleted document
                     "partial_update": False,
+                    "remove_encryption": False,
                     "restore": True,
                     "retrieve": True,
                     "search": False,
@@ -127,6 +130,11 @@ def test_api_documents_trashbin_format():
                 "creator": str(user.id),
                 "depth": 1,
                 "excerpt": other_document_to_delete.excerpt,
+                "is_encrypted": False,
+                "accesses_user_ids": direct_user_subs(other_document_to_delete),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "deleted_at": other_document_to_delete.ancestors_deleted_at.isoformat().replace(
                     "+00:00", "Z"
                 ),
@@ -161,6 +169,7 @@ def test_api_documents_trashbin_format():
                     "formatted_content": False,
                     "destroy": False,
                     "duplicate": False,
+                    "encrypt": False,
                     "favorite": False,
                     "invite_owner": False,
                     "link_configuration": False,
@@ -176,6 +185,7 @@ def test_api_documents_trashbin_format():
                     "media_check": False,
                     "move": False,  # Can't move a deleted document
                     "partial_update": False,
+                    "remove_encryption": False,
                     "restore": True,
                     "retrieve": True,
                     "search": False,
@@ -193,6 +203,11 @@ def test_api_documents_trashbin_format():
                 "creator": str(document.creator.id),
                 "depth": 1,
                 "excerpt": document.excerpt,
+                "is_encrypted": False,
+                "accesses_user_ids": direct_user_subs(document),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "deleted_at": document.ancestors_deleted_at.isoformat().replace(
                     "+00:00", "Z"
                 ),
@@ -250,10 +265,10 @@ def test_api_documents_trashbin_authenticated_direct(django_assert_num_queries):
 
     expected_ids = {str(document1.id), str(document2.id), str(document3.id)}
 
-    with django_assert_num_queries(11):
+    with django_assert_num_queries(12):
         response = client.get("/api/v1.0/documents/trashbin/")
 
-    with django_assert_num_queries(5):
+    with django_assert_num_queries(6):
         response = client.get("/api/v1.0/documents/trashbin/")
 
     assert response.status_code == 200
@@ -292,10 +307,10 @@ def test_api_documents_trashbin_authenticated_via_team(
 
     expected_ids = {str(deleted_document_team1.id), str(deleted_document_team2.id)}
 
-    with django_assert_num_queries(8):
+    with django_assert_num_queries(9):
         response = client.get("/api/v1.0/documents/trashbin/")
 
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(5):
         response = client.get("/api/v1.0/documents/trashbin/")
 
     assert response.status_code == 200

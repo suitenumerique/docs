@@ -1421,6 +1421,10 @@ class Test(Base):
 
     CELERY_TASK_ALWAYS_EAGER = values.BooleanValue(True)
 
+    # The development environment stores the OIDC access token for the encryption
+    # service; tests start from the default and enable it where they need it.
+    OIDC_STORE_ACCESS_TOKEN = False
+
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3.S3Storage",

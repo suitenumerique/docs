@@ -86,6 +86,7 @@ def test_models_document_access_get_abilities_anonymous():
     abilities = access.get_abilities(AnonymousUser())
     assert abilities == {
         "destroy": False,
+        "encryption_key": False,
         "retrieve": False,
         "update": False,
         "partial_update": False,
@@ -100,6 +101,7 @@ def test_models_document_access_get_abilities_authenticated():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
+        "encryption_key": False,
         "retrieve": False,
         "update": False,
         "partial_update": False,
@@ -120,6 +122,7 @@ def test_models_document_access_get_abilities_for_owner_of_self_allowed():
     abilities = access.get_abilities(access.user)
     assert abilities == {
         "destroy": True,
+        "encryption_key": True,
         "retrieve": True,
         "update": True,
         "partial_update": True,
@@ -141,6 +144,7 @@ def test_models_document_access_get_abilities_for_owner_of_self_last_on_root(
 
     assert abilities == {
         "destroy": False,
+        "encryption_key": True,
         "retrieve": True,
         "update": False,
         "partial_update": False,
@@ -163,6 +167,7 @@ def test_models_document_access_get_abilities_for_owner_of_self_last_on_child(
 
     assert abilities == {
         "destroy": True,
+        "encryption_key": True,
         "retrieve": True,
         "update": True,
         "partial_update": True,
@@ -180,6 +185,7 @@ def test_models_document_access_get_abilities_for_owner_of_owner():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": True,
+        "encryption_key": True,
         "retrieve": True,
         "update": True,
         "partial_update": True,
@@ -197,6 +203,7 @@ def test_models_document_access_get_abilities_for_owner_of_administrator():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": True,
+        "encryption_key": True,
         "retrieve": True,
         "update": True,
         "partial_update": True,
@@ -214,6 +221,7 @@ def test_models_document_access_get_abilities_for_owner_of_editor():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": True,
+        "encryption_key": True,
         "retrieve": True,
         "update": True,
         "partial_update": True,
@@ -231,6 +239,7 @@ def test_models_document_access_get_abilities_for_owner_of_reader():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": True,
+        "encryption_key": True,
         "retrieve": True,
         "update": True,
         "partial_update": True,
@@ -251,6 +260,7 @@ def test_models_document_access_get_abilities_for_administrator_of_owner():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
+        "encryption_key": True,
         "retrieve": True,
         "update": False,
         "partial_update": False,
@@ -268,6 +278,7 @@ def test_models_document_access_get_abilities_for_administrator_of_administrator
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": True,
+        "encryption_key": True,
         "retrieve": True,
         "update": True,
         "partial_update": True,
@@ -285,6 +296,7 @@ def test_models_document_access_get_abilities_for_administrator_of_editor():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": True,
+        "encryption_key": True,
         "retrieve": True,
         "update": True,
         "partial_update": True,
@@ -302,6 +314,7 @@ def test_models_document_access_get_abilities_for_administrator_of_reader():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": True,
+        "encryption_key": True,
         "retrieve": True,
         "update": True,
         "partial_update": True,
@@ -322,6 +335,7 @@ def test_models_document_access_get_abilities_for_editor_of_owner():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
+        "encryption_key": False,
         "retrieve": False,
         "update": False,
         "partial_update": False,
@@ -339,6 +353,7 @@ def test_models_document_access_get_abilities_for_editor_of_administrator():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
+        "encryption_key": False,
         "retrieve": False,
         "update": False,
         "partial_update": False,
@@ -361,6 +376,7 @@ def test_models_document_access_get_abilities_for_editor_of_editor_user(
 
     assert abilities == {
         "destroy": False,
+        "encryption_key": False,
         "retrieve": False,
         "update": False,
         "partial_update": False,
@@ -381,6 +397,7 @@ def test_models_document_access_get_abilities_for_reader_of_owner():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
+        "encryption_key": False,
         "retrieve": False,
         "update": False,
         "partial_update": False,
@@ -398,6 +415,7 @@ def test_models_document_access_get_abilities_for_reader_of_administrator():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
+        "encryption_key": False,
         "retrieve": False,
         "update": False,
         "partial_update": False,
@@ -420,6 +438,7 @@ def test_models_document_access_get_abilities_for_reader_of_reader_user(
 
     assert abilities == {
         "destroy": False,
+        "encryption_key": False,
         "retrieve": False,
         "update": False,
         "partial_update": False,
@@ -440,6 +459,7 @@ def test_models_document_access_get_abilities_preset_role(django_assert_num_quer
 
     assert abilities == {
         "destroy": False,
+        "encryption_key": False,
         "retrieve": False,
         "update": False,
         "partial_update": False,

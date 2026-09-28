@@ -42,8 +42,9 @@ def test_api_documents_list_format():
     client.force_login(user)
 
     other_users = factories.UserFactory.create_batch(3)
+    members = factories.UserFactory.create_batch(2)
     document = factories.DocumentFactory(
-        users=factories.UserFactory.create_batch(2),
+        users=members,
         favorited_by=[user, *other_users],
         link_traces=other_users,
     )
@@ -63,6 +64,8 @@ def test_api_documents_list_format():
     assert results[0] == {
         "id": str(document.id),
         "abilities": document.get_abilities(user),
+        "accesses_user_ids": sorted(str(member.sub) for member in [*members, user]),
+        "accesses_versions_per_user": None,
         "ancestors_link_reach": None,
         "ancestors_link_role": None,
         "computed_link_reach": document.computed_link_reach,
@@ -71,9 +74,11 @@ def test_api_documents_list_format():
         "creator": str(document.creator.id),
         "deleted_at": None,
         "depth": 1,
+        "encrypted_document_symmetric_key_for_user": None,
         "excerpt": document.excerpt,
         "is_favorite": True,
         "is_encrypted": document.is_encrypted,
+        "is_pending_encryption_for_user": False,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
         "nb_accesses_ancestors": 3,
@@ -154,11 +159,11 @@ def test_api_documents_list_authenticated_direct(django_assert_num_queries):
         str(child4_with_access.id),
     }
 
-    with django_assert_num_queries(14):
+    with django_assert_num_queries(15):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached
-    with django_assert_num_queries(6):
+    with django_assert_num_queries(7):
         response = client.get("/api/v1.0/documents/")
 
     assert response.status_code == 200
@@ -192,11 +197,11 @@ def test_api_documents_list_authenticated_via_team(
 
     expected_ids = {str(document.id) for document in documents_team1 + documents_team2}
 
-    with django_assert_num_queries(14):
+    with django_assert_num_queries(15):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(5):
         response = client.get("/api/v1.0/documents/")
 
     assert response.status_code == 200
@@ -225,11 +230,11 @@ def test_api_documents_list_authenticated_link_reach_restricted(
     other_document = factories.DocumentFactory(link_reach="public")
     models.LinkTrace.objects.create(document=other_document, user=user)
 
-    with django_assert_num_queries(6):
+    with django_assert_num_queries(7):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(5):
         response = client.get("/api/v1.0/documents/")
 
     assert response.status_code == 200
@@ -274,11 +279,11 @@ def test_api_documents_list_authenticated_link_reach_public_or_authenticated(
 
     expected_ids = {str(document1.id), str(document2.id), str(visible_child.id)}
 
-    with django_assert_num_queries(11):
+    with django_assert_num_queries(12):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached
-    with django_assert_num_queries(5):
+    with django_assert_num_queries(6):
         response = client.get("/api/v1.0/documents/")
 
     assert response.status_code == 200
@@ -398,11 +403,11 @@ def test_api_documents_list_favorites_no_extra_queries(django_assert_num_queries
     factories.DocumentFactory.create_batch(2, users=[user])
 
     url = "/api/v1.0/documents/"
-    with django_assert_num_queries(14):
+    with django_assert_num_queries(15):
         response = client.get(url)
 
     # nb_accesses should now be cached
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(5):
         response = client.get(url)
 
     assert response.status_code == 200
@@ -415,7 +420,7 @@ def test_api_documents_list_favorites_no_extra_queries(django_assert_num_queries
     for document in special_documents:
         models.DocumentFavorite.objects.create(document=document, user=user)
 
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(5):
         response = client.get(url)
 
     assert response.status_code == 200

@@ -1341,38 +1341,64 @@ class Document(MP_Node, BaseModel):
         """Actual link role on the document."""
         return self.computed_link_definition["link_role"]
 
-    @property
-    def accesses_user_ids(self):
+    @staticmethod
+    def get_encryption_accesses_mapping(document_ids, user):
         """
-        Return the list of user IDs with access to this document.
-        The frontend uses these IDs to fetch public keys from the
-        centralized encryption service.
-        """
-        return list(
-            DocumentAccess.objects
-            .filter(document=self, user__isnull=False)
-            .values_list('user__sub', flat=True)
-            .distinct()
-        )
+        Collect, in one query, the per-user encryption data of the direct user
+        accesses of several documents, as seen by `user`:
 
-    @property
-    def accesses_versions_per_user(self):
-        """
-        Return the version of each user's public key at the time of sharing.
-        This allows the frontend to detect key changes by comparing the
-        version stored at share time with the current public key version.
-        """
-        accesses = (
-            DocumentAccess.objects
-            .filter(document=self, user__isnull=False, encryption_public_key_version__isnull=False)
-            .values_list('user__sub', 'encryption_public_key_version')
-        )
+        - `user_subs`: subs of the users with a direct access (the frontend
+          fetches their public keys from the encryption service),
+        - `versions`: public key version each user was shared with, by sub,
+        - `has_own_access` / `own_key`: whether `user` has a direct access and
+          the symmetric key wrapped for them (None while pending).
 
-        return {
-            str(sub): version
-            for sub, version in accesses
-            if version is not None
+        Only the wrapped key of `user` is selected, never the other users' keys.
+        Returns a dict keyed by document id with an entry for every given id.
+        """
+        mapping = {
+            document_id: {
+                "user_subs": [],
+                "versions": {},
+                "has_own_access": False,
+                "own_key": None,
+            }
+            for document_id in document_ids
         }
+        if not mapping:
+            return mapping
+
+        user_id = user.id if user.is_authenticated else None
+        rows = (
+            DocumentAccess.objects.filter(document_id__in=mapping, user__isnull=False)
+            .annotate(
+                own_key=models.Case(
+                    models.When(
+                        user_id=user_id,
+                        then=models.F("encrypted_document_symmetric_key_for_user"),
+                    ),
+                    default=models.Value(None),
+                    output_field=models.TextField(),
+                )
+            )
+            .order_by()
+            .values_list(
+                "document_id",
+                "user_id",
+                "user__sub",
+                "encryption_public_key_version",
+                "own_key",
+            )
+        )
+        for document_id, access_user_id, sub, version, own_key in rows:
+            data = mapping[document_id]
+            data["user_subs"].append(sub)
+            if version is not None:
+                data["versions"][str(sub)] = version
+            if user_id is not None and access_user_id == user_id:
+                data["has_own_access"] = True
+                data["own_key"] = own_key
+        return mapping
 
     def get_abilities(self, user):  # pylint: disable=too-many-locals
         """

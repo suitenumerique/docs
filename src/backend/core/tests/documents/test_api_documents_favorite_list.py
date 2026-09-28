@@ -8,6 +8,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.tests.utils.encryption import direct_user_subs
 
 pytestmark = pytest.mark.django_db
 
@@ -72,6 +73,10 @@ def test_api_document_favorite_list_authenticated_with_favorite():
                 "deleted_at": None,
                 "depth": document.depth,
                 "excerpt": document.excerpt,
+                "accesses_user_ids": direct_user_subs(document),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(document.id),
                 "is_favorite": True,
                 "is_encrypted": document.is_encrypted,

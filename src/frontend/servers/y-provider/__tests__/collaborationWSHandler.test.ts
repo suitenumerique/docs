@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 
 import { Request } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { WebSocket } from 'ws';
 
 vi.mock('@/servers/hocuspocusServer', () => ({
@@ -58,6 +58,10 @@ const mockDocument = (isEncrypted: boolean) => {
 };
 
 describe('collaborationWSHandler', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   test('forwards a plain document connection to hocuspocus', async () => {
     mockDocument(false);
     const room = uuidv4();
@@ -116,5 +120,72 @@ describe('collaborationWSHandler', () => {
     );
 
     consoleErrorMock.mockRestore();
+  });
+
+  test.each([
+    ['not a uuid', 'not-a-uuid'],
+    ['not a uuid v4', 'c8c1b4b0-6b1f-11ee-8c99-0242ac120002'],
+  ])('refuses a room that is %s', async (_label, room) => {
+    const { ws, closeMock } = createFakeWs();
+
+    await collaborationWSHandler(ws, createRequest(room));
+
+    expect(CollaborationBackend.fetchDocument).not.toHaveBeenCalled();
+    expect(closeMock).toHaveBeenCalledWith(1008, 'unauthorized');
+  });
+
+  test('refuses a user the backend denies the document to', async () => {
+    vi.mocked(CollaborationBackend.fetchDocument).mockRejectedValue(
+      new Error('403'),
+    );
+    const consoleErrorMock = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const { ws, closeMock } = createFakeWs();
+
+    await collaborationWSHandler(ws, createRequest(uuidv4()));
+
+    expect(closeMock).toHaveBeenCalledWith(1011, 'internal error');
+    expect(handleConnectionMock).not.toHaveBeenCalled();
+    consoleErrorMock.mockRestore();
+  });
+
+  test('refuses a user without the retrieve ability', async () => {
+    vi.mocked(CollaborationBackend.fetchDocument).mockResolvedValue({
+      is_encrypted: false,
+      abilities: { retrieve: false, update: false },
+    } as Awaited<ReturnType<typeof CollaborationBackend.fetchDocument>>);
+    const consoleErrorMock = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const { ws, closeMock } = createFakeWs();
+
+    await collaborationWSHandler(ws, createRequest(uuidv4()));
+
+    expect(closeMock).toHaveBeenCalledWith(1008, 'unauthorized');
+    expect(handleConnectionMock).not.toHaveBeenCalled();
+    consoleErrorMock.mockRestore();
+  });
+
+  test('opens a plain document read-only without the update ability, and without a user id when there is no user', async () => {
+    vi.mocked(CollaborationBackend.fetchDocument).mockResolvedValue({
+      is_encrypted: false,
+      abilities: { retrieve: true, update: false },
+    } as Awaited<ReturnType<typeof CollaborationBackend.fetchDocument>>);
+    vi.mocked(CollaborationBackend.fetchCurrentUser).mockRejectedValue(
+      new Error('401'),
+    );
+    handleConnectionMock.mockClear();
+    const room = uuidv4();
+    const { ws } = createFakeWs();
+    const req = createRequest(room);
+
+    await collaborationWSHandler(ws, req);
+
+    expect(handleConnectionMock).toHaveBeenCalledWith(ws, req, {
+      roomId: room,
+      readOnly: true,
+      sessionKey: 'abc',
+    });
   });
 });

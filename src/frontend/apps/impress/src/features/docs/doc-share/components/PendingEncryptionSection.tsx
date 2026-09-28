@@ -212,18 +212,6 @@ export const PendingEncryptionSection = ({
                       {access.user.email}
                     </Text>
                   )}
-                  {canAccept && (
-                    <Box $direction="row" $align="center" $gap="4xs">
-                      <Icon
-                        iconName="verified_user"
-                        $size="14px"
-                        $theme="success"
-                      />
-                      <Text $size="xs" $weight="500" $theme="success">
-                        {t('Encryption enabled')}
-                      </Text>
-                    </Box>
-                  )}
                   {error && (
                     <Text $size="xs" $theme="error">
                       {error}

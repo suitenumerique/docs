@@ -18,6 +18,11 @@ export class EncryptedWebSocket extends WebSocket {
     super(address, protocols);
 
     const originalAddEventListener = this.addEventListener.bind(this);
+    const originalRemoveEventListener = this.removeEventListener.bind(this);
+    // The decrypting wrappers of the message listeners, so that detaching the
+    // socket (see the `onmessage` setter) can remove them.
+    const messageListeners: EventListener[] = [];
+    let detached = false;
 
     this.addEventListener = function <K extends keyof WebSocketEventMap>(
       type: K,
@@ -50,6 +55,12 @@ export class EncryptedWebSocket extends WebSocket {
                 this.keyVersion,
               );
 
+            // Detached while this frame was being decrypted: drop it, as the
+            // provider no longer listens to this socket.
+            if (detached) {
+              return;
+            }
+
             const decryptedData = new Uint8Array(decryptedBuffer);
 
             if (typeof listener === 'function') {
@@ -66,17 +77,18 @@ export class EncryptedWebSocket extends WebSocket {
           }
         };
 
+        messageListeners.push(wrappedListener);
         originalAddEventListener('message', wrappedListener, options);
       } else {
         originalAddEventListener(type, listener, options);
       }
     };
 
-    // Block direct onmessage assignment
+    // Block direct onmessage assignment: a handler set that way would receive
+    // the ciphertext, bypassing the decrypting listeners above.
     let explicitlySetListener:
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((this: WebSocket, handlerEvent: MessageEvent) => any) | null;
-    null;
+      ((this: WebSocket, handlerEvent: MessageEvent) => any) | null = null;
 
     Object.defineProperty(this, 'onmessage', {
       configurable: true,
@@ -85,8 +97,23 @@ export class EncryptedWebSocket extends WebSocket {
         return explicitlySetListener;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mirrors lib.dom WebSocket.onmessage signature (=> any)
-      set(_handler: ((handlerEvent: MessageEvent) => any) | null) {
+      set(handler: ((handlerEvent: MessageEvent) => any) | null) {
         explicitlySetListener = null;
+
+        // y-websocket detaches a socket it drops with `onmessage = null`, so that
+        // frames still buffered while it closes cannot touch the provider. The
+        // provider listens through addEventListener here (see the y-websocket
+        // patch), so detaching means removing those listeners.
+        if (handler === null) {
+          detached = true;
+          messageListeners
+            .splice(0)
+            .forEach((listener) =>
+              originalRemoveEventListener('message', listener),
+            );
+
+          return;
+        }
 
         throw new Error(
           '"onmessage" should not be set directly. Use addEventListener instead. Run "yarn run patch-package"!',
@@ -100,10 +127,21 @@ export class EncryptedWebSocket extends WebSocket {
   }
 
   send(message: Uint8Array<ArrayBuffer>) {
-    // Encrypt directly with ArrayBuffer — no base64 conversion
+    if (this.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    // Encrypt directly with ArrayBuffer, no base64 conversion
     this.vaultClient
       .encryptWithKey(message.buffer, this.encryptedSymmetricKey)
       .then(({ encryptedData }) => {
+        // Encryption is asynchronous: the socket may have closed meanwhile (the
+        // editor publishes its presence removal while it unmounts). Nobody is
+        // left to receive it on this socket, so it is dropped.
+        if (this.readyState !== WebSocket.OPEN) {
+          return;
+        }
+
         super.send(new Uint8Array(encryptedData));
       })
       .catch((error) => {

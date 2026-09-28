@@ -131,12 +131,21 @@ export const useSaveDoc = (
             documentEncryptionSettings.encryptedSymmetricKey,
           )
           .then(({ encryptedData }) => {
+            const content = toBase64(new Uint8Array(encryptedData));
             updateDocContent({
               id: docId,
-              content: toBase64(new Uint8Array(encryptedData)),
+              content,
               contentEncrypted: true,
               websocket,
-              keepalive: isUnloading,
+              // A keepalive request over the browser's size cap is refused
+              // outright: a larger one goes as a regular request instead.
+              keepalive:
+                isUnloading &&
+                canKeepaliveContent({
+                  content,
+                  contentEncrypted: true,
+                  websocket,
+                }),
             });
           })
           .catch((err) => {
@@ -181,7 +190,22 @@ export const useSaveDoc = (
   useEffect(() => {
     const onSave = (e?: Event) => {
       const isUnloading = typeof e !== 'undefined' && e.type === 'beforeunload';
+      // Read before saving: starting the save below flips the in-flight flag.
+      const hasUnsavedEncryptedChanges =
+        isEncrypted && (isLocalChange || isSavingRef.current);
       const { isSaving, isKeptAlive } = saveDoc({ isUnloading });
+
+      /**
+       * An encrypted save goes through the vault first, which is asynchronous,
+       * so the page would be gone before the request is sent. Asking the user
+       * to confirm keeps the page alive meanwhile: the save completes behind
+       * the prompt, and leaving right away is still possible.
+       */
+      if (isUnloading && hasUnsavedEncryptedChanges && e.preventDefault) {
+        e.preventDefault();
+
+        return;
+      }
 
       /**
        * Firefox does not trigger the request every time the user leaves the page.
@@ -218,5 +242,5 @@ export const useSaveDoc = (
       removeEventListener('beforeunload', onSave);
       router.events.off('routeChangeStart', onSave);
     };
-  }, [router.events, saveDoc]);
+  }, [router.events, saveDoc, isEncrypted, isLocalChange]);
 };

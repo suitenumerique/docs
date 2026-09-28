@@ -8,6 +8,7 @@ from os.path import splitext
 
 from django.conf import settings
 from django.db.models import Q
+from django.db.models.manager import BaseManager
 from django.utils.functional import lazy
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -32,7 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     full_name = serializers.SerializerMethodField(read_only=True)
     short_name = serializers.SerializerMethodField(read_only=True)
-    suite_user_id = serializers.CharField(source='sub', read_only=True)
+    suite_user_id = serializers.CharField(source="sub", read_only=True)
 
     class Meta:
         model = models.User
@@ -76,8 +77,38 @@ class UserLightSerializer(UserSerializer):
 
     class Meta:
         model = models.User
-        fields = ["id", "full_name", "short_name"]
-        read_only_fields = ["id", "full_name", "short_name"]
+        fields = ["full_name", "short_name"]
+        read_only_fields = ["full_name", "short_name"]
+
+
+ENCRYPTION_ACCESSES_ATTRIBUTE = "_encryption_accesses"
+
+
+class DocumentListSerializer(serializers.ListSerializer):
+    """
+    Precompute, in one query for the whole list, the encryption data that the
+    document serializers would otherwise query once per document.
+    """
+
+    def to_representation(self, data):
+        documents = list(data.all() if isinstance(data, BaseManager) else data)
+        request = self.context.get("request")
+        if request and request.user.is_authenticated and documents:
+            # Search results nest their top parent, serialized with the same context
+            parents = [
+                parent
+                for parent in (
+                    document.__dict__.get("parent") for document in documents
+                )
+                if isinstance(parent, models.Document)
+            ]
+            targets = documents + parents
+            mapping = models.Document.get_encryption_accesses_mapping(
+                {document.id for document in targets}, request.user
+            )
+            for document in targets:
+                setattr(document, ENCRYPTION_ACCESSES_ATTRIBUTE, mapping[document.id])
+        return super().to_representation(documents)
 
 
 class ListDocumentSerializer(serializers.ModelSerializer):
@@ -101,6 +132,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Document
+        list_serializer_class = DocumentListSerializer
         fields = [
             "id",
             "abilities",
@@ -188,43 +220,54 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         """Return the deleted_at of the current document."""
         return instance.ancestors_deleted_at
 
-    def get_accesses_user_ids(self, instance):
-        """Return user IDs of members with access to this document.
-        The frontend uses these to fetch public keys from the encryption service."""
+    def _get_encryption_accesses(self, instance):
+        """
+        Return the encryption data of the direct user accesses of the document
+        for the current user, or None for anonymous users. List serializers
+        compute it in bulk for the whole page; a single document computes it
+        once, in one query shared by all the encryption fields.
+        """
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return None
-        return [str(uid) for uid in instance.accesses_user_ids]
+        data = getattr(instance, ENCRYPTION_ACCESSES_ATTRIBUTE, None)
+        if data is None:
+            data = models.Document.get_encryption_accesses_mapping(
+                [instance.id], request.user
+            )[instance.id]
+            setattr(instance, ENCRYPTION_ACCESSES_ATTRIBUTE, data)
+        return data
+
+    def get_accesses_user_ids(self, instance):
+        """Return the suite user ids (subs) of the members with a direct access.
+        The frontend uses these to fetch public keys from the encryption service."""
+        data = self._get_encryption_accesses(instance)
+        if data is None:
+            return None
+        return sorted(str(sub) for sub in data["user_subs"])
 
     def get_accesses_versions_per_user(self, instance):
         """Return versions of users' public keys at share time."""
-        request = self.context.get("request")
-        if not request or not request.user.is_authenticated:
-            return None
         if not instance.is_encrypted:
             return None
-        return instance.accesses_versions_per_user
+        data = self._get_encryption_accesses(instance)
+        if data is None:
+            return None
+        return data["versions"]
 
     def get_encrypted_document_symmetric_key_for_user(self, instance):
         """Return the encrypted symmetric key for the current user."""
-        request = self.context.get("request")
-        if not request or not request.user.is_authenticated:
-            return None
         if not instance.is_encrypted:
             return None
-        try:
-            access = models.DocumentAccess.objects.get(
-                document=instance, user=request.user
-            )
-            return access.encrypted_document_symmetric_key_for_user
-        except models.DocumentAccess.DoesNotExist:
+        data = self._get_encryption_accesses(instance)
+        if data is None:
             return None
+        return data["own_key"]
 
     def get_is_pending_encryption_for_user(self, instance):
         """True when the current user has a DocumentAccess row on this
-        encrypted document with no wrapped key — i.e. they were added
-        to the access list but haven't completed their encryption
-        onboarding yet.
+        encrypted document with no wrapped key: they were added to the
+        access list but haven't completed their encryption onboarding yet.
 
         Clients use this to avoid attempting to decrypt (which would
         fail with a meaningless key error) and render a "waiting for
@@ -232,14 +275,10 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         """
         if not instance.is_encrypted:
             return False
-        request = self.context.get("request")
-        if not request or not request.user.is_authenticated:
+        data = self._get_encryption_accesses(instance)
+        if data is None:
             return False
-        return models.DocumentAccess.objects.filter(
-            document=instance,
-            user=request.user,
-            encrypted_document_symmetric_key_for_user__isnull=True,
-        ).exists()
+        return data["has_own_access"] and data["own_key"] is None
 
 
 class DocumentLightSerializer(serializers.ModelSerializer):
@@ -261,6 +300,7 @@ class DocumentSerializer(ListDocumentSerializer):
 
     class Meta:
         model = models.Document
+        list_serializer_class = DocumentListSerializer
         fields = [
             "id",
             "abilities",
@@ -391,6 +431,7 @@ class SearchDocumentSerializer(ListDocumentSerializer):
 
     class Meta:
         model = models.Document
+        list_serializer_class = DocumentListSerializer
         fields = ListDocumentSerializer.Meta.fields + ["parent"]
         read_only_fields = ListDocumentSerializer.Meta.read_only_fields + ["parent"]
 

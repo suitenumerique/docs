@@ -241,7 +241,7 @@ def test_services_search_indexers_serialize_document_encrypted():
     """Encrypted documents should have empty content to avoid indexing ciphertext."""
     document = factories.DocumentFactory(is_encrypted=True)
 
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
     result = indexer.serialize_document(document, {})
 
     assert result["content"] == ""

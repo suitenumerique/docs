@@ -667,7 +667,7 @@ class DocumentViewSet(
         filter_data = filterset.form.cleaned_data
 
         # Filter as early as possible on fields that are available on the model
-        for field in ["is_creator_me", "title", "q"]:
+        for field in ["is_creator_me", "is_encrypted", "title", "q"]:
             queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
         queryset = queryset.annotate_user_roles(user).annotate_user_has_link_trace(user)
@@ -1217,7 +1217,7 @@ class DocumentViewSet(
         filter_data = filterset.form.cleaned_data
 
         # Filter as early as possible on fields that are available on the model
-        for field in ["is_creator_me", "title", "q"]:
+        for field in ["is_creator_me", "is_encrypted", "title", "q"]:
             queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
         queryset = queryset.annotate_user_roles(user).annotate_user_has_link_trace(user)
@@ -3041,15 +3041,19 @@ class DocumentAccessViewSet(
         "created_at",
         "role",
         "team",
+        "encrypted_document_symmetric_key_for_user",
+        "encryption_public_key_version",
         "user__id",
         "user__short_name",
         "user__full_name",
         "user__email",
         "user__language",
         "user__is_first_connection",
+        "user__sub",
         "document__id",
         "document__path",
         "document__depth",
+        "document__is_encrypted",
     )
     resource_field_name = "document"
     throttle_scope = "document_access"
