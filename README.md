@@ -171,7 +171,13 @@ docker compose version
 
 ### Bootstrap the project
 
-The easiest way to start is using GNU Make:
+The easiest way to start is using the Claude `/docs-start` skill.
+
+It checks what is already built, stale or running, then runs only the Make
+targets needed: `make bootstrap` on a first run, the rebuild of the images
+whose dependencies changed after a pull, or just `make run`.
+
+Otherwise, bootstrap everything with GNU Make:
 
 ```bash
 make bootstrap FLUSH_ARGS='--no-input'
