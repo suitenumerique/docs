@@ -5,6 +5,7 @@ import {
   createDoc,
   getOtherBrowserName,
   verifyDocName,
+  waitForTransitionsEnd,
 } from './utils-common';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
 import { addChild, createRootSubPage, getTreeRow } from './utils-sub-pages';
@@ -403,12 +404,16 @@ test.describe('Doc Tree', () => {
     await expect(rootMoreOptionsButton).toBeFocused();
     await page.keyboard.press('F2');
     await expect(rootAddDocButton).toBeFocused();
+    await waitForTransitionsEnd(page);
     await page.keyboard.press('F2');
     await expect(rootMoreOptionsButton).toBeFocused();
+    await waitForTransitionsEnd(page);
     await page.keyboard.press('ArrowRight');
     await expect(rootAddDocButton).toBeFocused();
+    await waitForTransitionsEnd(page);
     await page.keyboard.press('ArrowLeft');
     await expect(rootMoreOptionsButton).toBeFocused();
+    await waitForTransitionsEnd(page);
     await page.keyboard.press('Enter');
     await expect(
       page.getByRole('menuitem', { name: /Copy Link/i }),

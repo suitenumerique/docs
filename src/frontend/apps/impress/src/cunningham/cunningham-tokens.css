@@ -427,6 +427,12 @@
   --c--contextuals--background--semantic--overlay--primary-hover: var(
     --c--globals--colors--black-100
   );
+  --c--contextuals--background--semantic--overlay--on-surface: var(
+    --c--globals--colors--white-650
+  );
+  --c--contextuals--background--semantic--overlay--transparent: var(
+    --c--globals--colors--white-000
+  );
   --c--contextuals--background--semantic--contextual--primary: var(
     --c--globals--colors--black-050
   );
@@ -653,6 +659,9 @@
   );
   --c--contextuals--content--semantic--overlay--primary: var(
     --c--globals--colors--white-950
+  );
+  --c--contextuals--content--semantic--overlay--secondary: var(
+    --c--globals--colors--white-800
   );
   --c--contextuals--content--semantic--brand--primary: var(
     --c--globals--colors--brand-700
@@ -1781,6 +1790,12 @@
   --c--contextuals--background--semantic--overlay--primary-hover: var(
     --c--globals--colors--white-100
   );
+  --c--contextuals--background--semantic--overlay--on-surface: var(
+    --c--globals--colors--black-650
+  );
+  --c--contextuals--background--semantic--overlay--transparent: var(
+    --c--globals--colors--black-000
+  );
   --c--contextuals--background--semantic--brand--primary: var(
     --c--globals--colors--brand-550
   );
@@ -2001,6 +2016,9 @@
   );
   --c--contextuals--content--semantic--overlay--primary: var(
     --c--globals--colors--black-850
+  );
+  --c--contextuals--content--semantic--overlay--secondary: var(
+    --c--globals--colors--black-700
   );
   --c--contextuals--content--semantic--brand--primary: var(
     --c--globals--colors--brand-050
@@ -2588,6 +2606,12 @@
   --c--contextuals--background--semantic--overlay--primary-hover: var(
     --c--globals--colors--black-100
   );
+  --c--contextuals--background--semantic--overlay--on-surface: var(
+    --c--globals--colors--white-650
+  );
+  --c--contextuals--background--semantic--overlay--transparent: var(
+    --c--globals--colors--white-000
+  );
   --c--contextuals--background--semantic--contextual--primary: var(
     --c--globals--colors--black-050
   );
@@ -2814,6 +2838,9 @@
   );
   --c--contextuals--content--semantic--overlay--primary: var(
     --c--globals--colors--white-950
+  );
+  --c--contextuals--content--semantic--overlay--secondary: var(
+    --c--globals--colors--white-800
   );
   --c--contextuals--content--semantic--brand--primary: var(
     --c--globals--colors--brand-700
@@ -6212,6 +6239,18 @@
   );
 }
 
+.bg-semantic-overlay-on-surface {
+  background-color: var(
+    --c--contextuals--background--semantic--overlay--on-surface
+  );
+}
+
+.bg-semantic-overlay-transparent {
+  background-color: var(
+    --c--contextuals--background--semantic--overlay--transparent
+  );
+}
+
 .bg-semantic-contextual-primary {
   background-color: var(
     --c--contextuals--background--semantic--contextual--primary
@@ -8123,6 +8162,10 @@
 
 .clr-content-semantic-overlay-primary {
   color: var(--c--contextuals--content--semantic--overlay--primary);
+}
+
+.clr-content-semantic-overlay-secondary {
+  color: var(--c--contextuals--content--semantic--overlay--secondary);
 }
 
 .clr-content-semantic-brand-primary {

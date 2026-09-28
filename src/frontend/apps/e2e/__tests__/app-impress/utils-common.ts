@@ -413,6 +413,27 @@ export async function waitForLanguageSwitch(
   await page.keyboard.press('Escape');
 }
 
+/**
+ * Wait until no CSS transition runs on the page.
+ *
+ * Moving the focus with the keyboard starts the focus ring transitions of the
+ * buttons. Since Chromium 153, a button that loses the focus or becomes inert
+ * mid-transition gets them cancelled, and react-aria (`runAfterTransition`)
+ * then waits forever before focusing a menu or restoring the focus.
+ * Call it after a keyboard focus move, before the next key press.
+ */
+export const waitForTransitionsEnd = async (page: Page) => {
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every(
+        (animation) =>
+          !(animation instanceof CSSTransition) ||
+          animation.playState !== 'running',
+      ),
+  );
+};
+
 export const clickInEditorShareButton = async (page: Page) => {
   await page
     .getByTestId('floating-bar')
