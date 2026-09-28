@@ -2,7 +2,7 @@
 #   docker build -f src/loadtest/canary/Dockerfile -t docs-canary .
 # The base image carries the browsers Playwright needs, at the same version as
 # the `playwright` package in package.json: bump both together.
-FROM mcr.microsoft.com/playwright:v1.62.1-noble AS base
+FROM mcr.microsoft.com/playwright:v1.63.0-noble AS base
 WORKDIR /app
 COPY ./src/loadtest/canary/package.json ./src/loadtest/canary/yarn.lock ./
 
