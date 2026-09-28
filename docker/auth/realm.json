@@ -56,7 +56,7 @@
           "value": "impress"
         }
       ],
-      "realmRoles": ["user"]
+      "realmRoles": ["user", "offline_access"]
     },
     {
       "username": "user-e2e-chromium",
@@ -834,6 +834,88 @@
         "offline_access",
         "microprofile-jwt"
       ]
+    },
+    {
+      "clientId": "docs-mcp-client",
+      "name": "Docs MCP development client",
+      "description": "Public OAuth client used by MCP clients (MCP Inspector, Claude Code, Codex CLI ...) to authenticate against the docs-mcp server. Authorization Code + PKCE only, no client secret.",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": true,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": ["*"],
+      "webOrigins": ["+"],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "+"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": false,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "offline_access",
+        "docs:documents:search",
+        "docs:documents:read",
+        "docs:documents:create",
+        "docs-mcp"
+      ]
+    },
+    {
+      "clientId": "docs-api",
+      "name": "Docs API resource server",
+      "description": "Represents the Django Docs API. Confidential client whose credentials Django uses to call Keycloak's token introspection endpoint (OIDC_RS_CLIENT_ID/SECRET). See documentation/mcp_server.md.",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "ThisIsAnExampleKeyForDevPurposeOnly",
+      "redirectUris": [],
+      "webOrigins": [],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {},
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": false,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": []
     }
   ],
   "clientScopes": [
@@ -1356,6 +1438,58 @@
             "access.token.claim": "true",
             "claim.name": "email_verified",
             "jsonType.label": "boolean"
+          }
+        }
+      ]
+    },
+    {
+      "name": "docs:documents:search",
+      "description": "Search the documents accessible to the authenticated user",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true",
+        "consent.screen.text": "Search your Docs documents"
+      }
+    },
+    {
+      "name": "docs:documents:read",
+      "description": "Read documents accessible to the authenticated user",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true",
+        "consent.screen.text": "Read your Docs documents"
+      }
+    },
+    {
+      "name": "docs:documents:create",
+      "description": "Create documents on behalf of the authenticated user",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true",
+        "consent.screen.text": "Create documents in Docs"
+      }
+    },
+    {
+      "name": "docs-mcp",
+      "description": "Adds the docs-mcp audience to the access token. Required for the MCP server to accept the token; only added when this scope is explicitly requested.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "docs-mcp audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "docs-mcp",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
           }
         }
       ]

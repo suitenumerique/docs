@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "docs-mcp": {
+      "type": "http",
+      "url": "http://localhost:4455/mcp",
+      "oauth": {
+        "clientId": "docs-mcp-client",
+        "scopes": "openid docs:documents:search docs:documents:read docs:documents:create docs-mcp"
+      }
+    }
+  }
+}
