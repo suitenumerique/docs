@@ -3,6 +3,7 @@ import path from 'path';
 
 import { Page, expect, test } from '@playwright/test';
 
+import { overrideConfig, randomName } from './utils-common';
 import { getEditor } from './utils-editor';
 
 test.beforeEach(async ({ page }) => {
@@ -10,9 +11,21 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Doc Import', () => {
+  test('import is not enabled if flag is disabled', async ({ page }) => {
+    await overrideConfig(page, {
+      CONVERSION_UPLOAD_ENABLED: false,
+    });
+
+    await page.goto('/');
+
+    await expect(page.getByLabel('Open new document options')).toBeHidden();
+  });
+
   test('it imports 2 docs with the import icon', async ({ page }) => {
     const fileChooserPromise = page.waitForEvent('filechooser');
-    await page.getByLabel('Open the upload dialog').click();
+
+    await page.getByLabel('Open new document options').click();
+    await page.getByRole('menuitem', { name: 'Import a document' }).click();
 
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles([
@@ -31,6 +44,7 @@ test.describe('Doc Import', () => {
       ),
     ).toBeVisible();
 
+    await page.getByLabel('Back to homepage').first().click();
     const docsGrid = page.getByTestId('docs-grid');
     await expect(docsGrid.getByText('test_import.docx').first()).toBeVisible();
     await expect(docsGrid.getByText('test_import.md').first()).toBeVisible();
@@ -78,7 +92,7 @@ test.describe('Doc Import', () => {
       ).toBeVisible();
 
       /* eslint-disable playwright/no-conditional-expect */
-      if (isMDCheck) {
+      if (isMDCheck && process.env.IS_INSTANCE !== 'true') {
         await expect(
           editor.locator(
             'img[src="http://localhost:3000/assets/logo-suite-numerique.png"]',
@@ -115,20 +129,25 @@ test.describe('Doc Import', () => {
     await contentCheck();
   });
 
-  test('it imports 2 docs with the drag and drop area', async ({ page }) => {
+  test('it imports 2 docs with the drag and drop area', async ({
+    page,
+    browserName,
+  }) => {
     const docsGrid = page.getByTestId('docs-grid');
     await expect(docsGrid).toBeVisible();
+
+    const randomImport = randomName('test_import', browserName, 1);
 
     await dragAndDropFiles(page, "[data-testid='docs-grid']", [
       {
         filePath: path.join(__dirname, 'assets/test_import.docx'),
-        fileName: 'test_import.docx',
+        fileName: `${randomImport}.docx`,
         fileType:
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       },
       {
         filePath: path.join(__dirname, 'assets/test_import.md'),
-        fileName: 'test_import.md',
+        fileName: `${randomImport}.md`,
         fileType: 'text/markdown',
       },
     ]);
@@ -136,17 +155,21 @@ test.describe('Doc Import', () => {
     // Wait for success messages
     await expect(
       page.getByText(
-        'The document "test_import.docx" has been successfully imported',
+        `The document "${randomImport}.docx" has been successfully imported`,
       ),
     ).toBeVisible();
     await expect(
       page.getByText(
-        'The document "test_import.md" has been successfully imported',
+        `The document "${randomImport}.md" has been successfully imported`,
       ),
     ).toBeVisible();
 
-    await expect(docsGrid.getByText('test_import.docx').first()).toBeVisible();
-    await expect(docsGrid.getByText('test_import.md').first()).toBeVisible();
+    await expect(
+      docsGrid.getByText(`${randomImport}.docx`).first(),
+    ).toBeVisible();
+    await expect(
+      docsGrid.getByText(`${randomImport}.md`).first(),
+    ).toBeVisible();
   });
 });
 
@@ -177,5 +200,5 @@ const dragAndDropFiles = async (
     return dt;
   }, filesData);
 
-  await page.dispatchEvent(selector, 'drop', { dataTransfer });
+  await page.locator(selector).dispatchEvent('drop', { dataTransfer });
 };

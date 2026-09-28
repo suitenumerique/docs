@@ -1,38 +1,31 @@
-import { Loader } from '@gouvfr-lasuite/cunningham-react';
 import { Command } from 'cmdk';
-import { ReactNode } from 'react';
+import { PropsWithChildren, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import SearchSVG from '@/assets/icons/ui-kit/zoom-rounded.svg';
 import { HorizontalSeparator } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
 import { Box } from '../Box';
-import { Icon } from '../Icon';
 
-type Props = {
-  loading?: boolean;
+type QuickSearchInputProps = {
   inputValue?: string;
   onFilter?: (str: string) => void;
   placeholder?: string;
-  children?: ReactNode;
   withSeparator?: boolean;
   listId?: string;
-  onUserInteract?: () => void;
-  isExpanded?: boolean;
 };
 export const QuickSearchInput = ({
-  loading,
   inputValue,
   onFilter,
   placeholder,
   children,
   withSeparator: separator = true,
   listId,
-  onUserInteract,
-  isExpanded,
-}: Props) => {
+}: PropsWithChildren<QuickSearchInputProps>) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   if (children) {
     return (
@@ -49,36 +42,27 @@ export const QuickSearchInput = ({
         $direction="row"
         $align="center"
         className="quick-search-input"
-        $gap={spacingsTokens['2xs']}
-        $padding={{ horizontal: 'base', vertical: 'sm' }}
+        $gap={spacingsTokens['xxs']}
+        $padding={{ horizontal: 'base', vertical: 'xs' }}
       >
-        {!loading && (
-          <Icon iconName="search" $variation="secondary" aria-hidden="true" />
-        )}
-        {loading && (
-          <div>
-            <Loader size="small" />
-          </div>
-        )}
+        <SearchSVG
+          aria-hidden="true"
+          width={24}
+          height={24}
+          color="var(--c--contextuals--content--semantic--neutral--secondary)"
+        />
         <Command.Input
+          ref={inputRef}
           autoFocus={true}
-          aria-label={t('Quick search input')}
-          aria-expanded={isExpanded}
           aria-controls={listId}
-          onClick={(e) => {
-            e.stopPropagation();
-            onUserInteract?.();
-          }}
-          onKeyDown={() => onUserInteract?.()}
           value={inputValue}
-          role="combobox"
           placeholder={placeholder ?? t('Search')}
           onValueChange={onFilter}
           maxLength={254}
           data-testid="quick-search-input"
         />
       </Box>
-      {separator && <HorizontalSeparator $withPadding={false} />}
+      {separator && <HorizontalSeparator $margin={{ top: '2xs' }} />}
     </>
   );
 };

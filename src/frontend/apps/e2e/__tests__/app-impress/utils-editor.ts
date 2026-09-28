@@ -1,15 +1,51 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Page } from '@playwright/test';
 
 export const getEditor = async ({ page }: { page: Page }) => {
-  const editor = page.locator('.ProseMirror');
-  await editor.click();
+  const editor = page.locator('.--docs--editor-container .ProseMirror');
+  await editor.focus();
   return editor;
 };
 
-export const openSuggestionMenu = async ({ page }: { page: Page }) => {
-  const editor = await writeInEditor({ page, text: '/' });
+export const tryFocusEditorContent = async ({ page }: { page: Page }) => {
+  const editor = await getEditor({ page });
+  if (
+    (await editor
+      .locator('.bn-block-outer div[data-content-type="paragraph"]')
+      .count()) > 0
+  ) {
+    await editor
+      .locator('.bn-block-outer div[data-content-type="paragraph"]')
+      .last()
+      .click();
+  } else {
+    await editor.click();
+  }
+
+  return editor;
+};
+
+export const openSuggestionMenu = async ({
+  page,
+  suggestion,
+}: {
+  page: Page;
+  suggestion?: string;
+}) => {
+  const editor = await tryFocusEditorContent({ page });
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('/');
 
   const suggestionMenu = page.locator('.bn-suggestion-menu');
+
+  if (suggestion) {
+    await suggestionMenu
+      .getByText(suggestion, {
+        exact: true,
+      })
+      .click();
+  }
 
   return { editor, suggestionMenu };
 };
@@ -22,6 +58,13 @@ export const writeInEditor = async ({
   text: string;
 }) => {
   const editor = await getEditor({ page });
+  if (
+    (await editor.locator('.bn-trailing-block.ProseMirror-widget').count()) > 0
+  ) {
+    await editor.locator('.bn-trailing-block.ProseMirror-widget').click();
+  } else {
+    await editor.click();
+  }
   await editor
     .locator('.bn-block-outer:last-child')
     .last()
@@ -29,4 +72,56 @@ export const writeInEditor = async ({
     .last()
     .fill(text);
   return editor;
+};
+
+export const mockAIResponse = async (page: Page) => {
+  await page.route(/.*\/ai-proxy\//, async (route) => {
+    const req = route.request();
+
+    if (req.method() !== 'POST') {
+      return route.continue();
+    }
+
+    // Extract the block ID from the request's selectedBlocks
+    const requestData = req.postDataJSON();
+    const messages = requestData?.messages || [];
+    const userMessage = messages.find((msg: any) => msg.role === 'user');
+    const documentState = userMessage?.metadata?.documentState;
+    const selectedBlocks = documentState?.selectedBlocks || [];
+    const blockId = selectedBlocks[0]?.id || 'initialBlockId$';
+
+    const sse = [
+      `data: {"type":"start"}\n\n`,
+      `data: {"type":"start-step"}\n\n`,
+      `data: ${JSON.stringify({
+        type: 'tool-input-available',
+        toolCallId: 'chatcmpl-mock-0',
+        toolName: 'applyDocumentOperations',
+        input: {
+          operations: [
+            {
+              type: 'update',
+              id: blockId,
+              block: '<p>Bonjour le monde</p>',
+            },
+          ],
+        },
+      })}\n\n`,
+      `data: {"type":"finish-step"}\n\n`,
+      `data: {"type":"finish","finishReason":"tool-calls"}\n\n`,
+      `data: [DONE]\n\n`,
+    ].join('');
+
+    await route.fulfill({
+      status: 200,
+      headers: {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        'x-vercel-ai-data-stream': 'v1',
+        'x-accel-buffering': 'no',
+        Connection: 'keep-alive',
+      },
+      body: sse,
+    });
+  });
 };

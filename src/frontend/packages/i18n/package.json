@@ -1,6 +1,6 @@
 {
   "name": "packages-i18n",
-  "version": "4.5.0",
+  "version": "5.7.0",
   "repository": "https://github.com/suitenumerique/docs",
   "author": "DINUM",
   "license": "MIT",
@@ -19,11 +19,11 @@
     "@types/node": "*",
     "eslint-plugin-docs": "*",
     "eslint-plugin-import": "2.32.0",
-    "i18next-parser": "9.3.0",
-    "jest": "30.2.0",
-    "ts-jest": "29.4.6",
+    "i18next-parser": "9.4.0",
+    "jest": "30.4.2",
+    "ts-jest": "29.4.12",
     "typescript": "*",
-    "yargs": "18.0.0"
+    "yargs": "18.1.0"
   },
   "packageManager": "yarn@1.22.22"
 }

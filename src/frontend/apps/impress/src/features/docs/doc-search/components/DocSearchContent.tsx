@@ -1,27 +1,40 @@
+import { announce } from '@react-aria/live-announcer';
 import { t } from 'i18next';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { InView } from 'react-intersection-observer';
 
+import { Box } from '@/components/';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 
-import { Doc, useInfiniteDocs } from '../../doc-management';
+import { DocSearch, useInfiniteSearchDocs } from '../api/useSearchDocs';
+import { useDocSearchFilterStore } from '../stores/useDocSearchFilterStore';
 
-import { DocSearchFiltersValues } from './DocSearchFilters';
 import { DocSearchItem } from './DocSearchItem';
 
 type DocSearchContentProps = {
+  groupName?: string;
   search: string;
-  filters: DocSearchFiltersValues;
-  onSelect: (doc: Doc) => void;
+  filterResults?: (doc: DocSearch) => boolean;
+  isSearchNotMandatory?: boolean;
+  onResults?: (results: DocSearch[]) => void;
+  onSelect: (doc: DocSearch) => void;
   onLoadingChange?: (loading: boolean) => void;
+  parentDocId?: string;
+  renderSearchElement?: (doc: DocSearch) => React.ReactNode;
 };
 
 export const DocSearchContent = ({
+  groupName,
   search,
-  filters,
+  filterResults,
+  onResults,
   onSelect,
   onLoadingChange,
+  renderSearchElement,
+  parentDocId,
+  isSearchNotMandatory,
 }: DocSearchContentProps) => {
+  const { filter } = useDocSearchFilterStore();
   const {
     data,
     isFetching,
@@ -29,30 +42,81 @@ export const DocSearchContent = ({
     isLoading,
     fetchNextPage,
     hasNextPage,
-  } = useInfiniteDocs({
-    page: 1,
-    title: search,
-    ...filters,
-  });
+  } = useInfiniteSearchDocs(
+    {
+      q: search,
+      page: 1,
+      filter,
+      parentDocId,
+    },
+    {
+      enabled: filter !== 'current' || !!parentDocId,
+    },
+  );
 
   const loading = isFetching || isRefetching || isLoading;
+  const [docsData, setDocsData] = useState<QuickSearchData<DocSearch>>({
+    groupName: '',
+    groupKey: 'docs',
+    elements: [],
+    emptyString: t('Loading documents...'),
+    endActions: [],
+  });
 
-  const docsData: QuickSearchData<Doc> = useMemo(() => {
-    const docs = data?.pages.flatMap((page) => page.results) || [];
+  useEffect(() => {
+    if (loading) {
+      if (search || isSearchNotMandatory) {
+        announce(t('Loading documents...'), 'polite');
+      }
+      return;
+    }
 
-    return {
-      groupName: docs.length > 0 ? t('Select a document') : '',
-      elements: search ? docs : [],
-      emptyString: t('No document found'),
+    let docs = data?.pages.flatMap((page) => page.results) || [];
+
+    if (filterResults) {
+      docs = docs.filter(filterResults);
+    }
+
+    const elements = search || isSearchNotMandatory ? docs : [];
+
+    onResults?.(elements);
+
+    setDocsData({
+      groupName: groupName,
+      groupKey: 'docs',
+      elements,
       endActions: hasNextPage
         ? [
             {
-              content: <InView onChange={() => void fetchNextPage()} />,
+              content: (
+                <Box $minHeight="1px">
+                  <InView onChange={() => void fetchNextPage()} />
+                </Box>
+              ),
             },
           ]
         : [],
-    };
-  }, [search, data?.pages, fetchNextPage, hasNextPage]);
+    });
+
+    if (search && !loading) {
+      announce(
+        elements.length === 0
+          ? t('No documents found')
+          : t('{{count}} document found', { count: elements.length }),
+        'polite',
+      );
+    }
+  }, [
+    search,
+    data?.pages,
+    filterResults,
+    groupName,
+    isSearchNotMandatory,
+    loading,
+    hasNextPage,
+    fetchNextPage,
+    onResults,
+  ]);
 
   useEffect(() => {
     onLoadingChange?.(loading);
@@ -62,7 +126,9 @@ export const DocSearchContent = ({
     <QuickSearchGroup
       onSelect={onSelect}
       group={docsData}
-      renderElement={(doc) => <DocSearchItem doc={doc} />}
+      renderElement={
+        renderSearchElement ?? ((doc) => <DocSearchItem doc={doc} />)
+      }
     />
   );
 };

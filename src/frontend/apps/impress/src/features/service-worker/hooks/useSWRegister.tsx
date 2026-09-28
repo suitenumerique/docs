@@ -34,22 +34,33 @@ export const useSWRegister = () => {
         console.error('Service worker registration failed:', err);
       });
 
+    const SW_RELOAD_KEY = 'sw-reloaded';
     let refreshing = false;
     const onControllerChange = () => {
       if (!hadControllerAtStart || refreshing) {
         return;
       }
 
+      if (sessionStorage.getItem(SW_RELOAD_KEY) === '1') {
+        sessionStorage.removeItem(SW_RELOAD_KEY);
+        return;
+      }
+
       refreshing = true;
 
-      if (document.visibilityState === 'visible') {
+      const doReload = () => {
+        sessionStorage.setItem(SW_RELOAD_KEY, '1');
         window.location.reload();
+      };
+
+      if (document.visibilityState === 'visible') {
+        doReload();
         return;
       }
 
       const onVisible = () => {
         if (document.visibilityState === 'visible') {
-          window.location.reload();
+          doReload();
         }
       };
 

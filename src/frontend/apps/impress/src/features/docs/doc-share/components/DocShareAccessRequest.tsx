@@ -3,14 +3,15 @@ import {
   ButtonProps,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
-import { useMemo, useState } from 'react';
+} from '@gouvfr-lasuite/ui-components';
+import { MouseEventHandler, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createGlobalStyle } from 'styled-components';
+import { createGlobalStyle, css } from 'styled-components';
 
 import {
   Box,
   BoxButton,
+  HorizontalSeparator,
   Icon,
   LoadMoreText,
   Loading,
@@ -18,8 +19,9 @@ import {
 } from '@/components';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
-import { AccessRequest, Doc } from '@/docs/doc-management/';
+import { AccessRequest, Doc, Role } from '@/docs/doc-management/';
 import { useAuth } from '@/features/auth';
+import { useResponsiveStore } from '@/stores';
 
 import {
   useAcceptDocAccessRequest,
@@ -33,8 +35,12 @@ import { DocRoleDropdown } from './DocRoleDropdown';
 import { SearchUserRow } from './SearchUserRow';
 
 const QuickSearchGroupAccessRequestStyle = createGlobalStyle`
-  .--docs--share-access-request [cmdk-item][data-selected='true'] {
-    background: inherit
+  .quick-search-container .--docs--share-access-request [cmdk-item]:hover, 
+  .quick-search-container .--docs--share-access-request [cmdk-item][data-selected='true'] {
+      background: inherit;
+  }
+  .--docs--doc-share-access-request-item:hover {
+    background: var(--c--contextuals--background--semantic--contextual--primary);
   }
 `;
 
@@ -45,6 +51,7 @@ type Props = {
 
 const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
   const { t } = useTranslation();
+  const { isSmallMobile } = useResponsiveStore();
   const { toast } = useToastProvider();
   const { spacingsTokens } = useCunninghamTheme();
   const { mutate: acceptDocAccessRequests } = useAcceptDocAccessRequest();
@@ -67,6 +74,15 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
       $width="100%"
       data-testid={`doc-share-access-request-row-${accessRequest.user.email}`}
       className="--docs--doc-share-access-request-item"
+      $css={css`
+        & .--docs--quick-search-item-content {
+          flex-wrap: wrap;
+
+          .--docs--quick-search-item-content-right {
+            margin-left: auto;
+          }
+        }
+      `}
     >
       <SearchUserRow
         alwaysShowRight={true}
@@ -84,7 +100,7 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
             />
             <Button
               color="brand"
-              variant="tertiary"
+              variant="secondary"
               onClick={() =>
                 acceptDocAccessRequests({
                   docId: doc.id,
@@ -92,7 +108,7 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
                   role,
                 })
               }
-              size="small"
+              size={isSmallMobile ? 'nano' : 'small'}
             >
               {t('Approve')}
             </Button>
@@ -150,27 +166,37 @@ export const QuickSearchGroupAccessRequest = ({
   }
 
   return (
-    <Box
-      aria-label={t('List request access card')}
-      className="--docs--share-access-request"
-    >
-      <QuickSearchGroupAccessRequestStyle />
-      <QuickSearchGroup
-        group={accessRequestsData}
-        renderElement={(accessRequest) => (
-          <DocShareAccessRequestItem doc={doc} accessRequest={accessRequest} />
-        )}
-      />
-    </Box>
+    <>
+      <Box
+        aria-label={t('List request access card')}
+        className="--docs--share-access-request"
+        $padding={{ horizontal: 'base' }}
+      >
+        <QuickSearchGroupAccessRequestStyle />
+        <QuickSearchGroup
+          group={accessRequestsData}
+          renderElement={(accessRequest) => (
+            <DocShareAccessRequestItem
+              doc={doc}
+              accessRequest={accessRequest}
+            />
+          )}
+        />
+      </Box>
+      <HorizontalSeparator $margin={{ vertical: 'sm' }} />
+    </>
   );
 };
 
 type ButtonAccessRequestProps = {
   docId: Doc['id'];
-} & ButtonProps;
+} & Omit<ButtonProps, 'onClick'> & {
+    onClick?: MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>;
+  };
 
 export const ButtonAccessRequest = ({
   docId,
+  onClick,
   ...buttonProps
 }: ButtonAccessRequestProps) => {
   const { authenticated } = useAuth();
@@ -216,7 +242,10 @@ export const ButtonAccessRequest = ({
 
   return (
     <Button
-      onClick={() => createRequest({ docId })}
+      onClick={(e) => {
+        createRequest({ docId, role: Role.EDITOR });
+        onClick?.(e);
+      }}
       disabled={hasRequested}
       {...buttonProps}
     >

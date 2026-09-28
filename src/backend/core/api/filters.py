@@ -2,6 +2,7 @@
 
 import unicodedata
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 import django_filters
@@ -46,10 +47,13 @@ class DocumentFilter(django_filters.FilterSet):
     title = AccentInsensitiveCharFilter(
         field_name="title", lookup_expr="unaccent__icontains", label=_("Title")
     )
+    q = AccentInsensitiveCharFilter(
+        field_name="title", lookup_expr="unaccent__icontains", label=_("Search")
+    )
 
     class Meta:
         model = models.Document
-        fields = ["title"]
+        fields = ["title", "q"]
 
 
 class ListDocumentFilter(DocumentFilter):
@@ -60,9 +64,6 @@ class ListDocumentFilter(DocumentFilter):
     is_creator_me = django_filters.BooleanFilter(
         method="filter_is_creator_me", label=_("Creator is me")
     )
-    is_masked = django_filters.BooleanFilter(
-        method="filter_is_masked", label=_("Masked")
-    )
     is_favorite = django_filters.BooleanFilter(
         method="filter_is_favorite", label=_("Favorite")
     )
@@ -72,7 +73,7 @@ class ListDocumentFilter(DocumentFilter):
 
     class Meta:
         model = models.Document
-        fields = ["is_creator_me", "is_favorite", "is_encrypted", "title"]
+        fields = ["is_creator_me", "is_favorite", "is_encrypted", "title", "q"]
 
     # pylint: disable=unused-argument
     def filter_is_creator_me(self, queryset, name, value):
@@ -131,29 +132,12 @@ class ListDocumentFilter(DocumentFilter):
 
         return queryset.filter(is_encrypted=bool(value))
 
-    # pylint: disable=unused-argument
-    def filter_is_masked(self, queryset, name, value):
-        """
-        Filter documents based on whether they are masked by the current user.
-
-        Example:
-            - /api/v1.0/documents/?is_masked=true
-                → Filters documents marked as masked by the logged-in user
-            - /api/v1.0/documents/?is_masked=false
-                → Filters documents not marked as masked by the logged-in user
-        """
-        user = self.request.user
-
-        if not user.is_authenticated:
-            return queryset
-
-        queryset_method = queryset.filter if bool(value) else queryset.exclude
-        return queryset_method(link_traces__user=user, link_traces__is_masked=True)
-
 
 class UserSearchFilter(django_filters.FilterSet):
     """
     Custom filter for searching users.
     """
 
-    q = django_filters.CharFilter(min_length=5, max_length=254)
+    q = django_filters.CharFilter(
+        min_length=settings.API_USERS_SEARCH_QUERY_MIN_LENGTH, max_length=254
+    )

@@ -11,6 +11,12 @@ export type DBRequest = {
   key: string;
 };
 
+export interface DocContentCacheEntry {
+  etag: string;
+  lastModified: string;
+  content: string;
+}
+
 interface IDocsDB extends DBSchema {
   'doc-list': {
     key: string;
@@ -28,9 +34,13 @@ interface IDocsDB extends DBSchema {
     key: 'version';
     value: number;
   };
+  'doc-content': {
+    key: string;
+    value: DocContentCacheEntry;
+  };
 }
 
-type TableName = 'doc-list' | 'doc-item' | 'doc-mutation';
+type TableName = 'doc-list' | 'doc-item' | 'doc-mutation' | 'doc-content';
 
 /**
  * IndexDB prefers incremental versioning when upgrading the database,
@@ -77,6 +87,9 @@ export class DocsDB {
           }
           if (!db.objectStoreNames.contains('doc-version')) {
             db.createObjectStore('doc-version');
+          }
+          if (!db.objectStoreNames.contains('doc-content')) {
+            db.createObjectStore('doc-content');
           }
         },
       });
@@ -127,20 +140,35 @@ export class DocsDB {
    */
   public static async cacheResponse(
     key: string,
-    body: DocsResponse | Doc | DBRequest,
+    body: DocsResponse | Doc | DBRequest | DocContentCacheEntry,
     tableName: TableName,
+    isRetry = false,
   ): Promise<void> {
     const db = await DocsDB.open();
 
     try {
       await db.put(tableName, body, key);
     } catch (error) {
-      console.error(
-        'SW: Failed to save response in IndexedDB',
-        error,
-        key,
-        body,
-      );
+      db.close();
+      // If the store is missing and we haven't retried yet, reset the DB once
+      // (handles a PR that added a store without a version bump).
+      // The isRetry guard prevents an infinite loop if the store name is invalid.
+      if (!isRetry && !db.objectStoreNames.contains(tableName)) {
+        console.warn(
+          'SW: Missing object store, resetting IndexedDB and retrying',
+          tableName,
+        );
+        await deleteDB(DocsDB.DBNAME);
+        await DocsDB.cacheResponse(key, body, tableName, true);
+      } else {
+        console.error(
+          'SW: Failed to save response in IndexedDB',
+          error,
+          key,
+          body,
+        );
+      }
+      return;
     }
 
     db.close();

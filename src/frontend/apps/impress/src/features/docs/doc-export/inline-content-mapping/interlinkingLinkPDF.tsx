@@ -7,7 +7,7 @@ import { DocsExporterPDF } from '../types';
 
 export const inlineContentMappingInterlinkingLinkPDF: DocsExporterPDF['mappings']['inlineContentMapping']['interlinkingLinkInline'] =
   (inline) => {
-    if (!inline.props.docId) {
+    if (!inline.props.docId || !inline.props.title || inline.props.disabled) {
       return <></>;
     }
 

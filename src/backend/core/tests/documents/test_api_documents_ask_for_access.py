@@ -9,6 +9,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core.api.serializers import UserSerializer
+from core.choices import PRIVILEGED_ROLES
 from core.factories import (
     DocumentAskForAccessFactory,
     DocumentFactory,
@@ -197,6 +198,27 @@ def test_api_documents_ask_for_access_create_authenticated_already_has_ask_for_a
     )
     assert response.status_code == 400
     assert response.json() == {"detail": "You already ask to access to this document."}
+
+
+@pytest.mark.parametrize("role", PRIVILEGED_ROLES)
+def test_api_documents_ask_for_access_create_authenticated_already_has_privileged_access(
+    role,
+):
+    """
+    Authenticated users with privileged access (owner or admin) should not be able to
+    create a document ask for access.
+    """
+    user = UserFactory()
+    document = DocumentFactory(users=[(user, role)])
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(f"/api/v1.0/documents/{document.id}/ask-for-access/")
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "You already have privileged access to this document."
+    }
 
 
 ## List

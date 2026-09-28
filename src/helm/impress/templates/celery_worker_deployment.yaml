@@ -1,4 +1,4 @@
-{{- $envVars := include "impress.common.env" (list . .Values.backend) -}}
+{{- $envVars := include "impress.backend.celery.env" (list . .Values.backend) -}}
 {{- $fullName := include "impress.celery.worker.fullname" . -}}
 {{- $component := "celery-worker" -}}
 apiVersion: apps/v1
@@ -49,10 +49,15 @@ spec:
           args:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if $envVars}}
           env:
-            {{- if $envVars}}
             {{- $envVars | indent 12 }}
-            {{- end }}
+          {{- end }}
+          {{- $envFrom := concat (.Values.backend.envFrom | default list) (.Values.backend.celery.envFrom | default list) }}
+          {{- if $envFrom }}
+          envFrom:
+            {{- toYaml $envFrom | nindent 12 }}
+          {{- end }}
           {{- with .Values.backend.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
@@ -73,7 +78,7 @@ spec:
           startupProbe:
             {{- include "impress.probes.abstract" (merge .Values.backend.celery.probes.startup (dict "targetPort" .Values.backend.service.targetPort )) | nindent 12 }}
           {{- end }}
-          {{- with .Values.backend.resources }}
+          {{- with .Values.backend.celery.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -135,6 +140,9 @@ spec:
           {{- if .existingClaim }}
           persistentVolumeClaim:
             claimName: {{ .existingClaim }}
+          {{- else if .secret }}
+          secret:
+            {{ toYaml .secret | nindent 12 }}
           {{- else if .hostPath }}
           hostPath:
             {{ toYaml .hostPath | nindent 12 }}

@@ -17,17 +17,21 @@ test.describe('Inherited share accesses', () => {
       page.getByText('People with access via the parent document'),
     ).toBeVisible();
 
-    const user = page.getByTestId(
-      `doc-share-member-row-user.test@${browserName}.test`,
-    );
-    await expect(user).toBeVisible();
-    await expect(user.getByText(`E2E ${browserName}`)).toBeVisible();
-    await expect(user.getByText('Owner')).toBeVisible();
+    const users = page.locator('.--docs--doc-share-member-item');
+    await expect(users).toBeVisible();
+    await expect(
+      users.getByText(
+        process.env[`SIGN_IN_USERNAME_${browserName.toUpperCase()}`] || '',
+      ),
+    ).toBeVisible();
+    await expect(users.getByText('Owner')).toBeVisible();
 
     await page
       .locator('.--docs--doc-inherited-share-content')
       .getByRole('link')
       .click();
+
+    await page.getByRole('button', { name: 'close' }).first().click();
 
     await verifyDocName(page, parentTitle);
   });
@@ -53,7 +57,7 @@ test.describe('Inherited share accesses', () => {
     await expect(docVisibilityCard.getByText('Reading')).toBeVisible();
 
     await docVisibilityCard.getByText('Reading').click();
-    await page.getByRole('menuitem', { name: 'Editing' }).click();
+    await page.getByRole('menuitemradio', { name: 'Editing' }).click();
 
     await expect(docVisibilityCard.getByText('Reading')).toBeHidden();
     await expect(docVisibilityCard.getByText('Editing')).toBeVisible();
@@ -61,11 +65,11 @@ test.describe('Inherited share accesses', () => {
     // Verify inherited link
     await docVisibilityCard.getByText('Connected').click();
     await expect(
-      page.getByRole('menuitem', { name: 'Private' }),
+      page.getByRole('menuitemradio', { name: 'Private' }),
     ).toBeDisabled();
 
     // Update child link
-    await page.getByRole('menuitem', { name: 'Public' }).click();
+    await page.getByRole('menuitemradio', { name: 'Public' }).click();
 
     await expect(docVisibilityCard.getByText('Connected')).toBeHidden();
     await expect(

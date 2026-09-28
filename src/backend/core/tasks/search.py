@@ -63,7 +63,7 @@ def batch_document_indexer_task(timestamp):
         logger.info("Indexed %d documents", count)
 
 
-def trigger_batch_document_indexer(item):
+def trigger_batch_document_indexer(document):
     """
     Trigger indexation task with debounce a delay set by the SEARCH_INDEXER_COUNTDOWN setting.
 
@@ -82,14 +82,14 @@ def trigger_batch_document_indexer(item):
         if batch_indexer_throttle_acquire(timeout=countdown):
             logger.info(
                 "Add task for batch document indexation from updated_at=%s in %d seconds",
-                item.updated_at.isoformat(),
+                document.updated_at.isoformat(),
                 countdown,
             )
 
             batch_document_indexer_task.apply_async(
-                args=[item.updated_at], countdown=countdown
+                args=[document.updated_at], countdown=countdown
             )
         else:
-            logger.info("Skip task for batch document %s indexation", item.pk)
+            logger.info("Skip task for batch document %s indexation", document.pk)
     else:
-        document_indexer_task.apply(args=[item.pk])
+        document_indexer_task.apply(args=[document.pk])

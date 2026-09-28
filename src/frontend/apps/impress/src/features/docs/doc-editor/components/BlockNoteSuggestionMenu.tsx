@@ -1,5 +1,7 @@
 import { combineByGroup } from '@blocknote/core';
 import { filterSuggestionItems } from '@blocknote/core/extensions';
+import { getDiagramSlashMenuItems } from '@blocknote/diagram-block';
+import { getMathSlashMenuItems } from '@blocknote/math-block';
 import {
   DefaultReactSuggestionItem,
   SuggestionMenuController,
@@ -17,6 +19,7 @@ import {
   DocsStyleSchema,
 } from '../types';
 
+import BlockNoteAI from './AI';
 import {
   getCalloutReactSlashMenuItems,
   getPdfReactSlashMenuItems,
@@ -27,7 +30,13 @@ import XLMultiColumn from './xl-multi-column';
 const getMultiColumnSlashMenuItems =
   XLMultiColumn?.getMultiColumnSlashMenuItems;
 
-export const BlockNoteSuggestionMenu = () => {
+const getAISlashMenuItems = BlockNoteAI?.getAISlashMenuItems;
+
+export const BlockNoteSuggestionMenu = ({
+  aiAllowed,
+}: {
+  aiAllowed: boolean;
+}) => {
   const editor = useBlockNoteEditor<
     DocsBlockSchema,
     DocsInlineContentSchema,
@@ -50,6 +59,9 @@ export const BlockNoteSuggestionMenu = () => {
       getMultiColumnSlashMenuItems?.(editor) || [],
       getPdfReactSlashMenuItems(editor, t, fileBlocksName),
       getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
+      getMathSlashMenuItems(editor),
+      getDiagramSlashMenuItems(editor),
+      aiAllowed && getAISlashMenuItems ? getAISlashMenuItems(editor) : [],
     );
 
     const index = combinedMenu.findIndex(
@@ -66,7 +78,14 @@ export const BlockNoteSuggestionMenu = () => {
 
     return async (query: string) =>
       Promise.resolve(filterSuggestionItems(newSlashMenuItems, query));
-  }, [basicBlocksName, editor, getInterlinkingMenuItems, t, fileBlocksName]);
+  }, [
+    editor,
+    t,
+    fileBlocksName,
+    basicBlocksName,
+    aiAllowed,
+    getInterlinkingMenuItems,
+  ]);
 
   return (
     <SuggestionMenuController

@@ -1,7 +1,4 @@
-import {
-  VariantType,
-  useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -36,7 +33,6 @@ export const DocShareMemberItem = ({
   const { t } = useTranslation();
   const { isLastOwner } = useWhoAmI(access);
   const { toast } = useToastProvider();
-
   const { spacingsTokens } = useCunninghamTheme();
 
   const message = isLastOwner
@@ -131,7 +127,10 @@ export const QuickSearchGroupMember = ({
   }, [membersQuery.data, t]);
 
   return (
-    <Box aria-label={t('List members card')} $padding={{ bottom: '3xs' }}>
+    <Box
+      aria-label={t('List members card')}
+      $padding={{ horizontal: 'base', bottom: '3xs' }}
+    >
       <QuickSearchGroup
         group={membersData}
         renderElement={(access) => {

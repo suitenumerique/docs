@@ -9,7 +9,7 @@ from django.db import migrations, models
 from botocore.exceptions import ClientError
 
 import core.models
-from core.utils import extract_attachments
+from core.utils.yjs import extract_attachments
 
 
 def populate_attachments_on_all_documents(apps, schema_editor):
@@ -21,7 +21,7 @@ def populate_attachments_on_all_documents(apps, schema_editor):
             response = default_storage.connection.meta.client.get_object(
                 Bucket=default_storage.bucket_name, Key=f"{document.pk!s}/file"
             )
-        except (FileNotFoundError, ClientError):
+        except FileNotFoundError, ClientError:
             pass
         else:
             content = response["Body"].read().decode("utf-8")

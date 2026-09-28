@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { css } from 'styled-components';
 
-import { BoxButton, Text } from '@/components';
+import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { DocsBlockNoteEditor } from '@/docs/doc-editor';
+import { scrollBlockIntoView } from '@/docs/doc-editor/hook/useScrollToBlockAnchor';
+import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { useResponsiveStore } from '@/stores';
 
 const leftPaddingMap: { [key: number]: string } = {
   3: '1.5rem',
   2: '0.9rem',
-  1: '0.3rem',
+  1: 'xs',
 };
 
 export type HeadingsHighlight = {
@@ -38,51 +39,63 @@ export const Heading = ({
   const isActive = isHighlight || isHover;
 
   return (
-    <BoxButton
-      id={`heading-${headingId}`}
+    <Box
+      as="a"
+      href={`#${headingId}`}
+      className="--docs--table-content-heading"
       $width="100%"
+      $minHeight="var(--c--globals--spacings--lg)"
       onMouseOver={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
-      onClick={() => {
+      onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
         // With mobile the focus open the keyboard and the scroll is not working
+        e.preventDefault();
+
         if (!isMobile) {
           editor.focus();
         }
 
         editor.setTextCursorPosition(headingId, 'end');
 
-        document.querySelector(`[data-id="${headingId}"]`)?.scrollIntoView({
-          behavior: 'smooth',
-          inline: 'start',
-          block: 'start',
-        });
+        const blockEl = document.getElementById(headingId);
+
+        if (blockEl) {
+          scrollBlockIntoView(blockEl);
+        }
       }}
       $radius="var(--c--globals--spacings--st)"
-      $background={isActive ? `${colorsTokens['gray-100']}` : 'none'}
+      $background={
+        isActive
+          ? 'var(--c--contextuals--background--semantic--overlay--primary)'
+          : 'none'
+      }
+      $justify="center"
+      $padding="none"
+      $margin="none"
+      $hasTransition
       $css={css`
         text-align: left;
+        display: flex;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
         &:focus-visible {
-          /* Scoped focus style: same footprint as hover, with theme shadow */
           outline: none;
           box-shadow: 0 0 0 2px ${colorsTokens['brand-400']};
           border-radius: var(--c--globals--spacings--st);
         }
       `}
-      className="--docs--table-content-heading"
-      aria-label={text}
-      aria-selected={isHighlight}
       aria-current={isHighlight ? 'true' : undefined}
     >
       <Text
-        $width="100%"
-        $padding={{ vertical: 'xtiny', left: leftPaddingMap[level] }}
-        $weight={isHighlight ? 'bold' : 'normal'}
+        $size="sm"
+        $padding={{ left: leftPaddingMap[level], vertical: 'xs' }}
+        $weight={isHighlight ? '700' : '500'}
         $css="overflow-wrap: break-word;"
         $hasTransition
-        aria-selected={isHighlight}
       >
         {text}
       </Text>
-    </BoxButton>
+    </Box>
   );
 };

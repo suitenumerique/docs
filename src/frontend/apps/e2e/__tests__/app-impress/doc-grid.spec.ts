@@ -1,6 +1,13 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, getGridRow, verifyDocName } from './utils-common';
+import {
+  clickInDocOptionMenu,
+  clickInEditorShareButton,
+  createDoc,
+  getGridRow,
+  getOtherBrowserName,
+  verifyDocName,
+} from './utils-common';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
 
 type SmallDoc = {
@@ -76,7 +83,7 @@ test.describe('Documents Grid mobile', () => {
     await expect(docsGrid).toBeVisible();
     await expect(page.getByTestId('grid-loader')).toBeHidden();
 
-    const rows = docsGrid.getByRole('row');
+    const rows = docsGrid.getByRole('listitem');
     const row = rows.filter({
       hasText: 'My mocked document',
     });
@@ -97,38 +104,40 @@ test.describe('Document grid item options', () => {
 
     await expect(page.getByText(docTitle)).toBeVisible();
     const row = await getGridRow(page, docTitle);
-    await row.getByText(`more_horiz`).click();
-
-    await page.getByRole('menuitem', { name: 'Share' }).click();
+    await clickInDocOptionMenu(page, row, 'Share');
 
     await expect(
       page.getByRole('dialog').getByText('Share the document'),
     ).toBeVisible();
   });
 
-  test('it pins a document', async ({ page, browserName }) => {
+  test('it stars a document', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, `Favorite doc`, browserName);
+    const [docTitle2] = await createDoc(page, `Not Favorite doc`, browserName);
 
-    await page.goto('/');
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
 
     const row = await getGridRow(page, docTitle);
 
-    // Pin
-    await row.getByText(`more_horiz`).click();
-    await page.getByText('push_pin').click();
+    // Star
+    await clickInDocOptionMenu(page, row, 'Star');
 
-    // Check is pinned
-    await expect(row.getByTestId('doc-pinned-icon')).toBeVisible();
-    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
+    // Check is starred
+    await expect(row.getByText(/This document is starred/)).toBeVisible();
+    await expect(page.getByText(docTitle2)).toBeVisible();
 
-    // Unpin
-    await row.getByText(`more_horiz`).click();
-    await page.getByText('Unpin').click();
+    await page.getByRole('link', { name: 'Starred', exact: true }).click();
+    await expect(row.getByText(/This document is starred/)).toBeVisible();
+    await expect(page.getByText(docTitle2)).toBeHidden();
 
-    // Check is unpinned
-    await expect(row.getByTestId('doc-pinned-icon')).toBeHidden();
-    await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
+    // Unstar
+    await clickInDocOptionMenu(page, row, 'Unstar');
+    await expect(row).toBeHidden();
+
+    // Check is unstarred
+    await page.getByRole('link', { name: 'Recent', exact: true }).click();
+    await expect(row).toBeVisible();
+    await expect(row.getByText(/This document is starred/)).toBeHidden();
   });
 
   test('it deletes the document', async ({ page, browserName }) => {
@@ -140,9 +149,8 @@ test.describe('Document grid item options', () => {
 
     await expect(page.getByText(docTitle)).toBeVisible();
     const row = await getGridRow(page, docTitle);
-    await row.getByText(`more_horiz`).click();
 
-    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await clickInDocOptionMenu(page, row, 'Delete');
 
     await expect(
       page.getByRole('heading', { name: 'Delete a doc' }),
@@ -158,53 +166,88 @@ test.describe('Document grid item options', () => {
       page.getByText('The document has been deleted.'),
     ).toBeVisible();
 
-    await expect(page.getByText(docTitle)).toBeHidden();
+    await expect(
+      page.getByLabel('Documents grid').getByText(docTitle),
+    ).toBeHidden();
   });
 
-  test("it checks if the delete option is disabled if we don't have the destroy capability", async ({
-    page,
-  }) => {
-    await page.route(/.*\/api\/v1.0\/documents\/\?page=1/, async (route) => {
-      await route.fulfill({
-        json: {
-          results: [
-            {
-              id: 'mocked-document-id',
-              content: '',
-              title: 'Mocked document',
-              accesses: [],
-              abilities: {
-                destroy: false, // Means not owner
-                link_configuration: false,
-                versions_destroy: false,
-                versions_list: true,
-                versions_retrieve: true,
-                accesses_manage: false, // Means not admin
-                update: false,
-                partial_update: false, // Means not editor
-                retrieve: true,
-              },
-              link_reach: 'restricted',
-              created_at: '2021-09-01T09:00:00Z',
-              user_roles: ['editor'],
-              user_role: 'editor',
-            },
-          ],
-        },
-      });
-    });
+  test('it checks the leave feature', async ({ page, browserName }) => {
+    const [docTitle] = await createDoc(page, `leave doc`, browserName);
+
     await page.goto('/');
 
-    const button = page
-      .getByTestId(`docs-grid-actions-button-mocked-document-id`)
-      .first();
-    await expect(button).toBeVisible();
-    await button.click();
-    const removeButton = page
-      .getByTestId(`docs-grid-actions-remove-mocked-document-id`)
-      .first();
-    await expect(removeButton).toBeVisible();
-    await removeButton.isDisabled();
+    // Assert the document is visible in the grid results
+    await expect(
+      page.getByLabel('Documents grid').getByText(docTitle),
+    ).toBeVisible();
+
+    const row = await getGridRow(page, docTitle);
+    await clickInDocOptionMenu(page, row, 'Leave');
+
+    const modal = page.getByRole('dialog', {
+      name: 'Confirmation to leave the document',
+    });
+
+    await expect(
+      modal.getByRole('heading', { name: 'Leave a doc' }),
+    ).toBeVisible();
+
+    // Check the message when the user is the unique owner
+    await expect(
+      modal.getByText(
+        'You cannot leave this document because you are the unique owner.',
+      ),
+    ).toBeVisible();
+
+    await expect(
+      modal.getByRole('button', {
+        name: 'Confirm leaving the document',
+      }),
+    ).toBeHidden();
+
+    await modal.getByRole('button', { name: 'Close the leave modal' }).click();
+
+    // Assert the document is visible in the search results
+    await page.getByRole('button', { name: 'Search docs' }).click();
+    await page.getByPlaceholder('Type the name of a document').fill(docTitle);
+    await page.getByRole('option').getByText(docTitle).click();
+
+    // We share the doc with another user with owner role
+    const otherBrowserName = getOtherBrowserName(browserName);
+    await page.getByRole('button', { name: 'Share' }).click();
+    await addNewMember(page, 0, 'Owner', otherBrowserName);
+    await expect(
+      page
+        .getByRole('listbox', { name: 'Suggestions' })
+        .getByText(new RegExp(otherBrowserName)),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Close the share modal' }).click();
+
+    // Leave the document
+    await page
+      .getByRole('button', { name: /Open the document options/ })
+      .click();
+    await page.getByRole('menuitem', { name: 'Leave' }).click();
+    // Check the message
+    await expect(
+      modal.getByText(
+        'This document and all the sub-documents will no longer be visible',
+      ),
+    ).toBeVisible();
+    await page
+      .getByRole('button', { name: 'Confirm leaving the document' })
+      .click();
+
+    // We are on the grid page and the document is not visible in the grid results
+    await expect(page.getByLabel('Documents grid')).toBeVisible();
+    await expect(
+      page.getByLabel('Documents grid').getByText(docTitle),
+    ).toBeHidden();
+
+    // We search the document and it's not visible in the search results either
+    await page.getByRole('button', { name: 'Search docs' }).click();
+    await page.getByPlaceholder('Type the name of a document').fill(docTitle);
+    await expect(page.getByRole('option').getByText(docTitle)).toBeHidden();
   });
 });
 
@@ -212,9 +255,7 @@ test.describe('Documents filters', () => {
   test('it checks the left panel filters', async ({ page, browserName }) => {
     void page.goto('/');
 
-    // Create my doc
     const [docName] = await createDoc(page, 'my-doc', browserName, 1);
-    await verifyDocName(page, docName);
 
     // Another user create a doc and share it with me
     const { cleanup, otherPage, otherBrowserName } =
@@ -230,9 +271,7 @@ test.describe('Documents filters', () => {
       1,
     );
 
-    await verifyDocName(otherPage, docShareName);
-
-    await otherPage.getByRole('button', { name: 'Share' }).click();
+    await clickInEditorShareButton(otherPage);
 
     await addNewMember(otherPage, 0, 'Editor', browserName);
 
@@ -261,46 +300,41 @@ test.describe('Documents filters', () => {
 });
 
 test.describe('Documents Grid', () => {
-  test('checks all the elements are visible', async ({ page }) => {
-    void page.goto('/');
+  test('opens a document with keyboard (Tab + Enter)', async ({
+    page,
+    browserName,
+  }) => {
+    await page.goto('/');
 
-    let docs: SmallDoc[] = [];
-    const response = await page.waitForResponse(
-      (response) =>
-        response.url().endsWith('documents/?page=1') &&
-        response.status() === 200,
-    );
-    const result = await response.json();
-    docs = result.results as SmallDoc[];
+    const [docTitle] = await createDoc(page, 'keyboard-nav-test', browserName);
 
+    await page.goto('/');
     await expect(page.getByTestId('grid-loader')).toBeHidden();
-    await expect(page.locator('h2').getByText('All docs')).toBeVisible();
 
-    const thead = page.getByTestId('docs-grid-header');
-    await expect(thead.getByText(/Name/i)).toBeVisible();
-    await expect(thead.getByText(/Updated at/i)).toBeVisible();
+    const row = await getGridRow(page, docTitle);
+    const link = row.getByRole('link').first();
 
-    await Promise.all(
-      docs.map(async (doc) => {
-        await expect(
-          page.getByTestId(`docs-grid-name-${doc.id}`),
-        ).toBeVisible();
-      }),
-    );
+    await link.focus();
+    await expect(link).toBeFocused();
+
+    await page.keyboard.press('Enter');
+
+    await expect(page).toHaveURL(/\/docs\//);
+    await verifyDocName(page, docTitle);
   });
 
   test('checks the infinite scroll', async ({ page }) => {
-    let docs: SmallDoc[] = [];
+    let docs: SmallDoc[];
     const responsePromisePage1 = page.waitForResponse((response) => {
       return (
-        response.url().endsWith(`/documents/?page=1`) &&
+        response.url().endsWith(`/documents/?page=1&ordering=-updated_at`) &&
         response.status() === 200
       );
     });
 
     const responsePromisePage2 = page.waitForResponse(
       (response) =>
-        response.url().endsWith(`/documents/?page=2`) &&
+        response.url().endsWith(`/documents/?page=2&ordering=-updated_at`) &&
         response.status() === 200,
     );
 
@@ -329,5 +363,47 @@ test.describe('Documents Grid', () => {
         ).toBeVisible();
       }),
     );
+  });
+
+  test('it checks the sorting feature', async ({ page, browserName }) => {
+    await page.goto('/');
+
+    const [docA] = await createDoc(page, 'a-sorting-feat-aaa', browserName);
+    const [docB] = await createDoc(page, 'b-sorting-feat-bbb', browserName);
+    const [docZ] = await createDoc(page, 'z-sorting-feat-zzz', browserName);
+
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+
+    const rowFilter = (text: string) =>
+      page.getByTestId('docs-grid').getByRole('listitem').filter({
+        hasText: text,
+      });
+
+    const row = rowFilter('sorting-feat');
+
+    // By default, the documents are sorted by descending order (last modified first)
+    await expect(row.nth(0).getByTestId('doc-title')).toHaveText(docZ);
+    await expect(row.nth(1).getByTestId('doc-title')).toHaveText(docB);
+    await expect(row.nth(2).getByTestId('doc-title')).toHaveText(docA);
+
+    // Sort by ascending order - should be empty
+    await page
+      .getByRole('button', { name: 'Sorted documents by Last modified' })
+      .click();
+    await expect(row).toHaveCount(0);
+
+    // Sort by title ascending
+    await page.getByRole('button', { name: 'Sort documents by Name' }).click();
+    await expect(rowFilter(docA)).toHaveCount(1);
+    await expect(rowFilter(docB)).toHaveCount(1);
+    await expect(rowFilter(docZ)).toHaveCount(0);
+
+    // Sort by title descending
+    await page
+      .getByRole('button', { name: 'Sorted documents by Name' })
+      .click();
+    await expect(rowFilter(docZ)).toHaveCount(1);
+    await expect(rowFilter(docA)).toHaveCount(0);
+    await expect(rowFilter(docB)).toHaveCount(0);
   });
 });

@@ -3,25 +3,28 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 
 import { CONFIG, createDoc, overrideConfig } from './utils-common';
+import { openSuggestionMenu, writeInEditor } from './utils-editor';
 
 test.describe('Config', () => {
-  test('it checks that sentry is trying to init from config endpoint', async ({
-    page,
-  }) => {
-    await overrideConfig(page, {
-      SENTRY_DSN: 'https://sentry.io/123',
+  if (process.env.IS_INSTANCE !== 'true') {
+    test('it checks that sentry is trying to init from config endpoint', async ({
+      page,
+    }) => {
+      await overrideConfig(page, {
+        SENTRY_DSN: 'https://sentry.io/123',
+      });
+
+      const invalidMsg = 'Invalid Sentry Dsn: https://sentry.io/123';
+      const consoleMessage = page.waitForEvent('console', {
+        timeout: 5000,
+        predicate: (msg) => msg.text().includes(invalidMsg),
+      });
+
+      await page.goto('/');
+
+      expect((await consoleMessage).text()).toContain(invalidMsg);
     });
-
-    const invalidMsg = 'Invalid Sentry Dsn: https://sentry.io/123';
-    const consoleMessage = page.waitForEvent('console', {
-      timeout: 5000,
-      predicate: (msg) => msg.text().includes(invalidMsg),
-    });
-
-    await page.goto('/');
-
-    expect((await consoleMessage).text()).toContain(invalidMsg);
-  });
+  }
 
   test('it checks that media server is configured from config endpoint', async ({
     page,
@@ -33,9 +36,16 @@ test.describe('Config', () => {
 
     const fileChooserPromise = page.waitForEvent('filechooser');
 
-    await page.locator('.bn-block-outer').last().fill('Anything');
-    await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Resizable image with caption').click();
+    await writeInEditor({
+      page,
+      text: 'Anything',
+    });
+
+    await openSuggestionMenu({
+      page,
+      suggestion: 'Resizable image with caption',
+    });
+
     await page.getByText('Upload image').click();
 
     const fileChooser = await fileChooserPromise;
@@ -55,7 +65,7 @@ test.describe('Config', () => {
 
     // Check src of image
     expect(await image.getAttribute('src')).toMatch(
-      /http:\/\/localhost:8083\/media\/.*\/attachments\/.*.png/,
+      new RegExp(`${process.env.MEDIA_BASE_URL}/media/.*?/attachments/.*?.png`),
     );
   });
 
@@ -65,51 +75,16 @@ test.describe('Config', () => {
     await page.goto('/');
 
     void page
-      .getByRole('button', {
-        name: 'New doc',
+      .getByRole('link', {
+        name: 'New',
+        exact: true,
       })
       .click();
 
     const webSocket = await page.waitForEvent('websocket', (webSocket) => {
-      return webSocket.url().includes('ws://localhost:4444/collaboration/ws/');
+      return webSocket.url().includes(`${process.env.COLLABORATION_WS_URL}`);
     });
-    expect(webSocket.url()).toContain('ws://localhost:4444/collaboration/ws/');
-  });
-
-  test('it checks the AI feature flag from config endpoint', async ({
-    page,
-    browserName,
-  }) => {
-    await overrideConfig(page, {
-      AI_FEATURE_ENABLED: false,
-    });
-
-    await page.goto('/');
-
-    await createDoc(page, 'doc-ai-feature', browserName, 1);
-
-    await page.locator('.bn-block-outer').last().fill('Anything');
-    await page.getByText('Anything').selectText();
-    expect(
-      await page.locator('button[data-test="convertMarkdown"]').count(),
-    ).toBe(1);
-    expect(await page.locator('button[data-test="ai-actions"]').count()).toBe(
-      0,
-    );
-  });
-
-  test('it checks that Crisp is trying to init from config endpoint', async ({
-    page,
-  }) => {
-    await overrideConfig(page, {
-      CRISP_WEBSITE_ID: '1234',
-    });
-
-    await page.goto('/');
-
-    await expect(
-      page.locator('#crisp-chatbox').getByText('Invalid website'),
-    ).toBeVisible();
+    expect(webSocket.url()).toContain(`${process.env.COLLABORATION_WS_URL}`);
   });
 
   test('it checks FRONTEND_CSS_URL config', async ({ page }) => {
@@ -140,44 +115,22 @@ test.describe('Config', () => {
     ).toBeAttached();
   });
 
-  test('it checks theme_customization.translations config', async ({
-    page,
-  }) => {
-    await overrideConfig(page, {
-      theme_customization: {
-        translations: {
-          en: {
-            translation: {
-              Docs: 'MyCustomDocs',
-            },
-          },
-        },
-      },
+  if (process.env.IS_INSTANCE !== 'true') {
+    test('it checks the config api is called', async ({ page }) => {
+      const responsePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes('/config/') && response.status() === 200,
+      );
+
+      await page.goto('/');
+
+      const response = await responsePromise;
+      expect(response.ok()).toBeTruthy();
+
+      const json = (await response.json()) as typeof CONFIG;
+      expect(json).toStrictEqual(CONFIG);
     });
-
-    await page.goto('/');
-
-    await expect(page.getByText('MyCustomDocs')).toBeAttached();
-  });
-
-  test('it checks the config api is called', async ({ page }) => {
-    const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/config/') && response.status() === 200,
-    );
-
-    await page.goto('/');
-
-    const response = await responsePromise;
-    expect(response.ok()).toBeTruthy();
-
-    const json = (await response.json()) as typeof CONFIG;
-    const { theme_customization, ...configApi } = json;
-    expect(theme_customization).toBeDefined();
-    const { theme_customization: _, ...CONFIG_LEFT } = CONFIG;
-
-    expect(configApi).toStrictEqual(CONFIG_LEFT);
-  });
+  }
 });
 
 test.describe('Config: Not logged', () => {
@@ -186,14 +139,24 @@ test.describe('Config: Not logged', () => {
   test('it checks that theme is configured from config endpoint', async ({
     page,
   }) => {
+    await page.goto('/');
+
+    await expect(
+      page.getByText('Collaborative writing, Simplified.'),
+    ).toHaveCSS('font-family', /Roboto/i, {
+      timeout: 10000,
+    });
+
     await overrideConfig(page, {
       FRONTEND_THEME: 'dsfr',
     });
 
     await page.goto('/');
 
-    const header = page.locator('header').first();
-    // alt 'Gouvernement Logo' comes from the theme
-    await expect(header.getByAltText('Gouvernement Logo')).toBeVisible();
+    await expect(
+      page.getByText('Collaborative writing, Simplified.'),
+    ).toHaveCSS('font-family', /Marianne/i, {
+      timeout: 10000,
+    });
   });
 });

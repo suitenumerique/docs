@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { ComponentPropsWithRef } from 'react';
 
-import { Box, BoxType } from '@/components';
+import { Box, BoxProps } from '@/components';
 
-type AvatarSvgProps = {
-  initials: string;
-  background: string;
-  fontFamily?: string;
-} & BoxType;
+type AvatarSvgProps = BoxProps &
+  Omit<ComponentPropsWithRef<'svg'>, keyof BoxProps> & {
+    initials: string;
+    background: string;
+    fontFamily?: string;
+  };
 
 export const AvatarSvg: React.FC<AvatarSvgProps> = ({
   initials,
@@ -20,6 +21,7 @@ export const AvatarSvg: React.FC<AvatarSvgProps> = ({
     width="24"
     height="24"
     viewBox="0 0 24 24"
+    aria-hidden="true"
     {...props}
   >
     <rect

@@ -1,10 +1,6 @@
 import { createGlobalStyle } from 'styled-components';
 
 export const QuickSearchStyle = createGlobalStyle`
-  & *:focus-visible {
-    outline: none;
-  }
-
   .quick-search-container {
     [cmdk-root] {
       width: 100%;
@@ -16,17 +12,18 @@ export const QuickSearchStyle = createGlobalStyle`
     }
 
     [cmdk-input] {
+      font-family: var(--c--globals--font--families--base);
       border: none;
       width: 100%;
-      font-size: 17px;
-      padding: var(--c--globals--spacings--xs);
+      font-size: 16px;
       background: white;
       outline: none;
-      color: var(--c--globals--colors--gray-1000);
+      color: var(--c--contextuals--content--semantic--neutral--primary);
       border-radius: var(--c--globals--spacings--0);
+      font-family: var(--c--globals--font--families--base);
 
       &::placeholder {
-        color: var(--c--globals--colors--gray-500);
+        color: var(--c--contextuals--content--semantic--neutral--tertiary);
       }
     }
 

@@ -249,13 +249,12 @@ def test_comment_get_abilities_user_editor_own_comment(link_role, link_reach):
     }
 
 
-def test_comment_get_abilities_user_admin():
-    """Admins have all accesses to a comment."""
+@pytest.mark.parametrize("role", [RoleChoices.ADMIN, RoleChoices.OWNER])
+def test_comment_get_abilities_user_admin_or_owner_own_comment(role):
+    """Admins/owners have full write access on their own comment."""
     user = factories.UserFactory()
-    document = factories.DocumentFactory(users=[(user, RoleChoices.ADMIN)])
-    comment = factories.CommentFactory(
-        thread__document=document, user=random.choice([user, None])
-    )
+    document = factories.DocumentFactory(users=[(user, role)])
+    comment = factories.CommentFactory(thread__document=document, user=user)
 
     assert comment.get_abilities(user) == {
         "destroy": True,
@@ -266,18 +265,19 @@ def test_comment_get_abilities_user_admin():
     }
 
 
-def test_comment_get_abilities_user_owner():
-    """Owners have all accesses to a comment."""
+@pytest.mark.parametrize("role", [RoleChoices.ADMIN, RoleChoices.OWNER])
+def test_comment_get_abilities_user_admin_or_owner_other_comment(role):
+    """Admins/owners can moderate others' comments (destroy) but cannot edit them."""
     user = factories.UserFactory()
-    document = factories.DocumentFactory(users=[(user, RoleChoices.OWNER)])
+    document = factories.DocumentFactory(users=[(user, role)])
     comment = factories.CommentFactory(
-        thread__document=document, user=random.choice([user, None])
+        thread__document=document, user=random.choice([factories.UserFactory(), None])
     )
 
     assert comment.get_abilities(user) == {
         "destroy": True,
-        "update": True,
-        "partial_update": True,
+        "update": False,
+        "partial_update": False,
         "reactions": True,
         "retrieve": True,
     }

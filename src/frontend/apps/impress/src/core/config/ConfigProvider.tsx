@@ -1,4 +1,4 @@
-import { Loader } from '@gouvfr-lasuite/cunningham-react';
+import { Loader } from '@gouvfr-lasuite/ui-components';
 import Head from 'next/head';
 import Script from 'next/script';
 import { PropsWithChildren, useEffect, useRef } from 'react';
@@ -12,7 +12,6 @@ import {
   useSynchronizedLanguage,
 } from '@/features/language';
 import { useAnalytics } from '@/libs';
-import { CrispAnalytic, PostHogAnalytic } from '@/services';
 import { useSentryStore } from '@/stores/useSentryStore';
 
 import { useConfig } from './api/useConfig';
@@ -27,6 +26,7 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   const { AnalyticsProvider } = useAnalytics();
   const { i18n } = useTranslation();
   const languageSynchronized = useRef(false);
+  const favicon = conf?.theme_customization?.favicon;
 
   useEffect(() => {
     if (!user || languageSynchronized.current) {
@@ -66,20 +66,42 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   }, [conf?.FRONTEND_THEME, setTheme]);
 
   useEffect(() => {
-    if (!conf?.POSTHOG_KEY) {
+    if (!conf?.POSTHOG_KEY || !conf?.POSTHOG_HOST) {
       return;
     }
 
-    new PostHogAnalytic(conf.POSTHOG_KEY);
-  }, [conf?.POSTHOG_KEY]);
+    const key = conf.POSTHOG_KEY;
+    const host = conf.POSTHOG_HOST;
+    void import('@/services').then(({ PostHogAnalytic }) => {
+      new PostHogAnalytic({ key, host });
+    });
+  }, [conf?.POSTHOG_KEY, conf?.POSTHOG_HOST]);
 
   useEffect(() => {
-    if (!conf?.CRISP_WEBSITE_ID) {
+    const frontendVersion = process.env.NEXT_PUBLIC_APP_VERSION;
+
+    if (
+      !conf?.RELEASE_VERSION ||
+      !frontendVersion ||
+      conf.RELEASE_VERSION === frontendVersion
+    ) {
       return;
     }
 
-    new CrispAnalytic({ websiteId: conf.CRISP_WEBSITE_ID });
-  }, [conf?.CRISP_WEBSITE_ID]);
+    // Avoid infinite reload loops: only reload once per backend version
+    const RELOAD_VERSION_KEY = 'reload-version';
+    try {
+      const reloadedForVersion = sessionStorage.getItem(RELOAD_VERSION_KEY);
+      if (reloadedForVersion === conf.RELEASE_VERSION) {
+        return;
+      }
+
+      sessionStorage.setItem(RELOAD_VERSION_KEY, conf.RELEASE_VERSION);
+      window.location.reload();
+    } catch {
+      console.warn('Failed to access sessionStorage for version reload logic');
+    }
+  }, [conf?.RELEASE_VERSION]);
 
   if (!conf) {
     return (
@@ -99,6 +121,25 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
       {conf?.FRONTEND_JS_URL && (
         <Script src={conf?.FRONTEND_JS_URL} strategy="afterInteractive" />
       )}
+      {favicon?.light.href && (
+        <Head>
+          <link
+            rel="icon"
+            media="(prefers-color-scheme: light)"
+            {...favicon.light}
+          />
+        </Head>
+      )}
+      {favicon?.dark.href && (
+        <Head>
+          <link
+            rel="icon"
+            media="(prefers-color-scheme: dark)"
+            {...favicon.dark}
+          />
+        </Head>
+      )}
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
       <AnalyticsProvider>{children}</AnalyticsProvider>
     </>
   );

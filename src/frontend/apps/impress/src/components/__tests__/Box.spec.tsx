@@ -18,10 +18,10 @@ describe('<Box />', () => {
     );
 
     expect(screen.getByText('My Box')).toHaveStyle(`
-      padding-left: 2.5rem;
-      padding-right: 2.5rem;
-      padding-top: 3rem;
-      padding-bottom: 0.5rem;`);
+      padding-left: 40px;
+      padding-right: 40px;
+      padding-top: 48px;
+      padding-bottom: 8px;`);
   });
 
   it('has the margin from prop', () => {
@@ -46,7 +46,7 @@ describe('<Box />', () => {
     expect(screen.getByText('My Box')).toHaveStyle(`
       margin-left: auto;
       margin-right: auto;
-      margin-top: 1.625rem;
+      margin-top: 26px;
       margin-bottom: 100%;`);
   });
 });

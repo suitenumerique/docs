@@ -3,7 +3,8 @@ import {
   Modal,
   ModalSize,
   useModal,
-} from '@gouvfr-lasuite/cunningham-react';
+} from '@gouvfr-lasuite/ui-components';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
@@ -14,8 +15,15 @@ import { Doc } from '@/docs/doc-management';
 import { Versions } from '../types';
 
 import { DocVersionEditor } from './DocVersionEditor';
-import { ModalConfirmationVersion } from './ModalConfirmationVersion';
 import { VersionList } from './VersionList';
+
+const ModalConfirmationVersion = dynamic(
+  () =>
+    import('./ModalConfirmationVersion').then((mod) => ({
+      default: mod.ModalConfirmationVersion,
+    })),
+  { ssr: false },
+);
 
 const NoPaddingStyle = createGlobalStyle`
   .c__modal__scroller:has(.noPadding) {
@@ -52,11 +60,10 @@ export const ModalSelectVersion = ({
         closeOnClickOutside={true}
         size={ModalSize.EXTRA_LARGE}
         onClose={onClose}
-        aria-describedby="modal-select-version-title"
+        aria-label={t('Version history')}
       >
         <NoPaddingStyle />
         <Box
-          aria-label="version history modal"
           className="--docs--modal-select-version noPadding"
           $direction="row"
           $height="100%"
@@ -107,11 +114,12 @@ export const ModalSelectVersion = ({
             $height="calc(100vh - 2em - 12px)"
             $css={css`
               overflow-y: hidden;
-              border-left: 1px solid var(--c--globals--colors--gray-200);
+              border-left: 1px solid
+                var(--c--contextuals--border--surface--primary);
             `}
           >
             <Box
-              aria-label="version list"
+              aria-label={t('Version list')}
               $css={css`
                 overflow-y: auto;
                 flex: 1;
@@ -123,7 +131,8 @@ export const ModalSelectVersion = ({
                 $direction="row"
                 $align="center"
                 $css={css`
-                  border-bottom: 1px solid var(--c--globals--colors--gray-200);
+                  border-bottom: 1px solid
+                    var(--c--contextuals--border--surface--primary);
                 `}
                 $padding="sm"
               >
@@ -132,6 +141,7 @@ export const ModalSelectVersion = ({
                 </Text>
                 <ButtonCloseModal
                   aria-label={t('Close the version history modal')}
+                  autoFocus
                   onClick={onClose}
                   size="nano"
                 />
@@ -147,7 +157,8 @@ export const ModalSelectVersion = ({
               <Box
                 $padding="xs"
                 $css={css`
-                  border-top: 1px solid var(--c--globals--colors--gray-200);
+                  border-top: 1px solid
+                    var(--c--contextuals--border--surface--primary);
                 `}
               >
                 <Button
@@ -165,6 +176,9 @@ export const ModalSelectVersion = ({
       {restoreModal.isOpen && selectedVersionId && (
         <ModalConfirmationVersion
           onClose={() => {
+            restoreModal.close();
+          }}
+          onSuccess={() => {
             restoreModal.close();
             onClose();
             setSelectedVersionId(undefined);

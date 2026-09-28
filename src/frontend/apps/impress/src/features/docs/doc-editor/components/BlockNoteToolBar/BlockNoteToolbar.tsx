@@ -1,24 +1,39 @@
+import { getDiagramBlockTypeSelectItems } from '@blocknote/diagram-block';
+import { getMathBlockTypeSelectItems } from '@blocknote/math-block';
 import {
   FormattingToolbar,
   FormattingToolbarController,
   blockTypeSelectItems,
   getFormattingToolbarItems,
+  useBlockNoteEditor,
   useDictionary,
 } from '@blocknote/react';
+import dynamic from 'next/dynamic';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
+import { CommentToolbarButton } from '@/docs/doc-comments/components/CommentToolbarButton';
 
-import { CommentToolbarButton } from '../comments/CommentToolbarButton';
+import BlockNoteAI from '../AI/';
+import { AIGroupButton } from '../AI/AIButtonMIT';
 import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
-import { AIGroupButton } from './AIButton';
 import { FileDownloadButton } from './FileDownloadButton';
 import { MarkdownButton } from './MarkdownButton';
-import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
 
-export const BlockNoteToolbar = () => {
+const ModalConfirmDownloadUnsafe = dynamic(
+  () =>
+    import('./ModalConfirmDownloadUnsafe').then((mod) => ({
+      default: mod.ModalConfirmDownloadUnsafe,
+    })),
+  { ssr: false },
+);
+
+const AIToolbarButton = BlockNoteAI?.AIToolbarButton;
+
+export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
+  const editor = useBlockNoteEditor();
   const dict = useDictionary();
   const [confirmOpen, setIsConfirmOpen] = useState(false);
   const [onConfirm, setOnConfirm] = useState<() => void | Promise<void>>();
@@ -29,6 +44,8 @@ export const BlockNoteToolbar = () => {
     let toolbarItems = getFormattingToolbarItems([
       ...blockTypeSelectItems(dict),
       getCalloutFormattingToolbarItems(t),
+      ...getMathBlockTypeSelectItems(editor),
+      ...getDiagramBlockTypeSelectItems(editor),
     ]);
 
     // Find the index of the file download button
@@ -64,23 +81,32 @@ export const BlockNoteToolbar = () => {
     });
 
     return toolbarItems;
-  }, [dict, t]);
+  }, [dict, editor, t]);
 
   const formattingToolbar = useCallback(() => {
     return (
       <FormattingToolbar>
-        <CommentToolbarButton />
-
         {toolbarItems}
 
-        {/* Extra button to do some AI powered actions */}
-        {conf?.AI_FEATURE_ENABLED && <AIGroupButton key="AIButton" />}
+        <CommentToolbarButton />
+
+        {aiAllowed && AIToolbarButton && <AIToolbarButton />}
+
+        {/* Extra button to do some AI powered actions - only if AIToolbarButton is not available because of MIT license */}
+        {conf?.AI_FEATURE_ENABLED && conf?.AI_FEATURE_LEGACY_ENABLED && (
+          <AIGroupButton key="AIButton" />
+        )}
 
         {/* Extra button to convert from markdown to json */}
         <MarkdownButton key="customButton" />
       </FormattingToolbar>
     );
-  }, [toolbarItems, conf?.AI_FEATURE_ENABLED]);
+  }, [
+    toolbarItems,
+    aiAllowed,
+    conf?.AI_FEATURE_ENABLED,
+    conf?.AI_FEATURE_LEGACY_ENABLED,
+  ]);
 
   return (
     <>

@@ -1,8 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
 
-const PORT = process.env.PORT || 3000;
+dotenv.config({
+  path: ['./.env.local', './.env'],
+  quiet: true,
+  debug: !process.env.CI,
+});
 
-const baseURL = `http://localhost:${PORT}`;
+const PORT = process.env.PORT;
+const baseURL = process.env.BASE_URL;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -23,7 +29,10 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 3 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [['html', { outputFolder: './report' }]],
+  reporter: [
+    ['html', { outputFolder: './report' }],
+    ['list', { printSteps: true }],
+  ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,
@@ -31,13 +40,16 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
-
-  webServer: {
-    command: !process.env.CI ? `cd ../.. && yarn app:dev --port ${PORT}` : '',
-    url: baseURL,
-    timeout: 120 * 1000,
-    reuseExistingServer: true,
-  },
+  ...(process.env.CI
+    ? {}
+    : {
+        webServer: {
+          command: `cd ../.. && yarn app:dev --port ${PORT}`,
+          url: baseURL,
+          timeout: 120 * 1000,
+          reuseExistingServer: true,
+        },
+      }),
   globalSetup: require.resolve('./__tests__/app-impress/auth.setup'),
   /* Configure projects for major browsers */
   projects: [

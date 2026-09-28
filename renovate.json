@@ -20,35 +20,53 @@
       "allowedVersions": "<6.0.0"
     },
     {
-      "groupName": "allowed pylint versions",
-      "matchManagers": ["pep621"],
-      "matchPackageNames": ["pylint"],
-      "allowedVersions": "<4.0.0"
-    },
-    {
       "groupName": "allowed django versions",
       "matchManagers": ["pep621"],
       "matchPackageNames": ["django"],
       "allowedVersions": "<6.0.0"
     },
     {
-      "groupName": "allowed celery versions",
+      "groupName": "allowed langfuse versions",
       "matchManagers": ["pep621"],
-      "matchPackageNames": ["celery"],
-      "allowedVersions": "<5.6.0"
+      "matchPackageNames": ["langfuse"],
+      "allowedVersions": "<3.12.0"
+    },
+    {
+      "groupName": "allowed django-treebeard versions",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["django-treebeard"],
+      "allowedVersions": "<5.0.0"
+    },
+    {
+      "groupName": "allowed @ai-sdk/openai versions",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["@ai-sdk/openai"],
+      "allowedVersions": "<4.0.0"
+    },
+    {
+      "groupName": "allowed ai versions",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["ai"],
+      "allowedVersions": "<7.0.0"
+    },
+    {
+      "groupName": "allowed typescript versions",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7.0.0"
     },
     {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
-        "@next/eslint-plugin-next",
-        "eslint-config-next",
-        "fetch-mock",
-        "next",
+        "@hocuspocus/provider",
+        "@hocuspocus/server",
         "node",
         "node-fetch",
         "react-resizable-panels",
+        "stylelint",
+        "stylelint-config-standard",
         "workbox-webpack-plugin"
       ]
     }

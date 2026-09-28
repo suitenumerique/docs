@@ -8,6 +8,9 @@ on:
     branches:
       - "*"
 
+permissions:
+  contents: read
+
 jobs:
 
   install-dependencies:
@@ -23,15 +26,15 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "22.x"
 
       - name: Restore the frontend cache
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
@@ -47,14 +50,14 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "22.x"
       - name: Restore the frontend cache
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
@@ -64,88 +67,11 @@ jobs:
         run: cd src/frontend/ && yarn lint
 
   test-e2e-chromium:
-    runs-on: ubuntu-latest
-    needs: install-dependencies
-    timeout-minutes: 20
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22.x"
-
-      - name: Restore the frontend cache
-        uses: actions/cache@v4
-        with:
-          path: "src/frontend/**/node_modules"
-          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
-          fail-on-cache-miss: true
-
-      - name: Set e2e env variables
-        run: cat env.d/development/common.e2e >> env.d/development/common.local
-
-      - name: Install Playwright Browsers
-        run: cd src/frontend/apps/e2e && yarn install --frozen-lockfile && yarn install-playwright chromium
-
-      - name: Free disk space before Docker
-        uses: ./.github/actions/free-disk-space
-
-      - name: Start Docker services
-        run: make bootstrap-e2e FLUSH_ARGS='--no-input'
-
-      - name: Run e2e tests
-        run: cd src/frontend/ && yarn e2e:test --project='chromium'
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-chromium-report
-          path: src/frontend/apps/e2e/report/
-          retention-days: 7
-
-  test-e2e-other-browser:
-    runs-on: ubuntu-latest
-    needs: test-e2e-chromium
-    timeout-minutes: 30
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22.x"
-
-      - name: Restore the frontend cache
-        uses: actions/cache@v4
-        with:
-          path: "src/frontend/**/node_modules"
-          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
-          fail-on-cache-miss: true
-
-      - name: Set e2e env variables
-        run: cat env.d/development/common.e2e >> env.d/development/common.local
-
-      - name: Install Playwright Browsers
-        run: cd src/frontend/apps/e2e && yarn install --frozen-lockfile && yarn install-playwright firefox webkit chromium
-
-      - name: Free disk space before Docker
-        uses: ./.github/actions/free-disk-space
-
-      - name: Start Docker services
-        run: make bootstrap-e2e FLUSH_ARGS='--no-input'
-
-      - name: Run e2e tests
-        run: cd src/frontend/ && yarn e2e:test --project=firefox --project=webkit
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-other-report
-          path: src/frontend/apps/e2e/report/
-          retention-days: 7
+    uses: ./.github/workflows/e2e-tests.yml
+    with:
+      browser-name: chromium
+      projects: --project=chromium
+      timeout-minutes: 25
 
   bundle-size-check:
     runs-on: ubuntu-latest
@@ -157,11 +83,11 @@ jobs:
       issues: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Detect relevant changes
         id: changes
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
         with:
           filters: |
             lock:
@@ -170,7 +96,7 @@ jobs:
               - 'src/frontend/apps/impress/**'
 
       - name: Restore the frontend cache
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
@@ -178,13 +104,13 @@ jobs:
 
       - name: Setup Node.js
         if: steps.changes.outputs.lock == 'true' || steps.changes.outputs.app == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "22.x"
 
       - name: Check bundle size changes
         if: steps.changes.outputs.lock == 'true' || steps.changes.outputs.app == 'true'
-        uses: preactjs/compressed-size-action@v2
+        uses: preactjs/compressed-size-action@66325aad6443cb7cf89c4bfcd414aea2367cda94 # v2
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
           build-script: "app:build"
@@ -205,14 +131,14 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "22.x"
       - name: Restore the frontend cache
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}

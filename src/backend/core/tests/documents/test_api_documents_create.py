@@ -3,13 +3,17 @@ Tests for Documents API endpoint in impress's core app: create
 """
 
 from concurrent.futures import ThreadPoolExecutor
+from unittest import mock
 from uuid import uuid4
+
+from django.db import connection
 
 import pytest
 from rest_framework.test import APIClient
 
 from core import factories
 from core.models import Document
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -37,19 +41,27 @@ def test_api_documents_create_authenticated_success():
     client = APIClient()
     client.force_login(user)
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "title": "my document",
-        },
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "title": "my document",
+            },
+            format="json",
+        )
 
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "my document"
     assert document.link_reach == "restricted"
     assert document.accesses.filter(role="owner", user=user).exists()
+
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {},
+        document=document,
+    )
 
 
 @pytest.mark.django_db(transaction=True)
@@ -60,16 +72,21 @@ def test_api_documents_create_document_race_condition():
     """
 
     def create_document(title):
-        user = factories.UserFactory()
-        client = APIClient()
-        client.force_login(user)
-        return client.post(
-            "/api/v1.0/documents/",
-            {
-                "title": title,
-            },
-            format="json",
-        )
+        try:
+            user = factories.UserFactory()
+            client = APIClient()
+            client.force_login(user)
+            return client.post(
+                "/api/v1.0/documents/",
+                {
+                    "title": title,
+                },
+                format="json",
+            )
+        finally:
+            # Close this worker thread's thread-local database connection so it
+            # does not linger and block dropping the test database at teardown.
+            connection.close()
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         future1 = executor.submit(create_document, "my document 1")
@@ -143,3 +160,36 @@ def test_api_documents_create_force_id_existing():
     assert response.json() == {
         "id": ["A document with this ID already exists. You cannot override it."]
     }
+
+
+@pytest.mark.parametrize(
+    "forced_id",
+    [
+        # Nil UUID: every bit is zero, including the version nibble.
+        "00000000-0000-0000-0000-000000000000",
+        # Max UUID: version nibble is 0xf, not in {1, 3, 4, 5}.
+        "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        # Non-RFC-4122 variant (Microsoft GUID): `.version` returns None.
+        "f47ac10b-58cc-4372-c567-0e02b2c3d479",
+        # RFC-4122 v2 (DCE security): valid variant but version not in {1, 3, 4, 5}.
+        "f47ac10b-58cc-2372-a567-0e02b2c3d479",
+    ],
+)
+def test_api_documents_create_force_id_invalid_uuid(forced_id):
+    """Forcing an ID with a non-standard UUID (nil, wrong variant, wrong version) is refused."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        "/api/v1.0/documents/",
+        {
+            "id": forced_id,
+            "title": "my document",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"id": ["The provided ID is not a valid UUID."]}
+    assert not Document.objects.exists()

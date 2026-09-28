@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 import magic
 
 from core.models import Document
+from core.utils.dicts import lowercase_keys
 
 # pylint: disable=too-many-locals, broad-exception-caught
 
@@ -74,7 +75,7 @@ class Command(BaseCommand):
                             CopySource={"Bucket": bucket_name, "Key": key},
                             Key=key,
                             ContentType=magic_mime_type,
-                            Metadata=head_resp.get("Metadata", {}),
+                            Metadata=lowercase_keys(head_resp.get("Metadata", {})),
                             MetadataDirective="REPLACE",
                         )
                         total_updated += 1

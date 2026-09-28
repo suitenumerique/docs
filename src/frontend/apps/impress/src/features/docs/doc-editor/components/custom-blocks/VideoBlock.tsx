@@ -109,10 +109,7 @@ export const VideoBlock = createReactBlockSpec(
       <VideoBlockComponent {...(props as any)} />
     ),
     parse: videoParse(config),
-    toExternalHTML: (props) => (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <VideoToExternalHTML {...(props as any)} />
-    ),
+    toExternalHTML: (props) => <VideoToExternalHTML {...props} />,
     runsBefore: ['file'],
   }),
 );

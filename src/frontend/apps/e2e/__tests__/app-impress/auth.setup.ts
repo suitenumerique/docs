@@ -1,6 +1,6 @@
 import { FullConfig, FullProject, chromium, expect } from '@playwright/test';
 
-import { keyCloakSignIn } from './utils-common';
+import { SignIn } from './utils-signin';
 
 const saveStorageState = async (
   browserConfig: FullProject<unknown, unknown>,
@@ -22,12 +22,13 @@ const saveStorageState = async (
     await page.content();
     await expect(page.getByText('Docs').first()).toBeVisible();
 
-    await keyCloakSignIn(page, browserName);
+    await SignIn(page, browserName);
 
+    /**
+     * If the grid is displayed, it means the user is logged in and the storage state can be saved.
+     */
     await expect(
-      page.locator('header').first().getByRole('button', {
-        name: 'Logout',
-      }),
+      page.getByRole('heading', { name: 'Recent', level: 2 }),
     ).toBeVisible({ timeout: 10000 });
 
     await page.context().storageState({

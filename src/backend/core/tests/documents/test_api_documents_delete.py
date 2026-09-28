@@ -2,11 +2,14 @@
 Tests for Documents API endpoint in impress's core app: delete
 """
 
+from unittest import mock
+
 import pytest
 from rest_framework.test import APIClient
 
 from core import factories, models
 from core.tests.conftest import TEAM, USER, VIA
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -127,9 +130,10 @@ def test_api_documents_delete_authenticated_owner(via, mock_user_teams):
             document=document, team="lasuite", role="owner"
         )
 
-    response = client.delete(
-        f"/api/v1.0/documents/{document.id}/",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.delete(
+            f"/api/v1.0/documents/{document.id}/",
+        )
 
     assert response.status_code == 204
 
@@ -137,3 +141,10 @@ def test_api_documents_delete_authenticated_owner(via, mock_user_teams):
     assert models.Document.objects.count() == 1
     assert models.Document.objects.filter(deleted_at__isnull=True).exists() is False
     assert models.Document.objects.filter(deleted_at__isnull=False).count() == 1
+
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_DELETED,
+        user,
+        {},
+        document=document,
+    )

@@ -2,47 +2,66 @@
 Test AI transform API endpoint for users in impress's core app.
 """
 
-import random
+from unittest import mock
 from unittest.mock import MagicMock, patch
 
-from django.test import override_settings
+from django.contrib.auth.models import AnonymousUser
 
 import pytest
 from rest_framework.test import APIClient
 
 from core import factories
+from core.services.ai_services.legacy import get_legacy_ai_service
 from core.tests.conftest import TEAM, USER, VIA
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def ai_settings():
+def ai_settings(settings):
     """Fixture to set AI settings."""
-    with override_settings(
-        AI_BASE_URL="http://example.com", AI_API_KEY="test-key", AI_MODEL="llama"
-    ):
-        yield
+    settings.AI_FEATURE_ENABLED = True
+    settings.AI_FEATURE_LEGACY_ENABLED = True
+    settings.OPENAI_SDK_BASE_URL = "http://example.com"
+    settings.OPENAI_SDK_API_KEY = "test-key"
+    settings.AI_MODEL = "llama"
 
 
-@override_settings(
-    AI_ALLOW_REACH_FROM=random.choice(["public", "authenticated", "restricted"])
-)
+@pytest.fixture(autouse=True)
+def clear_openai_client_config():
+    """Clear the _configure_legacy_openai_client cache"""
+    get_legacy_ai_service.cache_clear()
+
+
 @pytest.mark.parametrize(
-    "reach, role",
+    "reach, role, ai_allow_reach_from",
     [
-        ("restricted", "reader"),
-        ("restricted", "editor"),
-        ("authenticated", "reader"),
-        ("authenticated", "editor"),
-        ("public", "reader"),
+        ("restricted", "reader", "public"),
+        ("restricted", "reader", "authenticated"),
+        ("restricted", "reader", "restricted"),
+        ("restricted", "editor", "public"),
+        ("restricted", "editor", "authenticated"),
+        ("restricted", "editor", "restricted"),
+        ("authenticated", "reader", "public"),
+        ("authenticated", "reader", "authenticated"),
+        ("authenticated", "reader", "restricted"),
+        ("authenticated", "editor", "public"),
+        ("authenticated", "editor", "authenticated"),
+        ("authenticated", "editor", "restricted"),
+        ("public", "reader", "public"),
+        ("public", "reader", "authenticated"),
+        ("public", "reader", "restricted"),
     ],
 )
-def test_api_documents_ai_transform_anonymous_forbidden(reach, role):
+def test_api_documents_ai_transform_anonymous_forbidden(
+    reach, role, ai_allow_reach_from, settings
+):
     """
     Anonymous users should not be able to request AI transform if the link reach
     and role don't allow it.
     """
+    settings.AI_ALLOW_REACH_FROM = ai_allow_reach_from
     document = factories.DocumentFactory(link_reach=reach, link_role=role)
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
@@ -54,14 +73,14 @@ def test_api_documents_ai_transform_anonymous_forbidden(reach, role):
     }
 
 
-@override_settings(AI_ALLOW_REACH_FROM="public")
 @pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
-def test_api_documents_ai_transform_anonymous_success(mock_create):
+def test_api_documents_ai_transform_anonymous_success(mock_create, settings):
     """
     Anonymous users should be able to request AI transform to a document
     if the link reach and role permit it.
     """
+    settings.AI_ALLOW_REACH_FROM = "public"
     document = factories.DocumentFactory(link_reach="public", link_role="editor")
 
     mock_create.return_value = MagicMock(
@@ -69,7 +88,8 @@ def test_api_documents_ai_transform_anonymous_success(mock_create):
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
-    response = APIClient().post(url, {"text": "Hello", "action": "summarize"})
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = APIClient().post(url, {"text": "Hello", "action": "summarize"})
 
     assert response.status_code == 200
     assert response.json() == {"answer": "Salut"}
@@ -87,15 +107,26 @@ def test_api_documents_ai_transform_anonymous_success(mock_create):
         ],
     )
 
+    # The AI action should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_AI_ACTION,
+        AnonymousUser(),
+        {"method": "ai_transform", "action": "summarize"},
+        document=document,
+    )
 
-@override_settings(AI_ALLOW_REACH_FROM=random.choice(["authenticated", "restricted"]))
+
 @pytest.mark.usefixtures("ai_settings")
+@pytest.mark.parametrize("ai_allow_reach_from", ["authenticated", "restricted"])
 @patch("openai.resources.chat.completions.Completions.create")
-def test_api_documents_ai_transform_anonymous_limited_by_setting(mock_create):
+def test_api_documents_ai_transform_anonymous_limited_by_setting(
+    mock_create, ai_allow_reach_from, settings
+):
     """
     Anonymous users should be able to request AI transform to a document
     if the link reach and role permit it.
     """
+    settings.AI_ALLOW_REACH_FROM = ai_allow_reach_from
     document = factories.DocumentFactory(link_reach="public", link_role="editor")
 
     answer = '{"answer": "Salut"}'
@@ -165,7 +196,8 @@ def test_api_documents_ai_transform_authenticated_success(mock_create, reach, ro
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
-    response = client.post(url, {"text": "Hello", "action": "prompt"})
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(url, {"text": "Hello", "action": "prompt"})
 
     assert response.status_code == 200
     assert response.json() == {"answer": "Salut"}
@@ -176,14 +208,22 @@ def test_api_documents_ai_transform_authenticated_success(mock_create, reach, ro
                 "role": "system",
                 "content": (
                     "Answer the prompt using markdown formatting for structure and emphasis. "
-                    "Return the content directly without wrapping it in code blocks or markdown delimiters. "
-                    "Preserve the language and markdown formatting. "
+                    "Return the content directly without wrapping it in code blocks or markdown "
+                    "delimiters. Preserve the language and markdown formatting. "
                     "Do not provide any other information. "
                     "Preserve the language."
                 ),
             },
             {"role": "user", "content": "Hello"},
         ],
+    )
+
+    # The AI action should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_AI_ACTION,
+        user,
+        {"method": "ai_transform", "action": "prompt"},
+        document=document,
     )
 
 
@@ -242,7 +282,8 @@ def test_api_documents_ai_transform_success(mock_create, via, role, mock_user_te
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
-    response = client.post(url, {"text": "Hello", "action": "prompt"})
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(url, {"text": "Hello", "action": "prompt"})
 
     assert response.status_code == 200
     assert response.json() == {"answer": "Salut"}
@@ -253,8 +294,8 @@ def test_api_documents_ai_transform_success(mock_create, via, role, mock_user_te
                 "role": "system",
                 "content": (
                     "Answer the prompt using markdown formatting for structure and emphasis. "
-                    "Return the content directly without wrapping it in code blocks or markdown delimiters. "
-                    "Preserve the language and markdown formatting. "
+                    "Return the content directly without wrapping it in code blocks or markdown "
+                    "delimiters. Preserve the language and markdown formatting. "
                     "Do not provide any other information. "
                     "Preserve the language."
                 ),
@@ -263,7 +304,16 @@ def test_api_documents_ai_transform_success(mock_create, via, role, mock_user_te
         ],
     )
 
+    # The AI action should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_AI_ACTION,
+        user,
+        {"method": "ai_transform", "action": "prompt"},
+        document=document,
+    )
 
+
+@pytest.mark.usefixtures("ai_settings")
 def test_api_documents_ai_transform_empty_text():
     """The text should not be empty when requesting AI transform."""
     user = factories.UserFactory()
@@ -280,6 +330,7 @@ def test_api_documents_ai_transform_empty_text():
     assert response.json() == {"text": ["This field may not be blank."]}
 
 
+@pytest.mark.usefixtures("ai_settings")
 def test_api_documents_ai_transform_invalid_action():
     """The action should valid when requesting AI transform."""
     user = factories.UserFactory()
@@ -296,14 +347,14 @@ def test_api_documents_ai_transform_invalid_action():
     assert response.json() == {"action": ['"invalid" is not a valid choice.']}
 
 
-@override_settings(AI_DOCUMENT_RATE_THROTTLE_RATES={"minute": 3, "hour": 6, "day": 10})
 @pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
-def test_api_documents_ai_transform_throttling_document(mock_create):
+def test_api_documents_ai_transform_throttling_document(mock_create, settings):
     """
     Throttling per document should be triggered on the AI transform endpoint.
     For full throttle class test see: `test_api_utils_ai_document_rate_throttles`
     """
+    settings.AI_DOCUMENT_RATE_THROTTLE_RATES = {"minute": 3, "hour": 6, "day": 10}
     client = APIClient()
     document = factories.DocumentFactory(link_reach="public", link_role="editor")
 
@@ -329,14 +380,14 @@ def test_api_documents_ai_transform_throttling_document(mock_create):
     }
 
 
-@override_settings(AI_USER_RATE_THROTTLE_RATES={"minute": 3, "hour": 6, "day": 10})
 @pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
-def test_api_documents_ai_transform_throttling_user(mock_create):
+def test_api_documents_ai_transform_throttling_user(mock_create, settings):
     """
     Throttling per user should be triggered on the AI transform endpoint.
     For full throttle class test see: `test_api_utils_ai_user_rate_throttles`
     """
+    settings.AI_USER_RATE_THROTTLE_RATES = {"minute": 3, "hour": 6, "day": 10}
     user = factories.UserFactory()
     client = APIClient()
     client.force_login(user)

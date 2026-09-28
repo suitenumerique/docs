@@ -3,13 +3,20 @@ Tests for Documents API endpoint in impress's core app: children create
 """
 
 from concurrent.futures import ThreadPoolExecutor
+from io import BytesIO
+from unittest import mock
+from unittest.mock import patch
 from uuid import uuid4
+
+from django.db import connection
 
 import pytest
 from rest_framework.test import APIClient
 
 from core import factories
 from core.models import Document, LinkReachChoices, LinkRoleChoices
+from core.services import mime_types
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -102,12 +109,13 @@ def test_api_documents_children_create_authenticated_success(reach, role, depth)
                 parent=document, link_reach="restricted"
             )
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/children/",
-        {
-            "title": "my child",
-        },
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/children/",
+            {
+                "title": "my child",
+            },
+        )
 
     assert response.status_code == 201
 
@@ -116,6 +124,13 @@ def test_api_documents_children_create_authenticated_success(reach, role, depth)
     assert child.link_reach == "restricted"
     # Access objects on the child are not necessary
     assert child.accesses.exists() is False
+
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {"document_parent": str(document.id)},
+        document=child,
+    )
 
 
 @pytest.mark.parametrize("depth", [1, 2, 3])
@@ -273,12 +288,17 @@ def test_api_documents_create_document_children_race_condition():
     factories.UserDocumentAccessFactory(user=user, document=document, role="owner")
 
     def create_document():
-        return client.post(
-            f"/api/v1.0/documents/{document.id}/children/",
-            {
-                "title": "my child",
-            },
-        )
+        try:
+            return client.post(
+                f"/api/v1.0/documents/{document.id}/children/",
+                {
+                    "title": "my child",
+                },
+            )
+        finally:
+            # Close this worker thread's thread-local database connection so it
+            # does not linger and block dropping the test database at teardown.
+            connection.close()
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         future1 = executor.submit(create_document)
@@ -292,3 +312,154 @@ def test_api_documents_create_document_children_race_condition():
 
         document.refresh_from_db()
         assert document.numchild == 2
+
+
+@patch("core.services.converter_services.Converter.convert")
+def test_api_documents_children_create_with_docx_file_success(mock_convert, settings):
+    """
+    Authenticated users should be able to create children document by uploading a DOCX file.
+    The file should be converted to YJS format and the title should be set from filename.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    settings.CONVERSION_UPLOAD_ENABLED = True
+
+    # Mock the conversion
+    converted_yjs = "base64encodedyjscontent"
+    mock_convert.return_value = converted_yjs
+
+    # Create a fake DOCX file
+    file_content = b"fake docx content"
+    file = BytesIO(file_content)
+    file.name = "My Important Document.docx"
+
+    parent = factories.DocumentFactory(creator=user, users=[(user, "owner")])
+
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{parent.id}/children/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
+
+    assert response.status_code == 201
+    assert Document.objects.count() == 2
+    children = Document.objects.get(pk=response.json()["id"])
+    assert children.title == "My Important Document.docx"
+    assert children.content == converted_yjs
+
+    # Verify the converter was called correctly
+    mock_convert.assert_called_once_with(
+        file_content,
+        content_type=mime_types.DOCX,
+        accept=mime_types.YJS,
+    )
+
+    # The successful conversion should be tracked in PostHog
+    mock_capture.assert_any_call(
+        PosthogEventName.DOC_IMPORTED,
+        user,
+        {"content_type": mime_types.DOCX},
+    )
+
+
+@patch("core.services.converter_services.Converter.convert")
+def test_api_documents_children_create_with_docx_file_disabled(mock_convert, settings):
+    """
+    When conversion is not enabled, uploading a file should have no effect
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    settings.CONVERSION_UPLOAD_ENABLED = False
+
+    # Create a fake DOCX file
+    file_content = b"fake docx content"
+    file = BytesIO(file_content)
+    file.name = "My Important Document.docx"
+
+    parent = factories.DocumentFactory(creator=user, users=[(user, "owner")])
+
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{parent.id}/children/",
+            {
+                "file": file,
+            },
+            format="multipart",
+        )
+
+    assert response.status_code == 400
+    assert response.json() == {"file": ["file upload is not allowed"]}
+
+    # Verify the converter was not called
+    mock_convert.assert_not_called()
+
+    # No event should be tracked since the upload is rejected
+    mock_capture.assert_not_called()
+
+
+def test_api_documents_children_create_with_file_max_size_exceeded(settings):
+    """
+    The uploaded file should not exceed the maximum size in settings.
+    """
+    settings.CONVERSION_FILE_MAX_SIZE = 1  # 1 byte for test
+    settings.CONVERSION_UPLOAD_ENABLED = True
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    file = BytesIO(b"a" * (10))
+    file.name = "test.docx"
+
+    parent = factories.DocumentFactory(creator=user, users=[(user, "owner")])
+
+    response = client.post(
+        f"/api/v1.0/documents/{parent.id}/children/",
+        {
+            "file": file,
+        },
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+
+    assert response.json() == {"file": ["File size exceeds the maximum limit of 0 MB."]}
+
+
+def test_api_documents_children_create_with_file_extension_not_allowed(settings):
+    """
+    The uploaded file should not have an allowed extension.
+    """
+    settings.CONVERSION_FILE_EXTENSIONS_ALLOWED = [".docx"]
+    settings.CONVERSION_UPLOAD_ENABLED = True
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    file = BytesIO(b"fake docx content")
+    file.name = "test.md"
+
+    parent = factories.DocumentFactory(creator=user, users=[(user, "owner")])
+
+    response = client.post(
+        f"/api/v1.0/documents/{parent.id}/children/",
+        {
+            "file": file,
+        },
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "file": [
+            "File extension .md is not allowed. Allowed extensions are: ['.docx']."
+        ]
+    }

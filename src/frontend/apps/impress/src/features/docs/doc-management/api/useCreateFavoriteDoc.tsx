@@ -1,6 +1,9 @@
+import { announce } from '@react-aria/live-announcer';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
+import { syncDocInTree, useTreeContextOrNull } from '@/docs/doc-tree/utils';
 
 import { Doc } from '../types';
 
@@ -29,15 +32,28 @@ export function useCreateFavoriteDoc({
   listInvalidQueries,
 }: CreateFavoriteDocProps) {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const treeContext = useTreeContextOrNull();
+
   return useMutation<void, APIError, CreateFavoriteDocParams>({
     mutationFn: createFavoriteDoc,
-    onSuccess: () => {
+    onSuccess: (_data, { id }) => {
       listInvalidQueries?.forEach((queryKey) => {
         void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });
       });
+
+      syncDocInTree(treeContext, id, { is_favorite: true });
+
+      const message = t('Document starred successfully!');
+      announce(message, 'polite');
+
       onSuccess?.();
+    },
+    onError: () => {
+      const message = t('Failed to star the document.');
+      announce(message, 'assertive');
     },
   });
 }

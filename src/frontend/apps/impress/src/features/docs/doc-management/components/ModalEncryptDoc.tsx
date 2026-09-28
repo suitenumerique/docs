@@ -3,10 +3,10 @@ import {
   Button,
   Modal,
   ModalSize,
+  Spinner,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
-import { Spinner } from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
@@ -19,7 +19,6 @@ import {
   fetchRegisteredKeys,
   useVaultClient,
 } from '@/features/docs/doc-collaboration/vault';
-import { toBase64 } from '@/features/docs/doc-editor';
 import {
   Doc,
   EncryptionTransitionEvent,
@@ -34,6 +33,7 @@ import {
 import { useDocAccesses } from '@/features/docs/doc-share/api/useDocAccesses';
 import { useDocInvitations } from '@/features/docs/doc-share/api/useDocInvitations';
 import { useKeyboardAction } from '@/hooks';
+import { toBase64 } from '@/utils/string';
 
 import { EncryptionModalContent } from './EncryptionLayout';
 

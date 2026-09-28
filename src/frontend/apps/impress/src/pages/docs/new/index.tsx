@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 import { ReactElement, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Loading } from '@/components';
 import { LOGIN_URL, setAuthUrl, useAuth } from '@/features/auth';
@@ -17,6 +18,7 @@ import { MainLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 
 const Page: NextPageWithLayout = () => {
+  const { t } = useTranslation();
   const { setIsSkeletonVisible } = useSkeletonStore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -96,7 +98,19 @@ const Page: NextPageWithLayout = () => {
     updateDocLinkAsync,
   ]);
 
-  return <Loading />;
+  return (
+    <>
+      <Head>
+        <title>{`${t('New document')} - ${t('Docs')}`}</title>
+        <meta
+          property="og:title"
+          content={`${t('New document')} - ${t('Docs')}`}
+          key="title"
+        />
+      </Head>
+      <Loading />
+    </>
+  );
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {

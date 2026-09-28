@@ -1,107 +1,86 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
-import { t } from 'i18next';
+import { Button } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
-import { PropsWithChildren, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { Box, Icon, SeparatedSection } from '@/components';
-import { useDocStore } from '@/docs/doc-management';
-import { DocSearchModal } from '@/docs/doc-search/';
+import { Box, ButtonCloseModal, SeparatedSection } from '@/components';
+import { NewDocButton } from '@/docs/doc-management/components/NewDocButton';
+import { DocSearchButtonModal } from '@/docs/doc-search/components/DocSearchButtonModal';
 import { useAuth } from '@/features/auth';
-import { useCmdK } from '@/hooks/useCmdK';
+import { HEADER_ROW_MIN_HEIGHT, HeaderLogoLink } from '@/features/header';
+import HomeSVG from '@/icons/house-rounded.svg';
+import { useResponsiveStore } from '@/stores';
 
 import { useLeftPanelStore } from '../stores';
 
-import { LeftPanelHeaderButton } from './LeftPanelHeaderButton';
+export const LeftPanelHeader = () => {
+  const { isMobile } = useResponsiveStore();
+  const { closePanel } = useLeftPanelStore();
 
-export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
-  const { currentDoc } = useDocStore();
+  return (
+    <Box $width="100%" className="--docs--left-panel-header">
+      <Box
+        $padding={{ horizontal: 'xs' }}
+        $direction="row"
+        $align="center"
+        $gap="2xs"
+        $minHeight={HEADER_ROW_MIN_HEIGHT}
+      >
+        <HeaderLogoLink headingLevel="h1" />
+        {isMobile && (
+          <Box $margin={{ left: 'auto' }}>
+            <ButtonCloseModal
+              onClick={closePanel}
+              aria-label="Close left panel"
+            />
+          </Box>
+        )}
+      </Box>
+      <LeftPanelHeaderActions />
+    </Box>
+  );
+};
+export const LeftPanelHeaderActions = () => {
   const router = useRouter();
   const { authenticated } = useAuth();
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-
-  const openSearchModal = useCallback(() => {
-    const isEditorToolbarOpen =
-      document.getElementsByClassName('bn-formatting-toolbar').length > 0;
-    if (isEditorToolbarOpen) {
-      return;
-    }
-
-    setIsSearchModalOpen(true);
-  }, []);
-
-  const closeSearchModal = useCallback(() => {
-    setIsSearchModalOpen(false);
-  }, []);
-
-  useCmdK(openSearchModal);
-  const { togglePanel } = useLeftPanelStore();
+  const { togglePanel, closePanel } = useLeftPanelStore();
+  const { t } = useTranslation();
+  const { isMobile } = useResponsiveStore();
 
   const goToHome = () => {
     void router.push('/');
-    togglePanel();
+
+    if (isMobile) {
+      togglePanel();
+    }
   };
 
   return (
-    <>
-      <Box $width="100%" className="--docs--left-panel-header">
-        <SeparatedSection>
-          <Box
-            $padding={{ horizontal: 'sm' }}
-            $width="100%"
-            $direction="row"
-            $justify="space-between"
-            $align="center"
-          >
-            {authenticated && <LeftPanelHeaderButton />}
-            {(router.pathname !== '/' || authenticated) && (
-              <Box $direction="row" $gap="2px">
-                {router.pathname !== '/' && (
-                  <Button
-                    data-testid="home-button"
-                    onClick={goToHome}
-                    aria-label={t('Back to homepage')}
-                    size="medium"
-                    color="brand"
-                    variant="tertiary"
-                    icon={
-                      <Icon
-                        $color="inherit"
-                        iconName="house"
-                        aria-hidden="true"
-                      />
-                    }
-                  />
-                )}
-                {authenticated && (
-                  <Button
-                    data-testid="search-docs-button"
-                    onClick={openSearchModal}
-                    size="medium"
-                    color="brand"
-                    variant="tertiary"
-                    aria-label={t('Search docs')}
-                    icon={
-                      <Icon
-                        $color="inherit"
-                        iconName="search"
-                        aria-hidden="true"
-                      />
-                    }
-                  />
-                )}
-              </Box>
-            )}
-          </Box>
-        </SeparatedSection>
-        {children}
+    <SeparatedSection>
+      <Box
+        $padding={{ horizontal: 'sm' }}
+        $width="100%"
+        $direction="row"
+        $justify="space-between"
+        $align="center"
+      >
+        {authenticated && (
+          <NewDocButton onClose={() => isMobile && closePanel()} />
+        )}
+        <Box $direction="row" $gap="2px" $margin={{ left: 'auto' }}>
+          {router.pathname !== '/' && (
+            <Button
+              data-testid="home-button"
+              onClick={goToHome}
+              aria-label={t('Back to homepage')}
+              size="medium"
+              color="brand"
+              variant="tertiary"
+              icon={<HomeSVG aria-hidden="true" width={24} height={24} />}
+            />
+          )}
+          <DocSearchButtonModal />
+        </Box>
       </Box>
-      {isSearchModalOpen && (
-        <DocSearchModal
-          onClose={closeSearchModal}
-          isOpen={isSearchModalOpen}
-          doc={currentDoc}
-        />
-      )}
-    </>
+    </SeparatedSection>
   );
 };

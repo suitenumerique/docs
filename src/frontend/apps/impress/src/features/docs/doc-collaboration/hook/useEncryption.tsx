@@ -3,9 +3,7 @@ import { useEffect, useState } from 'react';
 import { getEncryptionDB } from '../encryptionDB';
 
 export type EncryptionError =
-  | 'missing_private_key'
-  | 'missing_public_key'
-  | null;
+  'missing_private_key' | 'missing_public_key' | null;
 
 export function useEncryption(
   userId?: string,

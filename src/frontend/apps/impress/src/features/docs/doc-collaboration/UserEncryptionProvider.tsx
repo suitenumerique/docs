@@ -15,9 +15,7 @@ import { useAuth } from '@/features/auth';
 import { useVaultClient } from './vault';
 
 export type EncryptionError =
-  | 'missing_private_key'
-  | 'missing_public_key'
-  | null;
+  'missing_private_key' | 'missing_public_key' | null;
 
 interface UserEncryptionContextValue {
   encryptionLoading: boolean;

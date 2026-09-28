@@ -2,18 +2,19 @@ import { WorkboxPlugin } from 'workbox-core';
 
 import { Doc, DocsResponse } from '@/docs/doc-management';
 import { LinkReach, LinkRole, Role } from '@/docs/doc-management/types';
+import { UpdateDocContentParams } from '@/features/docs/doc-management/api/useDocContentUpdate';
 
 import { DBRequest, DocsDB } from '../DocsDB';
 import { RequestSerializer } from '../RequestSerializer';
 import { SyncManager } from '../SyncManager';
 
 interface OptionsReadonly {
-  tableName: 'doc-list' | 'doc-item';
-  type: 'list' | 'item';
+  tableName: 'doc-list' | 'doc-item' | 'doc-content';
+  type: 'list' | 'item' | 'content';
 }
 
 interface OptionsMutate {
-  type: 'update' | 'delete' | 'create';
+  type: 'update' | 'delete' | 'create' | 'content-update';
 }
 
 interface OptionsSync {
@@ -51,34 +52,68 @@ export class ApiPlugin implements WorkboxPlugin {
     request,
     response,
   }) => {
-    if (response.status !== 200) {
-      return response;
-    }
+    try {
+      // For content requests, a 304 means the document hasn't changed:
+      // transparently serve the cached version from IDB.
+      if (this.options.type === 'content' && response.status === 304) {
+        const db = await DocsDB.open();
+        const entry = await db.get('doc-content', request.url);
+        db.close();
+        if (entry) {
+          return new Response(entry.content, {
+            status: 200,
+            statusText: 'OK',
+            headers: {
+              'Content-Type': 'text/plain',
+              ...(entry.etag && { ETag: entry.etag }),
+              ...(entry.lastModified && {
+                'Last-Modified': entry.lastModified,
+              }),
+            },
+          });
+        }
+      }
 
-    if (this.options.type === 'list' || this.options.type === 'item') {
-      const tableName = this.options.tableName;
-      const body = (await response.clone().json()) as DocsResponse | Doc;
-      await DocsDB.cacheResponse(request.url, body, tableName);
-    }
-
-    if (this.options.type === 'update') {
-      const db = await DocsDB.open();
-      const storedResponse = await db.get('doc-item', request.url);
-
-      if (!storedResponse || !this.initialRequest) {
+      if (response.status !== 200) {
         return response;
       }
 
-      const bodyMutate = (await this.initialRequest
-        .clone()
-        .json()) as Partial<Doc>;
+      if (this.options.type === 'list' || this.options.type === 'item') {
+        const tableName = this.options.tableName;
+        const body = (await response.clone().json()) as DocsResponse | Doc;
+        await DocsDB.cacheResponse(request.url, body, tableName);
+      } else if (this.options.type === 'content') {
+        // Cache the content response with its ETag / Last-Modified to be
+        // able to use it for conditional requests and offline access.
+        const content = await response.clone().text();
+        const etag = response.headers.get('ETag') ?? '';
+        const lastModified = response.headers.get('Last-Modified') ?? '';
+        await DocsDB.cacheResponse(
+          request.url,
+          { etag, lastModified, content },
+          'doc-content',
+        );
+      } else if (this.options.type === 'update') {
+        const db = await DocsDB.open();
+        const storedResponse = await db.get('doc-item', request.url);
 
-      const newResponse = {
-        ...storedResponse,
-        ...bodyMutate,
-      };
+        if (!storedResponse || !this.initialRequest) {
+          return response;
+        }
 
-      await DocsDB.cacheResponse(request.url, newResponse, 'doc-item');
+        const bodyMutate = (await this.initialRequest
+          .clone()
+          .json()) as Partial<Doc>;
+
+        const newResponse = {
+          ...storedResponse,
+          ...bodyMutate,
+        };
+
+        await DocsDB.cacheResponse(request.url, newResponse, 'doc-item');
+      }
+    } catch (error) {
+      console.error('SW: ApiPlugin fetchDidSucceed DB error', error);
     }
 
     return response;
@@ -100,6 +135,7 @@ export class ApiPlugin implements WorkboxPlugin {
   requestWillFetch: WorkboxPlugin['requestWillFetch'] = async ({ request }) => {
     if (
       this.options.type === 'update' ||
+      this.options.type === 'content-update' ||
       this.options.type === 'create' ||
       this.options.type === 'delete'
     ) {
@@ -107,6 +143,27 @@ export class ApiPlugin implements WorkboxPlugin {
     }
 
     await this.options.syncManager.sync();
+
+    // For content requests, add If-None-Match / If-Modified-Since from IDB
+    // so the backend can return a 304 when the document hasn't changed.
+    if (this.options.type === 'content') {
+      try {
+        const db = await DocsDB.open();
+        const entry = await db.get('doc-content', request.url);
+        db.close();
+        if (entry?.etag || entry?.lastModified) {
+          const headers = new Headers(request.headers);
+          if (entry.etag) {
+            headers.set('If-None-Match', entry.etag);
+          } else {
+            headers.set('If-Modified-Since', entry.lastModified);
+          }
+          return new Request(request, { headers });
+        }
+      } catch (error) {
+        console.error('SW: ApiPlugin requestWillFetch content error', error);
+      }
+    }
 
     return Promise.resolve(request);
   };
@@ -116,7 +173,12 @@ export class ApiPlugin implements WorkboxPlugin {
    */
   handlerDidError: WorkboxPlugin['handlerDidError'] = async ({ request }) => {
     if (!this.isFetchDidFailed) {
-      return Promise.resolve(ApiPlugin.getApiCatchHandler());
+      // it could be a plugin error, not a network error, so we try to do the request without the plugin.
+      try {
+        return await fetch(request);
+      } catch {
+        return ApiPlugin.getApiCatchHandler();
+      }
     }
 
     switch (this.options.type) {
@@ -126,12 +188,31 @@ export class ApiPlugin implements WorkboxPlugin {
         return this.handlerDidErrorDelete(request);
       case 'update':
         return this.handlerDidErrorUpdate(request);
+      case 'content-update':
+        return this.handlerDidErrorContentUpdate(request);
       case 'list':
       case 'item':
         return this.handlerDidErrorRead(this.options.tableName, request.url);
+      case 'content':
+        return this.handlerDidErrorContent(request);
     }
 
     return Promise.resolve(ApiPlugin.getApiCatchHandler());
+  };
+
+  private queueMutation = async (request: Request): Promise<void> => {
+    const requestData = (
+      await RequestSerializer.fromRequest(request)
+    ).toObject();
+    const serializeRequest: DBRequest = {
+      requestData,
+      key: `${Date.now()}`,
+    };
+    await DocsDB.cacheResponse(
+      serializeRequest.key,
+      serializeRequest,
+      'doc-mutation',
+    );
   };
 
   private handlerDidErrorCreate = async (request: Request) => {
@@ -169,7 +250,6 @@ export class ApiPlugin implements WorkboxPlugin {
     const newResponse: Doc = {
       title: '',
       id: uuid,
-      content: '',
       created_at: new Date().toISOString(),
       creator: 'dummy-id',
       deleted_at: null,
@@ -183,6 +263,7 @@ export class ApiPlugin implements WorkboxPlugin {
       abilities: {
         accesses_manage: true,
         accesses_view: true,
+        ai_proxy: true,
         ai_transform: true,
         ai_translate: true,
         attachment_upload: true,
@@ -190,16 +271,21 @@ export class ApiPlugin implements WorkboxPlugin {
         children_list: true,
         collaboration_auth: true,
         comment: true,
+        content_patch: true,
+        content_retrieve: true,
         destroy: true,
         duplicate: true,
         favorite: true,
+        formatted_content: true,
         invite_owner: true,
         link_configuration: true,
+        leave: true,
         media_auth: true,
         move: true,
         partial_update: true,
         restore: true,
         retrieve: true,
+        search: true,
         update: true,
         versions_destroy: true,
         versions_list: true,
@@ -220,10 +306,24 @@ export class ApiPlugin implements WorkboxPlugin {
       ancestors_link_role: undefined,
     };
 
+    /**
+     * Create a new document in the cache with the new id, so the client can use it while offline,
+     * and it will be updated later when the request will be synced.
+     */
     await DocsDB.cacheResponse(
       `${request.url}${uuid}/`,
       newResponse,
       'doc-item',
+    );
+
+    /**
+     * Create an empty content for the new document in the cache, so the client can use it while offline,
+     * and it will be updated later when the request will be synced.
+     */
+    await DocsDB.cacheResponse(
+      `${request.url}${uuid}/content/`,
+      { etag: '', lastModified: '', content: '' },
+      'doc-content',
     );
 
     /**
@@ -261,26 +361,14 @@ export class ApiPlugin implements WorkboxPlugin {
     /**
      * Queue the request in the cache 'doc-mutation' to sync it later.
      */
-    const requestData = (
-      await RequestSerializer.fromRequest(this.initialRequest)
-    ).toObject();
-
-    const serializeRequest: DBRequest = {
-      requestData,
-      key: `${Date.now()}`,
-    };
-
-    await DocsDB.cacheResponse(
-      serializeRequest.key,
-      serializeRequest,
-      'doc-mutation',
-    );
+    await this.queueMutation(this.initialRequest);
 
     /**
      * Delete item in the cache
      */
     const db = await DocsDB.open();
     await db.delete('doc-item', request.url);
+    await db.delete('doc-content', `${request.url}content/`);
 
     /**
      * Delete entry from the cache list.
@@ -327,20 +415,7 @@ export class ApiPlugin implements WorkboxPlugin {
     /**
      * Queue the request in the cache 'doc-mutation' to sync it later.
      */
-    const requestData = (
-      await RequestSerializer.fromRequest(this.initialRequest)
-    ).toObject();
-
-    const serializeRequest: DBRequest = {
-      requestData,
-      key: `${Date.now()}`,
-    };
-
-    await DocsDB.cacheResponse(
-      serializeRequest.key,
-      serializeRequest,
-      'doc-mutation',
-    );
+    await this.queueMutation(this.initialRequest);
 
     /**
      * Update the cache item with the new data.
@@ -416,6 +491,58 @@ export class ApiPlugin implements WorkboxPlugin {
       headers: {
         'Content-Type': 'application/json',
       },
+    });
+  };
+
+  private handlerDidErrorContent = async (request: Request) => {
+    const db = await DocsDB.open();
+    const entry = await db.get('doc-content', request.url);
+    db.close();
+
+    if (!entry) {
+      return Promise.resolve(ApiPlugin.getApiCatchHandler());
+    }
+
+    return new Response(entry.content, {
+      status: 200,
+      statusText: 'OK',
+      headers: {
+        'Content-Type': 'text/plain',
+        ...(entry.etag && { ETag: entry.etag }),
+        ...(entry.lastModified && { 'Last-Modified': entry.lastModified }),
+      },
+    });
+  };
+
+  /**
+   * When the content update fails, we save the new content in the cache, and we will sync it later with the SyncManager.
+   * We return a 204 to the client to say that the update is successful, and we update the content in the cache so the
+   * client can see the new content while offline.
+   */
+  private handlerDidErrorContentUpdate = async (request: Request) => {
+    const db = await DocsDB.open();
+    const entry = await db.get('doc-content', request.url);
+    db.close();
+
+    if (!entry || !this.initialRequest) {
+      return new Response('Not found', { status: 404 });
+    }
+
+    await this.queueMutation(this.initialRequest);
+
+    const bodyMutate = (await this.initialRequest
+      .clone()
+      .json()) as Partial<UpdateDocContentParams>;
+    const newContent = bodyMutate.content ?? entry.content;
+    await DocsDB.cacheResponse(
+      request.url,
+      { etag: '', lastModified: '', content: newContent },
+      'doc-content',
+    );
+
+    return new Response(null, {
+      status: 204,
+      statusText: 'No Content',
     });
   };
 }

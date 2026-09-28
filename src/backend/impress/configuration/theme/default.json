@@ -3,8 +3,10 @@
     "default": {
       "logo": {
         "src": "/assets/icon-docs.svg",
-        "width": "54px",
         "alt": "Docs Logo",
+        "width": 54,
+        "height": 63,
+        "style": { "width": "54px", "height": "auto" },
         "withTitle": true
       },
       "externalLinks": [
@@ -124,6 +126,58 @@
           "href": "https://github.com/suitenumerique/docs/blob/main/LICENSE"
         }
       }
+    }
+  },
+  "home": {
+    "with-proconnect": false,
+    "icon-banner": {
+      "src": "/assets/icon-docs.svg",
+      "width": 64,
+      "height": 74,
+      "style": {
+        "width": "64px",
+        "height": "auto"
+      },
+      "alt": ""
+    }
+  },
+  "header": {
+    "logo": {},
+    "icon": {
+      "src": "/assets/icon-docs.svg",
+      "width": 40,
+      "height": 40,
+      "style": {
+        "width": "40px",
+        "height": "auto"
+      },
+      "alt": "",
+      "withTitle": true
+    }
+  },
+  "favicon": {
+    "light": {
+      "href": "/assets/favicon-light.png",
+      "type": "image/png"
+    },
+    "dark": {
+      "href": "/assets/favicon-dark.png",
+      "type": "image/png"
+    }
+  },
+  "onboarding": {
+    "enabled": true,
+    "learn_more_url": "",
+    "ready_template_url": ""
+  },
+  "help": {
+    "documentation_url": "",
+    "support_mailto": "",
+    "legal_links": {
+      "personal_data": "",
+      "terms_of_use": "",
+      "accessibility_statement": "",
+      "legal_notice": ""
     }
   }
 }

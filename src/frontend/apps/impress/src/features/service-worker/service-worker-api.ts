@@ -63,6 +63,47 @@ registerRoute(
 );
 
 registerRoute(
+  ({ url }) =>
+    isApiUrl(url.href) && /\/documents\/[a-z0-9-]+\/content\/$/.test(url.href),
+  new NetworkOnly({
+    plugins: [
+      new ApiPlugin({
+        tableName: 'doc-content',
+        type: 'content',
+        syncManager,
+      }),
+      new OfflinePlugin(),
+    ],
+  }),
+  'GET',
+);
+
+/**
+ * Mutate routes for the content update
+ * It will save in cache the request if the content update fails, and will retry
+ * to sync it later with the SyncManager
+ */
+registerRoute(
+  ({ url }) =>
+    isApiUrl(url.href) && /\/documents\/[a-z0-9-]+\/content\/$/.test(url.href),
+  new NetworkOnly({
+    plugins: [
+      new ApiPlugin({
+        type: 'content-update',
+        syncManager,
+      }),
+      new OfflinePlugin(),
+    ],
+  }),
+  'PATCH',
+);
+
+/**
+ * Mutate routes for the document update
+ * It will save in cache the request if the document update fails, and will retry
+ * to sync it later with the SyncManager
+ */
+registerRoute(
   ({ url }) => isDocumentApiUrl(url),
   new NetworkOnly({
     plugins: [

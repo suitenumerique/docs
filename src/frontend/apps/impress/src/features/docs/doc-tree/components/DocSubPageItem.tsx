@@ -1,16 +1,16 @@
 import {
-  TreeViewDataType,
+  Spinner,
   TreeViewItem,
   TreeViewNodeProps,
+  TreeViewNodeTypeEnum,
   useTreeContext,
-} from '@gouvfr-lasuite/ui-kit';
-import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+} from '@gouvfr-lasuite/ui-components';
+import { useRouter } from 'next/router';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, BoxButton, Icon, Text } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
+import { Box, StyledLink, Text } from '@/components';
 import {
   Doc,
   DocIcon,
@@ -19,6 +19,9 @@ import {
 } from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
+
+import { useTreeItemActions } from '../hooks/useTreeItemActions';
+import { isDocNode } from '../utils';
 
 import SubPageIcon from './../assets/sub-page-logo.svg';
 import { DocTreeItemActions } from './DocTreeItemActions';
@@ -34,27 +37,108 @@ const ItemTextCss = css`
 `;
 
 export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
+  if (props.node.data.value.nodeType === TreeViewNodeTypeEnum.VIEW_MORE) {
+    return <DocSubPageLoadMore {...props} />;
+  }
+
+  if (!isDocNode(props.node.data.value)) {
+    return <TreeViewItem {...props} />;
+  }
+
+  return <DocSubPageItemContent {...props} />;
+};
+
+const DocSubPageLoadMore = (props: TreeViewNodeProps<Doc>) => {
+  const treeContext = useTreeContext<Doc>();
+  const { t } = useTranslation();
+  const loaderRef = useRef<HTMLDivElement>(null);
+  const inFlightRef = useRef<boolean>(false);
+
+  /**
+   * Use IntersectionObserver to trigger loading more children when the "Load More" item comes into view.
+   * This allows for infinite scrolling of child nodes without needing a "Load More" button click.
+   * The observer is disconnected when the component unmounts to prevent memory leaks.
+   */
+  useEffect(() => {
+    const el = loaderRef.current;
+    const parentKey = props.node.data.parentKey;
+    if (!el || !parentKey) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || inFlightRef.current) {
+          return;
+        }
+        inFlightRef.current = true;
+        void treeContext?.treeData.handleLoadChildren(parentKey).finally(() => {
+          inFlightRef.current = false;
+        });
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <Box
+      ref={loaderRef}
+      $align="center"
+      $justify="center"
+      $padding={{ vertical: 'xs' }}
+      role="status"
+      aria-label={t('Loading more documents')}
+    >
+      <Spinner size="sm" aria-hidden="true" />
+    </Box>
+  );
+};
+
+const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
   const doc = props.node.data.value as Doc;
   const treeContext = useTreeContext<Doc>();
   const { untitledDocument } = useTrans();
   const { node } = props;
-  const { spacingsTokens } = useCunninghamTheme();
-  const { isDesktop } = useResponsiveStore();
+  const { isMobile } = useResponsiveStore();
   const { t } = useTranslation();
-
-  const [menuOpen, setMenuOpen] = useState(false);
-  const isSelectedNow = treeContext?.treeData.selectedNode?.id === doc.id;
-
   const router = useRouter();
-  const { togglePanel } = useLeftPanelStore();
+  const { closePanel } = useLeftPanelStore();
 
   const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title || '');
   const displayTitle = titleWithoutEmoji || untitledDocument;
 
-  const handleActivate = () => {
-    treeContext?.treeData.setSelectedNode(doc);
-    router.push(`/docs/${doc.id}`);
-  };
+  const itemRef = useRef<HTMLAnchorElement>(null);
+
+  const focusRow = useCallback(() => {
+    // Keep react-arborist's notion of the focused node in sync…
+    node.focus();
+    /**
+     * …but move the DOM focus ourselves. The library only does it from an
+     * effect keyed on `isFocused` *changing*, and it is already true whenever
+     * focus sits on one of this row's own buttons — so `node.focus()` alone
+     * would leave focus right where it is.
+     */
+    itemRef.current?.closest<HTMLElement>('.c__tree-view--row')?.focus();
+  }, [node]);
+
+  /**
+   * F2 / arrows step through the item's actions (emoji button, then the toolbar
+   * buttons) and Escape leaves them; the very first F2 is handled by the
+   * ui-components row itself (row → emoji button).
+   */
+  const {
+    areActionsVisible,
+    onMenuOpenChange,
+    handleActionsKeyDown,
+    itemProps,
+  } = useTreeItemActions({
+    isActive: node.isFocused,
+    focusItem: focusRow,
+  });
 
   const afterCreate = (createdDoc: Doc) => {
     const actualChildren = node.data.children ?? [];
@@ -62,16 +146,14 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
     if (actualChildren.length === 0) {
       treeContext?.treeData
         .handleLoadChildren(node?.data.value.id)
-        .then((allChildren) => {
+        .then(() => {
           node.open();
 
-          router.push(`/docs/${createdDoc.id}`);
-          treeContext?.treeData.setChildren(
-            node.data.value.id,
-            allChildren as TreeViewDataType<Doc>[],
-          );
-          treeContext?.treeData.setSelectedNode(createdDoc);
-          togglePanel();
+          void router.push(`/docs/${createdDoc.id}`);
+
+          if (isMobile) {
+            closePanel();
+          }
         })
         .catch(console.error);
     } else {
@@ -83,68 +165,77 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       };
       treeContext?.treeData.addChild(node.data.value.id, newDoc);
       node.open();
-      router.push(`/docs/${createdDoc.id}`);
-      treeContext?.treeData.setSelectedNode(newDoc);
-      togglePanel();
+      void router.push(`/docs/${createdDoc.id}`);
+      if (isMobile) {
+        closePanel();
+      }
     }
   };
 
-  const docTitle = doc.title || untitledDocument;
-  const hasChildren = (doc.children?.length || 0) > 0;
-  const isExpanded = node.isOpen;
-  const isSelected = isSelectedNow;
-  const ariaLabel = docTitle;
-  const isDisabled = !!doc.deleted_at;
-  const actionsRef = useRef<HTMLDivElement>(null);
-  const buttonOptionRef = useRef<HTMLDivElement | null>(null);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // F2: focus first action button
-    const shouldOpenActions = !menuOpen && node.isFocused;
-    if (e.key === 'F2' && shouldOpenActions) {
-      buttonOptionRef.current?.focus();
-      e.stopPropagation();
-      return;
-    }
-  };
-
-  const handleActionsOpenChange = (isOpen: boolean) => {
-    setMenuOpen(isOpen);
-
-    // When the menu closes (via Escape or activating an option),
-    // return focus to the tree item so focus is not lost.
-    if (!isOpen) {
-      node.focus();
-    }
-  };
+  const isCurrentPage = router.query?.id === doc.id;
+  const isDeleted = !!doc.deleted_at;
 
   return (
-    <Box
+    <StyledLink
+      {...itemProps}
+      ref={itemRef}
       className="--docs-sub-page-item"
-      draggable={doc.abilities.move && isDesktop}
-      $position="relative"
-      role="treeitem"
-      aria-label={ariaLabel}
-      aria-selected={isSelected}
-      aria-expanded={hasChildren ? isExpanded : undefined}
-      aria-disabled={isDisabled}
-      onKeyDown={handleKeyDown}
+      /**
+       * Conflict with the react-arborist DND.
+       * It should be disabled to have the DND working properly.
+       */
+      draggable={false}
+      href={`/docs/${doc.id}`}
+      tabIndex={-1}
+      aria-label={
+        isDeleted
+          ? t('{{title}} (deleted)', { title: displayTitle })
+          : t('Open document {{title}}', { title: displayTitle })
+      }
+      aria-current={isCurrentPage ? 'page' : undefined}
+      data-testid={`doc-sub-page-item-${doc.id}`}
+      onKeyDown={handleActionsKeyDown}
+      aria-disabled={isDeleted}
+      onClick={(e) => {
+        if (isDeleted) {
+          e.preventDefault();
+          return;
+        }
+
+        if (isMobile) {
+          closePanel();
+        }
+      }}
+      /**
+       * Prevent the default click behavior when clicking on the expand/collapse arrow to avoid
+       * navigating to the document page.
+       * This allows users to expand/collapse the tree node without triggering navigation,
+       * while still allowing clicks on the rest of the item to navigate as expected.
+       */
+      onClickCapture={(e) => {
+        if ((e.target as HTMLElement).closest('.c__tree-view--node__arrow')) {
+          e.preventDefault();
+        }
+      }}
       $css={css`
-        background-color: var(--c--globals--colors--gray-000);
-        .light-doc-item-actions {
-          display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
-          right: var(--c--globals--spacings--0);
+        background-color: var(--c--contextuals--background--surface--primary);
+        text-align: left;
+        display: block;
+        width: 100%;
+        border-radius: var(--c--globals--spacings--st);
+        .c__tree-view--node {
+          padding-right: var(--c--globals--spacings--xxxs);
+          height: 32px;
         }
         .c__tree-view--node.isFocused {
           outline: none !important;
-          box-shadow: 0 0 0 2px var(--c--globals--colors--brand-500) !important;
           border-radius: var(--c--globals--spacings--st);
-          .light-doc-item-actions {
-            display: flex;
-          }
         }
-        /* Remove visual focus from the tree item when focus is on actions or emoji button */
-        &:has(.light-doc-item-actions *:focus, .--docs--doc-icon:focus-visible)
+        /* Only one focus ring at a time: the toolbar and emoji draw their own. */
+        &:has(
+            .doc-tree-root-item-actions *:focus,
+            .--docs--doc-icon:focus-visible
+          )
           .c__tree-view--node.isFocused {
           box-shadow: none !important;
         }
@@ -152,22 +243,13 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           background-color: var(
             --c--contextuals--background--semantic--gray--tertiary
           );
-          border-radius: var(--c--globals--spacings--st);
-          .light-doc-item-actions {
-            display: flex;
-          }
-        }
-        &:focus-within {
-          .light-doc-item-actions {
-            display: flex;
-          }
         }
         .row.preview & {
           background-color: inherit;
         }
       `}
     >
-      <TreeViewItem {...props} onClick={handleActivate}>
+      <TreeViewItem {...props}>
         <DocIcon
           emoji={emoji}
           withEmojiPicker={doc.abilities.partial_update}
@@ -181,6 +263,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           docId={doc.id}
           title={doc.title}
           buttonProps={{
+            tabIndex: -1,
             $css: css`
               &:focus-visible {
                 outline: 2px solid var(--c--globals--colors--brand-500);
@@ -192,68 +275,24 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
         <Box
           $direction="row"
           $align="center"
-          className="light-doc-item-actions actions"
-          role="toolbar"
-          aria-label={`${t('Actions for {{title}}', { title: docTitle })}`}
-          $css={css`
-            margin-left: auto;
-            order: 2;
-          `}
+          $gap="xs"
+          $minHeight="24px"
+          $minWidth="0"
+          $width="100%"
+          $overflow="hidden"
         >
+          <Text $css={ItemTextCss} $size="sm">
+            {displayTitle}
+          </Text>
+        </Box>
+        {areActionsVisible && (
           <DocTreeItemActions
             doc={doc}
-            isOpen={menuOpen}
-            onOpenChange={handleActionsOpenChange}
-            parentId={node.data.parentKey}
+            onOpenChange={onMenuOpenChange}
             onCreateSuccess={afterCreate}
-            actionsRef={actionsRef}
-            buttonOptionRef={buttonOptionRef}
           />
-        </Box>
-        <BoxButton
-          onClick={(e) => {
-            e.stopPropagation();
-            handleActivate();
-          }}
-          $width="100%"
-          $direction="row"
-          $gap={spacingsTokens['xs']}
-          $align="center"
-          $minHeight="24px"
-          data-testid={`doc-sub-page-item-${doc.id}`}
-          aria-label={`${t('Open document {{title}}', { title: docTitle })}`}
-          $css={css`
-            text-align: left;
-            min-width: 0;
-          `}
-        >
-          <Box
-            $direction="row"
-            $align="center"
-            $css={css`
-              display: flex;
-              flex-direction: row;
-              width: 100%;
-              min-width: 0;
-              gap: 0.5rem;
-              align-items: center;
-              overflow: hidden;
-            `}
-          >
-            <Text $css={ItemTextCss} $size="sm">
-              {displayTitle}
-            </Text>
-            {doc.nb_accesses_direct >= 1 && (
-              <Icon
-                variant="filled"
-                iconName="group"
-                $size="md"
-                aria-hidden="true"
-              />
-            )}
-          </Box>
-        </BoxButton>
+        )}
       </TreeViewItem>
-    </Box>
+    </StyledLink>
   );
 };

@@ -14,7 +14,7 @@ from core import factories
 pytestmark = pytest.mark.django_db
 
 
-def get_ydoc_with_mages(image_keys):
+def get_ydoc_with_images(image_keys):
     """Return a ydoc from text for testing purposes."""
     ydoc = pycrdt.Doc()
     fragment = pycrdt.XmlFragment(
@@ -36,7 +36,7 @@ def test_api_documents_update_new_attachment_keys_anonymous(django_assert_num_qu
     """
     image_keys = [f"{uuid4()!s}/attachments/{uuid4()!s}.png" for _ in range(4)]
     document = factories.DocumentFactory(
-        content=get_ydoc_with_mages(image_keys[:1]),
+        content=get_ydoc_with_images(image_keys[:1]),
         attachments=[image_keys[0]],
         link_reach="public",
         link_role="editor",
@@ -47,13 +47,13 @@ def test_api_documents_update_new_attachment_keys_anonymous(django_assert_num_qu
     factories.DocumentFactory(attachments=[image_keys[3]], link_reach="restricted")
     expected_keys = {image_keys[i] for i in [0, 1]}
 
-    with django_assert_num_queries(11):
-        response = APIClient().put(
-            f"/api/v1.0/documents/{document.id!s}/",
-            {"content": get_ydoc_with_mages(image_keys), "websocket": True},
+    with django_assert_num_queries(9):
+        response = APIClient().patch(
+            f"/api/v1.0/documents/{document.id!s}/content/",
+            {"content": get_ydoc_with_images(image_keys)},
             format="json",
         )
-    assert response.status_code == 200
+    assert response.status_code == 204
 
     document.refresh_from_db()
     assert set(document.attachments) == expected_keys
@@ -61,12 +61,12 @@ def test_api_documents_update_new_attachment_keys_anonymous(django_assert_num_qu
     # Check that the db query to check attachments readability for extracted
     # keys is not done if the content changes but no new keys are found
     with django_assert_num_queries(7):
-        response = APIClient().put(
-            f"/api/v1.0/documents/{document.id!s}/",
-            {"content": get_ydoc_with_mages(image_keys[:2]), "websocket": True},
+        response = APIClient().patch(
+            f"/api/v1.0/documents/{document.id!s}/content/",
+            {"content": get_ydoc_with_images(image_keys[:2]), "websocket": True},
             format="json",
         )
-    assert response.status_code == 200
+    assert response.status_code == 204
 
     document.refresh_from_db()
     assert len(document.attachments) == 2
@@ -87,7 +87,7 @@ def test_api_documents_update_new_attachment_keys_authenticated(
 
     image_keys = [f"{uuid4()!s}/attachments/{uuid4()!s}.png" for _ in range(5)]
     document = factories.DocumentFactory(
-        content=get_ydoc_with_mages(image_keys[:1]),
+        content=get_ydoc_with_images(image_keys[:1]),
         attachments=[image_keys[0]],
         users=[(user, "editor")],
     )
@@ -98,13 +98,13 @@ def test_api_documents_update_new_attachment_keys_authenticated(
     factories.DocumentFactory(attachments=[image_keys[4]], users=[user])
     expected_keys = {image_keys[i] for i in [0, 1, 2, 4]}
 
-    with django_assert_num_queries(12):
-        response = client.put(
-            f"/api/v1.0/documents/{document.id!s}/",
-            {"content": get_ydoc_with_mages(image_keys)},
+    with django_assert_num_queries(10):
+        response = client.patch(
+            f"/api/v1.0/documents/{document.id!s}/content/",
+            {"content": get_ydoc_with_images(image_keys)},
             format="json",
         )
-    assert response.status_code == 200
+    assert response.status_code == 204
 
     document.refresh_from_db()
     assert set(document.attachments) == expected_keys
@@ -112,12 +112,12 @@ def test_api_documents_update_new_attachment_keys_authenticated(
     # Check that the db query to check attachments readability for extracted
     # keys is not done if the content changes but no new keys are found
     with django_assert_num_queries(8):
-        response = client.put(
-            f"/api/v1.0/documents/{document.id!s}/",
-            {"content": get_ydoc_with_mages(image_keys[:2])},
+        response = client.patch(
+            f"/api/v1.0/documents/{document.id!s}/content/",
+            {"content": get_ydoc_with_images(image_keys[:2])},
             format="json",
         )
-    assert response.status_code == 200
+    assert response.status_code == 204
 
     document.refresh_from_db()
     assert len(document.attachments) == 4
@@ -135,19 +135,19 @@ def test_api_documents_update_new_attachment_keys_duplicate():
     image_key1 = f"{uuid4()!s}/attachments/{uuid4()!s}.png"
     image_key2 = f"{uuid4()!s}/attachments/{uuid4()!s}.png"
     document = factories.DocumentFactory(
-        content=get_ydoc_with_mages([image_key1]),
+        content=get_ydoc_with_images([image_key1]),
         attachments=[image_key1],
         users=[(user, "editor")],
     )
 
     factories.DocumentFactory(attachments=[image_key2], users=[user])
 
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/",
-        {"content": get_ydoc_with_mages([image_key1, image_key2, image_key2])},
+    response = client.patch(
+        f"/api/v1.0/documents/{document.id!s}/content/",
+        {"content": get_ydoc_with_images([image_key1, image_key2, image_key2])},
         format="json",
     )
-    assert response.status_code == 200
+    assert response.status_code == 204
 
     document.refresh_from_db()
     assert len(document.attachments) == 2

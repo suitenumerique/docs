@@ -1,7 +1,4 @@
-import {
-  VariantType,
-  useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import {
   UseMutationOptions,
   useMutation,
@@ -11,14 +8,14 @@ import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { toBase64 } from '@/docs/doc-editor';
-import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
+import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning/api/useDocVersions';
+import { toBase64 } from '@/utils/string';
 
 import { useProviderStore } from '../stores';
 import { Doc } from '../types';
 
+import { useDocContentUpdate } from './useDocContentUpdate';
 import { KEY_LIST_DOC } from './useDocs';
-import { useUpdateDoc } from './useUpdateDoc';
 
 interface DuplicateDocPayload {
   docId: string;
@@ -62,7 +59,7 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
   const { t } = useTranslation();
   const { provider } = useProviderStore();
 
-  const { mutateAsync: updateDoc } = useUpdateDoc({
+  const { mutateAsync: updateDocContent } = useDocContentUpdate({
     listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
   });
 
@@ -75,15 +72,13 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
         provider.document.guid === variables.docId;
 
       if (canSave) {
-        const state = Y.encodeStateAsUpdate(provider.document);
-
-        if (state) {
-          await updateDoc({
-            id: variables.docId,
-            content: toBase64(state),
-            contentEncrypted: false,
-          });
-        }
+        // A plain save: the server refuses it for an encrypted document
+        // rather than storing its content in clear
+        await updateDocContent({
+          id: variables.docId,
+          content: toBase64(Y.encodeStateAsUpdate(provider.document)),
+          contentEncrypted: false,
+        });
       }
 
       return await duplicateDoc(variables);
@@ -93,14 +88,16 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
         queryKey: [KEY_LIST_DOC],
       });
 
-      toast(t('Document duplicated successfully!'), VariantType.SUCCESS, {
+      const message = t('Document duplicated successfully!');
+      toast(message, VariantType.SUCCESS, {
         duration: 3000,
       });
 
       void options?.onSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast(t('Failed to duplicate the document...'), VariantType.ERROR, {
+      const message = t('Failed to duplicate the document...');
+      toast(message, VariantType.ERROR, {
         duration: 3000,
       });
 

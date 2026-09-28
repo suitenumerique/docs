@@ -5,7 +5,7 @@ import { APIError, errorCauses, fetchAPI } from '@/api';
 import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import { Access, Doc, KEY_DOC, KEY_LIST_DOC } from '@/docs/doc-management';
 import { fetchRegisteredKeys } from '@/features/docs/doc-collaboration/vault';
-import { toBase64 } from '@/features/docs/doc-editor';
+import { toBase64 } from '@/utils/string';
 
 import { KEY_LIST_DOC_ACCESSES } from './useDocAccesses';
 

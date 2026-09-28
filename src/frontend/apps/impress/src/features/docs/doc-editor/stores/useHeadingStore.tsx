@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import isEqual from 'lodash/isEqual';
 import { create } from 'zustand';
 
 import { DocsBlockNoteEditor, HeadingBlock } from '../types';
@@ -47,7 +47,7 @@ export const useHeadingStore = create<UseHeadingStore>((set, get) => ({
         ),
       })) as unknown as HeadingBlock[];
 
-    if (!_.isEqual(get().headings, headingBlocks)) {
+    if (!isEqual(get().headings, headingBlocks)) {
       set(() => ({ headings: headingBlocks }));
     }
   },

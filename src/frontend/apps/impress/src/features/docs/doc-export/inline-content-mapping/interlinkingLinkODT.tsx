@@ -6,7 +6,7 @@ import { DocsExporterODT } from '../types';
 
 export const inlineContentMappingInterlinkingLinkODT: DocsExporterODT['mappings']['inlineContentMapping']['interlinkingLinkInline'] =
   (inline) => {
-    if (!inline.props.docId) {
+    if (!inline.props.docId || !inline.props.title || inline.props.disabled) {
       return null;
     }
 

@@ -1,50 +1,73 @@
-import { codeBlockOptions } from '@blocknote/code-block';
+import { syntaxHighlighter } from '@blocknote/code-block';
 import {
   BlockNoteSchema,
-  createCodeBlockSpec,
   defaultBlockSpecs,
   defaultInlineContentSpecs,
   withPageBreak,
 } from '@blocknote/core';
 import { CommentsExtension } from '@blocknote/core/comments';
 import '@blocknote/core/fonts/inter.css';
-import * as locales from '@blocknote/core/locales';
+import * as localesBN from '@blocknote/core/locales';
+import { withCollaboration } from '@blocknote/core/yjs';
+import {
+  createReactDiagramBlockSpec,
+  locales as diagramLocales,
+} from '@blocknote/diagram-block';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
-import { useCreateBlockNote } from '@blocknote/react';
+import {
+  createReactInlineMathSpec,
+  createReactMathBlockSpec,
+  locales as mathLocales,
+} from '@blocknote/math-block';
+import {
+  FloatingComposerController,
+  FloatingThreadController,
+  ThreadsSidebar,
+  useCreateBlockNote,
+} from '@blocknote/react';
+import { FindAndReplace } from '@tiptap/extension-find-and-replace';
 import { useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 import type { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
+import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import {
-  Doc,
-  SwitchableProvider,
-  useProviderStore,
-} from '@/docs/doc-management';
+  DocsCommentsStyle,
+  useCommentSidebarStore,
+  useComments,
+} from '@/docs/doc-comments';
+import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
+import { Doc, SwitchableProvider } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
+import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
+import { useAnalytics } from '@/libs/Analytics';
 
+import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
 import {
   useHeadings,
   useSaveDoc,
+  useScrollToBlockAnchor,
   useShortcuts,
   useUploadFile,
   useUploadStatus,
 } from '../hook';
 import { useEditorStore } from '../stores';
-import { cssEditor } from '../styles';
+import { DocsEditorStyle } from '../styles';
 import { DocsBlockNoteEditor } from '../types';
-import { randomColor } from '../utils';
+import { randomColor, sanitizeColor } from '../utils';
 
+import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
+import { DocsSideMenu } from './DocsSideMenu/DocsSideMenu';
 import { EncryptedDocBanner } from './EncryptedDocBanner';
 import { EncryptionProvider } from './EncryptionProvider';
-import { cssComments, useComments } from './comments/';
 import {
   AccessibleImageBlock,
   AudioBlock,
@@ -53,13 +76,15 @@ import {
   UploadLoaderBlock,
   VideoBlock,
 } from './custom-blocks';
-import {
-  InterlinkingLinkInlineContent,
-  InterlinkingSearchInlineContent,
-} from './custom-inline-content';
+const AIMenu = BlockNoteAI?.AIMenu;
+const AIMenuController = BlockNoteAI?.AIMenuController;
+const useAI = BlockNoteAI?.useAI;
+const localesBNAI = BlockNoteAI?.localesAI || {};
+import { createSafeCodeBlockSpec } from './custom-blocks/CodeBlock';
+import { InterlinkingLinkInlineContent } from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
 
-const multiColumnLocales = XLMultiColumn?.locales;
+const localesBNMultiColumn = XLMultiColumn?.locales;
 const withMultiColumn = XLMultiColumn?.withMultiColumn;
 
 const baseBlockNoteSchema = withPageBreak(
@@ -68,16 +93,18 @@ const baseBlockNoteSchema = withPageBreak(
       ...defaultBlockSpecs,
       audio: AudioBlock(),
       callout: CalloutBlock(),
-      codeBlock: createCodeBlockSpec(codeBlockOptions),
+      codeBlock: createSafeCodeBlockSpec(),
+      diagram: createReactDiagramBlockSpec(),
       image: AccessibleImageBlock(),
+      mathBlock: createReactMathBlockSpec(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
       video: VideoBlock(),
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
-      interlinkingSearchInline: InterlinkingSearchInlineContent,
       interlinkingLinkInline: InterlinkingLinkInlineContent,
+      math: createReactInlineMathSpec(),
     },
   }),
 );
@@ -98,26 +125,35 @@ export const BlockNoteEditor = ({
 }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
-  const { t } = useTranslation();
   const { themeTokens } = useCunninghamTheme();
-  const { isSynced: isConnectedToCollabServer } = useProviderStore();
   const refEditorContainer = useRef<HTMLDivElement>(null);
-  const canSeeComment = doc.abilities.comment;
-  // Determine if comments should be visible in the UI
-  const showComments = canSeeComment;
-
   useSaveDoc(
     doc.id,
     provider.document,
-    isConnectedToCollabServer,
     doc.is_encrypted,
     documentEncryptionSettings,
   );
-  const { i18n } = useTranslation();
-  let lang = i18n.resolvedLanguage;
-  if (!lang || !(lang in locales)) {
-    lang = 'en';
-  }
+
+  const { i18n, t } = useTranslation();
+  const langLocalesBN =
+    !i18n.resolvedLanguage || !(i18n.resolvedLanguage in localesBN)
+      ? DEFAULT_LOCALE
+      : i18n.resolvedLanguage;
+  const langLocalesBNMultiColumn =
+    !i18n.resolvedLanguage ||
+    !localesBNMultiColumn ||
+    !(i18n.resolvedLanguage in localesBNMultiColumn)
+      ? DEFAULT_LOCALE
+      : i18n.resolvedLanguage;
+  const langLocalesBNAI =
+    !i18n.resolvedLanguage || !(i18n.resolvedLanguage in localesBNAI)
+      ? DEFAULT_LOCALE
+      : i18n.resolvedLanguage;
+  // The math and diagram blocks ship the same set of locales.
+  const langLocalesBNMathDiagram =
+    !i18n.resolvedLanguage || !(i18n.resolvedLanguage in mathLocales)
+      ? DEFAULT_LOCALE
+      : i18n.resolvedLanguage;
 
   const encryptedSymmetricKey =
     documentEncryptionSettings?.encryptedSymmetricKey;
@@ -125,16 +161,37 @@ export const BlockNoteEditor = ({
     doc.id,
     encryptedSymmetricKey,
   );
+  const conf = useConfig().data;
+  const { isFeatureFlagActivated } = useAnalytics();
+  // The AI proxy sends the content to the server in clear, which an encrypted
+  // document must never do.
+  const aiBlockNoteAllowed = !!(
+    !doc.is_encrypted &&
+    conf?.AI_FEATURE_ENABLED &&
+    conf?.AI_FEATURE_BLOCKNOTE_ENABLED &&
+    isFeatureFlagActivated(AI_FEATURE_FLAG) &&
+    doc.abilities?.ai_proxy
+  );
+  const aiExtension = useAI?.(doc.id, aiBlockNoteAllowed);
 
   const collabName = user?.full_name || user?.email;
   const cursorName = collabName || t('Anonymous');
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
+  // Comments
+  const canSeeComment = doc.abilities.comment;
+  const showComments = canSeeComment; // Determine if comments should be visible in the UI
   const { resolveUsers, threadStore } = useComments(
     doc.id,
     canSeeComment,
     user,
   );
+
+  // Comment sidebar
+  const { threadsSidebarTarget, filter: threadsSidebarFilter } =
+    useCommentSidebarStore();
+  const { activePanel, isPanelOpen } = useRightPanelStore();
+  const isCommentSideBarOpen = isPanelOpen && activePanel === 'comments';
 
   const currentUserAvatarUrl = useMemo(() => {
     if (canSeeComment) {
@@ -143,7 +200,7 @@ export const BlockNoteEditor = ({
   }, [canSeeComment, collabName, themeTokens?.font?.families?.base]);
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
-    {
+    withCollaboration({
       collaboration: {
         provider: provider as { awareness?: Awareness | undefined },
         fragment: provider.document.getXmlFragment('document-store'),
@@ -158,12 +215,13 @@ export const BlockNoteEditor = ({
          */
         renderCursor: (user: { color: string; name: string }) => {
           const cursorElement = document.createElement('span');
+          const safeColor = sanitizeColor(user.color);
 
           cursorElement.classList.add('collaboration-cursor-custom__base');
           const caretElement = document.createElement('span');
           caretElement.classList.add('collaboration-cursor-custom__caret');
           caretElement.setAttribute('spellcheck', `false`);
-          caretElement.setAttribute('style', `background-color: ${user.color}`);
+          caretElement.setAttribute('style', `background-color: ${safeColor}`);
 
           if (showCursorLabels === 'always') {
             cursorElement.setAttribute('data-active', '');
@@ -175,7 +233,7 @@ export const BlockNoteEditor = ({
           labelElement.setAttribute('spellcheck', `false`);
           labelElement.setAttribute(
             'style',
-            `background-color: ${user.color};border: 1px solid ${user.color};`,
+            `background-color: ${safeColor};border: 1px solid ${safeColor};`,
           );
           labelElement.insertBefore(document.createTextNode(user.name), null);
 
@@ -189,11 +247,22 @@ export const BlockNoteEditor = ({
         },
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
+      dropCursor: {
+        color: 'var(--c--contextuals--background--semantic--brand--tertiary)',
+      },
       dictionary: {
-        ...locales[lang as keyof typeof locales],
-        ...(multiColumnLocales && {
+        ...localesBN[langLocalesBN as keyof typeof localesBN],
+        math: mathLocales[langLocalesBNMathDiagram as keyof typeof mathLocales],
+        diagram:
+          diagramLocales[
+            langLocalesBNMathDiagram as keyof typeof diagramLocales
+          ],
+        ...(localesBNMultiColumn && {
           multi_column:
-            multiColumnLocales[lang as keyof typeof multiColumnLocales],
+            localesBNMultiColumn[
+              langLocalesBNMultiColumn as keyof typeof localesBNMultiColumn
+            ],
+          ai: localesBNAI?.[langLocalesBNAI as keyof typeof localesBNAI],
         }),
       },
       pasteHandler: ({ event, defaultPasteHandler }) => {
@@ -216,19 +285,42 @@ export const BlockNoteEditor = ({
 
         return defaultPasteHandler();
       },
-      extensions: [CommentsExtension({ threadStore, resolveUsers })],
+      extensions: [
+        // Highlights the source of code blocks and of the math / diagram
+        // blocks' editable LaTeX / Mermaid popups.
+        syntaxHighlighter,
+        CommentsExtension({ threadStore, resolveUsers }),
+        ...(aiExtension ? [aiExtension] : []),
+      ],
+      _tiptapOptions: {
+        extensions: [
+          FindAndReplace.configure({
+            injectCSS: false,
+          }),
+        ],
+      },
+      visualMedia: {
+        image: {
+          maxWidth: 760,
+        },
+      },
       tables: {
         splitCells: true,
         cellBackgroundColor: true,
         cellTextColor: true,
         headers: true,
       },
+      setIdAttribute: true,
       uploadFile,
       schema: blockNoteSchema,
-    },
+    }),
     [
+      aiExtension,
       cursorName,
-      lang,
+      langLocalesBN,
+      langLocalesBNMultiColumn,
+      langLocalesBNAI,
+      langLocalesBNMathDiagram,
       provider,
       uploadFile,
       encryptedSymmetricKey,
@@ -242,6 +334,8 @@ export const BlockNoteEditor = ({
   useShortcuts(editor, refEditorContainer.current);
 
   useUploadStatus(editor);
+
+  useScrollToBlockAnchor();
 
   useEffect(() => {
     setEditor(editor);
@@ -257,13 +351,13 @@ export const BlockNoteEditor = ({
       keyVersion={documentEncryptionSettings?.keyVersion}
     >
       <EncryptedDocBanner />
-      <Box
-        ref={refEditorContainer}
-        $css={css`
-          ${cssEditor};
-          ${cssComments(showComments, currentUserAvatarUrl)}
-        `}
-      >
+      <Box ref={refEditorContainer} $height="100%">
+        <DocsEditorStyle />
+        <DocsCommentsStyle
+          canSeeComment={canSeeComment}
+          currentUserAvatarUrl={currentUserAvatarUrl}
+        />
+        <DocsFindReplaceStyle />
         {errorAttachment && (
           <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
             <TextErrors
@@ -278,12 +372,31 @@ export const BlockNoteEditor = ({
           editor={editor}
           formattingToolbar={false}
           slashMenu={false}
+          sideMenu={false}
           theme="light"
-          comments={showComments}
+          comments={false}
           aria-label={t('Document editor')}
+          // To not clipped the floating part in the editor area
+          portalElements={{ default: null }}
         >
-          <BlockNoteSuggestionMenu />
-          <BlockNoteToolbar />
+          {aiBlockNoteAllowed && AIMenuController && AIMenu && (
+            <AIMenuController aiMenu={AIMenu} />
+          )}
+          <BlockNoteSuggestionMenu aiAllowed={aiBlockNoteAllowed} />
+          <BlockNoteToolbar aiAllowed={aiBlockNoteAllowed} />
+          <DocsSideMenu />
+          {showComments && <FloatingComposerController />}
+          {showComments && !isCommentSideBarOpen && (
+            <FloatingThreadController />
+          )}
+          {threadsSidebarTarget &&
+            createPortal(
+              <ThreadsSidebar
+                filter={threadsSidebarFilter}
+                sort="recent-activity"
+              />,
+              threadsSidebarTarget,
+            )}
         </BlockNoteView>
       </Box>
     </EncryptionProvider>
@@ -293,17 +406,19 @@ export const BlockNoteEditor = ({
 interface BlockNoteReaderProps {
   docId: Doc['id'];
   initialContent: Y.XmlFragment;
+  isMainEditor?: boolean;
 }
 
 export const BlockNoteReader = ({
   docId,
   initialContent,
+  isMainEditor = true,
 }: BlockNoteReaderProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { threadStore } = useComments(docId, false, user);
   const editor = useCreateBlockNote(
-    {
+    withCollaboration({
       collaboration: {
         fragment: initialContent,
         user: {
@@ -312,6 +427,7 @@ export const BlockNoteReader = ({
         },
         provider: undefined,
       },
+      setIdAttribute: true,
       schema: blockNoteSchema,
       extensions: [
         CommentsExtension({
@@ -321,27 +437,33 @@ export const BlockNoteReader = ({
           },
         }),
       ],
-    },
+    }),
     [initialContent, threadStore],
   );
 
   useEffect(() => {
+    if (!isMainEditor) {
+      return;
+    }
+
     setEditor(editor);
 
     return () => {
+      if (!isMainEditor) {
+        return;
+      }
       setEditor(undefined);
     };
-  }, [setEditor, editor]);
+  }, [setEditor, editor, isMainEditor]);
 
   useHeadings(editor);
 
+  useScrollToBlockAnchor();
+
   return (
-    <Box
-      $css={css`
-        ${cssEditor};
-        ${cssComments(false)}
-      `}
-    >
+    <Box>
+      <DocsEditorStyle />
+      <DocsCommentsStyle canSeeComment={false} />
       <BlockNoteView
         className="--docs--main-editor"
         editor={editor}
@@ -351,7 +473,7 @@ export const BlockNoteReader = ({
         slashMenu={false}
         comments={false}
       >
-        <BlockNoteToolbar />
+        <BlockNoteToolbar aiAllowed={false} />
       </BlockNoteView>
     </Box>
   );

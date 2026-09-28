@@ -17,9 +17,7 @@ import { useUserEncryption } from '../UserEncryptionProvider';
  *   direct access, or a stored key that is not valid base64).
  */
 export type DocumentEncryptionError =
-  | 'pending_acceptance'
-  | 'missing_symmetric_key'
-  | null;
+  'pending_acceptance' | 'missing_symmetric_key' | null;
 
 export interface DocumentEncryptionSettings {
   /**

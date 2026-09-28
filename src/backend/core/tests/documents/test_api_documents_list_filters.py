@@ -16,7 +16,16 @@ fake = Faker()
 pytestmark = pytest.mark.django_db
 
 
-def test_api_documents_list_filter_and_access_rights():
+@pytest.mark.parametrize(
+    "title_search_field",
+    # for integration with indexer search we must have
+    # the same filtering behaviour with "q" and "title" parameters
+    [
+        ("title"),
+        ("q"),
+    ],
+)
+def test_api_documents_list_filter_and_access_rights(title_search_field):
     """Filtering on querystring parameters should respect access rights."""
     user = factories.UserFactory()
     client = APIClient()
@@ -76,7 +85,7 @@ def test_api_documents_list_filter_and_access_rights():
 
     filters = {
         "link_reach": random.choice([None, *models.LinkReachChoices.values]),
-        "title": random.choice([None, *word_list]),
+        title_search_field: random.choice([None, *word_list]),
         "favorite": random.choice([None, True, False]),
         "creator": random.choice([None, user, other_user]),
         "ordering": random.choice(
@@ -323,7 +332,7 @@ def test_api_documents_list_filter_is_encrypted_true():
     client = APIClient()
     client.force_login(user)
 
-    factories.DocumentFactory.create_batch(3, users=[user])
+    factories.DocumentFactory.create_batch(3, users=[user], is_encrypted=True)
     factories.DocumentFactory.create_batch(2, users=[user])
 
     response = client.get("/api/v1.0/documents/?is_encrypted=true")
@@ -345,7 +354,7 @@ def test_api_documents_list_filter_is_encrypted_false():
     client = APIClient()
     client.force_login(user)
 
-    factories.DocumentFactory.create_batch(3, users=[user])
+    factories.DocumentFactory.create_batch(3, users=[user], is_encrypted=True)
     factories.DocumentFactory.create_batch(2, users=[user])
 
     response = client.get("/api/v1.0/documents/?is_encrypted=false")
@@ -365,7 +374,7 @@ def test_api_documents_list_filter_is_encrypted_invalid():
     client = APIClient()
     client.force_login(user)
 
-    factories.DocumentFactory.create_batch(3, users=[user])
+    factories.DocumentFactory.create_batch(3, users=[user], is_encrypted=True)
     factories.DocumentFactory.create_batch(2, users=[user])
 
     response = client.get("/api/v1.0/documents/?is_encrypted=invalid")
@@ -373,84 +382,6 @@ def test_api_documents_list_filter_is_encrypted_invalid():
     assert response.status_code == 200
     results = response.json()["results"]
     assert len(results) == 5
-
-
-# Filters: is_masked
-
-
-def test_api_documents_list_filter_is_masked_true():
-    """
-    Authenticated users should be able to filter documents they marked as masked.
-    """
-    user = factories.UserFactory()
-    client = APIClient()
-    client.force_login(user)
-
-    factories.DocumentFactory.create_batch(2, users=[user])
-    masked_documents = factories.DocumentFactory.create_batch(
-        3, users=[user], masked_by=[user]
-    )
-    unmasked_documents = factories.DocumentFactory.create_batch(2, users=[user])
-    for document in unmasked_documents:
-        models.LinkTrace.objects.create(document=document, user=user, is_masked=False)
-
-    response = client.get("/api/v1.0/documents/?is_masked=true")
-
-    assert response.status_code == 200
-    results = response.json()["results"]
-    assert len(results) == 3
-
-    # Ensure all results are marked as masked by the current user
-    masked_documents_ids = [str(doc.id) for doc in masked_documents]
-    for result in results:
-        assert result["id"] in masked_documents_ids
-
-
-def test_api_documents_list_filter_is_masked_false():
-    """
-    Authenticated users should be able to filter documents they didn't mark as masked.
-    """
-    user = factories.UserFactory()
-    client = APIClient()
-    client.force_login(user)
-
-    factories.DocumentFactory.create_batch(2, users=[user])
-    masked_documents = factories.DocumentFactory.create_batch(
-        3, users=[user], masked_by=[user]
-    )
-    unmasked_documents = factories.DocumentFactory.create_batch(2, users=[user])
-    for document in unmasked_documents:
-        models.LinkTrace.objects.create(document=document, user=user, is_masked=False)
-
-    response = client.get("/api/v1.0/documents/?is_masked=false")
-
-    assert response.status_code == 200
-    results = response.json()["results"]
-    assert len(results) == 4
-
-    # Ensure all results are not marked as masked by the current user
-    masked_documents_ids = [str(doc.id) for doc in masked_documents]
-    for result in results:
-        assert result["id"] not in masked_documents_ids
-
-
-def test_api_documents_list_filter_is_masked_invalid():
-    """Filtering with an invalid `is_masked` value should do nothing."""
-    user = factories.UserFactory()
-    client = APIClient()
-    client.force_login(user)
-
-    factories.DocumentFactory.create_batch(2, users=[user])
-    factories.DocumentFactory.create_batch(3, users=[user], masked_by=[user])
-    unmasked_documents = factories.DocumentFactory.create_batch(2, users=[user])
-    for document in unmasked_documents:
-        models.LinkTrace.objects.create(document=document, user=user, is_masked=False)
-
-    response = client.get("/api/v1.0/documents/?is_masked=invalid")
-
-    assert response.status_code == 200
-    results = response.json()["results"]
-    assert len(results) == 7
 
 
 # Filters: title

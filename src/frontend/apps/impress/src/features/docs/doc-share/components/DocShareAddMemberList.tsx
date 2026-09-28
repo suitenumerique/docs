@@ -2,7 +2,7 @@ import {
   Button,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+} from '@gouvfr-lasuite/ui-components';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,7 +16,8 @@ import {
   fetchRegisteredKeys,
   useVaultClient,
 } from '@/features/docs/doc-collaboration/vault';
-import { toBase64 } from '@/features/docs/doc-editor';
+import { useResponsiveStore } from '@/stores';
+import { toBase64 } from '@/utils/string';
 
 import { useCreateDocAccess, useCreateDocInvitation } from '../api';
 import { OptionType } from '../types';
@@ -47,7 +48,7 @@ export const DocShareAddMemberList = ({
   const { t } = useTranslation();
   const { toast } = useToastProvider();
   const { client: vaultClient } = useVaultClient();
-
+  const { isSmallMobile } = useResponsiveStore();
   const [isLoading, setIsLoading] = useState(false);
   const { spacingsTokens } = useCunninghamTheme();
   const [invitationRole, setInvitationRole] = useState<Role>(Role.EDITOR);
@@ -191,13 +192,15 @@ export const DocShareAddMemberList = ({
     <Card
       className="--docs--doc-share-add-member-list"
       data-testid="doc-share-add-member-list"
-      $direction="row"
-      $align="center"
+      $direction={isSmallMobile ? 'column' : 'row'}
+      $align={isSmallMobile ? 'stretch' : 'center'}
       $padding={spacingsTokens.sm}
       $scope="surface"
       $theme="tertiary"
       $variation=""
-      $border="1px solid var(--c--contextuals--border--semantic--contextual--primary)"
+      $border="1px solid var(--c--contextuals--border--surface--primary)"
+      $margin={{ bottom: 'sm' }}
+      $gap={spacingsTokens.xs}
     >
       <Box
         $direction="row"
@@ -214,7 +217,12 @@ export const DocShareAddMemberList = ({
           />
         ))}
       </Box>
-      <Box $direction="row" $align="center" $gap={spacingsTokens.xs}>
+      <Box
+        $direction="row"
+        $align="center"
+        $gap={spacingsTokens.xs}
+        $margin={{ left: isSmallMobile ? 'auto' : '' }}
+      >
         <DocRoleDropdown
           canUpdate={canShare}
           currentRole={invitationRole}
@@ -226,6 +234,7 @@ export const DocShareAddMemberList = ({
           disabled={isLoading}
           aria-label={inviteLabel}
           data-testid="doc-share-invite-button"
+          size={isSmallMobile ? 'small' : 'medium'}
         >
           {t('Invite')}
         </Button>

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
@@ -31,7 +32,13 @@ export const DocShareAddMemberListItem = ({ user, onRemoveUser }: Props) => {
       $theme="neutral"
       $variation="secondary"
     >
-      <Text $withThemeInherited $size="xs">
+      <Text
+        $withThemeInherited
+        $size="xs"
+        $css={css`
+          line-break: anywhere;
+        `}
+      >
         {user.full_name || user.email}
       </Text>
       <BoxButton

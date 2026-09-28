@@ -2,18 +2,54 @@ import { expect, test } from '@playwright/test';
 
 import {
   BROWSERS,
+  clickInEditorShareButton,
   createDoc,
-  keyCloakSignIn,
   randomName,
   verifyDocName,
 } from './utils-common';
 import { writeInEditor } from './utils-editor';
 import { connectOtherUserToDoc, updateRoleUser } from './utils-share';
+import { SignIn, logOut } from './utils-signin';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Document create member', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+  });
+
+  test('it checks search hints', async ({ page, browserName }) => {
+    await createDoc(page, 'select-multi-users', browserName, 1);
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    const shareModal = page.getByLabel('Share the document');
+    await expect(shareModal.getByText('Document owner')).toBeVisible();
+
+    const inputSearch = page.getByTestId('quick-search-input');
+    await inputSearch.fill('u');
+    await expect(shareModal.getByText('Document owner')).toBeHidden();
+    await expect(
+      shareModal.getByText('Type at least 3 characters to display user names'),
+    ).toBeVisible();
+    await inputSearch.fill('user');
+    await expect(
+      shareModal.getByText('Type at least 3 characters to display user names'),
+    ).toBeHidden();
+    await expect(shareModal.getByText('Choose a user')).toBeVisible();
+    await inputSearch.fill('anything');
+    await expect(shareModal.getByText('Choose a user')).toBeHidden();
+    await expect(
+      shareModal.getByText(
+        'No results. Type a full email address to invite someone.',
+      ),
+    ).toBeVisible();
+    await inputSearch.fill('anything@test.com');
+    await expect(
+      shareModal.getByText(
+        'No results. Type a full email address to invite someone.',
+      ),
+    ).toBeHidden();
+    await expect(shareModal.getByText('Choose the email')).toBeVisible();
   });
 
   test('it selects 2 users and 1 invitation', async ({ page, browserName }) => {
@@ -64,26 +100,32 @@ test.describe('Document create member', () => {
       list.getByTestId(`doc-share-add-member-${users[1].email}`),
     ).toBeVisible();
     await expect(
-      list.getByText(`${users[1].full_name || users[1].email}`),
+      list.getByText(`${users[1].full_name || users[1].email}`).first(),
     ).toBeVisible();
 
     // Select email and verify tag
-    const email = randomName('test@test.fr', browserName, 1)[0];
+    const email = randomName('test@test.fr', browserName, 1, true)[0];
     await inputSearch.fill(email);
     await quickSearchContent.getByText(email).click();
     await expect(list.getByText(email)).toBeVisible();
 
     // Check roles are displayed
     await list.getByTestId('doc-role-dropdown').click();
-    await expect(page.getByRole('menuitem', { name: 'Reader' })).toBeVisible();
-    await expect(page.getByRole('menuitem', { name: 'Editor' })).toBeVisible();
-    await expect(page.getByRole('menuitem', { name: 'Owner' })).toBeVisible();
     await expect(
-      page.getByRole('menuitem', { name: 'Administrator' }),
+      page.getByRole('menuitemradio', { name: 'Reader' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitemradio', { name: 'Editor' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitemradio', { name: 'Owner' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitemradio', { name: 'Administrator' }),
     ).toBeVisible();
 
     // Validate
-    await page.getByRole('menuitem', { name: 'Administrator' }).click();
+    await page.getByRole('menuitemradio', { name: 'Administrator' }).click();
     await page.getByTestId('doc-share-invite-button').click();
 
     // Check invitation added
@@ -122,14 +164,14 @@ test.describe('Document create member', () => {
 
     const inputSearch = page.getByTestId('quick-search-input');
 
-    const [email] = randomName('test@test.fr', browserName, 1);
+    const [email] = randomName('test@test.fr', browserName, 1, true);
     await inputSearch.fill(email);
     await page.getByTestId(`search-user-row-${email}`).click();
 
     // Choose a role
     const container = page.getByTestId('doc-share-add-member-list');
     await container.getByTestId('doc-role-dropdown').click();
-    await page.getByRole('menuitem', { name: 'Owner' }).click();
+    await page.getByRole('menuitemradio', { name: 'Owner' }).click();
 
     const responsePromiseCreateInvitation = page.waitForResponse(
       (response) =>
@@ -147,7 +189,7 @@ test.describe('Document create member', () => {
 
     // Choose a role
     await container.getByTestId('doc-role-dropdown').click();
-    await page.getByRole('menuitem', { name: 'Owner' }).click();
+    await page.getByRole('menuitemradio', { name: 'Owner' }).click();
 
     const responsePromiseCreateInvitationFail = page.waitForResponse(
       (response) =>
@@ -184,7 +226,7 @@ test.describe('Document create member', () => {
     // Choose a role
     const container = page.getByTestId('doc-share-add-member-list');
     await container.getByTestId('doc-role-dropdown').click();
-    await page.getByRole('menuitem', { name: 'Administrator' }).click();
+    await page.getByRole('menuitemradio', { name: 'Administrator' }).click();
 
     const responsePromiseCreateInvitation = page.waitForResponse(
       (response) =>
@@ -211,13 +253,13 @@ test.describe('Document create member', () => {
     );
 
     await userInvitation.getByTestId('doc-role-dropdown').click();
-    await page.getByRole('menuitem', { name: 'Reader' }).click();
+    await page.getByRole('menuitemradio', { name: 'Reader' }).click();
 
     const responsePatchInvitation = await responsePromisePatchInvitation;
     expect(responsePatchInvitation.ok()).toBeTruthy();
 
     await userInvitation.getByTestId('doc-role-dropdown').click();
-    await page.getByRole('menuitem', { name: 'Remove access' }).click();
+    await page.getByRole('menuitemradio', { name: 'Remove access' }).click();
 
     await expect(userInvitation).toBeHidden();
   });
@@ -234,8 +276,6 @@ test.describe('Document create member', () => {
       browserName,
       1,
     );
-
-    await verifyDocName(page, docTitle);
 
     await writeInEditor({ page, text: 'Hello World' });
 
@@ -258,23 +298,31 @@ test.describe('Document create member', () => {
     ).toBeVisible();
 
     // First user approves the request
-    await page.getByRole('button', { name: 'Share' }).click();
-
+    await clickInEditorShareButton(page);
     await expect(page.getByText('Access Requests')).toBeVisible();
-    await expect(page.getByText(`E2E ${otherBrowserName}`)).toBeVisible();
+    await expect(
+      page.getByText(
+        process.env[`USERNAME_${otherBrowserName.toUpperCase()}`] || '',
+      ),
+    ).toBeVisible();
 
-    const emailRequest = `user.test@${otherBrowserName}.test`;
+    const emailRequest =
+      process.env[`SIGN_IN_USERNAME_${otherBrowserName.toUpperCase()}`] || '';
     await expect(page.getByText(emailRequest)).toBeVisible();
     const container = page.getByTestId(
       `doc-share-access-request-row-${emailRequest}`,
     );
     await container.getByTestId('doc-role-dropdown').click();
-    await page.getByRole('menuitem', { name: 'Administrator' }).click();
+    await page.getByRole('menuitemradio', { name: 'Administrator' }).click();
     await container.getByRole('button', { name: 'Approve' }).click();
 
     await expect(page.getByText('Access Requests')).toBeHidden();
     await expect(page.getByText('Share with 2 users')).toBeVisible();
-    await expect(page.getByText(`E2E ${otherBrowserName}`)).toBeVisible();
+    await expect(
+      page.getByText(
+        process.env[`USERNAME_${otherBrowserName.toUpperCase()}`] || '',
+      ),
+    ).toBeVisible();
 
     // Other user verifies he has access
     await otherPage.reload();
@@ -285,7 +333,9 @@ test.describe('Document create member', () => {
     await updateRoleUser(page, 'Remove access', emailRequest);
     await expect(
       otherPage.getByText('Insufficient access rights to view the document.'),
-    ).toBeVisible();
+    ).toBeVisible({
+      timeout: 10000,
+    });
 
     // Cleanup: other user logout
     await cleanup();
@@ -302,7 +352,7 @@ test.describe('Document create member: Multiple login', () => {
     test.slow();
 
     await page.goto('/');
-    await keyCloakSignIn(page, browserName);
+    await SignIn(page, browserName);
 
     const [docParent] = await createDoc(
       page,
@@ -321,15 +371,11 @@ test.describe('Document create member: Multiple login', () => {
 
     const urlDoc = page.url();
 
-    await page
-      .getByRole('button', {
-        name: 'Logout',
-      })
-      .click();
+    await logOut(page);
 
     const otherBrowser = BROWSERS.find((b) => b !== browserName);
 
-    await keyCloakSignIn(page, otherBrowser!);
+    await SignIn(page, otherBrowser!);
 
     await expect(page.getByTestId('header-logo-link')).toBeVisible({
       timeout: 10000,

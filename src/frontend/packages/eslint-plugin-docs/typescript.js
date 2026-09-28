@@ -15,7 +15,7 @@ const typescriptConfig = {
   languageOptions: {
     parser: typescriptParser,
     parserOptions: {
-      project: true,
+      projectService: true,
     },
   },
   plugins: {

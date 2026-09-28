@@ -8,6 +8,9 @@ on:
     branches:
       - "*"
 
+permissions:
+  contents: read
+
 jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml
@@ -19,7 +22,7 @@ jobs:
     if: github.event_name == 'pull_request' # Makes sense only for pull requests
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
       - name: show
@@ -27,7 +30,7 @@ jobs:
       - name: Enforce absence of print statements in code
         if: always()
         run: |
-          ! git diff origin/${{ github.event.pull_request.base.ref }}..HEAD -- . ':(exclude)**/impress.yml' | grep "print("
+          ! git diff origin/${{ github.event.pull_request.base.ref }}..HEAD -- src/backend ':(exclude)**/impress.yml' | grep "print("
       - name: Check absence of fixup commits
         if: always()
         run: |
@@ -46,7 +49,7 @@ jobs:
       github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 50
       - name: Check that the CHANGELOG has been modified in the current branch
@@ -56,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Check CHANGELOG max line length
         run: |
           max_line_length=$(cat CHANGELOG.md | grep -Ev "^\[.*\]: https://github.com" | wc -L)
@@ -70,7 +73,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Install codespell
         run: pip install --user codespell
       - name: Check for typos
@@ -83,7 +86,8 @@ jobs:
             --skip "**/*.po" \
             --skip "**/*.pot" \
             --skip "**/*.json" \
-            --skip "**/yarn.lock"
+            --skip "**/yarn.lock" \
+            --skip "./src/backend/uv.lock"
 
   lint-back:
     runs-on: ubuntu-latest
@@ -92,22 +96,21 @@ jobs:
         working-directory: src/backend
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Install Python
-        uses: actions/setup-python@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: "3.13.3"
-          cache: "pip"
-      - name: Upgrade pip and setuptools
-        run: pip install --upgrade pip setuptools
-      - name: Install development dependencies
-        run: pip install --user .[dev]
+          python-version-file: "src/backend/pyproject.toml"
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      - name: Install the project
+        run: uv sync --locked --all-extras
       - name: Check code formatting with ruff
-        run: ~/.local/bin/ruff format . --diff
+        run: uv run ruff format . --diff
       - name: Lint code with ruff
-        run: ~/.local/bin/ruff check .
+        run: uv run ruff check .
       - name: Lint code with pylint
-        run: ~/.local/bin/pylint .
+        run: uv run pylint impress demo core
 
   test-back:
     runs-on: ubuntu-latest
@@ -146,7 +149,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Create writable /data
         run: |
@@ -154,7 +157,7 @@ jobs:
           sudo mkdir -p /data/static
 
       - name: Restore the mail templates
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         id: mail-templates
         with:
           path: "src/backend/core/templates/mail"
@@ -163,13 +166,13 @@ jobs:
 
       - name: Start MinIO
         run: |
-          docker pull minio/minio
+          docker pull quay.io/minio/minio
           docker run -d --name minio \
             -p 9000:9000 \
             -e "MINIO_ACCESS_KEY=impress" \
             -e "MINIO_SECRET_KEY=password" \
             -v /data/media:/data \
-            minio/minio server --console-address :9001 /data
+            quay.io/minio/minio server --console-address :9001 /data
 
       # Tool to wait for a service to be ready
       - name: Install Dockerize
@@ -189,23 +192,23 @@ jobs:
             mc mb impress/impress-media-storage && \
             mc version enable impress/impress-media-storage"
 
-      - name: Install Python
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: "3.13.3"
-          cache: "pip"
-
-      - name: Install development dependencies
-        run: pip install --user .[dev]
+          python-version-file: "src/backend/pyproject.toml"
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      - name: Install the project
+        run: uv sync --locked --all-extras
 
       - name: Install gettext (required to compile messages) and MIME support
         run: |
           sudo apt-get update
           sudo apt-get install -y gettext pandoc shared-mime-info
-          sudo wget https://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types -O /etc/mime.types
+          sudo wget https://raw.githubusercontent.com/suitenumerique/django-lasuite/refs/heads/main/assets/conf/mime.types -O /etc/mime.types
 
       - name: Generate a MO file from strings extracted from the project
-        run: python manage.py compilemessages
+        run: uv run python manage.py compilemessages
 
       - name: Run tests
-        run: ~/.local/bin/pytest -n 2
+        run: uv run pytest -n 2

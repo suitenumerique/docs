@@ -9,7 +9,18 @@ const { sizes } = tokens.themes.default.globals.font;
 type TextSizes = keyof typeof sizes;
 
 export interface TextProps extends BoxProps {
-  as?: 'p' | 'span' | 'div' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  as?:
+    | 'p'
+    | 'span'
+    | 'div'
+    | 'h1'
+    | 'h2'
+    | 'h3'
+    | 'h4'
+    | 'h5'
+    | 'h6'
+    | 'dt'
+    | 'dd';
   $ellipsis?: boolean;
   $weight?: CSSProperties['fontWeight'];
   $textAlign?: CSSProperties['textAlign'];
@@ -34,9 +45,7 @@ export const TextStyled = styled(Box)<TextProps>`
 
 const Text = forwardRef<HTMLElement, ComponentPropsWithRef<typeof TextStyled>>(
   (props, ref) => {
-    return (
-      <TextStyled ref={ref as React.Ref<HTMLDivElement>} as="span" {...props} />
-    );
+    return <TextStyled ref={ref} as="span" {...props} />;
   },
 );
 

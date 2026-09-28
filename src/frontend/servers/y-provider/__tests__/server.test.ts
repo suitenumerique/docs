@@ -9,6 +9,7 @@ vi.mock('../src/env', async (importOriginal) => {
     ...(await importOriginal()),
     COLLABORATION_SERVER_ORIGIN: 'http://localhost:3000',
     Y_PROVIDER_API_KEY: 'yprovider-api-key',
+    CONVERSION_FILE_MAX_SIZE: 500 * 1024, // 500kb
   };
 });
 
@@ -54,7 +55,7 @@ describe('Server Tests', () => {
     expect(response.status).not.toBe(413);
   });
 
-  it('rejects payloads larger than 500kb for the CONVERT route', async () => {
+  it('rejects payloads larger than CONVERSION_FILE_MAX_SIZE for the CONVERT route', async () => {
     const app = initApp();
 
     const oversizedPayload = 'a'.repeat(501 * 1024); // 501kb payload

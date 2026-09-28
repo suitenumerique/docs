@@ -1,6 +1,7 @@
 """Test API for comments on documents."""
 
 import random
+from unittest import mock
 
 from django.contrib.auth.models import AnonymousUser
 
@@ -8,6 +9,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -184,11 +186,20 @@ def test_create_comment_anonymous_user_public_document():
     )
     thread = factories.ThreadFactory(document=document)
     client = APIClient()
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/",
-        {"body": "test"},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/",
+            {"body": "test"},
+        )
     assert response.status_code == 201
+
+    # The comment creation should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.COMMENT_CREATED,
+        None,
+        {"comment_id": response.json()["id"], "thread_id": str(thread.id)},
+        document=document,
+    )
 
     assert response.json() == {
         "id": str(response.json()["id"]),
@@ -231,11 +242,20 @@ def test_create_comment_authenticated_user_accessible_document():
     thread = factories.ThreadFactory(document=document)
     client = APIClient()
     client.force_login(user)
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/",
-        {"body": "test"},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/",
+            {"body": "test"},
+        )
     assert response.status_code == 201
+
+    # The comment creation should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.COMMENT_CREATED,
+        user,
+        {"comment_id": response.json()["id"], "thread_id": str(thread.id)},
+        document=document,
+    )
 
     assert response.json() == {
         "id": str(response.json()["id"]),
@@ -438,6 +458,7 @@ def test_update_comment_authenticated_user_own_comment():
 
     comment.refresh_from_db()
     assert comment.body == "other content"
+    assert comment.user == user
 
 
 def test_update_comment_authenticated_user_not_enough_access():
@@ -479,14 +500,15 @@ def test_update_comment_authenticated_no_access():
 
 
 @pytest.mark.parametrize("role", [models.RoleChoices.ADMIN, models.RoleChoices.OWNER])
-def test_update_comment_authenticated_admin_or_owner_can_update_any_comment(role):
+def test_update_comment_authenticated_admin_or_owner_cannot_update_other_comment(role):
     """
-    Authenticated users should be able to update comments on a document they don't have access to.
+    Admins and owners can moderate (delete) but must not edit other users' comments.
     """
     user = factories.UserFactory()
     document = factories.DocumentFactory(users=[(user, role)])
     thread = factories.ThreadFactory(document=document)
-    comment = factories.CommentFactory(thread=thread, body="test")
+    original_author = factories.UserFactory()
+    comment = factories.CommentFactory(thread=thread, body="test", user=original_author)
     client = APIClient()
     client.force_login(user)
 
@@ -494,10 +516,11 @@ def test_update_comment_authenticated_admin_or_owner_can_update_any_comment(role
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/{comment.id!s}/",
         {"body": "other content"},
     )
-    assert response.status_code == 200
+    assert response.status_code == 403
 
     comment.refresh_from_db()
-    assert comment.body == "other content"
+    assert comment.body == "test"
+    assert comment.user == original_author
 
 
 @pytest.mark.parametrize("role", [models.RoleChoices.ADMIN, models.RoleChoices.OWNER])
@@ -644,11 +667,13 @@ def test_create_reaction_anonymous_user_public_document(link_role):
     document = factories.DocumentFactory(link_reach="public", link_role=link_role)
     thread = factories.ThreadFactory(document=document)
     comment = factories.CommentFactory(thread=thread)
+    reaction = factories.ReactionFactory(comment=comment)
+
     client = APIClient()
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": reaction.emoji},
     )
     assert response.status_code == 401
 
@@ -664,12 +689,14 @@ def test_create_reaction_authenticated_user_public_document():
     )
     thread = factories.ThreadFactory(document=document)
     comment = factories.CommentFactory(thread=thread)
+    reaction = factories.ReactionFactory(comment=comment)
+
     client = APIClient()
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": reaction.emoji},
     )
     assert response.status_code == 403
 
@@ -684,17 +711,19 @@ def test_create_reaction_authenticated_user_accessible_public_document():
     )
     thread = factories.ThreadFactory(document=document)
     comment = factories.CommentFactory(thread=thread)
+    reaction = factories.ReactionFactory(comment=comment)
+
     client = APIClient()
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": reaction.emoji},
     )
     assert response.status_code == 201
 
     assert models.Reaction.objects.filter(
-        comment=comment, emoji="test", users__in=[user]
+        comment=comment, emoji=reaction.emoji, users__in=[user]
     ).exists()
 
 
@@ -709,12 +738,14 @@ def test_create_reaction_authenticated_user_connected_document_link_role_reader(
     )
     thread = factories.ThreadFactory(document=document)
     comment = factories.CommentFactory(thread=thread)
+    reaction = factories.ReactionFactory(comment=comment)
+
     client = APIClient()
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": reaction.emoji},
     )
     assert response.status_code == 403
 
@@ -737,17 +768,19 @@ def test_create_reaction_authenticated_user_connected_document(link_role):
     )
     thread = factories.ThreadFactory(document=document)
     comment = factories.CommentFactory(thread=thread)
+    reaction = factories.ReactionFactory(comment=comment)
+
     client = APIClient()
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": reaction.emoji},
     )
     assert response.status_code == 201
 
     assert models.Reaction.objects.filter(
-        comment=comment, emoji="test", users__in=[user]
+        comment=comment, emoji=reaction.emoji, users__in=[user]
     ).exists()
 
 
@@ -760,12 +793,14 @@ def test_create_reaction_authenticated_user_restricted_accessible_document():
     document = factories.DocumentFactory(link_reach="restricted")
     thread = factories.ThreadFactory(document=document)
     comment = factories.CommentFactory(thread=thread)
+    reaction = factories.ReactionFactory(comment=comment)
+
     client = APIClient()
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": reaction.emoji},
     )
     assert response.status_code == 403
 
@@ -781,12 +816,14 @@ def test_create_reaction_authenticated_user_restricted_accessible_document_role_
     )
     thread = factories.ThreadFactory(document=document)
     comment = factories.CommentFactory(thread=thread)
+    reaction = factories.ReactionFactory(comment=comment)
+
     client = APIClient()
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": reaction.emoji},
     )
     assert response.status_code == 403
 
@@ -806,18 +843,41 @@ def test_create_reaction_authenticated_user_restricted_accessible_document_role_
     document = factories.DocumentFactory(link_reach="restricted", users=[(user, role)])
     thread = factories.ThreadFactory(document=document)
     comment = factories.CommentFactory(thread=thread)
+    reaction = factories.ReactionFactory(comment=comment)
+
     client = APIClient()
     client.force_login(user)
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
         f"comments/{comment.id!s}/reactions/",
-        {"emoji": "test"},
+        {"emoji": reaction.emoji},
     )
     assert response.status_code == 201
 
     assert models.Reaction.objects.filter(
-        comment=comment, emoji="test", users__in=[user]
+        comment=comment, emoji=reaction.emoji, users__in=[user]
     ).exists()
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
+        f"comments/{comment.id!s}/reactions/",
+        {"emoji": reaction.emoji},
+    )
+    assert response.status_code == 400
+    assert response.json() == {"user_already_reacted": True}
+
+
+def test_create_reaction_invalid_emoji():
+    """Users should not be able to submit non-emojis as reactions."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(
+        link_reach="restricted", users=[(user, models.RoleChoices.COMMENTER)]
+    )
+    thread = factories.ThreadFactory(document=document)
+    comment = factories.CommentFactory(thread=thread)
+
+    client = APIClient()
+    client.force_login(user)
 
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
@@ -825,7 +885,28 @@ def test_create_reaction_authenticated_user_restricted_accessible_document_role_
         {"emoji": "test"},
     )
     assert response.status_code == 400
-    assert response.json() == {"user_already_reacted": True}
+    assert "Reaction must be a single valid emoji." in str(response.json())
+
+
+def test_create_reaction_multiple_emojis():
+    """Users should not be able to submit multiple emojis as a single reaction."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(
+        link_reach="restricted", users=[(user, models.RoleChoices.COMMENTER)]
+    )
+    thread = factories.ThreadFactory(document=document)
+    comment = factories.CommentFactory(thread=thread)
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
+        f"comments/{comment.id!s}/reactions/",
+        {"emoji": "🐛🐛"},
+    )
+    assert response.status_code == 400
+    assert "Reaction must be a single valid emoji." in str(response.json())
 
 
 # Delete reaction
@@ -876,3 +957,56 @@ def test_delete_reaction_owned_by_the_current_user():
 
     reaction.refresh_from_db()
     assert reaction.users.exists()
+
+
+def test_create_reaction_exceeds_maximum(settings):
+    """
+    Users should not be able to add more than REACTIONS_MAX_PER_COMMENT
+    (here we set it to 10) distinct emoji reactions to a comment.
+    They should, however, be able to add themselves to an existing reaction.
+    """
+    user1 = factories.UserFactory()
+    user2 = factories.UserFactory()
+    document = factories.DocumentFactory(
+        link_reach="restricted",
+        users=[(user1, models.RoleChoices.ADMIN), (user2, models.RoleChoices.ADMIN)],
+    )
+    thread = factories.ThreadFactory(document=document)
+    comment = factories.CommentFactory(thread=thread)
+
+    client = APIClient()
+    client.force_login(user1)
+
+    # Add max distinct reactions
+    max_reactions = settings.REACTIONS_MAX_PER_COMMENT
+    emojis = factories.ReactionFactory.generate_emojis(max_reactions + 1)
+    for emoji in emojis[:max_reactions]:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
+            f"comments/{comment.id!s}/reactions/",
+            {"emoji": emoji},
+        )
+        assert response.status_code == 201
+
+    # Attempt to add another distinct reaction
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
+        f"comments/{comment.id!s}/reactions/",
+        {"emoji": emojis[max_reactions]},
+    )
+    assert response.status_code == 400
+    expected_message = (
+        f"A comment can have a maximum of {max_reactions} distinct reactions."
+    )
+    assert response.json() == {"emoji": [expected_message]}
+
+    # Attempt to add user2 to one of the existing reactions (should succeed)
+    client.force_login(user2)
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
+        f"comments/{comment.id!s}/reactions/",
+        {"emoji": emojis[0]},
+    )
+    assert response.status_code == 201
+    reaction = models.Reaction.objects.get(comment=comment, emoji=emojis[0])
+    assert reaction.users.count() == 2

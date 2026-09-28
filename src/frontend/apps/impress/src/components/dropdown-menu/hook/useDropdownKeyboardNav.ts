@@ -6,7 +6,7 @@ type UseDropdownKeyboardNavProps = {
   isOpen: boolean;
   focusedIndex: number;
   options: DropdownMenuOption[];
-  menuItemRefs: RefObject<(HTMLDivElement | null)[]>;
+  menuItemRefs: RefObject<(HTMLButtonElement | null)[]>;
   setFocusedIndex: (index: number) => void;
   onOpenChange: (isOpen: boolean) => void;
 };

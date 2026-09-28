@@ -1,51 +1,36 @@
+import { OpenMap, useTreeContext } from '@gouvfr-lasuite/ui-components';
 import {
-  OpenMap,
-  TreeView,
-  TreeViewMoveResult,
-  useResponsive,
-  useTreeContext,
-} from '@gouvfr-lasuite/ui-kit';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Overlayer, StyledLink } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
-import { Doc, SimpleDocItem } from '@/docs/doc-management';
+import { Box } from '@/components';
+import { Doc } from '@/docs/doc-management';
+import { TreeSkeleton } from '@/features/skeletons/components/TreeSkeleton';
 
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
-import { useMoveDoc } from '../api/useMove';
-import { findIndexInTree } from '../utils';
+import { findIndexInTree, reloadTree } from '../utils';
 
-import { DocSubPageItem } from './DocSubPageItem';
-import { DocTreeItemActions } from './DocTreeItemActions';
+import { DocTreeRoot } from './DocTreeRoot';
+import { DocTreeSubpages } from './DocTreeSubpages';
 
 type DocTreeProps = {
   currentDoc: Doc;
 };
 
 export const DocTree = ({ currentDoc }: DocTreeProps) => {
-  const { spacingsTokens } = useCunninghamTheme();
-  const { isDesktop } = useResponsive();
   const [treeRoot, setTreeRoot] = useState<HTMLElement | null>(null);
   const treeContext = useTreeContext<Doc | null>();
-  const router = useRouter();
-  const [rootActionsOpen, setRootActionsOpen] = useState(false);
-  const rootIsSelected =
-    !!treeContext?.root?.id &&
-    treeContext?.treeData.selectedNode?.id === treeContext.root.id;
   const rootItemRef = useRef<HTMLDivElement>(null);
-  const rootActionsRef = useRef<HTMLDivElement>(null);
-  const rootButtonOptionRef = useRef<HTMLDivElement | null>(null);
-
   const { t } = useTranslation();
-
   const [initialOpenState, setInitialOpenState] = useState<OpenMap | undefined>(
     undefined,
   );
-
-  const { mutate: moveDoc } = useMoveDoc();
 
   const { data: tree, isFetching } = useDocTree(
     { docId: currentDoc.id },
@@ -55,99 +40,13 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     },
   );
 
-  const handleMove = (result: TreeViewMoveResult) => {
-    moveDoc({
-      sourceDocumentId: result.sourceId,
-      targetDocumentId: result.targetModeId,
-      position: result.mode,
-    });
-    treeContext?.treeData.handleMove(result);
-  };
-
   /**
    * This function resets the tree states.
    */
   const resetStateTree = useCallback(() => {
-    treeContext?.setRoot(null);
+    reloadTree(treeContext);
     setInitialOpenState(undefined);
   }, [treeContext]);
-
-  const selectRoot = useCallback(() => {
-    if (treeContext?.root) {
-      treeContext.treeData.setSelectedNode(treeContext.root);
-    }
-  }, [treeContext]);
-
-  const navigateToRoot = useCallback(() => {
-    const id = treeContext?.root?.id;
-    if (id) {
-      router.push(`/docs/${id}`);
-    }
-  }, [router, treeContext?.root?.id]);
-
-  const handleRootFocus = useCallback(() => {
-    selectRoot();
-  }, [selectRoot]);
-
-  // Handle keyboard navigation for root item
-  const handleRootKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      // F2: focus first action button
-      if (e.key === 'F2' && !rootActionsOpen) {
-        e.preventDefault();
-        rootButtonOptionRef.current?.focus();
-        return;
-      }
-
-      // Ignore if focus is in actions
-      const target = e.target as HTMLElement | null;
-      if (target?.closest('.doc-tree-root-item-actions')) {
-        return;
-      }
-
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        selectRoot();
-        navigateToRoot();
-      }
-    },
-    [selectRoot, navigateToRoot, rootActionsOpen],
-  );
-
-  // Handle menu open/close for root item - mirrors DocSubPageItem behavior
-  const handleRootActionsOpenChange = useCallback((isOpen: boolean) => {
-    setRootActionsOpen(isOpen);
-
-    // When the menu closes, return focus to the root tree item
-    // (same behavior as DocSubPageItem for consistency)
-    // Use requestAnimationFrame for smoother focus transition without flickering
-    if (!isOpen) {
-      requestAnimationFrame(() => {
-        rootItemRef.current?.focus();
-      });
-    }
-  }, []);
-
-  const handleRowKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key !== 'Enter') {
-      return;
-    }
-
-    const target = e.target as HTMLElement | null;
-    if (
-      !target ||
-      !(
-        target.classList.contains('c__tree-view--row') ||
-        target.classList.contains('c__tree-view--node')
-      )
-    ) {
-      return;
-    }
-
-    e.currentTarget
-      .querySelector<HTMLDivElement>('.c__tree-view--node')
-      ?.click();
-  }, []);
 
   /**
    * This effect is used to reset the tree when a new document
@@ -218,8 +117,54 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     }
   }, [currentDoc, treeContext]);
 
+  /**
+   * react-arborist's scrollTo calls react-window's scrollToItem, which mutates
+   * the internal scrollOffset state. When navigating to a deep item in a large
+   * tree, this causes all items above the target to be removed from the DOM
+   * (virtualized away), making the tree appear empty above the selected node.
+   * We no-op it to prevent that — the panel's own overflow-y handles scrolling.
+   */
+  const treeApiRef = treeContext?.treeApiRef;
+  useLayoutEffect(() => {
+    if (!treeRoot || !treeApiRef?.current) {
+      return;
+    }
+    const api = treeApiRef.current as unknown as Record<string, unknown>;
+    const origScrollTo = api['scrollTo'];
+    if (typeof origScrollTo !== 'function') {
+      return;
+    }
+    api['scrollTo'] = () => {};
+    return () => {
+      api['scrollTo'] = origScrollTo;
+    };
+  }, [treeRoot, treeApiRef]);
+
+  /**
+   * On initial tree load, scroll the panel to show the current document.
+   * This fires once when initialOpenState is first set (tree data just loaded).
+   * It does not re-fire on user navigation — clicked items are already in view.
+   */
+  useEffect(() => {
+    if (!treeRoot || !initialOpenState) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      treeRoot
+        .querySelector<HTMLElement>(
+          `[data-testid="doc-sub-page-item-${currentDoc.id}"]`,
+        )
+        ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }, 500);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [treeRoot, initialOpenState, currentDoc.id]);
+
   if (!treeContext || !treeContext.root) {
-    return null;
+    return <TreeSkeleton />;
   }
 
   return (
@@ -231,12 +176,22 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       aria-label={t('Document tree')}
       aria-describedby="doc-tree-keyboard-instructions"
       $css={css`
+        /**
+        * TODO: When this pull request is merged (https://github.com/suitenumerique/ui-kit/pull/215), we 
+        * should remove the pointer-events manipulation.
+        * See: https://github.com/suitenumerique/docs/commit/d41e44dcd5a4111463b1bddfdab640faacbf1795
+        */
         /* Remove outline from TreeViewItem wrapper elements */
         .c__tree-view--row {
           outline: none !important;
+          pointer-events: initial;
           &:focus-visible {
             outline: none !important;
           }
+        }
+
+        .c__tree-view--node {
+          pointer-events: inherit;
         }
 
         .c__tree-view--container {
@@ -252,7 +207,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       {/* Keyboard instructions for screen readers */}
       <Box id="doc-tree-keyboard-instructions" className="sr-only">
         {t(
-          'Use arrow keys to navigate between documents. Press Enter to open a document. Press F2 to focus the emoji button when available, then press F2 again to access document actions.',
+          'Use the up and down arrow keys to move between documents, and Enter to open one. Press F2 to reach the actions of a document and to move between them, use Escape to go back to the document list.',
         )}
       </Box>
       <Box
@@ -261,128 +216,23 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
           z-index: 2;
         `}
       >
-        <Box
-          ref={rootItemRef}
-          data-testid="doc-tree-root-item"
-          role="treeitem"
-          aria-label={`${t('Root document {{title}}', { title: treeContext.root?.title || t('Untitled document') })}`}
-          aria-selected={rootIsSelected}
-          tabIndex={0}
-          onFocus={handleRootFocus}
-          onKeyDown={handleRootKeyDown}
-          $css={css`
-            padding: ${spacingsTokens['2xs']};
-            border-radius: var(--c--globals--spacings--st);
-            width: 100%;
-            background-color: ${rootIsSelected || rootActionsOpen
-              ? 'var(--c--contextuals--background--semantic--contextual--primary)'
-              : 'transparent'};
-
-            &:hover {
-              background-color: var(
-                --c--contextuals--background--semantic--contextual--primary
-              );
-            }
-
-            &:focus-visible {
-              outline: none !important;
-              box-shadow: 0 0 0 2px var(--c--globals--colors--brand-500) !important;
-              border-radius: var(--c--globals--spacings--st);
-            }
-
-            .doc-tree-root-item-actions {
-              display: flex;
-              opacity: ${rootActionsOpen ? '1' : '0'};
-
-              &:has(.isOpen) {
-                opacity: 1;
-              }
-            }
-            &:hover,
-            &:focus-visible,
-            &:focus-within {
-              .doc-tree-root-item-actions {
-                display: flex;
-                opacity: 1;
-              }
-            }
-            /* Remove visual focus from the root item when focus is on the actions */
-            &:has(.doc-tree-root-item-actions *:focus) {
-              box-shadow: none !important;
-            }
-          `}
-        >
-          <StyledLink
-            $css={css`
-              width: 100%;
-            `}
-            href={`/docs/${treeContext.root.id}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              treeContext.treeData.setSelectedNode(
-                treeContext.root ?? undefined,
-              );
-              router.push(`/docs/${treeContext?.root?.id}`);
-            }}
-            aria-label={`${t('Open root document')}: ${treeContext.root?.title || t('Untitled document')}`}
-            tabIndex={-1} // avoid double tabstop
-          >
-            <Box $direction="row" $align="center" $width="100%">
-              <SimpleDocItem doc={treeContext.root} showAccesses={true} />
-              <DocTreeItemActions
-                doc={treeContext.root}
-                onCreateSuccess={(createdDoc) => {
-                  const newDoc = {
-                    ...createdDoc,
-                    children: [],
-                    childrenCount: 0,
-                    parentId: treeContext.root?.id ?? undefined,
-                  };
-                  treeContext?.treeData.addChild(null, newDoc);
-                }}
-                isOpen={rootActionsOpen}
-                isRoot={true}
-                onOpenChange={handleRootActionsOpenChange}
-                actionsRef={rootActionsRef}
-                buttonOptionRef={rootButtonOptionRef}
-              />
-            </Box>
-          </StyledLink>
-        </Box>
+        <DocTreeRoot
+          currentDoc={currentDoc}
+          rootItemRef={rootItemRef}
+          treeContext={treeContext}
+        />
       </Box>
 
       {initialOpenState &&
         treeContext.treeData.nodes.length > 0 &&
         treeRoot && (
-          <Overlayer isOverlay={currentDoc.deleted_at != null} inert>
-            <TreeView
-              dndRootElement={treeRoot}
-              initialOpenState={initialOpenState}
-              afterMove={handleMove}
-              selectedNodeId={
-                treeContext.treeData.selectedNode?.id ??
-                treeContext.initialTargetId ??
-                undefined
-              }
-              canDrop={({ parentNode }) => {
-                const parentDoc = parentNode?.data.value as Doc;
-                if (!parentDoc) {
-                  return currentDoc.abilities.move && isDesktop;
-                }
-                return parentDoc.abilities.move && isDesktop;
-              }}
-              canDrag={(node) => {
-                const doc = node.value as Doc;
-                return doc.abilities.move && isDesktop;
-              }}
-              rootNodeId={treeContext.root.id}
-              renderNode={DocSubPageItem}
-              rowProps={{
-                onKeyDown: handleRowKeyDown,
-              }}
-            />
-          </Overlayer>
+          <DocTreeSubpages
+            doc={currentDoc}
+            treeRoot={treeRoot}
+            initialOpenState={initialOpenState}
+            rootNodeId={treeContext.root.id}
+            rootItemRef={rootItemRef}
+          />
         )}
     </Box>
   );

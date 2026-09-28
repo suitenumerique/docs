@@ -2,16 +2,16 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Icon, Text } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
 import { useDate } from '@/hooks/useDate';
+import DocsIcon from '@/icons/Docs.svg';
+import SubdocsIcon from '@/icons/Subdocs.svg';
+import ArrowIcon from '@/icons/arrow-corner-down-right.svg';
 import { useResponsiveStore } from '@/stores';
 
-import ChildDocument from '../assets/child-document.svg';
 import EncryptedDocumentIcon from '../assets/encrypted-document.svg';
-import PinnedDocumentIcon from '../assets/pinned-document.svg';
-import SimpleFileIcon from '../assets/simple-document.svg';
 import { useDocUtils, useTrans } from '../hooks';
 import { Doc } from '../types';
+import { getEmojiAndTitle } from '../utils';
 
 const ItemTextCss = css`
   overflow: hidden;
@@ -21,109 +21,126 @@ const ItemTextCss = css`
   line-clamp: 1;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
+  justify-content: center;
 `;
 
 type SimpleDocItemProps = {
   doc: Doc;
-  isPinned?: boolean;
+  breadcrumb?: string;
   isEncrypted?: boolean;
-  showAccesses?: boolean;
+  showDate?: boolean;
 };
 
 export const SimpleDocItem = ({
   doc,
-  isPinned = false,
+  showDate = false,
   isEncrypted = doc.is_encrypted ?? false,
-  showAccesses = false,
+  breadcrumb,
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
-  const { spacingsTokens } = useCunninghamTheme();
-  const { isDesktop } = useResponsiveStore();
+  const { isSmallMobile } = useResponsiveStore();
   const { untitledDocument } = useTrans();
   const { isChild } = useDocUtils(doc);
-  const { relativeDate } = useDate();
+  const { relativeDate, formatDate } = useDate();
+  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title || '');
+  const docTitle = titleWithoutEmoji || untitledDocument;
+  const docRelativeUpdate = relativeDate(doc.updated_at);
+  const itemAriaLabel = `${t('Open document {{title}}', { title: docTitle })}. ${t(
+    'Last update: {{update}}',
+    {
+      update: formatDate(doc.updated_at),
+    },
+  )}`;
 
   return (
     <Box
       $direction="row"
-      $gap={spacingsTokens.sm}
+      $gap={isSmallMobile ? 'xs' : 'sm'}
       $overflow="auto"
       $width="100%"
       className="--docs--simple-doc-item"
-      role="presentation"
-      aria-label={`${t('Open document {{title}}', { title: doc.title || untitledDocument })}`}
+      aria-label={itemAriaLabel}
     >
-      <Box
-        $direction="row"
-        $align="center"
-        $css={css`
-          background-color: transparent;
-          filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.05));
-          position: relative;
-        `}
-        $padding={`${spacingsTokens['3xs']} 0`}
-        data-testid={isPinned ? `doc-pinned-${doc.id}` : undefined}
-        aria-hidden="true"
-      >
-        {isEncrypted ? (
-          <EncryptedDocumentIcon
-            aria-hidden="true"
-            data-testid="doc-encryption-icon"
-          />
-        ) : isPinned ? (
-          <PinnedDocumentIcon
-            aria-hidden="true"
-            data-testid="doc-pinned-icon"
-            color="var(--c--contextuals--content--semantic--info--tertiary)"
-          />
-        ) : isChild ? (
-          <ChildDocument
-            aria-hidden="true"
-            data-testid="doc-child-icon"
-            color="var(--c--contextuals--content--semantic--info--tertiary)"
-          />
-        ) : (
-          <SimpleFileIcon
-            width="32px"
-            height="32px"
-            aria-hidden="true"
-            data-testid="doc-simple-icon"
-            color="var(--c--contextuals--content--semantic--info--tertiary)"
-          />
-        )}
-        {isPinned && isEncrypted && (
-          <Icon
-            iconName="push_pin"
-            $size="12px"
-            $color="var(--c--contextuals--content--semantic--info--tertiary)"
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              right: -4,
-            }}
-          />
-        )}
-      </Box>
-      <Box $justify="center" $overflow="auto">
+      {isEncrypted ? (
+        <Icon
+          icon={
+            <EncryptedDocumentIcon
+              width={isSmallMobile ? '35px' : '40px'}
+              height={isSmallMobile ? '35px' : '40px'}
+              aria-hidden="true"
+              data-testid="doc-encryption-icon"
+            />
+          }
+          $shrink="0"
+        />
+      ) : isChild ? (
+        <Icon
+          icon={
+            <SubdocsIcon
+              width={isSmallMobile ? '35px' : '40px'}
+              height={isSmallMobile ? '35px' : '40px'}
+              aria-hidden="true"
+              data-testid="doc-child-icon"
+              color="var(--c--contextuals--content--semantic--info--tertiary)"
+            />
+          }
+          $shrink="0"
+        />
+      ) : (
+        <Icon
+          icon={
+            <DocsIcon
+              width={isSmallMobile ? '35px' : '40px'}
+              height={isSmallMobile ? '35px' : '40px'}
+              aria-hidden="true"
+              data-testid="doc-simple-icon"
+              color="var(--c--contextuals--content--semantic--info--tertiary)"
+            />
+          }
+          $shrink="0"
+        />
+      )}
+      <Box $justify="center" $overflow="auto" $gap="4xs">
         <Text
           $size="sm"
           $weight="500"
           $css={ItemTextCss}
           data-testid="doc-title"
+          title={docTitle}
         >
-          {doc.title || untitledDocument}
+          {emoji && <span aria-hidden="true">{emoji} </span>}
+          {docTitle}
         </Text>
-        {(!isDesktop || showAccesses) && (
+
+        {(showDate || breadcrumb) && (
           <Box
-            $direction="row"
-            $align="center"
-            $gap={spacingsTokens['3xs']}
-            $margin={{ top: '-2px' }}
+            $direction={isSmallMobile ? 'column' : 'row'}
+            $align={isSmallMobile ? 'flex-start' : 'center'}
             aria-hidden="true"
           >
-            <Text $size="xs" $variation="tertiary">
-              {relativeDate(doc.updated_at)}
-            </Text>
+            {breadcrumb && (
+              <Box $direction="row" $align="center" $gap="3xs">
+                <ArrowIcon
+                  width="16px"
+                  height="16px"
+                  aria-hidden="true"
+                  color="var(--c--contextuals--content--semantic--neutral--tertiary)"
+                />
+                <Text $size="xs" $variation="tertiary" $css={ItemTextCss}>
+                  {breadcrumb}
+                </Text>
+              </Box>
+            )}
+            {breadcrumb && showDate && !isSmallMobile && (
+              <Text $size="xs" $variation="tertiary">
+                &nbsp;·&nbsp;
+              </Text>
+            )}
+            {showDate && (
+              <Text $size="xs" $variation="tertiary" $shrink="0">
+                {docRelativeUpdate}
+              </Text>
+            )}
           </Box>
         )}
       </Box>

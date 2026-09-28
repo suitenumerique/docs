@@ -1,25 +1,56 @@
-import {
-  PartialCustomInlineContentFromConfig,
-  StyleSchema,
-} from '@blocknote/core';
+import { StyleSchema } from '@blocknote/core';
 import { createReactInlineContentSpec } from '@blocknote/react';
 import * as Sentry from '@sentry/nextjs';
-import { useRouter } from 'next/router';
+import { TFunction } from 'i18next';
 import { useEffect } from 'react';
-import { css } from 'styled-components';
 import { validate as uuidValidate } from 'uuid';
 
-import { BoxButton, Text } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
-import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
-import { getEmojiAndTitle, useDoc } from '@/docs/doc-management/';
+import LinkPageIcon from '@/docs/doc-editor/assets/doc-link.svg';
+import AddPageIcon from '@/docs/doc-editor/assets/doc-plus.svg';
+import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
+import { useCreateChildDocTree, useDocStore } from '@/docs/doc-management';
 
-export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
+import { LinkSelected } from './LinkSelected';
+import { SearchPage } from './SearchPage';
+
+export type InterlinkingLinkInlineContentType = {
+  type: 'interlinkingLinkInline';
+  propSchema: {
+    disabled?: {
+      default: false;
+      values: [true, false];
+    };
+    docId?: {
+      default: '';
+    };
+    trigger?: {
+      default: '/';
+      values: readonly ['/', '@'];
+    };
+    title?: {
+      default: '';
+    };
+  };
+  content: 'none';
+};
+
+export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
+  InterlinkingLinkInlineContentType,
+  StyleSchema
+>(
   {
     type: 'interlinkingLinkInline',
     propSchema: {
       docId: {
         default: '',
+      },
+      disabled: {
+        default: false,
+        values: [true, false],
+      },
+      trigger: {
+        default: '/',
+        values: ['/', '@'],
       },
       title: {
         default: '',
@@ -28,152 +59,126 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
     content: 'none',
   },
   {
-    render: ({ editor, inlineContent, updateInlineContent }) => {
-      if (!inlineContent.props.docId) {
+    /**
+     * Can have 3 render states:
+     * 1. Disabled state: when the inline content is disabled, it renders nothing
+     * 2. Search state: when the inline content has no docId, it renders the search page
+     * 3. Linked state: when the inline content has a docId and title, it renders the linked doc
+     *
+     * Info: We keep everything in the same inline content to easily preserve
+     * the element position when switching between states
+     */
+    render: (props) => {
+      const { disabled, docId, title } = props.inlineContent.props;
+
+      if (disabled) {
         return null;
       }
 
-      /**
-       * Should not happen
-       */
-      if (!uuidValidate(inlineContent.props.docId)) {
-        Sentry.captureException(
-          new Error(`Invalid docId: ${inlineContent.props.docId}`),
-          {
-            extra: { info: 'InterlinkingLinkInlineContent' },
-          },
+      if (docId && title) {
+        /**
+         * Should not happen
+         */
+        if (!uuidValidate(docId)) {
+          return (
+            <DisableInvalidInterlink
+              docId={docId}
+              onUpdateInlineContent={() => {
+                props.updateInlineContent({
+                  type: 'interlinkingLinkInline',
+                  props: {
+                    disabled: true,
+                  },
+                });
+              }}
+            />
+          );
+        }
+
+        return (
+          <LinkSelected
+            docId={docId}
+            title={title}
+            isEditable={props.editor.isEditable}
+            onUpdateTitle={(newTitle) =>
+              props.updateInlineContent({
+                type: 'interlinkingLinkInline',
+                props: {
+                  docId: docId,
+                  title: newTitle,
+                  trigger: props.inlineContent.props.trigger,
+                  disabled: false,
+                },
+              })
+            }
+          />
         );
-
-        updateInlineContent({
-          type: 'interlinkingLinkInline',
-          props: {
-            docId: '',
-            title: '',
-          },
-        });
-
-        return null;
       }
 
-      return (
-        <LinkSelected
-          docId={inlineContent.props.docId}
-          title={inlineContent.props.title}
-          isEditable={editor.isEditable}
-          updateInlineContent={updateInlineContent}
-        />
-      );
+      return <SearchPage {...props} />;
     },
   },
 );
 
-interface LinkSelectedProps {
-  docId: string;
-  title: string;
-  isEditable: boolean;
-  updateInlineContent: (
-    update: PartialCustomInlineContentFromConfig<
-      {
-        readonly type: 'interlinkingLinkInline';
-        readonly propSchema: {
-          readonly docId: {
-            readonly default: '';
-          };
-          readonly title: {
-            readonly default: '';
-          };
-        };
-        readonly content: 'none';
-      },
-      StyleSchema
-    >,
-  ) => void;
-}
-export const LinkSelected = ({
-  docId,
-  title,
-  isEditable,
-  updateInlineContent,
-}: LinkSelectedProps) => {
-  const { data: doc } = useDoc({ id: docId });
-
-  /**
-   * Update the content title if the referenced doc title changes
-   */
-  useEffect(() => {
-    if (isEditable && doc?.title && doc.title !== title) {
-      updateInlineContent({
-        type: 'interlinkingLinkInline',
-        props: {
-          docId,
-          title: doc.title,
+export const getInterlinkinghMenuItems = (
+  editor: DocsBlockNoteEditor,
+  t: TFunction<'translation', undefined>,
+  group: string,
+  createPage: () => void,
+) => [
+  {
+    key: 'link-doc',
+    title: t('Link a doc'),
+    onItemClick: () => {
+      editor.insertInlineContent([
+        {
+          type: 'interlinkingLinkInline',
+          props: {
+            trigger: '/',
+          },
         },
-      });
-    }
+      ]);
+    },
+    aliases: ['interlinking', 'link', 'anchor', 'a'],
+    group,
+    icon: <LinkPageIcon />,
+    subtext: t('Link this doc to another doc'),
+  },
+  {
+    key: 'new-sub-doc',
+    title: t('New sub-doc'),
+    onItemClick: createPage,
+    aliases: ['new sub-doc'],
+    group,
+    icon: <AddPageIcon />,
+    subtext: t('Create a new sub-doc'),
+  },
+];
 
-    /**
-     * ⚠️ When doing collaborative editing, doc?.title might be out of sync
-     * causing an infinite loop of updates.
-     * To prevent this, we only run this effect when doc?.title changes,
-     * not when inlineContent.props.title changes.
-     */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doc?.title, docId, isEditable]);
-
-  const { colorsTokens } = useCunninghamTheme();
-
-  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(title);
-  const router = useRouter();
-
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    void router.push(`/docs/${docId}/`);
-  };
+export const useGetInterlinkingMenuItems = () => {
+  const { currentDoc } = useDocStore();
+  const createChildDoc = useCreateChildDocTree(currentDoc?.id);
 
   return (
-    <BoxButton
-      as="span"
-      className="--docs--interlinking-link-inline-content"
-      onClick={handleClick}
-      draggable="false"
-      $css={css`
-        display: inline;
-        padding: 0.1rem 0.4rem;
-        border-radius: 4px;
-        & svg {
-          position: relative;
-          top: 2px;
-          margin-right: 0.2rem;
-        }
-        &:hover {
-          background-color: var(
-            --c--contextuals--background--semantic--contextual--primary
-          );
-        }
-        transition: background-color var(--c--globals--transitions--duration)
-          var(--c--globals--transitions--ease-out);
+    editor: DocsBlockNoteEditor,
+    t: TFunction<'translation', undefined>,
+  ) => getInterlinkinghMenuItems(editor, t, t('Links'), createChildDoc);
+};
 
-        .--docs--doc-deleted & {
-          pointer-events: none;
-        }
-      `}
-    >
-      {emoji ? (
-        <Text $size="16px">{emoji}</Text>
-      ) : (
-        <SelectedPageIcon width={11.5} color={colorsTokens['brand-400']} />
-      )}
-      <Text
-        $weight="500"
-        spellCheck="false"
-        $size="16px"
-        $display="inline"
-        $css={css`
-          margin-left: 2px;
-        `}
-      >
-        {titleWithoutEmoji}
-      </Text>
-    </BoxButton>
-  );
+const DisableInvalidInterlink = ({
+  docId,
+  onUpdateInlineContent,
+}: {
+  docId: string;
+  onUpdateInlineContent: () => void;
+}) => {
+  useEffect(() => {
+    Sentry.captureException(new Error(`Invalid docId: ${docId}`), {
+      extra: { info: 'InterlinkingInlineContent' },
+    });
+
+    onUpdateInlineContent();
+  }, [docId, onUpdateInlineContent]);
+
+  return null;
 };

@@ -5,6 +5,7 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
+import { KEY_LIST_SEARCH_DOC } from '@/docs/doc-search/api/useSearchDocs';
 
 import { Doc } from '../types';
 
@@ -40,6 +41,9 @@ export function useCreateDoc(options?: UseCreateDocOptions) {
     onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC],
+      });
+      void queryClient.resetQueries({
+        queryKey: [KEY_LIST_SEARCH_DOC],
       });
       options?.onSuccess?.(data, variables, onMutateResult, context);
     },

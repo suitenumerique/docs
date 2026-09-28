@@ -37,7 +37,7 @@ ingress:
   ## @param ingress.hosts Additional host to configure for the Ingress
   hosts: []
   #  - chart-example.local
-  ## @param ingress.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingress.tls.enabled Whether to enable TLS for the Ingress
   ## @param ingress.tls.secretName Secret name for TLS config
   ## @skip ingress.tls.additional
   ## @extra ingress.tls.additional[].secretName Secret name for additional TLS config
@@ -62,7 +62,7 @@ ingressCollaborationWS:
   ## @param ingressCollaborationWS.hosts Additional host to configure for the Ingress
   hosts: []
   #  - chart-example.local
-  ## @param ingressCollaborationWS.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingressCollaborationWS.tls.enabled Whether to enable TLS for the Ingress
   ## @param ingressCollaborationWS.tls.secretName Secret name for TLS config
   ## @skip ingressCollaborationWS.tls.additional
   ## @extra ingressCollaborationWS.tls.additional[].secretName Secret name for additional TLS config
@@ -92,7 +92,7 @@ ingressRedirects:
   enabled: false
   className: null
   host: impress.example.com
-  ## @param ingressRedirects.tls.enabled Weather to enable TLS for the Ingress Redirects
+  ## @param ingressRedirects.tls.enabled Whether to enable TLS for the Ingress Redirects
   ## @param ingressRedirects.tls.secretName Secret name for TLS config
   ## @skip ingressRedirects.tls.additional
   ## @extra ingressRedirects.tls.additional[].secretName Secret name for additional TLS config
@@ -116,7 +116,7 @@ ingressCollaborationApi:
   ## @param ingressCollaborationApi.hosts Additional host to configure for the Ingress
   hosts: []
   #  - chart-example.local
-  ## @param ingressCollaborationApi.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingressCollaborationApi.tls.enabled Whether to enable TLS for the Ingress
   ## @param ingressCollaborationApi.tls.secretName Secret name for TLS config
   ## @skip ingressCollaborationApi.tls.additional
   ## @extra ingressCollaborationApi.tls.additional[].secretName Secret name for additional TLS config
@@ -133,7 +133,6 @@ ingressCollaborationApi:
   annotations:
     nginx.ingress.kubernetes.io/upstream-hash-by: $arg_room
 
-
 ## @param ingressAdmin.enabled whether to enable the Ingress or not
 ## @param ingressAdmin.className IngressClass to use for the Ingress
 ## @param ingressAdmin.host Host for the Ingress
@@ -144,9 +143,9 @@ ingressAdmin:
   host: impress.example.com
   path: /admin
   ## @param ingressAdmin.hosts Additional host to configure for the Ingress
-  hosts: [ ]
+  hosts: []
   #  - chart-example.local
-  ## @param ingressAdmin.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingressAdmin.tls.enabled Whether to enable TLS for the Ingress
   ## @param ingressAdmin.tls.secretName Secret name for TLS config
   ## @skip ingressAdmin.tls.additional
   ## @extra ingressAdmin.tls.additional[].secretName Secret name for additional TLS config
@@ -166,9 +165,9 @@ ingressMedia:
   host: impress.example.com
   path: /media/(.*)
   ## @param ingressMedia.hosts Additional host to configure for the Ingress
-  hosts: [ ]
+  hosts: []
   #  - chart-example.local
-  ## @param ingressMedia.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingressMedia.tls.enabled Whether to enable TLS for the Ingress
   ## @param ingressMedia.tls.secretName Secret name for TLS config
   ## @skip ingressMedia.tls.additional
   ## @extra ingressMedia.tls.additional[].secretName Secret name for additional TLS config
@@ -189,19 +188,17 @@ ingressMedia:
     nginx.ingress.kubernetes.io/configuration-snippet: |
       add_header Content-Security-Policy "default-src 'none'" always;
 
-## @param serviceMedia.host
-## @param serviceMedia.port
-## @param serviceMedia.annotations
+## @param serviceMedia.host Hostname of the media storage backend (S3/MinIO) used by the media ingress
+## @param serviceMedia.port Port of the media storage backend
+## @param serviceMedia.annotations Annotations to add to the media ExternalName Service
 serviceMedia:
   host: minio.impress.svc.cluster.local
   port: 9000
   annotations: {}
 
-
 ## @section backend
 
 backend:
-
   ## @param backend.command Override the backend container command
   command: []
 
@@ -226,12 +223,15 @@ backend:
     ttlSecondsAfterFinished: 30
     backoffLimit: 2
 
-  ## @param backend.securityContext Configure backend Pod security context
+  ## @param backend.securityContext.allowPrivilegeEscalation Whether to allow privilege escalation for the backend container
+  ## @param backend.securityContext.capabilities.drop List of capabilities to drop for the backend container
+  ## @param backend.securityContext.runAsNonRoot Whether to run the backend container as a non-root user
+  ## @param backend.securityContext.seccompProfile.type Seccomp profile type for the backend container
   securityContext:
     allowPrivilegeEscalation: false
     capabilities:
       drop:
-      - "ALL"
+        - "ALL"
     runAsNonRoot: true
     seccompProfile:
       type: RuntimeDefault
@@ -245,6 +245,21 @@ backend:
   ## @skip backend.envVars
   envVars:
     <<: *commonEnvVars
+
+  ## @skip backend.envFrom List of environment variables taken from Secrets or configMaps, common to backend and celery worker
+  envFrom: []
+  # envFrom:
+  #   - secret:
+  #       name: super-secret-user-credentials
+  #   - configMapRef:
+  #       name: my-environment-variables
+
+  ## @extra backend.django.envVars Backend web deployment specific environment variables (not shared with celery worker)
+  ## @skip backend.django.envVars
+  ## @skip backend.django.envFrom List of environment variables taken from Secrets or configMaps, specific to the backend web deployment
+  django:
+    envVars: {}
+    envFrom: []
 
   ## @param backend.podAnnotations Annotations to add to the backend Pod
   podAnnotations: {}
@@ -269,9 +284,12 @@ backend:
       - /bin/sh
       - "-c"
       - |
-        while ! python manage.py check --database default > /dev/null 2>&1
+        attempt=0
+        until output=$(python manage.py check --database default 2>&1)
         do
-          echo "Database not ready"
+          attempt=$((attempt + 1))
+          echo "Database check failed (attempt $attempt), retrying in 2s:"
+          echo "$output"
           sleep 2
         done
 
@@ -287,9 +305,12 @@ backend:
       - "/bin/sh"
       - "-c"
       - |
-        while ! python manage.py check --database default > /dev/null 2>&1
+        attempt=0
+        until output=$(python manage.py check --database default 2>&1)
         do
-          echo "Database not ready"
+          attempt=$((attempt + 1))
+          echo "Database check failed (attempt $attempt), retrying in 2s:"
+          echo "$output"
           sleep 2
         done
 
@@ -325,21 +346,21 @@ backend:
   ## @param backend.probes.liveness.path [nullable] Configure path for backend HTTP liveness probe
   ## @param backend.probes.liveness.targetPort [nullable] Configure port for backend HTTP liveness probe
   ## @param backend.probes.liveness.initialDelaySeconds [nullable] Configure initial delay for backend liveness probe
-  ## @param backend.probes.liveness.initialDelaySeconds [nullable] Configure timeout for backend liveness probe
-  ## @param backend.probes.startup.path [nullable] Configure path for backend HTTP startup probe
-  ## @param backend.probes.startup.targetPort [nullable] Configure port for backend HTTP startup probe
-  ## @param backend.probes.startup.initialDelaySeconds [nullable] Configure initial delay for backend startup probe
-  ## @param backend.probes.startup.initialDelaySeconds [nullable] Configure timeout for backend startup probe
+  ## @param backend.probes.liveness.timeoutSeconds [nullable] Configure timeout for backend liveness probe
+  ## @extra backend.probes.startup.path [nullable] Configure path for backend HTTP startup probe
+  ## @extra backend.probes.startup.targetPort [nullable] Configure port for backend HTTP startup probe
+  ## @extra backend.probes.startup.initialDelaySeconds [nullable] Configure initial delay for backend startup probe
+  ## @extra backend.probes.startup.timeoutSeconds [nullable] Configure timeout for backend startup probe
   ## @param backend.probes.readiness.path [nullable] Configure path for backend HTTP readiness probe
   ## @param backend.probes.readiness.targetPort [nullable] Configure port for backend HTTP readiness probe
   ## @param backend.probes.readiness.initialDelaySeconds [nullable] Configure initial delay for backend readiness probe
-  ## @param backend.probes.readiness.initialDelaySeconds [nullable] Configure timeout for backend readiness probe
+  ## @param backend.probes.readiness.timeoutSeconds [nullable] Configure timeout for backend readiness probe
   probes:
     liveness:
-      path: /__heartbeat__
+      path: /__lbheartbeat__
       initialDelaySeconds: 10
     readiness:
-      path: /__lbheartbeat__
+      path: /__heartbeat__
       initialDelaySeconds: 10
 
   ## @param backend.resources Resource requirements for the backend container
@@ -381,7 +402,6 @@ backend:
     file_content: ""
     mount_path: /app/impress/configuration/theme
 
-
   ## @param backend.celery.replicas Amount of celery replicas
   ## @param backend.celery.command Override the celery container command
   ## @param backend.celery.args Override the celery container args
@@ -392,24 +412,47 @@ backend:
   ## @param backend.celery.probes.readiness.exec.command Override the celery container readiness probe command
   ## @param backend.celery.probes.readiness.initialDelaySeconds Initial delay for the celery container readiness probe
   ## @param backend.celery.probes.readiness.timeoutSeconds Timeout for the celery container readiness probe
+  ## @extra backend.celery.envVars Celery worker specific environment variables (not shared with the backend web deployment)
+  ## @skip backend.celery.envVars
+  ## @skip backend.celery.envFrom List of environment variables taken from Secrets or configMaps, specific to celery worker
   celery:
     replicas: 1
     command: []
-    args: ["celery", "-A", "impress.celery_app", "worker", "-l", "INFO", "-n", "impress@%h"]
+    args:
+      [
+        "celery",
+        "-A",
+        "impress.celery_app",
+        "worker",
+        "-l",
+        "INFO",
+        "-n",
+        "impress@%h",
+      ]
+    envVars: {}
+    envFrom: []
     resources: {}
     probes:
       liveness:
         exec:
-          command: ["/bin/sh", "-c", "celery -A impress.celery_app inspect ping -d impress@$HOSTNAME"]
+          command:
+            [
+              "/bin/sh",
+              "-c",
+              "celery -A impress.celery_app inspect ping -d impress@$HOSTNAME",
+            ]
         initialDelaySeconds: 60
         timeoutSeconds: 5
       readiness:
         exec:
-          command: ["/bin/sh", "-c", "celery -A impress.celery_app inspect ping -d impress@$HOSTNAME"]
+          command:
+            [
+              "/bin/sh",
+              "-c",
+              "celery -A impress.celery_app inspect ping -d impress@$HOSTNAME",
+            ]
         initialDelaySeconds: 15
         timeoutSeconds: 5
-
-
 
 ## @section frontend
 
@@ -431,18 +474,21 @@ frontend:
   ## @param frontend.replicas Amount of frontend replicas
   replicas: 3
 
-  ## @param frontend.shareProcessNamespace Enable share process namefrontend between containers
+  ## @param frontend.shareProcessNamespace Enable share process namespace between containers
   shareProcessNamespace: false
 
   ## @param frontend.sidecars Add sidecars containers to frontend deployment
   sidecars: []
 
-  ## @param frontend.securityContext Configure frontend Pod security context
+  ## @param frontend.securityContext.allowPrivilegeEscalation Whether to allow privilege escalation for the frontend container
+  ## @param frontend.securityContext.capabilities.drop List of capabilities to drop for the frontend container
+  ## @param frontend.securityContext.runAsNonRoot Whether to run the frontend container as a non-root user
+  ## @param frontend.securityContext.seccompProfile.type Seccomp profile type for the frontend container
   securityContext:
     allowPrivilegeEscalation: false
     capabilities:
       drop:
-      - "ALL"
+        - "ALL"
     runAsNonRoot: true
     seccompProfile:
       type: RuntimeDefault
@@ -456,6 +502,14 @@ frontend:
   ## @skip frontend.envVars
   envVars:
     <<: *commonEnvVars
+
+  ## @skip frontend.envFrom List of environment variables taken from Secrets or configMaps
+  envFrom: []
+  # envFrom:
+  #   - secret:
+  #       name: super-secret-user-credentials
+  #   - configMapRef:
+  #       name: my-environment-variables
 
   ## @param frontend.podAnnotations Annotations to add to the frontend Pod
   podAnnotations: {}
@@ -522,7 +576,6 @@ frontend:
 ## @section posthog
 
 posthog:
-
   ## @param posthog.ingress.enabled Enable or disable the ingress resource creation
   ## @param posthog.ingress.className Kubernetes ingress class name to use (e.g., nginx, traefik)
   ## @param posthog.ingress.host Primary hostname for the ingress resource
@@ -537,12 +590,12 @@ posthog:
     className: null
     host: impress.example.com
     path: /
-    hosts: [ ]
+    hosts: []
     tls:
       enabled: true
-      additional: [ ]
+      additional: []
 
-    customBackends: [ ]
+    customBackends: []
     annotations: {}
 
   ## @param posthog.ingressAssets.enabled Enable or disable the ingress resource creation
@@ -559,14 +612,14 @@ posthog:
     className: null
     host: impress.example.com
     paths:
-    - /static
-    - /array
-    hosts: [ ]
+      - /static
+      - /array
+    hosts: []
     tls:
       enabled: true
-      additional: [ ]
+      additional: []
 
-    customBackends: [ ]
+    customBackends: []
     annotations: {}
 
   ## @param posthog.service.type Service type (e.g. ExternalName, ClusterIP, LoadBalancer)
@@ -589,7 +642,6 @@ posthog:
     port: 443
     annotations: {}
 
-
 ## @section yProvider
 
 yProvider:
@@ -600,6 +652,77 @@ yProvider:
     repository: lasuite/impress-y-provider
     pullPolicy: IfNotPresent
     tag: "latest"
+
+  converter:
+    ## @param yProvider.converter.enabled Enable the yProvider converter deployment and service
+    enabled: false
+
+    ## @param yProvider.converter.replicas Amount of yProvider replicas
+    replicas: 3
+
+    ## @param yProvider.converter.resources Resource requirements for the yProvider container
+    resources: {}
+
+    ## @param yProvider.converter.service.type yProvider converter Service type
+    ## @param yProvider.converter.service.port yProvider converter Service listening port
+    ## @param yProvider.converter.service.targetPort yProvider converter container listening port
+    ## @param yProvider.converter.service.annotations Annotations to add to the yProvider converter Service
+    service: {}
+
+    ## @param yProvider.converter.command Override the yProvider converter container command
+    command: []
+
+    ## @param yProvider.converter.args Override the yProvider converter container args
+    args: []
+
+    ## @param yProvider.converter.shareProcessNamespace Enable share process namespace between containers
+    shareProcessNamespace: false
+
+    ## @param yProvider.converter.sidecars Add sidecars containers to yProvider converter deployment
+    sidecars: []
+
+    ## @skip yProvider.converter.securityContext
+    securityContext: {}
+
+    ## @skip yProvider.converter.envVars
+    envVars: {}
+
+    ## @skip yProvider.converter.envFrom
+    envFrom: []
+
+    ## @param yProvider.converter.podAnnotations Annotations to add to the yProvider converter Pod
+    podAnnotations: {}
+
+    ## @param yProvider.converter.dpAnnotations Annotations to add to the yProvider converter Deployment
+    dpAnnotations: {}
+
+    ## @skip yProvider.converter.probes
+    probes: {}
+
+    ## @param yProvider.converter.nodeSelector Node selector for the yProvider converter Pod
+    nodeSelector: {}
+
+    ## @param yProvider.converter.tolerations Tolerations for the yProvider converter Pod
+    tolerations: []
+
+    ## @param yProvider.converter.affinity Affinity for the yProvider converter Pod
+    affinity: {}
+
+    ## @param yProvider.converter.persistence Additional volumes to create and mount on the yProvider converter
+    persistence: {}
+
+    ## @param yProvider.converter.extraVolumeMounts Additional volumes to mount on the yProvider converter
+    extraVolumeMounts: []
+
+    ## @param yProvider.converter.extraVolumes Additional volumes to mount on the yProvider converter
+    extraVolumes: []
+
+    ## @param yProvider.converter.pdb.enabled Enable pdb on yProvider converter
+    pdb:
+      enabled: true
+
+    ## @param yProvider.converter.serviceAccountName Optional service account name to use for yProvider converter pods
+    serviceAccountName: null
 
   ## @param yProvider.command Override the yProvider container command
   command: []
@@ -616,12 +739,15 @@ yProvider:
   ## @param yProvider.sidecars Add sidecars containers to yProvider deployment
   sidecars: []
 
-  ## @param yProvider.securityContext Configure yProvider Pod security context
+  ## @param yProvider.securityContext.allowPrivilegeEscalation Whether to allow privilege escalation for the yProvider container
+  ## @param yProvider.securityContext.capabilities.drop List of capabilities to drop for the yProvider container
+  ## @param yProvider.securityContext.runAsNonRoot Whether to run the yProvider container as a non-root user
+  ## @param yProvider.securityContext.seccompProfile.type Seccomp profile type for the yProvider container
   securityContext:
     allowPrivilegeEscalation: false
     capabilities:
       drop:
-      - "ALL"
+        - "ALL"
     runAsNonRoot: true
     seccompProfile:
       type: RuntimeDefault
@@ -635,6 +761,14 @@ yProvider:
   ## @skip yProvider.envVars
   envVars:
     <<: *commonEnvVars
+
+  ## @skip yProvider.envFrom List of environment variables taken from Secrets or configMaps
+  envFrom: []
+  # envFrom:
+  #   - secret:
+  #       name: super-secret-user-credentials
+  #   - configMapRef:
+  #       name: my-environment-variables
 
   ## @param yProvider.podAnnotations Annotations to add to the yProvider Pod
   podAnnotations: {}
@@ -652,22 +786,20 @@ yProvider:
     targetPort: 4444
     annotations: {}
 
-  ## @extra yProvider.probes.liveness.path Configure path for yProvider HTTP liveness probe
+  ## @param yProvider.probes.liveness.path Configure path for yProvider HTTP liveness probe
+  ## @param yProvider.probes.liveness.initialDelaySeconds Configure initial delay for yProvider liveness probe
   ## @extra yProvider.probes.liveness.targetPort Configure port for yProvider HTTP liveness probe
-  ## @extra yProvider.probes.liveness.initialDelaySeconds Configure initial delay for yProvider liveness probe
-  ## @extra yProvider.probes.liveness.initialDelaySeconds Configure timeout for yProvider liveness probe
+  ## @extra yProvider.probes.liveness.timeoutSeconds Configure timeout for yProvider liveness probe
   ## @extra yProvider.probes.startup.path Configure path for yProvider HTTP startup probe
   ## @extra yProvider.probes.startup.targetPort Configure port for yProvider HTTP startup probe
   ## @extra yProvider.probes.startup.initialDelaySeconds Configure initial delay for yProvider startup probe
-  ## @extra yProvider.probes.startup.initialDelaySeconds Configure timeout for yProvider startup probe
+  ## @extra yProvider.probes.startup.timeoutSeconds Configure timeout for yProvider startup probe
   ## @extra yProvider.probes.readiness.path Configure path for yProvider HTTP readiness probe
   ## @extra yProvider.probes.readiness.targetPort Configure port for yProvider HTTP readiness probe
   ## @extra yProvider.probes.readiness.initialDelaySeconds Configure initial delay for yProvider readiness probe
-  ## @extra yProvider.probes.readiness.initialDelaySeconds Configure timeout for yProvider readiness probe
+  ## @extra yProvider.probes.readiness.timeoutSeconds Configure timeout for yProvider readiness probe
   probes:
     liveness:
-      ## @param yProvider.probes.liveness.path
-      ## @param yProvider.probes.liveness.initialDelaySeconds
       path: /ping
       initialDelaySeconds: 10
 
@@ -711,9 +843,9 @@ docSpec:
   ## @param docSpec.image.tag docSpec container tag
   ## @param docSpec.image.pullPolicy docSpec container image pull policy
   image:
-    repository: ghcr.io/docspecio/api
+    repository: ghcr.io/docspec/api
     pullPolicy: IfNotPresent
-    tag: "2.6.3"
+    tag: "1.21.4"
 
   ## @param docSpec.command Override the docSpec container command
   command: []
@@ -724,12 +856,15 @@ docSpec:
   ## @param docSpec.replicas Amount of docSpec replicas
   replicas: 1
 
-  ## @param docSpec.securityContext Configure docSpec Pod security context
+  ## @param docSpec.securityContext.allowPrivilegeEscalation Whether to allow privilege escalation for the docSpec container
+  ## @param docSpec.securityContext.capabilities.drop List of capabilities to drop for the docSpec container
+  ## @param docSpec.securityContext.runAsNonRoot Whether to run the docSpec container as a non-root user
+  ## @param docSpec.securityContext.seccompProfile.type Seccomp profile type for the docSpec container
   securityContext:
     allowPrivilegeEscalation: false
     capabilities:
       drop:
-      - "ALL"
+        - "ALL"
     runAsNonRoot: true
     seccompProfile:
       type: RuntimeDefault
@@ -737,13 +872,24 @@ docSpec:
   ## @param docSpec.envVars Configure docSpec container environment variables
   envVars: {}
 
-  ## @param docSpec.service Configure docSpec service
+  ## @skip docSpec.envFrom List of environment variables taken from Secrets or configMaps
+  envFrom: []
+  # envFrom:
+  #   - secret:
+  #       name: super-secret-user-credentials
+  #   - configMapRef:
+  #       name: my-environment-variables
+
+  ## @param docSpec.service.type docSpec Service type
+  ## @param docSpec.service.port docSpec Service listening port
+  ## @param docSpec.service.targetPort docSpec container listening port
   service:
     type: ClusterIP
     port: 4000
-    targetPort: 4000
+    targetPort: 3000
 
-  ## @param docSpec.probes Configure docSpec probes
+  ## @param docSpec.probes.liveness.path Configure path for docSpec HTTP liveness probe
+  ## @param docSpec.probes.readiness.path Configure path for docSpec HTTP readiness probe
   probes:
     liveness:
       path: /health

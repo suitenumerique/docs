@@ -1,5 +1,9 @@
+import { diagramBlockMapping } from '@blocknote/diagram-block/docx-exporter';
+import {
+  inlineMathMapping,
+  mathBlockMapping,
+} from '@blocknote/math-block/docx-exporter';
 import { docxDefaultSchemaMappings } from '@blocknote/xl-docx-exporter';
-import { TextRun } from 'docx';
 
 import {
   blockMappingCalloutDocx,
@@ -19,6 +23,10 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
     // implementation signature, so we can reuse the handler directly.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pdf: docxDefaultSchemaMappings.blockMapping.file as any,
+    // Renders the LaTeX as a native (editable) Word equation.
+    mathBlock: mathBlockMapping,
+    // Renders the Mermaid source to a PNG in the browser (async mapping).
+    diagram: diagramBlockMapping,
     quote: blockMappingQuoteDocx,
     image: blockMappingImageDocx,
     uploadLoader: blockMappingUploadLoaderDocx,
@@ -48,8 +56,9 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
   },
   inlineContentMapping: {
     ...docxDefaultSchemaMappings.inlineContentMapping,
-    interlinkingSearchInline: () => new TextRun(''),
     interlinkingLinkInline: inlineContentMappingInterlinkingLinkDocx,
+    // Renders inline math as a native (editable) Word equation.
+    math: inlineMathMapping,
   },
   styleMapping: {
     ...docxDefaultSchemaMappings.styleMapping,

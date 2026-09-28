@@ -155,6 +155,7 @@ def test_models_documents_get_abilities_forbidden(
     expected_abilities = {
         "accesses_manage": False,
         "accesses_view": False,
+        "ai_proxy": False,
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
@@ -164,13 +165,15 @@ def test_models_documents_get_abilities_forbidden(
         "collaboration_auth": False,
         "descendants": False,
         "cors_proxy": False,
-        "content": False,
+        "formatted_content": False,
         "destroy": False,
         "duplicate": False,
         "favorite": False,
         "comment": False,
         "invite_owner": False,
-        "mask": False,
+        "content_patch": False,
+        "content_retrieve": False,
+        "leave": False,
         "media_auth": False,
         "media_check": False,
         "move": False,
@@ -188,8 +191,9 @@ def test_models_documents_get_abilities_forbidden(
         "versions_destroy": False,
         "versions_list": False,
         "versions_retrieve": False,
+        "search": False,
     }
-    nb_queries = 1 if is_authenticated else 0
+    nb_queries = 2 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
         assert document.get_abilities(user) == expected_abilities
     document.soft_delete()
@@ -220,6 +224,7 @@ def test_models_documents_get_abilities_reader(
     expected_abilities = {
         "accesses_manage": False,
         "accesses_view": False,
+        "ai_proxy": False,
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
@@ -230,7 +235,7 @@ def test_models_documents_get_abilities_reader(
         "comment": False,
         "descendants": True,
         "cors_proxy": True,
-        "content": True,
+        "formatted_content": True,
         "destroy": False,
         "duplicate": is_authenticated,
         "favorite": is_authenticated,
@@ -241,7 +246,9 @@ def test_models_documents_get_abilities_reader(
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "mask": is_authenticated,
+        "content_patch": False,
+        "content_retrieve": True,
+        "leave": False,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -253,8 +260,9 @@ def test_models_documents_get_abilities_reader(
         "versions_destroy": False,
         "versions_list": False,
         "versions_retrieve": False,
+        "search": True,
     }
-    nb_queries = 1 if is_authenticated else 0
+    nb_queries = 2 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
         assert document.get_abilities(user) == expected_abilities
 
@@ -290,6 +298,7 @@ def test_models_documents_get_abilities_commenter(
     expected_abilities = {
         "accesses_manage": False,
         "accesses_view": False,
+        "ai_proxy": False,
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
@@ -298,7 +307,7 @@ def test_models_documents_get_abilities_commenter(
         "children_list": True,
         "collaboration_auth": True,
         "comment": True,
-        "content": True,
+        "formatted_content": True,
         "descendants": True,
         "cors_proxy": True,
         "destroy": False,
@@ -311,7 +320,9 @@ def test_models_documents_get_abilities_commenter(
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "mask": is_authenticated,
+        "content_patch": False,
+        "content_retrieve": True,
+        "leave": False,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -323,8 +334,9 @@ def test_models_documents_get_abilities_commenter(
         "versions_destroy": False,
         "versions_list": False,
         "versions_retrieve": False,
+        "search": True,
     }
-    nb_queries = 1 if is_authenticated else 0
+    nb_queries = 2 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
         assert document.get_abilities(user) == expected_abilities
 
@@ -357,6 +369,7 @@ def test_models_documents_get_abilities_editor(
     expected_abilities = {
         "accesses_manage": False,
         "accesses_view": False,
+        "ai_proxy": is_authenticated,
         "ai_transform": is_authenticated,
         "ai_translate": is_authenticated,
         "attachment_upload": True,
@@ -367,7 +380,7 @@ def test_models_documents_get_abilities_editor(
         "comment": True,
         "descendants": True,
         "cors_proxy": True,
-        "content": True,
+        "formatted_content": True,
         "destroy": False,
         "duplicate": is_authenticated,
         "favorite": is_authenticated,
@@ -378,7 +391,9 @@ def test_models_documents_get_abilities_editor(
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "mask": is_authenticated,
+        "content_patch": True,
+        "content_retrieve": True,
+        "leave": False,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -390,8 +405,9 @@ def test_models_documents_get_abilities_editor(
         "versions_destroy": False,
         "versions_list": False,
         "versions_retrieve": False,
+        "search": True,
     }
-    nb_queries = 1 if is_authenticated else 0
+    nb_queries = 2 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
         assert document.get_abilities(user) == expected_abilities
     document.soft_delete()
@@ -413,6 +429,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
     expected_abilities = {
         "accesses_manage": True,
         "accesses_view": True,
+        "ai_proxy": True,
         "ai_transform": True,
         "ai_translate": True,
         "attachment_upload": True,
@@ -423,7 +440,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "comment": True,
         "descendants": True,
         "cors_proxy": True,
-        "content": True,
+        "formatted_content": True,
         "destroy": True,
         "duplicate": True,
         "favorite": True,
@@ -434,18 +451,21 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "mask": True,
+        "content_patch": True,
+        "content_retrieve": True,
+        "leave": False,
         "media_auth": True,
         "media_check": True,
         "move": True,
         "partial_update": True,
-        "restore": True,
+        "restore": False,
         "retrieve": True,
         "tree": True,
         "update": True,
         "versions_destroy": True,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
     with django_assert_num_queries(1):
         assert document.get_abilities(user) == expected_abilities
@@ -455,6 +475,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
     assert document.get_abilities(user) == {
         "accesses_manage": False,
         "accesses_view": False,
+        "ai_proxy": False,
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
@@ -465,7 +486,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "comment": False,
         "descendants": False,
         "cors_proxy": False,
-        "content": False,
+        "formatted_content": False,
         "destroy": False,
         "duplicate": False,
         "favorite": False,
@@ -476,7 +497,9 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "mask": False,
+        "content_patch": False,
+        "content_retrieve": True,
+        "leave": False,
         "media_auth": False,
         "media_check": False,
         "move": False,
@@ -488,6 +511,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "versions_destroy": False,
         "versions_list": False,
         "versions_retrieve": False,
+        "search": False,
     }
 
 
@@ -501,6 +525,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
     expected_abilities = {
         "accesses_manage": True,
         "accesses_view": True,
+        "ai_proxy": True,
         "ai_transform": True,
         "ai_translate": True,
         "attachment_upload": True,
@@ -511,7 +536,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "comment": True,
         "descendants": True,
         "cors_proxy": True,
-        "content": True,
+        "formatted_content": True,
         "destroy": False,
         "duplicate": True,
         "favorite": True,
@@ -522,7 +547,9 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "mask": True,
+        "content_patch": True,
+        "content_retrieve": True,
+        "leave": False,
         "media_auth": True,
         "media_check": True,
         "move": True,
@@ -534,6 +561,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "versions_destroy": True,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
     with django_assert_num_queries(1):
         assert document.get_abilities(user) == expected_abilities
@@ -557,6 +585,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
     expected_abilities = {
         "accesses_manage": False,
         "accesses_view": True,
+        "ai_proxy": True,
         "ai_transform": True,
         "ai_translate": True,
         "attachment_upload": True,
@@ -567,7 +596,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "comment": True,
         "descendants": True,
         "cors_proxy": True,
-        "content": True,
+        "formatted_content": True,
         "destroy": False,
         "duplicate": True,
         "favorite": True,
@@ -578,7 +607,9 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "mask": True,
+        "content_patch": True,
+        "content_retrieve": True,
+        "leave": True,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -590,6 +621,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "versions_destroy": False,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
     with django_assert_num_queries(1):
         assert document.get_abilities(user) == expected_abilities
@@ -620,6 +652,7 @@ def test_models_documents_get_abilities_reader_user(
         "accesses_view": True,
         # If you get your editor rights from the link role and not your access role
         # You should not access AI if it's restricted to users with specific access
+        "ai_proxy": access_from_link and ai_access_setting != "restricted",
         "ai_transform": access_from_link and ai_access_setting != "restricted",
         "ai_translate": access_from_link and ai_access_setting != "restricted",
         "attachment_upload": access_from_link,
@@ -631,7 +664,7 @@ def test_models_documents_get_abilities_reader_user(
         and document.link_role in ["commenter", "editor"],
         "descendants": True,
         "cors_proxy": True,
-        "content": True,
+        "formatted_content": True,
         "destroy": False,
         "duplicate": True,
         "favorite": True,
@@ -642,7 +675,9 @@ def test_models_documents_get_abilities_reader_user(
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "mask": True,
+        "content_patch": access_from_link,
+        "content_retrieve": True,
+        "leave": True,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -654,6 +689,7 @@ def test_models_documents_get_abilities_reader_user(
         "versions_destroy": False,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
 
     with override_settings(AI_ALLOW_REACH_FROM=ai_access_setting):
@@ -686,6 +722,7 @@ def test_models_documents_get_abilities_commenter_user(
         "accesses_view": True,
         # If you get your editor rights from the link role and not your access role
         # You should not access AI if it's restricted to users with specific access
+        "ai_proxy": access_from_link and ai_access_setting != "restricted",
         "ai_transform": access_from_link and ai_access_setting != "restricted",
         "ai_translate": access_from_link and ai_access_setting != "restricted",
         "attachment_upload": access_from_link,
@@ -694,7 +731,7 @@ def test_models_documents_get_abilities_commenter_user(
         "children_list": True,
         "collaboration_auth": True,
         "comment": True,
-        "content": True,
+        "formatted_content": True,
         "descendants": True,
         "cors_proxy": True,
         "destroy": False,
@@ -707,7 +744,9 @@ def test_models_documents_get_abilities_commenter_user(
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "mask": True,
+        "content_patch": access_from_link,
+        "content_retrieve": True,
+        "leave": True,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -719,6 +758,7 @@ def test_models_documents_get_abilities_commenter_user(
         "versions_destroy": False,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
 
     with override_settings(AI_ALLOW_REACH_FROM=ai_access_setting):
@@ -747,6 +787,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
     assert abilities == {
         "accesses_manage": False,
         "accesses_view": True,
+        "ai_proxy": False,
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
@@ -757,7 +798,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "comment": False,
         "descendants": True,
         "cors_proxy": True,
-        "content": True,
+        "formatted_content": True,
         "destroy": False,
         "duplicate": True,
         "favorite": True,
@@ -768,7 +809,9 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "mask": True,
+        "content_patch": False,
+        "content_retrieve": True,
+        "leave": True,
         "media_auth": True,
         "media_check": True,
         "move": False,
@@ -780,6 +823,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "versions_destroy": False,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
 
 
@@ -839,7 +883,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
     ],
 )
 # pylint: disable=too-many-arguments, too-many-positional-arguments
-def test_models_documents_get_abilities_children_destroy(  # noqa: PLR0913
+def test_models_documents_get_abilities_children_destroy(  # noqa: PLR0913, PLR0917
     is_authenticated,
     is_creator,
     role,
@@ -863,6 +907,22 @@ def test_models_documents_get_abilities_children_destroy(  # noqa: PLR0913
     assert abilities["destroy"] is can_destroy
 
 
+@pytest.mark.parametrize("parent_deleted", [False, True])
+def test_models_documents_get_abilities_owner_ancestor_deleted(parent_deleted):
+    """Test restore a child should not be enabled when a parent is deleted."""
+    user = factories.UserFactory()
+    parent = factories.DocumentFactory(users=[(user, "owner")])
+    document = factories.DocumentFactory(parent=parent)
+
+    if parent_deleted:
+        parent.soft_delete()
+        document.refresh_from_db()
+
+    abilities = document.get_abilities(user)
+
+    assert abilities["restore"] is False
+
+
 @override_settings(AI_ALLOW_REACH_FROM="public")
 @pytest.mark.parametrize(
     "is_authenticated,reach",
@@ -878,6 +938,7 @@ def test_models_document_get_abilities_ai_access_authenticated(is_authenticated,
     document = factories.DocumentFactory(link_reach=reach, link_role="editor")
 
     abilities = document.get_abilities(user)
+    assert abilities["ai_proxy"] is True
     assert abilities["ai_transform"] is True
     assert abilities["ai_translate"] is True
 
@@ -897,6 +958,7 @@ def test_models_document_get_abilities_ai_access_public(is_authenticated, reach)
     document = factories.DocumentFactory(link_reach=reach, link_role="editor")
 
     abilities = document.get_abilities(user)
+    assert abilities["ai_proxy"] == is_authenticated
     assert abilities["ai_transform"] == is_authenticated
     assert abilities["ai_translate"] == is_authenticated
 
@@ -1021,7 +1083,10 @@ def test_models_documents__email_invitation__success():
         f"Test Sender (sender@example.com) invited you with the role &quot;editor&quot; "
         f"on the following document: {document.title}" in email_content
     )
-    assert f"docs/{document.id}/" in email_content
+    assert (
+        f"docs/{document.id}/?utm_source=docssharelink&amp;utm_campaign={document.id}"
+        in email_content
+    )
 
 
 @pytest.mark.parametrize(
@@ -1051,10 +1116,18 @@ def test_models_documents__email_invitation__url_app_param(email_url_app):
 
         # Determine expected domain
         if email_url_app:
-            assert f"https://test-example.com/docs/{document.id}/" in email_content
+            expected_url = (
+                f"https://test-example.com/docs/{document.id}/"
+                f"?utm_source=docssharelink&amp;utm_campaign={document.id}"
+            )
+            assert expected_url in email_content
         else:
             # Default Site domain is example.com
-            assert f"example.com/docs/{document.id}/" in email_content
+            expected_url = (
+                f"example.com/docs/{document.id}/"
+                f"?utm_source=docssharelink&amp;utm_campaign={document.id}"
+            )
+            assert expected_url in email_content
 
 
 def test_models_documents__email_invitation__success_empty_title():
@@ -1085,7 +1158,10 @@ def test_models_documents__email_invitation__success_empty_title():
         "Test Sender (sender@example.com) invited you with the role &quot;editor&quot; "
         "on the following document: Untitled Document" in email_content
     )
-    assert f"docs/{document.id}/" in email_content
+    assert (
+        f"docs/{document.id}/?utm_source=docssharelink&amp;utm_campaign={document.id}"
+        in email_content
+    )
 
 
 def test_models_documents__email_invitation__success_fr():
@@ -1120,7 +1196,10 @@ def test_models_documents__email_invitation__success_fr():
         f"Test Sender2 (sender2@example.com) vous a invité avec le rôle &quot;propriétaire&quot; "
         f"sur le document suivant : {document.title}" in email_content
     )
-    assert f"docs/{document.id}/" in email_content
+    assert (
+        f"docs/{document.id}/?utm_source=docssharelink&amp;utm_campaign={document.id}"
+        in email_content
+    )
 
 
 @mock.patch(
@@ -1650,3 +1729,59 @@ def test_models_documents_compute_ancestors_links_paths_mapping_structure(
                 {"link_reach": sibling.link_reach, "link_role": sibling.link_role},
             ],
         }
+
+
+def test_models_documents_get_self_and_ancestors_paths_root():
+    """A root document should only return its own path."""
+    document = factories.DocumentFactory()
+
+    assert len(document.path) == models.Document.steplen
+    assert document.get_self_and_ancestors_paths() == [document.path]
+
+
+def test_models_documents_get_self_and_ancestors_paths_tree(
+    django_assert_num_queries,
+):
+    """
+    The method should return the paths of the document and all its ancestors,
+    ordered from the root down to the document itself, without hitting the database.
+    """
+    root = factories.DocumentFactory()
+    factories.DocumentFactory(parent=root)  # sibling branch, should be ignored
+    parent = factories.DocumentFactory(parent=root)
+    document = factories.DocumentFactory(parent=parent)
+    child = factories.DocumentFactory(parent=document)
+
+    with django_assert_num_queries(0):
+        paths = child.get_self_and_ancestors_paths()
+
+    assert paths == [root.path, parent.path, document.path, child.path]
+
+    # Should match what treebeard computes with a database query
+    ancestors_paths = list(
+        child.get_ancestors().order_by("path").values_list("path", flat=True)
+    )
+    assert paths == ancestors_paths + [child.path]
+
+    # Filtering on these paths should return exactly the ancestors and the document
+    assert set(
+        models.Document.objects.filter(path__in=paths).values_list("id", flat=True)
+    ) == {root.id, parent.id, document.id, child.id}
+
+
+def test_models_documents_get_self_and_ancestors_paths_from_path_only():
+    """
+    The method should only rely on the materialized path and the step length,
+    so it can be used on an unsaved instance.
+    """
+    steplen = models.Document.steplen
+    document = models.Document(path="0000001" + "000000A" + "00000Zz")
+
+    assert document.get_self_and_ancestors_paths() == [
+        "0000001",
+        "0000001000000A",
+        "0000001000000A00000Zz",
+    ]
+    assert all(
+        len(path) % steplen == 0 for path in document.get_self_and_ancestors_paths()
+    )

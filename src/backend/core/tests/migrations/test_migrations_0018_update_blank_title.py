@@ -1,7 +1,5 @@
 import pytest
 
-from core import models
-
 
 @pytest.mark.django_db
 def test_update_blank_title_migration(migrator):

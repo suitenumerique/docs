@@ -1,7 +1,4 @@
-import {
-  VariantType,
-  useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -137,7 +134,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
       $gap={spacingsTokens['base']}
       className="--docs--doc-visibility"
     >
-      <Text $weight="700" $size="sm">
+      <Text as="h2" $weight="700" $size="sm" $margin="none">
         {t('Link settings')}
       </Text>
       {isDesynchronized && <DocDesynchronized doc={doc} />}
@@ -180,8 +177,8 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
             options={linkReachOptions}
           >
             <Box
-              $theme={canManage ? 'brand' : 'gray'}
-              $variation={canManage ? 'tertiary' : 'primary'}
+              $theme={canManage ? 'brand' : 'neutral'}
+              $variation="tertiary"
               $direction="row"
               $align="center"
               $gap={spacingsTokens['3xs']}
@@ -229,7 +226,11 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
               }
               label={t('Document access mode')}
             >
-              <Text $weight="initial" $theme="brand" $variation="tertiary">
+              <Text
+                $weight="initial"
+                $theme={!canManage ? 'neutral' : 'brand'}
+                $variation={!canManage ? 'secondary' : 'tertiary'}
+              >
                 {linkModeTranslations[docLinkRole]}
               </Text>
             </DropdownMenu>

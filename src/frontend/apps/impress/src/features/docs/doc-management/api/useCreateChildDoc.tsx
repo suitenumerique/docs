@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
+import { KEY_LIST_SEARCH_DOC } from '@/docs/doc-search/api/useSearchDocs';
 
 import { Doc } from '../types';
 
@@ -42,6 +43,9 @@ export function useCreateChildDoc({ onSuccess }: UseCreateChildDocProps) {
     onSuccess: (doc) => {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC],
+      });
+      void queryClient.resetQueries({
+        queryKey: [KEY_LIST_SEARCH_DOC],
       });
       onSuccess(doc);
     },

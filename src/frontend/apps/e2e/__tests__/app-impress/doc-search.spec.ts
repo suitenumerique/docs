@@ -1,7 +1,11 @@
 import { expect, test } from '@playwright/test';
 
 import { createDoc, verifyDocName } from './utils-common';
-import { createRootSubPage } from './utils-sub-pages';
+import { connectOtherUserToDoc, updateShareLink } from './utils-share';
+import {
+  createRootSubPage,
+  navigateToTopParentFromTree,
+} from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -29,11 +33,11 @@ test.describe('Document search', () => {
     await page.getByTestId('search-docs-button').click();
 
     await expect(
-      page.getByRole('img', { name: 'No active search' }),
+      page.getByRole('listbox', { name: 'Suggestions' }).locator('img'),
     ).toBeVisible();
 
     await expect(
-      page.getByRole('heading', { name: 'Search docs' }),
+      page.getByRole('heading', { name: 'Search for a document' }),
     ).toBeVisible();
 
     const inputSearch = page.getByPlaceholder('Type the name of a document');
@@ -44,7 +48,6 @@ test.describe('Document search', () => {
 
     const listSearch = page.getByRole('listbox').getByRole('group');
     const rowdoc = listSearch.getByRole('option').first();
-    await expect(rowdoc.getByText('keyboard_return')).toBeVisible();
     await expect(rowdoc.getByText(/just now/)).toBeVisible();
 
     await expect(
@@ -79,7 +82,7 @@ test.describe('Document search', () => {
 
     await page.keyboard.press('Control+k');
     await expect(
-      page.getByRole('heading', { name: 'Search docs' }),
+      page.getByRole('heading', { name: 'Search for a document' }),
     ).toBeVisible();
 
     await page.keyboard.press('Escape');
@@ -92,59 +95,8 @@ test.describe('Document search', () => {
     await page.keyboard.press('Control+k');
     await expect(page.getByRole('textbox', { name: 'Edit URL' })).toBeVisible();
     await expect(
-      page.getByLabel('Search modal').getByText('search'),
+      page.getByRole('heading', { name: 'Search for a document' }),
     ).toBeHidden();
-  });
-
-  test('it check the presence of filters in search modal', async ({
-    page,
-    browserName,
-  }) => {
-    // Doc grid filters are not visible
-    const searchButton = page.getByTestId('search-docs-button');
-
-    const filters = page.getByTestId('doc-search-filters');
-
-    await searchButton.click();
-    await expect(
-      page.getByRole('combobox', { name: 'Quick search input' }),
-    ).toBeVisible();
-    await expect(filters).toBeHidden();
-
-    await page.getByRole('button', { name: 'close' }).click();
-
-    // Create a doc without children for the moment
-    // and check that filters are not visible
-    const [doc1Title] = await createDoc(page, 'My page search', browserName, 1);
-    await verifyDocName(page, doc1Title);
-
-    await searchButton.click();
-    await expect(
-      page.getByRole('combobox', { name: 'Quick search input' }),
-    ).toBeVisible();
-    await expect(filters).toBeHidden();
-
-    await page.getByRole('button', { name: 'close' }).click();
-
-    // Create a sub page
-    // and check that filters are visible
-    await createRootSubPage(page, browserName, 'My sub page search');
-
-    await searchButton.click();
-
-    await expect(filters).toBeVisible();
-
-    await filters.click();
-    await filters.getByRole('button', { name: 'Current doc' }).click();
-    await expect(
-      page.getByRole('menuitem', { name: 'All docs' }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('menuitem', { name: 'Current doc' }),
-    ).toBeVisible();
-    await page.getByRole('menuitem', { name: 'All docs' }).click();
-
-    await expect(page.getByRole('button', { name: 'Reset' })).toBeVisible();
   });
 
   test('it searches sub pages', async ({ page, browserName }) => {
@@ -168,10 +120,9 @@ test.describe('Document search', () => {
     const searchButton = page.getByTestId('search-docs-button');
 
     await searchButton.click();
-    await page.getByRole('combobox', { name: 'Quick search input' }).click();
     await page
-      .getByRole('combobox', { name: 'Quick search input' })
-      .fill('sub page search');
+      .getByRole('combobox', { name: 'Type the name of a document' })
+      .fill('sub page');
 
     // Expect to find the first and second docs in the results list
     const resultsList = page.getByRole('listbox');
@@ -188,23 +139,95 @@ test.describe('Document search', () => {
     const { name: secondChildDocTitle } = await createRootSubPage(
       page,
       browserName,
-      'second - Child doc',
+      'My second sub page search - Child doc',
     );
     await searchButton.click();
     await page
-      .getByRole('combobox', { name: 'Quick search input' })
-      .fill('second');
+      .getByRole('combobox', { name: 'Type the name of a document' })
+      .fill('sub page');
 
-    // Now there is a sub page - expect to have the focus on the current doc
+    // Display only current doc results
     const updatedResultsList = page.getByRole('listbox');
+    // Top parent are not displayed - only children
+    await expect(
+      updatedResultsList.getByRole('option', { name: secondDocTitle }),
+    ).toBeHidden();
+    await expect(
+      updatedResultsList.getByRole('option', { name: secondChildDocTitle }),
+    ).toBeVisible();
+    // Breadcrumb not displayed
+    await expect(
+      updatedResultsList
+        .getByRole('option', { name: secondChildDocTitle })
+        .getByText(secondDocTitle),
+    ).toBeHidden();
+    await expect(
+      updatedResultsList.getByRole('option', { name: firstDocTitle }),
+    ).toBeHidden();
+
+    // Click on the filter to show all docs
+    await page
+      .getByRole('switch', { name: 'Search in all documents' })
+      .getByText('All docs')
+      .click();
+
+    // Expect to see all docs in the results list
+    await expect(
+      updatedResultsList.getByRole('option', { name: firstDocTitle }),
+    ).toBeVisible();
     await expect(
       updatedResultsList.getByRole('option', { name: secondDocTitle }),
     ).toBeVisible();
     await expect(
       updatedResultsList.getByRole('option', { name: secondChildDocTitle }),
     ).toBeVisible();
+    // Breadcrumb with top parent is displayed
     await expect(
-      updatedResultsList.getByRole('option', { name: firstDocTitle }),
+      updatedResultsList
+        .getByRole('option', { name: secondChildDocTitle })
+        .getByText(secondDocTitle),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'close' }).click();
+
+    // Navigate to the top parent doc and make it public
+    await navigateToTopParentFromTree({ page });
+    await verifyDocName(page, secondDocTitle);
+    await page.locator('[data-test="share-button"]').click();
+    await updateShareLink(page, 'Public');
+    await page.getByRole('button', { name: 'close' }).click();
+
+    const docUrl = page.url();
+
+    // Another unauthenticated should be able to search in the current doc
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      browserName,
+      docUrl,
+      docTitle: secondDocTitle,
+      withoutSignIn: true,
+    });
+
+    await otherPage.getByTestId('search-docs-button').click();
+    await otherPage
+      .getByRole('combobox', { name: 'Type the name of a document' })
+      .fill('sub page');
+
+    // Search only in the current doc
+    const otherPageResultsList = otherPage.getByRole('listbox');
+    await expect(
+      otherPageResultsList.getByRole('option', { name: secondDocTitle }),
     ).toBeHidden();
+    await expect(
+      otherPageResultsList.getByRole('option', { name: secondChildDocTitle }),
+    ).toBeVisible();
+    await expect(
+      otherPageResultsList.getByRole('option', { name: firstDocTitle }),
+    ).toBeHidden();
+
+    // Filter is not displayed because the user is not connected
+    const otherPageFilters = otherPage.getByTestId('doc-search-filters');
+    await expect(otherPageFilters).toBeHidden();
+
+    await cleanup();
   });
 });

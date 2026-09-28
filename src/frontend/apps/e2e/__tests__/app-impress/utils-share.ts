@@ -3,9 +3,9 @@ import { Page, chromium, expect } from '@playwright/test';
 import {
   BrowserName,
   getOtherBrowserName,
-  keyCloakSignIn,
   verifyDocName,
 } from './utils-common';
+import { SignIn } from './utils-signin';
 
 export type Role = 'Administrator' | 'Owner' | 'Editor' | 'Reader';
 export type LinkReach = 'Private' | 'Connected' | 'Public';
@@ -39,7 +39,7 @@ export const addNewMember = async (
 
   // Choose a role
   await page.getByTestId('doc-role-dropdown').click();
-  await page.getByRole('menuitem', { name: role }).click();
+  await page.getByRole('menuitemradio', { name: role }).click();
   await page.getByTestId('doc-share-invite-button').click();
 
   return users[index].email;
@@ -51,7 +51,7 @@ export const updateShareLink = async (
   linkRole?: LinkRole | null,
 ) => {
   await page.getByTestId('doc-visibility').click();
-  await page.getByRole('menuitem', { name: linkReach }).click();
+  await page.getByRole('menuitemradio', { name: linkReach }).click();
 
   const visibilityUpdatedText = page
     .getByText('The document visibility has been updated')
@@ -61,7 +61,7 @@ export const updateShareLink = async (
 
   if (linkRole) {
     await page.getByTestId('doc-access-mode').click();
-    await page.getByRole('menuitem', { name: linkRole }).click();
+    await page.getByRole('menuitemradio', { name: linkRole }).click();
     await expect(visibilityUpdatedText).toBeVisible();
   }
 };
@@ -76,7 +76,7 @@ export const updateRoleUser = async (
   const currentUser = list.getByTestId(`doc-share-member-row-${email}`);
   const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
   await currentUserRole.click();
-  await page.getByRole('menuitem', { name: role }).click();
+  await page.getByRole('menuitemradio', { name: role }).click();
   await list.click();
 };
 
@@ -131,14 +131,14 @@ export const connectOtherUserToDoc = async ({
       .getByRole('main', { name: 'Main content' })
       .getByLabel('Login');
     const loginFromHome = otherPage.getByRole('button', {
-      name: 'Start Writing',
+      name: process.env.SIGN_IN_EL_TRIGGER,
     });
 
     await loginFromApp.or(loginFromHome).first().click({
       timeout: 15000,
     });
 
-    await keyCloakSignIn(otherPage, otherBrowserName, false);
+    await SignIn(otherPage, otherBrowserName, false);
   }
   if (docTitle) {
     await verifyDocName(otherPage, docTitle);

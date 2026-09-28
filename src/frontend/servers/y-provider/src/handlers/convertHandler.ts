@@ -1,13 +1,20 @@
+import { PartialBlock } from '@blocknote/core';
 import {
-  DefaultBlockSchema,
-  DefaultInlineContentSchema,
-  DefaultStyleSchema,
-  PartialBlock,
-} from '@blocknote/core';
+  CommentsExtension,
+  DefaultThreadStoreAuth,
+} from '@blocknote/core/comments';
+import { YjsThreadStore } from '@blocknote/core/yjs';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
+import * as Sentry from '@sentry/node';
 import { Request, Response } from 'express';
 import * as Y from 'yjs';
 
+import {
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema,
+  docsBlockNoteSchema,
+} from '@/blockSpecs';
 import { logger } from '@/utils';
 
 interface ErrorResponse {
@@ -16,21 +23,56 @@ interface ErrorResponse {
 
 type ConversionResponseBody = Uint8Array | string | object | ErrorResponse;
 
+type DocsPartialBlock = PartialBlock<
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema
+>;
+
 interface InputReader {
   supportedContentTypes: string[];
-  read(data: Buffer): Promise<PartialBlock[]>;
+  read(data: Buffer): Promise<DocsPartialBlock[]>;
 }
 
 interface OutputWriter {
   supportedContentTypes: string[];
-  write(blocks: PartialBlock[]): Promise<ConversionResponseBody>;
+  write(blocks: DocsPartialBlock[]): Promise<ConversionResponseBody>;
 }
 
+/**
+ * The "comment" mark must exist in the editor schema, otherwise y-prosemirror
+ * silently discards every commented run of text when it reads the Yjs document
+ * (a mark with no matching type in the schema is dropped together with the text
+ * it wraps). This corrupts *all* conversion targets (HTML, Markdown, JSON...),
+ * turning any block that holds a comment into an empty block.
+ *
+ * Registering the CommentsExtension is the only supported way to add that mark to
+ * the schema. The thread store and user resolver below are never exercised during
+ * conversion (we only read the document, we never resolve threads or users); they
+ * exist solely to satisfy the extension's constructor.
+ */
+const commentsThreadStore = new YjsThreadStore(
+  'y-provider',
+  new Y.Doc().getMap('comment-threads'),
+  new DefaultThreadStoreAuth('y-provider', 'editor'),
+);
+
 const editor = ServerBlockNoteEditor.create<
-  DefaultBlockSchema,
-  DefaultInlineContentSchema,
-  DefaultStyleSchema
->();
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema
+>({
+  schema: docsBlockNoteSchema,
+  extensions: [
+    CommentsExtension({
+      threadStore: commentsThreadStore,
+      resolveUsers: (userIds) =>
+        Promise.resolve(
+          userIds.map((id) => ({ id, username: id, avatarUrl: '' })),
+        ),
+    }),
+  ],
+});
 
 const ContentTypes = {
   XMarkdown: 'text/x-markdown',
@@ -43,7 +85,7 @@ const ContentTypes = {
   JSON: 'application/json',
 } as const;
 
-const createYDocument = (blocks: PartialBlock[]) =>
+const createYDocument = (blocks: DocsPartialBlock[]) =>
   editor.blocksToYDoc(blocks, 'document-store');
 
 const readers: InputReader[] = [
@@ -60,8 +102,12 @@ const readers: InputReader[] = [
     supportedContentTypes: [ContentTypes.YJS, ContentTypes.OctetStream],
     read: async (data) => {
       const ydoc = new Y.Doc();
-      Y.applyUpdate(ydoc, data);
-      return editor.yDocToBlocks(ydoc, 'document-store') as PartialBlock[];
+      try {
+        Y.applyUpdate(ydoc, data);
+        return editor.yDocToBlocks(ydoc, 'document-store');
+      } finally {
+        ydoc.destroy();
+      }
     },
   },
   {
@@ -77,7 +123,14 @@ const writers: OutputWriter[] = [
   },
   {
     supportedContentTypes: [ContentTypes.YJS, ContentTypes.OctetStream],
-    write: async (blocks) => Y.encodeStateAsUpdate(createYDocument(blocks)),
+    write: async (blocks) => {
+      const ydoc = createYDocument(blocks);
+      try {
+        return Y.encodeStateAsUpdate(ydoc);
+      } finally {
+        ydoc.destroy();
+      }
+    },
   },
   {
     supportedContentTypes: [ContentTypes.Markdown, ContentTypes.XMarkdown],
@@ -124,13 +177,7 @@ export const convertHandler = async (
     return;
   }
 
-  let blocks:
-    | PartialBlock<
-        DefaultBlockSchema,
-        DefaultInlineContentSchema,
-        DefaultStyleSchema
-      >[]
-    | null = null;
+  let blocks: DocsPartialBlock[] | null;
   try {
     try {
       blocks = await reader.read(req.body);
@@ -140,16 +187,19 @@ export const convertHandler = async (
       return;
     }
 
-    if (!blocks || blocks.length === 0) {
-      res.status(500).json({ error: 'No valid blocks were generated' });
-      return;
-    }
-
     res
       .status(200)
       .setHeader('content-type', accept)
-      .send(await writer.write(blocks));
+      .send(await writer.write(blocks ?? []));
   } catch (e) {
+    Sentry.captureException(e, {
+      tags: { handler: 'convert' },
+      extra: {
+        contentType,
+        accept,
+        bodyBytes: req.body?.length ?? 0,
+      },
+    });
     logger('conversion failed:', e);
     res.status(500).json({ error: 'An error occurred' });
   }

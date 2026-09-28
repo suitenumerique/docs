@@ -9,9 +9,6 @@ const playwrightConfig = {
   },
   languageOptions: {
     parser: typescriptParser,
-    parserOptions: {
-      project: true,
-    },
   },
   files: [
     '**/*.spec.ts',

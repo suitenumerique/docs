@@ -1,34 +1,58 @@
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
 
 import { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
-import { useProviderStore, useUpdateDoc } from '@/docs/doc-management/';
-import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
-import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
+import { RelayProvider } from '@/docs/doc-collaboration/relayProvider';
+import { useVaultClient } from '@/docs/doc-collaboration/vault';
+import {
+  canKeepaliveContent,
+  useDocContentUpdate,
+} from '@/docs/doc-management/api/useDocContentUpdate';
+import { useProviderStore } from '@/docs/doc-management/stores/useProviderStore';
+import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning/api/useDocVersions';
+import { COMMENT_UPDATE_ORIGIN } from '@/features/docs/doc-comments/api/DocsThreadStore';
+import { useIsOffline } from '@/features/service-worker';
+import { toBase64 } from '@/utils/string';
 import { isFirefox } from '@/utils/userAgent';
-
-import { toBase64 } from '../utils';
 
 const SAVE_INTERVAL = 60000;
 
 export const useSaveDoc = (
   docId: string,
   yDoc: Y.Doc,
-  isConnectedToCollabServer: boolean,
   isEncrypted: boolean,
   documentEncryptionSettings: DocumentEncryptionSettings | null,
 ) => {
-  const { encryptionTransition } = useProviderStore();
+  /**
+   * isSynced is more reliable than isConnected in this cases
+   * because it indicates that the content is fully synchronised
+   * with the yjs server
+   */
+  const { isSynced: isConnectedToCollabServer, encryptionTransition } =
+    useProviderStore();
   const { client: vaultClient } = useVaultClient();
-  const { mutate: updateDoc } = useUpdateDoc({
+
+  const { isOffline } = useIsOffline();
+  const isSavingRef = useRef(false);
+  const { mutate: updateDocContent } = useDocContentUpdate({
     listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
+    isOptimistic: isOffline, // Enable optimistic updates when offline, to update the cache immediately
     onSuccess: () => {
+      isSavingRef.current = false;
       setIsLocalChange(false);
+    },
+    onError: () => {
+      isSavingRef.current = false;
     },
   });
   const [isLocalChange, setIsLocalChange] = useState<boolean>(false);
 
+  /**
+   * Update initial doc when doc is updated by other users,
+   * so only the user typing will trigger the save.
+   * This is to avoid saving the same doc multiple time.
+   */
   useEffect(() => {
     const onUpdate = (
       _uintArray: Uint8Array,
@@ -36,7 +60,38 @@ export const useSaveDoc = (
       _updatedDoc: Y.Doc,
       transaction: Y.Transaction,
     ) => {
-      setIsLocalChange(transaction.local);
+      /**
+       * When the AI edit the doc transaction.local is false,
+       * so we check if the origin constructor to know where
+       * the transaction comes from.
+       * "PluginKey" constructor comes from the current user, but transaction.local is more reliable
+       * "HocuspocusProvider" constructor comes from other users from the collaboration server,
+       * it seems quite reliable too.
+       * The AI constructor name seems to not be reliable enough, but by deduction if it's not local
+       * and not from other users, it has to be from the AI.
+       *
+       * TODO: see if we can get the local changes from the AI
+       */
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const transactionOrigin = transaction?.origin?.constructor?.name;
+      const PROVIDER_ORIGIN_CONSTRUCTOR = 'HocuspocusProvider';
+
+      const isAIChange =
+        !transaction.local &&
+        transactionOrigin !== PROVIDER_ORIGIN_CONSTRUCTOR &&
+        !(transaction.origin instanceof RelayProvider);
+
+      /**
+       * notifySubscribers generate a transaction that can be
+       * interpreted as a local change.
+       * We intercept the update with this origin to
+       * avoid marking the change as local.
+       */
+      if (transaction.origin === COMMENT_UPDATE_ORIGIN) {
+        return;
+      }
+
+      setIsLocalChange(transaction.local || isAIChange);
     };
 
     yDoc.on('update', onUpdate);
@@ -46,79 +101,120 @@ export const useSaveDoc = (
     };
   }, [yDoc]);
 
-  const saveDoc = useCallback(() => {
-    if (!isLocalChange) {
-      return false;
-    } else if (encryptionTransition) {
-      return false;
-    } else if (isEncrypted && (!documentEncryptionSettings || !vaultClient)) {
-      return false;
-    }
+  /**
+   * `isSaving` tells whether a request was actually sent, `isKeptAlive`
+   * whether it was handed over to the browser process (see `keepalive`) and
+   * will therefore outlive the page.
+   */
+  const saveDoc = useCallback(
+    ({ isUnloading = false }: { isUnloading?: boolean } = {}) => {
+      if (
+        !isLocalChange ||
+        isSavingRef.current ||
+        // The content is being re-encrypted or decrypted server side
+        encryptionTransition ||
+        (isEncrypted && (!documentEncryptionSettings || !vaultClient))
+      ) {
+        return { isSaving: false, isKeptAlive: false };
+      }
 
-    const state = Y.encodeStateAsUpdate(yDoc);
+      isSavingRef.current = true;
+      const state = Y.encodeStateAsUpdate(yDoc);
+      const websocket = isConnectedToCollabServer;
 
-    if (isEncrypted && documentEncryptionSettings && vaultClient) {
-      // Encrypt via vault with ArrayBuffer — zero-copy
-      vaultClient
-        .encryptWithKey(
-          state.buffer as ArrayBuffer,
-          documentEncryptionSettings.encryptedSymmetricKey,
-        )
-        .then(({ encryptedData }) => {
-          updateDoc({
-            id: docId,
-            content: toBase64(new Uint8Array(encryptedData)),
-            contentEncrypted: true,
-            websocket: isConnectedToCollabServer,
+      if (isEncrypted && documentEncryptionSettings && vaultClient) {
+        // Encryption is asynchronous, so the request cannot be handed to the
+        // browser before an unload tears the page down: never kept alive.
+        vaultClient
+          .encryptWithKey(
+            state.buffer as ArrayBuffer,
+            documentEncryptionSettings.encryptedSymmetricKey,
+          )
+          .then(({ encryptedData }) => {
+            updateDocContent({
+              id: docId,
+              content: toBase64(new Uint8Array(encryptedData)),
+              contentEncrypted: true,
+              websocket,
+              keepalive: isUnloading,
+            });
+          })
+          .catch((err) => {
+            isSavingRef.current = false;
+            console.error('Failed to encrypt document for save:', err);
           });
-        })
-        .catch((err) => {
-          console.error('Failed to encrypt document for save:', err);
-        });
-    } else {
-      updateDoc({
-        id: docId,
-        content: toBase64(state),
-        contentEncrypted: false,
-        websocket: isConnectedToCollabServer,
-      });
-    }
 
-    return true;
-  }, [
-    isLocalChange,
-    encryptionTransition,
-    updateDoc,
-    docId,
-    yDoc,
-    isConnectedToCollabServer,
-    isEncrypted,
-    documentEncryptionSettings,
-    vaultClient,
-  ]);
+        return { isSaving: true, isKeptAlive: false };
+      }
+
+      const content = toBase64(state);
+      updateDocContent({
+        id: docId,
+        content,
+        contentEncrypted: false,
+        websocket,
+        keepalive: isUnloading,
+      });
+
+      return {
+        isSaving: true,
+        isKeptAlive:
+          isUnloading &&
+          canKeepaliveContent({ content, contentEncrypted: false, websocket }),
+      };
+    },
+    [
+      isLocalChange,
+      encryptionTransition,
+      isEncrypted,
+      documentEncryptionSettings,
+      vaultClient,
+      updateDocContent,
+      docId,
+      yDoc,
+      isConnectedToCollabServer,
+    ],
+  );
 
   const router = useRouter();
 
   useEffect(() => {
     const onSave = (e?: Event) => {
-      const isSaving = saveDoc();
+      const isUnloading = typeof e !== 'undefined' && e.type === 'beforeunload';
+      const { isSaving, isKeptAlive } = saveDoc({ isUnloading });
 
+      /**
+       * Firefox does not trigger the request every time the user leaves the page.
+       * Plus the request is not intercepted by the service worker.
+       * So we prevent the default behavior to have the popup asking the user
+       * if he wants to leave the page, by adding the popup, we let the time to the
+       * request to be sent, and intercepted by the service worker (for the offline part).
+       *
+       * We do the same for documents too big to be sent with `keepalive`: the
+       * request is a regular fetch, so it dies with the page unless we hold
+       * the unload back.
+       */
       if (
         isSaving &&
-        typeof e !== 'undefined' &&
+        isUnloading &&
         e.preventDefault &&
-        isFirefox()
+        isFirefox() &&
+        !isKeptAlive
       ) {
         e.preventDefault();
       }
     };
 
-    const timeout = setInterval(onSave, SAVE_INTERVAL);
+    // Save every minute
+    const timeout = setInterval(() => onSave(), SAVE_INTERVAL);
+    // Save when the user leaves the page
     addEventListener('beforeunload', onSave);
+    // Save when the user navigates to another page
     router.events.on('routeChangeStart', onSave);
 
     return () => {
       clearInterval(timeout);
+
       removeEventListener('beforeunload', onSave);
       router.events.off('routeChangeStart', onSave);
     };

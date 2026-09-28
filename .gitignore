@@ -80,5 +80,13 @@ db.sqlite3
 *.iml
 .devcontainer
 
-# Cursor rules
+# AI
+CLAUDE.md
+AGENTS.md
+.claude/
+.cursor/
 .cursorrules
+.windsurfrules
+.aider*
+.copilot/
+.github/copilot-instructions.md

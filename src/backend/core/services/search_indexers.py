@@ -8,12 +8,15 @@ from functools import cache
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Subquery
 from django.utils.module_loading import import_string
 
 import requests
 
-from core import models, utils
+from core import models
+from core.enums import SearchType
+from core.utils.dicts import get_value_by_pattern
+from core.utils.paths import get_ancestor_to_descendants_map
+from core.utils.yjs import base64_yjs_to_text
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +47,7 @@ def get_batch_accesses_by_users_and_teams(paths):
     Get accesses related to a list of document paths,
     grouped by users and teams, including all ancestor paths.
     """
-    ancestor_map = utils.get_ancestor_to_descendants_map(
+    ancestor_map = get_ancestor_to_descendants_map(
         paths, steplen=models.Document.steplen
     )
     ancestor_paths = list(ancestor_map.keys())
@@ -69,7 +72,7 @@ def get_batch_accesses_by_users_and_teams(paths):
     return dict(access_by_document_path)
 
 
-def get_visited_document_ids_of(queryset, user):
+def get_visited_document_ids_of(queryset, user) -> tuple[str, ...]:
     """
     Returns the ids of the documents that have a linktrace to the user and NOT owned.
     It will be use to limit the opensearch responses to the public documents already
@@ -78,7 +81,9 @@ def get_visited_document_ids_of(queryset, user):
     if isinstance(user, AnonymousUser):
         return []
 
-    qs = models.LinkTrace.objects.filter(user=user)
+    visited_ids = models.LinkTrace.objects.filter(user=user).values_list(
+        "document_id", flat=True
+    )
 
     docs = (
         queryset.exclude(accesses__user=user)
@@ -86,12 +91,12 @@ def get_visited_document_ids_of(queryset, user):
             deleted_at__isnull=True,
             ancestors_deleted_at__isnull=True,
         )
-        .filter(pk__in=Subquery(qs.values("document_id")))
+        .filter(pk__in=visited_ids)
         .order_by("pk")
         .distinct("pk")
     )
 
-    return [str(id) for id in docs.values_list("pk", flat=True)]
+    return tuple(str(id) for id in docs.values_list("pk", flat=True))
 
 
 class BaseDocumentIndexer(ABC):
@@ -107,15 +112,13 @@ class BaseDocumentIndexer(ABC):
         Initialize the indexer.
         """
         self.batch_size = settings.SEARCH_INDEXER_BATCH_SIZE
-        self.indexer_url = settings.SEARCH_INDEXER_URL
+        self.indexer_url = settings.INDEXING_URL
         self.indexer_secret = settings.SEARCH_INDEXER_SECRET
-        self.search_url = settings.SEARCH_INDEXER_QUERY_URL
+        self.search_url = settings.SEARCH_URL
         self.search_limit = settings.SEARCH_INDEXER_QUERY_LIMIT
 
         if not self.indexer_url:
-            raise ImproperlyConfigured(
-                "SEARCH_INDEXER_URL must be set in Django settings."
-            )
+            raise ImproperlyConfigured("INDEXING_URL must be set in Django settings.")
 
         if not self.indexer_secret:
             raise ImproperlyConfigured(
@@ -123,9 +126,7 @@ class BaseDocumentIndexer(ABC):
             )
 
         if not self.search_url:
-            raise ImproperlyConfigured(
-                "SEARCH_INDEXER_QUERY_URL must be set in Django settings."
-            )
+            raise ImproperlyConfigured("SEARCH_URL must be set in Django settings.")
 
     def index(self, queryset=None, batch_size=None):
         """
@@ -184,8 +185,16 @@ class BaseDocumentIndexer(ABC):
         Must be implemented by subclasses.
         """
 
-    # pylint: disable-next=too-many-arguments,too-many-positional-arguments
-    def search(self, text, token, visited=(), nb_results=None):
+    # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def search(  # noqa : PLR0913, PLR0917
+        self,
+        q: str,
+        token: str,
+        visited: tuple[str, ...] = (),
+        nb_results: int = None,
+        path: str = None,
+        search_type: SearchType = None,
+    ):
         """
         Search for documents in Find app.
         Ensure the same default ordering as "Docs" list : -updated_at
@@ -193,7 +202,7 @@ class BaseDocumentIndexer(ABC):
         Returns ids of the documents
 
         Args:
-            text (str): Text search content.
+            q (str): user query.
             token (str): OIDC Authentication token.
             visited (list, optional):
                 List of ids of active public documents with LinkTrace
@@ -201,21 +210,28 @@ class BaseDocumentIndexer(ABC):
             nb_results (int, optional):
                 The number of results to return.
                 Defaults to 50 if not specified.
+            path (str, optional):
+                The parent path to search descendants of.
+            search_type (SearchType, optional):
+                Type of search to perform. Can be SearchType.HYBRID or SearchType.FULL_TEXT.
+                If None, the backend search service will use its default search behavior.
         """
         nb_results = nb_results or self.search_limit
-        response = self.search_query(
+        results = self.search_query(
             data={
-                "q": text,
+                "q": q,
                 "visited": visited,
                 "services": ["docs"],
                 "nb_results": nb_results,
                 "order_by": "updated_at",
                 "order_direction": "desc",
+                "path": path,
+                "search_type": search_type,
             },
             token=token,
         )
 
-        return [d["_id"] for d in response]
+        return results
 
     @abstractmethod
     def search_query(self, data, token) -> dict:
@@ -226,10 +242,71 @@ class BaseDocumentIndexer(ABC):
         """
 
 
-class SearchIndexer(BaseDocumentIndexer):
+class FindDocumentIndexer(BaseDocumentIndexer):
     """
-    Document indexer that pushes documents to La Suite Find app.
+    Document indexer that indexes and searches documents with La Suite Find app.
     """
+
+    # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def search(  # noqa : PLR0913, PLR0917
+        self,
+        q: str,
+        token: str,
+        visited: tuple[()] = (),
+        nb_results: int = None,
+        path: str = None,
+        search_type: SearchType = None,
+    ):
+        """format Find search results"""
+        search_results = super().search(
+            q=q,
+            token=token,
+            visited=visited,
+            nb_results=nb_results,
+            path=path,
+            search_type=search_type,
+        )
+        return [
+            {
+                **hit["_source"],
+                "id": hit["_id"],
+                "title": self.get_title(hit["_source"]),
+            }
+            for hit in search_results
+        ]
+
+    @staticmethod
+    def get_title(source):
+        """
+        Find returns the titles with an extension depending on the language.
+        This function extracts the title in a generic way.
+
+        Handles multiple cases:
+        - Localized title fields like "title.<some_extension>"
+        - Fallback to plain "title" field if localized version not found
+        - Returns empty string if no title field exists
+
+        Args:
+            source (dict): The _source dictionary from a search hit
+
+        Returns:
+            str: The extracted title or empty string if not found
+
+        Example:
+            >>> get_title({"title.fr": "Bonjour", "id": 1})
+            "Bonjour"
+            >>> get_title({"title": "Hello", "id": 1})
+            "Hello"
+            >>> get_title({"id": 1})
+            ""
+        """
+        titles = get_value_by_pattern(source, r"^title\.")
+        for title in titles:
+            if title:
+                return title
+        if "title" in source:
+            return source["title"]
+        return ""
 
     def serialize_document(self, document, accesses):
         """
@@ -243,13 +320,12 @@ class SearchIndexer(BaseDocumentIndexer):
             dict: A JSON-serializable dictionary.
         """
         doc_path = document.path
-        doc_content = document.content
-
         # Encrypted content is ciphertext and it should never be indexed for search
         if document.is_encrypted:
             text_content = ""
         else:
-            text_content = utils.base64_yjs_to_text(doc_content) if doc_content else ""
+            doc_content = document.content
+            text_content = base64_yjs_to_text(doc_content) if doc_content else ""
 
         return {
             "id": str(document.id),

@@ -1,16 +1,9 @@
-/* eslint-disable playwright/no-conditional-expect */
 import path from 'path';
 
 import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 
-import {
-  createDoc,
-  goToGridDoc,
-  mockedDocument,
-  overrideConfig,
-  verifyDocName,
-} from './utils-common';
+import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
 import { getEditor, openSuggestionMenu, writeInEditor } from './utils-editor';
 import { connectOtherUserToDoc, updateShareLink } from './utils-share';
 import {
@@ -39,9 +32,7 @@ test.describe('Doc Editor', () => {
       .selectText();
 
     const toolbar = page.locator('.bn-formatting-toolbar');
-    await expect(
-      toolbar.locator('button[data-test="comment-toolbar-button"]'),
-    ).toBeVisible();
+
     await expect(toolbar.locator('button[data-test="bold"]')).toBeVisible();
     await expect(toolbar.locator('button[data-test="italic"]')).toBeVisible();
     await expect(
@@ -64,8 +55,9 @@ test.describe('Doc Editor', () => {
     await expect(
       toolbar.locator('button[data-test="createLink"]'),
     ).toBeVisible();
+
     await expect(
-      toolbar.locator('button[data-test="ai-actions"]'),
+      toolbar.locator('button[data-test="comment-toolbar-button"]'),
     ).toBeVisible();
     await expect(
       toolbar.locator('button[data-test="convertMarkdown"]'),
@@ -78,8 +70,10 @@ test.describe('Doc Editor', () => {
     await page.keyboard.press('Enter');
 
     const fileChooserPromise = page.waitForEvent('filechooser');
-    await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Resizable image with caption').click();
+    await openSuggestionMenu({
+      page,
+      suggestion: 'Resizable image with caption',
+    });
     await page.getByText('Upload image').click();
 
     const fileChooser = await fileChooserPromise;
@@ -91,15 +85,10 @@ test.describe('Doc Editor', () => {
       .locator('.--docs--editor-container img.bn-visual-media')
       .first();
 
-    await expect(image).toHaveAttribute('role', 'presentation');
-
-    await image.dblclick();
+    await image.click();
 
     await expect(
       toolbar.locator('button[data-test="comment-toolbar-button"]'),
-    ).toBeHidden();
-    await expect(
-      toolbar.locator('button[data-test="ai-actions"]'),
     ).toBeHidden();
     await expect(
       toolbar.locator('button[data-test="convertMarkdown"]'),
@@ -113,63 +102,28 @@ test.describe('Doc Editor', () => {
     ).toBeVisible();
   });
 
-  /**
-   * We check:
-   *  - connection to the collaborative server
-   *  - signal of the backend to the collaborative server (connection should close)
-   *  - reconnection to the collaborative server
-   */
-  test('checks the connection with collaborative server', async ({ page }) => {
-    let webSocketPromise = page.waitForEvent('websocket', (webSocket) => {
-      return webSocket
-        .url()
-        .includes('ws://localhost:4444/collaboration/ws/?room=');
-    });
+  test('it checks side menu buttons are displayed', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-side-menu', browserName, 1);
 
-    await page
-      .getByRole('button', {
-        name: 'New doc',
-      })
-      .click();
+    const { editor } = await openSuggestionMenu({ page, suggestion: 'Table' });
 
-    let webSocket = await webSocketPromise;
-    expect(webSocket.url()).toContain(
-      'ws://localhost:4444/collaboration/ws/?room=',
-    );
+    await editor.locator('.tableWrapper').first().hover();
 
-    // Is connected
-    let framesentPromise = webSocket.waitForEvent('framesent');
-
-    await writeInEditor({ page, text: 'Hello World' });
-
-    let framesent = await framesentPromise;
-    expect(framesent.payload).not.toBeNull();
-
-    await page.getByRole('button', { name: 'Share' }).click();
-
-    const selectVisibility = page.getByTestId('doc-visibility');
-
-    // When the visibility is changed, the ws should close the connection (backend signal)
-    const wsClosePromise = webSocket.waitForEvent('close');
-
-    await selectVisibility.click();
-    await page.getByRole('menuitem', { name: 'Connected' }).click();
-
-    // Assert that the doc reconnects to the ws
-    const wsClose = await wsClosePromise;
-    expect(wsClose.isClosed()).toBeTruthy();
-
-    // Check the ws is connected again
-    webSocketPromise = page.waitForEvent('websocket', (webSocket) => {
-      return webSocket
-        .url()
-        .includes('ws://localhost:4444/collaboration/ws/?room=');
-    });
-
-    webSocket = await webSocketPromise;
-    framesentPromise = webSocket.waitForEvent('framesent');
-    framesent = await framesentPromise;
-    expect(framesent.payload).not.toBeNull();
+    await page.locator('.bn-side-menu > button').last().click();
+    await expect(page.getByRole('menuitem', { name: 'Colors' })).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Header row' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Header column' }),
+    ).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Copy link to block' }),
+    ).toBeVisible();
   });
 
   test('markdown button converts from markdown to the editor syntax json', async ({
@@ -203,7 +157,6 @@ test.describe('Doc Editor', () => {
   }) => {
     // Check the first doc
     const [firstDoc] = await createDoc(page, 'doc-switch-1', browserName, 1);
-    await verifyDocName(page, firstDoc);
 
     const editor = page.locator('.ProseMirror');
     await editor.click();
@@ -211,8 +164,7 @@ test.describe('Doc Editor', () => {
     await expect(editor.getByText('Hello World Doc 1')).toBeVisible();
 
     // Check the second doc
-    const [secondDoc] = await createDoc(page, 'doc-switch-2', browserName, 1);
-    await verifyDocName(page, secondDoc);
+    await createDoc(page, 'doc-switch-2', browserName, 1);
 
     await expect(editor.getByText('Hello World Doc 1')).toBeHidden();
     await editor.click();
@@ -229,8 +181,9 @@ test.describe('Doc Editor', () => {
 
     await page.goto('/');
     await page
-      .getByRole('button', {
-        name: 'New doc',
+      .getByRole('link', {
+        name: 'New',
+        exact: true,
       })
       .click();
 
@@ -244,20 +197,13 @@ test.describe('Doc Editor', () => {
   }) => {
     // Check the first doc
     const [doc] = await createDoc(page, 'doc-saves-change', browserName);
-    await verifyDocName(page, doc);
 
-    const editor = page.locator('.ProseMirror');
-    await editor.click();
-    await editor.fill('Hello World Doc persisted 1');
-    await expect(editor.getByText('Hello World Doc persisted 1')).toBeVisible();
-
-    const [secondDoc] = await createDoc(
+    const editor = await writeInEditor({
       page,
-      'doc-saves-change-other',
-      browserName,
-    );
+      text: 'Hello World Doc persisted 1',
+    });
 
-    await verifyDocName(page, secondDoc);
+    await createDoc(page, 'doc-saves-change-other', browserName);
 
     await goToGridDoc(page, {
       title: doc,
@@ -274,12 +220,10 @@ test.describe('Doc Editor', () => {
     const [doc] = await createDoc(page, 'doc-quit-1', browserName, 1);
     await verifyDocName(page, doc);
 
-    const editor = page.locator('.ProseMirror');
-    await editor.click();
-    await editor.fill('Hello World Doc persisted 2');
-    await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
-
-    await page.waitForTimeout(1000);
+    const editor = await writeInEditor({
+      page,
+      text: 'Hello World Doc persisted 2',
+    });
 
     const urlDoc = page.url();
     await page.goto(urlDoc);
@@ -289,78 +233,17 @@ test.describe('Doc Editor', () => {
     await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
   });
 
-  test('it cannot edit if viewer but see and can get resources', async ({
-    page,
-    browserName,
-  }) => {
-    const [docTitle] = await createDoc(page, 'doc-viewer', browserName, 1);
-    await verifyDocName(page, docTitle);
-
-    await writeInEditor({ page, text: 'Hello World' });
-
-    await page.getByRole('button', { name: 'Share' }).click();
-    await updateShareLink(page, 'Public', 'Reading');
-
-    // Close the modal
-    await page.getByRole('button', { name: 'close' }).first().click();
-
-    const { otherPage, cleanup } = await connectOtherUserToDoc({
-      browserName,
-      docUrl: page.url(),
-      withoutSignIn: true,
-      docTitle,
-    });
-
-    await expect(
-      otherPage.getByLabel('It is the card information').getByText('Reader'),
-    ).toBeVisible();
-
-    // Cannot edit
-    const editor = otherPage.locator('.ProseMirror');
-    await expect(editor).toHaveAttribute('contenteditable', 'false');
-
-    // Owner add a image
-    const fileChooserPromise = page.waitForEvent('filechooser');
-    await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Resizable image with caption').click();
-    await page.getByText('Upload image').click();
-
-    const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(
-      path.join(__dirname, 'assets/logo-suite-numerique.png'),
-    );
-
-    // Owner see the image
-    await expect(
-      page.locator('.--docs--editor-container img.bn-visual-media').first(),
-    ).toBeVisible();
-
-    // Viewser see the image
-    const viewerImg = otherPage
-      .locator('.--docs--editor-container img.bn-visual-media')
-      .first();
-    await expect(viewerImg).toBeVisible();
-
-    // Viewer can download the image
-    await viewerImg.click();
-    const downloadPromise = otherPage.waitForEvent('download');
-    await otherPage.getByRole('button', { name: 'Download image' }).click();
-    const download = await downloadPromise;
-    expect(download.suggestedFilename()).toBe('logo-suite-numerique.png');
-
-    await cleanup();
-  });
-
   test('it adds an image to the doc editor', async ({ page, browserName }) => {
     await createDoc(page, 'doc-image', browserName, 1);
 
     const fileChooserPromise = page.waitForEvent('filechooser');
 
-    await page.locator('.bn-block-outer').last().fill('Hello World');
+    await writeInEditor({ page, text: 'Hello World' });
 
-    await page.keyboard.press('Enter');
-    await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Resizable image with caption').click();
+    await openSuggestionMenu({
+      page,
+      suggestion: 'Resizable image with caption',
+    });
     await page.getByText('Upload image').click();
 
     const fileChooser = await fileChooserPromise;
@@ -372,210 +255,74 @@ test.describe('Doc Editor', () => {
       .locator('.--docs--editor-container img.bn-visual-media')
       .first();
 
-    await expect(image).toBeVisible();
+    await expect(image).toBeVisible({
+      timeout: 10000,
+    });
 
     // Wait for the media-check to be processed
-
     await page.waitForTimeout(1000);
 
     // Check src of image
     expect(await image.getAttribute('src')).toMatch(
-      /http:\/\/localhost:8083\/media\/.*\/attachments\/.*.png/,
+      /media\/.*\/attachments\/.*.png/,
     );
-
-    await expect(image).toHaveAttribute('role', 'presentation');
-    await expect(image).toHaveAttribute('alt', '');
-    await expect(image).toHaveAttribute('tabindex', '-1');
-    await expect(image).toHaveAttribute('aria-hidden', 'true');
   });
 
-  test('it checks the AI buttons', async ({ page, browserName }) => {
-    await page.route(/.*\/ai-translate\//, async (route) => {
-      const request = route.request();
-      if (request.method().includes('POST')) {
-        await route.fulfill({
-          json: {
-            answer: 'Bonjour le monde',
-          },
-        });
-      } else {
-        await route.continue();
-      }
-    });
+  if (process.env.IS_INSTANCE !== 'true') {
+    test('it downloads unsafe files', async ({ page, browserName }) => {
+      const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
 
-    await createDoc(page, 'doc-ai', browserName, 1);
-
-    await page.locator('.bn-block-outer').last().fill('Hello World');
-
-    const editor = page.locator('.ProseMirror');
-    await editor.getByText('Hello').selectText();
-
-    await page.getByRole('button', { name: 'AI' }).click();
-
-    await expect(
-      page.getByRole('menuitem', { name: 'Use as prompt' }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('menuitem', { name: 'Rephrase' }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('menuitem', { name: 'Summarize' }),
-    ).toBeVisible();
-    await expect(page.getByRole('menuitem', { name: 'Correct' })).toBeVisible();
-    await expect(
-      page.getByRole('menuitem', { name: 'Language' }),
-    ).toBeVisible();
-
-    await page.getByRole('menuitem', { name: 'Language' }).hover();
-    await expect(
-      page.getByRole('menuitem', { name: 'English', exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('menuitem', { name: 'French', exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('menuitem', { name: 'German', exact: true }),
-    ).toBeVisible();
-
-    await page.getByRole('menuitem', { name: 'English', exact: true }).click();
-
-    await expect(editor.getByText('Bonjour le monde')).toBeVisible();
-  });
-
-  [
-    { ai_transform: false, ai_translate: false },
-    { ai_transform: true, ai_translate: false },
-    { ai_transform: false, ai_translate: true },
-  ].forEach(({ ai_transform, ai_translate }) => {
-    test(`it checks AI buttons when can transform is at "${ai_transform}" and can translate is at "${ai_translate}"`, async ({
-      page,
-      browserName,
-    }) => {
-      await mockedDocument(page, {
-        accesses: [
-          {
-            id: 'b0df4343-c8bd-4c20-9ff6-fbf94fc94egg',
-            role: 'owner',
-            user: {
-              email: 'super@owner.com',
-              full_name: 'Super Owner',
-            },
-          },
-        ],
-        abilities: {
-          destroy: true, // Means owner
-          link_configuration: true,
-          ai_transform,
-          ai_translate,
-          accesses_manage: true,
-          accesses_view: true,
-          update: true,
-          partial_update: true,
-          retrieve: true,
-        },
-        link_reach: 'restricted',
-        link_role: 'editor',
-        created_at: '2021-09-01T09:00:00Z',
-        title: '',
+      const fileChooserPromise = page.waitForEvent('filechooser');
+      const downloadPromise = page.waitForEvent('download', (download) => {
+        return download.suggestedFilename().includes(`html`);
       });
-
-      const [randomDoc] = await createDoc(
-        page,
-        'doc-editor-ai',
-        browserName,
-        1,
+      const responseCheckPromise = page.waitForResponse(
+        (response) =>
+          response.url().includes('media-check') && response.status() === 200,
       );
 
       await verifyDocName(page, randomDoc);
 
-      await page.locator('.bn-block-outer').last().fill('Hello World');
+      await writeInEditor({ page, text: 'Hello World' });
+      await openSuggestionMenu({
+        page,
+        suggestion: 'Embedded file',
+      });
+      await page.getByText('Upload file').click();
 
-      const editor = page.locator('.ProseMirror');
-      await editor.getByText('Hello').selectText();
+      const fileChooser = await fileChooserPromise;
+      await fileChooser.setFiles(path.join(__dirname, 'assets/test.html'));
 
-      if (!ai_transform && !ai_translate) {
-        await expect(page.getByRole('button', { name: 'AI' })).toBeHidden();
-        return;
-      }
+      await responseCheckPromise;
 
-      await page.getByRole('button', { name: 'AI' }).click();
+      await page.locator('.bn-block-content[data-name="test.html"]').click();
+      await page.getByRole('button', { name: 'Download file' }).click();
 
-      if (ai_transform) {
-        await expect(
-          page.getByRole('menuitem', { name: 'Use as prompt' }),
-        ).toBeVisible();
-      } else {
-        await expect(
-          page.getByRole('menuitem', { name: 'Use as prompt' }),
-        ).toBeHidden();
-      }
+      await expect(
+        page.getByText('This file is flagged as unsafe.'),
+      ).toBeVisible();
 
-      if (ai_translate) {
-        await expect(
-          page.getByRole('menuitem', { name: 'Language' }),
-        ).toBeVisible();
-      } else {
-        await expect(
-          page.getByRole('menuitem', { name: 'Language' }),
-        ).toBeHidden();
-      }
+      await expect(
+        page.getByRole('button', {
+          name: 'Download',
+          exact: true,
+        }),
+      ).toBeVisible();
+
+      void page
+        .getByRole('button', {
+          name: 'Download',
+          exact: true,
+        })
+        .click();
+
+      const download = await downloadPromise;
+      expect(download.suggestedFilename()).toContain(`-unsafe.html`);
+
+      const svgBuffer = await cs.toBuffer(await download.createReadStream());
+      expect(svgBuffer.toString()).toContain('Hello svg');
     });
-  });
-
-  test('it downloads unsafe files', async ({ page, browserName }) => {
-    const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
-
-    const fileChooserPromise = page.waitForEvent('filechooser');
-    const downloadPromise = page.waitForEvent('download', (download) => {
-      return download.suggestedFilename().includes(`html`);
-    });
-    const responseCheckPromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('media-check') && response.status() === 200,
-    );
-
-    await verifyDocName(page, randomDoc);
-
-    await page.locator('.ProseMirror.bn-editor').click();
-    await page.locator('.ProseMirror.bn-editor').fill('Hello World');
-
-    await page.keyboard.press('Enter');
-    await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Embedded file').click();
-    await page.getByText('Upload file').click();
-
-    const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(path.join(__dirname, 'assets/test.html'));
-
-    await responseCheckPromise;
-
-    await page.locator('.bn-block-content[data-name="test.html"]').click();
-    await page.getByRole('button', { name: 'Download file' }).click();
-
-    await expect(
-      page.getByText('This file is flagged as unsafe.'),
-    ).toBeVisible();
-
-    await expect(
-      page.getByRole('button', {
-        name: 'Download',
-        exact: true,
-      }),
-    ).toBeVisible();
-
-    void page
-      .getByRole('button', {
-        name: 'Download',
-        exact: true,
-      })
-      .click();
-
-    const download = await downloadPromise;
-    expect(download.suggestedFilename()).toContain(`-unsafe.html`);
-
-    const svgBuffer = await cs.toBuffer(await download.createReadStream());
-    expect(svgBuffer.toString()).toContain('Hello svg');
-  });
+  }
 
   test('it analyzes uploads', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
@@ -602,8 +349,6 @@ test.describe('Doc Editor', () => {
 
     const fileChooserPromise = page.waitForEvent('filechooser');
 
-    await verifyDocName(page, randomDoc);
-
     const { editor } = await openSuggestionMenu({ page });
     await page.getByText('Embedded file').click();
     await page.getByText('Upload file').click();
@@ -614,7 +359,9 @@ test.describe('Doc Editor', () => {
     await expect(editor.getByText('Analyzing file...')).toBeVisible();
 
     // To be sure the retry happens even after a page reload
-    await page.reload();
+    await goToGridDoc(page, {
+      title: randomDoc,
+    });
 
     await expect(editor.getByText('Analyzing file...')).toBeVisible();
 
@@ -623,147 +370,6 @@ test.describe('Doc Editor', () => {
       timeout: 7000,
     });
     await expect(editor.getByText('Analyzing file...')).toBeHidden();
-  });
-
-  test('it checks block editing when not connected to collab server', async ({
-    page,
-    browserName,
-  }) => {
-    test.slow();
-
-    /**
-     * The good port is 4444, but we want to simulate a not connected
-     * collaborative server.
-     * So we use a port that is not used by the collaborative server.
-     * The server will not be able to connect to the collaborative server.
-     */
-    await overrideConfig(page, {
-      COLLABORATION_WS_URL: 'ws://localhost:5555/collaboration/ws/',
-    });
-
-    await page.goto('/');
-
-    const [parentTitle] = await createDoc(
-      page,
-      'editing-blocking',
-      browserName,
-      1,
-    );
-
-    const card = page.getByLabel('It is the card information');
-    await expect(
-      card.getByText('Others are editing. Your network prevent changes.'),
-    ).toBeHidden();
-    const editor = page.locator('.ProseMirror');
-
-    await expect(editor).toHaveAttribute('contenteditable', 'true');
-
-    let responseCanEditPromise = page.waitForResponse(
-      (response) =>
-        response.url().includes(`/can-edit/`) && response.status() === 200,
-    );
-
-    await page.getByRole('button', { name: 'Share' }).click();
-
-    await updateShareLink(page, 'Public', 'Editing');
-
-    // Close the modal
-    await page.getByRole('button', { name: 'close' }).first().click();
-
-    const urlParentDoc = page.url();
-
-    const { name: childTitle } = await createRootSubPage(
-      page,
-      browserName,
-      'editing-blocking - child',
-    );
-
-    let responseCanEdit = await responseCanEditPromise;
-    expect(responseCanEdit.ok()).toBeTruthy();
-    let jsonCanEdit = (await responseCanEdit.json()) as { can_edit: boolean };
-    expect(jsonCanEdit.can_edit).toBeTruthy();
-
-    const urlChildDoc = page.url();
-
-    /**
-     * We open another browser that will connect to the collaborative server
-     * and will block the current browser to edit the doc.
-     */
-    const { otherPage } = await connectOtherUserToDoc({
-      browserName,
-      docUrl: urlChildDoc,
-      docTitle: childTitle,
-      withoutSignIn: true,
-    });
-
-    const webSocketPromise = otherPage.waitForEvent(
-      'websocket',
-      (webSocket) => {
-        return webSocket
-          .url()
-          .includes('ws://localhost:4444/collaboration/ws/?room=');
-      },
-    );
-
-    await otherPage.goto(urlChildDoc);
-
-    const webSocket = await webSocketPromise;
-    expect(webSocket.url()).toContain(
-      'ws://localhost:4444/collaboration/ws/?room=',
-    );
-
-    await verifyDocName(otherPage, childTitle);
-
-    await page.reload();
-
-    responseCanEditPromise = page.waitForResponse(
-      (response) =>
-        response.url().includes(`/can-edit/`) && response.status() === 200,
-    );
-
-    responseCanEdit = await responseCanEditPromise;
-    expect(responseCanEdit.ok()).toBeTruthy();
-
-    jsonCanEdit = (await responseCanEdit.json()) as { can_edit: boolean };
-    expect(jsonCanEdit.can_edit).toBeFalsy();
-
-    await expect(
-      card.getByText('Others are editing. Your network prevent changes.'),
-    ).toBeVisible({
-      timeout: 10000,
-    });
-
-    await expect(editor).toHaveAttribute('contenteditable', 'false');
-
-    await expect(
-      page.getByRole('textbox', { name: 'Document title' }),
-    ).toBeHidden();
-    await expect(page.getByRole('heading', { name: childTitle })).toBeVisible();
-
-    await page.goto(urlParentDoc);
-
-    await verifyDocName(page, parentTitle);
-
-    await page.getByRole('button', { name: 'Share' }).click();
-
-    await page.getByTestId('doc-access-mode').click();
-    await page.getByRole('menuitem', { name: 'Reading' }).click();
-
-    // Close the modal
-    await page.getByRole('button', { name: 'close' }).first().click();
-
-    await page.goto(urlChildDoc);
-
-    await expect(editor).toHaveAttribute('contenteditable', 'true');
-
-    await expect(
-      page.getByRole('textbox', { name: 'Document title' }),
-    ).toContainText(childTitle);
-    await expect(page.getByRole('heading', { name: childTitle })).toBeHidden();
-
-    await expect(
-      card.getByText('Others are editing. Your network prevent changes.'),
-    ).toBeHidden();
   });
 
   test('it checks if callout custom block', async ({ page, browserName }) => {
@@ -805,7 +411,7 @@ test.describe('Doc Editor', () => {
     await page.keyboard.press('Escape');
 
     await page.locator('.bn-side-menu > button').last().click();
-    await page.locator('.mantine-Menu-dropdown > button').last().click();
+    await page.getByRole('menuitem', { name: 'Color' }).click();
     await page.locator('.bn-color-picker-dropdown > button').last().click();
 
     await expect(
@@ -816,15 +422,11 @@ test.describe('Doc Editor', () => {
   test('it checks interlink feature', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-interlink', browserName, 1);
 
-    await verifyDocName(page, randomDoc);
-
     const { name: docChild1 } = await createRootSubPage(
       page,
       browserName,
       'doc-interlink-child-1',
     );
-
-    await verifyDocName(page, docChild1);
 
     const { name: docChild2 } = await createRootSubPage(
       page,
@@ -832,9 +434,11 @@ test.describe('Doc Editor', () => {
       'doc-interlink-child-2',
     );
 
-    await verifyDocName(page, docChild2);
-
     const treeRow = await getTreeRow(page, docChild2);
+
+    // To let the time for the emoji-picker to load
+    await page.waitForTimeout(500);
+
     await treeRow.locator('.--docs--doc-icon').click();
     await page.getByRole('button', { name: '😀' }).first().click();
 
@@ -844,7 +448,7 @@ test.describe('Doc Editor', () => {
     await page.getByText('Link a doc').first().click();
 
     const input = page.locator(
-      "span[data-inline-content-type='interlinkingSearchInline'] input",
+      "span[data-inline-content-type='interlinkingLinkInline'] input",
     );
     const searchContainer = page.locator('.quick-search-container');
 
@@ -862,7 +466,6 @@ test.describe('Doc Editor', () => {
       .first();
 
     await expect(searchContainerRow).toContainText('😀');
-    await expect(searchContainerRow.locator('svg').first()).toBeHidden();
 
     await input.pressSequentially('-child');
 
@@ -918,7 +521,7 @@ test.describe('Doc Editor', () => {
   }) => {
     const [randomDoc] = await createDoc(page, 'doc-scroll', browserName, 1);
 
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 30; i++) {
       await page.keyboard.press('Enter');
       await writeInEditor({ page, text: 'Hello Parent ' + i });
     }
@@ -927,7 +530,7 @@ test.describe('Doc Editor', () => {
     await expect(
       editor.getByText('Hello Parent 1', { exact: true }),
     ).not.toBeInViewport();
-    await expect(editor.getByText('Hello Parent 14')).toBeInViewport();
+    await expect(editor.getByText('Hello Parent 29')).toBeInViewport();
 
     const { name: docChild } = await createRootSubPage(
       page,
@@ -935,7 +538,7 @@ test.describe('Doc Editor', () => {
       'doc-scroll-child',
     );
 
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 30; i++) {
       await page.keyboard.press('Enter');
       await writeInEditor({ page, text: 'Hello Child ' + i });
     }
@@ -943,21 +546,21 @@ test.describe('Doc Editor', () => {
     await expect(
       editor.getByText('Hello Child 1', { exact: true }),
     ).not.toBeInViewport();
-    await expect(editor.getByText('Hello Child 14')).toBeInViewport();
+    await expect(editor.getByText('Hello Child 29')).toBeInViewport();
 
     await navigateToPageFromTree({ page, title: randomDoc });
 
     await expect(
       editor.getByText('Hello Parent 1', { exact: true }),
     ).toBeInViewport();
-    await expect(editor.getByText('Hello Parent 14')).not.toBeInViewport();
+    await expect(editor.getByText('Hello Parent 29')).not.toBeInViewport();
 
     await navigateToPageFromTree({ page, title: docChild });
 
     await expect(
       editor.getByText('Hello Child 1', { exact: true }),
     ).toBeInViewport();
-    await expect(editor.getByText('Hello Child 14')).not.toBeInViewport();
+    await expect(editor.getByText('Hello Child 29')).not.toBeInViewport();
   });
 
   test('it embeds PDF', async ({ page, browserName }) => {
@@ -968,15 +571,17 @@ test.describe('Doc Editor', () => {
 
     await page.getByRole('button', { name: 'Close the share modal' }).click();
 
-    await openSuggestionMenu({ page });
-    await page.getByText('Embed a PDF file').click();
+    await openSuggestionMenu({ page, suggestion: 'Embed a PDF file' });
 
     const pdfBlock = page.locator('div[data-content-type="pdf"]').last();
 
     await expect(pdfBlock).toBeVisible();
 
     // Try with invalid PDF first
-    await page.getByText(/Add (PDF|file)/).click();
+    await page
+      .getByText(/Add (PDF|file)/)
+      .first()
+      .click();
 
     await page.locator('[data-test="embed-tab"]').click();
 
@@ -988,13 +593,11 @@ test.describe('Doc Editor', () => {
 
     await expect(page.getByText('Invalid or missing PDF file')).toBeVisible();
 
-    await openSuggestionMenu({ page });
-    await page.getByText('Embed a PDF file').click();
+    await openSuggestionMenu({ page, suggestion: 'Embed a PDF file' });
 
     // Now with a valid PDF
     await page.getByText(/Add (PDF|file)/).click();
     const fileChooserPromise = page.waitForEvent('filechooser');
-    const downloadPromise = page.waitForEvent('download');
     await page.getByText(/Upload (PDF|file)/).click();
     const fileChooser = await fileChooserPromise;
 
@@ -1003,37 +606,23 @@ test.describe('Doc Editor', () => {
     // Wait for the media-check to be processed
     await page.waitForTimeout(1000);
 
-    const pdfEmbed = page
-      .locator('.--docs--editor-container embed.bn-visual-media')
+    const pdfIframe = page
+      .locator('.--docs--editor-container iframe.bn-visual-media')
       .first();
 
     // Check src of pdf
-    expect(await pdfEmbed.getAttribute('src')).toMatch(
-      /http:\/\/localhost:8083\/media\/.*\/attachments\/.*.pdf/,
+    expect(await pdfIframe.getAttribute('src')).toMatch(
+      /\/media\/.*\/attachments\/.*.pdf/,
     );
 
-    await expect(pdfEmbed).toHaveAttribute('type', 'application/pdf');
-    await expect(pdfEmbed).toHaveAttribute('role', 'presentation');
-
-    // Check download with original filename
-    await pdfBlock.click();
-    await page.locator('[data-test="downloadfile"]').click();
-
-    const download = await downloadPromise;
-    expect(download.suggestedFilename()).toBe('test-pdf.pdf');
+    await expect(pdfIframe).toHaveAttribute('role', 'presentation');
   });
 
   test('it preserves text when switching between mobile and desktop views', async ({
     page,
     browserName,
   }) => {
-    const [docTitle] = await createDoc(
-      page,
-      'doc-viewport-test',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, docTitle);
+    await createDoc(page, 'doc-viewport-test', browserName, 1);
 
     const editor = await writeInEditor({
       page,
@@ -1061,5 +650,155 @@ test.describe('Doc Editor', () => {
     await page.waitForTimeout(500);
 
     await expect(editor.getByText('Mobile Text')).toBeVisible();
+  });
+
+  test('it searches and replaces occurrences', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-search-replace', browserName);
+
+    const editor = await writeInEditor({
+      page,
+      text: 'World',
+    });
+
+    await writeInEditor({
+      page,
+      text: 'Hello World - Hello World',
+    });
+
+    // Open the find and replace panel
+    await page.keyboard.press('Control+f');
+
+    // Search for "Hello" and check that the occurrences are highlighted
+    await page.getByRole('textbox', { name: 'Find in document' }).fill('Hello');
+    await expect(page.getByText('1 / 2')).toBeVisible();
+    await expect(
+      editor
+        .locator('.find-and-replace-result-current')
+        .first()
+        .getByText('Hello'),
+    ).toBeVisible();
+    await expect(editor.locator('.find-and-replace-result')).toHaveCount(2);
+
+    await page.getByRole('button', { name: 'Next match' }).click();
+    await expect(page.getByText('2 / 2')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    // Select World then press Ctrl+f to check if the selected text is prefilled in the find input
+    await page.getByText('World').first().selectText();
+    await page.keyboard.press('Control+f');
+    await expect(
+      page.getByRole('textbox', { name: 'Find in document' }),
+    ).toHaveValue('World');
+
+    // Replace occurrences
+    await page.getByRole('button', { name: 'Next match' }).click();
+    await page.getByRole('button', { name: 'Toggle replace' }).click();
+    await page.getByRole('textbox', { name: 'Replace with' }).fill('Docs');
+    await page.getByRole('button', { name: 'Replace', exact: true }).click();
+    await expect(editor.getByText('Hello Docs - Hello World')).toBeVisible();
+    await page.getByRole('button', { name: 'Replace all' }).click();
+    await expect(editor.getByText('Docs', { exact: true })).toBeVisible();
+    await expect(editor.getByText('Hello Docs - Hello Docs')).toBeVisible();
+  });
+
+  test('it checks "Copy link to block" feature', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-copy-link-to-block', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'First Block' });
+
+    for (let i = 0; i < 30; i++) {
+      await page.keyboard.press('Enter');
+    }
+
+    await writeInEditor({ page, text: 'My Block' });
+
+    await editor
+      .locator('.bn-block-outer')
+      .filter({ hasText: 'My Block' })
+      .first()
+      .hover();
+
+    await page.locator('.bn-side-menu > button').last().click();
+    await page.getByRole('menuitem', { name: 'Link to block' }).click();
+    await expect(page.getByText('Link Copied !')).toBeVisible();
+
+    const url = page.url();
+
+    const handle = await page.evaluateHandle(() =>
+      navigator.clipboard.readText(),
+    );
+    const clipboardContent = await handle.jsonValue();
+
+    await expect(editor.getByText('First Block')).not.toBeInViewport();
+    await page.goto(url);
+    await expect(editor.getByText('First Block')).toBeInViewport();
+    await expect(editor.getByText('My Block')).not.toBeInViewport();
+
+    await page.goto(clipboardContent);
+    await expect(editor.getByText('First Block')).not.toBeInViewport();
+    await expect(editor.getByText('My Block')).toBeInViewport();
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(page, 'Public', 'Reading');
+
+    // Check link on read-only view for another user
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      browserName,
+      docUrl: clipboardContent,
+      withoutSignIn: true,
+    });
+
+    await expect(otherPage.getByText('First Block')).not.toBeInViewport();
+    await expect(otherPage.getByText('My Block')).toBeInViewport();
+
+    await cleanup();
+  });
+
+  test('it checks "Equation block" feature', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-equation', browserName, 1);
+
+    const { editor } = await openSuggestionMenu({
+      page,
+      suggestion: 'Block Equation',
+    });
+
+    await editor.getByLabel('E = mc^2').fill('E = mc^2');
+    await editor.locator('.bn-code-block-source-popup-ok-button').click();
+    await expect(
+      editor.locator('.katex-html').filter({ hasText: 'E=mc2' }),
+    ).toBeVisible();
+  });
+
+  test('it checks "Diagram block" feature', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-diagram', browserName, 1);
+
+    const { editor } = await openSuggestionMenu({
+      page,
+      suggestion: 'Diagram',
+    });
+
+    await editor.getByRole('img', { name: 'Mermaid diagram' }).click();
+
+    const diagramCode = editor.getByLabel('Enter diagram code');
+    await diagramCode.click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.press('Backspace');
+
+    await page.keyboard.type('graph TD');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('    A[Hello] --> B[World]');
+
+    await editor.locator('.bn-code-block-source-popup-ok-button').click();
+
+    await expect(
+      editor.getByLabel('Mermaid diagram').filter({ hasText: 'HelloWorld' }),
+    ).toBeVisible();
   });
 });

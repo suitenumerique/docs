@@ -4,8 +4,8 @@ import * as ws from 'ws';
 
 import { fetchCurrentUser, fetchDocument } from '@/api/collaborationBackend';
 import { hocuspocusServer } from '@/servers/hocuspocusServer';
-import { logger } from '@/utils';
 import { handleRelayServerConnection } from '@/servers/relayServer';
+import { logger } from '@/utils';
 
 class WSProtocolError extends Error {
   constructor(
@@ -42,7 +42,7 @@ export const collaborationWSHandler = async (
       throw new WSProtocolError(1008, 'unauthorized');
     }
 
-    const document = await fetchDocument(roomId, req.headers);
+    const document = await fetchDocument({ name: roomId }, req.headers);
 
     if (!document.abilities.retrieve) {
       logger('onConnect: Unauthorized to retrieve this document', roomId);

@@ -21,6 +21,10 @@ export const useDate = () => {
       .toLocaleString(format);
   };
 
+  const formatDateSpecial = (date: string, format: string): string => {
+    return DateTime.fromISO(date).setLocale(i18n.language).toFormat(format);
+  };
+
   const relativeDate = (date: string): string => {
     const dateToCompare = DateTime.fromISO(date);
 
@@ -45,5 +49,5 @@ export const useDate = () => {
       ),
     );
 
-  return { formatDate, relativeDate, calculateDaysLeft };
+  return { formatDate, formatDateSpecial, relativeDate, calculateDaysLeft };
 };

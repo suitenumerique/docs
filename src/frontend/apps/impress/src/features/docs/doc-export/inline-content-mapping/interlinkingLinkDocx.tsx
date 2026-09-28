@@ -6,7 +6,7 @@ import { DocsExporterDocx } from '../types';
 
 export const inlineContentMappingInterlinkingLinkDocx: DocsExporterDocx['mappings']['inlineContentMapping']['interlinkingLinkInline'] =
   (inline) => {
-    if (!inline.props.docId) {
+    if (!inline.props.docId || !inline.props.title || inline.props.disabled) {
       return new TextRun('');
     }
 

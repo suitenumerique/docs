@@ -74,6 +74,20 @@ spec:
               serviceName: {{ include "impress.backend.fullname" . }}
               servicePort: {{ .Values.backend.service.port }}
             {{- end }}
+          - path: /external_api
+            {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
+            pathType: Prefix
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ include "impress.backend.fullname" $ }}
+                port:
+                  number: {{ $.Values.backend.service.port }}
+              {{- else }}
+              serviceName: {{ include "impress.backend.fullname" $ }}
+              servicePort: {{ $.Values.backend.service.port }}
+            {{- end }}
           {{- with .Values.ingress.customBackends }}
             {{- toYaml . | nindent 10 }}
           {{- end }}
@@ -97,6 +111,20 @@ spec:
               servicePort: {{ $.Values.frontend.service.port }}
             {{- end }}
           - path: /api
+            {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
+            pathType: Prefix
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ include "impress.backend.fullname" $ }}
+                port:
+                  number: {{ $.Values.backend.service.port }}
+              {{- else }}
+              serviceName: {{ include "impress.backend.fullname" $ }}
+              servicePort: {{ $.Values.backend.service.port }}
+            {{- end }}
+          - path: /external_api
             {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
             pathType: Prefix
             {{- end }}

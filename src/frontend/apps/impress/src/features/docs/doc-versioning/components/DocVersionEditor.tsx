@@ -1,12 +1,15 @@
-import { Loader } from '@gouvfr-lasuite/cunningham-react';
+import { Loader } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import * as Y from 'yjs';
 
 import { Box, Text, TextErrors } from '@/components';
-import { BlockNoteReader, DocEditorContainer } from '@/docs/doc-editor/';
+import { BlockNoteReader } from '@/docs/doc-editor/components/BlockNoteEditor';
+import { DocEditorContainer } from '@/docs/doc-editor/components/DocEditor';
 import { Doc, base64ToBlocknoteXmlFragment } from '@/docs/doc-management';
-import { Versions, useDocVersion } from '@/docs/doc-versioning/';
+
+import { useDocVersion } from '../api/useDocVersion';
+import { Versions } from '../types';
 
 import { DocVersionHeader } from './DocVersionHeader';
 
@@ -82,11 +85,14 @@ export const DocVersionEditor = ({
   return (
     <DocEditorContainer
       docHeader={<DocVersionHeader />}
-      docEditor={
-        <BlockNoteReader initialContent={initialContent} docId={version.id} />
-      }
       isDeletedDoc={false}
       readOnly={true}
-    />
+    >
+      <BlockNoteReader
+        initialContent={initialContent}
+        docId={version.id}
+        isMainEditor={false}
+      />
+    </DocEditorContainer>
   );
 };

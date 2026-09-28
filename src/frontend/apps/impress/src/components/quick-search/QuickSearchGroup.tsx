@@ -1,7 +1,7 @@
 import { Command } from 'cmdk';
 import { ReactNode } from 'react';
 
-import { Box, Text } from '@/components';
+import { Text } from '@/components';
 
 import { QuickSearchData } from './QuickSearch';
 import { QuickSearchItem } from './QuickSearchItem';
@@ -18,17 +18,27 @@ export const QuickSearchGroup = <T,>({
   renderElement,
 }: Props<T>) => {
   return (
-    <Box $margin={{ top: 'sm' }}>
+    <>
+      {group.groupName && (
+        <Text
+          className="--docs--quick-search-group-title"
+          as="h2"
+          $weight="700"
+          $size="sm"
+          $margin="none"
+        >
+          {group.groupName}
+        </Text>
+      )}
       <Command.Group
         key={group.groupName}
-        heading={group.groupName}
         forceMount={false}
         contentEditable={false}
       >
         {group.startActions?.map((action, index) => {
           return (
             <QuickSearchItem
-              key={`${group.groupName}-action-${index}`}
+              key={`${group.groupKey ?? group.groupName}-start-actions-${index}`}
               onSelect={action.onSelect}
             >
               {action.content}
@@ -38,8 +48,8 @@ export const QuickSearchGroup = <T,>({
         {group.elements.map((groupElement, index) => {
           return (
             <QuickSearchItem
-              id={`${group.groupName}-element-${index}`}
-              key={`${group.groupName}-element-${index}`}
+              id={`${group.groupKey ?? group.groupName}-element-${index}`}
+              key={`${group.groupKey ?? group.groupName}-element-${index}`}
               onSelect={() => {
                 onSelect?.(groupElement);
               }}
@@ -51,7 +61,7 @@ export const QuickSearchGroup = <T,>({
         {group.endActions?.map((action, index) => {
           return (
             <QuickSearchItem
-              key={`${group.groupName}-action-${index}`}
+              key={`${group.groupKey ?? group.groupName}-end-actions-${index}`}
               onSelect={action.onSelect}
             >
               {action.content}
@@ -59,11 +69,15 @@ export const QuickSearchGroup = <T,>({
           );
         })}
         {group.emptyString && group.elements.length === 0 && (
-          <Text $margin={{ left: '2xs', bottom: '3xs' }} $size="sm">
+          <Text
+            className="--docs--quick-search-group-empty"
+            $margin={{ left: '2xs', bottom: '3xs' }}
+            $size="sm"
+          >
             {group.emptyString}
           </Text>
         )}
       </Command.Group>
-    </Box>
+    </>
   );
 };

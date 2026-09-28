@@ -150,15 +150,6 @@ class DocumentFactory(factory.django.DjangoModelFactory):
             for item in extracted:
                 models.DocumentFavorite.objects.create(document=self, user=item)
 
-    @factory.post_generation
-    def masked_by(self, create, extracted, **kwargs):
-        """Mark document as masked by a list of users."""
-        if create and extracted:
-            for item in extracted:
-                models.LinkTrace.objects.update_or_create(
-                    document=self, user=item, defaults={"is_masked": True}
-                )
-
 
 class UserDocumentAccessFactory(factory.django.DjangoModelFactory):
     """Create fake document user accesses for testing."""
@@ -231,9 +222,15 @@ class ReactionFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.Reaction
+        skip_postgeneration_save = True
 
     comment = factory.SubFactory(CommentFactory)
-    emoji = "test"
+    emoji = factory.Faker("emoji")
+
+    @classmethod
+    def generate_emojis(cls, n=10):
+        """Generate a list of n unique emojis."""
+        return [fake.unique.emoji() for _ in range(n)]
 
     @factory.post_generation
     def users(self, create, extracted, **kwargs):

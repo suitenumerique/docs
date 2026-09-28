@@ -8,18 +8,22 @@ import {
 } from '@blocknote/core';
 import { insertOrUpdateBlockForSlashMenu } from '@blocknote/core/extensions';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
-import { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, BoxButton, EmojiPicker, Icon, emojidata } from '@/components';
+import { Box, BoxButton, EmojiPicker, Icon } from '@/components';
+import { getEmojidata } from '@/components/Emoji/initEmojiCallout';
 
-import { DocsBlockNoteEditor } from '../../types';
+import type { DocsBlockNoteEditor } from '../../types';
 
 const CalloutBlockStyle = createGlobalStyle`
   .bn-block-content[data-content-type="callout"][data-background-color] {
     padding: var(--c--globals--spacings--3xs) var(--c--globals--spacings--3xs);
     border-radius: var(--c--globals--spacings--3xs);
+  }
+  .bn-block-content[data-content-type="callout"] .inline-content {
+    white-space: pre-wrap;
   }
 `;
 
@@ -106,12 +110,14 @@ const CalloutComponent = ({
           $css={css`
             font-size: 1.125rem;
             cursor: ${isEditable ? 'pointer' : 'default'};
-            ${isEditable &&
-            `
+            ${
+              isEditable &&
+              `
           &:hover {
             background-color: rgba(0, 0, 0, 0.1);
           }
-          `}
+          `
+            }
           `}
           $align="center"
           $width="28px"
@@ -122,14 +128,31 @@ const CalloutComponent = ({
 
         {openEmojiPicker && (
           <EmojiPicker
-            emojiData={emojidata}
+            emojiData={getEmojidata()}
             onClickOutside={onClickOutside}
             onEmojiSelect={onEmojiSelect}
             withOverlay={true}
           />
         )}
       </Box>
-      <Box as="p" className="inline-content" ref={contentRef} />
+      <Box
+        as="p"
+        className="inline-content"
+        ref={(node: HTMLElement | null) => {
+          contentRef(node);
+
+          /**
+           * BlockNote's CSS uses `.bn-block:has(> .bn-block-content[...])` (direct child).
+           * For custom blocks, `.react-renderer` sits between `.bn-block` and `.bn-block-content`,
+           * so background/text-color selectors never match. Adding `bn-block` to the intermediate
+           * wrapper makes it the direct parent of `.bn-block-content`, fixing all those selectors.
+           * TODO: Remove this patch once BlockNote issue is resolved: https://github.com/TypeCellOS/BlockNote/issues/2732
+           */
+          node
+            ?.closest('.bn-react-node-view-renderer')
+            ?.classList.add('bn-block');
+        }}
+      />
     </Box>
   );
 };

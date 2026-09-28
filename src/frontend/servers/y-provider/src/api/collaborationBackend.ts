@@ -17,7 +17,7 @@ type Base64 = string;
 interface Doc {
   id: string;
   title?: string;
-  content: Base64;
+  content?: Base64;
   creator: string;
   is_favorite: boolean;
   is_encrypted: boolean;
@@ -30,6 +30,7 @@ interface Doc {
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;
+    ai_proxy: boolean;
     ai_transform: boolean;
     ai_translate: boolean;
     attachment_upload: boolean;
@@ -75,7 +76,7 @@ async function fetch<T>(
 }
 
 export function fetchDocument(
-  name: string,
+  { name }: { name: string },
   requestHeaders: IncomingHttpHeaders,
 ): Promise<Doc> {
   return fetch<Doc>(`/api/v1.0/documents/${name}/`, requestHeaders);

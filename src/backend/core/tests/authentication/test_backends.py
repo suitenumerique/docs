@@ -17,6 +17,7 @@ from core.authentication.backends import (
     create_or_update_contact,
 )
 from core.factories import UserFactory
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -57,6 +58,30 @@ def test_authentication_getter_existing_user_via_email(
 
     def get_userinfo_mocked(*args):
         return {"sub": "123", "email": db_user.email}
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+
+    with django_assert_num_queries(4):  # user by sub, user by mail, update sub
+        user = klass.get_or_create_user(
+            access_token="test-token", id_token=None, payload=None
+        )
+
+    assert user == db_user
+
+
+def test_authentication_getter_existing_user_via_email_case_insensitive(
+    django_assert_num_queries, monkeypatch
+):
+    """
+    If an existing user doesn't match the sub but matches the email with different case,
+    the user should be returned (case-insensitive email matching).
+    """
+
+    klass = OIDCAuthenticationBackend()
+    db_user = UserFactory(email="john.doe@example.com")
+
+    def get_userinfo_mocked(*args):
+        return {"sub": "123", "email": "JOHN.DOE@EXAMPLE.COM"}
 
     monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
 
@@ -141,6 +166,39 @@ def test_authentication_getter_existing_user_no_fallback_to_email_no_duplicate(
 
     def get_userinfo_mocked(*args):
         return {"sub": "123", "email": db_user.email}
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+
+    with pytest.raises(
+        SuspiciousOperation,
+        match=(
+            "We couldn't find a user with this sub but the email is already associated "
+            "with a registered user."
+        ),
+    ):
+        klass.get_or_create_user(access_token="test-token", id_token=None, payload=None)
+
+    # Since the sub doesn't match, it should not create a new user
+    assert models.User.objects.count() == 1
+
+
+def test_authentication_getter_existing_user_no_fallback_to_email_no_duplicate_case_insensitive(
+    settings, monkeypatch
+):
+    """
+    When the "OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION" setting is set to False,
+    the system should detect duplicate emails even with different case.
+    """
+
+    klass = OIDCAuthenticationBackend()
+    _db_user = UserFactory(email="john.doe@example.com")
+
+    # Set the setting to False
+    settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION = False
+    settings.OIDC_ALLOW_DUPLICATE_EMAILS = False
+
+    def get_userinfo_mocked(*args):
+        return {"sub": "123", "email": "JOHN.DOE@EXAMPLE.COM"}
 
     monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
 
@@ -445,12 +503,21 @@ def test_authentication_post_get_or_create_user_new_user_to_marketing_email(sett
     settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = True
 
     klass = OIDCAuthenticationBackend()
-    with mock.patch.object(
-        create_or_update_contact, "delay"
-    ) as mock_create_or_update_contact:
+    with (
+        mock.patch.object(
+            create_or_update_contact, "delay"
+        ) as mock_create_or_update_contact,
+        mock.patch(
+            "core.authentication.backends.posthog_capture"
+        ) as mock_posthog_capture,
+    ):
         klass.post_get_or_create_user(user, {}, True)
         mock_create_or_update_contact.assert_called_once_with(
             email=user.email, attributes={"DOCS_SOURCE": ["SIGNIN"]}
+        )
+        mock_posthog_capture.assert_called_once_with(
+            PosthogEventName.USER_LOGIN,
+            user,
         )
 
 
@@ -466,11 +533,20 @@ def test_authentication_post_get_or_create_user_new_user_to_marketing_email_disa
     settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = False
 
     klass = OIDCAuthenticationBackend()
-    with mock.patch.object(
-        create_or_update_contact, "delay"
-    ) as mock_create_or_update_contact:
+    with (
+        mock.patch.object(
+            create_or_update_contact, "delay"
+        ) as mock_create_or_update_contact,
+        mock.patch(
+            "core.authentication.backends.posthog_capture"
+        ) as mock_posthog_capture,
+    ):
         klass.post_get_or_create_user(user, {}, True)
         mock_create_or_update_contact.assert_not_called()
+        mock_posthog_capture.assert_called_once_with(
+            PosthogEventName.USER_LOGIN,
+            user,
+        )
 
 
 def test_authentication_post_get_or_create_user_existing_user_to_marketing_email(
@@ -485,11 +561,20 @@ def test_authentication_post_get_or_create_user_existing_user_to_marketing_email
     settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = True
 
     klass = OIDCAuthenticationBackend()
-    with mock.patch.object(
-        create_or_update_contact, "delay"
-    ) as mock_create_or_update_contact:
+    with (
+        mock.patch.object(
+            create_or_update_contact, "delay"
+        ) as mock_create_or_update_contact,
+        mock.patch(
+            "core.authentication.backends.posthog_capture"
+        ) as mock_posthog_capture,
+    ):
         klass.post_get_or_create_user(user, {}, False)
         mock_create_or_update_contact.assert_not_called()
+        mock_posthog_capture.assert_called_once_with(
+            PosthogEventName.USER_LOGIN,
+            user,
+        )
 
 
 def test_authentication_post_get_or_create_user_existing_user_to_marketing_email_disabled(
@@ -504,8 +589,17 @@ def test_authentication_post_get_or_create_user_existing_user_to_marketing_email
     settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = False
 
     klass = OIDCAuthenticationBackend()
-    with mock.patch.object(
-        create_or_update_contact, "delay"
-    ) as mock_create_or_update_contact:
+    with (
+        mock.patch.object(
+            create_or_update_contact, "delay"
+        ) as mock_create_or_update_contact,
+        mock.patch(
+            "core.authentication.backends.posthog_capture"
+        ) as mock_posthog_capture,
+    ):
         klass.post_get_or_create_user(user, {}, False)
         mock_create_or_update_contact.assert_not_called()
+        mock_posthog_capture.assert_called_once_with(
+            PosthogEventName.USER_LOGIN,
+            user,
+        )

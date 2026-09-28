@@ -1,14 +1,19 @@
 """Util to generate S3 authorization headers for object storage access control"""
 
+import datetime as dt
 import time
 from abc import ABC, abstractmethod
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import default_storage
+from django.utils.decorators import method_decorator
 
 import botocore
+from lasuite.oidc_login.decorators import refresh_oidc_access_token
 from rest_framework.throttling import BaseThrottle
+
+from core.utils.s3 import get_s3_client, get_unsigned_s3_client
 
 
 def nest_tree(flat_list, steplen):
@@ -73,14 +78,14 @@ def generate_s3_authorization_headers(key):
     - access control is truly realtime
     - the object storage service does not need to be exposed on internet
     """
-    url = default_storage.unsigned_connection.meta.client.generate_presigned_url(
+    url = get_unsigned_s3_client().generate_presigned_url(
         "get_object",
         ExpiresIn=0,
         Params={"Bucket": default_storage.bucket_name, "Key": key},
     )
     request = botocore.awsrequest.AWSRequest(method="get", url=url)
 
-    s3_client = default_storage.connection.meta.client
+    s3_client = get_s3_client()
     # pylint: disable=protected-access
     credentials = s3_client._request_signer._credentials  # noqa: SLF001
     frozen_credentials = credentials.get_frozen_credentials()
@@ -89,6 +94,19 @@ def generate_s3_authorization_headers(key):
     auth.add_auth(request)
 
     return request
+
+
+def conditional_refresh_oidc_token(func):
+    """
+    Conditionally apply refresh_oidc_access_token decorator.
+
+    The decorator is only applied if OIDC_STORE_REFRESH_TOKEN is True, meaning
+    we can actually refresh something. Broader settings checks are done in settings.py.
+    """
+    if settings.OIDC_STORE_REFRESH_TOKEN:
+        return method_decorator(refresh_oidc_access_token)(func)
+
+    return func
 
 
 class AIBaseRateThrottle(BaseThrottle, ABC):
@@ -179,3 +197,36 @@ class AIUserRateThrottle(AIBaseRateThrottle):
             if x_forwarded_for
             else request.META.get("REMOTE_ADDR")
         )
+
+
+def get_content_metadata_cache_key(document_id):
+    """Return the cache key used to store content metadata."""
+    return f"docs:content-metadata:{document_id!s}"
+
+
+def parse_http_conditional_headers(request):
+    """Extract and normalize `If-None-Match` and `If-Modified-Since`.
+
+    The `W/` weak prefix is stripped from the ETag because reverse proxies
+    (e.g. nginx with gzip) rewrite strong ETags into weak ones, which would
+    otherwise break a strict equality check in production.
+    """
+    if_none_match = request.META.get("HTTP_IF_NONE_MATCH")
+    if if_none_match and if_none_match.startswith("W/"):
+        if_none_match = if_none_match.removeprefix("W/")
+
+    if_modified_since_dt = None
+    if not (if_modified_since := request.META.get("HTTP_IF_MODIFIED_SINCE")):
+        return if_none_match, if_modified_since_dt
+
+    try:
+        if_modified_since_dt = dt.datetime.strptime(
+            if_modified_since, "%a, %d %b %Y %H:%M:%S %Z"
+        )
+    except ValueError:
+        if_modified_since_dt = None
+    else:
+        if not if_modified_since_dt.tzinfo:
+            if_modified_since_dt = if_modified_since_dt.replace(tzinfo=dt.timezone.utc)
+
+    return if_none_match, if_modified_since_dt

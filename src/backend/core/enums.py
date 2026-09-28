@@ -3,7 +3,7 @@ Core application enums declaration
 """
 
 import re
-from enum import StrEnum
+from enum import Enum, StrEnum
 
 from django.conf import global_settings, settings
 from django.db import models
@@ -46,3 +46,24 @@ class DocumentAttachmentStatus(StrEnum):
 
     PROCESSING = "processing"
     READY = "ready"
+
+
+class SearchType(str, Enum):
+    """
+    Defines the possible search types for a document search query.
+        - TITLE: DRF based search in the title of the documents only.
+        - HYBRID and FULL_TEXT: more advanced search based on Find indexer.
+    """
+
+    TITLE = "title"
+    HYBRID = "hybrid"
+    FULL_TEXT = "full-text"
+
+
+class FeatureFlag(str, Enum):
+    """
+    Defines the possible feature flags for the application.
+    """
+
+    FLAG_FIND_HYBRID_SEARCH = "flag_find_hybrid_search"
+    FLAG_FIND_FULL_TEXT_SEARCH = "flag_find_full_text_search"

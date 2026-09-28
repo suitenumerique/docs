@@ -1,4 +1,4 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/ui-components';
 import Head from 'next/head';
 import Image from 'next/image';
 import { ReactElement } from 'react';
@@ -46,6 +46,7 @@ const Page: NextPageWithLayout = () => {
             maxWidth: '100%',
             height: 'auto',
           }}
+          loading="eager"
         />
 
         <Text

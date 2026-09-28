@@ -6,7 +6,7 @@
  * Docs only shows a loader until it is on screen. The product doesn't manage
  * public keys — it only stores fingerprints on document accesses for UI purposes.
  */
-import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import { Modal, ModalSize } from '@gouvfr-lasuite/ui-components';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -14,13 +14,14 @@ from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.contrib.sites.models import Site
-from django.core import mail
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.db import models, transaction
+from django.db.models import Count
 from django.db.models.functions import Left, Length
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -33,14 +34,15 @@ from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
 from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
 
-from .choices import (
+from core.choices import (
     PRIVILEGED_ROLES,
     LinkReachChoices,
     LinkRoleChoices,
     RoleChoices,
     get_equivalent_link_definition,
 )
-from .validators import sub_validator
+from core.utils.treebeard import create_tree_node_with_retry
+from core.validators import sub_validator
 
 logger = getLogger(__name__)
 
@@ -119,11 +121,11 @@ class UserManager(auth_models.UserManager):
 
             if settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION:
                 try:
-                    return self.get(email=email)
+                    return self.get(email__iexact=email)
                 except self.model.DoesNotExist:
                     pass
             elif (
-                self.filter(email=email).exists()
+                self.filter(email__iexact=email).exists()
                 and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
             ):
                 raise DuplicateEmailError(
@@ -194,6 +196,11 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
             "Unselect this instead of deleting accounts."
         ),
     )
+    is_first_connection = models.BooleanField(
+        _("first connection status"),
+        default=True,
+        help_text=_("Whether the user has completed the first connection process."),
+    )
 
     objects = UserManager()
 
@@ -210,13 +217,129 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
 
     def save(self, *args, **kwargs):
         """
-        If it's a new user, give its user access to the documents to which s.he was invited.
+        If it's a new user, give its user access to the documents they were invited to.
         """
         is_adding = self._state.adding
         super().save(*args, **kwargs)
 
         if is_adding:
+            self._handle_onboarding_documents_access()
+            self._duplicate_onboarding_sandbox_document()
             self._convert_valid_invitations()
+
+    def delete(self, using=None, keep_parents=False):
+        """Completely delete a user and its relations."""
+        with transaction.atomic():
+            self._delete_user_shared_documents_accesses()
+            self._delete_documents_single_owner()
+            self._clear_user_created_documents()
+
+            return super().delete(using=using, keep_parents=keep_parents)
+
+    def _delete_user_shared_documents_accesses(self):
+        """
+        accesses to delete where there are more than one owner.
+
+        Create first a subquery to filter all the the accesses having more than one
+        owner. Then use this subquery to filter the accesses belonging to this list of
+        documents and to the user to delete
+        """
+        docs_ids = (
+            DocumentAccess.objects.filter(role=RoleChoices.OWNER)
+            .values("document_id")
+            .annotate(owner_count=Count("id"))
+            .filter(owner_count__gte=2)
+            .values("document_id")
+        )
+        DocumentAccess.objects.filter(user=self, document_id__in=docs_ids).delete()
+
+        logger.info(
+            "user_delete: shared documents accesses for user %s have been deleted",
+            self.id,
+        )
+
+    def _delete_documents_single_owner(self):
+        """Delete the documents where the user is the single owner."""
+        Document.objects.filter(
+            accesses__user=self, accesses__role=RoleChoices.OWNER
+        ).delete()
+        logger.info(
+            "user_delete: documents where the user %s is the sole owner deleted",
+            self.id,
+        )
+
+    def _clear_user_created_documents(self):
+        """Set creator to Null for documents where the user is the creator."""
+        Document.objects.filter(creator=self).update(creator=None)
+        logger.info(
+            "user_delete: documents created by user %s have been cleared",
+            self.id,
+        )
+
+    def _handle_onboarding_documents_access(self):
+        """
+        If the user is new and there are documents configured to be given to new users,
+        create link traces to these documents and pin them as favorites for the user.
+        """
+        if settings.USER_ONBOARDING_DOCUMENTS:
+            onboarding_document_ids = set(settings.USER_ONBOARDING_DOCUMENTS)
+            onboarding_link_traces = []
+            favorite_documents = []
+            for document_id in onboarding_document_ids:
+                try:
+                    document = Document.objects.get(id=document_id)
+                except Document.DoesNotExist:
+                    logger.warning(
+                        "Onboarding document with id %s does not exist. Skipping.",
+                        document_id,
+                    )
+                    continue
+
+                if document.computed_link_reach == LinkReachChoices.RESTRICTED:
+                    logger.warning(
+                        "Onboarding on a restricted document is not allowed. Must be public or "
+                        "connected. Restricted document: %s",
+                        document_id,
+                    )
+                    continue
+
+                onboarding_link_traces.append(LinkTrace(user=self, document=document))
+                favorite_documents.append(
+                    DocumentFavorite(user=self, document_id=document_id)
+                )
+
+            LinkTrace.objects.bulk_create(onboarding_link_traces)
+            DocumentFavorite.objects.bulk_create(favorite_documents)
+
+    def _duplicate_onboarding_sandbox_document(self):
+        """
+        If the user is new and there is a sandbox document configured,
+        duplicate the sandbox document for the user
+        """
+        if settings.USER_ONBOARDING_SANDBOX_DOCUMENT:
+            sandbox_id = settings.USER_ONBOARDING_SANDBOX_DOCUMENT
+            try:
+                template_document = Document.objects.get(id=sandbox_id)
+            except Document.DoesNotExist:
+                logger.warning(
+                    "Onboarding sandbox document with id %s does not exist. Skipping.",
+                    sandbox_id,
+                )
+                return
+            with transaction.atomic():
+                sandbox_document = create_tree_node_with_retry(
+                    lambda: Document.add_root(
+                        title=template_document.title,
+                        content=template_document.content,
+                        attachments=template_document.attachments,
+                        duplicated_from=template_document,
+                        creator=self,
+                    )
+                )
+
+                DocumentAccess.objects.create(
+                    user=self, document=sandbox_document, role=RoleChoices.OWNER
+                )
 
     def _convert_valid_invitations(self):
         """
@@ -251,11 +374,37 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
 
         valid_invitations.delete()
 
-    def email_user(self, subject, message, from_email=None, **kwargs):
-        """Email this user."""
-        if not self.email:
-            raise ValueError("User has no email address.")
-        mail.send_mail(subject, message, from_email, [self.email], **kwargs)
+    def send_email(self, subject, context=None, language=None):
+        """Generate and send email to the user from a template."""
+        emails = [self.email]
+        context = context or {}
+        domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
+
+        language = language or get_language()
+        context.update(
+            {
+                "brandname": settings.EMAIL_BRAND_NAME,
+                "domain": domain,
+                "logo_img": settings.EMAIL_LOGO_IMG,
+            }
+        )
+
+        with override(language):
+            msg_html = render_to_string("mail/html/template.html", context)
+            msg_plain = render_to_string("mail/text/template.txt", context)
+            subject = str(subject)  # Force translation
+
+            try:
+                send_mail(
+                    subject.capitalize(),
+                    msg_plain,
+                    settings.EMAIL_FROM,
+                    emails,
+                    html_message=msg_html,
+                    fail_silently=False,
+                )
+            except smtplib.SMTPException as exception:
+                logger.error("invitation to %s was not sent: %s", emails, exception)
 
     @cached_property
     def teams(self):
@@ -264,6 +413,417 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         Must be cached if retrieved remotely.
         """
         return []
+
+
+class UserReconciliation(BaseModel):
+    """Model to run batch jobs to replace an active user by another one"""
+
+    active_email = models.EmailField(_("Active email address"))
+    inactive_email = models.EmailField(_("Email address to deactivate"))
+    active_email_checked = models.BooleanField(default=False)
+    inactive_email_checked = models.BooleanField(default=False)
+    active_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="active_user",
+    )
+    inactive_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="inactive_user",
+    )
+    active_email_confirmation_id = models.UUIDField(
+        default=uuid.uuid4, unique=True, editable=False, null=True
+    )
+    inactive_email_confirmation_id = models.UUIDField(
+        default=uuid.uuid4, unique=True, editable=False, null=True
+    )
+    source_unique_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name=_("Unique ID in the source file"),
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", _("Pending")),
+            ("ready", _("Ready")),
+            ("done", _("Done")),
+            ("error", _("Error")),
+        ],
+        default="pending",
+    )
+    logs = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "impress_user_reconciliation"
+        verbose_name = _("user reconciliation")
+        verbose_name_plural = _("user reconciliations")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Reconciliation from {self.inactive_email} to {self.active_email}"
+
+    def save(self, *args, **kwargs):
+        """
+        For pending queries, identify the actual users and send validation emails
+        """
+        if self.status == "pending":
+            self.active_user = User.objects.filter(email=self.active_email).first()
+            self.inactive_user = User.objects.filter(email=self.inactive_email).first()
+
+            if self.active_user and self.inactive_user:
+                if not self.active_email_checked:
+                    self.send_reconciliation_confirm_email(
+                        self.active_user, "active", self.active_email_confirmation_id
+                    )
+                if not self.inactive_email_checked:
+                    self.send_reconciliation_confirm_email(
+                        self.inactive_user,
+                        "inactive",
+                        self.inactive_email_confirmation_id,
+                    )
+                self.status = "ready"
+            else:
+                self.status = "error"
+                self.logs = "Error: Both active and inactive users need to exist."
+
+        super().save(*args, **kwargs)
+
+    @transaction.atomic
+    def process_reconciliation_request(self):
+        """
+        Process the reconciliation request as a transaction.
+
+        - Transfer document accesses from inactive to active user, updating roles as needed.
+        - Transfer document favorites from inactive to active user.
+        - Transfer link traces from inactive to active user.
+        - Transfer comment-related content from inactive to active user
+          (threads, comments and reactions)
+        - Activate the active user and deactivate the inactive user.
+        - Update the reconciliation entry itself.
+        """
+
+        # Prepare the data to perform the reconciliation on
+        updated_accesses, removed_accesses = (
+            self.prepare_documentaccess_reconciliation()
+        )
+        updated_linktraces, removed_linktraces = self.prepare_linktrace_reconciliation()
+        update_favorites, removed_favorites = (
+            self.prepare_document_favorite_reconciliation()
+        )
+        updated_threads = self.prepare_thread_reconciliation()
+        updated_comments = self.prepare_comment_reconciliation()
+        updated_reactions, removed_reactions = self.prepare_reaction_reconciliation()
+
+        self.active_user.is_active = True
+        self.inactive_user.is_active = False
+
+        # Actually perform the bulk operations
+        DocumentAccess.objects.bulk_update(updated_accesses, ["user", "role"])
+
+        if removed_accesses:
+            ids_to_delete = [entry.id for entry in removed_accesses]
+            DocumentAccess.objects.filter(id__in=ids_to_delete).delete()
+
+        DocumentFavorite.objects.bulk_update(update_favorites, ["user"])
+        if removed_favorites:
+            ids_to_delete = [entry.id for entry in removed_favorites]
+            DocumentFavorite.objects.filter(id__in=ids_to_delete).delete()
+
+        LinkTrace.objects.bulk_update(updated_linktraces, ["user"])
+        if removed_linktraces:
+            ids_to_delete = [entry.id for entry in removed_linktraces]
+            LinkTrace.objects.filter(id__in=ids_to_delete).delete()
+
+        Thread.objects.bulk_update(updated_threads, ["creator"])
+        Comment.objects.bulk_update(updated_comments, ["user"])
+
+        # pylint: disable=C0103
+        ReactionThroughModel = Reaction.users.through
+        reactions_to_create = []
+        for updated_reaction in updated_reactions:
+            reactions_to_create.append(
+                ReactionThroughModel(
+                    user_id=self.active_user.pk, reaction_id=updated_reaction.pk
+                )
+            )
+
+        if reactions_to_create:
+            ReactionThroughModel.objects.bulk_create(reactions_to_create)
+
+        if removed_reactions:
+            ids_to_delete = [entry.id for entry in removed_reactions]
+            ReactionThroughModel.objects.filter(
+                reaction_id__in=ids_to_delete, user_id=self.inactive_user.pk
+            ).delete()
+
+        User.objects.bulk_update([self.active_user, self.inactive_user], ["is_active"])
+
+        # Wrap up the reconciliation entry
+        self.logs += f"""Requested update for {len(updated_accesses)} DocumentAccess items
+            and deletion for {len(removed_accesses)} DocumentAccess items.\n"""
+        self.status = "done"
+        self.save()
+
+        self.send_reconciliation_done_email()
+
+    def prepare_documentaccess_reconciliation(self):
+        """
+        Prepare the reconciliation by transferring document accesses from the inactive user
+        to the active user.
+        """
+        updated_accesses = []
+        removed_accesses = []
+        inactive_accesses = DocumentAccess.objects.filter(user=self.inactive_user)
+
+        # Check documents where the active user already has access
+        inactive_accesses_documents = inactive_accesses.values_list(
+            "document", flat=True
+        )
+        existing_accesses = DocumentAccess.objects.filter(user=self.active_user).filter(
+            document__in=inactive_accesses_documents
+        )
+        existing_roles_per_doc = dict(existing_accesses.values_list("document", "role"))
+
+        for entry in inactive_accesses:
+            if entry.document_id in existing_roles_per_doc:
+                # Update role if needed
+                existing_role = existing_roles_per_doc[entry.document_id]
+                max_role = RoleChoices.max(entry.role, existing_role)
+                if existing_role != max_role:
+                    existing_access = existing_accesses.get(document=entry.document)
+                    existing_access.role = max_role
+                    updated_accesses.append(existing_access)
+                removed_accesses.append(entry)
+            else:
+                entry.user = self.active_user
+                updated_accesses.append(entry)
+
+        return updated_accesses, removed_accesses
+
+    def prepare_document_favorite_reconciliation(self):
+        """
+        Prepare the reconciliation by transferring document favorites from the inactive user
+        to the active user.
+        """
+        updated_favorites = []
+        removed_favorites = []
+
+        existing_favorites = DocumentFavorite.objects.filter(user=self.active_user)
+        existing_favorite_doc_ids = set(
+            existing_favorites.values_list("document_id", flat=True)
+        )
+
+        inactive_favorites = DocumentFavorite.objects.filter(user=self.inactive_user)
+
+        for entry in inactive_favorites:
+            if entry.document_id in existing_favorite_doc_ids:
+                removed_favorites.append(entry)
+            else:
+                entry.user = self.active_user
+                updated_favorites.append(entry)
+
+        return updated_favorites, removed_favorites
+
+    def prepare_linktrace_reconciliation(self):
+        """
+        Prepare the reconciliation by transferring link traces from the inactive user
+        to the active user.
+        """
+        updated_linktraces = []
+        removed_linktraces = []
+
+        existing_linktraces = LinkTrace.objects.filter(user=self.active_user)
+        inactive_linktraces = LinkTrace.objects.filter(user=self.inactive_user)
+
+        for entry in inactive_linktraces:
+            if existing_linktraces.filter(document=entry.document).exists():
+                removed_linktraces.append(entry)
+            else:
+                entry.user = self.active_user
+                updated_linktraces.append(entry)
+
+        return updated_linktraces, removed_linktraces
+
+    def prepare_thread_reconciliation(self):
+        """
+        Prepare the reconciliation by transferring threads from the inactive user
+        to the active user.
+        """
+        updated_threads = []
+
+        inactive_threads = Thread.objects.filter(creator=self.inactive_user)
+
+        for entry in inactive_threads:
+            entry.creator = self.active_user
+            updated_threads.append(entry)
+
+        return updated_threads
+
+    def prepare_comment_reconciliation(self):
+        """
+        Prepare the reconciliation by transferring comments from the inactive user
+        to the active user.
+        """
+        updated_comments = []
+
+        inactive_comments = Comment.objects.filter(user=self.inactive_user)
+
+        for entry in inactive_comments:
+            entry.user = self.active_user
+            updated_comments.append(entry)
+
+        return updated_comments
+
+    def prepare_reaction_reconciliation(self):
+        """
+        Prepare the reconciliation by creating missing reactions for the active user
+        (ie, the ones that exist for the inactive user but not the active user)
+        and then deleting all reactions of the inactive user.
+        """
+
+        inactive_reactions = Reaction.objects.filter(users=self.inactive_user)
+        updated_reactions = inactive_reactions.exclude(users=self.active_user)
+
+        return updated_reactions, inactive_reactions
+
+    def send_reconciliation_confirm_email(
+        self, user, user_type, confirmation_id, language=None
+    ):
+        """Method allowing to send confirmation email for reconciliation requests."""
+        language = language or get_language()
+        domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
+
+        message = _(
+            """You have requested a reconciliation of your user accounts on Docs.
+            To confirm that you are the one who initiated the request
+            and that this email belongs to you:"""
+        )
+
+        with override(language):
+            subject = _("Confirm by clicking the link to start the reconciliation")
+            context = {
+                "title": subject,
+                "message": message,
+                "link": f"{domain}/user-reconciliations/{user_type}/{confirmation_id}/",
+                "link_label": str(_("Click here")),
+                "button_label": str(_("Confirm")),
+            }
+
+        user.send_email(subject, context, language)
+
+    def send_reconciliation_done_email(self, language=None):
+        """Method allowing to send done email for reconciliation requests."""
+        language = language or get_language()
+        domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
+
+        message = _(
+            """Your reconciliation request has been processed.
+            New documents are likely associated with your account:"""
+        )
+
+        with override(language):
+            subject = _("Your accounts have been merged")
+            context = {
+                "title": subject,
+                "message": message,
+                "link": f"{domain}/",
+                "link_label": str(_("Click here to see")),
+                "button_label": str(_("See my documents")),
+            }
+
+        self.active_user.send_email(subject, context, language)
+
+
+class UserReconciliationCsvImport(BaseModel):
+    """Model to import reconciliations requests from an external source
+    (eg, )"""
+
+    file = models.FileField(upload_to="imports/", verbose_name=_("CSV file"))
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", _("Pending")),
+            ("running", _("Running")),
+            ("done", _("Done")),
+            ("error", _("Error")),
+        ],
+        default="pending",
+    )
+    logs = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "impress_user_reconciliation_csv_import"
+        verbose_name = _("user reconciliation CSV import")
+        verbose_name_plural = _("user reconciliation CSV imports")
+
+    def __str__(self):
+        return f"User reconciliation CSV import {self.id}"
+
+    def send_email(self, subject, emails, context=None, language=None):
+        """Generate and send email to the user from a template."""
+        context = context or {}
+        domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
+        language = language or get_language()
+        context.update(
+            {
+                "brandname": settings.EMAIL_BRAND_NAME,
+                "domain": domain,
+                "logo_img": settings.EMAIL_LOGO_IMG,
+            }
+        )
+
+        with override(language):
+            msg_html = render_to_string("mail/html/template.html", context)
+            msg_plain = render_to_string("mail/text/template.txt", context)
+            subject = str(subject)  # Force translation
+
+            try:
+                send_mail(
+                    subject.capitalize(),
+                    msg_plain,
+                    settings.EMAIL_FROM,
+                    emails,
+                    html_message=msg_html,
+                    fail_silently=False,
+                )
+            except smtplib.SMTPException as exception:
+                logger.error("invitation to %s was not sent: %s", emails, exception)
+
+    def send_reconciliation_error_email(
+        self, recipient_email, other_email, language=None
+    ):
+        """Method allowing to send email for reconciliation requests with errors."""
+        language = language or get_language()
+
+        emails = [recipient_email]
+
+        message = _(
+            """Your request for reconciliation was unsuccessful.
+            Reconciliation failed for the following email addresses:
+            {recipient_email}, {other_email}.
+            Please check for typos.
+            You can submit another request with the valid email addresses."""
+        ).format(recipient_email=recipient_email, other_email=other_email)
+
+        with override(language):
+            subject = _("Reconciliation of your Docs accounts not completed")
+            context = {
+                "title": subject,
+                "message": message,
+                "link": settings.USER_RECONCILIATION_FORM_URL,
+                "link_label": str(_("Click here")),
+                "button_label": str(_("Make a new request")),
+            }
+
+        self.send_email(subject, emails, context, language)
 
 
 class BaseAccess(BaseModel):
@@ -291,7 +851,7 @@ class BaseAccess(BaseModel):
         blank=True,
         help_text=_(
             "Version of the user's encryption public key at the time of sharing. "
-            "Used to detect key changes — if the user's current public key version "
+            "Used to detect key changes: if the user's current public key version "
             "differs from this value, the access needs re-encryption."
         ),
     )
@@ -358,6 +918,22 @@ class DocumentQuerySet(MP_NodeQuerySet):
         return self.annotate(
             user_roles=models.Value([], output_field=output_field),
         )
+
+    def annotate_user_has_link_trace(self, user):
+        """
+        Annotate document queryset with a boolean to know if the current user
+        has a link_trace on the current document.
+        """
+
+        if user.is_authenticated:
+            link_trace_exists_subquery = LinkTrace.objects.filter(
+                document_id=models.OuterRef("pk"), user=user
+            )
+            return self.annotate(
+                user_has_link_trace=models.Exists(link_trace_exists_subquery)
+            )
+
+        return self.annotate(user_has_link_trace=models.Value(False))
 
 
 class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
@@ -428,6 +1004,11 @@ class Document(MP_Node, BaseModel):
         ordering = ("path",)
         verbose_name = _("Document")
         verbose_name_plural = _("Documents")
+        indexes = [
+            # Used by media-auth to find the document(s) holding an attachment
+            # key without scanning the table (attachments @> [key]).
+            GinIndex(fields=["attachments"], name="document_attachments_gin"),
+        ]
         constraints = [
             models.CheckConstraint(
                 condition=(
@@ -506,7 +1087,7 @@ class Document(MP_Node, BaseModel):
         if self._content is None and self.id:
             try:
                 response = self.get_content_response()
-            except (FileNotFoundError, ClientError):
+            except FileNotFoundError, ClientError:
                 pass
             else:
                 self._content = response["Body"].read().decode("utf-8")
@@ -594,6 +1175,20 @@ class Document(MP_Node, BaseModel):
             Bucket=default_storage.bucket_name, Key=self.file_key, VersionId=version_id
         )
 
+    def get_self_and_ancestors_paths(self):
+        """
+        Return the paths of the document and of all its ancestors, computed from
+        the materialized path without querying the database.
+
+        Filtering on `path__in` with this list hits the unique index on `path`,
+        whereas comparing `path` with `LEFT(value, LENGTH(path))` forces a
+        sequential scan of the whole table.
+        """
+        return [
+            self.path[:pos]
+            for pos in range(self.steplen, len(self.path) + 1, self.steplen)
+        ]
+
     def get_nb_accesses_cache_key(self):
         """Generate a unique cache key for each document."""
         return f"document_{self.id!s}_nb_accesses"
@@ -611,13 +1206,13 @@ class Document(MP_Node, BaseModel):
             nb_accesses = (
                 DocumentAccess.objects.filter(document=self).count(),
                 DocumentAccess.objects.filter(
-                    document__path=Left(
-                        models.Value(self.path), Length("document__path")
-                    ),
+                    document__path__in=self.get_self_and_ancestors_paths(),
                     document__ancestors_deleted_at__isnull=True,
                 ).count(),
             )
-            cache.set(cache_key, nb_accesses)
+            cache.set(
+                cache_key, nb_accesses, settings.DOCUMENT_NB_ACCESSES_CACHE_TIMEOUT
+            )
 
         return nb_accesses
 
@@ -653,10 +1248,21 @@ class Document(MP_Node, BaseModel):
         except AttributeError:
             roles = DocumentAccess.objects.filter(
                 models.Q(user=user) | models.Q(team__in=user.teams),
-                document__path=Left(models.Value(self.path), Length("document__path")),
+                document__path__in=self.get_self_and_ancestors_paths(),
             ).values_list("role", flat=True)
 
         return RoleChoices.max(*roles)
+
+    def has_link_trace(self, user):
+        """Return if the user has a link trace on this document."""
+
+        if not user.is_authenticated:
+            return False
+
+        try:
+            return self.user_has_link_trace
+        except AttributeError:
+            return LinkTrace.objects.filter(document=self, user=user).exists()
 
     def compute_ancestors_links_paths_mapping(self):
         """
@@ -768,7 +1374,7 @@ class Document(MP_Node, BaseModel):
             if version is not None
         }
 
-    def get_abilities(self, user):
+    def get_abilities(self, user):  # pylint: disable=too-many-locals
         """
         Compute and return abilities for a given user on the document.
         """
@@ -788,6 +1394,18 @@ class Document(MP_Node, BaseModel):
         can_update_from_access = (
             is_owner_or_admin or role == RoleChoices.EDITOR
         ) and not is_deleted
+
+        # compute can_leave
+        # An authenticated user can leave a document if it has a non
+        # privileged role on the document or access to it with a link_trace
+        can_leave = (
+            user.is_authenticated
+            and not is_deleted
+            and (
+                (has_access_role and not is_owner_or_admin)
+                or (not has_access_role and self.has_link_trace(user))
+            )
+        )
 
         link_select_options = LinkReachChoices.get_select_options(
             **self.ancestors_link_definition
@@ -819,7 +1437,10 @@ class Document(MP_Node, BaseModel):
         ) and not is_deleted
 
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
-        ai_access = any(
+        # Server-side features that need the plaintext (AI, conversion, copying
+        # the content) would either leak it or work on ciphertext, so they are
+        # off for encrypted documents.
+        ai_access = not self.is_encrypted and any(
             [
                 ai_allow_reach_from == LinkReachChoices.PUBLIC and can_update,
                 ai_allow_reach_from == LinkReachChoices.AUTHENTICATED
@@ -833,6 +1454,7 @@ class Document(MP_Node, BaseModel):
         return {
             "accesses_manage": is_owner_or_admin,
             "accesses_view": has_access_role,
+            "ai_proxy": ai_access,
             "ai_transform": ai_access,
             "ai_translate": ai_access,
             "attachment_upload": can_update,
@@ -841,21 +1463,27 @@ class Document(MP_Node, BaseModel):
             "children_list": can_get,
             "children_create": can_create_children,
             "collaboration_auth": can_get,
-            "comment": can_comment,
-            "content": can_get,
+            # Comments are stored server-side in clear: off on encrypted documents
+            # until they can be encrypted too.
+            "comment": can_comment and not self.is_encrypted,
+            "formatted_content": can_get and not self.is_encrypted,
+            "content_patch": can_update,
+            "content_retrieve": retrieve,
             "cors_proxy": can_get,
             "descendants": can_get,
             "destroy": can_destroy,
-            "duplicate": can_get and user.is_authenticated,
+            "duplicate": (
+                can_get and user.is_authenticated and not self.is_encrypted
+            ),
             "encrypt": is_owner_or_admin,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
             "invite_owner": is_owner and not is_deleted,
-            "mask": can_get and user.is_authenticated,
+            "leave": can_leave,
             "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
             "remove_encryption": is_owner_or_admin,
-            "restore": is_owner,
+            "restore": is_owner and bool(self.deleted_at),
             "retrieve": retrieve,
             "media_auth": can_get,
             "link_select_options": link_select_options,
@@ -864,6 +1492,7 @@ class Document(MP_Node, BaseModel):
             "versions_destroy": is_owner_or_admin,
             "versions_list": has_access_role,
             "versions_retrieve": has_access_role,
+            "search": can_get,
         }
 
     def send_email(self, subject, emails, context=None, language=None):
@@ -876,7 +1505,7 @@ class Document(MP_Node, BaseModel):
                 "brandname": settings.EMAIL_BRAND_NAME,
                 "document": self,
                 "domain": domain,
-                "link": f"{domain}/docs/{self.id}/",
+                "link": f"{domain}/docs/{self.id}/?utm_source=docssharelink&utm_campaign={self.id}",
                 "link_label": self.title or str(_("Untitled Document")),
                 "button_label": _("Open"),
                 "logo_img": settings.EMAIL_LOGO_IMG,
@@ -1020,7 +1649,6 @@ class LinkTrace(BaseModel):
         related_name="link_traces",
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="link_traces")
-    is_masked = models.BooleanField(default=False)
 
     class Meta:
         db_table = "impress_link_trace"
@@ -1399,6 +2027,7 @@ class Thread(BaseModel):
             "update": write_access,
             "partial_update": write_access,
             "resolve": write_access,
+            "unresolve": write_access,
             "retrieve": read_access,
         }
 
@@ -1443,14 +2072,15 @@ class Comment(BaseModel):
         doc_abilities = self.thread.document.get_abilities(user)
         read_access = doc_abilities.get("comment", False)
         can_react = read_access and user.is_authenticated
-        write_access = self.user == user or role in [
+        is_author = self.user == user
+        can_moderate = is_author or role in [
             RoleChoices.OWNER,
             RoleChoices.ADMIN,
         ]
         return {
-            "destroy": write_access,
-            "update": write_access,
-            "partial_update": write_access,
+            "destroy": can_moderate,
+            "update": is_author,
+            "partial_update": is_author,
             "reactions": can_react,
             "retrieve": read_access,
         }
@@ -1530,7 +2160,7 @@ class Invitation(BaseModel):
 
         # Check if an identity already exists for the provided email
         if (
-            User.objects.filter(email=self.email).exists()
+            User.objects.filter(email__iexact=self.email).exists()
             and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
         ):
             raise ValidationError(
@@ -1559,7 +2189,7 @@ class Invitation(BaseModel):
                     roles = self.document.accesses.filter(
                         models.Q(user=user) | models.Q(team__in=teams),
                     ).values_list("role", flat=True)
-                except (self._meta.model.DoesNotExist, IndexError):
+                except self._meta.model.DoesNotExist, IndexError:
                     roles = []
 
         is_admin_or_owner = bool(

@@ -1,5 +1,7 @@
 import JSZip from 'jszip';
 
+import { isSafeUrl } from '@/utils/url';
+
 import { exportResolveFileUrl } from './api';
 
 // Escape user-provided text  before injecting it into the exported HTML document.
@@ -10,6 +12,12 @@ export const escapeHtml = (value: string): string =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+
+const moveChildNodes = (from: Element, to: Element) => {
+  while (from.firstChild) {
+    to.appendChild(from.firstChild);
+  }
+};
 
 /**
  * Derives a stable, readable filename for media exported in the HTML ZIP.
@@ -137,8 +145,20 @@ export const improveHtmlAccessibility = (
   headingBlocks.forEach((block) => {
     const rawLevel = Number(block.getAttribute('data-level')) || 1;
     const level = Math.min(Math.max(rawLevel, 1), 6);
-    const heading = parsedDocument.createElement(`h${level}`);
-    heading.innerHTML = block.innerHTML;
+    const tag = `h${level}`;
+
+    const existingHeading = block.querySelector('h1, h2, h3, h4, h5, h6');
+    const heading = parsedDocument.createElement(tag);
+
+    if (existingHeading) {
+      if (existingHeading.className) {
+        heading.className = existingHeading.className;
+      }
+      moveChildNodes(existingHeading, heading);
+    } else {
+      moveChildNodes(block, heading);
+    }
+
     block.replaceWith(heading);
   });
 
@@ -170,10 +190,11 @@ export const improveHtmlAccessibility = (
     listItem: HTMLElement;
     contentType: string;
     level: number;
+    blockOuterIndex: number;
   }
 
   const listItemsInfo: ListItemInfo[] = [];
-  allBlockOuters.forEach((blockOuter) => {
+  allBlockOuters.forEach((blockOuter, index) => {
     const listItem = blockOuter.querySelector<HTMLElement>(listItemSelector);
     if (listItem) {
       const contentType = listItem.getAttribute('data-content-type');
@@ -184,6 +205,7 @@ export const improveHtmlAccessibility = (
           listItem,
           contentType,
           level,
+          blockOuterIndex: index,
         });
       }
     }
@@ -198,12 +220,19 @@ export const improveHtmlAccessibility = (
     const isBullet = contentType === 'bulletListItem';
     const listTag = isBullet ? 'ul' : 'ol';
 
-    // Check if previous item continues the same list (same type and level)
+    // Check if previous item continues the same list (same type, level, and
+    // no non-list block between them in the DOM : e.g. a heading separates lists).
     const previousInfo = idx > 0 ? listItemsInfo[idx - 1] : null;
+    const isAdjacentBlock =
+      previousInfo && info.blockOuterIndex === previousInfo.blockOuterIndex + 1;
     const continuesPreviousList =
-      previousInfo &&
+      isAdjacentBlock &&
       previousInfo.contentType === contentType &&
       previousInfo.level === level;
+
+    if (previousInfo && !isAdjacentBlock) {
+      listStack.length = 0;
+    }
 
     // Find or create the appropriate list
     let targetList: HTMLElement | null = null;
@@ -252,7 +281,7 @@ export const improveHtmlAccessibility = (
 
     // Create list item and add content
     const li = parsedDocument.createElement('li');
-    li.innerHTML = listItem.innerHTML;
+    moveChildNodes(listItem, li);
     targetList.appendChild(li);
 
     // Remove original block-outer
@@ -265,7 +294,7 @@ export const improveHtmlAccessibility = (
   );
   quoteBlocks.forEach((block) => {
     const quote = parsedDocument.createElement('blockquote');
-    quote.innerHTML = block.innerHTML;
+    moveChildNodes(block, quote);
     block.replaceWith(quote);
   });
 
@@ -276,7 +305,7 @@ export const improveHtmlAccessibility = (
   calloutBlocks.forEach((block) => {
     const aside = parsedDocument.createElement('aside');
     aside.setAttribute('role', 'note');
-    aside.innerHTML = block.innerHTML;
+    moveChildNodes(block, aside);
     block.replaceWith(aside);
   });
 
@@ -291,7 +320,7 @@ export const improveHtmlAccessibility = (
     }
 
     let previousSibling = item.previousElementSibling;
-    let listContainer: HTMLElement | null = null;
+    let listContainer: HTMLElement | null;
 
     if (previousSibling?.tagName.toLowerCase() === 'ul') {
       listContainer = previousSibling as HTMLElement;
@@ -303,7 +332,7 @@ export const improveHtmlAccessibility = (
     }
 
     const li = parsedDocument.createElement('li');
-    li.innerHTML = item.innerHTML;
+    moveChildNodes(item, li);
 
     // Ensure checkbox has an accessible state; fall back to aria-checked if missing.
     const checkbox = li.querySelector<HTMLInputElement>(
@@ -340,7 +369,7 @@ export const improveHtmlAccessibility = (
     });
 
     // Move content inside <code>.
-    code.innerHTML = block.innerHTML;
+    moveChildNodes(block, code);
     pre.appendChild(code);
     block.replaceWith(pre);
   });
@@ -401,14 +430,14 @@ export const addMediaFilesToZip = async (
 
       // Only download same-origin resources (internal media like /media/...).
       // External URLs keep their original src and are not included in the ZIP
-      let url: URL | null = null;
+      let url: URL | null;
       try {
         url = new URL(src, mediaUrl);
       } catch {
         url = null;
       }
 
-      if (!url || url.origin !== mediaUrl) {
+      if (!url || url.origin !== mediaUrl || !isSafeUrl(url.href)) {
         return;
       }
 

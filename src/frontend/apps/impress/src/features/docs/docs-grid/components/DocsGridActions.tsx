@@ -1,119 +1,113 @@
-import { useModal } from '@gouvfr-lasuite/cunningham-react';
-import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
-
-import { DropdownMenu, DropdownMenuOption, Icon } from '@/components';
 import {
-  Doc,
+  ButtonProps,
+  DropdownMenuItem,
+  VariantType,
+  useToastProvider,
+} from '@gouvfr-lasuite/ui-components';
+import { useTranslation } from 'react-i18next';
+
+import { Icon } from '@/components/Icon';
+import {
+  type Doc,
   KEY_LIST_DOC,
   KEY_LIST_FAVORITE_DOC,
-  ModalRemoveDoc,
-  useCreateFavoriteDoc,
-  useDeleteFavoriteDoc,
-  useDuplicateDoc,
+  useRestoreDoc,
 } from '@/docs/doc-management';
+import { DocToolBox } from '@/docs/doc-management/components/DocToolBox';
+import MoreIcon from '@/icons/more_horiz.svg';
+
+import { KEY_LIST_DOC_TRASHBIN } from '../api';
 
 interface DocsGridActionsProps {
   doc: Doc;
-  openShareModal?: () => void;
+  isInTrashbin?: boolean;
 }
+
+const TOOLBOX_BUTTON_PROPS: ButtonProps = {
+  icon: <MoreIcon width={16} height={16} aria-hidden="true" />,
+  size: 'nano',
+};
 
 export const DocsGridActions = ({
   doc,
-  openShareModal,
+  isInTrashbin,
 }: DocsGridActionsProps) => {
+  return isInTrashbin ? (
+    <DocsGridTrashbinActions doc={doc} />
+  ) : (
+    <DocToolBox
+      doc={doc}
+      isCurrentDoc={false}
+      buttonProps={TOOLBOX_BUTTON_PROPS}
+    />
+  );
+};
+
+interface DocsGridTrashbinActionsProps {
+  doc: Doc;
+}
+
+export const DocsGridTrashbinActions = ({
+  doc,
+}: DocsGridTrashbinActionsProps) => {
   const { t } = useTranslation();
-
-  const deleteModal = useModal();
-  const { mutate: duplicateDoc } = useDuplicateDoc();
-
-  const removeFavoriteDoc = useDeleteFavoriteDoc({
-    listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_FAVORITE_DOC],
-  });
-  const makeFavoriteDoc = useCreateFavoriteDoc({
-    listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_FAVORITE_DOC],
-  });
-
-  const options: DropdownMenuOption[] = [
-    {
-      label: doc.is_favorite ? t('Unpin') : t('Pin'),
-      icon: 'push_pin',
-      callback: () => {
-        if (doc.is_favorite) {
-          removeFavoriteDoc.mutate({ id: doc.id });
-        } else {
-          makeFavoriteDoc.mutate({ id: doc.id });
-        }
-      },
-      testId: `docs-grid-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
-      showSeparator: true,
-    },
-    {
-      label: t('Share'),
-      icon: 'group',
-      callback: () => {
-        openShareModal?.();
-      },
-
-      testId: `docs-grid-actions-share-${doc.id}`,
-    },
-    {
-      label: t('Duplicate'),
-      icon: 'content_copy',
-      disabled: !doc.abilities.duplicate,
-      callback: () => {
-        duplicateDoc({
-          docId: doc.id,
-          with_accesses: false,
-          canSave: false,
+  const { toast } = useToastProvider();
+  const { mutate: restoreDoc } = useRestoreDoc({
+    listInvalidQueries: [
+      KEY_LIST_DOC,
+      KEY_LIST_DOC_TRASHBIN,
+      KEY_LIST_FAVORITE_DOC,
+    ],
+    options: {
+      onSuccess: (_data) => {
+        toast(t('The document has been restored.'), VariantType.SUCCESS, {
+          duration: 4000,
         });
       },
-      showSeparator: true,
+      onError: (error) => {
+        toast(
+          t('An error occurred while restoring the document: {{error}}', {
+            error: error?.message,
+          }),
+          VariantType.ERROR,
+          {
+            duration: 4000,
+          },
+        );
+      },
     },
+  });
+
+  if (!doc.abilities.restore) {
+    return null;
+  }
+
+  const options: DropdownMenuItem[] = [
     {
-      label: t('Delete'),
-      icon: 'delete',
-      callback: () => deleteModal.open(),
-      disabled: !doc.abilities.destroy,
-      testId: `docs-grid-actions-remove-${doc.id}`,
+      label: t('Restore'),
+      icon: (
+        <Icon
+          $size="20px"
+          iconName="undo"
+          aria-hidden="true"
+          variant="symbols-outlined"
+        />
+      ),
+      callback: () => {
+        restoreDoc({
+          docId: doc.id,
+        });
+      },
+      testId: `docs-grid-actions-restore-${doc.id}`,
     },
   ];
 
-  const documentTitle = doc.title || t('Untitled document');
-  const menuLabel = t('Open the menu of actions for the document: {{title}}', {
-    title: documentTitle,
-  });
-
   return (
-    <>
-      <DropdownMenu
-        options={options}
-        label={menuLabel}
-        aria-label={t('More options')}
-        buttonCss={css`
-          &:hover {
-            background-color: unset;
-          }
-        `}
-      >
-        <Icon
-          data-testid={`docs-grid-actions-button-${doc.id}`}
-          iconName="more_horiz"
-          $theme="brand"
-          $variation="secondary"
-          $css={css`
-            cursor: pointer;
-            &:hover {
-              opacity: 0.8;
-            }
-          `}
-          aria-hidden="true"
-        />
-      </DropdownMenu>
-
-      {deleteModal.isOpen && (
-        <ModalRemoveDoc onClose={deleteModal.onClose} doc={doc} />
-      )}
-    </>
+    <DocToolBox
+      doc={doc}
+      isCurrentDoc={false}
+      buttonProps={TOOLBOX_BUTTON_PROPS}
+      optionsDefault={options}
+    />
   );
 };

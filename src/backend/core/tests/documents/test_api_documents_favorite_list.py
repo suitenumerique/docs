@@ -1,5 +1,9 @@
 """Test for the document favorite_list endpoint."""
 
+from datetime import timedelta
+
+from django.utils import timezone
+
 import pytest
 from rest_framework.test import APIClient
 
@@ -12,7 +16,7 @@ def test_api_document_favorite_list_anonymous():
     """Anonymous users should receive a 401 error."""
     client = APIClient()
 
-    response = client.get("/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorites/")
 
     assert response.status_code == 401
 
@@ -23,7 +27,7 @@ def test_api_document_favorite_list_authenticated_no_favorite():
     client = APIClient()
     client.force_login(user)
 
-    response = client.get("/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorites/")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -49,7 +53,7 @@ def test_api_document_favorite_list_authenticated_with_favorite():
         user=user, role=models.RoleChoices.READER, document__favorited_by=[user]
     ).document
 
-    response = client.get("/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorites/")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -66,7 +70,6 @@ def test_api_document_favorite_list_authenticated_with_favorite():
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "deleted_at": None,
-                "content": document.content,
                 "depth": document.depth,
                 "excerpt": document.excerpt,
                 "id": str(document.id),
@@ -105,13 +108,81 @@ def test_api_document_favorite_list_with_favorite_children():
     other_root = factories.DocumentFactory(creator=user, users=[user])
     factories.DocumentFactory.create_batch(2, parent=other_root)
 
-    response = client.get("/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorites/")
 
     assert response.status_code == 200
     assert response.json()["count"] == 3
 
     content = response.json()["results"]
 
-    assert content[0]["id"] == str(children[0].id)
+    assert content[0]["id"] == str(access.document.id)
     assert content[1]["id"] == str(children[1].id)
+    assert content[2]["id"] == str(children[0].id)
+
+
+def test_api_document_favorite_list_sorted_by_updated_at():
+    """
+    Authenticated users should receive their favorite documents including children
+    sorted by last updated_at timestamp.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    root = factories.DocumentFactory(creator=user, users=[user])
+    children = factories.DocumentFactory.create_batch(
+        2, parent=root, favorited_by=[user]
+    )
+
+    access = factories.UserDocumentAccessFactory(
+        user=user, role=models.RoleChoices.READER, document__favorited_by=[user]
+    )
+
+    other_root = factories.DocumentFactory(creator=user, users=[user])
+    factories.DocumentFactory.create_batch(2, parent=other_root)
+
+    now = timezone.now()
+
+    models.Document.objects.filter(pk=children[0].pk).update(
+        updated_at=now + timedelta(seconds=2)
+    )
+    models.Document.objects.filter(pk=children[1].pk).update(
+        updated_at=now + timedelta(seconds=3)
+    )
+
+    response = client.get("/api/v1.0/documents/favorites/")
+
+    assert response.status_code == 200
+    assert response.json()["count"] == 3
+
+    content = response.json()["results"]
+
+    assert content[0]["id"] == str(children[1].id)
+    assert content[1]["id"] == str(children[0].id)
     assert content[2]["id"] == str(access.document.id)
+
+
+def test_api_document_favorite_list_with_deleted_child():
+    """
+    Authenticated users should not see deleted documents in their favorite list.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    root = factories.DocumentFactory(creator=user, users=[user], favorited_by=[user])
+    child1, child2 = factories.DocumentFactory.create_batch(
+        2, parent=root, favorited_by=[user]
+    )
+
+    child1.delete()
+
+    response = client.get("/api/v1.0/documents/favorites/")
+
+    assert response.status_code == 200
+    assert response.json()["count"] == 2
+
+    content = response.json()["results"]
+
+    assert content[0]["id"] == str(root.id)
+    assert content[1]["id"] == str(child2.id)

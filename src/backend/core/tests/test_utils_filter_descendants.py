@@ -2,7 +2,7 @@
 Unit tests for the filter_root_paths utility function.
 """
 
-from core.utils import filter_descendants
+from core.utils.paths import filter_descendants
 
 
 def test_utils_filter_descendants_success():

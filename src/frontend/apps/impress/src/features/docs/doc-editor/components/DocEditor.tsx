@@ -1,7 +1,8 @@
 import clsx from 'clsx';
-import { useEffect, useState } from 'react';
+import { PropsWithChildren, useEffect, useState } from 'react';
+import { css } from 'styled-components';
 
-import { Box, Loading } from '@/components';
+import { Box } from '@/components';
 import { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import { DocHeader } from '@/docs/doc-header/';
 import {
@@ -11,27 +12,29 @@ import {
   useIsCollaborativeEditable,
   useProviderStore,
 } from '@/docs/doc-management';
-import { TableContent } from '@/docs/doc-table-content/';
 import { useAuth } from '@/features/auth/';
-import { useSkeletonStore } from '@/features/skeletons';
+import { SkeletonEditorCore, useSkeletonStore } from '@/features/skeletons';
+import { useSkeletonFadeOut } from '@/features/skeletons/hooks/useFadeOut';
 import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
 
 import { BlockNoteEditor, BlockNoteReader } from './BlockNoteEditor';
+import { EncryptionProvider } from './EncryptionProvider';
+
+const DOCS_EDITOR_CLASS = '--docs--doc-editor';
 
 interface DocEditorContainerProps {
   docHeader: React.ReactNode;
-  docEditor: React.ReactNode;
   isDeletedDoc: boolean;
   readOnly: boolean;
 }
 
 export const DocEditorContainer = ({
+  children,
   docHeader,
-  docEditor,
   isDeletedDoc,
   readOnly,
-}: DocEditorContainerProps) => {
+}: PropsWithChildren<DocEditorContainerProps>) => {
   const { isDesktop } = useResponsiveStore();
 
   return (
@@ -39,8 +42,9 @@ export const DocEditorContainer = ({
       <Box
         $maxWidth="868px"
         $width="100%"
-        $height="100%"
-        className="--docs--doc-editor"
+        $flex="1"
+        className={DOCS_EDITOR_CLASS}
+        $margin={{ horizontal: 'auto' }}
       >
         <Box
           $padding={{ horizontal: isDesktop ? '54px' : 'base' }}
@@ -52,21 +56,21 @@ export const DocEditorContainer = ({
         <Box
           $direction="row"
           $width="100%"
-          $css="overflow-x: clip; flex: 1;"
+          $css="flex: 1;"
           $position="relative"
           className="--docs--doc-editor-content"
         >
           <Box $css="flex:1;" $position="relative" $width="100%">
             <Box
               $padding={{ top: 'md', bottom: '2rem' }}
-              $background="white"
+              $background="var(--c--contextuals--background--surface--primary)"
               className={clsx('--docs--editor-container', {
                 '--docs--doc-readonly': readOnly,
                 '--docs--doc-deleted': isDeletedDoc,
               })}
               $height="100%"
             >
-              {docEditor}
+              {children}
             </Box>
           </Box>
         </Box>
@@ -80,28 +84,28 @@ interface DocEditorProps {
   documentEncryptionSettings: DocumentEncryptionSettings | null;
 }
 
+/**
+ * The collaboration provider is created by the document page (`useCollaboration`)
+ * rather than here: the page swaps this editor for the encryption transition
+ * and decryption failure screens without losing the provider state.
+ */
 export const DocEditor = ({
   doc,
   documentEncryptionSettings,
 }: DocEditorProps) => {
-  const { isDesktop } = useResponsiveStore();
-  const { provider, isReady } = useProviderStore();
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
   const isDeletedDoc = !!doc.deleted_at;
   const readOnly =
     !doc.abilities.partial_update || !isEditable || isLoading || isDeletedDoc;
-  const { setIsSkeletonVisible } = useSkeletonStore();
-  const isProviderReady = isReady && provider;
   const { trackEvent } = useAnalytics();
   const [hasTracked, setHasTracked] = useState(false);
   const { authenticated } = useAuth();
   const isPublicDoc = getDocLinkReach(doc) === LinkReach.PUBLIC;
+  const { setIsSkeletonVisible } = useSkeletonStore();
 
   useEffect(() => {
-    if (isProviderReady) {
-      setIsSkeletonVisible(false);
-    }
-  }, [isProviderReady, setIsSkeletonVisible]);
+    setIsSkeletonVisible(false);
+  }, [setIsSkeletonVisible, doc.id]);
 
   /**
    * Track doc view event only once per doc change
@@ -127,39 +131,76 @@ export const DocEditor = ({
     });
   }, [authenticated, hasTracked, isPublicDoc, trackEvent]);
 
-  if (!isProviderReady || provider?.configuration.name !== doc.id) {
-    return <Loading />;
+  return (
+    <DocEditorContainer
+      docHeader={<DocHeader doc={doc} />}
+      isDeletedDoc={isDeletedDoc}
+      readOnly={readOnly}
+    >
+      <DocCoreEditor
+        doc={doc}
+        readOnly={readOnly}
+        documentEncryptionSettings={documentEncryptionSettings}
+      />
+    </DocEditorContainer>
+  );
+};
+
+interface DocCoreEditorProps {
+  doc: Doc;
+  readOnly: boolean;
+  documentEncryptionSettings: DocumentEncryptionSettings | null;
+}
+
+export const DocCoreEditor = ({
+  doc,
+  readOnly,
+  documentEncryptionSettings,
+}: DocCoreEditorProps) => {
+  const { provider, isReady } = useProviderStore();
+  const isProviderReady = isReady && provider;
+  const showContent = !!(
+    isProviderReady && provider?.configuration.name === doc.id
+  );
+  const { skeletonVisible, isFadingOut } = useSkeletonFadeOut(showContent);
+
+  if (
+    skeletonVisible ||
+    !isProviderReady ||
+    provider?.configuration.name !== doc.id
+  ) {
+    return (
+      <SkeletonEditorCore
+        isFadingOut={isFadingOut}
+        $css={css`
+          padding-top: 0px;
+        `}
+      />
+    );
+  }
+
+  if (readOnly) {
+    // Readers of an encrypted document decrypt its media too
+    return (
+      <EncryptionProvider
+        encryptedSymmetricKey={
+          documentEncryptionSettings?.encryptedSymmetricKey
+        }
+        keyVersion={documentEncryptionSettings?.keyVersion}
+      >
+        <BlockNoteReader
+          initialContent={provider.document.getXmlFragment('document-store')}
+          docId={doc.id}
+        />
+      </EncryptionProvider>
+    );
   }
 
   return (
-    <>
-      {isDesktop && <TableContent />}
-      <DocEditorContainer
-        docHeader={
-          <DocHeader
-            doc={doc}
-            documentEncryptionSettings={documentEncryptionSettings}
-          />
-        }
-        docEditor={
-          readOnly ? (
-            <BlockNoteReader
-              initialContent={provider.document.getXmlFragment(
-                'document-store',
-              )}
-              docId={doc.id}
-            />
-          ) : (
-            <BlockNoteEditor
-              doc={doc}
-              provider={provider}
-              documentEncryptionSettings={documentEncryptionSettings}
-            />
-          )
-        }
-        isDeletedDoc={isDeletedDoc}
-        readOnly={readOnly}
-      />
-    </>
+    <BlockNoteEditor
+      doc={doc}
+      provider={provider}
+      documentEncryptionSettings={documentEncryptionSettings}
+    />
   );
 };

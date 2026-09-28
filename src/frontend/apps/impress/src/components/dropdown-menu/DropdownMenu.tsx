@@ -1,4 +1,3 @@
-import { HorizontalSeparator } from '@gouvfr-lasuite/ui-kit';
 import {
   Fragment,
   PropsWithChildren,
@@ -10,7 +9,15 @@ import {
 } from 'react';
 import { css } from 'styled-components';
 
-import { Box, BoxButton, BoxProps, DropButton, Icon, Text } from '@/components';
+import {
+  Box,
+  BoxButton,
+  BoxProps,
+  DropButton,
+  HorizontalSeparator,
+  Icon,
+  Text,
+} from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useKeyboardAction } from '@/hooks';
 
@@ -19,6 +26,7 @@ import { useDropdownKeyboardNav } from './hook/useDropdownKeyboardNav';
 export type DropdownMenuOption = {
   icon?: ReactNode;
   label: string;
+  lang?: string;
   testId?: string;
   value?: string;
   callback?: () => void | Promise<unknown>;
@@ -62,7 +70,10 @@ export const DropdownMenu = ({
   const [isOpen, setIsOpen] = useState(opened ?? false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const blockButtonRef = useRef<HTMLDivElement>(null);
-  const menuItemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const menuItemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const isSingleSelectable = options.some(
+    (option) => option.isSelected !== undefined,
+  );
 
   const onOpenChange = useCallback(
     (isOpen: boolean) => {
@@ -165,14 +176,25 @@ export const DropdownMenu = ({
           }
           const isDisabled = option.disabled !== undefined && option.disabled;
           const isFocused = index === focusedIndex;
+          const isSelected =
+            option.isSelected === true ||
+            (selectedValues?.includes(option.value ?? '') ?? false);
+          const itemRole =
+            selectedValues !== undefined
+              ? 'menuitemcheckbox'
+              : isSingleSelectable
+                ? 'menuitemradio'
+                : 'menuitem';
+          const optionKey = option.value ?? option.testId ?? `option-${index}`;
 
           return (
-            <Fragment key={option.label}>
+            <Fragment key={optionKey}>
               <BoxButton
                 ref={(el) => {
                   menuItemRefs.current[index] = el;
                 }}
-                role="menuitem"
+                role={itemRole}
+                aria-checked={itemRole === 'menuitem' ? undefined : isSelected}
                 data-testid={option.testId}
                 $direction="row"
                 disabled={isDisabled}
@@ -183,26 +205,33 @@ export const DropdownMenu = ({
                   triggerOption(option);
                 }}
                 onKeyDown={keyboardAction(() => triggerOption(option))}
-                key={option.label}
                 $align="center"
                 $justify="space-between"
-                $background={colorsTokens['gray-000']}
+                $background="var(--c--contextuals--background--surface--primary)"
                 $color={colorsTokens['brand-600']}
                 $padding={{ vertical: 'xs', horizontal: 'base' }}
                 $width="100%"
                 $gap={spacingsTokens['base']}
                 $css={css`
                   border: none;
-                  ${index === 0 &&
-                  css`
-                    border-top-left-radius: 4px;
-                    border-top-right-radius: 4px;
-                  `}
-                  ${index === options.length - 1 &&
-                  css`
-                    border-bottom-left-radius: var(--c--globals--spacings--st);
-                    border-bottom-right-radius: var(--c--globals--spacings--st);
-                  `}
+                  ${
+                    index === 0 &&
+                    css`
+                      border-top-left-radius: 4px;
+                      border-top-right-radius: 4px;
+                    `
+                  }
+                  ${
+                    index === options.length - 1 &&
+                    css`
+                      border-bottom-left-radius: var(
+                        --c--globals--spacings--st
+                      );
+                      border-bottom-right-radius: var(
+                        --c--globals--spacings--st
+                      );
+                    `
+                  }
                   font-size: var(--c--globals--font--sizes--sm);
                   color: var(--c--globals--colors--gray-1000);
                   font-weight: var(--c--globals--font--weights--medium);
@@ -226,13 +255,15 @@ export const DropdownMenu = ({
                   /**
                   * TODO: This part seems to have a problem with DocToolBox
                   */
-                  /* ${isFocused &&
-                  css`
-                    outline-offset: -2px;
-                    background-color: var(
-                      --c--contextuals--background--semantic--contextual--primary
-                    );
-                  `} */
+                  /* ${
+                    isFocused &&
+                    css`
+                      outline-offset: -2px;
+                      background-color: var(
+                        --c--contextuals--background--semantic--contextual--primary
+                      );
+                    `
+                  } */
                 `}
               >
                 <Box
@@ -243,21 +274,26 @@ export const DropdownMenu = ({
                   {option.icon && typeof option.icon === 'string' && (
                     <Icon
                       $size="20px"
-                      $theme="gray"
+                      $theme="neutral"
                       $variation={isDisabled ? 'tertiary' : 'primary'}
                       iconName={option.icon}
                       aria-hidden="true"
                     />
                   )}
-                  {option.icon &&
-                    typeof option.icon !== 'string' &&
-                    option.icon}
+
+                  {option.icon && typeof option.icon !== 'string' && (
+                    <Box
+                      $theme="neutral"
+                      $variation={isDisabled ? 'tertiary' : 'primary'}
+                    >
+                      {option.icon}
+                    </Box>
+                  )}
                   <Text $variation={isDisabled ? 'tertiary' : 'primary'}>
-                    {option.label}
+                    <span lang={option.lang}>{option.label}</span>
                   </Text>
                 </Box>
-                {(option.isSelected ||
-                  selectedValues?.includes(option.value ?? '')) && (
+                {isSelected && (
                   <Icon
                     iconName="check"
                     $size="20px"
@@ -266,9 +302,7 @@ export const DropdownMenu = ({
                   />
                 )}
               </BoxButton>
-              {option.showSeparator && (
-                <HorizontalSeparator withPadding={false} />
-              )}
+              {option.showSeparator && <HorizontalSeparator $margin="none" />}
             </Fragment>
           );
         })}

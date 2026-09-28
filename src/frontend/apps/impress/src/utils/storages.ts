@@ -50,3 +50,30 @@ export const safeLocalStorage: SyncStorage = {
     localStorage.removeItem(key);
   },
 };
+
+/**
+ * @namespace safeSessionStorage
+ * @description A utility for safely interacting with sessionStorage.
+ * sessionStorage is scoped to the current browser tab, making it suitable
+ * for per-tab state that should not be shared across tabs.
+ */
+export const safeSessionStorage: SyncStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    return sessionStorage.getItem(key);
+  },
+  setItem: (key: string, value: string): void => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    sessionStorage.setItem(key, value);
+  },
+  removeItem: (key: string): void => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    sessionStorage.removeItem(key);
+  },
+};

@@ -2,10 +2,10 @@ import {
   Button,
   Modal,
   ModalSize,
+  Spinner,
   VariantType,
   useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
-import { Spinner } from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';

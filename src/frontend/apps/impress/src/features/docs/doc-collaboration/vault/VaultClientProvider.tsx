@@ -98,7 +98,7 @@ export function VaultClientProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, authenticated, isLoading: authLoading } = useAuth();
+  const { user, authenticated, isAuthLoading: authLoading } = useAuth();
   const { data: config } = useConfig();
   const { i18n } = useTranslation();
   const { theme: cunninghamTheme } = useCunninghamTheme();

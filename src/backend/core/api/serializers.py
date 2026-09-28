@@ -12,16 +12,19 @@ from django.utils.functional import lazy
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
+import emoji
 import magic
 from rest_framework import serializers
 
-from core import choices, enums, models, utils, validators
+from core import choices, enums, models, validators
 from core.services import mime_types
-from core.services.ai_services import AI_ACTIONS
+from core.services.ai_services.legacy import AI_ACTIONS
 from core.services.converter_services import (
     ConversionError,
     Converter,
 )
+from core.utils.analytics import PosthogEventName, posthog_capture
+from core.utils.treebeard import create_tree_node_with_retry
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -33,8 +36,23 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ["id", "email", "full_name", "short_name", "language", "suite_user_id"]
-        read_only_fields = ["id", "email", "full_name", "short_name", "suite_user_id"]
+        fields = [
+            "id",
+            "email",
+            "full_name",
+            "short_name",
+            "language",
+            "is_first_connection",
+            "suite_user_id",
+        ]
+        read_only_fields = [
+            "id",
+            "email",
+            "full_name",
+            "short_name",
+            "is_first_connection",
+            "suite_user_id",
+        ]
 
     def get_full_name(self, instance):
         """Return the full name of the user."""
@@ -236,8 +254,6 @@ class DocumentLightSerializer(serializers.ModelSerializer):
 class DocumentSerializer(ListDocumentSerializer):
     """Serialize documents with all fields for display in detail views."""
 
-    content = serializers.CharField(required=False)
-    contentEncrypted = serializers.BooleanField(required=False, write_only=True)
     websocket = serializers.BooleanField(required=False, write_only=True)
     file = serializers.FileField(
         required=False, write_only=True, allow_null=True, max_length=255
@@ -254,8 +270,6 @@ class DocumentSerializer(ListDocumentSerializer):
             "ancestors_link_role",
             "computed_link_reach",
             "computed_link_role",
-            "content",
-            "contentEncrypted",
             "created_at",
             "creator",
             "deleted_at",
@@ -307,8 +321,9 @@ class DocumentSerializer(ListDocumentSerializer):
         fields = super().get_fields()
 
         request = self.context.get("request")
-        if request and request.method == "POST":
-            fields["id"].read_only = False
+        if request:
+            if request.method == "POST":
+                fields["id"].read_only = False
 
         # if user is not authenticated remove public keys information since he can still retrieve the document
         if request and not request.user.is_authenticated:
@@ -318,27 +333,20 @@ class DocumentSerializer(ListDocumentSerializer):
         return fields
 
     def validate_id(self, value):
-        """Ensure the provided ID does not already exist when creating a new document."""
+        """Ensure the provided ID is a valid UUID and not already taken."""
         request = self.context.get("request")
 
         # Only check this on POST (creation)
         if request and request.method == "POST":
+            if value.version not in (1, 3, 4, 5):
+                raise serializers.ValidationError(
+                    "The provided ID is not a valid UUID."
+                )
+
             if models.Document.objects.filter(id=value).exists():
                 raise serializers.ValidationError(
                     "A document with this ID already exists. You cannot override it."
                 )
-
-        return value
-
-    def validate_content(self, value):
-        """Validate the content field."""
-        if not value:
-            return None
-
-        try:
-            b64decode(value, validate=True)
-        except binascii.Error as err:
-            raise serializers.ValidationError("Invalid base64 content.") from err
 
         return value
 
@@ -366,60 +374,57 @@ class DocumentSerializer(ListDocumentSerializer):
 
         return file
 
-    def save(self, **kwargs):
+    def update(self, instance, validated_data):
         """
-        Process the content field to extract attachment keys and update the document's
-        "attachments" field for access control.
+        When no data is sent on the update, skip making the update in the database and return
+        directly the instance unchanged.
         """
-        content = self.validated_data.get("content", "")
+        if not validated_data:
+            return instance  # No data provided, skip the update
+        return super().update(instance, validated_data)
 
-        # Encrypted content cannot be parsed as a Yjs update
-        # TODO: for now skip attachment extraction for encrypted documents but we should have them
-        is_encrypted = self.validated_data.get(
-            "is_encrypted", self.instance and self.instance.is_encrypted
-        )
-        extracted_attachments = (
-            set() if is_encrypted else set(utils.extract_attachments(content))
-        )
 
-        existing_attachments = (
-            set(self.instance.attachments or []) if self.instance else set()
-        )
-        new_attachments = extracted_attachments - existing_attachments
+class SearchDocumentSerializer(ListDocumentSerializer):
+    """Serialize items for search."""
 
-        if new_attachments:
-            attachments_documents = (
-                models.Document.objects.filter(
-                    attachments__overlap=list(new_attachments)
-                )
-                .only("path", "attachments")
-                .order_by("path")
-            )
+    parent = ListDocumentSerializer(many=False, read_only=True)
 
-            user = self.context["request"].user
-            readable_per_se_paths = (
-                models.Document.objects.readable_per_se(user)
-                .order_by("path")
-                .values_list("path", flat=True)
-            )
-            readable_attachments_paths = utils.filter_descendants(
-                [doc.path for doc in attachments_documents],
-                readable_per_se_paths,
-                skip_sorting=True,
-            )
+    class Meta:
+        model = models.Document
+        fields = ListDocumentSerializer.Meta.fields + ["parent"]
+        read_only_fields = ListDocumentSerializer.Meta.read_only_fields + ["parent"]
 
-            readable_attachments = set()
-            for document in attachments_documents:
-                if document.path not in readable_attachments_paths:
-                    continue
-                readable_attachments.update(set(document.attachments) & new_attachments)
 
-            # Update attachments with readable keys
-            self.validated_data["attachments"] = list(
-                existing_attachments | readable_attachments
-            )
+class DocumentContentSerializer(serializers.Serializer):
+    """Serializer for updating only the raw content of a document stored in S3."""
 
-        return super().save(**kwargs)
+    content = serializers.CharField(required=True)
+    # Encryption state the client produced the content for. When it no longer
+    # matches the document (encrypted or decrypted meanwhile by someone else),
+    # the save is refused instead of overwriting with the wrong kind of content.
+    contentEncrypted = serializers.BooleanField(required=False)
+    websocket = serializers.BooleanField(required=False)
+
+    def validate_content(self, value):
+        """Validate the content field."""
+        try:
+            b64decode(value, validate=True)
+        except binascii.Error as err:
+            raise serializers.ValidationError("Invalid base64 content.") from err
+
+        return value
+
+    def update(self, instance, validated_data):
+        """
+        This serializer does not support updates.
+        """
+        raise NotImplementedError("Update is not supported for this serializer.")
+
+    def create(self, validated_data):
+        """
+        This serializer does not support create.
+        """
+        raise NotImplementedError("Create is not supported for this serializer.")
 
 
 class DocumentAccessSerializer(serializers.ModelSerializer):
@@ -588,6 +593,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
     language = serializers.ChoiceField(
         required=False, choices=lazy(lambda: settings.LANGUAGES, tuple)()
     )
+    send_notification_email = serializers.BooleanField(required=False, default=True)
     # Invitation
     message = serializers.CharField(required=False)
     subject = serializers.CharField(required=False)
@@ -619,10 +625,22 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 {"content": ["Could not convert content"]}
             ) from err
 
-        document = models.Document.add_root(
-            title=validated_data["title"],
-            content=document_content,
-            creator=user,
+        document = create_tree_node_with_retry(
+            lambda: models.Document.add_root(
+                title=validated_data["title"],
+                creator=user,
+            )
+        )
+
+        posthog_capture(PosthogEventName.DOC_CREATED, user, {}, document=document)
+        posthog_capture(
+            PosthogEventName.DOC_IMPORTED,
+            user,
+            {
+                "content_type": mime_types.MARKDOWN,
+                "create_for_owner": True,
+            },
+            document=document,
         )
 
         if user:
@@ -640,7 +658,11 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 role=models.RoleChoices.OWNER,
             )
 
-        self._send_email_notification(document, validated_data, email, language)
+        document.content = document_content
+        document.save()
+
+        if validated_data.get("send_notification_email", True):
+            self._send_email_notification(document, validated_data, email, language)
         return document
 
     def _send_email_notification(self, document, validated_data, email, language):
@@ -735,10 +757,13 @@ class LinkDocumentSerializer(serializers.ModelSerializer):
 class DocumentDuplicationSerializer(serializers.Serializer):
     """
     Serializer for duplicating a document.
-    Allows specifying whether to keep access permissions.
+    Allows specifying whether to keep access permissions,
+    and whether to duplicate descendant documents as well
+    (deep copy) or not (shallow copy).
     """
 
     with_accesses = serializers.BooleanField(default=False)
+    with_descendants = serializers.BooleanField(default=False)
 
     def create(self, validated_data):
         """
@@ -1150,6 +1175,12 @@ class ReactionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at", "users"]
 
+    def validate_emoji(self, value):
+        """Ensure the reaction is a single emoji."""
+        if not emoji.is_emoji(value):
+            raise serializers.ValidationError("Reaction must be a single valid emoji.")
+        return value
+
 
 class CommentSerializer(serializers.ModelSerializer):
     """Serialize comments (nested under a thread) with reactions and abilities."""
@@ -1180,12 +1211,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """Validate comment data."""
-
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-
         attrs["thread_id"] = self.context["thread_id"]
-        attrs["user_id"] = user.id if user else None
         return attrs
 
     def get_abilities(self, obj):
@@ -1256,11 +1282,8 @@ class ThreadSerializer(serializers.ModelSerializer):
         return {}
 
 
-class SearchDocumentSerializer(serializers.Serializer):
+class SearchQueryParamDocumentSerializer(serializers.Serializer):
     """Serializer for fulltext search requests through Find application"""
 
-    q = serializers.CharField(required=True, allow_blank=False, trim_whitespace=True)
-    page_size = serializers.IntegerField(
-        required=False, min_value=1, max_value=50, default=20
-    )
-    page = serializers.IntegerField(required=False, min_value=1, default=1)
+    q = serializers.CharField(required=True, allow_blank=True, trim_whitespace=True)
+    document = serializers.UUIDField(required=False)

@@ -1,26 +1,59 @@
+import { LaGaufreV2Props } from '@gouvfr-lasuite/ui-components';
 import { useQuery } from '@tanstack/react-query';
-import { Resource } from 'i18next';
+import type { Resource } from 'i18next';
+import Image from 'next/image';
+import type { LinkHTMLAttributes } from 'react';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Theme } from '@/cunningham/';
-import { FooterType } from '@/features/footer';
-import { HeaderType, WaffleType } from '@/features/header';
-import { PostHogConf } from '@/services';
+import type { Theme } from '@/cunningham/';
+import type { FooterType } from '@/features/footer';
+import { HeaderType } from '@/features/left-panel/types';
+import type { PostHogConf } from '@/services/PosthogAnalytic';
+
+type Imagetype = React.ComponentProps<typeof Image>;
 
 interface ThemeCustomization {
+  favicon?: {
+    light: LinkHTMLAttributes<HTMLLinkElement>;
+    dark: LinkHTMLAttributes<HTMLLinkElement>;
+  };
   footer?: FooterType;
-  translations?: Resource;
   header?: HeaderType;
-  waffle?: WaffleType;
+  help: {
+    documentation_url?: string;
+    support_mailto?: string;
+    legal_links?: {
+      personal_data?: string;
+      terms_of_use?: string;
+      accessibility_statement?: string;
+      legal_notice?: string;
+    };
+  };
+  home: {
+    'with-proconnect'?: boolean;
+    'icon-banner'?: Imagetype;
+  };
+  onboarding?: {
+    enabled: true;
+    learn_more_url?: string;
+    ready_template_url?: string;
+  };
+  translations?: Resource;
+  waffle?: LaGaufreV2Props;
 }
 
 export interface ConfigResponse {
+  AI_BOT: { name: string; color: string };
   AI_FEATURE_ENABLED?: boolean;
+  AI_FEATURE_BLOCKNOTE_ENABLED?: boolean;
+  AI_FEATURE_LEGACY_ENABLED?: boolean;
+  API_USERS_SEARCH_QUERY_MIN_LENGTH?: number;
   COLLABORATION_WS_URL?: string;
-  COLLABORATION_WS_NOT_CONNECTED_READY_ONLY?: boolean;
+  COLLABORATION_WS_NOT_CONNECTED_READ_ONLY?: boolean;
+  COLLABORATION_WS_INACTIVITY_TIMEOUT?: number | null;
   CONVERSION_FILE_EXTENSIONS_ALLOWED: string[];
   CONVERSION_FILE_MAX_SIZE: number;
-  CRISP_WEBSITE_ID?: string;
+  CONVERSION_UPLOAD_ENABLED?: boolean;
   ENCRYPTION_FEATURE_ENABLED?: boolean;
   ENCRYPTION_INTERFACE_URL?: string | null;
   ENCRYPTION_VAULT_URL?: string | null;
@@ -33,8 +66,11 @@ export interface ConfigResponse {
   LANGUAGES: [string, string][];
   LANGUAGE_CODE: string;
   MEDIA_BASE_URL?: string;
-  POSTHOG_KEY?: PostHogConf;
+  POSTHOG_KEY?: PostHogConf['key'];
+  POSTHOG_HOST?: PostHogConf['host'];
+  RELEASE_VERSION: string;
   SENTRY_DSN?: string;
+  REACTIONS_MAX_PER_COMMENT: number;
   TRASHBIN_CUTOFF_DAYS?: number;
   theme_customization?: ThemeCustomization;
 }
@@ -71,13 +107,13 @@ export const KEY_CONFIG = 'config';
 
 export function useConfig() {
   const cachedData = getCachedTranslation();
-  const oneHour = 1000 * 60 * 60;
+  const staleTime = 1000 * 60 * 5;
 
   return useQuery<ConfigResponse, APIError, ConfigResponse>({
     queryKey: [KEY_CONFIG],
     queryFn: () => getConfig(),
     initialData: cachedData,
-    staleTime: oneHour,
-    initialDataUpdatedAt: Date.now() - oneHour, // Force initial data to be considered stale
+    staleTime,
+    initialDataUpdatedAt: Date.now() - staleTime, // Force initial data to be considered stale
   });
 }

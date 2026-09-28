@@ -1,4 +1,4 @@
-@import url('@gouvfr-lasuite/ui-kit/style');
+@import url('@gouvfr-lasuite/ui-components/style');
 @import url('./cunningham-tokens.css');
 
 :root {
@@ -64,11 +64,37 @@
   z-index: 1000;
 }
 
+.c__modal__scroller {
+  padding: var(--c--globals--font--sizes--md);
+}
+
+.c__modal__title {
+  padding: 0;
+  display: block;
+}
+
+.c__modal__footer {
+  background-color: transparent;
+}
+
+.c__modal__close .c__button {
+  right: 0;
+  top: 0;
+  position: relative;
+}
+
+.c__modal__close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
 /**
  * Tooltip
 */
 .c__tooltip {
-  padding: var(--c--globals--font--sizes--sm) var(--c--globals--spacings--xxs);
+  padding: var(--c--globals--spacings--t) var(--c--globals--spacings--xxs);
+  text-align: center;
 }
 
 .c__tooltip .react-aria-OverlayArrow svg {

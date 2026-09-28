@@ -33,10 +33,7 @@ export type EncryptionTransitionType = 'encrypting' | 'removing-encryption';
  * - `unknown`: anything else (vault unreachable mid-way, unexpected error).
  */
 export type DecryptionFailure =
-  | 'key_unavailable'
-  | 'key_mismatch'
-  | 'content_integrity'
-  | 'unknown';
+  'key_unavailable' | 'key_mismatch' | 'content_integrity' | 'unknown';
 
 export const decryptionFailureOf = (err: unknown): DecryptionFailure => {
   switch ((err as VaultError | null | undefined)?.code) {
@@ -58,7 +55,7 @@ export interface UseCollaborationStore {
   createProvider: (
     providerUrl: string,
     storeId: string,
-    initialDocState?: Buffer<ArrayBuffer>,
+    initialDocState?: Uint8Array,
     encryptionOptions?: {
       vaultClient: VaultClient;
       encryptedSymmetricKey: ArrayBuffer;
@@ -66,6 +63,9 @@ export interface UseCollaborationStore {
     },
   ) => SwitchableProvider;
   destroyProvider: () => void;
+  setReady: (value: boolean) => void;
+  pauseForInactivity: () => void;
+  resumeFromInactivity: () => void;
   notifyOthers: (event: EncryptionTransitionEvent) => void;
   startEncryptionTransition: (type: EncryptionTransitionType) => void;
   clearEncryptionTransition: () => void;
@@ -74,6 +74,7 @@ export interface UseCollaborationStore {
   isReady: boolean;
   isSynced: boolean;
   hasLostConnection: boolean;
+  isPausedForInactivity: boolean;
   encryptionTransition: EncryptionTransitionType | null;
   decryptionFailure: DecryptionFailure | null;
   setDecryptionFailure: (failure: DecryptionFailure) => void;
@@ -86,9 +87,24 @@ const defaultValues = {
   isReady: false,
   isSynced: false,
   hasLostConnection: false,
+  isPausedForInactivity: false,
   encryptionTransition: null,
   decryptionFailure: null,
 };
+
+type ExtendedCloseEvent = CloseEvent & { wasClean: boolean };
+
+/**
+ * When a massive simultaneous disconnection occurs (e.g. infra restart), all
+ * clients would reconnect and invalidate their queries at exactly the same
+ * time, causing a possible DB spike. Adding random jitter spreads these events over a
+ * time window so the load is absorbed gradually.
+ */
+const RECONNECT_BASE_DELAY_MS = 1000;
+const RECONNECT_JITTER_MAX_MS = 3000;
+
+let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
+let lostConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
 function handleEncryptionSystemMessage(
   message: string,
@@ -115,6 +131,76 @@ function handleEncryptionSystemMessage(
   }
 }
 
+/**
+ * Connection status handling shared by the Hocuspocus and relay providers.
+ */
+function handleStatus(
+  isConnected: boolean,
+  isDisconnected: boolean,
+  set: (
+    partial:
+      | Partial<UseCollaborationStore>
+      | ((state: UseCollaborationStore) => Partial<UseCollaborationStore>),
+  ) => void,
+  get: () => UseCollaborationStore,
+) {
+  const wasConnected = get().isConnected;
+
+  if (isConnected) {
+    clearTimeout(lostConnectionTimeout);
+  }
+  // If we were previously connected and now we're not,
+  // we might have lost the connection
+  else if (wasConnected && !get().isPausedForInactivity) {
+    clearTimeout(lostConnectionTimeout);
+    // Jitter spreading for reconnection attempts
+    // Math.random() generates a random delay to avoid all clients
+    // reconnecting at the same time
+    lostConnectionTimeout = setTimeout(
+      () => set({ hasLostConnection: true }),
+      Math.random() * RECONNECT_JITTER_MAX_MS,
+    );
+  }
+
+  set((state) => {
+    /**
+     * A connected status does not mean we are totally connected
+     * because authentication can still be in progress and failed
+     * So we only update isConnected when we lose the connection
+     */
+    const connected = !isConnected
+      ? {
+          isConnected: false,
+        }
+      : undefined;
+
+    return {
+      ...connected,
+      isReady: state.isReady || isDisconnected,
+    };
+  });
+}
+
+/**
+ * Reconnect after a clean disconnection, with jitter, unless the disconnection
+ * came from inactivity: reconnection then happens once the user is active again.
+ */
+function scheduleReconnect(
+  provider: SwitchableProvider,
+  get: () => UseCollaborationStore,
+) {
+  if (get().isPausedForInactivity) {
+    return;
+  }
+
+  clearTimeout(reconnectTimeout);
+
+  reconnectTimeout = setTimeout(
+    () => void provider.connect(),
+    RECONNECT_BASE_DELAY_MS + Math.random() * RECONNECT_JITTER_MAX_MS,
+  );
+}
+
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
   ...defaultValues,
   setDecryptionFailure: (failure) => set({ decryptionFailure: failure }),
@@ -132,11 +218,6 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     let provider: SwitchableProvider;
 
     if (isEncrypted) {
-      //
-      // TODO: should implement features for authentication (listening on message with custom payload?)
-      // same for previous "onSynced"
-      //
-
       const AdaptedEncryptedWebSocket = createAdaptedEncryptedWebsocketClass({
         vaultClient: encryptionOptions.vaultClient,
         encryptedSymmetricKey: encryptionOptions.encryptedSymmetricKey,
@@ -158,18 +239,19 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
         },
       });
 
-      provider = new RelayProvider(wsUrl, storeId, doc, {
+      const relayProvider = new RelayProvider(wsUrl, storeId, doc, {
         WebSocketPolyfill: AdaptedEncryptedWebSocket,
         // For simplicity we always use websocket server even if there is local tabs,
         // otherwise the question would be do we need to encrypt also for local tabs through BroadcastChannel or not
         disableBc: true,
       });
+      provider = relayProvider;
 
-      provider.on('connection-close', (event) => {
+      relayProvider.on('connection-close', (event) => {
         if (event) {
           if (event.wasClean) {
             // Attempt to reconnect if the disconnection was clean (initiated by the client or server)
-            void provider.connect();
+            scheduleReconnect(relayProvider, get);
           } else if (event.code === 1000) {
             /**
              * Handle the "Reset Connection" event from the server
@@ -178,52 +260,53 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
              * A disconnect is made automatically but it takes time to be triggered,
              * so we force the disconnection here.
              */
-            provider.disconnect();
+            relayProvider.disconnect();
           }
         }
       });
 
-      provider.on('status', (event) => {
-        set((state) => {
-          const nextConnected = event.status === 'connected';
-
-          /**
-           * status === 'connected' does not mean we are totally connected
-           * because authentication can still be in progress and failed
-           * So we only update isConnected when we loose the connection
-           */
-          const connected =
-            event.status !== 'connected'
-              ? {
-                  isConnected: false,
-                }
-              : undefined;
-
-          return {
-            ...connected,
-            isReady: state.isReady || event.status === 'disconnected',
-            hasLostConnection:
-              state.isConnected && !nextConnected
-                ? true
-                : state.hasLostConnection,
-          };
-        });
+      relayProvider.on('status', (event) => {
+        handleStatus(
+          event.status === 'connected',
+          event.status === 'disconnected',
+          set,
+          get,
+        );
       });
 
-      provider.on('sync', (state) => {
+      relayProvider.on('sync', (state) => {
         set({ isSynced: state, isReady: true });
       });
     } else {
-      provider = new HocuspocusProvider({
+      const hocuspocusProvider: HocuspocusProvider = new HocuspocusProvider({
         url: wsUrl,
         name: storeId,
         document: doc,
         onDisconnect(data) {
-          type ExtendedCloseEvent = CloseEvent & { wasClean: boolean };
+          // Skip reconnect when the disconnect was triggered by inactivity:
+          // reconnection only happens once the user becomes active again.
+          if (get().isPausedForInactivity) {
+            return;
+          }
 
           // Attempt to reconnect if the disconnection was clean (initiated by the client or server)
           if ((data.event as ExtendedCloseEvent).wasClean) {
-            void provider.connect();
+            if (
+              data.event.reason === 'No cookies' &&
+              data.event.code === 4001
+            ) {
+              console.error(
+                'Disconnection due to missing cookies. Not attempting to reconnect.',
+              );
+              void hocuspocusProvider.disconnect();
+              set({
+                isReady: true,
+                isConnected: false,
+              });
+              return;
+            }
+
+            scheduleReconnect(hocuspocusProvider, get);
           }
         },
         onAuthenticationFailed() {
@@ -233,30 +316,12 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
           set({ isReady: true, isConnected: true });
         },
         onStatus: ({ status }) => {
-          set((state) => {
-            const nextConnected = status === WebSocketStatus.Connected;
-
-            /**
-             * status === WebSocketStatus.Connected does not mean we are totally connected
-             * because authentication can still be in progress and failed
-             * So we only update isConnected when we loose the connection
-             */
-            const connected =
-              status !== WebSocketStatus.Connected
-                ? {
-                    isConnected: false,
-                  }
-                : undefined;
-
-            return {
-              ...connected,
-              isReady: state.isReady || status === WebSocketStatus.Disconnected,
-              hasLostConnection:
-                state.isConnected && !nextConnected
-                  ? true
-                  : state.hasLostConnection,
-            };
-          });
+          handleStatus(
+            status === WebSocketStatus.Connected,
+            status === WebSocketStatus.Disconnected,
+            set,
+            get,
+          );
         },
         onStateless: ({ payload }) => {
           handleEncryptionSystemMessage(payload, set, get);
@@ -273,10 +338,11 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
            * so we force the disconnection here.
            */
           if (data.event.code === 1000) {
-            provider.disconnect();
+            hocuspocusProvider.disconnect();
           }
         },
       });
+      provider = hocuspocusProvider;
     }
 
     set({
@@ -286,6 +352,8 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     return provider;
   },
   startEncryptionTransition: (type: EncryptionTransitionType) => {
+    clearTimeout(reconnectTimeout);
+    clearTimeout(lostConnectionTimeout);
     const provider = get().provider;
 
     // switching between hocuspocus and relay servers, we have to properly close the current one
@@ -301,6 +369,7 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       isReady: false,
       isSynced: false,
       hasLostConnection: false,
+      isPausedForInactivity: false,
     });
   },
   clearEncryptionTransition: () => {
@@ -324,12 +393,32 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     }
   },
   destroyProvider: () => {
+    clearTimeout(reconnectTimeout);
+    clearTimeout(lostConnectionTimeout);
     const provider = get().provider;
     if (provider) {
       provider.destroy();
     }
 
     set(defaultValues);
+  },
+  setReady: (value: boolean) => set({ isReady: value }),
+  pauseForInactivity: () => {
+    if (get().isPausedForInactivity) {
+      return;
+    }
+    clearTimeout(reconnectTimeout);
+    clearTimeout(lostConnectionTimeout);
+    set({ isPausedForInactivity: true, hasLostConnection: false });
+    get().provider?.disconnect();
+  },
+  resumeFromInactivity: () => {
+    if (!get().isPausedForInactivity) {
+      return;
+    }
+    clearTimeout(lostConnectionTimeout);
+    set({ isPausedForInactivity: false });
+    void get().provider?.connect();
   },
   resetLostConnection: () => set({ hasLostConnection: false }),
 }));

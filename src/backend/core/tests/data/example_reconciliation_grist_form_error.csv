@@ -1,0 +1,2 @@
+merge_accept,active_email,inactive_email,status,id
+true,user.test20@example.com,user.test20@example.com,pending,20

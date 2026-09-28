@@ -1,5 +1,7 @@
-import { CunninghamProvider } from '@gouvfr-lasuite/cunningham-react';
-import { TreeProvider } from '@gouvfr-lasuite/ui-kit';
+import {
+  CunninghamProvider,
+  TreeProvider,
+} from '@gouvfr-lasuite/ui-components';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
 

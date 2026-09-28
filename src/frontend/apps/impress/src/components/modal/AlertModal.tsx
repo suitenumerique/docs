@@ -1,4 +1,10 @@
-import { Button, Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Button,
+  ButtonProps,
+  Modal,
+  ModalDefaultVariantProps,
+  ModalSize,
+} from '@gouvfr-lasuite/ui-components';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,10 +16,11 @@ export type AlertModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  themeCTA?: ButtonProps['color'];
   title: string;
   cancelLabel?: string;
   confirmLabel?: string;
-};
+} & Partial<ModalDefaultVariantProps>;
 
 export const AlertModal = ({
   cancelLabel,
@@ -23,14 +30,18 @@ export const AlertModal = ({
   onClose,
   onConfirm,
   title,
+  themeCTA,
+  ...props
 }: AlertModalProps) => {
   const { t } = useTranslation();
+
   return (
     <Modal
+      closeOnClickOutside
       isOpen={isOpen}
       size={ModalSize.MEDIUM}
       onClose={onClose}
-      aria-describedby="alert-modal-title"
+      aria-label={title}
       title={
         <Text
           $size="h6"
@@ -43,24 +54,26 @@ export const AlertModal = ({
         </Text>
       }
       rightActions={
-        <>
+        <Box $direction="row" $gap="small">
           <Button
             aria-label={`${t('Cancel')} - ${title}`}
             variant="secondary"
             fullWidth
-            onClick={() => onClose()}
+            autoFocus
+            onClick={onClose}
           >
             {cancelLabel ?? t('Cancel')}
           </Button>
           <Button
             aria-label={confirmLabel ?? t('Confirm')}
-            color="error"
+            color={themeCTA ?? 'error'}
             onClick={onConfirm}
           >
             {confirmLabel ?? t('Confirm')}
           </Button>
-        </>
+        </Box>
       }
+      {...props}
     >
       <Box className="--docs--alert-modal">
         <Box>

@@ -2,100 +2,89 @@ import { PropsWithChildren } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
-import { Header } from '@/features/header';
-import { HEADER_HEIGHT } from '@/features/header/conf';
+import { Box, BoxType } from '@/components';
 import { LeftPanel, ResizableLeftPanel } from '@/features/left-panel';
+import { RightPanel } from '@/features/right-panel/components/RightPanel';
 import { DocEditorSkeleton, Skeleton } from '@/features/skeletons';
-import { useResponsiveStore } from '@/stores';
 
 import { MAIN_LAYOUT_ID } from './conf';
+import { usePanelCoordination } from './usePanelCoordination';
 
 type MainLayoutProps = {
-  backgroundColor?: 'white' | 'grey';
   enableResizablePanel?: boolean;
+  propsLayout?: BoxType;
+  propsContent?: BoxType;
 };
 
 export function MainLayout({
   children,
-  backgroundColor = 'white',
   enableResizablePanel = false,
+  propsLayout,
+  propsContent,
 }: PropsWithChildren<MainLayoutProps>) {
   return (
-    <Box className="--docs--main-layout">
-      <Header />
-      <Box
-        $direction="row"
-        $margin={{ top: `${HEADER_HEIGHT}px` }}
-        $width="100%"
-        $height={`calc(100dvh - ${HEADER_HEIGHT}px)`}
+    <Box
+      className="--docs--main-layout"
+      $direction="row"
+      $width="100%"
+      $height="100dvh"
+      {...propsLayout}
+    >
+      <MainLayoutContent
+        enableResizablePanel={enableResizablePanel}
+        {...propsContent}
       >
-        <MainLayoutContent
-          backgroundColor={backgroundColor}
-          enableResizablePanel={enableResizablePanel}
-        >
-          {children}
-        </MainLayoutContent>
-      </Box>
+        {children}
+      </MainLayoutContent>
     </Box>
   );
 }
 
-export interface MainLayoutContentProps {
-  backgroundColor: 'white' | 'grey';
-  enableResizablePanel?: boolean;
+export interface MainLayoutContentProps extends BoxType {
+  enableResizablePanel: boolean;
 }
 
 export function MainLayoutContent({
   children,
-  backgroundColor,
-  enableResizablePanel = false,
+  enableResizablePanel,
+  ...props
 }: PropsWithChildren<MainLayoutContentProps>) {
-  const { isDesktop } = useResponsiveStore();
-
   if (enableResizablePanel) {
-    return (
-      <ResizableLeftPanel leftPanel={<LeftPanel />}>
-        <MainContent backgroundColor={backgroundColor}>{children}</MainContent>
-      </ResizableLeftPanel>
-    );
-  }
-
-  if (!isDesktop) {
-    return (
-      <>
-        <LeftPanel />
-        <MainContent backgroundColor={backgroundColor}>{children}</MainContent>
-      </>
-    );
+    return <MainResizableLayout {...props}>{children}</MainResizableLayout>;
   }
 
   return (
     <>
-      <Box
-        $css={css`
-          width: 300px;
-          border-right: 1px solid
-            var(--c--contextuals--border--surface--primary);
-        `}
-      >
-        <LeftPanel />
-      </Box>
-      <MainContent backgroundColor={backgroundColor}>{children}</MainContent>
+      <LeftPanel />
+      <MainContent {...props}>{children}</MainContent>
+      <RightPanel />
     </>
   );
 }
 
-const MainContent = ({
+const MainResizableLayout = ({
   children,
-  backgroundColor,
-}: PropsWithChildren<MainLayoutContentProps>) => {
-  const { isDesktop } = useResponsiveStore();
+  ...props
+}: PropsWithChildren<BoxType>) => {
+  usePanelCoordination();
 
+  return (
+    <ResizableLeftPanel>
+      <Box $direction="row" $width="100%" $position="relative">
+        <MainContent $flex="auto" $padding="0" {...props}>
+          {children}
+        </MainContent>
+        <RightPanel />
+      </Box>
+    </ResizableLeftPanel>
+  );
+};
+
+export const MainContent = ({
+  children,
+  ...props
+}: PropsWithChildren<BoxType>) => {
   const { t } = useTranslation();
-  const { colorsTokens } = useCunninghamTheme();
-  const currentBackgroundColor = !isDesktop ? 'white' : backgroundColor;
 
   return (
     <Box
@@ -103,28 +92,21 @@ const MainContent = ({
       role="main"
       aria-label={t('Main content')}
       id={MAIN_LAYOUT_ID}
-      tabIndex={-1}
       $align="center"
       $flex={1}
       $width="100%"
-      $height={`calc(100dvh - ${HEADER_HEIGHT}px)`}
+      $height="100dvh"
       $position="relative"
-      $padding={{
-        all: isDesktop ? 'base' : '0',
-      }}
-      $background={
-        currentBackgroundColor === 'white'
-          ? 'var(--c--contextuals--background--surface--primary)'
-          : 'var(--c--contextuals--background--surface--tertiary)'
-      }
+      $background="var(--c--contextuals--background--surface--primary)"
       $css={css`
         overflow-y: auto;
         overflow-x: clip;
+
         &:focus-visible {
-          outline: 3px solid ${colorsTokens['brand-400']};
-          outline-offset: -3px;
+          outline: none;
         }
       `}
+      {...props}
     >
       <Skeleton>
         <DocEditorSkeleton />

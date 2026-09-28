@@ -9,11 +9,12 @@ import { Button, Popover } from 'react-aria-components';
 import styled, { css } from 'styled-components';
 
 import { useCunninghamTheme } from '@/cunningham';
+import { useFocusStore } from '@/stores';
 
 import { BoxProps } from './Box';
 
 const StyledPopover = styled(Popover)`
-  background-color: white;
+  background-color: var(--c--contextuals--background--surface--primary);
   border-radius: var(--c--globals--spacings--st);
   box-shadow: 0 0 6px 0 rgba(0, 0, 145, 0.1);
   border: 1px solid var(--c--contextuals--border--surface--primary);
@@ -70,8 +71,9 @@ export const DropButton = ({
   const { themeTokens } = useCunninghamTheme();
   const font = themeTokens['font']?.['families']['base'];
   const [isLocalOpen, setIsLocalOpen] = useState(isOpen);
+  const addLastFocus = useFocusStore((state) => state.addLastFocus);
 
-  const triggerRef = useRef(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     setIsLocalOpen(isOpen);
@@ -86,8 +88,13 @@ export const DropButton = ({
     <>
       <StyledButton
         ref={triggerRef}
-        onPress={() => onOpenChangeHandler(true)}
+        onPress={() => {
+          addLastFocus(triggerRef.current);
+          onOpenChangeHandler(true);
+        }}
         aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={isLocalOpen}
         data-testid={testId}
         $css={css`
           font-family: ${font};

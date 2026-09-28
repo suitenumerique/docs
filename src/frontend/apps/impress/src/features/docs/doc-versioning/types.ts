@@ -1,5 +1,3 @@
-import { Doc } from '../doc-management';
-
 export interface APIListVersions {
   count: number;
   is_truncated: boolean;
@@ -15,7 +13,7 @@ export interface Versions {
 }
 
 export interface Version {
-  content: Doc['content'];
+  content: string; // Base64 encoded content
   last_modified: string;
   id: string;
 }

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2020",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -11,7 +11,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
@@ -20,15 +20,10 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@/docs/*": ["./src/features/docs/*"]
+      "@/docs/*": ["./src/features/docs/*"],
+      "@/icons/*": ["./src/assets/icons/ui-kit/*"]
     }
   },
-  "include": [
-    "src/custom-next.d.ts",
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
+  "include": ["src/custom-next.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }

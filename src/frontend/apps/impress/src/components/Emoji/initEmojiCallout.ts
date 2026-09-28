@@ -54,6 +54,12 @@ if (!emojidata.categories.some((c) => c.id === CALLOUT_ID)) {
   });
 }
 
-void init({ data: emojidata });
+let hasBeenCalled = false;
+export const getEmojidata = () => {
+  if (!hasBeenCalled) {
+    void init({ data: emojidata });
+    hasBeenCalled = true;
+  }
 
-export default emojidata;
+  return emojidata;
+};

@@ -55,6 +55,31 @@ def test_api_docs_cors_proxy_valid_url(mock_getaddrinfo):
     assert response.streaming_content
 
 
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
+@responses.activate
+def test_api_docs_cors_proxy_url_with_surrounding_whitespace(mock_getaddrinfo):
+    """
+    URLs with leading or trailing whitespace must still be proxied successfully,
+    otherwise images whose `src` has stray whitespace are missing from the PDF export.
+    """
+    document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to return a public IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))
+    ]
+
+    client = APIClient()
+    url_to_fetch = "https://external-url.com/assets/logo-gouv.png"
+    responses.get(url_to_fetch, body=b"", status=200, content_type="image/png")
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url=   {url_to_fetch}   "
+    )
+    assert response.status_code == 200
+    assert response.headers["Content-Type"] == "image/png"
+    assert response.streaming_content
+
+
 def test_api_docs_cors_proxy_without_url_query_string():
     """Test the CORS proxy API for documents without a URL query string."""
     document = factories.DocumentFactory(link_reach="public")
@@ -255,7 +280,7 @@ def test_api_docs_cors_proxy_invalid_url(url_to_fetch):
         f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
     )
     assert response.status_code == 400
-    assert response.json() == ["Enter a valid URL."]
+    assert response.json() == {"detail": "['Enter a valid URL.']"}
 
 
 @unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")

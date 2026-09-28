@@ -45,7 +45,8 @@ const dummyUser = { id: '123', email: 'test@example.com' };
 describe('useAuth hook - trackEvent effect', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    fetchMock.restore();
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
   });
 
   test('calls trackEvent when user exists, isSuccess is true, and event was not tracked yet', async () => {

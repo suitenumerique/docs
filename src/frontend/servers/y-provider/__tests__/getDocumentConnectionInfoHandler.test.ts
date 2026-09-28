@@ -15,7 +15,10 @@ console.error = vi.fn();
 
 import { COLLABORATION_SERVER_ORIGIN as origin } from '@/env';
 import { hocuspocusServer, initApp } from '@/servers';
-import { handleRelayServerConnection, getRelayRoom } from '@/servers/relayServer';
+import {
+  getRelayRoom,
+  handleRelayServerConnection,
+} from '@/servers/relayServer';
 
 const apiEndpoint = '/collaboration/api/get-connections/';
 

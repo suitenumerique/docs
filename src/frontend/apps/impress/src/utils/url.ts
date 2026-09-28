@@ -45,3 +45,34 @@ export function isSafeUrl(url: string): boolean {
     return false;
   }
 }
+
+export const isSameOrigin = (url: string) => {
+  try {
+    return (
+      new URL(url, window.location.origin).origin === window.location.origin
+    );
+  } catch {
+    return false;
+  }
+};
+
+export const isLocalDevOrigin = (url: string) => {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return (
+      window.location.hostname === 'localhost' &&
+      parsed.hostname === 'localhost' &&
+      parsed.protocol === window.location.protocol
+    );
+  } catch {
+    return false;
+  }
+};
+
+export const isDataUrl = (url: string) => {
+  try {
+    return new URL(url, window.location.origin).protocol === 'data:';
+  } catch {
+    return false;
+  }
+};

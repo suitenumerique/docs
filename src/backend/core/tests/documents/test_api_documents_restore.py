@@ -124,3 +124,24 @@ def test_api_documents_restore_authenticated_owner_expired():
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Not found."}
+
+
+def test_api_documents_restore_authenticated_owner_not_deleted():
+    """Restoring a document that is not deleted should return a 400 error."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory()
+    factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
+
+    response = client.post(f"/api/v1.0/documents/{document.id!s}/restore/")
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "You do not have permission to perform this action."
+    }
+
+    document.refresh_from_db()
+    assert document.deleted_at is None
+    assert document.ancestors_deleted_at is None

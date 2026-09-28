@@ -5,7 +5,7 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { toBase64 } from '@/features/docs/doc-editor';
+import { toBase64 } from '@/utils/string';
 
 interface RemoveDocEncryptionProps {
   docId: string;

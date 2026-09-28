@@ -45,9 +45,11 @@ class Converter:
     def convert(self, data, content_type, accept):
         """Convert input into other formats using external microservices."""
 
+        logger.info("converting content from %s to %s", content_type, accept)
+
         if content_type == mime_types.DOCX and accept == mime_types.YJS:
             blocknote_data = self.docspec.convert(
-                data, mime_types.DOCX, mime_types.BLOCKNOTE
+                data, content_type, mime_types.BLOCKNOTE
             )
             return self.ydoc.convert(
                 blocknote_data, mime_types.BLOCKNOTE, mime_types.YJS
@@ -64,8 +66,11 @@ class DocSpecConverter:
 
         response = requests.post(
             url,
-            headers={"Accept": mime_types.BLOCKNOTE},
-            files={"file": ("document.docx", data, content_type)},
+            headers={
+                "Content-Type": content_type,
+                "Accept": mime_types.BLOCKNOTE,
+            },
+            data=data,
             timeout=settings.CONVERSION_API_TIMEOUT,
             verify=settings.CONVERSION_API_SECURE,
         )

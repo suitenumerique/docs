@@ -1,21 +1,24 @@
-import { Button, type ButtonProps } from '@gouvfr-lasuite/cunningham-react';
-import React from 'react';
+import { Button, type ButtonProps } from '@gouvfr-lasuite/ui-components';
+import type { ComponentProps } from 'react';
 
-import { Icon } from '@/components';
+import CloseIcon from '@/icons/x-mark.svg';
 
-export const ButtonCloseModal = (props: ButtonProps) => {
+type ButtonCloseModalProps = ButtonProps & {
+  iconProps?: Omit<ComponentProps<typeof CloseIcon>, 'children'>;
+};
+
+export const ButtonCloseModal = ({
+  iconProps,
+  ...props
+}: ButtonCloseModalProps) => {
   return (
     <Button
       type="button"
       size="small"
-      color="brand"
+      color="neutral"
       variant="tertiary"
       icon={
-        <Icon
-          $withThemeInherited
-          iconName="close"
-          className="material-icons-filled"
-        />
+        <CloseIcon width="24" height="24" aria-hidden="true" {...iconProps} />
       }
       {...props}
     />

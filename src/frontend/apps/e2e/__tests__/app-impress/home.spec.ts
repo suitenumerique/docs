@@ -2,12 +2,9 @@ import { expect, test } from '@playwright/test';
 
 import { overrideConfig } from './utils-common';
 
-test.beforeEach(async ({ page }) => {
-  await page.goto('/docs/');
-});
-
 test.describe('Home page', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
+
   test('checks all the elements are visible', async ({ page }) => {
     await page.goto('/docs/');
 
@@ -22,7 +19,6 @@ test.describe('Home page', () => {
     await expect(languageButton).toBeVisible();
 
     await expect(header.getByTestId('header-icon-docs')).toBeVisible();
-    await expect(header.getByRole('heading', { name: 'Docs' })).toBeVisible();
 
     // Check the titles
     const h2 = page.locator('h2');
@@ -68,7 +64,9 @@ test.describe('Home page', () => {
       h2.getByText('A new way to organize knowledge.'),
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: 'Start Writing' }),
+      page
+        .getByRole('button', { name: process.env.SIGN_IN_EL_TRIGGER })
+        .first(),
     ).toBeVisible();
 
     await expect(footer).toBeVisible();
@@ -90,21 +88,44 @@ test.describe('Home page', () => {
             ],
           },
         },
+        header: {
+          logo: {
+            src: '/assets/logo-gouv.svg',
+            alt: 'Gouvernement Logo',
+            style: { width: '110px', height: 'auto' },
+          },
+          icon: {
+            src: '/assets/icon-docs-dsfr-v2.png',
+            style: {
+              width: '100px',
+              height: 'auto',
+            },
+            alt: '',
+            withTitle: false,
+          },
+        },
+        home: {
+          'with-proconnect': true,
+          'icon-banner': {
+            src: '/assets/icon-docs.svg',
+            style: {
+              width: '64px',
+              height: 'auto',
+            },
+            alt: '',
+          },
+        },
       },
     });
 
     await page.goto('/docs/');
 
-    // Wait for the page to be fully loaded and responsive store to be initialized
-    await page.waitForLoadState('domcontentloaded');
-
-    // Wait a bit more for the responsive store to be initialized
-    await page.waitForTimeout(500);
-
     // Check header content
     const header = page.locator('header').first();
     const footer = page.locator('footer').first();
-    await expect(header).toBeVisible();
+    await expect(header).toBeVisible({
+      timeout: 10000,
+    });
 
     // Check for language picker - it should be visible on desktop
     // Use a more flexible selector that works with both Header and HomeHeader
@@ -117,7 +138,6 @@ test.describe('Home page', () => {
       header.getByRole('img', { name: 'Gouvernement Logo' }),
     ).toBeVisible();
     await expect(header.getByTestId('header-icon-docs')).toBeVisible();
-    await expect(header.getByRole('heading', { name: 'Docs' })).toBeVisible();
 
     // Check the titles
     const h2 = page.locator('h2');
@@ -155,7 +175,37 @@ test.describe('Home page', () => {
 
     // Keyclock login page
     await expect(
-      page.locator('.login-pf #kc-header-wrapper').getByText('impress'),
+      page.locator(`${process.env.SIGN_IN_EL_LOGIN_PAGE}`).getByText('impress'),
+    ).toBeVisible();
+  });
+
+  test('it redirects a direct /home link to login when the homepage feature is disabled', async ({
+    page,
+  }) => {
+    await overrideConfig(page, {
+      FRONTEND_HOMEPAGE_FEATURE_ENABLED: false,
+    });
+
+    await page.goto('/home/');
+
+    // Keyclock login page
+    await expect(
+      page.locator(`${process.env.SIGN_IN_EL_LOGIN_PAGE}`).getByText('impress'),
+    ).toBeVisible();
+  });
+
+  test('it shows the homepage for a direct /home link when the homepage feature is enabled', async ({
+    page,
+  }) => {
+    await overrideConfig(page, {
+      FRONTEND_HOMEPAGE_FEATURE_ENABLED: true,
+    });
+
+    await page.goto('/home/');
+
+    // Homepage content, not the login page
+    await expect(
+      page.locator('h2').getByText('Govs ❤️ Open Source.'),
     ).toBeVisible();
   });
 });

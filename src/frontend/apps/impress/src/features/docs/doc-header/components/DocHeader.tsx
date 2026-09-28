@@ -1,92 +1,117 @@
+import { Button } from '@gouvfr-lasuite/ui-components';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 
+import RemoveEmojiSVG from '@/assets/icons/ui-kit/face-remove.svg';
+import AddEmojiSVG from '@/assets/icons/ui-kit/face.svg';
 import { Box, HorizontalSeparator } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
-import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import {
   Doc,
-  LinkReach,
-  getDocLinkReach,
+  getEmojiAndTitle,
+  useDocTitleUpdate,
+  useDocUtils,
   useIsCollaborativeEditable,
 } from '@/docs/doc-management';
-import { useResponsiveStore } from '@/stores';
 
 import { AlertNetwork } from './AlertNetwork';
-import { AlertPublic } from './AlertPublic';
 import { AlertRestore } from './AlertRestore';
-import { BoutonShare } from './BoutonShare';
 import { DocHeaderInfo } from './DocHeaderInfo';
 import { DocTitle } from './DocTitle';
-import { DocToolBox } from './DocToolBox';
 
 interface DocHeaderProps {
   doc: Doc;
-  documentEncryptionSettings?: DocumentEncryptionSettings | null;
 }
 
-export const DocHeader = ({
-  doc,
-  documentEncryptionSettings,
-}: DocHeaderProps) => {
-  const { spacingsTokens } = useCunninghamTheme();
-  const { isDesktop } = useResponsiveStore();
+export const DocHeader = ({ doc }: DocHeaderProps) => {
   const { t } = useTranslation();
   const { isEditable } = useIsCollaborativeEditable(doc);
-  const docIsPublic = getDocLinkReach(doc) === LinkReach.PUBLIC;
-  const docIsAuth = getDocLinkReach(doc) === LinkReach.AUTHENTICATED;
   const isDeletedDoc = !!doc.deleted_at;
+  // Emoji Management
+  const { emoji } = getEmojiAndTitle(doc.title ?? '');
+  const { updateDocEmoji } = useDocTitleUpdate();
+  const { isTopRoot } = useDocUtils(doc);
+  const displayEmojiButton = doc.abilities.partial_update && !isTopRoot;
+  const latestTitleRef = useRef(doc.title ?? '');
+
+  useEffect(() => {
+    latestTitleRef.current = doc.title ?? '';
+  }, [doc.title]);
 
   return (
     <>
       <Box
         $width="100%"
-        $padding={{ top: isDesktop ? '50px' : 'md' }}
-        $gap={spacingsTokens['base']}
         aria-label={t('It is the card information about the document.')}
         className="--docs--doc-header"
+        $minHeight="125px"
+        $css={css`
+          .--docs--doc-header-emoji-button {
+            opacity: 0;
+
+            &:focus {
+              opacity: 1;
+            }
+          }
+          &:hover {
+            .--docs--doc-header-emoji-button {
+              opacity: 1;
+            }
+          }
+        `}
       >
-        {isDeletedDoc && <AlertRestore doc={doc} />}
-        {!isEditable && <AlertNetwork />}
-        {(docIsPublic || docIsAuth) && (
-          <AlertPublic isPublicDoc={docIsPublic} />
-        )}
         <Box
-          $direction="row"
-          $align="center"
-          $width="100%"
-          $padding={{ bottom: 'xs' }}
+          $gap="base"
+          $padding={{
+            bottom: isDeletedDoc || !isEditable ? 'base' : undefined,
+          }}
         >
-          <Box
-            $direction="row"
-            $justify="space-between"
-            $css="flex:1;"
-            $gap="0.5rem 1rem"
-            $align="center"
-            $maxWidth="100%"
-          >
-            <Box $gap={spacingsTokens['3xs']} $overflow="auto">
-              <DocTitle doc={doc} />
-              <Box $direction="row">
-                <DocHeaderInfo doc={doc} />
-              </Box>
-            </Box>
-            {!isDeletedDoc && (
-              <DocToolBox
-                doc={doc}
-                documentEncryptionSettings={documentEncryptionSettings}
-              />
-            )}
-            {isDeletedDoc && (
-              <BoutonShare
-                doc={doc}
-                open={() => {}}
-                displayNbAccess={true}
-                isDisabled
-              />
+          {isDeletedDoc && <AlertRestore doc={doc} />}
+          {!isEditable && <AlertNetwork />}
+        </Box>
+        <Box $gap="sm">
+          <Box>
+            {displayEmojiButton && (
+              <Button
+                className="--docs--doc-header-emoji-button"
+                size="nano"
+                onClick={() => {
+                  const today = new Date();
+                  const isAprilFools =
+                    today.getMonth() === 3 && today.getDate() === 1;
+                  emoji
+                    ? updateDocEmoji(doc.id, latestTitleRef.current, '')
+                    : updateDocEmoji(
+                        doc.id,
+                        latestTitleRef.current,
+                        isAprilFools ? '🐟' : '📄',
+                      );
+                }}
+                aria-label={emoji ? t('Remove emoji') : t('Add emoji')}
+                color="neutral"
+                variant="tertiary"
+                icon={
+                  emoji ? (
+                    <RemoveEmojiSVG width={16} height={16} aria-hidden="true" />
+                  ) : (
+                    <AddEmojiSVG width={16} height={16} aria-hidden="true" />
+                  )
+                }
+                style={{ width: 'fit-content' }}
+              >
+                {emoji ? t('Remove emoji') : t('Add emoji')}
+              </Button>
             )}
           </Box>
+          <DocTitle
+            doc={doc}
+            onTitleUpdate={(title) => {
+              latestTitleRef.current = title;
+            }}
+          />
+          <DocHeaderInfo doc={doc} />
         </Box>
-        <HorizontalSeparator $withPadding={false} />
+        <HorizontalSeparator $margin={{ top: '24px' }} />
       </Box>
     </>
   );

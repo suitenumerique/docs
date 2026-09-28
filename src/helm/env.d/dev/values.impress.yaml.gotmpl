@@ -16,6 +16,9 @@ backend:
   replicas: 1
   envVars:
     COLLABORATION_SERVER_SECRET: my-secret
+    COLLABORATION_API_URL: https://docs.127.0.0.1.nip.io/collaboration/api/
+    COLLABORATION_WS_NOT_CONNECTED_READ_ONLY: False
+    CONVERSION_UPLOAD_ENABLED: True
     DJANGO_CSRF_TRUSTED_ORIGINS: https://docs.127.0.0.1.nip.io
     DJANGO_CONFIGURATION: Feature
     DJANGO_ALLOWED_HOSTS: docs.127.0.0.1.nip.io
@@ -68,19 +71,29 @@ backend:
     AWS_S3_ACCESS_KEY_ID: dinum
     AWS_S3_SECRET_ACCESS_KEY: password
     AWS_STORAGE_BUCKET_NAME: docs-media-storage
-    STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
+    STORAGES_STATICFILES_BACKEND: servestatic.storage.CompressedManifestStaticFilesStorage
     DOCSPEC_API_URL: http://impress-docs-docspec:4000/conversion
-    Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
+    USER_RECONCILIATION_FORM_URL: https://docs.127.0.0.1.nip.io
+    Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider-converter:443/api/
     Y_PROVIDER_API_KEY: my-secret
     CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"
+  django:
+    envVars:
+      WEB_CONCURRENCY: 1
+      DB_PSYCOPG_POOL_MIN_SIZE: 10
+
+
   migrate:
     command:
       - "/bin/sh"
       - "-c"
       - |
-        while ! python manage.py check --database default > /dev/null 2>&1
+        attempt=0
+        until output=$(python manage.py check --database default 2>&1)
         do
-          echo "Database not ready"
+          attempt=$((attempt + 1))
+          echo "Database check failed (attempt $attempt), retrying in 2s:"
+          echo "$output"
           sleep 2
         done
 
@@ -90,30 +103,31 @@ backend:
     restartPolicy: Never
 
   command:
-    - "gunicorn"
-    - "-c"
-    - "/usr/local/etc/gunicorn/impress.py"
-    - "impress.wsgi:application"
-    - "--reload"
+    - uvicorn
+    - --app-dir=/app
+    - --host=0.0.0.0
+    - --lifespan=off
+    - --reload
+    - --reload-dir=/app
+    - "impress.asgi:application"
 
   createsuperuser:
     command:
       - "/bin/sh"
       - "-c"
       - |
-        while ! python manage.py check --database default > /dev/null 2>&1
+        attempt=0
+        until output=$(python manage.py check --database default 2>&1)
         do
-          echo "Database not ready"
+          attempt=$((attempt + 1))
+          echo "Database check failed (attempt $attempt), retrying in 2s:"
+          echo "$output"
           sleep 2
         done
 
         echo "Database is ready"
         python manage.py createsuperuser --email admin@example.com --password admin
     restartPolicy: Never
-
-  themeCustomization:
-    enabled: true
-    file_content: {{ readFile "./configuration/theme/demo.json" }}
 
   # Extra volume mounts to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumeMounts:
@@ -144,7 +158,15 @@ frontend:
     pullPolicy: Always
     tag: "latest"
 
+  securityContext:
+    runAsNonRoot: false
+
 yProvider:
+
+  converter:
+    enabled: true
+    replicas: 2
+
   replicas: 1
 
   image:
@@ -158,15 +180,31 @@ yProvider:
     COLLABORATION_SERVER_ORIGIN: https://docs.127.0.0.1.nip.io
     COLLABORATION_SERVER_SECRET: my-secret
     Y_PROVIDER_API_KEY: my-secret
+    NODE_EXTRA_CA_CERTS: /cert/cacert.pem
+
+  # Extra volume mounts to manage our local custom CA and avoid to set ssl_verify: false
+  extraVolumeMounts:
+    - name: certs
+      mountPath: /cert/cacert.pem
+      subPath: cacert.pem
+
+  # Extra volumes to manage our local custom CA and avoid to set ssl_verify: false
+  extraVolumes:
+    - name: certs
+      configMap:
+        name: certifi
+        items:
+        - key: cacert.pem
+          path: cacert.pem
 
 docSpec:
   enabled: true
   replicas: 1
 
   image:
-    repository: ghcr.io/docspecio/api
+    repository: ghcr.io/docspec/api
     pullPolicy: IfNotPresent
-    tag: "2.6.3"
+    tag: "1.21.4"
 
   probes:
     liveness:

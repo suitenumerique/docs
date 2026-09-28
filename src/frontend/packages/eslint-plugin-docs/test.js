@@ -14,9 +14,6 @@ const testConfig = {
   ],
   languageOptions: {
     parser: typescriptParser,
-    parserOptions: {
-      project: true,
-    },
     globals: {
       describe: 'readonly',
       it: 'readonly',

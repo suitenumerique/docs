@@ -15,16 +15,21 @@ import {
 import { TFunction } from 'i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createGlobalStyle, css } from 'styled-components';
+import { createGlobalStyle } from 'styled-components';
 
 import { Box, Icon, Loading } from '@/components';
+import { isSafeUrl } from '@/utils/url';
 
+import Warning from '../../assets/warning.svg';
 import { ANALYZE_URL } from '../../conf';
 import { DocsBlockNoteEditor } from '../../types';
 import { EncryptedMediaPlaceholder } from '../EncryptedMediaPlaceholder';
 import { useEncryption } from '../EncryptionProvider';
 
 const PDFBlockStyle = createGlobalStyle`
+  .bn-block-content[data-content-type="pdf"] .bn-file-block-content-wrapper {
+    width: fit-content;
+  }
   .bn-block-content[data-content-type="pdf"] .bn-file-block-content-wrapper[style*="fit-content"] {
     width: 100% !important;
   }
@@ -53,7 +58,6 @@ interface PdfBlockComponentProps {
     InlineContentSchema,
     StyleSchema
   >;
-  contentRef: (node: HTMLElement | null) => void;
   editor: BlockNoteEditor<
     Record<'pdf', CreatePDFBlockConfig>,
     InlineContentSchema,
@@ -61,16 +65,11 @@ interface PdfBlockComponentProps {
   >;
 }
 
-const PdfBlockComponent = ({
-  editor,
-  block,
-  contentRef,
-}: PdfBlockComponentProps) => {
+const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
   const pdfUrl = block.props.url;
   const { i18n, t } = useTranslation();
   const lang = i18n.resolvedLanguage;
   const { isEncrypted, decryptFileUrl } = useEncryption();
-
   const [isPDFContent, setIsPDFContent] = useState<boolean | null>(null);
   const [isPDFContentLoading, setIsPDFContentLoading] =
     useState<boolean>(false);
@@ -93,7 +92,12 @@ const PdfBlockComponent = ({
 
   // For non-encrypted docs, validate PDF content on mount
   useEffect(() => {
-    if (isEncrypted || !pdfUrl || pdfUrl.includes(ANALYZE_URL)) {
+    if (
+      isEncrypted ||
+      !pdfUrl ||
+      pdfUrl.includes(ANALYZE_URL) ||
+      !isSafeUrl(pdfUrl)
+    ) {
       return;
     }
 
@@ -141,11 +145,31 @@ const PdfBlockComponent = ({
   const showEncryptedPlaceholder =
     isEncrypted &&
     isPDFContent === null &&
-    pdfUrl &&
+    !!pdfUrl &&
     !pdfUrl.includes(ANALYZE_URL);
 
+  const isInvalidPDF =
+    (!isPDFContentLoading && isPDFContent !== null && !isPDFContent) ||
+    !isSafeUrl(pdfUrl);
+
+  if (isInvalidPDF) {
+    return (
+      <Box
+        $direction="row"
+        $gap="0.5rem"
+        $width="inherit"
+        $css="pointer-events: none;"
+        contentEditable={false}
+        draggable={false}
+      >
+        <Warning />
+        {t('Invalid or missing PDF file.')}
+      </Box>
+    );
+  }
+
   return (
-    <Box ref={contentRef} className="bn-file-block-content-wrapper">
+    <>
       <PDFBlockStyle />
       {!isEncrypted && isPDFContentLoading && <Loading />}
       {showEncryptedPlaceholder && (
@@ -158,23 +182,6 @@ const PdfBlockComponent = ({
           onDecrypt={() => void handleDecryptPdf()}
         />
       )}
-      {!isPDFContentLoading && isPDFContent !== null && !isPDFContent && (
-        <Box
-          $align="center"
-          $justify="center"
-          $color="#666"
-          $background="#f5f5f5"
-          $border="1px solid #ddd"
-          $height="300px"
-          $css={css`
-            text-align: center;
-          `}
-          contentEditable={false}
-          onClick={() => editor.setTextCursorPosition(block)}
-        >
-          {t('Invalid or missing PDF file.')}
-        </Box>
-      )}
       <ResizableFileBlockWrapper
         buttonIcon={
           <Icon iconName="upload" $size="24px" $css="line-height: normal;" />
@@ -184,21 +191,19 @@ const PdfBlockComponent = ({
       >
         {!isPDFContentLoading && isPDFContent && resolvedPdfUrl && (
           <Box
-            as="embed"
+            as="iframe"
             className="bn-visual-media"
             role="presentation"
             $width="100%"
             $height="450px"
-            type="application/pdf"
             src={resolvedPdfUrl}
             aria-label={block.props.name || t('PDF document')}
             contentEditable={false}
             draggable={false}
-            onClick={() => editor.setTextCursorPosition(block)}
           />
         )}
       </ResizableFileBlockWrapper>
-    </Box>
+    </>
   );
 };
 

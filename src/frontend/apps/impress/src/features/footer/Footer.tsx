@@ -4,9 +4,8 @@ import { useTranslation } from 'react-i18next';
 import styled, { css } from 'styled-components';
 
 import { Box, StyledLink, Text } from '@/components/';
+import { Title } from '@/components/Title';
 import { useConfig } from '@/core/config';
-
-import { Title } from '../header';
 
 import IconLink from './assets/external-link.svg';
 import { ContentType } from './types';
@@ -22,7 +21,7 @@ const BlueStripe = styled.div`
 export const Footer = () => {
   const { data: config } = useConfig();
   const footerJson = config?.theme_customization?.footer;
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
   const resolvedLanguage = i18n.resolvedLanguage;
   const [content, setContent] = useState<ContentType>();
 
@@ -84,14 +83,12 @@ export const Footer = () => {
                   {logo?.src && (
                     <Image
                       priority
-                      src={logo.src}
-                      alt={logo?.alt || t('Logo')}
                       width={0}
                       height={0}
-                      style={{ width: logo?.width || 'auto', height: 'auto' }}
+                      {...(({ withTitle: _, ...rest }) => rest)(logo)}
                     />
                   )}
-                  {logo.withTitle && (
+                  {logo?.withTitle && (
                     <Box $css="zoom:1.4;">
                       <Title />
                     </Box>

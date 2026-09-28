@@ -1,25 +1,26 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
-import { TreeProvider } from '@gouvfr-lasuite/ui-kit';
+import { Button, TreeProvider } from '@gouvfr-lasuite/ui-components';
 import { useQueryClient } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Icon, Loading, StyledLink, TextErrors } from '@/components';
+import { Icon, Loading, StyledLink } from '@/components';
 import { DEFAULT_QUERY_RETRY } from '@/core';
-import { DocEditor } from '@/docs/doc-editor';
+import { useCollaboration } from '@/docs/doc-editor/hook/useCollaboration';
+import { DocFloatingBar } from '@/docs/doc-header/components/DocFloatingBar';
 import {
   Doc,
   DocPage403,
   KEY_DOC,
-  useCollaboration,
   useDoc,
   useDocStore,
   useEncryptionAccessCopy,
   useProviderStore,
   useTrans,
 } from '@/docs/doc-management/';
+import { KEY_DOC_CONTENT } from '@/docs/doc-management/api/useDocContent';
 import {
   KEY_AUTH,
   ModalEncryptionOnboarding,
@@ -33,13 +34,24 @@ import {
 import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
 import { DecryptionFailurePanel } from '@/features/docs/doc-management/components/DecryptionFailurePanel';
 import { EncryptionEmptyState } from '@/features/docs/doc-management/components/EncryptionLayout';
+import { PresenterRoot } from '@/features/docs/doc-presenter';
 import { useAutoAcceptPendingMembers } from '@/features/docs/doc-share';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
-import { useSkeletonStore } from '@/features/skeletons';
+import { DocEditorSkeleton, useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
-import { useBroadcastStore } from '@/stores';
 import { NextPageWithLayout } from '@/types/next';
+
+const DocEditor = dynamic(
+  () =>
+    import('@/docs/doc-editor/components/DocEditor').then((mod) => ({
+      default: mod.DocEditor,
+    })),
+  {
+    ssr: false,
+    loading: () => <DocEditorSkeleton />,
+  },
+);
 
 export function DocLayout() {
   const {
@@ -62,13 +74,19 @@ export function DocLayout() {
           const doc = await getDocChildren({ docId, page });
           return {
             children: subPageToTree(doc.results),
-            hasMore: !!doc.next,
+            pagination: {
+              currentPage: page,
+              hasMore: !!doc.next,
+              totalCount: doc.count,
+            },
           };
         }}
       >
         <MainLayout enableResizablePanel={true}>
+          <DocFloatingBar />
           <DocPage id={id} />
         </MainLayout>
+        <PresenterRoot />
       </TreeProvider>
     </>
   );
@@ -80,8 +98,6 @@ interface DocProps {
 
 const DocPage = ({ id }: DocProps) => {
   const {
-    hasLostConnection,
-    resetLostConnection,
     encryptionTransition,
     clearEncryptionTransition,
     provider,
@@ -96,7 +112,7 @@ const DocPage = ({ id }: DocProps) => {
   } = useDoc(
     { id },
     {
-      staleTime: 0,
+      staleTime: 30000, // 30 seconds - We keep the data fresh as it is a highly collaborative page
       queryKey: [KEY_DOC, { id }],
       retryDelay: 1000,
       // A pending member is let in by an owner opening the document elsewhere:
@@ -113,8 +129,13 @@ const DocPage = ({ id }: DocProps) => {
     },
   );
 
-  const { authenticated, user } = useAuth();
   const [doc, setDoc] = useState<Doc>();
+  const { setCurrentDoc } = useDocStore();
+  const queryClient = useQueryClient();
+  const { replace, asPath } = useRouter();
+  const { t } = useTranslation();
+  const { authenticated, user } = useAuth();
+  const { untitledDocument } = useTrans();
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const { isEnabled: isEncryptionEnabled, error: vaultClientError } =
     useVaultClient();
@@ -140,78 +161,31 @@ const DocPage = ({ id }: DocProps) => {
     doc,
     provider ? documentEncryptionSettings : null,
   );
-  const { setCurrentDoc } = useDocStore();
-  const { addTask } = useBroadcastStore();
-  const queryClient = useQueryClient();
-  const { replace } = useRouter();
-  useCollaboration(
-    doc?.id,
-    doc?.content,
-    doc?.is_encrypted,
-    documentEncryptionSettings,
-  );
-  const { t } = useTranslation();
-  const { untitledDocument } = useTrans();
+  // Held by the page rather than the editor, so the provider state survives
+  // the transition and decryption failure screens that replace the editor
+  useCollaboration(doc?.id, doc?.is_encrypted, documentEncryptionSettings);
 
   /**
    * Show skeleton when loading a document
    */
   useEffect(() => {
-    if (
-      !doc &&
-      encryptionLoading &&
-      documentEncryptionLoading &&
-      !isError &&
-      !isSkeletonVisible
-    ) {
+    if (!doc && !isError && !isSkeletonVisible) {
       setIsSkeletonVisible(true);
     }
 
     if (isError) {
       setIsSkeletonVisible(false);
     }
-  }, [
-    doc,
-    encryptionLoading,
-    documentEncryptionLoading,
-    isError,
-    isSkeletonVisible,
-    setIsSkeletonVisible,
-  ]);
-
-  /**
-   * Scroll to top when navigating to a new document
-   * We use a timeout to ensure the scroll happens after the layout has updated.
-   */
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | undefined;
-    const mainElement = document.getElementById(MAIN_LAYOUT_ID);
-    if (mainElement) {
-      timeoutId = setTimeout(() => {
-        mainElement.scrollTop = 0;
-      }, 150);
-    }
-
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [id]);
-
-  // Invalidate when provider store reports a lost connection
-  useEffect(() => {
-    if (hasLostConnection && doc?.id) {
-      void queryClient.invalidateQueries({
-        queryKey: [KEY_DOC, { id: doc.id }],
-      });
-      resetLostConnection();
-    }
-  }, [hasLostConnection, doc?.id, queryClient, resetLostConnection]);
+  }, [doc, isError, isSkeletonVisible, setIsSkeletonVisible]);
 
   // when encryption transition destroys the provider, that's the signal to refetch the document
   useEffect(() => {
     if (encryptionTransition && !provider && doc?.id) {
+      // The stored content changes form (clear or encrypted): drop the cached one
+      // so the next provider never starts from the previous form
+      queryClient.removeQueries({
+        queryKey: [KEY_DOC_CONTENT, { id: doc.id }],
+      });
       void queryClient.invalidateQueries({
         queryKey: [KEY_DOC, { id: doc.id }],
       });
@@ -242,6 +216,26 @@ const DocPage = ({ id }: DocProps) => {
     clearEncryptionTransition,
   ]);
 
+  /**
+   * Scroll to top when navigating to a new document
+   * We use a timeout to ensure the scroll happens after the layout has updated.
+   */
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | undefined;
+    const mainElement = document.getElementById(MAIN_LAYOUT_ID);
+    if (mainElement) {
+      timeoutId = setTimeout(() => {
+        mainElement.scrollTop = 0;
+      }, 150);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [id]);
+
   useEffect(() => {
     if (!docQuery || isFetching) {
       return;
@@ -251,66 +245,51 @@ const DocPage = ({ id }: DocProps) => {
     setCurrentDoc(docQuery);
   }, [docQuery, setCurrentDoc, isFetching]);
 
+  /**
+   * Reset state when unmounting the component to avoid
+   * showing stale data when navigating to another document
+   */
   useEffect(() => {
     return () => {
       setCurrentDoc(undefined);
+      setIsSkeletonVisible(false);
     };
-  }, [setCurrentDoc]);
-
-  /**
-   * We add a broadcast task to reset the query cache
-   * when the document visibility changes.
-   */
-  useEffect(() => {
-    if (!doc?.id) {
-      return;
-    }
-
-    addTask(`${KEY_DOC}-${doc.id}`, () => {
-      void queryClient.invalidateQueries({
-        queryKey: [KEY_DOC, { id: doc.id }],
-      });
-    });
-  }, [addTask, doc?.id, queryClient]);
+  }, [setCurrentDoc, setIsSkeletonVisible]);
 
   useEffect(() => {
-    if (!isError || !error?.status || ![404, 401].includes(error.status)) {
+    if (!isError || !error?.status || [403].includes(error.status)) {
       return;
     }
-
-    let replacePath = `/${error.status}`;
 
     if (error.status === 401) {
       if (authenticated) {
         queryClient.setQueryData([KEY_AUTH], null);
       }
       setAuthUrl();
+      void replace('/401');
+      return;
     }
 
-    void replace(replacePath);
-  }, [isError, error?.status, replace, authenticated, queryClient]);
+    if (error.status === 404) {
+      void replace('/404');
+      return;
+    }
+
+    if (error.status === 502) {
+      void replace('/offline');
+      return;
+    }
+
+    const fromPath = encodeURIComponent(asPath);
+    void replace(`/500?from=${fromPath}`);
+  }, [isError, error?.status, replace, authenticated, queryClient, asPath]);
 
   if (isError && error?.status) {
-    if ([404, 401].includes(error.status)) {
-      return <Loading />;
-    }
-
     if (error.status === 403) {
       return <DocPage403 id={id} />;
     }
 
-    return (
-      <Box $margin="large">
-        <TextErrors
-          causes={error.cause}
-          icon={
-            error.status === 502 ? (
-              <Icon iconName="wifi_off" $theme="danger" $withThemeInherited />
-            ) : undefined
-          }
-        />
-      </Box>
-    );
+    return <Loading />;
   }
 
   if (!doc || encryptionLoading || documentEncryptionLoading) {

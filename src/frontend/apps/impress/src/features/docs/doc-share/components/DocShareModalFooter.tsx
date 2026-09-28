@@ -1,4 +1,4 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -25,12 +25,12 @@ export const DocShareModalFooter = ({
       `}
       className="--docs--doc-share-modal-footer"
     >
-      <HorizontalSeparator $withPadding={true} customPadding="12px" />
+      <HorizontalSeparator $margin={{ vertical: 'sm' }} />
 
       {!doc.is_encrypted && (
         <>
           <DocVisibility doc={doc} />
-          <HorizontalSeparator customPadding="12px" />
+          <HorizontalSeparator $margin={{ vertical: 'sm' }} />
         </>
       )}
 

@@ -1,4 +1,3 @@
-export * from './ButtonTogglePanel';
-export * from './Header';
-export * from './Waffle';
-export * from './Title';
+export * from './HeaderBar';
+export * from './HeaderFloatingBar';
+export * from './HeaderLogoLink';

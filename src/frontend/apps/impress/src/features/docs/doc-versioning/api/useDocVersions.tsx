@@ -29,9 +29,9 @@ const getDocVersions = async ({
   versionId,
   docId,
 }: DocVersionsAPIParams): Promise<VersionsResponse> => {
-  const url = `documents/${docId}/versions/?version_id=${versionId}`;
-
-  const response = await fetchAPI(url);
+  const response = await fetchAPI(
+    `documents/${docId}/versions/?version_id=${versionId}`,
+  );
 
   if (!response.ok) {
     throw new APIError(

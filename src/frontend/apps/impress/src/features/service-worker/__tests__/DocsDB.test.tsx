@@ -1,12 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('@/../package.json', () => ({
-  default: { version: '0.0.0' },
-}));
+import { describe, expect, it, vi } from 'vitest';
 
 describe('DocsDB', () => {
-  afterEach(() => {
-    vi.clearAllMocks();
+  beforeEach(() => {
     vi.resetModules();
   });
 
@@ -20,17 +15,16 @@ describe('DocsDB', () => {
     { version: '3.0.0', expected: 3000000 },
     { version: '10.20.30', expected: 10020030 },
   ].forEach(({ version, expected }) => {
-    it(`correctly computes version for ${version}`, () => {
+    it(`correctly computes version for ${version}`, async () => {
       vi.doMock('@/../package.json', () => ({
         default: { version },
       }));
 
-      return vi.importActual('../DocsDB').then((module: any) => {
-        const result = module.getCurrentVersion();
-        expect(result).toBe(expected);
-        expect(result).toBeGreaterThan(previousExpected);
-        previousExpected = result;
-      });
+      const module = await import('../DocsDB');
+      const result = (module as any).getCurrentVersion();
+      expect(result).toBe(expected);
+      expect(result).toBeGreaterThan(previousExpected);
+      previousExpected = result;
     });
   });
 });

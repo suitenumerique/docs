@@ -1,5 +1,5 @@
 import { Command } from 'cmdk';
-import { PropsWithChildren, ReactNode, useId, useRef, useState } from 'react';
+import { PropsWithChildren, ReactNode, useId, useRef } from 'react';
 
 import { hasChildrens } from '@/utils/children';
 
@@ -14,7 +14,8 @@ export type QuickSearchAction = {
 };
 
 export type QuickSearchData<T> = {
-  groupName: string;
+  groupName?: string;
+  groupKey?: string;
   elements: T[];
   emptyString?: string;
   startActions?: QuickSearchAction[];
@@ -23,6 +24,7 @@ export type QuickSearchData<T> = {
 };
 
 export type QuickSearchProps = {
+  isSelectByDefault?: boolean;
   onFilter?: (str: string) => void;
   inputValue?: string;
   inputContent?: ReactNode;
@@ -30,36 +32,24 @@ export type QuickSearchProps = {
   loading?: boolean;
   label?: string;
   placeholder?: string;
+  groupKey?: string;
+  beforeList?: ReactNode;
 };
 
 export const QuickSearch = ({
+  isSelectByDefault,
   onFilter,
   inputContent,
   inputValue,
-  loading,
   showInput = true,
   label,
+  loading,
   placeholder,
+  beforeList,
   children,
 }: PropsWithChildren<QuickSearchProps>) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const listId = useId();
-  const NO_SELECTION_VALUE = '__none__';
-  const [userInteracted, setUserInteracted] = useState(false);
-  const [selectedValue, setSelectedValue] = useState(NO_SELECTION_VALUE);
-  const isExpanded = userInteracted;
-
-  const handleValueChange = (val: string) => {
-    if (userInteracted) {
-      setSelectedValue(val);
-    }
-  };
-
-  const handleUserInteract = () => {
-    if (!userInteracted) {
-      setUserInteracted(true);
-    }
-  };
 
   return (
     <>
@@ -70,24 +60,22 @@ export const QuickSearch = ({
           shouldFilter={false}
           ref={ref}
           tabIndex={-1}
-          value={selectedValue}
-          onValueChange={handleValueChange}
+          disablePointerSelection
+          value={!isSelectByDefault ? '__none__' : undefined}
         >
           {showInput && (
             <QuickSearchInput
-              loading={loading}
               withSeparator={hasChildrens(children)}
               inputValue={inputValue}
               onFilter={onFilter}
               placeholder={placeholder}
               listId={listId}
-              isExpanded={isExpanded}
-              onUserInteract={handleUserInteract}
             >
               {inputContent}
             </QuickSearchInput>
           )}
-          <Command.List id={listId} aria-label={label} role="listbox">
+          {beforeList}
+          <Command.List id={listId} aria-busy={loading}>
             <Box>{children}</Box>
           </Command.List>
         </Command>

@@ -11,11 +11,15 @@ vi.mock('@/stores', () => ({
   useResponsiveStore: () => ({ isDesktop: false }),
 }));
 
-vi.mock('@/features/skeletons', () => ({
-  useSkeletonStore: () => ({
-    setIsSkeletonVisible: vi.fn(),
-  }),
-}));
+vi.mock('@/features/skeletons', async () => {
+  const actual = await vi.importActual<any>('../../../skeletons');
+  return {
+    ...actual,
+    useSkeletonStore: () => ({
+      setIsSkeletonVisible: vi.fn(),
+    }),
+  };
+});
 
 vi.mock('../../doc-management', async () => {
   const actual = await vi.importActual<any>('../../doc-management');

@@ -1,5 +1,6 @@
-import { Tooltip } from '@gouvfr-lasuite/cunningham-react';
+import { Tooltip } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon, Text } from '@/components';
 import {
@@ -77,7 +78,13 @@ export const SearchUserRow = ({
           )}
           <Box $direction="column">
             <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
-              <Text $size="sm" $weight="500">
+              <Text
+                $size="sm"
+                $weight="500"
+                $css={css`
+                  line-break: anywhere;
+                `}
+              >
                 {hasFullName ? user.full_name : user.email}
               </Text>
               {suffix && (
@@ -111,7 +118,14 @@ export const SearchUserRow = ({
               )}
             </Box>
             {hasFullName && (
-              <Text $size="xs" $margin={{ top: '-2px' }} $variation="secondary">
+              <Text
+                $size="xs"
+                $margin={{ top: '-2px' }}
+                $variation="secondary"
+                $css={css`
+                  line-break: anywhere;
+                `}
+              >
                 {user.email}
               </Text>
             )}

@@ -66,7 +66,7 @@ export const useIsCollaborativeEditable = (doc: Doc) => {
     setIsLoading(false);
   }, [_isEditable]);
 
-  if (!conf?.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY) {
+  if (!conf?.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY) {
     return {
       isEditable: true,
       isLoading: false,

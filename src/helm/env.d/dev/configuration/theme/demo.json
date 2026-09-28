@@ -135,9 +135,15 @@
     }
   },
   "header": {
+    "logo": {},
     "icon": {
       "src": "/assets/icon-docs.svg",
-      "width": "32px"
+      "style": {
+        "width": "32px",
+        "height": "auto"
+      },
+      "alt": "",
+      "withTitle": true
     }
   },
   "waffle": {
@@ -164,5 +170,26 @@
       ]
     },
     "showMoreLimit": 9
+  },
+  "home": {
+    "with-proconnect": false,
+    "icon-banner": {
+      "src": "/assets/icon-docs.svg",
+      "style": {
+        "width": "64px",
+        "height": "auto"
+      },
+      "alt": ""
+    }
+  },
+  "favicon": {
+    "light": {
+      "href": "/assets/favicon-light.png",
+      "type": "image/png"
+    },
+    "dark": {
+      "href": "/assets/favicon-dark.png",
+      "type": "image/png"
+    }
   }
 }

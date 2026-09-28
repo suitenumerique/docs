@@ -13,6 +13,8 @@ services:
       - env.d/development/postgresql.local
     ports:
       - "15432:5432"
+    volumes:
+      - ./docker/files/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
 
   redis:
     image: redis:5
@@ -24,13 +26,13 @@ services:
 
   minio:
     user: ${DOCKER_USER:-1000}
-    image: minio/minio
+    image: quay.io/minio/minio
     environment:
       - MINIO_ROOT_USER=impress
       - MINIO_ROOT_PASSWORD=password
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - "9000:9000"
+      - "9001:9001"
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 1s
@@ -42,7 +44,7 @@ services:
       - ./data/media:/data
 
   createbuckets:
-    image: minio/mc
+    image: quay.io/minio/mc
     depends_on:
       minio:
         condition: service_healthy
@@ -80,17 +82,18 @@ services:
     volumes:
       - ./src/backend:/app
       - ./data/static:/data/static
+      - /app/.venv
     depends_on:
-        postgresql:
-            condition: service_healthy
-            restart: true
-        mailcatcher:
-          condition: service_started
-        redis:
-          condition: service_started
-        createbuckets:
-          condition: service_started
-  
+      postgresql:
+        condition: service_healthy
+        restart: true
+      mailcatcher:
+        condition: service_started
+      redis:
+        condition: service_started
+      createbuckets:
+        condition: service_started
+
   celery-dev:
     user: ${DOCKER_USER:-1000}
     image: impress:backend-development
@@ -108,6 +111,7 @@ services:
     volumes:
       - ./src/backend:/app
       - ./data/static:/data/static
+      - /app/.venv
     depends_on:
       - app-dev
 
@@ -129,9 +133,21 @@ services:
         condition: service_healthy
         restart: true
 
+  nginx-frontend:
+    image: nginx:1.25
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src/frontend/apps/impress/conf/default.conf:/etc/nginx/conf.d/impress.conf
+      - ./src/frontend/apps/impress/out:/app
+    depends_on:
+      keycloak:
+        condition: service_healthy
+        restart: true
+
   frontend-development:
     user: "${DOCKER_USER:-1000}"
-    build: 
+    build:
       context: .
       dockerfile: ./src/frontend/Dockerfile
       target: impress-dev
@@ -161,13 +177,13 @@ services:
     image: node:22
     user: "${DOCKER_USER:-1000}"
     environment:
-      HOME: /tmp 
+      HOME: /tmp
     volumes:
       - ".:/app"
 
   y-provider-development:
     user: ${DOCKER_USER:-1000}
-    build: 
+    build:
       context: .
       dockerfile: ./src/frontend/servers/y-provider/Dockerfile
       target: y-provider-development
@@ -182,6 +198,21 @@ services:
       - ./src/frontend/:/home/frontend
       - /home/frontend/node_modules
       - /home/frontend/servers/y-provider/node_modules
+
+  y-provider-development-converter:
+    user: ${DOCKER_USER:-1000}
+    image: impress:y-provider-development
+    restart: unless-stopped
+    env_file:
+      - env.d/development/common
+      - env.d/development/common.local
+    volumes:
+      - ./src/frontend/:/home/frontend
+      - /home/frontend/node_modules
+      - /home/frontend/servers/y-provider/node_modules
+    depends_on:
+      y-provider-development:
+        condition: service_started
 
   kc_postgresql:
     image: postgres:14.3
@@ -200,30 +231,26 @@ services:
     image: quay.io/keycloak/keycloak:26.3
     volumes:
       - ./docker/auth/realm.json:/opt/keycloak/data/import/realm.json
+    env_file:
+      - env.d/development/kc_auth
+      - env.d/development/kc_auth.local
     command:
       - start-dev
       - --features=preview
       - --import-realm
-      - --hostname=http://localhost:8083
       - --hostname-strict=false
       - --health-enabled=true
       - --metrics-enabled=true
     healthcheck:
-      test: ['CMD-SHELL', 'exec 3<>/dev/tcp/localhost/9000; echo -e "GET /health/live HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3; grep "HTTP/1.1 200 OK" <&3']
+      test:
+        [
+          "CMD-SHELL",
+          'exec 3<>/dev/tcp/localhost/9000; echo -e "GET /health/live HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3; grep "HTTP/1.1 200 OK" <&3',
+        ]
       start_period: 5s
       interval: 1s
       timeout: 2s
       retries: 300
-    environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_DB: postgres
-      KC_DB_URL_HOST: kc_postgresql
-      KC_DB_URL_DATABASE: keycloak
-      KC_DB_PASSWORD: pass
-      KC_DB_USERNAME: impress
-      KC_DB_SCHEMA: public
-      PROXY_ADDRESS_FORWARDING: 'true'
     ports:
       - "8080:8080"
     depends_on:
@@ -232,11 +259,12 @@ services:
         restart: true
 
   docspec:
-    image: ghcr.io/docspecio/api:2.6.3
+    image: ghcr.io/docspec/api:1.21.4
     ports:
-      - "4000:4000"
+      - "4000:3000"
 
 networks:
   lasuite:
     name: lasuite-network
     driver: bridge
+    external: true

@@ -3,6 +3,7 @@ Test moving documents within the document tree via an detail action API endpoint
 """
 
 import random
+from unittest import mock
 from uuid import uuid4
 
 from django.utils import timezone
@@ -11,6 +12,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import enums, factories, models
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -144,10 +146,11 @@ def test_api_documents_move_authenticated_target_roles_mocked(
     models.DocumentAccess.objects.create(document=target, user=user, role=target_role)
     target_children = factories.DocumentFactory.create_batch(2, parent=target)
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": position},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={"target_document_id": str(target.id), "position": position},
+        )
 
     document.refresh_from_db()
 
@@ -160,6 +163,14 @@ def test_api_documents_move_authenticated_target_roles_mocked(
     ):
         assert response.status_code == 200
         assert response.json() == {"message": "Document moved successfully."}
+
+        # The move should be tracked in PostHog
+        mock_capture.assert_called_once_with(
+            PosthogEventName.DOC_MOVED,
+            user,
+            {"position": position, "targeted_document_id": str(target.id)},
+            document=document,
+        )
 
         match position:
             case "first-child":
@@ -207,6 +218,9 @@ def test_api_documents_move_authenticated_target_roles_mocked(
         )
         assert document.is_root() is True
 
+        # No event should be tracked when the move is not permitted
+        mock_capture.assert_not_called()
+
 
 def test_api_documents_move_authenticated_no_owner_user_and_team():
     """
@@ -226,21 +240,30 @@ def test_api_documents_move_authenticated_no_owner_user_and_team():
     child = factories.DocumentFactory(parent=document)
     target = factories.DocumentFactory()
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": "first-sibling"},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={"target_document_id": str(target.id), "position": "first-sibling"},
+        )
 
     assert response.status_code == 200
     assert response.json() == {"message": "Document moved successfully."}
     assert list(target.get_siblings()) == [document, parent, target]
 
+    # The move should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_MOVED,
+        user,
+        {"position": "first-sibling", "targeted_document_id": str(target.id)},
+        document=document,
+    )
+
     document.refresh_from_db()
     assert list(document.get_children()) == [child]
-    assert document.accesses.count() == 3
+
+    assert document.accesses.count() == 2
     assert document.accesses.get(user__isnull=False, role="owner").user == parent_owner
     assert document.accesses.get(user__isnull=True, role="owner").team == "lasuite"
-    assert document.accesses.get(role="administrator").user == user
 
 
 def test_api_documents_move_authenticated_no_owner_same_user():
@@ -260,14 +283,23 @@ def test_api_documents_move_authenticated_no_owner_same_user():
     child = factories.DocumentFactory(parent=document)
     target = factories.DocumentFactory()
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": "first-sibling"},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={"target_document_id": str(target.id), "position": "first-sibling"},
+        )
 
     assert response.status_code == 200
     assert response.json() == {"message": "Document moved successfully."}
     assert list(target.get_siblings()) == [document, parent, target]
+
+    # The move should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_MOVED,
+        user,
+        {"position": "first-sibling", "targeted_document_id": str(target.id)},
+        document=document,
+    )
 
     document.refresh_from_db()
     assert list(document.get_children()) == [child]
@@ -293,19 +325,30 @@ def test_api_documents_move_authenticated_no_owner_same_team():
     child = factories.DocumentFactory(parent=document)
     target = factories.DocumentFactory()
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": "first-sibling"},
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={"target_document_id": str(target.id), "position": "first-sibling"},
+        )
 
     assert response.status_code == 200
     assert response.json() == {"message": "Document moved successfully."}
     assert list(target.get_siblings()) == [document, parent, target]
 
+    # The move should be tracked in PostHog
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_MOVED,
+        user,
+        {"position": "first-sibling", "targeted_document_id": str(target.id)},
+        document=document,
+    )
+
     document.refresh_from_db()
     assert list(document.get_children()) == [child]
-    assert document.accesses.count() == 2
-    assert document.accesses.get(user__isnull=False, role="administrator").user == user
+
+    # The user's direct administrator access was wiped during the cross-tree move;
+    # only the "lasuite" team remains, re-added as owner from the previous root.
+    assert document.accesses.count() == 1
     assert document.accesses.get(user__isnull=True, role="owner").team == "lasuite"
 
 
@@ -438,3 +481,358 @@ def test_api_documents_move_authenticated_deleted_target_as_sibling(position):
     # Verify that the document has not moved
     document.refresh_from_db()
     assert document.is_root() is True
+
+
+@pytest.mark.parametrize("position", enums.MoveNodePositionChoices.values)
+def test_api_documents_move_to_descendant(position):
+    """
+    Moving a document to one of its descendants should return a validation error.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create a hierarchy: parent -> child -> grandchild
+    parent = factories.DocumentFactory(users=[(user, "owner")])
+    child = factories.DocumentFactory(parent=parent, users=[(user, "owner")])
+    grandchild = factories.DocumentFactory(parent=child, users=[(user, "owner")])
+
+    # Try moving parent to child (descendant)
+    response = client.post(
+        f"/api/v1.0/documents/{parent.id!s}/move/",
+        data={"target_document_id": str(child.id), "position": position},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "target_document_id": "Cannot move a document to its own descendant."
+    }
+
+    # Try moving parent to grandchild
+    response = client.post(
+        f"/api/v1.0/documents/{parent.id!s}/move/",
+        data={"target_document_id": str(grandchild.id), "position": position},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "target_document_id": "Cannot move a document to its own descendant."
+    }
+
+    # Try moving child to grandchild (still descendant)
+    response = client.post(
+        f"/api/v1.0/documents/{child.id!s}/move/",
+        data={"target_document_id": str(grandchild.id), "position": position},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "target_document_id": "Cannot move a document to its own descendant."
+    }
+
+    # Ensure documents have not moved
+    parent.refresh_from_db()
+    child.refresh_from_db()
+    grandchild.refresh_from_db()
+    assert parent.is_root() is True
+    assert child.is_child_of(parent) is True
+    assert grandchild.is_child_of(child) is True
+
+
+@pytest.mark.parametrize(
+    "position",
+    [
+        enums.MoveNodePositionChoices.FIRST_CHILD,
+        enums.MoveNodePositionChoices.LAST_CHILD,
+    ],
+)
+def test_api_documents_move_to_self(position):
+    """
+    Moving a document to itself should return a validation error.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[(user, "owner")])
+
+    # Try moving document to itself
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(document.id), "position": position},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "target_document_id": "Cannot move a document to its own descendant."
+    }
+
+    # Ensure document has not moved
+    document.refresh_from_db()
+    assert document.is_root() is True
+
+
+def test_api_documents_move_root_deletes_accesses_and_invitations():
+    """
+    Moving a root document should automatically delete all its direct accesses and
+    invitations so it inherits the target's permissions.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    other_user = factories.UserFactory()
+    document = factories.DocumentFactory(
+        users=[(user, "owner"), (other_user, "editor")]
+    )
+    factories.InvitationFactory(document=document)
+    factories.InvitationFactory(document=document)
+
+    target = factories.DocumentFactory(users=[(user, "owner")])
+
+    assert document.is_root()
+    assert document.accesses.count() == 2
+    assert document.invitations.count() == 2
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(target.id), "position": "first-child"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Document moved successfully."}
+
+    document.refresh_from_db()
+    assert document.is_child_of(target)
+    assert document.accesses.count() == 0
+    assert document.invitations.count() == 0
+
+
+def test_api_documents_move_cross_tree_deletes_accesses_and_invitations():
+    """
+    Moving a non-root document to a different tree should delete its direct accesses
+    and invitations because it is leaving its current permission scope.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    other_user = factories.UserFactory()
+    source_root = factories.DocumentFactory(users=[(user, "owner")])
+    document = factories.DocumentFactory(
+        parent=source_root, users=[(user, "owner"), (other_user, "editor")]
+    )
+    factories.InvitationFactory(document=document)
+
+    target_root = factories.DocumentFactory(users=[(user, "owner")])
+    target = factories.DocumentFactory(parent=target_root, users=[(user, "owner")])
+
+    assert not document.is_root()
+    assert document.get_root() != target.get_root()
+    assert document.accesses.count() == 2
+    assert document.invitations.count() == 1
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(target.id), "position": "first-child"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Document moved successfully."}
+
+    document.refresh_from_db()
+    assert document.is_child_of(target)
+    assert document.accesses.count() == 0
+    assert document.invitations.count() == 0
+
+
+def test_api_documents_move_same_tree_keeps_accesses_and_invitations():
+    """
+    Moving a non-root document within the same tree should preserve its direct
+    accesses and invitations since it stays in the same permission scope.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    other_user = factories.UserFactory()
+    root = factories.DocumentFactory(users=[(user, "owner")])
+    document = factories.DocumentFactory(
+        parent=root, users=[(user, "owner"), (other_user, "editor")]
+    )
+    factories.InvitationFactory(document=document)
+    target = factories.DocumentFactory(parent=root, users=[(user, "owner")])
+
+    assert not document.is_root()
+    assert document.get_root() == target.get_root()
+    assert document.accesses.count() == 2
+    assert document.invitations.count() == 1
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(target.id), "position": "first-child"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Document moved successfully."}
+
+    document.refresh_from_db()
+    assert document.is_child_of(target)
+    assert document.accesses.count() == 2
+    assert document.invitations.count() == 1
+
+
+@pytest.mark.parametrize("position", ["first-sibling", "last-sibling", "left", "right"])
+def test_api_documents_move_sub_document_to_root_deletes_accesses_and_invitations(
+    position,
+):
+    """
+    Moving a sub-document to root level (as a sibling of a root document) changes its
+    permission scope. Its direct accesses and invitations must be deleted.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    other_user = factories.UserFactory()
+    parent = factories.DocumentFactory(users=[(user, "owner")])
+    document = factories.DocumentFactory(
+        parent=parent, users=[(user, "owner"), (other_user, "editor")]
+    )
+    factories.InvitationFactory(document=document)
+
+    # target is a root document; moving as its sibling promotes document to root level
+    target = factories.DocumentFactory(users=[(user, "owner")])
+
+    assert not document.is_root()
+    assert document.accesses.count() == 2
+    assert document.invitations.count() == 1
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(target.id), "position": position},
+    )
+
+    assert response.status_code == 200
+    document.refresh_from_db()
+    assert document.is_root()
+    # Direct accesses and invitations are wiped; the backend then ensures at least one
+    # owner exists by inheriting the owner(s) from the previous root.
+    assert document.accesses.count() == 1
+    assert document.accesses.filter(role="owner").exists()
+    assert document.invitations.count() == 0
+
+
+@pytest.mark.parametrize("position", ["first-sibling", "last-sibling", "left", "right"])
+def test_api_documents_move_sub_document_as_sibling_of_its_own_root_deletes_accesses(
+    position,
+):
+    """
+    Moving a sub-document as a sibling of its current root promotes it to a
+    new root. Even though before the move both share the same root, the document is
+    leaving its permission scope and its direct accesses/invitations must be deleted.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    other_user = factories.UserFactory()
+    root = factories.DocumentFactory(users=[(user, "owner")])
+    document = factories.DocumentFactory(
+        parent=root, users=[(user, "owner"), (other_user, "editor")]
+    )
+    factories.InvitationFactory(document=document)
+
+    assert not document.is_root()
+    assert document.get_root() == root
+    assert document.accesses.count() == 2
+    assert document.invitations.count() == 1
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(root.id), "position": position},
+    )
+
+    assert response.status_code == 200
+    document.refresh_from_db()
+    assert document.is_root()
+    # Original accesses wiped; owner re-inherited from previous root ensures non-orphaned.
+    assert document.accesses.count() == 1
+    assert document.accesses.filter(role="owner").exists()
+    assert document.invitations.count() == 0
+
+
+@pytest.mark.parametrize("position", ["first-sibling", "last-sibling", "left", "right"])
+def test_api_documents_move_root_as_sibling_of_root_preserves_owner(position):
+    """
+    Moving a root document as sibling of another root, the owners
+    collected from the previous root (which is the document itself) must survive the
+    pre-move access deletion, so the document keeps at least one owner afterwards.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    other_user = factories.UserFactory()
+    document = factories.DocumentFactory(
+        users=[(user, "owner"), (other_user, "editor")]
+    )
+    factories.InvitationFactory(document=document)
+
+    target = factories.DocumentFactory(users=[(user, "owner")])
+
+    assert document.is_root()
+    assert target.is_root()
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(target.id), "position": position},
+    )
+
+    assert response.status_code == 200
+    document.refresh_from_db()
+    assert document.is_root()
+    # The original editor access and invitation are wiped; the previous root owner
+    # is re-added so the document still has at least one owner.
+    assert document.accesses.count() == 1
+    assert document.accesses.get(role="owner").user == user
+    assert document.invitations.count() == 0
+
+
+def test_api_documents_move_scope_change_deletion_is_atomic(monkeypatch):
+    """
+    When accesses/invitations are to be deleted (root or cross-tree move), both
+    deletions and the tree move are atomic: if the move fails, deletions roll back.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    other_user = factories.UserFactory()
+    document = factories.DocumentFactory(
+        users=[(user, "owner"), (other_user, "editor")]
+    )
+    factories.InvitationFactory(document=document)
+    target = factories.DocumentFactory(users=[(user, "owner")])
+
+    assert document.is_root()
+    assert document.accesses.count() == 2
+    assert document.invitations.count() == 1
+
+    # Force Document.move to fail *after* the deletion block has already run,
+    # so we actually exercise the rollback path rather than bailing out earlier.
+    def failing_move(self, *args, **kwargs):
+        raise RuntimeError("Simulated move failure for atomicity test")
+
+    monkeypatch.setattr(models.Document, "move", failing_move)
+
+    with pytest.raises(RuntimeError, match="Simulated move failure"):
+        client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={"target_document_id": str(target.id), "position": "first-sibling"},
+        )
+
+    # Accesses and invitations must still exist due to transaction rollback
+    document.refresh_from_db()
+    assert document.accesses.count() == 2
+    assert document.invitations.count() == 1

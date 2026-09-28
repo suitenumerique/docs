@@ -14,56 +14,57 @@ test.describe('Footer', () => {
     await expect(page.locator('footer')).toBeHidden();
   });
 
-  test('checks all the elements are visible', async ({ page }) => {
-    await page.goto('/');
-    const footer = page.locator('footer').first();
+  if (process.env.IS_INSTANCE !== 'true') {
+    test('checks all the elements are visible', async ({ page }) => {
+      await page.goto('/');
+      const footer = page.locator('footer').first();
 
-    await expect(footer.getByAltText('Docs Logo')).toBeVisible();
-    await expect(footer.getByRole('heading', { name: 'Docs' })).toBeVisible();
+      await expect(footer.getByAltText('Docs Logo')).toBeVisible();
+      await expect(footer.getByRole('heading', { name: 'Docs' })).toBeVisible();
 
-    await expect(footer.getByRole('link', { name: 'GitHub' })).toBeVisible();
-    await expect(footer.getByRole('link', { name: 'DINUM' })).toBeVisible();
-    await expect(footer.getByRole('link', { name: 'ZenDiS' })).toBeVisible();
+      await expect(footer.getByRole('link', { name: 'GitHub' })).toBeVisible();
+      await expect(footer.getByRole('link', { name: 'DINUM' })).toBeVisible();
+      await expect(footer.getByRole('link', { name: 'ZenDiS' })).toBeVisible();
 
-    await expect(
-      footer.getByRole('link', { name: 'BlockNote.js' }),
-    ).toBeVisible();
-    await expect(
-      footer.getByRole('link', { name: 'Legal Notice' }),
-    ).toBeVisible();
-    await expect(
-      footer.getByRole('link', { name: 'Personal data and cookies' }),
-    ).toBeVisible();
-    await expect(
-      footer.getByRole('link', { name: 'Accessibility' }),
-    ).toBeVisible();
+      await expect(
+        footer.getByRole('link', { name: 'BlockNote.js' }),
+      ).toBeVisible();
+      await expect(
+        footer.getByRole('link', { name: 'Legal Notice' }),
+      ).toBeVisible();
+      await expect(
+        footer.getByRole('link', { name: 'Personal data and cookies' }),
+      ).toBeVisible();
+      await expect(
+        footer.getByRole('link', { name: 'Accessibility' }),
+      ).toBeVisible();
 
-    await expect(
-      footer.getByText(
-        'Unless otherwise stated, all content on this site is under licence',
-      ),
-    ).toBeVisible();
+      await expect(
+        footer.getByText(
+          'Unless otherwise stated, all content on this site is under licence',
+        ),
+      ).toBeVisible();
 
-    // Check the translation
-    const header = page.locator('header').first();
-    await header.getByRole('button').getByText('English').click();
-    await page.getByRole('menuitem', { name: 'Français' }).click();
+      // Check the translation
+      const header = page.locator('header').first();
+      await header.getByRole('button').getByText('English').click();
+      await page.getByRole('menuitemradio', { name: 'Français' }).click();
 
-    await expect(
-      page.locator('footer').getByText('Mentions légales'),
-    ).toBeVisible();
-  });
+      await expect(
+        page.locator('footer').getByText('Mentions légales'),
+      ).toBeVisible();
+    });
+  }
 
   test('checks the footer is correctly overrided', async ({ page }) => {
     await overrideConfig(page, {
-      FRONTEND_THEME: 'dsfr',
       theme_customization: {
         footer: {
           default: {
             logo: {
               src: '/assets/logo-gouv.svg',
-              width: '220px',
               alt: 'Gouvernement Logo',
+              style: { width: '220px', height: 'auto' },
             },
             externalLinks: [
               {
@@ -132,7 +133,7 @@ test.describe('Footer', () => {
     // Check the translation
     const header = page.locator('header').first();
     await header.getByRole('button').getByText('English').click();
-    await page.getByRole('menuitem', { name: 'Français' }).click();
+    await page.getByRole('menuitemradio', { name: 'Français' }).click();
 
     await expect(
       page

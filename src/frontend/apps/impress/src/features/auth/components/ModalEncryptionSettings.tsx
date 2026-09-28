@@ -5,7 +5,7 @@
  * emergency access) draws its own modal over the page; Docs only shows a loader
  * until it is on screen.
  */
-import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import { Modal, ModalSize } from '@gouvfr-lasuite/ui-components';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

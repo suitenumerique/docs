@@ -47,7 +47,7 @@ export const useAPIInfiniteQuery = <T, Q extends { next?: APIList<Q>['next'] }>(
 ) => {
   return useInfiniteQuery<Q, APIError, InfiniteData<Q>, QueryKey, number>({
     initialPageParam: 1,
-    queryKey: [key, param],
+    queryKey: [key, param, api],
     queryFn: ({ pageParam }) =>
       api({
         ...param,

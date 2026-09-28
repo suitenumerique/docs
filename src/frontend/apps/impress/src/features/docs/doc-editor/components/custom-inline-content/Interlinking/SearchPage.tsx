@@ -1,41 +1,31 @@
-import {
-  PartialCustomInlineContentFromConfig,
-  StyleSchema,
-} from '@blocknote/core';
-import { useBlockNoteEditor } from '@blocknote/react';
+import { StyleSchema } from '@blocknote/core';
+import { ReactCustomInlineContentRenderProps } from '@blocknote/react';
+import { useTreeContext } from '@gouvfr-lasuite/ui-components';
+import { Popover } from '@mantine/core';
 import type { KeyboardEvent } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
+import DocIcon from '@/assets/icons/ui-kit/doc.svg';
+import ArrowIcon from '@/assets/icons/ui-kit/keyboard_return.svg';
 import {
   Box,
   Card,
-  Icon,
   QuickSearch,
-  QuickSearchGroup,
   QuickSearchItemContent,
   Text,
 } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
-import {
-  DocsBlockSchema,
-  DocsInlineContentSchema,
-  DocsStyleSchema,
-} from '@/docs/doc-editor';
-import FoundPageIcon from '@/docs/doc-editor/assets/doc-found.svg';
-import AddPageIcon from '@/docs/doc-editor/assets/doc-plus.svg';
-import {
-  getEmojiAndTitle,
-  useCreateChildDocTree,
-  useDocStore,
-  useTrans,
-} from '@/docs/doc-management';
-import { DocSearchSubPageContent, DocSearchTarget } from '@/docs/doc-search';
+import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
+import { Doc, getEmojiAndTitle, useTrans } from '@/docs/doc-management';
+import { DocSearchContent } from '@/docs/doc-search';
+import { useDocSearchFilterStore } from '@/docs/doc-search/stores/useDocSearchFilterStore';
 import { useResponsiveStore } from '@/stores';
 
+import { InterlinkingLinkInlineContentType } from './InterlinkingLinkInlineContent';
+
 const inputStyle = css`
-  background-color: var(--c--globals--colors--gray-100);
+  background-color: transparent;
   border: none;
   outline: none;
   color: var(--c--globals--colors--gray-700);
@@ -44,62 +34,56 @@ const inputStyle = css`
   font-family: 'Inter';
 `;
 
-type SearchPageProps = {
-  trigger: '/' | '@';
-  updateInlineContent: (
-    update: PartialCustomInlineContentFromConfig<
-      {
-        type: 'interlinkingSearchInline';
-        propSchema: {
-          disabled: {
-            default: false;
-            values: [true, false];
-          };
-          trigger: {
-            default: '/';
-            values: ['/', '@'];
-          };
-        };
-        content: 'styled';
-      },
-      StyleSchema
-    >,
-  ) => void;
-  contentRef: (node: HTMLElement | null) => void;
-};
+type ReactInterlinkingSearch = ReactCustomInlineContentRenderProps<
+  InterlinkingLinkInlineContentType,
+  StyleSchema
+>;
 
 export const SearchPage = ({
   contentRef,
-  trigger,
   updateInlineContent,
-}: SearchPageProps) => {
-  const { colorsTokens } = useCunninghamTheme();
-  const editor = useBlockNoteEditor<
-    DocsBlockSchema,
-    DocsInlineContentSchema,
-    DocsStyleSchema
-  >();
+  editor,
+  inlineContent,
+}: ReactInterlinkingSearch) => {
+  const trigger = inlineContent.props.trigger;
   const { t } = useTranslation();
-  const { currentDoc } = useDocStore();
-  const createChildDoc = useCreateChildDocTree(currentDoc?.id);
   const inputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
   const isEditable = editor.isEditable;
+  const treeContext = useTreeContext<Doc>();
+  const modalRef = useRef<HTMLDivElement>(null);
+  const dropdownId = useId();
+  const [popoverOpened, setPopoverOpened] = useState(false);
+  const { setFilter } = useDocSearchFilterStore();
+
+  /**
+   * When the search page is opened, we set the search
+   * target to 'current' to limit the search to the current
+   * document and its sub-documents.
+   */
+  useEffect(() => {
+    setFilter('current');
+  }, [setFilter]);
 
   /**
    * createReactInlineContentSpec add automatically the focus after
    * the inline content, so we need to set the focus on the input
    * after the component is mounted.
+   * We also defer opening the popover to after mount so that
+   * floating-ui attaches scroll/resize listeners correctly.
    */
   useEffect(() => {
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
       }
+      setPopoverOpened(true);
     }, 100);
-  }, [inputRef]);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const closeSearch = (insertContent: string) => {
     if (!isEditable) {
@@ -107,16 +91,19 @@ export const SearchPage = ({
     }
 
     updateInlineContent({
-      type: 'interlinkingSearchInline',
+      type: 'interlinkingLinkInline',
       props: {
         disabled: true,
-        trigger,
       },
     });
 
-    contentRef(null);
     editor.focus();
-    editor.insertInlineContent([insertContent]);
+
+    if (insertContent) {
+      contentRef(null);
+      editor.focus();
+      (editor as DocsBlockNoteEditor).insertInlineContent([insertContent]);
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -129,9 +116,7 @@ export const SearchPage = ({
       closeSearch('');
     } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       // Allow arrow keys to be handled by the command menu for navigation
-      const commandList = e.currentTarget
-        .closest('.inline-content')
-        ?.nextElementSibling?.querySelector('[cmdk-list]');
+      const commandList = modalRef.current?.querySelector('[cmdk-list]');
 
       // Create a synthetic keyboard event for the command menu
       const syntheticEvent = new KeyboardEvent('keydown', {
@@ -143,11 +128,9 @@ export const SearchPage = ({
       e.preventDefault();
     } else if (e.key === 'Enter') {
       // Handle Enter key to select the currently highlighted item
-      const selectedItem = e.currentTarget
-        .closest('.inline-content')
-        ?.nextElementSibling?.querySelector(
-          '[cmdk-item][data-selected="true"]',
-        ) as HTMLElement;
+      const selectedItem = modalRef.current?.querySelector(
+        '[cmdk-item][data-selected="true"]',
+      ) as HTMLElement;
 
       selectedItem?.click();
       e.preventDefault();
@@ -156,201 +139,211 @@ export const SearchPage = ({
 
   return (
     <Box as="span" $position="relative">
-      <Box
-        as="span"
-        className="inline-content"
-        $background={colorsTokens['gray-100']}
-        $color="var(--c--globals--colors--gray-700)"
-        $direction="row"
-        $radius="3px"
-        $padding="1px"
-        $display="inline-flex"
-        tabIndex={-1} // Ensure the span is focusable
+      <Popover
+        position="bottom"
+        opened={popoverOpened}
+        withinPortal={true}
+        hideDetached={false}
       >
-        {' '}
-        {trigger}
-        <Box
-          as="input"
-          name="doc-search-input"
-          $padding={{ left: '3px' }}
-          $css={inputStyle}
-          ref={inputRef}
-          $display="inline-flex"
-          onInput={(e) => {
-            const value = (e.target as HTMLInputElement).value;
-            setSearch(value);
-          }}
-          onKeyDown={handleKeyDown}
-        />
-      </Box>
-      <Box
-        $minWidth={isDesktop ? '330px' : '220px'}
-        $width="fit-content"
-        $position="absolute"
-        $css={css`
-          top: 28px;
-          z-index: 1000;
-
-          & .quick-search-container [cmdk-root] {
-            border-radius: inherit;
-          }
-        `}
-      >
-        <QuickSearch showInput={false}>
-          <Card
+        <Popover.Target>
+          <Box
+            as="span"
+            className="inline-content"
+            $background="var(--c--contextuals--background--semantic--overlay--primary)"
+            $color="var(--c--contextuals--content--semantic--neutral--primary)"
+            $direction="row"
+            $radius="3px"
+            $padding="2px"
+            $display="inline-flex"
+            tabIndex={-1} // Ensure the span is focusable
+          >
+            {' '}
+            <Box as="span" aria-hidden="true" $height="25px">
+              {trigger}
+            </Box>
+            <Box
+              as="input"
+              name="doc-search-input"
+              role="combobox"
+              aria-label={t('Search for a document')}
+              aria-expanded={popoverOpened}
+              aria-haspopup="listbox"
+              aria-autocomplete="list"
+              aria-controls={dropdownId}
+              $padding={{ left: '3px' }}
+              placeholder={t('mention a sub-doc...')}
+              $css={inputStyle}
+              ref={inputRef}
+              $display="inline-flex"
+              onInput={(e) => {
+                const value = (e.target as HTMLInputElement).value;
+                setSearch(value);
+              }}
+              onKeyDown={handleKeyDown}
+              autoComplete="off"
+            />
+          </Box>
+        </Popover.Target>
+        <Popover.Dropdown>
+          <Box
+            ref={modalRef}
+            id={dropdownId}
+            role="listbox"
+            aria-label={t('Search results')}
+            $minWidth={isDesktop ? '330px' : '220px'}
+            $width="fit-content"
+            $zIndex="10"
             $css={css`
-              box-shadow: 0 0 3px 0px var(--c--globals--colors--gray-200);
-              & > div {
-                margin-top: var(--c--globals--spacings--0);
-                & [cmdk-group-heading] {
-                  padding: 0.4rem;
-                  margin: 0;
-                }
+              position: relative;
 
-                & [cmdk-group-items] .ml-b {
-                  margin-left: 0rem;
-                  padding: 0.5rem;
-                  font-size: 14px;
-                  display: block;
-                }
+              .mantine-Popover-dropdown[data-position='bottom'] & {
+                top: -10px;
+              }
+              .mantine-Popover-dropdown[data-position='top'] & {
+                top: 10px;
+              }
 
-                & [cmdk-item] {
-                  border-radius: 0;
-                }
-
-                & .--docs--doc-search-item > div {
-                  gap: 0.8rem;
-                }
+              & .quick-search-container [cmdk-root] {
+                border-radius: inherit;
+                background: transparent;
               }
             `}
-            $margin={{ top: '0.5rem' }}
           >
-            <DocSearchSubPageContent
-              search={search}
-              filters={{ target: DocSearchTarget.CURRENT }}
-              onSelect={(doc) => {
-                if (!isEditable) {
-                  return;
-                }
-
-                updateInlineContent({
-                  type: 'interlinkingSearchInline',
-                  props: {
-                    disabled: true,
-                    trigger,
-                  },
-                });
-
-                contentRef(null);
-
-                editor.insertInlineContent([
-                  {
-                    type: 'interlinkingLinkInline',
-                    props: {
-                      docId: doc.id,
-                      title: doc.title || untitledDocument,
-                    },
-                  },
-                ]);
-
-                editor.focus();
-              }}
-              renderElement={(doc) => {
-                const { emoji, titleWithoutEmoji } = getEmojiAndTitle(
-                  doc.title || untitledDocument,
-                );
-
-                return (
-                  <QuickSearchItemContent
-                    left={
-                      <Box
-                        $direction="row"
-                        $gap="0.2rem"
-                        $align="center"
-                        $padding={{ vertical: '0.5rem', horizontal: '0.2rem' }}
-                        $width="100%"
-                      >
-                        <Box
-                          $css={css`
-                            width: 24px;
-                            flex-shrink: 0;
-                          `}
-                        >
-                          {emoji ? (
-                            <Text $size="18px">{emoji}</Text>
-                          ) : (
-                            <FoundPageIcon
-                              width="100%"
-                              style={{ maxHeight: '24px' }}
-                            />
-                          )}
-                        </Box>
-
-                        <Text
-                          $size="sm"
-                          $color="var(--c--globals--colors--gray-1000)"
-                          spellCheck="false"
-                        >
-                          {titleWithoutEmoji}
-                        </Text>
-                      </Box>
+            <QuickSearch showInput={false} isSelectByDefault>
+              <Card
+                $css={css`
+                  box-shadow: 0 0 6px 0 rgba(0, 0, 145, 0.1);
+                  border: 1px solid
+                    var(--c--contextuals--border--surface--primary);
+                  background: var(
+                    --c--contextuals--background--surface--primary
+                  );
+                  .quick-search-container & [cmdk-group] {
+                    margin-top: 0 !important;
+                  }
+                  & h2 {
+                    padding: var(--c--globals--spacings--sm);
+                  }
+                  & > div {
+                    margin-top: var(--c--globals--spacings--0);
+                    & [cmdk-group-heading] {
+                      padding: 0.4rem;
+                      margin: 0;
                     }
-                    right={
-                      <Icon iconName="keyboard_return" spellCheck="false" />
+
+                    & [cmdk-group-items] .ml-b {
+                      margin-left: 0rem;
+                      padding: 0.5rem;
+                      font-size: 14px;
+                      display: block;
                     }
-                  />
-                );
-              }}
-            />
-            <QuickSearchGroup
-              group={{
-                groupName: '',
-                elements: [],
-                endActions: [
-                  {
-                    onSelect: createChildDoc,
-                    content: (
-                      <Box
-                        $css={css`
-                          border-top: 1px solid
-                            var(--c--globals--colors--gray-200);
-                        `}
-                        $width="100%"
-                      >
-                        <Box
-                          $direction="row"
-                          $gap="0.4rem"
-                          $align="center"
-                          $padding={{
-                            vertical: '0.5rem',
-                            horizontal: '0.3rem',
-                          }}
-                          $css={css`
-                            &:hover {
-                              background-color: var(
-                                --c--globals--colors--gray-100
-                              );
-                            }
-                          `}
-                        >
-                          <AddPageIcon />
-                          <Text
-                            $size="sm"
-                            $color="var(--c--globals--colors--gray-1000)"
-                            contentEditable={false}
+
+                    & [cmdk-item] {
+                      border-radius: 0;
+                    }
+
+                    & .--docs--doc-search-item > div {
+                      gap: 0.8rem;
+                    }
+
+                    & .--docs--quick-search-group-title {
+                      font-size: 12px;
+                      margin: var(--c--globals--spacings--sm);
+                      margin-bottom: var(--c--globals--spacings--xxs);
+                    }
+
+                    & .--docs--quick-search-group-empty {
+                      margin: var(--c--globals--spacings--sm);
+                    }
+                  }
+                `}
+                $margin="sm"
+                $padding="none"
+              >
+                <DocSearchContent
+                  groupName={t('Link a doc')}
+                  search={search}
+                  parentDocId={treeContext?.root?.id}
+                  isSearchNotMandatory
+                  onSelect={(doc) => {
+                    if (!isEditable) {
+                      return;
+                    }
+
+                    updateInlineContent({
+                      type: 'interlinkingLinkInline',
+                      props: {
+                        docId: doc.id,
+                        title: doc.title || untitledDocument,
+                      },
+                    });
+
+                    contentRef(null);
+                    editor.focus();
+                  }}
+                  renderSearchElement={(doc) => {
+                    const { emoji, titleWithoutEmoji } = getEmojiAndTitle(
+                      doc.title || untitledDocument,
+                    );
+
+                    return (
+                      <QuickSearchItemContent
+                        left={
+                          <Box
+                            $direction="row"
+                            $gap="0.2rem"
+                            $align="center"
+                            $padding={{
+                              vertical: '0.5rem',
+                              horizontal: '0.2rem',
+                            }}
+                            $width="100%"
                           >
-                            {t('New sub-doc')}
-                          </Text>
-                        </Box>
-                      </Box>
-                    ),
-                  },
-                ],
-              }}
-            />
-          </Card>
-        </QuickSearch>
-      </Box>
+                            <Box
+                              $css={css`
+                                width: 24px;
+                                flex-shrink: 0;
+                              `}
+                            >
+                              {emoji ? (
+                                <Text $size="18px">{emoji}</Text>
+                              ) : (
+                                <DocIcon
+                                  aria-hidden="true"
+                                  width="24px"
+                                  height="24px"
+                                  color="var(--c--contextuals--content--semantic--neutral--primary)"
+                                />
+                              )}
+                            </Box>
+
+                            <Text
+                              $size="sm"
+                              $color="var(--c--contextuals--content--semantic--neutral--primary)"
+                              spellCheck="false"
+                              $weight="500"
+                            >
+                              {titleWithoutEmoji}
+                            </Text>
+                          </Box>
+                        }
+                        right={
+                          <ArrowIcon
+                            aria-hidden="true"
+                            width="24px"
+                            height="24px"
+                            color="var(--c--contextuals--content--semantic--neutral--tertiary)"
+                          />
+                        }
+                      />
+                    );
+                  }}
+                />
+              </Card>
+            </QuickSearch>
+          </Box>
+        </Popover.Dropdown>
+      </Popover>
     </Box>
   );
 };

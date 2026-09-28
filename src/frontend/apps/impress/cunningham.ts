@@ -2,7 +2,7 @@ import {
   dsfrGlobals,
   getUIKitThemesFromGlobals,
   whiteLabelGlobals,
-} from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-components';
 
 const themeWhiteLabelLight = getUIKitThemesFromGlobals(whiteLabelGlobals, {
   prefix: 'default',
@@ -18,23 +18,11 @@ const themeWhiteLabelLight = getUIKitThemesFromGlobals(whiteLabelGlobals, {
         '3xs': '0.25rem',
         '2xs': '0.375rem',
       },
-    },
-    components: {
-      logo: {
-        src: '',
-        alt: '',
-        widthHeader: '',
-        widthFooter: '',
-      },
-      'home-proconnect': false,
-      icon: {
-        src: '/assets/icon-docs.svg',
-        width: '32px',
-        height: 'auto',
-      },
-      favicon: {
-        'png-light': '/assets/favicon-light.png',
-        'png-dark': '/assets/favicon-dark.png',
+      font: {
+        families: {
+          base: 'Inter Variable, Roboto Flex Variable, sans-serif',
+          accent: 'Inter Variable, Roboto Flex Variable, sans-serif',
+        },
       },
     },
   },
@@ -51,28 +39,9 @@ const themesDSFRLight = getUIKitThemesFromGlobals(dsfrGlobals, {
     globals: {
       font: {
         families: {
-          base: 'Marianne, Inter, Roboto Flex Variable, sans-serif',
-          accent: 'Marianne, Inter, Roboto Flex Variable, sans-serif',
+          base: 'Marianne, Inter Variable, Roboto Flex Variable, sans-serif',
+          accent: 'Marianne, Inter Variable, Roboto Flex Variable, sans-serif',
         },
-      },
-    },
-    components: {
-      logo: {
-        src: '/assets/logo-gouv.svg',
-        widthHeader: '110px',
-        widthFooter: '220px',
-        alt: 'Gouvernement Logo',
-      },
-      'home-proconnect': true,
-      icon: {
-        src: '/assets/icon-docs-dsfr.svg',
-        width: '32px',
-        height: 'auto',
-      },
-      favicon: {
-        ico: '/assets/favicon-dsfr.ico',
-        'png-light': '/assets/favicon-dsfr.png',
-        'png-dark': '/assets/favicon-dark-dsfr.png',
       },
     },
   },

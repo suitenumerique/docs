@@ -106,10 +106,7 @@ export const AudioBlock = createReactBlockSpec(
       <AudioBlockComponent {...(props as any)} />
     ),
     parse: audioParse(config),
-    toExternalHTML: (props) => (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <AudioToExternalHTML {...(props as any)} />
-    ),
+    toExternalHTML: (props) => <AudioToExternalHTML {...props} />,
     runsBefore: ['file'],
   }),
 );

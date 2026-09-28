@@ -13,5 +13,6 @@ from configurations.wsgi import get_wsgi_application
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "impress.settings")
 os.environ.setdefault("DJANGO_CONFIGURATION", "Development")
+os.environ.setdefault("PYTHON_SERVER_MODE", "sync")
 
 application = get_wsgi_application()

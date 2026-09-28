@@ -1,67 +1,65 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Switch } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 
 import { Box } from '@/components';
-import { FilterDropdown } from '@/components/filter/FilterDropdown';
 
-export enum DocSearchTarget {
-  ALL = 'all',
-  CURRENT = 'current',
-}
+import { useDocSearchFilterStore } from '../stores/useDocSearchFilterStore';
 
-export type DocSearchFiltersValues = {
-  target?: DocSearchTarget;
-};
-
-export type DocSearchFiltersProps = {
-  values?: DocSearchFiltersValues;
-  onValuesChange?: (values: DocSearchFiltersValues) => void;
-  onReset?: () => void;
-};
-
-export const DocSearchFilters = ({
-  values,
-  onValuesChange,
-  onReset,
-}: DocSearchFiltersProps) => {
+export const DocSearchFilters = () => {
   const { t } = useTranslation();
-  const hasFilters = Object.keys(values ?? {}).length > 0;
-  const handleTargetChange = (target: DocSearchTarget) => {
-    onValuesChange?.({ ...values, target });
-  };
+  const { setFilter, filter } = useDocSearchFilterStore();
+  const isAll = filter === 'all';
+  const toggle = () => setFilter(isAll ? 'current' : 'all');
 
   return (
+    /**
+     * The switch is not focusable, so we wrap it in a div that can be focused
+     * and handle the keydown event to toggle the switch with
+     * space or enter key for accessibility reasons
+     */
     <Box
-      $direction="row"
-      $align="center"
-      $height="35px"
-      $justify="space-between"
-      $gap="10px"
-      data-testid="doc-search-filters"
-      $margin={{ vertical: 'base' }}
+      role="switch"
+      aria-checked={isAll}
+      aria-label={t('Search in all documents')}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          toggle();
+        }
+      }}
+      $css={css`
+        &:focus-visible {
+          outline: none;
+
+          .c__switch__rail {
+            outline: none;
+            box-shadow: 0 0 0 2px
+              var(--c--contextuals--border--semantic--brand--primary);
+          }
+        }
+        // Remove the default focus style of the switch component
+        .c__checkbox {
+          border: none;
+          box-shadow: none;
+          outline: 0;
+        }
+        & *:focus-visible {
+          outline: none;
+        }
+      `}
     >
-      <Box $direction="row" $align="center" $gap="10px">
-        <FilterDropdown
-          selectedValue={values?.target}
-          options={[
-            {
-              label: t('All docs'),
-              value: DocSearchTarget.ALL,
-              callback: () => handleTargetChange(DocSearchTarget.ALL),
-            },
-            {
-              label: t('Current doc'),
-              value: DocSearchTarget.CURRENT,
-              callback: () => handleTargetChange(DocSearchTarget.CURRENT),
-            },
-          ]}
-        />
-      </Box>
-      {hasFilters && (
-        <Button color="brand" variant="tertiary" size="small" onClick={onReset}>
-          {t('Reset')}
-        </Button>
-      )}
+      <Switch
+        labelSide="right"
+        label={t('All docs')}
+        checked={isAll}
+        onChange={toggle}
+        aria-label={t(
+          'Toggle to search in all documents or only in current document',
+        )}
+        tabIndex={-1}
+      />
     </Box>
   );
 };

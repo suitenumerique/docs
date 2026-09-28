@@ -14,33 +14,34 @@ import {
   resetSilent,
 } from '../utils';
 
+import { FirstConnection } from './FirstConnection';
+
 export const Auth = ({ children }: PropsWithChildren) => {
   const {
-    isLoading: isAuthLoading,
+    isAuthLoading,
     pathAllowed,
-    isFetchedAfterMount,
     authenticated,
-    fetchStatus,
+    hasInitiallyLoaded,
+    user,
   } = useAuth();
-  const isLoading = fetchStatus !== 'idle' || isAuthLoading;
   const [isRedirecting, setIsRedirecting] = useState(false);
   const { data: config } = useConfig();
   const shouldTrySilentLogin = useMemo(
     () =>
       !authenticated &&
       !hasTrySilent() &&
-      !isLoading &&
+      !isAuthLoading &&
       !isRedirecting &&
       config?.FRONTEND_SILENT_LOGIN_ENABLED,
     [
       authenticated,
-      isLoading,
+      isAuthLoading,
       isRedirecting,
       config?.FRONTEND_SILENT_LOGIN_ENABLED,
     ],
   );
   const shouldTryLogin =
-    !authenticated && !isLoading && !isRedirecting && !pathAllowed;
+    !authenticated && !isAuthLoading && !isRedirecting && !pathAllowed;
   const { replace, pathname } = useRouter();
 
   /**
@@ -101,7 +102,7 @@ export const Auth = ({ children }: PropsWithChildren) => {
   ]);
 
   const shouldShowLoader =
-    (isLoading && !isFetchedAfterMount) ||
+    !hasInitiallyLoaded ||
     isRedirecting ||
     (!authenticated && !pathAllowed) ||
     shouldTrySilentLogin;
@@ -110,5 +111,10 @@ export const Auth = ({ children }: PropsWithChildren) => {
     return <Loading $height="100vh" $width="100vw" />;
   }
 
-  return children;
+  return (
+    <>
+      {children}
+      {user && user.is_first_connection && <FirstConnection />}
+    </>
+  );
 };

@@ -1,15 +1,20 @@
 const crypto = require('crypto');
-const path = require('path');
 
-const CopyPlugin = require('copy-webpack-plugin');
 const { InjectManifest } = require('workbox-webpack-plugin');
+
+const { version } = require('./package.json');
 
 const buildId = crypto.randomBytes(256).toString('hex').slice(0, 8);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  allowedDevOrigins: ['docs.127.0.0.1.nip.io'],
   output: 'export',
   trailingSlash: true,
+  // `@blocknote/math-block` imports `katex/dist/katex.min.css` from its entry
+  // point; transpiling it lets Next.js accept that global CSS import from
+  // within node_modules.
+  transpilePackages: ['@blocknote/math-block'],
   images: {
     unoptimized: true,
   },
@@ -17,9 +22,27 @@ const nextConfig = {
     // Enables the styled-components SWC transform
     styledComponents: true,
   },
+  experimental: {
+    // Next.js 16.3 defaults `next build` to the `tsc` CLI, which type-checks the
+    // whole tsconfig project (test files included) and chokes on vitest globals.
+    // Keep the compiler-API checker, which skips test files. Safe on TypeScript 6.
+    useTypeScriptCli: false,
+  },
   generateBuildId: () => buildId,
   env: {
     NEXT_PUBLIC_BUILD_ID: buildId,
+    NEXT_PUBLIC_APP_VERSION: version,
+  },
+  /**
+   * In dev mode, Next.js doesn't use Webpack, but Turbopack.
+   */
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
   },
   webpack(config, { isServer }) {
     // Grab the existing rule that handles SVG imports
@@ -41,22 +64,6 @@ const nextConfig = {
         resourceQuery: { not: [...fileLoaderRule.resourceQuery.not, /url/] }, // exclude if *.svg?url
         use: ['@svgr/webpack'],
       },
-    );
-
-    // Copy necessary fonts from node_modules to public directory during build or dev
-    config.plugins.push(
-      new CopyPlugin({
-        patterns: [
-          {
-            from: path.resolve(
-              __dirname,
-              '../../node_modules/emoji-datasource-apple/img/apple/64',
-            ),
-            to: path.resolve(__dirname, 'public/assets/fonts/emoji'),
-            force: true,
-          },
-        ],
-      }),
     );
 
     if (!isServer && process.env.NEXT_PUBLIC_SW_DEACTIVATED !== 'true') {

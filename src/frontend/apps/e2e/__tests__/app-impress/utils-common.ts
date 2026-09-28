@@ -1,13 +1,27 @@
-import { Locator, Page, expect } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+
+import { Locator, Page, TestInfo, expect } from '@playwright/test';
+
+import theme_customization from '../../../../../backend/impress/configuration/theme/default.json';
+import { version as packageJsonVersion } from '../../package.json';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
 
 export const CONFIG = {
-  AI_FEATURE_ENABLED: true,
-  CRISP_WEBSITE_ID: null,
-  COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
-  COLLABORATION_WS_NOT_CONNECTED_READY_ONLY: true,
+  AI_BOT: {
+    name: 'Docs AI',
+    color: '#8bc6ff',
+  },
+  AI_FEATURE_ENABLED: false,
+  AI_FEATURE_BLOCKNOTE_ENABLED: false,
+  AI_FEATURE_LEGACY_ENABLED: true,
+  API_USERS_SEARCH_QUERY_MIN_LENGTH: 3,
+  COLLABORATION_WS_INACTIVITY_TIMEOUT: 15,
+  COLLABORATION_WS_URL: process.env.COLLABORATION_WS_URL,
+  COLLABORATION_WS_NOT_CONNECTED_READ_ONLY: true,
+  CONVERSION_UPLOAD_ENABLED: true,
   CONVERSION_FILE_EXTENSIONS_ALLOWED: ['.docx', '.md'],
   CONVERSION_FILE_MAX_SIZE: 20971520,
   ENVIRONMENT: 'development',
@@ -16,7 +30,7 @@ export const CONFIG = {
   FRONTEND_HOMEPAGE_FEATURE_ENABLED: true,
   FRONTEND_SILENT_LOGIN_ENABLED: false,
   FRONTEND_THEME: null,
-  MEDIA_BASE_URL: 'http://localhost:8083',
+  MEDIA_BASE_URL: process.env.MEDIA_BASE_URL,
   LANGUAGES: [
     ['en-us', 'English'],
     ['fr-fr', 'Français'],
@@ -25,10 +39,13 @@ export const CONFIG = {
     ['es-es', 'Español'],
   ],
   LANGUAGE_CODE: 'en-us',
-  POSTHOG_KEY: {},
+  POSTHOG_HOST: 'https://eu.i.posthog.com',
+  POSTHOG_KEY: null,
+  REACTIONS_MAX_PER_COMMENT: 15,
+  RELEASE_VERSION: packageJsonVersion,
   SENTRY_DSN: null,
   TRASHBIN_CUTOFF_DAYS: 30,
-  theme_customization: {},
+  theme_customization,
 } as const;
 
 export const overrideConfig = async (
@@ -49,29 +66,18 @@ export const overrideConfig = async (
     }
   });
 
-export const keyCloakSignIn = async (
-  page: Page,
-  browserName: string,
-  fromHome = true,
-) => {
-  if (fromHome) {
-    await page.getByRole('button', { name: 'Start Writing' }).first().click();
-  }
+export const getCurrentConfig = async (page: Page) => {
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes('/config/') && response.status() === 200,
+  );
 
-  const login = `user-e2e-${browserName}`;
-  const password = `password-e2e-${browserName}`;
+  await page.goto('/');
 
-  await expect(
-    page.locator('.login-pf #kc-header-wrapper').getByText('impress'),
-  ).toBeVisible();
+  const response = await responsePromise;
+  expect(response.ok()).toBeTruthy();
 
-  if (await page.getByLabel('Restart login').isVisible()) {
-    await page.getByLabel('Restart login').click();
-  }
-
-  await page.getByRole('textbox', { name: 'username' }).fill(login);
-  await page.getByRole('textbox', { name: 'password' }).fill(password);
-  await page.click('button[type="submit"]', { force: true });
+  return (await response.json()) as typeof CONFIG;
 };
 
 export const getOtherBrowserName = (browserName: BrowserName) => {
@@ -82,13 +88,20 @@ export const getOtherBrowserName = (browserName: BrowserName) => {
   return otherBrowserName;
 };
 
-export const randomName = (name: string, browserName: string, length: number) =>
+export const randomName = (
+  name: string,
+  browserName: string,
+  length: number,
+  reverseName = false,
+) =>
   Array.from({ length }, (_el, index) => {
-    return `${browserName}-${Math.floor(Math.random() * 10000)}-${index}-${name}`;
+    return reverseName
+      ? `${browserName}-${Math.floor(Math.random() * 10000)}-${index}-${name}`
+      : `${name}-${browserName}-${Math.floor(Math.random() * 10000)}-${index}`;
   });
 
 export const openHeaderMenu = async (page: Page) => {
-  const toggleButton = page.getByTestId('header-menu-toggle');
+  const toggleButton = page.getByTestId('floating-bar-toggle-left-panel');
   await expect(toggleButton).toBeVisible();
 
   const isExpanded =
@@ -98,8 +111,16 @@ export const openHeaderMenu = async (page: Page) => {
   }
 };
 
-export const closeHeaderMenu = async (page: Page) => {
-  const toggleButton = page.getByTestId('header-menu-toggle');
+export const closeHeaderMenu = async (page: Page, isMobile = false) => {
+  if (isMobile) {
+    const closeButton = page.getByRole('button', { name: 'Close left panel' });
+    await expect(closeButton).toBeVisible();
+    await closeButton.click();
+
+    return;
+  }
+
+  const toggleButton = page.getByTestId('floating-bar-toggle-left-panel');
   await expect(toggleButton).toBeVisible();
 
   const isExpanded =
@@ -107,12 +128,6 @@ export const closeHeaderMenu = async (page: Page) => {
   if (isExpanded) {
     await toggleButton.click();
   }
-};
-
-export const toggleHeaderMenu = async (page: Page) => {
-  const toggleButton = page.getByTestId('header-menu-toggle');
-  await expect(toggleButton).toBeVisible();
-  await toggleButton.click();
 };
 
 export const createDoc = async (
@@ -129,9 +144,17 @@ export const createDoc = async (
       await openHeaderMenu(page);
     }
 
+    const responsePromiseCreateDoc = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/v1.0/documents/') &&
+        response.status() === 201 &&
+        response.request().method() === 'POST',
+    );
+
     await page
-      .getByRole('button', {
-        name: 'New doc',
+      .getByRole('link', {
+        name: 'New',
+        exact: true,
       })
       .click();
 
@@ -140,44 +163,55 @@ export const createDoc = async (
       waitUntil: 'networkidle',
     });
 
+    const responseCreateDoc = await responsePromiseCreateDoc;
+    expect(responseCreateDoc.ok()).toBeTruthy();
+    const { id: docId } = (await responseCreateDoc.json()) as { id: string };
+
+    const responsePromiseUpdateDoc = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/v1.0/documents/${docId}`) &&
+        response.status() === 200 &&
+        response.request().method() === 'PATCH',
+    );
+
     const input = page.getByLabel('Document title');
-    await expect(input).toBeVisible();
-    await expect(input).toHaveText('');
+    await expect(input).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(input).toHaveText('', {
+      timeout: 10000,
+    });
 
     await input.fill(randomDocs[i]);
-    await input.blur();
+    void input.blur();
+
+    const responseUpdateDoc = await responsePromiseUpdateDoc;
+    expect(responseUpdateDoc.ok()).toBeTruthy();
   }
 
   return randomDocs;
 };
 
 export const verifyDocName = async (page: Page, docName: string) => {
-  await expect(
-    page.getByLabel('It is the card information about the document.'),
-  ).toBeVisible({
+  const card = page.getByLabel(
+    'It is the card information about the document.',
+  );
+  await expect(card).toBeVisible({
     timeout: 10000,
   });
 
-  /*replace toHaveText with toContainText to handle cases where emojis or other characters might be added*/
-  try {
-    await expect(
-      page.getByRole('textbox', { name: 'Document title' }),
-    ).toContainText(docName, {
-      timeout: 3000,
-    });
-  } catch {
-    await expect(page.getByRole('heading', { name: docName })).toBeVisible();
-  }
+  await expect(card).toHaveText(new RegExp(docName), {
+    timeout: 10000,
+  });
 };
 
 export const getGridRow = async (page: Page, title: string) => {
-  const docsGrid = page.getByRole('grid');
+  const docsGrid = page.getByTestId('docs-grid');
   await expect(docsGrid).toBeVisible();
   await expect(page.getByTestId('grid-loader')).toBeHidden();
 
-  const rows = docsGrid.getByRole('row');
-
-  const row = rows
+  const row = docsGrid
+    .getByRole('listitem')
     .filter({
       hasText: title,
     })
@@ -196,14 +230,17 @@ export const goToGridDoc = async (
   page: Page,
   { nthRow = 1, title }: GoToGridDocOptions = {},
 ) => {
-  const header = page.locator('header').first();
-  await header.locator('h1').getByText('Docs').click();
+  if (
+    await page.getByRole('button', { name: 'Back to homepage' }).isVisible()
+  ) {
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+  }
 
   const docsGrid = page.getByTestId('docs-grid');
   await expect(docsGrid).toBeVisible();
   await expect(page.getByTestId('grid-loader')).toBeHidden();
 
-  const rows = docsGrid.getByRole('row');
+  const rows = docsGrid.getByRole('listitem');
 
   const row = title
     ? rows.filter({
@@ -224,13 +261,10 @@ export const goToGridDoc = async (
 
 export const updateDocTitle = async (page: Page, title: string) => {
   const input = page.getByRole('textbox', { name: 'Document title' });
-  await expect(input).toHaveText('');
-  await expect(input).toBeVisible();
-  await input.click();
+  await expect(input).toBeEmpty({ timeout: 10000 });
   await input.fill(title, {
     force: true,
   });
-  await input.click();
   await input.blur();
   await verifyDocName(page, title);
 };
@@ -244,23 +278,44 @@ export const waitForResponseCreateDoc = (page: Page) => {
   );
 };
 
+/**
+ * Navigates back to the homepage, waits for the PATCH /content/ request
+ * triggered by the route change to complete, then navigates back to the doc.
+ *
+ * Use this instead of goToGridDoc when the test must assert on content that
+ * was just written in the editor, to avoid a race condition where the GET
+ * request fired on doc mount returns stale data because the server has not
+ * yet processed the PATCH.
+ */
+export const saveContent = async (page: Page, title: string) => {
+  const savePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes('/content/') &&
+      response.request().method() === 'PATCH',
+  );
+
+  await page.getByRole('button', { name: 'Back to homepage' }).click();
+  await expect(page.getByTestId('docs-grid')).toBeVisible();
+  await expect(page.getByTestId('grid-loader')).toBeHidden();
+
+  await savePromise;
+
+  await goToGridDoc(page, { title });
+};
+
 export const mockedDocument = async (page: Page, data: object) => {
-  await page.route(/\**\/documents\/\**/, async (route) => {
+  // document/[ID]/ or document/[ID]/tree/ routes
+  let uuid: string | undefined;
+  await page.route(/.*\/documents\/[^/]+\/(?:$|tree\/.*)/, async (route) => {
     const request = route.request();
-    if (
-      request.method().includes('GET') &&
-      !request.url().includes('page=') &&
-      !request.url().includes('versions') &&
-      !request.url().includes('accesses') &&
-      !request.url().includes('invitations')
-    ) {
+    if (request.method().includes('GET') && !request.url().includes('page=')) {
+      uuid = request.url().match(/\/documents\/([^/]+)\//)?.[1];
       const { abilities, ...doc } = data as unknown as {
         abilities?: Record<string, unknown>;
       };
       await route.fulfill({
         json: {
-          id: 'mocked-document-id',
-          content: '',
+          id: uuid,
           title: 'Mocked document',
           path: '000000',
           abilities: {
@@ -294,6 +349,19 @@ export const mockedDocument = async (page: Page, data: object) => {
       await route.continue();
     }
   });
+
+  await page.route(/.*\/documents\/[^/]+\/content\/$/, async (route) => {
+    const request = route.request();
+    if (request.method().includes('GET')) {
+      await route.fulfill({
+        body: '',
+      });
+    } else {
+      await route.continue();
+    }
+  });
+
+  return uuid;
 };
 
 export const mockedListDocs = async (page: Page, data: object[] = []) => {
@@ -311,13 +379,6 @@ export const mockedListDocs = async (page: Page, data: object[] = []) => {
     }
   });
 };
-
-export const expectLoginPage = async (page: Page) =>
-  await expect(
-    page.getByRole('heading', { name: 'Collaborative writing' }),
-  ).toBeVisible({
-    timeout: 10000,
-  });
 
 // language helper
 export const TestLanguage = {
@@ -345,7 +406,19 @@ type TestLanguageValue = (typeof TestLanguage)[TestLanguageKey];
 export async function waitForLanguageSwitch(
   page: Page,
   lang: TestLanguageValue,
+  labelUserMenu = 'User menu',
 ) {
+  await page.getByLabel(labelUserMenu).click();
+  const languagePicker = page.getByRole('button', { name: /Language/ });
+  const isAlreadyTargetLanguage = await languagePicker
+    .innerText()
+    .then((text) => text.toLowerCase().includes(lang.label.toLowerCase()));
+
+  if (isAlreadyTargetLanguage) {
+    await page.keyboard.press('Escape');
+    return;
+  }
+
   await page.route(/\**\/api\/v1.0\/users\/\**/, async (route, request) => {
     if (request.method().includes('PATCH')) {
       await route.fulfill({
@@ -358,33 +431,61 @@ export async function waitForLanguageSwitch(
     }
   });
 
-  const header = page.locator('header').first();
-  const languagePicker = header.locator('.--docs--language-picker-text');
-  const isAlreadyTargetLanguage = await languagePicker
-    .innerText()
-    .then((text) => text.toLowerCase().includes(lang.label.toLowerCase()));
-
-  if (isAlreadyTargetLanguage) {
-    return;
-  }
-
   await languagePicker.click();
 
   await page.getByRole('menuitem', { name: lang.label }).click();
+  await page.keyboard.press('Escape');
 }
 
+export const clickInEditorShareButton = async (page: Page) => {
+  await page
+    .getByTestId('floating-bar')
+    .getByRole('button', { name: 'Share' })
+    .click();
+};
+
 export const clickInEditorMenu = async (page: Page, textButton: string) => {
-  await page.getByRole('button', { name: 'Open the document options' }).click();
+  await clickInDocOptionMenu(
+    page,
+    page.getByTestId('floating-bar'),
+    textButton,
+  );
+};
+
+export const clickInDocOptionMenu = async (
+  page: Page,
+  selector: Locator,
+  textButton: string,
+) => {
+  await selector
+    .getByRole('button', { name: /Open the document options/ })
+    .click();
   await page.getByRole('menuitem', { name: textButton }).click();
 };
 
-export const clickInGridMenu = async (
-  page: Page,
-  row: Locator,
-  textButton: string,
+export const writeReport = async (
+  testInfo: TestInfo,
+  filename: string,
+  attachName: string,
+  buffer: Buffer,
+  contentType: string,
 ) => {
-  await row
-    .getByRole('button', { name: /Open the menu of actions for the document/ })
-    .click();
-  await page.getByRole('menuitem', { name: textButton }).click();
+  const REPORT_DIRNAME = 'extra-report';
+  const REPORT_NAME = 'test-results';
+  const outDir = testInfo
+    ? path.join(testInfo.outputDir, REPORT_DIRNAME, path.parse(filename).name)
+    : path.join(
+        process.cwd(),
+        REPORT_NAME,
+        REPORT_DIRNAME,
+        path.parse(filename).name,
+      );
+
+  fs.mkdirSync(outDir, { recursive: true });
+  const pathToFile = path.join(outDir, filename);
+  fs.writeFileSync(pathToFile, buffer);
+  await testInfo.attach(attachName, {
+    path: pathToFile,
+    contentType: contentType,
+  });
 };

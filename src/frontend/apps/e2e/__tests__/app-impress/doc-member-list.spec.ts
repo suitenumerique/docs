@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, verifyDocName } from './utils-common';
+import {
+  clickInEditorShareButton,
+  createDoc,
+  verifyDocName,
+} from './utils-common';
 import { addNewMember } from './utils-share';
 
 test.beforeEach(async ({ page }) => {
@@ -114,14 +118,8 @@ test.describe('Document list members', () => {
       },
     );
 
-    const [docTitle] = await createDoc(
-      page,
-      'members-big-invitation-list',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, docTitle);
-    await page.getByRole('button', { name: 'Share' }).click();
+    await createDoc(page, 'members-big-invitation-list', browserName, 1);
+    await clickInEditorShareButton(page);
 
     const prefix = 'doc-share-invitation';
     const elements = page.locator(`[data-testid^="${prefix}"]`);
@@ -142,15 +140,16 @@ test.describe('Document list members', () => {
   });
 
   test('it checks the role rules', async ({ page, browserName }) => {
-    const [docTitle] = await createDoc(page, 'Doc role rules', browserName, 1);
+    await createDoc(page, 'Doc role rules', browserName, 1);
 
-    await verifyDocName(page, docTitle);
+    await clickInEditorShareButton(page);
 
-    await page.getByRole('button', { name: 'Share' }).click();
     const list = page.getByTestId('doc-share-quick-search');
     await expect(list).toBeVisible();
+    const emailRequest =
+      process.env[`SIGN_IN_USERNAME_${browserName.toUpperCase()}`] || '';
     const currentUser = list.getByTestId(
-      `doc-share-member-row-user.test@${browserName}.test`,
+      `doc-share-member-row-${emailRequest}`,
     );
     const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
     await expect(currentUser).toBeVisible();
@@ -161,7 +160,7 @@ test.describe('Document list members', () => {
     );
     await expect(soloOwner).toBeVisible();
     await expect(
-      page.getByRole('menuitem', { name: 'Administrator' }),
+      page.getByRole('menuitemradio', { name: 'Administrator' }),
     ).toBeDisabled();
 
     await list.click({
@@ -185,18 +184,22 @@ test.describe('Document list members', () => {
     });
 
     await currentUserRole.click();
-    await page.getByRole('menuitem', { name: 'Administrator' }).click();
+    await page.getByRole('menuitemradio', { name: 'Administrator' }).click();
     await list.click();
     await expect(currentUserRole).toBeVisible();
 
+    await page.waitForTimeout(300);
+
     await newUserRoles.click();
-    await expect(page.getByRole('menuitem', { name: 'Owner' })).toBeDisabled();
+    await expect(
+      page.getByRole('menuitemradio', { name: 'Owner' }),
+    ).toBeDisabled();
     await list.click({
       force: true, // Force click to close the dropdown
     });
 
     await currentUserRole.click();
-    await page.getByRole('menuitem', { name: 'Reader' }).click();
+    await page.getByRole('menuitemradio', { name: 'Reader' }).click();
     await list.click({
       force: true, // Force click to close the dropdown
     });
@@ -204,16 +207,15 @@ test.describe('Document list members', () => {
   });
 
   test('it checks the delete members', async ({ page, browserName }) => {
-    const [docTitle] = await createDoc(page, 'Doc role rules', browserName, 1);
+    await createDoc(page, 'Doc role rules', browserName, 1);
 
-    await verifyDocName(page, docTitle);
-
-    await page.getByRole('button', { name: 'Share' }).click();
+    await clickInEditorShareButton(page);
 
     const list = page.getByTestId('doc-share-quick-search');
 
-    const emailMyself = `user.test@${browserName}.test`;
-    const mySelf = list.getByTestId(`doc-share-member-row-${emailMyself}`);
+    const emailRequest =
+      process.env[`SIGN_IN_USERNAME_${browserName.toUpperCase()}`] || '';
+    const mySelf = list.getByTestId(`doc-share-member-row-${emailRequest}`);
     const mySelfRole = mySelf.getByTestId('doc-role-dropdown');
 
     const userOwnerEmail = await addNewMember(page, 0, 'Owner');
@@ -222,7 +224,7 @@ test.describe('Document list members', () => {
     );
 
     await page.getByRole('button', { name: 'close' }).first().click();
-    await page.getByRole('button', { name: 'Share' }).first().click();
+    await clickInEditorShareButton(page);
 
     const userReaderEmail = await addNewMember(page, 0, 'Reader');
 
@@ -236,11 +238,11 @@ test.describe('Document list members', () => {
     await expect(userReader).toBeVisible();
 
     await userReaderRole.click();
-    await page.getByRole('menuitem', { name: 'Remove access' }).click();
+    await page.getByRole('menuitemradio', { name: 'Remove access' }).click();
     await expect(userReader).toBeHidden();
 
     await mySelfRole.click();
-    await page.getByRole('menuitem', { name: 'Remove access' }).click();
+    await page.getByRole('menuitemradio', { name: 'Remove access' }).click();
     await expect(
       page.getByText('Insufficient access rights to view the document.'),
     ).toBeVisible();

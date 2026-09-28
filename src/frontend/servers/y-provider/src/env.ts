@@ -8,6 +8,9 @@ export const COLLABORATION_SERVER_SECRET = process.env
   .COLLABORATION_SERVER_SECRET_FILE
   ? readFileSync(process.env.COLLABORATION_SERVER_SECRET_FILE, 'utf-8')
   : process.env.COLLABORATION_SERVER_SECRET || 'secret-api-key';
+export const CONVERSION_FILE_MAX_SIZE = process.env.CONVERSION_FILE_MAX_SIZE
+  ? Number(process.env.CONVERSION_FILE_MAX_SIZE)
+  : 20971520; // 20 MB default
 export const Y_PROVIDER_API_KEY = process.env.Y_PROVIDER_API_KEY_FILE
   ? readFileSync(process.env.Y_PROVIDER_API_KEY_FILE, 'utf-8')
   : process.env.Y_PROVIDER_API_KEY || 'yprovider-api-key';

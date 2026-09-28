@@ -1,12 +1,16 @@
-import {
-  VariantType,
-  useToastProvider,
-} from '@gouvfr-lasuite/cunningham-react';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, BoxButton, Icon, LoadMoreText, Text } from '@/components';
+import {
+  Box,
+  BoxButton,
+  HorizontalSeparator,
+  Icon,
+  LoadMoreText,
+  Text,
+} from '@/components';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, Role } from '@/docs/doc-management';
@@ -36,6 +40,7 @@ export const DocShareInvitationItem = ({
     email: invitation.email,
     short_name: invitation.email,
     language: 'en-us',
+    is_first_connection: false,
   };
 
   const { toast } = useToastProvider();
@@ -168,13 +173,19 @@ export const QuickSearchGroupInvitation = ({
   }
 
   return (
-    <Box aria-label={t('List invitation card')}>
-      <QuickSearchGroup
-        group={invitationsData}
-        renderElement={(invitation) => (
-          <DocShareInvitationItem doc={doc} invitation={invitation} />
-        )}
-      />
-    </Box>
+    <>
+      <Box
+        aria-label={t('List invitation card')}
+        $padding={{ horizontal: 'base' }}
+      >
+        <QuickSearchGroup
+          group={invitationsData}
+          renderElement={(invitation) => (
+            <DocShareInvitationItem doc={doc} invitation={invitation} />
+          )}
+        />
+      </Box>
+      <HorizontalSeparator $margin={{ vertical: 'sm' }} />
+    </>
   );
 };

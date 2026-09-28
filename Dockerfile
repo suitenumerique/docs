@@ -1,31 +1,37 @@
 # Django impress
 
 # ---- base image to inherit from ----
-FROM python:3.13.3-alpine AS base
-
-# Upgrade pip to its latest release to speed up dependencies installation
-RUN python -m pip install --upgrade pip
+FROM python:3.14.6-alpine AS base
 
 # Upgrade system packages to install security updates
 RUN apk update && apk upgrade --no-cache
 
+# We must do that to avoid having an outdated pip version with security issues
+RUN python -m pip install --upgrade pip
+
 # ---- Back-end builder image ----
 FROM base AS back-builder
 
-WORKDIR /builder
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
 
-# Install Rust and Cargo using Alpine's package manager
-RUN apk add --no-cache \
-  build-base \
-  libffi-dev \
-  rust \
-  cargo
+# Disable Python downloads, because we want to use the system interpreter
+# across both images. If using a managed Python version, it needs to be
+# copied from the build image into the final image;
+ENV UV_PYTHON_DOWNLOADS=0
 
-# Copy required python dependencies
-COPY ./src/backend /builder
+# install uv
+COPY --from=ghcr.io/astral-sh/uv:0.11.10 /uv /uvx /bin/
 
-RUN mkdir /install && \
-  pip install --prefix=/install .
+WORKDIR /app
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=src/backend/uv.lock,target=uv.lock \
+    --mount=type=bind,source=src/backend/pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project --no-dev
+COPY src/backend /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
 
 
 # ---- mails ----
@@ -36,7 +42,7 @@ COPY ./src/mail /mail/app
 WORKDIR /mail/app
 
 RUN yarn install --frozen-lockfile && \
-    yarn build
+  yarn build
 
 
 # ---- static link collector ----
@@ -48,17 +54,16 @@ RUN apk add --no-cache \
   pango \
   rdfind
 
-# Copy installed python dependencies
-COPY --from=back-builder /install /usr/local
-
-# Copy impress application (see .dockerignore)
-COPY ./src/backend /app/
+# Copy the application from the builder
+COPY --from=back-builder /app /app
 
 WORKDIR /app
 
+ENV PATH="/app/.venv/bin:$PATH"
+
 # collectstatic
 RUN DJANGO_CONFIGURATION=Build \
-    python manage.py collectstatic --noinput
+  python manage.py collectstatic --noinput
 
 # Replace duplicated file by a symlink to decrease the overall size of the
 # final image
@@ -81,7 +86,7 @@ RUN apk add --no-cache \
   pango \
   shared-mime-info
 
-RUN wget https://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types -O /etc/mime.types
+RUN wget https://raw.githubusercontent.com/suitenumerique/django-lasuite/refs/heads/main/assets/conf/mime.types -O /etc/mime.types
 
 # Copy entrypoint
 COPY ./docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
@@ -91,25 +96,24 @@ COPY ./docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
 # docker user (see entrypoint).
 RUN chmod g=u /etc/passwd
 
-# Copy installed python dependencies
-COPY --from=back-builder /install /usr/local
+# Copy the application from the builder
+COPY --from=back-builder /app /app
+
+WORKDIR /app
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Link certifi certificate from a static path /cert/cacert.pem to avoid issues
 # when python is upgraded and the path to the certificate changes.
 # The space between print and the ( is intended otherwise the git lint is failing
 RUN mkdir /cert && \
-    path=`python -c 'import certifi;print (certifi.where())'` && \
-    mv $path /cert/ && \
-    ln -s /cert/cacert.pem $path
-
-# Copy impress application (see .dockerignore)
-COPY ./src/backend /app/
-
-WORKDIR /app
+  path=`python -c 'import certifi;print (certifi.where())'` && \
+  mv $path /cert/ && \
+  ln -s /cert/cacert.pem $path
 
 # Generate compiled translation messages
 RUN DJANGO_CONFIGURATION=Build \
-    python manage.py compilemessages
+  python manage.py compilemessages --ignore=".venv/**/*"
 
 
 # We wrap commands run in this container by the following entrypoint that
@@ -126,10 +130,9 @@ USER root:root
 # Install psql
 RUN apk add --no-cache postgresql-client
 
-# Uninstall impress and re-install it in editable mode along with development
-# dependencies
-RUN pip uninstall -y impress
-RUN pip install -e .[dev]
+# Install development dependencies
+RUN --mount=from=ghcr.io/astral-sh/uv:0.11.10,source=/uv,target=/bin/uv \
+  uv sync --all-extras --locked
 
 # Restore the un-privileged user running the application
 ARG DOCKER_USER
@@ -138,10 +141,18 @@ USER ${DOCKER_USER}
 # Target database host (e.g. database engine following docker compose services
 # name) & port
 ENV DB_HOST=postgresql \
-    DB_PORT=5432
+  DB_PORT=5432
 
 # Run django development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD [\
+  "uvicorn",\
+  "--app-dir=/app",\
+  "--host=0.0.0.0",\
+  "--lifespan=off",\
+  "--reload",\
+  "--reload-dir=/app",\
+  "impress.asgi:application"\
+  ]
 
 # ---- Production image ----
 FROM core AS backend-production
@@ -151,7 +162,7 @@ RUN rm -rf /var/cache/apk/*
 
 ARG IMPRESS_STATIC_ROOT=/data/static
 
-# Gunicorn
+# Gunicorn - not used by default but configuration file is provided
 RUN mkdir -p /usr/local/etc/gunicorn
 COPY docker/files/usr/local/etc/gunicorn/impress.py /usr/local/etc/gunicorn/impress.py
 
@@ -165,5 +176,18 @@ COPY --from=link-collector ${IMPRESS_STATIC_ROOT} ${IMPRESS_STATIC_ROOT}
 # Copy impress mails
 COPY --from=mail-builder /mail/backend/core/templates/mail /app/core/templates/mail
 
-# The default command runs gunicorn WSGI server in impress's main module
-CMD ["gunicorn", "-c", "/usr/local/etc/gunicorn/impress.py", "impress.wsgi:application"]
+# The default command runs uvicorn ASGI server in dics's main module
+# WEB_CONCURRENCY: number of workers to run <=> --workers=4
+ENV WEB_CONCURRENCY=4
+CMD [\
+  "uvicorn",\
+  "--app-dir=/app",\
+  "--host=0.0.0.0",\
+  "--timeout-graceful-shutdown=300",\
+  "--limit-max-requests=20000",\
+  "--lifespan=off",\
+  "impress.asgi:application"\
+  ]
+
+# To run using gunicorn WSGI server use this instead:
+#CMD ["gunicorn", "-c", "/usr/local/etc/gunicorn/conversations.py", "impress.wsgi:application"]

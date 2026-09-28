@@ -73,7 +73,8 @@ export class EncryptedWebSocket extends WebSocket {
     };
 
     // Block direct onmessage assignment
-    let explicitlySetListener: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let explicitlySetListener:
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ((this: WebSocket, handlerEvent: MessageEvent) => any) | null;
     null;
 

@@ -1,8 +1,7 @@
 services:
-
   frontend:
     user: "${DOCKER_USER:-1000}"
-    build: 
+    build:
       context: .
       dockerfile: ./src/frontend/Dockerfile
       target: frontend-production
@@ -16,7 +15,7 @@ services:
 
   y-provider:
     user: ${DOCKER_USER:-1000}
-    build: 
+    build:
       context: .
       dockerfile: ./src/frontend/servers/y-provider/Dockerfile
       target: y-provider
@@ -27,3 +26,14 @@ services:
       - env.d/development/common.local
     ports:
       - "4444:4444"
+
+  y-provider-converter:
+    user: ${DOCKER_USER:-1000}
+    image: impress:y-provider-production
+    restart: unless-stopped
+    env_file:
+      - env.d/development/common
+      - env.d/development/common.local
+    depends_on:
+      y-provider:
+        condition: service_started

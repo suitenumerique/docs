@@ -3,9 +3,25 @@
 import base64
 import uuid
 
-import pycrdt
+from django.core.cache import cache
 
-from core import utils
+import pycrdt
+import pytest
+
+from core import factories
+from core.utils.dicts import get_value_by_pattern, lowercase_keys
+from core.utils.paths import get_ancestor_to_descendants_map
+from core.utils.users import (
+    get_users_sharing_documents_with_cache_key,
+    users_sharing_documents_with,
+)
+from core.utils.yjs import (
+    base64_yjs_to_text,
+    base64_yjs_to_xml,
+    extract_attachments,
+)
+
+pytestmark = pytest.mark.django_db
 
 # This base64 string is an example of what is saved in the database.
 # This base64 is generated from the blocknote editor, it contains
@@ -29,12 +45,12 @@ TEST_BASE64_STRING = (
 
 def test_utils_base64_yjs_to_text():
     """Test extract text from saved yjs document"""
-    assert utils.base64_yjs_to_text(TEST_BASE64_STRING) == "Hello w or ld"
+    assert base64_yjs_to_text(TEST_BASE64_STRING) == "Hello w or ld"
 
 
 def test_utils_base64_yjs_to_xml():
     """Test extract xml from saved yjs document"""
-    content = utils.base64_yjs_to_xml(TEST_BASE64_STRING)
+    content = base64_yjs_to_xml(TEST_BASE64_STRING)
     assert (
         '<heading textAlignment="left" level="1"><italic>Hello</italic></heading>'
         in content
@@ -74,13 +90,13 @@ def test_utils_extract_attachments():
     update = ydoc.get_update()
     base64_string = base64.b64encode(update).decode("utf-8")
     # image_key2 is missing the "/media/" part and shouldn't get extracted
-    assert utils.extract_attachments(base64_string) == [image_key1, image_key3]
+    assert extract_attachments(base64_string) == [image_key1, image_key3]
 
 
 def test_utils_get_ancestor_to_descendants_map_single_path():
     """Test ancestor mapping of a single path."""
     paths = ["000100020005"]
-    result = utils.get_ancestor_to_descendants_map(paths, steplen=4)
+    result = get_ancestor_to_descendants_map(paths, steplen=4)
 
     assert result == {
         "0001": {"000100020005"},
@@ -92,7 +108,7 @@ def test_utils_get_ancestor_to_descendants_map_single_path():
 def test_utils_get_ancestor_to_descendants_map_multiple_paths():
     """Test ancestor mapping of multiple paths with shared prefixes."""
     paths = ["000100020005", "00010003"]
-    result = utils.get_ancestor_to_descendants_map(paths, steplen=4)
+    result = get_ancestor_to_descendants_map(paths, steplen=4)
 
     assert result == {
         "0001": {"000100020005", "00010003"},
@@ -100,3 +116,170 @@ def test_utils_get_ancestor_to_descendants_map_multiple_paths():
         "000100020005": {"000100020005"},
         "00010003": {"00010003"},
     }
+
+
+def test_utils_users_sharing_documents_with_cache_miss():
+    """Test cache miss: should query database and cache result."""
+    user1 = factories.UserFactory()
+    user2 = factories.UserFactory()
+    user3 = factories.UserFactory()
+    doc1 = factories.DocumentFactory()
+    doc2 = factories.DocumentFactory()
+
+    factories.UserDocumentAccessFactory(user=user1, document=doc1)
+    factories.UserDocumentAccessFactory(user=user2, document=doc1)
+    factories.UserDocumentAccessFactory(user=user3, document=doc2)
+
+    cache_key = get_users_sharing_documents_with_cache_key(user1.id)
+    cache.delete(cache_key)
+
+    result = users_sharing_documents_with(user1.id)
+
+    assert user2.id in result
+
+    cached_data = cache.get(cache_key)
+    assert cached_data == result
+
+
+def test_utils_users_sharing_documents_with_cache_hit():
+    """Test cache hit: should return cached data without querying database."""
+    user1 = factories.UserFactory()
+    user2 = factories.UserFactory()
+    doc1 = factories.DocumentFactory()
+
+    factories.UserDocumentAccessFactory(user=user1, document=doc1)
+    factories.UserDocumentAccessFactory(user=user2, document=doc1)
+
+    cache_key = get_users_sharing_documents_with_cache_key(user1.id)
+
+    test_cached_data = {user2.id: "2025-02-10"}
+    cache.set(cache_key, test_cached_data, 86400)
+
+    result = users_sharing_documents_with(user1.id)
+    assert result == test_cached_data
+
+
+def test_utils_users_sharing_documents_with_cache_invalidation_on_create():
+    """Test that cache is invalidated when a DocumentAccess is created."""
+    # Create test data
+    user1 = factories.UserFactory()
+    user2 = factories.UserFactory()
+    doc1 = factories.DocumentFactory()
+
+    # Pre-populate cache
+    cache_key = get_users_sharing_documents_with_cache_key(user1.id)
+    cache.set(cache_key, {}, 86400)
+
+    # Verify cache exists
+    assert cache.get(cache_key) is not None
+
+    # Create new DocumentAccess
+    factories.UserDocumentAccessFactory(user=user2, document=doc1)
+
+    # Cache should still exist (only created for user2 who was added)
+    # But if we create access for user1 being shared with, cache should be cleared
+    cache.set(cache_key, {"test": "data"}, 86400)
+    factories.UserDocumentAccessFactory(user=user1, document=doc1)
+
+    # Cache for user1 should be invalidated (cleared)
+    assert cache.get(cache_key) is None
+
+
+def test_utils_users_sharing_documents_with_cache_invalidation_on_delete():
+    """Test that cache is invalidated when a DocumentAccess is deleted."""
+    user1 = factories.UserFactory()
+    user2 = factories.UserFactory()
+    doc1 = factories.DocumentFactory()
+
+    doc_access = factories.UserDocumentAccessFactory(user=user1, document=doc1)
+
+    cache_key = get_users_sharing_documents_with_cache_key(user1.id)
+    cache.set(cache_key, {user2.id: "2025-02-10"}, 86400)
+
+    assert cache.get(cache_key) is not None
+
+    doc_access.delete()
+
+    assert cache.get(cache_key) is None
+
+
+def test_utils_users_sharing_documents_with_empty_result():
+    """Test when user is not sharing any documents."""
+    user1 = factories.UserFactory()
+
+    cache_key = get_users_sharing_documents_with_cache_key(user1.id)
+    cache.delete(cache_key)
+
+    result = users_sharing_documents_with(user1.id)
+
+    assert result == {}
+
+    cached_data = cache.get(cache_key)
+    assert cached_data == {}
+
+
+def test_utils_get_value_by_pattern_matching_key():
+    """Test extracting value from a dictionary with a matching key pattern."""
+    data = {"title.extension": "Bonjour", "id": 1, "content": "test"}
+    result = get_value_by_pattern(data, r"^title\.")
+
+    assert set(result) == {"Bonjour"}
+
+
+def test_utils_get_value_by_pattern_multiple_matches():
+    """Test that all matching keys are returned."""
+    data = {"title.extension_1": "Bonjour", "title.extension_2": "Hello", "id": 1}
+    result = get_value_by_pattern(data, r"^title\.")
+
+    assert set(result) == {
+        "Bonjour",
+        "Hello",
+    }
+
+
+def test_utils_get_value_by_pattern_multiple_extensions():
+    """Test that all matching keys are returned."""
+    data = {"title.extension_1.extension_2": "Bonjour", "id": 1}
+    result = get_value_by_pattern(data, r"^title\.")
+
+    assert set(result) == {"Bonjour"}
+
+
+def test_utils_get_value_by_pattern_no_match():
+    """Test that empty list is returned when no key matches the pattern."""
+    data = {"name": "Test", "id": 1}
+    result = get_value_by_pattern(data, r"^title\.")
+
+    assert result == []
+
+
+def test_utils_lowercase_keys_empty():
+    """Test that an empty dictionary is returned untouched."""
+    assert lowercase_keys({}) == {}
+
+
+def test_utils_lowercase_keys_mixed_case():
+    """Test that keys are lowercased while values are left untouched."""
+    data = {"Owner": "42", "STATUS": "Ready", "is_unsafe": "true"}
+
+    assert lowercase_keys(data) == {
+        "owner": "42",
+        "status": "Ready",
+        "is_unsafe": "true",
+    }
+
+
+def test_utils_lowercase_keys_collision():
+    """Test that keys differing only by their case are collapsed into a single one."""
+    data = {"Status": "processing", "status": "ready"}
+    result = lowercase_keys(data)
+
+    assert result == {"status": "ready"}
+
+
+def test_utils_lowercase_keys_does_not_mutate_source():
+    """Test that the source dictionary is left untouched."""
+    data = {"Status": "processing"}
+    lowercase_keys(data)
+
+    assert data == {"Status": "processing"}
