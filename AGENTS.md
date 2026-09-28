@@ -274,6 +274,10 @@ Internationalize user-facing strings with `_()` (backend) or i18next (frontend).
 - Verify narrowly first and widen only once that passes: `bin/pytest -n auto <file>::<test> -x -q --tb=short` or `yarn vitest run <file>`, and lint only the files you touched (`yarn eslint <files>`, `docker compose run --rm app-dev ruff check <files>`). Run the full `make lint` / suites once, at the end.
 - Filter long command output (`| tail`, `grep`, `-q`) rather than reading it all.
 
+## Incidental findings
+
+While on a task, if you come across something **unrelated to it** that clearly deserves fixing (a real bug, a security issue, or a strong improvement: algorithm or SQL efficiency, documentation, CI), do not fix it or widen the task. At the end, tell the user in one or two lines (what, where, why it matters) and offer to file it with the `docs-create-issue` Skill, labelled `AI generated`. Only report what you verified, not style nits or guesses.
+
 ## Knowledge feedback
 
 At the end of a meaningful task, consider whether you verified something repository-specific that would have saved real time or prevented a mistake had you known it at the start: a required service, a command that looks right but is not, a test-suite limitation, a helper to prefer, an invariant, a recurring failure and how to diagnose it.
