@@ -66,6 +66,7 @@ and this project adheres to
   offline
 - 🐛(frontend) stop the service worker from caching the collaboration server's
   rest api
+- ✨(backend) import documents from a ZIP file exported from Outline or Notion
 
 ### Changed
 
