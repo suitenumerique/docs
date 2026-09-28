@@ -265,3 +265,44 @@ Internationalize user-facing strings with `_()` (backend) or i18next (frontend).
 - `src/mail/` - Email template generator (MJML)
 - `documentation/` - Documentation
 - `.github/` - GitHub workflows and templates
+
+## Working efficiently
+
+- Load the Skill that matches the task before exploring: it already holds the commands, helpers and pitfalls.
+- Big files: grep for the symbol, then read only that range. `core/api/viewsets.py` (~3,300 lines), `core/models.py` (~2,100) and `core/api/serializers.py` (~1,000) are never worth reading whole. Backend tests are split per endpoint and action (`core/tests/documents/test_api_documents_<action>.py`), so glob for the test file.
+- Never read generated or vendored files: `translations.json` (i18n), `yarn.lock`, `CHANGELOG.md` beyond its `[Unreleased]` section, `node_modules/`, `dist/`, `.next/`.
+- Verify narrowly first and widen only once that passes: `bin/pytest -n auto <file>::<test> -x -q --tb=short` or `yarn vitest run <file>`, and lint only the files you touched (`yarn eslint <files>`, `docker compose run --rm app-dev ruff check <files>`). Run the full `make lint` / suites once, at the end.
+- Filter long command output (`| tail`, `grep`, `-q`) rather than reading it all.
+
+## Knowledge feedback
+
+At the end of a meaningful task, consider whether you verified something repository-specific that would have saved real time or prevented a mistake had you known it at the start: a required service, a command that looks right but is not, a test-suite limitation, a helper to prefer, an invariant, a recurring failure and how to diagnose it.
+
+Record it only if all of these hold:
+
+- it is verified, not a guess;
+- it is not already findable in this file, a Skill, a README, the Makefile, a package script or the nearby code;
+- a competent developer or agent doing a similar task six months from now would be materially helped by it.
+
+Never record facts about the current issue, temporary bugs, line numbers, branch names, one-off decisions or generic programming advice. Do not update agent documentation just to summarize the task.
+
+Put it in the narrowest place that fits:
+
+- **This file**: repository-wide rules and conventions that most tasks need, whatever the agent
+- **An existing Skill** for the workflow it belongs to (E2E tests, backend, review, running the stack…), when your agent setup has one. Claude Code Skills are versioned in `.claude/skills/<name>/SKILL.md`, except the `local-*` ones, which are gitignored: an edit there will not show in `git diff`, so name it in your report
+- **The subsystem's own documentation** (e.g. `src/yhub-server/README.md`, `documentation/`) when it is useful to humans too
+- **A new Skill** only for a substantial, repeatable workflow with no natural home, never for a single tip
+
+A repository fact belongs in the repository, where every agent and developer gets it, not in a personal agent memory; keep personal memory for the user's own preferences.
+
+Prefer amending an existing line or section to adding a new one, and keep it to a line or two. Give the reason when it is not obvious. An instruction you found to be wrong is worth fixing or removing too. When in doubt, do not edit: mention it in your report instead. A human reviews the change like any code.
+
+This file is loaded into every session, so each line costs tokens on every task. Before adding a line here, check whether it only serves one area; if so, it belongs in that area's Skill or README. Remove what has gone stale or become derivable from the code. Two Skills that trigger on the same request (a similar `description`) must be merged.
+
+Close your report with one short line, and skip it for trivial tasks:
+
+```text
+Agent knowledge: none.
+Agent knowledge: added to <file> that <fact>, because <what it would have saved>.
+Agent knowledge (unverified, not recorded): <fact>.
+```
