@@ -13,6 +13,7 @@ COPY ./src/frontend/package.json ./package.json
 COPY ./src/frontend/yarn.lock ./yarn.lock
 COPY ./src/frontend/apps/impress/package.json ./apps/impress/package.json
 COPY ./src/frontend/packages/eslint-plugin-docs/package.json ./packages/eslint-plugin-docs/package.json
+COPY ./src/frontend/patches ./patches
 
 RUN yarn install --frozen-lockfile
 
