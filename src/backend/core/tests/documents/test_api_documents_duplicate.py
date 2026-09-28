@@ -2,13 +2,14 @@
 Test file uploads API endpoint for users in impress's core app.
 """
 
+# pylint: disable=too-many-lines
 import uuid
 from io import BytesIO
 from unittest import mock
 from urllib.parse import urlparse
 
-from django.conf import settings
 from django.core.files.storage import default_storage
+from django.db import connection
 from django.utils import timezone
 
 import pycrdt
@@ -19,6 +20,9 @@ from rest_framework.test import APIClient
 
 from core import factories, models
 from core.factories import YDOC_HELLO_WORLD_UPDATE
+from core.services.yhub_services import (
+    APIError,
+)
 from core.services.yhub_services import (
     ServiceUnavailableError as YHubServiceUnavailableError,
 )
@@ -100,7 +104,7 @@ def test_api_documents_duplicate_anonymous():
 
 
 @pytest.mark.parametrize("index", range(3))
-def test_api_documents_duplicate_success(index, mock_yhub):
+def test_api_documents_duplicate_success(index, mock_yhub, settings):
     """
     Anonymous users should be able to retrieve attachments linked to a public document.
     Accesses should not be duplicated if the user does not request it specifically.
@@ -1031,3 +1035,143 @@ def test_api_documents_duplicate_collaboration_server_unavailable(mock_yhub):
 
     assert response.status_code == 500
     assert models.Document.objects.count() == 1
+
+
+def test_api_documents_duplicate_content_fetch_fails(mock_yhub):
+    """
+    A document whose content cannot be read from the collaboration server
+    should not be duplicated either: no copy is left in the database, and
+    nothing is seeded nor deleted there.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[(user, "owner")], title="my document")
+    mock_yhub.return_value.get_ydoc.side_effect = YHubServiceUnavailableError(
+        "Failed to connect to the yhub service"
+    )
+
+    response = client.post(f"/api/v1.0/documents/{document.id!s}/duplicate/")
+
+    assert response.status_code == 500
+    assert models.Document.objects.count() == 1
+    mock_yhub.return_value.create_ydoc.assert_not_called()
+    mock_yhub.return_value.delete_ydoc.assert_not_called()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_api_documents_duplicate_content_seeded_outside_transaction(mock_yhub):
+    """
+    The calls seeding the content of a duplicate must happen after the
+    transaction that replicated the structure is committed: holding it open
+    across the calls to the collaboration server is what made a duplication
+    hold database locks for the duration of every call.
+
+    `transaction=True` is what makes the assertion readable — under the default
+    transaction-per-test every request runs inside an atomic block, in_atomic_block
+    would be true whatever the duplication does, and the test would hold for a
+    duplication that seeds its content without ever committing first.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[(user, "owner")], title="my document")
+
+    in_atomic_block = []
+
+    def create_ydoc(_duplicated_document, _update):
+        in_atomic_block.append(connection.in_atomic_block)
+
+    mock_yhub.return_value.create_ydoc.side_effect = create_ydoc
+
+    response = client.post(f"/api/v1.0/documents/{document.id!s}/duplicate/")
+
+    assert response.status_code == 201
+    assert in_atomic_block == [False]
+
+
+def test_api_documents_duplicate_partial_failure_is_compensated(mock_yhub):
+    """
+    A failure seeding the content of a subtree must undo the whole
+    duplication: what was already seeded on the collaboration server is
+    deleted, and the replicated documents are removed from the database, so
+    neither side is left with an orphan.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    root = factories.DocumentFactory(users=[(user, "owner")], title="Root")
+    factories.DocumentFactory(parent=root, title="Child 1")
+    factories.DocumentFactory(parent=root, title="Child 2")
+
+    seeded = []
+
+    def create_ydoc(duplicated_document, _update):
+        seeded.append(duplicated_document)
+        if len(seeded) == 3:
+            raise YHubServiceUnavailableError("Failed to connect to the yhub service")
+
+    mock_yhub.return_value.create_ydoc.side_effect = create_ydoc
+
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{root.id!s}/duplicate/",
+            {"with_descendants": True},
+            format="json",
+        )
+
+    assert response.status_code == 500
+    # the whole replicated subtree is gone, only the original remains
+    assert models.Document.objects.count() == 3
+    # what was seeded before the failure is compensated, in seeding order
+    assert mock_yhub.return_value.delete_ydoc.call_args_list == [
+        mock.call(seeded[0]),
+        mock.call(seeded[1]),
+        mock.call(seeded[2]),
+    ]
+    mock_capture.assert_not_called()
+
+
+def test_api_documents_duplicate_content_conflict_is_compensated(mock_yhub):
+    """
+    A 409 on `create_ydoc` — the collaboration server already holds content
+    for the duplicate — is a duplication failure like any other: it is a
+    state a fresh duplicate id cannot reach, it says nothing about holding
+    the source's content, and a 201 served on top of unknown content would
+    be a lie. The duplication is undone and the failure is reported.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    root = factories.DocumentFactory(users=[(user, "owner")], title="Root")
+    factories.DocumentFactory(parent=root, title="Child 1")
+    factories.DocumentFactory(parent=root, title="Child 2")
+
+    seeded = []
+
+    def create_ydoc(duplicated_document, _update):
+        seeded.append(duplicated_document)
+        if len(seeded) == 2:
+            raise APIError("The yhub API answered 409 on create-ydoc", status_code=409)
+
+    mock_yhub.return_value.create_ydoc.side_effect = create_ydoc
+
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{root.id!s}/duplicate/",
+            {"with_descendants": True},
+            format="json",
+        )
+
+    assert response.status_code == 500
+    assert models.Document.objects.count() == 3
+    # the one document that 409'd is compensated along with the seeded one
+    assert mock_yhub.return_value.delete_ydoc.call_args_list == [
+        mock.call(seeded[0]),
+        mock.call(seeded[1]),
+    ]
+    mock_capture.assert_not_called()

@@ -765,45 +765,6 @@ class DocumentViewSet(
                 {"file": ["Could not save the imported file content"]}
             ) from err
 
-    def _get_collaboration_document(self, document):
-        """
-        Return the content of a document, as held by the collaboration server.
-
-        It is the source of truth for the content, the one Django may still
-        store is ignored. A document it holds nothing for has no content to
-        copy, it answers None.
-        """
-        try:
-            return YHubService(user=self.request.user).get_ydoc(document)
-        except YHubError as err:
-            logger.error(
-                "could not fetch the content of document %s with error: %s",
-                document.id,
-                err,
-            )
-            raise drf.exceptions.APIException(
-                "Failed to fetch the document content"
-            ) from err
-
-    def _copy_collaboration_document(self, document, update):
-        """
-        Seed a duplicated document with the content of the one it copies.
-
-        The duplicate is worthless without it, so a failure is reported to the
-        caller rather than leaving an empty copy behind.
-        """
-        try:
-            YHubService(user=self.request.user).create_ydoc(document, update)
-        except YHubError as err:
-            logger.error(
-                "could not copy the content into document %s with error: %s",
-                document.id,
-                err,
-            )
-            raise drf.exceptions.APIException(
-                "Failed to duplicate the document content"
-            ) from err
-
     def perform_create(self, serializer):
         """Set the current user as creator and owner of the newly created object."""
 
@@ -1379,7 +1340,6 @@ class DocumentViewSet(
         ],
         url_path="duplicate",
     )
-    @transaction.atomic
     def duplicate(self, request, *args, **kwargs):
         """
         Duplicate a document, alongside its descendants if requested.
@@ -1393,12 +1353,21 @@ class DocumentViewSet(
         serializer.is_valid(raise_exception=True)
         user = request.user
 
+        # First phase: replicate the structure, in a transaction making no
+        # call to the collaboration server. It stays short, and its rollback
+        # on a failure leaves nothing behind anywhere.
         with transaction.atomic():
-            duplicated_document = self._duplicate_document(
+            duplicated_document, duplicates = self._duplicate_document_structure(
                 document_to_duplicate=document_to_duplicate,
                 serializer=serializer,
                 user=user,
             )
+
+        # Second phase: seed each duplicate with the content of its source,
+        # out of any transaction. A failure undoes the whole duplication, so
+        # neither the database nor the collaboration server is left with an
+        # orphan.
+        self._duplicate_documents_content(duplicates, user)
 
         posthog_capture(
             PosthogEventName.DOC_DUPLICATED,
@@ -1419,7 +1388,7 @@ class DocumentViewSet(
 
         return drf_response.Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def _duplicate_document(
+    def _duplicate_document_structure(
         self,
         document_to_duplicate,
         serializer,
@@ -1427,18 +1396,22 @@ class DocumentViewSet(
         new_parent=None,
     ):
         """
-        Duplicate a document and store the links to attached files in the duplicated
-        document to allow cross-access.
+        Replicate a document, and its descendants when requested, in the
+        database only: no call to the collaboration server is made here, so
+        the transaction wrapping the replication of a whole tree stays short.
+
+        A duplicate is created without its attachments: which ones its content
+        refers to is only known once the content is copied, what
+        `_duplicate_documents_content` does next. Return the duplicate along
+        with the (source, duplicate) pairs of the whole replication for it,
+        in creation order.
 
         Optionally duplicates accesses if `with_accesses` is set to true
         in the payload.
 
-        Optionally duplicates sub-documents if `with_descendants` is set to true in
-        the payload. In this case, the whole subtree of the document will be duplicated,
-        and the links to attached files will be stored in all duplicated documents.
-
-        The `with_accesses` option will also be applied to all duplicated documents
-        if `with_descendants` is set to true.
+        Optionally replicates sub-documents if `with_descendants` is set to
+        true in the payload. The `with_accesses` option is then applied to
+        every replicated document.
         """
         with_accesses = serializer.validated_data.get("with_accesses", False)
         with_descendants = (
@@ -1449,10 +1422,6 @@ class DocumentViewSet(
         user_role = document_to_duplicate.get_role(user)
         is_owner_or_admin = user_role in models.PRIVILEGED_ROLES
 
-        # The collaboration server holds the content, the duplicate is seeded
-        # with it once it exists
-        ydoc_update = self._get_collaboration_document(document_to_duplicate)
-
         # Duplicate the document instance
         link_kwargs = (
             {
@@ -1462,10 +1431,6 @@ class DocumentViewSet(
             if with_accesses
             else {}
         )
-        extracted_attachments = set(extract_attachments_from_update(ydoc_update))
-        attachments = list(
-            extracted_attachments & set(document_to_duplicate.attachments)
-        )
         title = capfirst(_("copy of {title}").format(title=document_to_duplicate.title))
         # If parent_duplicate is provided we must add the duplicated document as a child.
         # No retry here: the parent was created by this very transaction, nobody
@@ -1473,7 +1438,7 @@ class DocumentViewSet(
         if new_parent is not None:
             duplicated_document = new_parent.add_child(
                 title=title,
-                attachments=attachments,
+                attachments=[],
                 duplicated_from=document_to_duplicate,
                 creator=user,
                 **link_kwargs,
@@ -1505,7 +1470,7 @@ class DocumentViewSet(
                 lambda: models.Document.add_root(
                     creator=user,
                     title=title,
-                    attachments=attachments,
+                    attachments=[],
                     duplicated_from=document_to_duplicate,
                     **link_kwargs,
                 )
@@ -1523,7 +1488,7 @@ class DocumentViewSet(
                 lambda: document_to_duplicate.add_sibling(
                     "last-sibling",
                     title=title,
-                    attachments=attachments,
+                    attachments=[],
                     duplicated_from=document_to_duplicate,
                     creator=user,
                     **link_kwargs,
@@ -1560,24 +1525,115 @@ class DocumentViewSet(
                 # Bulk create all the duplicated accesses
                 models.DocumentAccess.objects.bulk_create(accesses_to_create)
 
-        # the accesses exist by now, so the content is only served to the users
-        # the duplicate is meant for
-        if ydoc_update:
-            self._copy_collaboration_document(duplicated_document, ydoc_update)
+        duplicates = [(document_to_duplicate, duplicated_document)]
 
         if with_descendants:
             for child in document_to_duplicate.get_children().filter(
                 ancestors_deleted_at__isnull=True
             ):
-                # When duplicating descendants, attach duplicates under the duplicated_document
-                self._duplicate_document(
+                # When duplicating descendants, attach duplicates under the
+                # duplicated_document. Indexed rather than unpacked: `_` is the
+                # gettext alias in this scope, binding anything to it here makes
+                # every `_()` above raise UnboundLocalError.
+                children_duplicates = self._duplicate_document_structure(
                     document_to_duplicate=child,
                     serializer=serializer,
                     user=user,
                     new_parent=duplicated_document,
+                )[1]
+                duplicates += children_duplicates
+
+        return duplicated_document, duplicates
+
+    def _duplicate_documents_content(self, duplicates, user):
+        """
+        Seed each duplicated document with the content of its source.
+
+        `duplicates` holds the (source, duplicate) pairs of a duplication in
+        creation order, the duplicate of the root first. It runs once the
+        transaction that created the duplicates is committed, so no call to
+        the collaboration server is ever made with a transaction held open.
+
+        A failure undoes the whole duplication: what was seeded on the
+        collaboration server is deleted — its deletion is idempotent and never
+        refused — and the duplicates are removed from the database, so neither
+        side is left with an orphan.
+        """
+        service = YHubService(user=user)
+        seeded = []
+        try:
+            for source, duplicated in duplicates:
+                try:
+                    update = service.get_ydoc(source)
+                except YHubError as err:
+                    logger.error(
+                        "could not fetch the content of document %s with error: %s",
+                        source.id,
+                        err,
+                    )
+                    raise drf.exceptions.APIException(
+                        "Failed to fetch the document content"
+                    ) from err
+
+                if not update:
+                    continue
+
+                seeded.append(duplicated)
+                try:
+                    service.create_ydoc(duplicated, update)
+                except YHubError as err:
+                    # 409 included: the duplicate was created moments ago with
+                    # a fresh id, content on the collaboration server for it
+                    # is not a state this flow can reach — a 409 says content
+                    # exists, nothing about it being the source's, and a 201
+                    # served on top of unknown content would be a lie.
+                    # Whatever it is, it undoes the duplication.
+                    logger.error(
+                        "could not copy the content into document %s with error: %s",
+                        duplicated.id,
+                        err,
+                    )
+                    raise drf.exceptions.APIException(
+                        "Failed to duplicate the document content"
+                    ) from err
+
+                # The attachments the content refers to are the ones the
+                # duplicate allows a cross-access to
+                extracted_attachments = set(extract_attachments_from_update(update))
+                duplicated.attachments = list(
+                    extracted_attachments & set(source.attachments)
                 )
 
-        return duplicated_document
+            models.Document.objects.bulk_update(seeded, ["attachments"])
+        except Exception:
+            # a saga must compensate on any failure, expected or not: whatever
+            # escapes the seeding of a subtree undoes the whole duplication
+            self._compensate_duplication(service, seeded, duplicates[0][1])
+            raise
+
+
+    @staticmethod
+    def _compensate_duplication(service, seeded, duplicated_root):
+        """
+        Undo a failed duplication.
+
+        What was seeded on the collaboration server is deleted first, then the
+        duplicated documents themselves: a deleted document answers 404 there,
+        so no editor can ever open a duplicate the database no longer holds.
+        A deletion the collaboration server cannot honour is logged rather
+        than raised, the duplicated documents must go down all the same.
+        """
+        for document in seeded:
+            try:
+                service.delete_ydoc(document)
+            except YHubError:
+                logger.exception(
+                    "could not delete the content of duplicated document %s "
+                    "from the collaboration server",
+                    document.id,
+                )
+
+        duplicated_root.delete()
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
     @utils.conditional_refresh_oidc_token
