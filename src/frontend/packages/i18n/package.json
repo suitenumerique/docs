@@ -20,10 +20,10 @@
     "eslint-plugin-docs": "*",
     "eslint-plugin-import": "2.32.0",
     "i18next-parser": "9.4.0",
-    "jest": "30.4.2",
+    "jest": "30.5.2",
     "ts-jest": "29.4.12",
     "typescript": "*",
-    "yargs": "18.1.0"
+    "yargs": "18.2.0"
   },
   "packageManager": "yarn@1.22.22"
 }
