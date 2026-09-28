@@ -115,6 +115,7 @@
     "stylelint-config-standard": "39.0.1",
     "stylelint-prettier": "5.0.3",
     "typescript": "*",
+    "vite": "8.3.1",
     "vitest": "5.0.1",
     "webpack": "5.111.1",
     "workbox-webpack-plugin": "7.1.0"

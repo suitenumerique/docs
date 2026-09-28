@@ -66,8 +66,6 @@
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
-        "@hocuspocus/provider",
-        "@hocuspocus/server",
         "node",
         "node-fetch",
         "react-resizable-panels",
