@@ -1,4 +1,4 @@
-import { Button, Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,10 +28,7 @@ import {
 } from '@/docs/doc-collaboration/vault';
 import { Doc, useEncryptionAccessCopy } from '@/docs/doc-management';
 import { User, useAuth } from '@/features/auth';
-import {
-  EncryptionEmptyState,
-  EncryptionModalContent,
-} from '@/features/docs/doc-management/components/EncryptionLayout';
+import { EncryptionEmptyState } from '@/features/docs/doc-management/components/EncryptionLayout';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 
@@ -425,10 +422,9 @@ const QuickSearchInviteInputSection = ({
 }: QuickSearchInviteInputSectionProps) => {
   const { t } = useTranslation();
   const { client: vaultClient } = useVaultClient();
-  const [showNoKeyModal, setShowNoKeyModal] = useState(false);
   // Subs of the search results that hold a registered encryption key, from
   // the directory; null until known (or when the lookup failed), in which
-  // case nobody is refused here and the invitation itself reports.
+  // case nobody is marked.
   const [registeredSubs, setRegisteredSubs] = useState<Set<string> | null>(
     null,
   );
@@ -475,7 +471,7 @@ const QuickSearchInviteInputSection = ({
     [isEncrypted, registeredSubs],
   );
 
-  const showEncryptedInviteWarning = useMemo(() => {
+  const showEncryptedInviteHint = useMemo(() => {
     const users = searchUsersRawData || [];
     const isEmail = isValidEmail(userQuery);
     const hasEmailInUsers = users.some(
@@ -483,17 +479,6 @@ const QuickSearchInviteInputSection = ({
     );
     return isEncrypted && isEmail && !hasEmailInUsers;
   }, [searchUsersRawData, userQuery, isEncrypted]);
-
-  const handleSelect = useCallback(
-    (user: User) => {
-      if (hasNoKey(user)) {
-        setShowNoKeyModal(true);
-        return;
-      }
-      onSelect(user);
-    },
-    [hasNoKey, onSelect],
-  );
 
   const searchUserData: QuickSearchData<User> = useMemo(() => {
     const users = searchUsersRawData || [];
@@ -511,7 +496,7 @@ const QuickSearchInviteInputSection = ({
       (user) => user.email.toLowerCase() === userQuery.toLowerCase(),
     );
 
-    const showInviteByEmail = isEmail && !hasEmailInUsers && !isEncrypted;
+    const showInviteByEmail = isEmail && !hasEmailInUsers;
 
     return {
       groupName: t('Search user result'),
@@ -520,12 +505,12 @@ const QuickSearchInviteInputSection = ({
         ? [
             {
               content: <DocShareModalInviteUserRow user={newUser} />,
-              onSelect: () => void handleSelect(newUser),
+              onSelect: () => void onSelect(newUser),
             },
           ]
         : undefined,
     };
-  }, [handleSelect, searchUsersRawData, t, userQuery, isEncrypted]);
+  }, [onSelect, searchUsersRawData, t, userQuery]);
 
   // On an encrypted document, a person's avatar opens their encryption
   // identity (fingerprint, trust decision), registered or not.
@@ -547,7 +532,7 @@ const QuickSearchInviteInputSection = ({
         return {
           label: t('No encryption'),
           hint: t(
-            'This person has not enabled encryption yet, so they cannot be added to an encrypted document.',
+            'This person has not enabled encryption yet. They will be added as pending and get access once they enable it, the next time the document owner opens the document.',
           ),
         };
       }
@@ -563,7 +548,7 @@ const QuickSearchInviteInputSection = ({
     >
       <QuickSearchGroup
         group={searchUserData}
-        onSelect={handleSelect}
+        onSelect={onSelect}
         renderElement={(user) => (
           <DocShareModalInviteUserRow
             user={user}
@@ -572,38 +557,16 @@ const QuickSearchInviteInputSection = ({
           />
         )}
       />
-      {showEncryptedInviteWarning && (
+      {showEncryptedInviteHint && (
         <Text
           $variation="secondary"
           $size="sm"
           $padding={{ horizontal: 'xs', top: '3xs' }}
         >
           {t(
-            'Only registered users with encryption enabled can be added to encrypted documents.',
+            'Invited people get access once they have signed up and enabled encryption, the next time the document owner opens the document.',
           )}
         </Text>
-      )}
-      {showNoKeyModal && (
-        <Modal
-          isOpen
-          closeOnClickOutside
-          onClose={() => setShowNoKeyModal(false)}
-          size={ModalSize.SMALL}
-          aria-label={t('Encryption required')}
-        >
-          <EncryptionModalContent
-            illustration="document-shield-x"
-            title={t('Encryption required')}
-            description={t(
-              'This person has not enabled encryption yet, so the document cannot be shared with them. Ask them to enable encryption first.',
-            )}
-            actions={
-              <Button fullWidth onClick={() => setShowNoKeyModal(false)}>
-                {t('Understood')}
-              </Button>
-            }
-          />
-        </Modal>
       )}
     </Box>
   );

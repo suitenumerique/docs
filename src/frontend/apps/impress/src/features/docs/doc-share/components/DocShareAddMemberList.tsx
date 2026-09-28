@@ -122,31 +122,16 @@ export const DocShareAddMemberList = ({
       };
 
       if (isInvitationMode) {
-        if (doc.is_encrypted) {
-          throw Object.assign(
-            new Error(
-              t(
-                'Only registered users with encryption enabled can be added to encrypted documents.',
-              ),
-            ),
-            {
-              cause: [
-                t(
-                  'Only registered users with encryption enabled can be added to encrypted documents.',
-                ),
-              ],
-              data: { value: user.email, type: OptionType.INVITATION },
-            },
-          ) as APIErrorUser;
-        }
-
+        // On an encrypted document the invitee becomes a pending member when
+        // they sign up, like anyone added without encryption.
         return createInvitation({
           ...payload,
           email: user.email.toLowerCase(),
         });
       }
 
-      // For encrypted docs, re-wrap the symmetric key for the new member via vault
+      // For encrypted docs, re-wrap the symmetric key for the new member via
+      // vault; a member without encryption is created pending (no key).
       let memberEncryptedSymmetricKey: string | null = null;
       let encryptionPublicKeyVersion: number | null = null;
 

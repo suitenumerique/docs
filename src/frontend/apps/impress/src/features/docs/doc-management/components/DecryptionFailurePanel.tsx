@@ -19,13 +19,13 @@ export const DecryptionFailurePanel = ({ failure }: Props) => {
     key_unavailable: {
       title: t('This document was shared with a previous key'),
       description: t(
-        'It was shared with you under an encryption key you no longer have, most likely from before you reset your encryption. Ask the document owner to remove you from its members and add you again.',
+        'That key is no longer on your account, most likely because you reset your encryption. Ask the document owner to remove you from its members and add you again.',
       ),
     },
     key_mismatch: {
       title: t('This document was encrypted with a different key'),
       description: t(
-        "The copy of this document's key stored for you cannot be opened with your encryption key. Ask the document owner to remove you from its members and add you again.",
+        'Your current encryption key cannot open it. Ask the document owner to remove you from its members and add you again.',
       ),
     },
     content_integrity: {

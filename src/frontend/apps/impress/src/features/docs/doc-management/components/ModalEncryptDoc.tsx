@@ -157,7 +157,9 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
 
   const effectiveReach = getDocLinkReach(doc);
   const isRestricted = effectiveReach === LinkReach.RESTRICTED;
-  const hasPendingInvitations = !!invitationsData && invitationsData.count > 0;
+  // Invitees have no account yet: their invitation becomes a pending access
+  // when they sign up, like a member without encryption.
+  const invitationCount = invitationsData?.count ?? 0;
 
   // Fetch public keys from the encryption service to check who has encryption enabled
   const [publicKeysMap, setPublicKeysMap] = useState<
@@ -212,12 +214,14 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
     [membersWithoutKey, user?.suite_user_id],
   );
 
+  const pendingCount = othersWithoutKey.length + invitationCount;
+
   const hasEncryptionKeys = !!encryptionSettings;
 
   // Members with no public key will be written to the backend as
   // pending (`null` wrapped key). They'll see the document in their
-  // listings but won't be able to decrypt until a validated collaborator
-  // accepts them from the share dialog. This no longer blocks
+  // listings but won't be able to decrypt until the owner, opening the
+  // document, gives them its key. This no longer blocks
   // encryption — only the degenerate case where NOBODY has a key does.
   const hasAnyPublicKey =
     accesses === undefined || accesses.length === 0
@@ -226,11 +230,7 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
           (a) => a.user?.suite_user_id && !!publicKeysMap[a.user.suite_user_id],
         );
 
-  const canEncrypt =
-    hasEncryptionKeys &&
-    isRestricted &&
-    !hasPendingInvitations &&
-    hasAnyPublicKey;
+  const canEncrypt = hasEncryptionKeys && isRestricted && hasAnyPublicKey;
 
   const handleClose = () => {
     if (isPending) {
@@ -388,9 +388,6 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
       }),
     );
   }
-  if (hasPendingInvitations) {
-    blockers.push(t('Pending invitations must be resolved first'));
-  }
 
   return (
     <Modal
@@ -451,11 +448,11 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
           </Alert>
         )}
 
-        {!isError && blockers.length === 0 && othersWithoutKey.length > 0 && (
+        {!isError && blockers.length === 0 && pendingCount > 0 && (
           <Alert type={VariantType.WARNING}>
             {t(
-              '{{count}} collaborator(s) have not enabled encryption yet. They will be added as pending and get access once they enable it.',
-              { count: othersWithoutKey.length },
+              '{{count}} collaborators have not enabled encryption yet. They will be added as pending and get access once they enable it.',
+              { count: pendingCount },
             )}
           </Alert>
         )}

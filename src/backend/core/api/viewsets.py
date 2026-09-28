@@ -2071,14 +2071,6 @@ class DocumentViewSet(
                 'Please set the document access to "Restricted" before encrypting.'
             })
 
-        # Prevent encryption if there are pending invitations
-        if document.invitations.exists():
-            raise drf.exceptions.ValidationError({
-                'non_field_errors':
-                'Cannot encrypt a document with pending invitations. '
-                'Please resolve all invitations before encrypting.'
-            })
-
         # Validate that we have encrypted symmetric keys for all users with access.
         # Keys in encryptedSymmetricKeyPerUser are keyed by the user's OIDC sub (suite_user_id).
         # Values may be a wrapped key (validated) or explicit null (pending —
@@ -2686,15 +2678,9 @@ class InvitationViewset(
 
     def perform_create(self, serializer):
         """Save invitation to a document then send an email to the invited user."""
-        # Prevent invitation creation for encrypted documents
-        document = models.Document.objects.get(pk=self.kwargs["resource_id"])
-        if document.is_encrypted:
-            raise drf.exceptions.ValidationError({
-                'non_field_errors':
-                'Cannot create invitations for encrypted documents. '
-                'All invitations must be resolved before encrypting a document.'
-            })
-
+        # On an encrypted document the invitee signs up without a key: their
+        # invitation becomes a pending access, accepted once they have enabled
+        # encryption.
         invitation = serializer.save()
 
         invitation.document.send_invitation_email(
@@ -2703,19 +2689,6 @@ class InvitationViewset(
             self.request.user,
             self.request.user.language or settings.LANGUAGE_CODE,
         )
-
-    def perform_update(self, serializer):
-        """Update an invitation to a document."""
-        # Prevent invitation updates for encrypted documents
-        document = models.Document.objects.get(pk=self.kwargs["resource_id"])
-        if document.is_encrypted:
-            raise drf.exceptions.ValidationError({
-                'non_field_errors':
-                'Cannot update invitations for encrypted documents. '
-                'All invitations must be resolved before encrypting a document.'
-            })
-
-        return super().perform_update(serializer)
 
 
 class DocumentAskForAccessViewSet(
