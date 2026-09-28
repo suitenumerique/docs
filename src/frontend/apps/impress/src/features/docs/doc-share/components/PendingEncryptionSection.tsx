@@ -9,10 +9,9 @@ import {
   fetchRegisteredKeys,
   useVaultClient,
 } from '@/features/docs/doc-collaboration/vault';
-import { toBase64 } from '@/features/docs/doc-editor';
 import type { Access, Doc } from '@/features/docs/doc-management';
 
-import { useAcceptEncryptionAccess } from '../api/useAcceptEncryptionAccess';
+import { useAcceptPendingMembers } from '../api/useAcceptEncryptionAccess';
 
 interface Props {
   doc: Doc;
@@ -27,9 +26,9 @@ interface Props {
  * Two sub-states per row, driven by an upfront public-key probe:
  *  - invitee HAS a public key → Accept button actionable. One click
  *    re-wraps the document key against their key and PATCHes the row.
- *  - invitee has NO public key yet → no button, just a hint saying we're
- *    waiting for them to complete onboarding. This prevents the
- *    "click Accept, get a cryptic error" loop.
+ *  - invitee has NO public key yet → no button, a "Waiting for encryption"
+ *    chip; one line under the heading explains it for every such row. This
+ *    prevents the "click Accept, get a cryptic error" loop.
  */
 export const PendingEncryptionSection = ({
   doc,
@@ -38,7 +37,7 @@ export const PendingEncryptionSection = ({
 }: Props) => {
   const { t } = useTranslation();
   const { client: vaultClient } = useVaultClient();
-  const { mutateAsync: acceptMutation } = useAcceptEncryptionAccess();
+  const acceptPendingMembers = useAcceptPendingMembers();
 
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
   const [errorByAccessId, setErrorByAccessId] = useState<
@@ -111,9 +110,8 @@ export const PendingEncryptionSection = ({
   }
 
   const handleAccept = async (access: Access) => {
-    const recipient = access.user;
-    const sub = recipient?.suite_user_id;
-    if (!sub || !recipient || !vaultClient || !documentEncryptionSettings) {
+    const sub = access.user?.suite_user_id;
+    if (!sub || !vaultClient || !documentEncryptionSettings) {
       return;
     }
     setInFlight((prev) => new Set(prev).add(access.id));
@@ -123,35 +121,21 @@ export const PendingEncryptionSection = ({
       return copy;
     });
     try {
-      const { publicKeys, versions } = await fetchRegisteredKeys(vaultClient, [
-        sub,
-      ]);
-      const userPublicKey = publicKeys[sub];
-      if (!userPublicKey) {
+      const { accepted, notReady } = await acceptPendingMembers(
+        vaultClient,
+        doc.id,
+        documentEncryptionSettings,
+        [access],
+      );
+      if (notReady.length > 0) {
         setHasPublicKeyBySub((m) => ({ ...m, [sub]: false }));
         throw new Error(
           t("This user still hasn't completed their encryption onboarding."),
         );
       }
-      // The vault resolves + trust-checks the recipient key (binding + TOFU);
-      // the fetched userPublicKey above only gates on completed onboarding. The
-      // label (email/name) is display-only, shown if the trust modal opens.
-      const { encryptedKeys } = await vaultClient.shareKeys(
-        documentEncryptionSettings.encryptedSymmetricKey,
-        { [sub]: { email: recipient.email, name: recipient.full_name } },
-      );
-      const wrappedKey = encryptedKeys[sub];
-      if (!wrappedKey) {
+      if (accepted.length === 0) {
         throw new Error(t('Failed to wrap the document key for this user.'));
       }
-      await acceptMutation({
-        docId: doc.id,
-        accessId: access.id,
-        encrypted_document_symmetric_key_for_user: toBase64(
-          new Uint8Array(wrappedKey),
-        ),
-        encryption_public_key_version: versions[sub],
-      });
     } catch (err) {
       setErrorByAccessId((prev) => ({
         ...prev,
@@ -166,26 +150,41 @@ export const PendingEncryptionSection = ({
     }
   };
 
+  const canAcceptAccess = (access: Access) => {
+    const sub = access.user?.suite_user_id;
+    return (
+      !!sub &&
+      !!documentEncryptionSettings &&
+      hasPublicKeyBySub[sub] === true &&
+      !probing
+    );
+  };
+  const someoneWaiting =
+    !probing && pending.some((access) => !canAcceptAccess(access));
+
   return (
     <Box
       className="--docs--pending-encryption"
       $margin={{ horizontal: 'base', bottom: 'sm' }}
       $gap="xs"
     >
-      <Text $size="xs" $weight="700" $variation="secondary">
-        {t('Action needed')}
-      </Text>
+      <Box $gap="4xs">
+        <Text $size="xs" $weight="700" $variation="secondary">
+          {t('Action needed')}
+        </Text>
+        {someoneWaiting && (
+          <Text $size="xs" $variation="tertiary">
+            {t(
+              'Members who have not enabled encryption yet get access once they do.',
+            )}
+          </Text>
+        )}
+      </Box>
       <Box $gap="xs">
         {pending.map((access) => {
-          const sub = access.user?.suite_user_id;
           const isBusy = inFlight.has(access.id);
           const error = errorByAccessId[access.id];
-          const hasPublicKey = sub ? hasPublicKeyBySub[sub] : false;
-          const canAccept =
-            !!sub &&
-            !!documentEncryptionSettings &&
-            hasPublicKey === true &&
-            !probing;
+          const canAccept = canAcceptAccess(access);
           const name = access.user?.full_name || access.user?.email || '';
 
           return (
@@ -213,12 +212,17 @@ export const PendingEncryptionSection = ({
                       {access.user.email}
                     </Text>
                   )}
-                  {!canAccept && !probing && (
-                    <Text $size="xs" $variation="secondary">
-                      {t(
-                        'Waiting for them to enable encryption. You will be able to accept them once they have.',
-                      )}
-                    </Text>
+                  {canAccept && (
+                    <Box $direction="row" $align="center" $gap="4xs">
+                      <Icon
+                        iconName="verified_user"
+                        $size="14px"
+                        $theme="success"
+                      />
+                      <Text $size="xs" $weight="500" $theme="success">
+                        {t('Encryption enabled')}
+                      </Text>
+                    </Box>
                   )}
                   {error && (
                     <Text $size="xs" $theme="error">
@@ -245,6 +249,7 @@ export const PendingEncryptionSection = ({
                   $radius="4px"
                   $height="24px"
                   $background="var(--c--contextuals--background--surface--tertiary)"
+                  title={t('Waiting for them to enable encryption')}
                 >
                   <Icon iconName="schedule" $size="sm" $variation="tertiary" />
                   <Text
@@ -253,7 +258,7 @@ export const PendingEncryptionSection = ({
                     $variation="tertiary"
                     $css="white-space: nowrap;"
                   >
-                    {t('Pending encryption')}
+                    {t('Waiting for encryption')}
                   </Text>
                 </Box>
               )}

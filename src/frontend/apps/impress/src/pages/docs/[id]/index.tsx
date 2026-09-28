@@ -16,6 +16,7 @@ import {
   useCollaboration,
   useDoc,
   useDocStore,
+  useEncryptionAccessCopy,
   useProviderStore,
   useTrans,
 } from '@/docs/doc-management/';
@@ -30,8 +31,9 @@ import {
   useUserEncryption,
 } from '@/features/docs/doc-collaboration';
 import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
+import { DecryptionFailurePanel } from '@/features/docs/doc-management/components/DecryptionFailurePanel';
 import { EncryptionEmptyState } from '@/features/docs/doc-management/components/EncryptionLayout';
-import { KeyMismatchPanel } from '@/features/docs/doc-management/components/KeyMismatchPanel';
+import { useAutoAcceptPendingMembers } from '@/features/docs/doc-share';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
@@ -83,7 +85,7 @@ const DocPage = ({ id }: DocProps) => {
     encryptionTransition,
     clearEncryptionTransition,
     provider,
-    decryptionFailed,
+    decryptionFailure,
   } = useProviderStore();
   const { isSkeletonVisible, setIsSkeletonVisible } = useSkeletonStore();
   const {
@@ -97,6 +99,10 @@ const DocPage = ({ id }: DocProps) => {
       staleTime: 0,
       queryKey: [KEY_DOC, { id }],
       retryDelay: 1000,
+      // A pending member is let in by an owner opening the document elsewhere:
+      // look again now and then so the page opens by itself once they have.
+      refetchInterval: (query) =>
+        query.state.data?.is_pending_encryption_for_user ? 15_000 : false,
       retry: (failureCount, error) => {
         if (error.status == 403 || error.status == 401 || error.status == 404) {
           return false;
@@ -123,6 +129,16 @@ const DocPage = ({ id }: DocProps) => {
     user?.suite_user_id
       ? doc?.accesses_versions_per_user?.[user.suite_user_id]
       : undefined,
+    doc?.is_pending_encryption_for_user,
+  );
+  const needsSetup =
+    encryptionError === 'missing_private_key' ||
+    encryptionError === 'missing_public_key';
+  const accessCopy = useEncryptionAccessCopy(doc, needsSetup);
+  // Only once the content decrypted: the key then provably opens.
+  useAutoAcceptPendingMembers(
+    doc,
+    provider ? documentEncryptionSettings : null,
   );
   const { setCurrentDoc } = useDocStore();
   const { addTask } = useBroadcastStore();
@@ -301,8 +317,8 @@ const DocPage = ({ id }: DocProps) => {
     return <Loading />;
   }
 
-  if (doc.is_encrypted && decryptionFailed) {
-    return <KeyMismatchPanel doc={doc} />;
+  if (doc.is_encrypted && decryptionFailure) {
+    return <DecryptionFailurePanel failure={decryptionFailure} />;
   }
 
   if (doc.is_encrypted && vaultClientError) {
@@ -339,27 +355,11 @@ const DocPage = ({ id }: DocProps) => {
   }
 
   if (doc.is_encrypted && (encryptionError || documentEncryptionError)) {
-    const needsSetup =
-      encryptionError === 'missing_private_key' ||
-      encryptionError === 'missing_public_key';
-
     return (
       <>
         <EncryptionEmptyState
-          title={t('Encrypted document')}
-          description={
-            needsSetup
-              ? t(
-                  'This document is encrypted. You must enable encryption on your account to access it.',
-                )
-              : documentEncryptionError === 'missing_symmetric_key'
-                ? t(
-                    'You do not have access to this encrypted document. Ask the document owner to share it with you again.',
-                  )
-                : t(
-                    'You do not have the correct encryption key to decrypt this document. Ask the document owner to share it with you again.',
-                  )
-          }
+          title={accessCopy.title}
+          description={accessCopy.description}
           actions={
             <>
               <StyledLink href="/">

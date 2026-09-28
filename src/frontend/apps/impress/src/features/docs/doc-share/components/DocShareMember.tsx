@@ -17,14 +17,13 @@ import { useDocAccesses, useUpdateDocAccess } from '../api';
 import { useWhoAmI } from '../hooks/';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
-import { SearchUserRow } from './SearchUserRow';
+import { SearchUserRow, UserRowStatus } from './SearchUserRow';
 
 type Props = {
   doc?: Doc;
   access: Access;
   isInherited?: boolean;
-  suffix?: string;
-  suffixIcon?: string;
+  suffix?: UserRowStatus;
   onAvatarClick?: () => void;
 };
 export const DocShareMemberItem = ({
@@ -32,7 +31,6 @@ export const DocShareMemberItem = ({
   access,
   isInherited = false,
   suffix,
-  suffixIcon,
   onAvatarClick,
 }: Props) => {
   const { t } = useTranslation();
@@ -78,7 +76,6 @@ export const DocShareMemberItem = ({
         alwaysShowRight={true}
         user={access.user}
         suffix={suffix}
-        suffixIcon={suffixIcon}
         onAvatarClick={onAvatarClick}
         right={
           <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
@@ -139,9 +136,6 @@ export const QuickSearchGroupMember = ({
         group={membersData}
         renderElement={(access) => {
           const uid = access.user.suite_user_id;
-          const hasNoEncryptionKey =
-            doc.is_encrypted &&
-            (!uid || !doc.accesses_versions_per_user?.[uid]);
 
           // On an encrypted document, a member's avatar opens their
           // encryption identity (fingerprint, trust decision); not one's own.
@@ -158,7 +152,17 @@ export const QuickSearchGroupMember = ({
             <DocShareMemberItem
               doc={doc}
               access={access}
-              suffix={hasNoEncryptionKey ? t('No encryption') : undefined}
+              suffix={
+                doc.is_encrypted && access.is_pending_encryption
+                  ? {
+                      label: t('Waiting for encryption'),
+                      hint: t(
+                        'Added before they enabled encryption. They get access once they have, the next time the document owner opens it.',
+                      ),
+                      icon: 'schedule',
+                    }
+                  : undefined
+              }
               onAvatarClick={identityOf}
             />
           );

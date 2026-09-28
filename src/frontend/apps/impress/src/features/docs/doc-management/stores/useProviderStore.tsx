@@ -22,6 +22,38 @@ export type SwitchableProvider = RelayProvider | HocuspocusProvider;
 
 export type EncryptionTransitionType = 'encrypting' | 'removing-encryption';
 
+/**
+ * Why an encrypted document could not be opened:
+ * - `key_unavailable`: shared for a key version the user no longer holds
+ *   (typically from before they reset their encryption);
+ * - `key_mismatch`: the user's key cannot open the copy of the document key
+ *   stored for them;
+ * - `content_integrity`: the document key opened, the stored content failed its
+ *   integrity check (damaged or altered);
+ * - `unknown`: anything else (vault unreachable mid-way, unexpected error).
+ */
+export type DecryptionFailure =
+  | 'key_unavailable'
+  | 'key_mismatch'
+  | 'content_integrity'
+  | 'unknown';
+
+export const decryptionFailureOf = (err: unknown): DecryptionFailure => {
+  switch ((err as VaultError | null | undefined)?.code) {
+    case 'KEY_VERSION_UNAVAILABLE':
+      return 'key_unavailable';
+    case 'WRONG_SECRET_KEY':
+      return 'key_mismatch';
+    case 'CONTENT_INTEGRITY_FAILED':
+    case 'MALFORMED_CIPHERTEXT':
+    case 'CIPHERTEXT_TOO_SHORT':
+    case 'UNSUPPORTED_CRYPTO_VERSION':
+      return 'content_integrity';
+    default:
+      return 'unknown';
+  }
+};
+
 export interface UseCollaborationStore {
   createProvider: (
     providerUrl: string,
@@ -43,7 +75,8 @@ export interface UseCollaborationStore {
   isSynced: boolean;
   hasLostConnection: boolean;
   encryptionTransition: EncryptionTransitionType | null;
-  decryptionFailed: boolean;
+  decryptionFailure: DecryptionFailure | null;
+  setDecryptionFailure: (failure: DecryptionFailure) => void;
   resetLostConnection: () => void;
 }
 
@@ -54,7 +87,7 @@ const defaultValues = {
   isSynced: false,
   hasLostConnection: false,
   encryptionTransition: null,
-  decryptionFailed: false,
+  decryptionFailure: null,
 };
 
 function handleEncryptionSystemMessage(
@@ -84,6 +117,7 @@ function handleEncryptionSystemMessage(
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
   ...defaultValues,
+  setDecryptionFailure: (failure) => set({ decryptionFailure: failure }),
   createProvider: (wsUrl, storeId, initialDocState, encryptionOptions) => {
     const isEncrypted = !!encryptionOptions;
 
@@ -115,14 +149,11 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
           }
         },
         onDecryptError: (err) => {
-          // Match on the stable VaultError code rather than message
-          // text — the SDK guarantees `code === 'WRONG_SECRET_KEY'`
-          // for the AEAD-verification failure branch (libsodium's
-          // "wrong secret key for the given ciphertext").
-          if (
-            (err as VaultError | null | undefined)?.code === 'WRONG_SECRET_KEY'
-          ) {
-            set({ decryptionFailed: true });
+          // A key that cannot open the document key makes every message
+          // unreadable; one damaged message alone does not end the session.
+          const failure = decryptionFailureOf(err);
+          if (failure === 'key_unavailable' || failure === 'key_mismatch') {
+            set({ decryptionFailure: failure });
           }
         },
       });

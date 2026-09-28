@@ -2,7 +2,11 @@ import { useEffect } from 'react';
 
 import { useCollaborationUrl } from '@/core/config';
 import { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
-import { Base64, useProviderStore } from '@/docs/doc-management';
+import {
+  Base64,
+  decryptionFailureOf,
+  useProviderStore,
+} from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
 import { useBroadcastStore } from '@/stores';
@@ -17,8 +21,13 @@ export const useCollaboration = (
   const { setBroadcastProvider, cleanupBroadcast } = useBroadcastStore();
   const { user } = useAuth();
   const { client: vaultClient } = useVaultClient();
-  const { provider, createProvider, destroyProvider, encryptionTransition } =
-    useProviderStore();
+  const {
+    provider,
+    createProvider,
+    destroyProvider,
+    encryptionTransition,
+    setDecryptionFailure,
+  } = useProviderStore();
 
   useEffect(() => {
     if (
@@ -68,6 +77,7 @@ export const useCollaboration = (
         setBroadcastProvider(newProvider);
       })().catch((err) => {
         console.error('Failed to decrypt document content:', err);
+        setDecryptionFailure(decryptionFailureOf(err));
       });
     } else {
       const newProvider = createProvider(
@@ -90,6 +100,7 @@ export const useCollaboration = (
     documentEncryptionSettings,
     vaultClient,
     encryptionTransition,
+    setDecryptionFailure,
   ]);
 
   useEffect(() => {

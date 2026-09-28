@@ -26,7 +26,7 @@ import {
   fetchRegisteredKeys,
   useVaultClient,
 } from '@/docs/doc-collaboration/vault';
-import { Doc } from '@/docs/doc-management';
+import { Doc, useEncryptionAccessCopy } from '@/docs/doc-management';
 import { User, useAuth } from '@/features/auth';
 import {
   EncryptionEmptyState,
@@ -57,6 +57,7 @@ import {
 import { QuickSearchGroupMember } from './DocShareMember';
 import { DocShareModalFooter } from './DocShareModalFooter';
 import { PendingEncryptionSection } from './PendingEncryptionSection';
+import { UserRowStatus } from './SearchUserRow';
 
 const ShareModalStyle = createGlobalStyle`
   .--docs--doc-share-modal [cmdk-item] {
@@ -101,6 +102,12 @@ export const DocShareModal = ({
     needsDerivation && user?.suite_user_id
       ? doc.accesses_versions_per_user?.[user.suite_user_id]
       : undefined,
+    needsDerivation ? doc.is_pending_encryption_for_user : undefined,
+  );
+  const accessCopy = useEncryptionAccessCopy(
+    doc,
+    encryptionError === 'missing_private_key' ||
+      encryptionError === 'missing_public_key',
   );
   const effectiveEncryptionSettings =
     documentEncryptionSettings ?? derivedEncryptionSettings ?? null;
@@ -268,21 +275,8 @@ export const DocShareModal = ({
         {isEncryptionDeriving && <Loading />}
         {!isEncryptionDeriving && derivedEncryptionError && (
           <EncryptionEmptyState
-            title={t('Encrypted document')}
-            description={
-              encryptionError === 'missing_private_key' ||
-              encryptionError === 'missing_public_key'
-                ? t(
-                    'This document is encrypted. You must enable encryption on your account to access it.',
-                  )
-                : documentEncryptionError === 'missing_symmetric_key'
-                  ? t(
-                      'You do not have access to this encrypted document. Ask the document owner to share it with you again.',
-                    )
-                  : t(
-                      'You do not have the correct encryption key to decrypt this document. Ask the document owner to share it with you again.',
-                    )
-            }
+            title={accessCopy.title}
+            description={accessCopy.description}
           />
         )}
         {!isEncryptionDeriving && !derivedEncryptionError && (
@@ -548,9 +542,14 @@ const QuickSearchInviteInputSection = ({
   };
 
   const getUserSuffix = useCallback(
-    (user: User): string | undefined => {
+    (user: User): UserRowStatus | undefined => {
       if (hasNoKey(user)) {
-        return t('No encryption');
+        return {
+          label: t('No encryption'),
+          hint: t(
+            'This person has not enabled encryption yet, so they cannot be added to an encrypted document.',
+          ),
+        };
       }
       return undefined;
     },

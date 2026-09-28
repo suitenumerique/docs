@@ -8,3 +8,4 @@ export * from './useDocInvitations';
 export * from './useUpdateDocAccess';
 export * from './useUpdateDocInvitation';
 export * from './useUsers';
+export * from './useAcceptEncryptionAccess';

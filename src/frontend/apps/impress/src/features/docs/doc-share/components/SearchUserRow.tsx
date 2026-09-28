@@ -1,3 +1,4 @@
+import { Tooltip } from '@gouvfr-lasuite/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, BoxButton, Icon, Text } from '@/components';
@@ -8,15 +9,20 @@ import {
 import { useCunninghamTheme } from '@/cunningham';
 import { User, UserAvatar } from '@/features/auth';
 
+export type UserRowStatus = {
+  label: string;
+  hint: string;
+  /** Material icon; the crossed shield by default. */
+  icon?: string;
+};
+
 type Props = {
   user: User;
   alwaysShowRight?: boolean;
   right?: QuickSearchItemContentProps['right'];
   isInvitation?: boolean;
-  /** A short status ("No encryption") shown as an icon with the text as tooltip. */
-  suffix?: string;
-  /** Material icon for the suffix; the crossed shield by default. */
-  suffixIcon?: string;
+  /** A short status next to the name, with a sentence explaining it on hover. */
+  suffix?: UserRowStatus;
   /** Makes the avatar a button (the person's encryption identity). */
   onAvatarClick?: () => void;
 };
@@ -27,7 +33,6 @@ export const SearchUserRow = ({
   alwaysShowRight = false,
   isInvitation = false,
   suffix,
-  suffixIcon = 'gpp_bad',
   onAvatarClick,
 }: Props) => {
   const { t } = useTranslation();
@@ -76,14 +81,33 @@ export const SearchUserRow = ({
                 {hasFullName ? user.full_name : user.email}
               </Text>
               {suffix && (
-                <Icon
-                  iconName={suffixIcon}
-                  $size="sm"
-                  $theme="neutral"
-                  $variation="tertiary"
-                  aria-label={suffix}
-                  title={suffix}
-                />
+                <Tooltip
+                  content={<Text $textAlign="center">{suffix.hint}</Text>}
+                  placement="top"
+                >
+                  <Box
+                    $direction="row"
+                    $align="center"
+                    $gap="4xs"
+                    aria-label={`${suffix.label}. ${suffix.hint}`}
+                  >
+                    <Icon
+                      iconName={suffix.icon ?? 'gpp_bad'}
+                      $size="14px"
+                      $theme="neutral"
+                      $variation="tertiary"
+                    />
+                    <Text
+                      $size="xs"
+                      $weight="500"
+                      $theme="neutral"
+                      $variation="tertiary"
+                      $css="white-space: nowrap;"
+                    >
+                      {suffix.label}
+                    </Text>
+                  </Box>
+                </Tooltip>
               )}
             </Box>
             {hasFullName && (

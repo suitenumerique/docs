@@ -107,6 +107,7 @@ export declare class VaultClient {
     private overlay;
     private overlayWatchdog;
     private overlayBootFailure;
+    private overlayReadyFallback;
     private verifyResolve;
     private emergencySurfaced;
     private pendingContext;
@@ -223,8 +224,10 @@ export declare class VaultClient {
      * @param encryptedSymmetricKey - user's encrypted copy of the symmetric key
      * @param keyVersion - the recipient's encryption-key VERSION this wrap was
      *   produced against, as stored by the product on the access row. The vault
-     *   unwraps with exactly that retained key (a version this device no longer
-     *   holds throws WRONG_SECRET_KEY).
+     *   unwraps with exactly that retained key: a version this vault does not
+     *   hold throws KEY_VERSION_UNAVAILABLE, a wrap that key cannot open throws
+     *   WRONG_SECRET_KEY, and content that fails its integrity check under the
+     *   unwrapped key throws CONTENT_INTEGRITY_FAILED.
      * @param encryptedKeyChain - optional chain of wrapped keys for Drive's key hierarchy.
      *   When provided, resolves the chain from entry point to target before decrypting.
      */
@@ -409,8 +412,8 @@ export declare class VaultClient {
     off<K extends keyof EncryptionClientEventMap>(event: K, listener: Listener<K>): void;
     /**
      * Lay the transparent full-viewport layer over the page and load the interface
-     * in it. The layer stays `visibility: hidden` until the app inside asks for
-     * its context (the proof it came up), and that is the only right way to hide it:
+     * in it. The layer stays `visibility: hidden` until the app inside reports its
+     * modal painted, and that is the only right way to hide it:
      *  - `display: none` would stop the iframe laying out, so the app inside could
      *    mount at zero size;
      *  - `opacity: 0` would keep the layer in the hit-test, so this full-viewport
@@ -422,7 +425,19 @@ export declare class VaultClient {
      * for, silently for the overlays the SDK opens on its own.
      */
     private openOverlay;
-    /** The app inside mounted: show the layer, stand the watchdog down, tell the product. */
+    /**
+     * The app inside came up: stand the watchdog down and wait for its modal
+     * (`revealOverlay`), for a bounded time. The layer stays hidden meanwhile,
+     * over the product's own loader.
+     */
+    private overlayBooted;
+    /**
+     * The app inside has its modal in the DOM: show the layer and have the
+     * product drop its loader, in one go, so both land in the same paint. The
+     * layer is transparent and both modals dim the page the same way, so a
+     * moment with the two of them, or with neither, would show as a blink.
+     * Once per opening.
+     */
     private revealOverlay;
     /**
      * Construct and configure an interface iframe for `path` (sandbox, allow,
@@ -520,12 +535,28 @@ export declare const VaultErrorCode: {
     /** No key pair stored locally on this device — user must onboard. */
     readonly MISSING_KEYS: "MISSING_KEYS";
     /**
+     * This device holds keys, but not the encryption key version the content was
+     * wrapped for: typically a key from before the user reset their encryption,
+     * whose private half is gone. The content must be shared again with the
+     * current key; it is not a reason to onboard.
+     */
+    readonly KEY_VERSION_UNAVAILABLE: "KEY_VERSION_UNAVAILABLE";
+    /**
      * AEAD verification failed. Either the ciphertext is for a different
      * recipient (their wrapped symmetric key was encrypted against another
      * pubkey) or the underlying KEM secret didn't match. Bubbles up from
      * libsodium's "wrong secret key for the given ciphertext".
      */
     readonly WRONG_SECRET_KEY: "WRONG_SECRET_KEY";
+    /**
+     * The symmetric key was unwrapped, but the content failed its integrity check
+     * under it (the AEAD tag did not verify): the content was damaged or altered
+     * in storage, or encrypted under another key. The vault cannot tell which, so
+     * the name states the check, not a cause. Raised by `decrypt-with-key` for the
+     * content step only, so a product can tell "your key does not open this" from
+     * "this content cannot be trusted". Mirrors VAULT_INTEGRITY_FAILED.
+     */
+    readonly CONTENT_INTEGRITY_FAILED: "CONTENT_INTEGRITY_FAILED";
     /** Backup payload is corrupted, truncated, or from an unsupported version. */
     readonly INVALID_BACKUP: "INVALID_BACKUP";
     /** BIP-39-style mnemonic input that doesn't checksum. */

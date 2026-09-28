@@ -16,7 +16,7 @@ import { useDocInvitationsInfinite, useUpdateDocInvitation } from '../api';
 import { Invitation } from '../types';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
-import { SearchUserRow } from './SearchUserRow';
+import { SearchUserRow, UserRowStatus } from './SearchUserRow';
 
 type DocShareInvitationItemProps = {
   doc: Doc;
@@ -92,14 +92,12 @@ export const DocShareInvitationItem = ({
 
 type DocShareModalInviteUserRowProps = {
   user: User;
-  suffix?: string;
-  suffixIcon?: string;
+  suffix?: UserRowStatus;
   onAvatarClick?: () => void;
 };
 export const DocShareModalInviteUserRow = ({
   user,
   suffix,
-  suffixIcon,
   onAvatarClick,
 }: DocShareModalInviteUserRowProps) => {
   const { t } = useTranslation();
@@ -112,7 +110,6 @@ export const DocShareModalInviteUserRow = ({
       <SearchUserRow
         user={user}
         suffix={suffix}
-        suffixIcon={suffixIcon}
         onAvatarClick={onAvatarClick}
         right={
           <BoxButton

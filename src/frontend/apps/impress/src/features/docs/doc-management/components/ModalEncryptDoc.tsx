@@ -454,7 +454,7 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
         {!isError && blockers.length === 0 && othersWithoutKey.length > 0 && (
           <Alert type={VariantType.WARNING}>
             {t(
-              '{{count}} collaborator(s) have not enabled encryption yet. They will be added as pending and cannot open the document until someone accepts them from the share dialog.',
+              '{{count}} collaborator(s) have not enabled encryption yet. They will be added as pending and get access once they enable it.',
               { count: othersWithoutKey.length },
             )}
           </Alert>
