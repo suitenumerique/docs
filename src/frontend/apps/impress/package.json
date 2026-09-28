@@ -55,7 +55,7 @@
     "@tiptap/extension-find-and-replace": "3.31.3",
     "@tiptap/extensions": "*",
     "@y/yhub-http-fallback": "0.1.1",
-    "ai": "6.0.205",
+    "ai": "6.0.295",
     "canvg": "4.0.3",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",

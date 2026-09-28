@@ -29,7 +29,8 @@
     "nodemon": "3.1.14",
     "typescript": "6.0.3",
     "typescript-eslint": "8.70.0",
-    "vitest": "3.2.7"
+    "vite": "8.3.1",
+    "vitest": "5.0.1"
   },
   "engines": {
     "node": ">=22"
