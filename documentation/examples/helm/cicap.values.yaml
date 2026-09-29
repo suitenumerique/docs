@@ -1,15 +1,19 @@
 cicap:
   enabled: true
-  name: cicap
+  # Service name used in MALWARE_DETECTION_PARAMETERS "server_address"
+  # (defaults to <release>-dev-backend-cicap, i.e. cicap-dev-backend-cicap)
   #serviceNameOverride: cicap
-  registry: registry.opencode.de
-  repository: bmi/opendesk/components/platform-development/images/clamav-icap
-  tag: "0.6.4"
-  clamd:
-    image: clamav/clamav:stable
   port: 1344
   # MaxObjectSize limits the size of files scanned by the ICAP service
   maxObjectSize: 100M
   # StreamMaxLength limits the size of files scanned by clamd
   streamMaxLength: 100M
-  resources: {}
+  clamd:
+    # clamd keeps the whole ClamAV database in memory (~1Gi, about twice as
+    # much while reloading it after an update): make sure your cluster can
+    # schedule it
+    resources:
+      requests:
+        memory: 1536Mi
+      limits:
+        memory: 3Gi
