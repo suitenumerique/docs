@@ -149,12 +149,12 @@ keycloak-dev-backend-keycloak-pg-0   1/1     Running   0          20s
 From here the important information you will need are:
 
 ```yaml
-OIDC_OP_JWKS_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/certs
-OIDC_OP_AUTHORIZATION_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
-OIDC_OP_TOKEN_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
-OIDC_OP_USER_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/userinfo
-OIDC_OP_LOGOUT_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/logout
-OIDC_RP_CLIENT_ID: impress
+OIDC_OP_JWKS_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/certs
+OIDC_OP_AUTHORIZATION_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/auth
+OIDC_OP_TOKEN_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/token
+OIDC_OP_USER_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/userinfo
+OIDC_OP_LOGOUT_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/logout
+OIDC_RP_CLIENT_ID: docs
 OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
 OIDC_RP_SIGN_ALGO: RS256
 OIDC_RP_SCOPES: "openid email"
