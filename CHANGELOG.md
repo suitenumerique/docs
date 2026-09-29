@@ -83,6 +83,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(documentation) fix minio port and keycloak realm in the k8s guide #2751
 - 🐛(frontend) open search results in a new tab with ctrl/cmd+click #2719
 - 🐛(docker) pull minio images from pgsty
 - 🐛(backend) retry the duplicate of a document on a tree path collision

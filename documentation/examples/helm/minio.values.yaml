@@ -15,8 +15,6 @@ minio:
     tls:
       enabled: true
       secretName: docs-tls
-  api:
-    port: 80
   username: dinum
   password: password
   bucket: docs-media-storage
