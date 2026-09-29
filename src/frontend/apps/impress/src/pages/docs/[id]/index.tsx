@@ -296,10 +296,6 @@ const DocPage = ({ id }: DocProps) => {
     return <Loading />;
   }
 
-  if (doc.is_encrypted && decryptionFailure) {
-    return <DecryptionFailurePanel failure={decryptionFailure} />;
-  }
-
   if (doc.is_encrypted && vaultClientError) {
     return (
       <EncryptionEmptyState
@@ -373,6 +369,12 @@ const DocPage = ({ id }: DocProps) => {
         )}
       </>
     );
+  }
+
+  // After the access checks: with no keys on this device, the editor's attempt fails
+  // too (MISSING_KEYS), and setting encryption up is the answer, not a retry.
+  if (doc.is_encrypted && decryptionFailure) {
+    return <DecryptionFailurePanel failure={decryptionFailure} />;
   }
 
   if (encryptionTransition) {
