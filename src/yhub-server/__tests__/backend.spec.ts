@@ -93,6 +93,83 @@ describe('backendFetch', () => {
       backendFetch('/api/v1.0/documents/x/', {}),
     ).rejects.toMatchObject({ status: 403 });
   });
+
+  it('gives up within the timeout on a backend that never answers', async () => {
+    fetchMock.mockImplementation((_url: string, init: RequestInit) => {
+      // the real fetch rejects when the signal aborts; a missing signal must
+      // fail the test right here rather than let it hang
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+      return new Promise((_resolve, reject) => {
+        init.signal?.addEventListener('abort', () =>
+          reject(new DOMException('The operation timed out.', 'TimeoutError')),
+        );
+      });
+    });
+    const { backendFetch } = await load();
+
+    const startedAt = Date.now();
+    // a short timeout is injected rather than faking timers, so the call is
+    // exercised against the real clock
+    const rejection = backendFetch('/api/v1.0/users/me/', { timeoutMs: 50 });
+    await expect(rejection).rejects.toThrowError(/timed out/i);
+    expect(Date.now() - startedAt).toBeLessThan(2000);
+  });
+
+  it('gives up within the timeout when the body stalls after the headers arrived', async () => {
+    // headers came in time — a bookkeeping that stops at the fetch phase would
+    // read this as a clean 200. The body read shares the signal: the timeout
+    // must still surface, without a status
+    fetchMock.mockImplementation((_url: string, init: RequestInit) => {
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+      return Promise.resolve(
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode('{"partial":'));
+              init.signal?.addEventListener('abort', () =>
+                controller.error(
+                  new DOMException('The operation timed out.', 'TimeoutError'),
+                ),
+              );
+            },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      );
+    });
+    const { backendFetch } = await load();
+
+    const startedAt = Date.now();
+    const err = await backendFetch('/api/v1.0/users/me/', {
+      timeoutMs: 50,
+    }).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).name).toBe('TimeoutError');
+    expect((err as { status?: number }).status).toBeUndefined();
+    expect(Date.now() - startedAt).toBeLessThan(2000);
+  });
+
+  it('times out without a status, so the auth layer reads it as unavailability', async () => {
+    fetchMock.mockImplementation((_url: string, init: RequestInit) => {
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+      return new Promise((_resolve, reject) => {
+        init.signal?.addEventListener('abort', () =>
+          reject(new DOMException('The operation timed out.', 'TimeoutError')),
+        );
+      });
+    });
+    const { backendFetch } = await load();
+
+    // server.ts maps an error carrying no `status` to a retryable 503 — had
+    // the timeout answered 401/403 instead, a slow backend would read as a
+    // permission denial
+    const err = await backendFetch('/api/v1.0/documents/x/', {
+      timeoutMs: 50,
+    }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect((err as { status?: number }).status).toBeUndefined();
+  });
 });
 
 describe('the backend signing key', () => {

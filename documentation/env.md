@@ -196,6 +196,7 @@ documents what each of them changes.
 | YHUB_TASK_CONCURRENCY         | Tasks one worker process claims at once                                                                                                                 | 5                      |
 | YHUB_TASK_DEBOUNCE_MS         | How long an update waits on the redis stream before a worker persists it                                                                                 | 10000                  |
 | YHUB_MIN_MESSAGE_LIFETIME_MS  | How long persisted updates stay replayable from redis rather than read back from postgres                                                                | 60000                  |
+| YHUB_BACKEND_REQUEST_TIMEOUT_MS | How long a call to the backend (`users/me`, `documents/{id}`, `accesses/me`) may take before it is given up on and the caller told to retry, in ms   | 5000                   |
 | SENTRY_DSN                    | Sentry DSN, unset disables it: the SDK is then not even loaded. Can be read from a file with SENTRY_DSN_FILE                                             |                        |
 | SENTRY_ENVIRONMENT            | Environment the events are reported under                                                                                                                | production             |
 | SENTRY_RELEASE                | Release the events are reported under. Detected by the SDK when unset                                                                                    |                        |

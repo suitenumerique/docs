@@ -29,6 +29,7 @@ import type { DocumentAbilities } from './permissions.js';
 import {
   BACKEND_AUDIENCE,
   BACKEND_NOTIFY_TIMEOUT_MS,
+  BACKEND_REQUEST_TIMEOUT_MS,
   BACKEND_TOKEN_LIFETIME_S,
   BACKEND_TOKEN_MARGIN_MS,
   COLLABORATION_BACKEND_BASE_URL,
@@ -116,29 +117,46 @@ export const JWKS = createRemoteJWKSet(
 
 export const backendFetch = async <T = unknown>(
   path: string,
-  { cookie, origin }: { cookie?: string; origin?: string },
+  {
+    cookie,
+    origin,
+    timeoutMs = BACKEND_REQUEST_TIMEOUT_MS,
+  }: { cookie?: string; origin?: string; timeoutMs?: number },
 ): Promise<T> => {
-  const res = await timedBackendRequest(path, () =>
-    fetch(`${COLLABORATION_BACKEND_BASE_URL}${path}`, {
-      headers: {
-        // an anonymous caller may have no session at all; `cookie: undefined` would
-        // reach the backend as the literal string "undefined"
-        ...(cookie ? { cookie } : {}),
-        // a same-origin request carries no `Origin` — forwarded when there is one, omitted
-        // rather than sent empty, which is not a value the header is allowed to take
-        ...(origin ? { origin } : {}),
-        'X-Y-Provider-Key': Y_PROVIDER_API_KEY,
-      },
-    }),
+  // the body read shares the signal, so it is timed with the request: a body
+  // that stalls past the timeout is a timeout of the request, not a clean
+  // answer the metrics would book under its status before the rejection
+  // surfaces
+  const body = await timedBackendRequest(
+    path,
+    () =>
+      fetch(`${COLLABORATION_BACKEND_BASE_URL}${path}`, {
+        // a backend that hangs must not hang the websocket upgrade with it.
+        // The abort surfaces as an error without a `status`, which every caller
+        // maps to a retryable 503 — never to a permission decision
+        signal: AbortSignal.timeout(timeoutMs),
+        headers: {
+          // an anonymous caller may have no session at all; `cookie: undefined` would
+          // reach the backend as the literal string "undefined"
+          ...(cookie ? { cookie } : {}),
+          // a same-origin request carries no `Origin` — forwarded when there is one, omitted
+          // rather than sent empty, which is not a value the header is allowed to take
+          ...(origin ? { origin } : {}),
+          'X-Y-Provider-Key': Y_PROVIDER_API_KEY,
+        },
+      }),
+    async (res) => {
+      if (!res.ok) {
+        const err: Error & { status?: number } = new Error(
+          `Failed to fetch ${path}: ${res.status}`,
+        );
+        err.status = res.status;
+        throw err;
+      }
+      return (await res.json()) as T;
+    },
   );
-  if (!res.ok) {
-    const err: Error & { status?: number } = new Error(
-      `Failed to fetch ${path}: ${res.status}`,
-    );
-    err.status = res.status;
-    throw err;
-  }
-  return res.json() as Promise<T>;
+  return body as T;
 };
 
 // Django orders the document lists by `updated_at` and no edit goes through it

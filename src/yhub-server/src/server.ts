@@ -16,6 +16,7 @@ import { JWKS, backendFetch, touchDocument } from './backend.js';
 import {
   ANONYMOUS_USERID,
   API_PREFIX,
+  BACKEND_REQUEST_TIMEOUT_MS,
   MIN_MESSAGE_LIFETIME_MS,
   ORG,
   PORT,
@@ -512,6 +513,7 @@ logger.info(
       : null,
     taskDebounceMs: yhub.stream.taskDebounce,
     minMessageLifetimeMs: yhub.stream.minMessageLifetime,
+    backendRequestTimeoutMs: BACKEND_REQUEST_TIMEOUT_MS,
   },
   'yhub configuration',
 );

@@ -210,6 +210,63 @@ describe('timedBackendRequest timeouts', () => {
         .map(({ labels }) => `${labels.route}:${labels.status}`),
     ).toEqual(['users_me:timeout']);
   });
+
+  it('times the body read with the request: a stalled body is a timeout, not the status it answered', async () => {
+    const { backendRequestDuration, timedBackendRequest } = await load();
+    // the fetch itself answered in time; the body never made it before the
+    // same signal gave up on it
+    const err = new DOMException('The operation timed out', 'TimeoutError');
+
+    await expect(
+      timedBackendRequest(
+        '/api/v1.0/documents/x/',
+        async () => new Response('{}', { status: 200 }),
+        async () => {
+          throw err;
+        },
+      ),
+    ).rejects.toBe(err);
+
+    const { values } = await backendRequestDuration.get();
+    expect(
+      values
+        .filter(({ metricName }) => metricName?.endsWith('_count'))
+        .map(({ labels }) => `${labels.route}:${labels.status}`),
+    ).toEqual(['document:timeout']);
+  });
+
+  it('books a body-level denial under its own status, and a broken body as an error', async () => {
+    const { backendRequestDuration, timedBackendRequest } = await load();
+
+    const denial: Error & { status?: number } = new Error(
+      'Failed to fetch /api/v1.0/users/me/: 403',
+    );
+    denial.status = 403;
+    await expect(
+      timedBackendRequest(
+        '/api/v1.0/users/me/',
+        async () => new Response('{}', { status: 403 }),
+        async () => {
+          throw denial;
+        },
+      ),
+    ).rejects.toBe(denial);
+
+    await expect(
+      timedBackendRequest(
+        '/api/v1.0/users/me/',
+        async () => new Response('not json', { status: 200 }),
+        async (res) => res.json(),
+      ),
+    ).rejects.toBeInstanceOf(Error);
+
+    const { values } = await backendRequestDuration.get();
+    expect(
+      values
+        .filter(({ metricName }) => metricName?.endsWith('_count'))
+        .map(({ labels }) => `${labels.route}:${labels.status}`),
+    ).toEqual(['users_me:403', 'users_me:error']);
+  });
 });
 
 describe('the metrics listener', () => {

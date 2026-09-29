@@ -255,14 +255,16 @@ coordination between them.
 
 ## Tuning
 
-Three numbers this wrapper passes to yhub, all of them environment variables
-whose defaults are what Docs ran with before they were configurable:
+Three numbers this wrapper passes to yhub and one it keeps for itself, all of
+them environment variables whose defaults are what Docs ran with before they
+were configurable:
 
 | Variable | Default | What it changes |
 | -------- | ------- | --------------- |
 | `YHUB_TASK_CONCURRENCY` | `5` | Tasks one worker process claims at once |
 | `YHUB_TASK_DEBOUNCE_MS` | `10000` | How long an update waits on the stream before a worker persists it |
 | `YHUB_MIN_MESSAGE_LIFETIME_MS` | `60000` | How long persisted updates stay replayable from redis |
+| `YHUB_BACKEND_REQUEST_TIMEOUT_MS` | `5000` | How long a call to the Docs backend may take before it is given up on |
 
 **Concurrency** multiplies with the number of processes running a worker, since
 redis hands each task to exactly one of them: the two are interchangeable up to
@@ -281,7 +283,17 @@ is ever dropped. It buys how much recent history a server can replay from redis
 instead of reading the document back out of postgres, and it is paid for in
 redis memory.
 
-All three are refused at startup, like an unknown role, when they are not whole
+**The backend timeout** bounds the calls made to the Docs backend on the
+connection path (`users/me`, `documents/{id}`, `accesses/me`; the
+`content-updated` notification has its own fixed 5s). A call cut by it answers
+the caller with a retryable 503, never with a permission decision, and books
+as `timeout` in `yhub_backend_request_duration_seconds`. The right value is
+relative to the backend's latency under load: below its p99 every new
+connection fails while the backend is merely slow, far above it a hanging
+backend holds the websocket upgrades open again. An upgrade chains up to three
+of these calls, so it may take three times this value before it fails.
+
+All four are refused at startup, like an unknown role, when they are not whole
 numbers in range (`YHUB_TASK_CONCURRENCY must be an integer >= 1 (got "abc")`):
 `Number()` would otherwise read a typo as `NaN` and hand it to yhub, which
 takes it — a worker that claims nothing, or a stream that is never trimmed,
@@ -290,7 +302,7 @@ kubernetes variable left blank behaves as if it were absent. The effective
 values are logged at startup, next to the role:
 
 ```json
-{"role":"all","server":true,"worker":true,"taskConcurrency":5,"s3Bucket":null,"taskDebounceMs":10000,"minMessageLifetimeMs":60000,"msg":"yhub configuration"}
+{"role":"all","server":true,"worker":true,"taskConcurrency":5,"s3Bucket":null,"taskDebounceMs":10000,"minMessageLifetimeMs":60000,"backendRequestTimeoutMs":5000,"msg":"yhub configuration"}
 ```
 
 ## Document storage (`YHUB_S3_PERSISTENCE`)

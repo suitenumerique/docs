@@ -61,7 +61,10 @@ export const COLLABORATION_BACKEND_BASE_URL =
 export const allowedOrigins = (
   process.env.COLLABORATION_SERVER_ORIGIN || 'http://localhost:3000'
 ).split(',');
-export const Y_PROVIDER_API_KEY = secret('Y_PROVIDER_API_KEY', 'yprovider-api-key');
+export const Y_PROVIDER_API_KEY = secret(
+  'Y_PROVIDER_API_KEY',
+  'yprovider-api-key',
+);
 export const ORG = process.env.YHUB_ORG || 'docs';
 // Which halves of yhub this process runs. The server accepts the websocket
 // connections and serves the REST routes; the worker drains the redis stream
@@ -154,6 +157,18 @@ export const EMPTY_UPDATE_MAX_BYTES = 3;
 export const MAX_CREATE_BYTES = 10 * 1024 * 1024;
 
 export const BACKEND_NOTIFY_TIMEOUT_MS = 5000;
+// The calls `backendFetch` makes on the connection path (`users/me`,
+// `documents/{id}`, `accesses/me`) get the same bound by default: a backend
+// that hangs must read as "unavailable" (a retryable 503), never as a
+// websocket upgrade stuck waiting on it. Configurable because the right value
+// is relative to the backend's own latency under load: below its p99 every
+// new connection fails while it is merely slow, far above it the upgrades
+// pile up again. A connection chains up to three of these calls, so the worst
+// case for one upgrade is three times this value.
+export const BACKEND_REQUEST_TIMEOUT_MS = intEnv(
+  'YHUB_BACKEND_REQUEST_TIMEOUT_MS',
+  5000,
+);
 // Audience of the tokens the backend accepts from us. It must match the one
 // its CollaborationServerAuthentication requires, a token minted for anything
 // else is refused there.
@@ -177,7 +192,10 @@ export const SENTRY_RELEASE = process.env.SENTRY_RELEASE || undefined;
 // Both off by default, like the backend. The websocket server is not an http
 // server the SDK knows how to trace, so a trace here is the outgoing calls (the
 // backend, postgres, redis) rather than a request from end to end.
-export const SENTRY_TRACES_SAMPLE_RATE = rateEnv('SENTRY_TRACES_SAMPLE_RATE', 0);
+export const SENTRY_TRACES_SAMPLE_RATE = rateEnv(
+  'SENTRY_TRACES_SAMPLE_RATE',
+  0,
+);
 // Relative to the traces: the share of sampled traces that are also profiled.
 export const SENTRY_PROFILES_SAMPLE_RATE = rateEnv(
   'SENTRY_PROFILES_SAMPLE_RATE',

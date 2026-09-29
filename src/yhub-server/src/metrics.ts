@@ -199,23 +199,39 @@ export const timedAuth =
 /**
  * Time a call to the backend. `status` is the http status, `timeout` when the
  * call was given up on, `error` when it never got an answer.
+ *
+ * `parse`, when given, reads the response body inside the same timing: the
+ * signal aborting a stalled body is a timeout of the request, not a clean
+ * answer the metrics would book under its status before the rejection
+ * surfaces.
  */
-export const timedBackendRequest = async (
+export const timedBackendRequest = async <T = Response>(
   path: string,
   request: () => Promise<Response>,
-): Promise<Response> => {
+  parse?: (res: Response) => Promise<T>,
+): Promise<T | Response> => {
   const route = backendRouteLabel(path);
   const end = backendRequestDuration.startTimer({ route });
   backendRequestsInflight.inc({ route });
   try {
     const res = await request();
+    if (parse == null) {
+      end({ status: String(res.status) });
+      return res;
+    }
+    const body = await parse(res);
     end({ status: String(res.status) });
-    return res;
+    return body;
   } catch (err) {
     // what `AbortSignal.timeout` aborts with: a backend that is up but too slow
-    // is not the same finding as one that cannot be reached
+    // is not the same finding as one that cannot be reached. An error carrying
+    // a `status` (a `!res.ok` the parser turns into an error) books under its
+    // own status, like it always did when the check ran outside.
     const timedOut = err instanceof Error && err.name === 'TimeoutError';
-    end({ status: timedOut ? 'timeout' : 'error' });
+    const status = errStatus(err);
+    end({
+      status: timedOut ? 'timeout' : status != null ? String(status) : 'error',
+    });
     throw err;
   } finally {
     backendRequestsInflight.dec({ route });
