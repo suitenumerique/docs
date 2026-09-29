@@ -299,6 +299,15 @@ ingressMedia:
     nginx.ingress.kubernetes.io/upstream-vhost: minio.impress.svc.cluster.local:9000
     nginx.ingress.kubernetes.io/configuration-snippet: |
       add_header Content-Security-Policy "default-src 'none'" always;
+      # Browsers re-request the same attachment on every page open, and each
+      # request costs an auth subrequest. Letting them hold the file for a
+      # short while removes those repeats; a revoked access takes as long to
+      # be reflected, the same trade-off the media-auth decision cache makes
+      # (MEDIA_AUTH_CACHE_TTL, 60s by default -- keep in step). The
+      # upstream's own Cache-Control, if any, is dropped: answered twice,
+      # the browser would see two contradicting directives.
+      proxy_hide_header Cache-Control;
+      add_header Cache-Control "private, max-age=60";
 
 ## @param serviceMedia.host Hostname of the media storage backend (S3/MinIO) used by the media ingress
 ## @param serviceMedia.port Port of the media storage backend

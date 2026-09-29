@@ -2,12 +2,15 @@
 Test media-auth authorization API endpoint in docs core app.
 """
 
+import time
 from io import BytesIO
 from unittest.mock import patch
 from urllib.parse import urlparse
 from uuid import uuid4
 
 from django.core.files.storage import default_storage
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 import pytest
@@ -573,8 +576,164 @@ def test_api_documents_media_auth_authorization_cost_is_bounded(
         assert _media_auth_ready(user, key).status_code == 200
 
     # Flood the instance with unrelated readable (public) documents: the query
-    # count must not change.
+    # count must not change. Another attachment is authorized, so the decision
+    # cache does not come into play.
     factories.DocumentFactory.create_batch(30, link_reach="public")
+    other_document = factories.DocumentFactory(users=[user], link_reach="restricted")
+    other_key = f"{other_document.id!s}/attachments/{uuid4()!s}.jpg"
+    other_document.attachments = [other_key]
+    other_document.save()
 
     with django_assert_num_queries(MEDIA_AUTH_QUERY_COUNT):
-        assert _media_auth_ready(user, key).status_code == 200
+        assert _media_auth_ready(user, other_key).status_code == 200
+
+
+class HeadObjectSpy:
+    """
+    Count the HeadObject calls the media-auth endpoint makes to the storage.
+
+    The object storage is the boundary the decision cache is meant to
+    protect, so the tests below assert on how many times it is hit rather
+    than on the cache itself.
+    """
+
+    def __init__(self):
+        self.keys = []
+        self._real_make_api_call = BaseClient._make_api_call  # pylint: disable=protected-access
+
+    def media_auth(self, client, key):
+        """Run a media-auth request with the spy installed."""
+        spy = self
+        real_make_api_call = self._real_make_api_call
+
+        # Built as a plain function and installed on the class: the descriptor
+        # protocol then binds it to the botocore client, which is how it gets
+        # handed the very instance a patched method still needs to make the
+        # calls it does not want to answer itself.
+        def fake_make_api_call(boto_client, operation_name, api_params):
+            """Answer HeadObject as ready, recording it, defer the rest."""
+            if operation_name == "HeadObject":
+                spy.keys.append(api_params["Key"])
+                return {"Metadata": {"status": DocumentAttachmentStatus.READY}}
+            return real_make_api_call(boto_client, operation_name, api_params)
+
+        with patch.object(BaseClient, "_make_api_call", new=fake_make_api_call):
+            return client.get(
+                "/api/v1.0/documents/media-auth/",
+                HTTP_X_ORIGINAL_URL=f"http://localhost/media/{key:s}",
+            )
+
+
+def _document_queries(context):
+    """Return the queries a captured context ran against the documents table."""
+    table = models.Document._meta.db_table
+    return [query["sql"] for query in context.captured_queries if table in query["sql"]]
+
+
+def test_api_documents_media_auth_caches_allow_decision():
+    """
+    Authorizing the same attachment twice for the same user must not repeat the
+    authorization work: neither the database lookups that establish the
+    decision nor the object storage check run again, which is what keeps a page
+    holding many attachments from multiplying the very same calls.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(users=[user], link_reach="restricted")
+    key = f"{document.id!s}/attachments/{uuid4()!s}.jpg"
+    document.attachments = [key]
+    document.save()
+
+    client = APIClient()
+    client.force_login(user)
+    spy = HeadObjectSpy()
+
+    with CaptureQueriesContext(connection) as first_call:
+        assert spy.media_auth(client, key).status_code == 200
+
+    with CaptureQueriesContext(connection) as second_call:
+        assert spy.media_auth(client, key).status_code == 200
+
+    # Asserted on both sides against passing vacuously: the first call has to
+    # query the documents table, otherwise the absence of such a query on the
+    # second one proves nothing (a wrong table name would read green forever).
+    assert _document_queries(first_call) != []
+    assert _document_queries(second_call) == []
+    assert len(second_call.captured_queries) < len(first_call.captured_queries)
+
+    # The object storage is checked once too, not once per authorization.
+    assert spy.keys == [key]
+
+
+def test_api_documents_media_auth_cache_does_not_leak_across_users():
+    """
+    An allow cached for a user must never authorize another user on the same
+    attachment: the cache key carries the user, or this test would read 200.
+    """
+    user = factories.UserFactory()
+    other = factories.UserFactory()
+    document = factories.DocumentFactory(users=[user], link_reach="restricted")
+    key = f"{document.id!s}/attachments/{uuid4()!s}.jpg"
+    document.attachments = [key]
+    document.save()
+
+    spy = HeadObjectSpy()
+
+    client = APIClient()
+    client.force_login(user)
+    assert spy.media_auth(client, key).status_code == 200
+
+    other_client = APIClient()
+    other_client.force_login(other)
+    assert spy.media_auth(other_client, key).status_code == 403
+
+
+def test_api_documents_media_auth_cached_decision_expires(settings):
+    """
+    The cached allow must expire after MEDIA_AUTH_CACHE_TTL seconds: the
+    object storage is checked again past the TTL, or a revoked access would
+    keep passing forever.
+    """
+    ttl = 1
+    settings.MEDIA_AUTH_CACHE_TTL = ttl
+
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(users=[user], link_reach="restricted")
+    key = f"{document.id!s}/attachments/{uuid4()!s}.jpg"
+    document.attachments = [key]
+    document.save()
+
+    client = APIClient()
+    client.force_login(user)
+    spy = HeadObjectSpy()
+
+    assert spy.media_auth(client, key).status_code == 200
+
+    # Waited out for real instead of with freezegun: whatever backend the
+    # settings select, expiry must follow the passage of time an attacker of
+    # a frozen clock cannot argue with, not the clock of this process.
+    time.sleep(ttl + 0.5)
+
+    assert spy.media_auth(client, key).status_code == 200
+
+    assert spy.keys == [key, key]
+
+
+def test_api_documents_media_auth_deny_is_not_cached():
+    """
+    A denied authorization must not be cached: an access granted right after
+    a denial is effective at once, without waiting for any TTL.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach="restricted")
+    key = f"{document.id!s}/attachments/{uuid4()!s}.jpg"
+    document.attachments = [key]
+    document.save()
+
+    client = APIClient()
+    client.force_login(user)
+    spy = HeadObjectSpy()
+
+    assert spy.media_auth(client, key).status_code == 403
+
+    factories.UserDocumentAccessFactory(document=document, user=user)
+    assert spy.media_auth(client, key).status_code == 200
