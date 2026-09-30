@@ -413,6 +413,7 @@ class Base(Configuration):
         "django.contrib.staticfiles",
         # OIDC third party
         "mozilla_django_oidc",
+        "lasuite.oidc_login",
         "lasuite.malware_detection",
         "lasuite.marketing",
         "csp",
@@ -725,6 +726,9 @@ class Base(Configuration):
     )
     OIDC_OP_LOGOUT_ENDPOINT = values.Value(
         None, environ_name="OIDC_OP_LOGOUT_ENDPOINT", environ_prefix=None
+    )
+    OIDC_OP_LOGOUT_USE_POST = values.BooleanValue(
+        False, environ_name="OIDC_OP_LOGOUT_USE_POST", environ_prefix=None
     )
     OIDC_AUTH_REQUEST_EXTRA_PARAMS = values.DictValue(
         {}, environ_name="OIDC_AUTH_REQUEST_EXTRA_PARAMS", environ_prefix=None
