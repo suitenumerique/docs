@@ -24,6 +24,7 @@ beforeEach(() => {
     'YHUB_TASK_CONCURRENCY',
     'YHUB_TASK_DEBOUNCE_MS',
     'YHUB_MIN_MESSAGE_LIFETIME_MS',
+    'YHUB_BACKEND_REQUEST_TIMEOUT_MS',
     'PORT',
   ]) {
     vi.stubEnv(key, '');
@@ -90,6 +91,28 @@ describe('the numeric tuning knobs', () => {
     const { TASK_DEBOUNCE_MS, MIN_MESSAGE_LIFETIME_MS } = await load();
     expect(TASK_DEBOUNCE_MS).toBe(10000);
     expect(MIN_MESSAGE_LIFETIME_MS).toBe(60000);
+  });
+
+  it('bounds the calls to the backend at 5s unless told otherwise', async () => {
+    const { BACKEND_REQUEST_TIMEOUT_MS } = await load();
+    expect(BACKEND_REQUEST_TIMEOUT_MS).toBe(5000);
+
+    vi.resetModules();
+    vi.stubEnv('YHUB_BACKEND_REQUEST_TIMEOUT_MS', '12000');
+    expect((await load()).BACKEND_REQUEST_TIMEOUT_MS).toBe(12000);
+  });
+
+  it('refuses a backend timeout that is not a positive whole number of ms', async () => {
+    // zero would abort every call before it is sent: a backend that is up
+    // would read as unavailable on every connection
+    vi.stubEnv('YHUB_BACKEND_REQUEST_TIMEOUT_MS', '0');
+    await expect(load()).rejects.toThrow(
+      /YHUB_BACKEND_REQUEST_TIMEOUT_MS must be an integer >= 1/,
+    );
+
+    vi.resetModules();
+    vi.stubEnv('YHUB_BACKEND_REQUEST_TIMEOUT_MS', '5s');
+    await expect(load()).rejects.toThrow(/YHUB_BACKEND_REQUEST_TIMEOUT_MS/);
   });
 });
 

@@ -79,6 +79,7 @@ beforeEach(() => {
     'YHUB_TASK_CONCURRENCY',
     'YHUB_TASK_DEBOUNCE_MS',
     'YHUB_MIN_MESSAGE_LIFETIME_MS',
+    'YHUB_BACKEND_REQUEST_TIMEOUT_MS',
     'YHUB_S3_PERSISTENCE',
     'YHUB_S3_ENDPOINT_URL',
     'YHUB_S3_ACCESS_KEY_ID',
@@ -136,7 +137,9 @@ describe('the process role', () => {
   it('the endpoint array is handed to the server half', async () => {
     await boot();
     // createApiEndpoint is faked to `{ name, opts }` — assert the routes are wired
-    const names = createYHub.lastConfig.server.api.map((e: { name: string }) => e.name);
+    const names = createYHub.lastConfig.server.api.map(
+      (e: { name: string }) => e.name,
+    );
     expect(names).toEqual(
       expect.arrayContaining(['ping', 'ready', 'jwks', 'create-ydoc']),
     );

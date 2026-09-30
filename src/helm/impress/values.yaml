@@ -1166,6 +1166,7 @@ yhub:
   ## @extra yhub.envVars.YHUB_TASK_CONCURRENCY Tasks one worker process claims at once, times the replicas running a worker (default: 5)
   ## @extra yhub.envVars.YHUB_TASK_DEBOUNCE_MS How long an update waits on the redis stream before a worker persists it, in ms (default: 10000)
   ## @extra yhub.envVars.YHUB_MIN_MESSAGE_LIFETIME_MS How long persisted updates stay replayable from redis, in ms (default: 60000)
+  ## @extra yhub.envVars.YHUB_BACKEND_REQUEST_TIMEOUT_MS How long a call to the backend may take before yhub gives up on it and tells the caller to retry, in ms (default: 5000)
   ## @extra yhub.envVars.SOFT_MIGRATION Set to "true" to seed rooms from the legacy Django/S3 document store on first access
   ## @extra yhub.envVars.LEGACY_S3_ENDPOINT_URL Required by SOFT_MIGRATION, endpoint of the legacy Django media bucket, without a path (e.g. https://s3.example.com)
   ## @extra yhub.envVars.LEGACY_S3_ACCESS_KEY_ID Required by SOFT_MIGRATION, read access to the legacy bucket (or LEGACY_S3_ACCESS_KEY_ID_FILE)
