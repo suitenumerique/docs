@@ -38,7 +38,7 @@
     "@types/node": "24.13.3",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
-    "dompurify": "3.4.14",
+    "dompurify": "3.4.16",
     "eslint": "10.9.0",
     "postcss": "8.5.26",
     "prosemirror-model": "1.25.11",
