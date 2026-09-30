@@ -11,6 +11,13 @@ on:
 permissions:
   contents: read
 
+# One run per pull request: a new push cancels the checks of the previous one.
+# Pushes get a group of their own (the commit), so every commit of main keeps
+# its full set of checks.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml

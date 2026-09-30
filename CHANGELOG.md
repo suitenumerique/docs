@@ -10,6 +10,7 @@ and this project adheres to
 
 - 👷(ci) lint, typecheck, build and test the collaboration server (yhub)
 - 👷(ci) check the load-test tooling: swarm, canary, k6 and dashboards
+- 👷(ci) cancel the superseded runs of a pull request
 - ✨(backend) add mention endpoint with cooldown-limited email 
   notification #2447
 - 🚩(setting) add feature flag on Duplicate with Children #2721

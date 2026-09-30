@@ -19,6 +19,14 @@ env:
 permissions:
   contents: read
 
+# One run per pull request: a new push cancels the run of the previous one.
+# Branches and tags get a group of their own, queued instead of cancelled (only
+# the latest pending run is kept): an image push or the Argo CD notification is
+# never stopped halfway, and two runs never race to push the same tag.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build-and-push-backend:
     uses: ./.github/workflows/docker-publish.yml

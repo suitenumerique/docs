@@ -16,6 +16,13 @@ env:
 permissions:
   contents: read
 
+# One run per branch or tag, queued instead of cancelled (only the latest
+# pending run is kept): an image push is never stopped halfway, and two runs
+# never race to push the same tag.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-and-push-backend:
     runs-on: ubuntu-latest

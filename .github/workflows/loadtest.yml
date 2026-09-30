@@ -11,6 +11,13 @@ on:
 permissions:
   contents: read
 
+# One run per pull request: a new push cancels the checks of the previous one.
+# Pushes get a group of their own (the commit), so every commit of main keeps
+# its full set of checks.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 # The load-test tooling of src/loadtest (see documentation/load-testing.md).
 # swarm and canary are standalone TypeScript packages, each with its own
 # package.json and yarn.lock, like src/yhub-server; k6 runs plain scripts and
