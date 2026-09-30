@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- 👷(ci) lint, typecheck, build and test the collaboration server (yhub)
 - ✨(backend) add mention endpoint with cooldown-limited email 
   notification #2447
 - 🚩(setting) add feature flag on Duplicate with Children #2721
