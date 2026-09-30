@@ -19,6 +19,7 @@ from freezegun import freeze_time
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.api.viewsets import DocumentViewSet
 from core.factories import YDOC_HELLO_WORLD_UPDATE
 from core.services.yhub_services import (
     APIError,
@@ -1175,3 +1176,29 @@ def test_api_documents_duplicate_content_conflict_is_compensated(mock_yhub):
         mock.call(seeded[1]),
     ]
     mock_capture.assert_not_called()
+
+
+def test_api_documents_duplicate_compensation_failure_preserves_seeding_error():
+    """
+    A database failure while undoing the duplication must not replace the
+    seeding error on its way to the caller: the undo runs inside the handling
+    of that error, and a leftover subtree goes to the log rather than
+    becoming the answer.
+    """
+    service = mock.Mock()
+    seeded = [mock.Mock(id=uuid.uuid4()), mock.Mock(id=uuid.uuid4())]
+    duplicated_root = mock.Mock(id=uuid.uuid4())
+    duplicated_root.delete.side_effect = RuntimeError("database went away")
+
+    logger = "core.api.viewsets.logger"
+    with mock.patch(logger) as mock_logger:
+        # pylint: disable-next=protected-access
+        DocumentViewSet._compensate_duplication(service, seeded, duplicated_root)
+
+    # every ydoc the duplication touched was still deleted, in order
+    assert service.delete_ydoc.call_args_list == [
+        mock.call(seeded[0]),
+        mock.call(seeded[1]),
+    ]
+    # the database failure is logged, not raised
+    mock_logger.exception.assert_called_once()

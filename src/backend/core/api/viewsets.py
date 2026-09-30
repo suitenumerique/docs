@@ -1621,6 +1621,10 @@ class DocumentViewSet(
         so no editor can ever open a duplicate the database no longer holds.
         A deletion the collaboration server cannot honour is logged rather
         than raised, the duplicated documents must go down all the same.
+        The database deletion is held to the same rule, and for the same
+        reason: it runs while an original seeding error is on its way to the
+        caller, which must not be replaced by a failure of the undo itself —
+        the leftover subtree, if any, goes to the log.
         """
         for document in seeded:
             try:
@@ -1632,7 +1636,14 @@ class DocumentViewSet(
                     document.id,
                 )
 
-        duplicated_root.delete()
+        try:
+            duplicated_root.delete()
+        except Exception:  # pylint: disable=broad-exception-caught
+            logger.exception(
+                "could not delete the duplicated subtree of document %s "
+                "from the database",
+                duplicated_root.id,
+            )
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
     @utils.conditional_refresh_oidc_token
