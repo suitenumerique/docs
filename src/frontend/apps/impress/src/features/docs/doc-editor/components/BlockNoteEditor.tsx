@@ -64,6 +64,7 @@ import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { DocsSideMenu } from './DocsSideMenu/DocsSideMenu';
+import { KeepHyphenatedWordsTogether } from './KeepHyphenatedWordsTogether';
 import { CalloutBlock, PdfBlock, UploadLoaderBlock } from './custom-blocks';
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
@@ -291,6 +292,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           FindAndReplace.configure({
             injectCSS: false,
           }),
+          KeepHyphenatedWordsTogether,
         ],
       },
       visualMedia: {
@@ -422,6 +424,9 @@ export const BlockNoteReader = ({
           },
         }),
       ],
+      _tiptapOptions: {
+        extensions: [KeepHyphenatedWordsTogether],
+      },
     }),
     [initialContent, threadStore],
   );

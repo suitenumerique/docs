@@ -87,6 +87,7 @@ and this project adheres to
 - 🐛(collaboration) bound the calls yhub makes to the backend with a timeout,
   `YHUB_BACKEND_REQUEST_TIMEOUT_MS`, 5s by default #2753
 - 🐛(backend) compensate document duplication failures #2755
+- 🐛(frontend) prevent line breaks inside hyphenated editor words #2239
 - 🐛(frontend) open search results in a new tab with ctrl/cmd+click #2719
 - 🐛(docker) pull minio images from pgsty
 - 🐛(backend) retry the duplicate of a document on a tree path collision
