@@ -97,6 +97,7 @@ and this project adheres to
 - 🐛(export) keep image aspect ratio in PDF columns #2670
 - 🐛(frontend) fix redirect after deleting a document #2706
 - 🐛(frontend) keep documents draggable with a mouse when zoomed #2727
+- 📝(docs) fix markdown typo in installation README #2766
 
 ### Removed
 

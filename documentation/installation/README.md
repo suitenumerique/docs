@@ -31,7 +31,7 @@ Community members have contributed several other ways to install Docs. While we 
 Here is the list of other methods in alphabetical order:
 - Coop-Cloud: [code](https://git.coopcloud.tech/coop-cloud/lasuite-docs)
 - Nix: [Packages](https://search.nixos.org/packages?channel=unstable&query=lasuite-docs), ⚠️ unstable
-- Podman: [code][https://codeberg.org/philo/lasuite-docs-podman], ⚠️ experimental
+- Podman: [code](https://codeberg.org/philo/lasuite-docs-podman), ⚠️ experimental
 - YunoHost: [code](https://github.com/YunoHost-Apps/lasuite-docs_ynh), [app store](https://apps.yunohost.org/app/lasuite-docs)
 
 Feel free to make a PR to add ones that are not listed above 🙏
