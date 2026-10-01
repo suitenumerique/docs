@@ -161,6 +161,38 @@ describe('preserveImageWidthsInMarkdown', () => {
     expect(markdown).toBe('```md\n![](photo.png)\n```\n\n![](photo.png =400x)');
   });
 
+  test('accepts tabs after a closing code fence', () => {
+    const markdown = preserveImageWidthsInMarkdown(
+      '```md\n![](photo.png)\n```\t\n\n![](photo.png)',
+      [
+        {
+          type: 'image',
+          props: { url: 'photo.png', previewWidth: 400 },
+        },
+      ],
+    );
+
+    expect(markdown).toBe(
+      '```md\n![](photo.png)\n```\t\n\n![](photo.png =400x)',
+    );
+  });
+
+  test('rejects non-whitespace after a closing code fence', () => {
+    const markdown = preserveImageWidthsInMarkdown(
+      '```md\n```t\n![](photo.png)\n```\n\n![](photo.png)',
+      [
+        {
+          type: 'image',
+          props: { url: 'photo.png', previewWidth: 400 },
+        },
+      ],
+    );
+
+    expect(markdown).toBe(
+      '```md\n```t\n![](photo.png)\n```\n\n![](photo.png =400x)',
+    );
+  });
+
   test.each([undefined, 0, -1, Infinity])(
     'does not add a dimension for invalid width %s',
     (previewWidth) => {

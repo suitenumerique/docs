@@ -49,7 +49,7 @@ const getFencedCodeRanges = (markdown: string): MarkdownRange[] => {
         };
       }
     } else {
-      const closingFence = /^ {0,3}(`+|~+)[ \\t]*$/.exec(content);
+      const closingFence = /^ {0,3}(`+|~+)[ \t]*$/.exec(content);
       if (
         closingFence &&
         closingFence[1][0] === openingFence.character &&
