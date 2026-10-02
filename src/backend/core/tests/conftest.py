@@ -1,15 +1,18 @@
 """Fixtures for tests in the impress core application"""
 
 import base64
+from contextlib import contextmanager
 from unittest import mock
 
 from django.core.cache import cache
+from django.db import transaction
 
 import pytest
 import responses
 
 from core import factories
 from core.services.yhub_services import YHubService
+from core.tasks.access import PENDING_RESETS_ATTRIBUTE
 from core.tests.utils.urls import reload_urls, restore_urls
 
 USER = "user"
@@ -40,6 +43,54 @@ def restore_urlconf():
     yield
 
     restore_urls()
+
+
+@pytest.fixture(autouse=True, name="mock_reset_service_connections")
+def mock_reset_service_connections_fixture():
+    """
+    Take the resets of connections queued for the collaboration server.
+
+    Every change of an access queues one, at the commit of the transaction: in
+    a transactional test the Celery task would then run inline and reach for
+    the collaboration server. What was queued is checked on this mock, once
+    the callbacks on commit have run (`django_capture_on_commit_callbacks`).
+    """
+    with mock.patch(
+        "core.tasks.access.reset_service_connections_in_cascade.delay"
+    ) as mock_delay:
+        yield mock_delay
+
+
+@pytest.fixture(name="capture_service_resets")
+def capture_service_resets_fixture(
+    mock_reset_service_connections, django_capture_on_commit_callbacks
+):
+    """
+    Provide a context manager taking the resets queued by what runs in it.
+
+    The resets of a transaction are coalesced and sent on commit, and a test
+    runs whole in one transaction: what its setup queued is forgotten first,
+    then the callbacks queued on commit by the block are run, and the resets
+    they send are on the mock this yields.
+    """
+
+    @contextmanager
+    def _capture_service_resets():
+        setattr(transaction.get_connection(), PENDING_RESETS_ATTRIBUTE, None)
+        mock_reset_service_connections.reset_mock()
+        with django_capture_on_commit_callbacks(execute=True):
+            yield mock_reset_service_connections
+
+    return _capture_service_resets
+
+
+@pytest.fixture(autouse=True, name="mock_delete_service_documents")
+def mock_delete_service_documents_fixture():
+    """Take the deletions of documents queued for the collaboration server, as above."""
+    with mock.patch(
+        "core.tasks.documents.delete_service_documents.delay"
+    ) as mock_delay:
+        yield mock_delay
 
 
 @pytest.fixture

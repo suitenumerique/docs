@@ -438,3 +438,35 @@ def test_clean_document_reports_the_documents_it_could_not_erase(
     assert "Erased collaboration content for 1 document(s)." in captured.out
     assert str(root.id) in captured.err
     assert str(child.id) not in captured.err
+
+
+def test_clean_document_resets_connections(
+    settings, mock_reset_service_connections, capture_service_resets
+):
+    """
+    The link definition of the root changes and its accesses but the owners'
+    are deleted: the collaboration server should re-check every connection of
+    the root, once, the resets of the deleted accesses being coalesced into it.
+    """
+    settings.DEBUG = True
+    root = factories.DocumentFactory(
+        link_reach=LinkReachChoices.PUBLIC, link_role=LinkRoleChoices.EDITOR
+    )
+    owner = factories.UserDocumentAccessFactory(
+        document=root, role=choices.RoleChoices.OWNER
+    )
+    readers = factories.UserDocumentAccessFactory.create_batch(
+        2, document=root, role=choices.RoleChoices.READER
+    )
+
+    with (
+        mock.patch("core.management.commands.clean_document.default_storage"),
+        capture_service_resets(),
+    ):
+        call_command("clean_document", str(root.id), "--force")
+
+    assert not models.DocumentAccess.objects.filter(
+        pk__in=[reader.pk for reader in readers]
+    ).exists()
+    assert models.DocumentAccess.objects.filter(pk=owner.pk).exists()
+    mock_reset_service_connections.assert_called_once_with(str(root.id), None)

@@ -608,6 +608,20 @@ class Base(Configuration):
         environ_name="YHUB_MIGRATION_TIMEOUT",
         environ_prefix=None,
     )
+    # A change of accesses has the connections of a whole subtree re-checked,
+    # one call to the collaboration server per document. The walk resets this
+    # many documents per run and queues the rest after this many seconds, so
+    # that a large subtree is spread over time instead of fired at once.
+    YHUB_RESET_CONNECTIONS_BATCH_SIZE = values.PositiveIntegerValue(
+        default=50,
+        environ_name="YHUB_RESET_CONNECTIONS_BATCH_SIZE",
+        environ_prefix=None,
+    )
+    YHUB_RESET_CONNECTIONS_DELAY = values.FloatValue(
+        default=1.0,
+        environ_name="YHUB_RESET_CONNECTIONS_DELAY",
+        environ_prefix=None,
+    )
 
     # JWT
     # RSA private key (PEM) used to sign the tokens issued by
@@ -1487,6 +1501,10 @@ class Base(Configuration):
             raise ValueError(
                 "Both OPENAI_SDK and MISTRAL_SDK parameters can not be set simultaneously."
             )
+
+        # a batch of nothing would walk no subtree and never end
+        if cls.YHUB_RESET_CONNECTIONS_BATCH_SIZE < 1:
+            raise ValueError("YHUB_RESET_CONNECTIONS_BATCH_SIZE must be at least 1.")
 
         if cls.POSTHOG_KEY is not None:
             posthog.api_key = cls.POSTHOG_KEY
