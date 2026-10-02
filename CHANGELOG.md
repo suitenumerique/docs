@@ -100,6 +100,7 @@ and this project adheres to
 - 🐛(frontend) fix redirect after deleting a document #2706
 - 🐛(frontend) keep documents draggable with a mouse when zoomed #2727
 - 📝(docs) fix markdown typo in installation README #2766
+- 🐛(i18n) export locale correctly #2750
 
 ### Removed
 
