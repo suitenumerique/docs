@@ -132,6 +132,9 @@ export const DocsEditorStyle = createGlobalStyle`
       .bn-inline-content {
       text-decoration: none;
     }
+    .bn-hyphenated-word {
+      white-space: nowrap;
+    }
     a {
       color: var(--c--globals--colors--gray-600);
       cursor: pointer;
