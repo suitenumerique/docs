@@ -196,6 +196,11 @@ username: impress
 password: impress
 ```
 
+Alternatively, you can start the project with the Claude `/docs-start` skill.
+It checks what is already built, stale or running, then runs only the Make
+targets needed: `make bootstrap` on a first run, the rebuild of the images
+whose dependencies changed after a pull, or just `make run`.
+
 ### Frontend development mode
 
 For frontend work, running outside Docker is often more convenient:

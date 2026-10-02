@@ -87,7 +87,6 @@ db.sqlite3
 # AI
 CLAUDE.md
 !AGENTS.md
-.claude/
 .cursor/
 .cursorrules
 .windsurfrules
@@ -95,3 +94,7 @@ CLAUDE.md
 .copilot/
 .github/copilot-instructions.md
 .playwright-mcp
+# AI Claude
+.claude/*
+!.claude/skills/
+.claude/skills/local-*/
