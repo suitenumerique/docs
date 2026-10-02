@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-14 19:00+0000\n"
-"PO-Revision-Date: 2026-09-15 11:54\n"
+"POT-Creation-Date: 2026-09-30 13:00+0000\n"
+"PO-Revision-Date: 2026-10-02 09:08\n"
 "Last-Translator: \n"
 "Language-Team: Dutch\n"
 "Language: nl_NL\n"
@@ -31,7 +31,7 @@ msgstr "Belangrijke data"
 
 #: core/admin.py:119
 msgid "Permanently delete selected users"
-msgstr ""
+msgstr "Geselecteerde gebruikers permanent verwijderen"
 
 #: core/admin.py:141
 msgid "Import job created and queued."
@@ -51,7 +51,7 @@ msgstr "Titel"
 
 #: core/api/filters.py:51
 msgid "Search"
-msgstr ""
+msgstr "Zoeken"
 
 #: core/api/filters.py:65
 msgid "Creator is me"
@@ -61,32 +61,32 @@ msgstr "Ik ben eigenaar"
 msgid "Favorite"
 msgstr "Favoriet"
 
-#: core/api/serializers.py:531
+#: core/api/serializers.py:516
 msgid "A new document was created on your behalf!"
 msgstr "Een nieuw document is namens u gemaakt!"
 
-#: core/api/serializers.py:535
+#: core/api/serializers.py:520
 msgid "You have been granted ownership of a new document:"
 msgstr "U heeft eigenaarschap van een nieuw document gekregen:"
 
-#: core/api/serializers.py:571
+#: core/api/serializers.py:556
 msgid "This field is required."
 msgstr "Dit veld is verplicht."
 
-#: core/api/serializers.py:582
+#: core/api/serializers.py:567
 #, python-format
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr "Link bereik '%(link_reach)s' is niet toegestaan op basis van bovenliggende documentconfiguratie."
 
-#: core/api/viewsets.py:1398
+#: core/api/viewsets.py:1434
 #, python-brace-format
 msgid "copy of {title}"
 msgstr "kopie van {title}"
 
-#: core/api/viewsets.py:3337
+#: core/api/viewsets.py:3334
 #, python-format
 msgid "A comment can have a maximum of %(max)d distinct reactions."
-msgstr ""
+msgstr "Een opmerking kan maximaal %(max)d verschillende reacties hebben."
 
 #: core/apps.py:12
 msgid "Impress core application"
@@ -112,15 +112,15 @@ msgstr "Beheerder"
 msgid "Owner"
 msgstr "Eigenaar"
 
-#: core/choices.py:58
+#: core/choices.py:59
 msgid "Restricted"
 msgstr "Beperkt"
 
-#: core/choices.py:62
+#: core/choices.py:63
 msgid "Authenticated"
 msgstr "Geauthenticeerd"
 
-#: core/choices.py:64
+#: core/choices.py:65
 msgid "Public"
 msgstr "Publiek"
 
@@ -148,147 +148,147 @@ msgstr "Links"
 msgid "Right"
 msgstr "Rechts"
 
-#: core/models.py:83
+#: core/models.py:80
 msgid "id"
 msgstr "id"
 
-#: core/models.py:84
+#: core/models.py:81
 msgid "primary key for the record as UUID"
 msgstr "primaire sleutel voor dossier als UUID"
 
-#: core/models.py:90
+#: core/models.py:87
 msgid "created on"
 msgstr "gecreëerd op"
 
-#: core/models.py:91
+#: core/models.py:88
 msgid "date and time at which a record was created"
 msgstr "datum en tijd waarop dossier is gecreeërd"
 
-#: core/models.py:96
+#: core/models.py:93 core/models.py:2256
 msgid "updated on"
 msgstr "Laatst gewijzigd op"
 
-#: core/models.py:97
+#: core/models.py:94
 msgid "date and time at which a record was last updated"
 msgstr "datum en tijd waarop dossier laatst was gewijzigd"
 
-#: core/models.py:133
+#: core/models.py:130
 msgid "We couldn't find a user with this sub but the email is already associated with a registered user."
 msgstr "Wij konden geen gebruiker vinden met dit id, maar de email is al geassocieerd met een geregistreerde gebruiker."
 
-#: core/models.py:144
+#: core/models.py:141
 msgid "sub"
 msgstr "id"
 
-#: core/models.py:145
+#: core/models.py:142
 msgid "Required. 255 characters or fewer. ASCII characters only."
 msgstr "Vereist. 255 tekens of minder. Alleen ASCII tekens."
 
-#: core/models.py:153
+#: core/models.py:150
 msgid "full name"
 msgstr "volledige naam"
 
-#: core/models.py:155
+#: core/models.py:152
 msgid "short name"
 msgstr "gebruikersnaam"
 
-#: core/models.py:158
+#: core/models.py:155
 msgid "identity email address"
 msgstr "identiteit emailadres"
 
-#: core/models.py:163
+#: core/models.py:160
 msgid "admin email address"
 msgstr "admin emailadres"
 
-#: core/models.py:170
+#: core/models.py:167
 msgid "language"
 msgstr "taal"
 
-#: core/models.py:171
+#: core/models.py:168
 msgid "The language in which the user wants to see the interface."
 msgstr "De taal waarin de gebruiker de interface wil zien."
 
-#: core/models.py:179
+#: core/models.py:176
 msgid "The timezone in which the user wants to see times."
 msgstr "De tijdzone waarin de gebruiker de tijden wil zien."
 
-#: core/models.py:182
+#: core/models.py:179
 msgid "device"
 msgstr "apparaat"
 
-#: core/models.py:184
+#: core/models.py:181
 msgid "Whether the user is a device or a real user."
 msgstr "Of de gebruiker een apparaat is of een echte gebruiker."
 
-#: core/models.py:187
+#: core/models.py:184
 msgid "staff status"
 msgstr "beheerder status"
 
-#: core/models.py:189
+#: core/models.py:186
 msgid "Whether the user can log into this admin site."
 msgstr "Of de gebruiker kan inloggen in het beheer gedeelte."
 
-#: core/models.py:192
+#: core/models.py:189
 msgid "active"
 msgstr "actief"
 
-#: core/models.py:195
+#: core/models.py:192
 msgid "Whether this user should be treated as active. Unselect this instead of deleting accounts."
 msgstr "Of een gebruiker als actief moet worden beschouwd. Deselecteer dit in plaats van het account te deleten."
 
-#: core/models.py:200
+#: core/models.py:197
 msgid "first connection status"
-msgstr ""
+msgstr "eerste verbinding status"
 
-#: core/models.py:202
+#: core/models.py:199
 msgid "Whether the user has completed the first connection process."
-msgstr ""
+msgstr "Of de gebruiker het eerste verbindingsproces heeft voltooid."
 
-#: core/models.py:212
+#: core/models.py:209
 msgid "user"
 msgstr "gebruiker"
 
-#: core/models.py:213
+#: core/models.py:210
 msgid "users"
 msgstr "gebruikers"
 
-#: core/models.py:421
+#: core/models.py:439
 msgid "Active email address"
 msgstr "Actieve e-mail adres"
 
-#: core/models.py:422
+#: core/models.py:440
 msgid "Email address to deactivate"
 msgstr "E-mailadres om te deactiveren"
 
-#: core/models.py:449
+#: core/models.py:467
 msgid "Unique ID in the source file"
 msgstr "Unieke ID in het bronbestand"
 
-#: core/models.py:455 core/models.py:753
+#: core/models.py:473 core/models.py:771
 msgid "Pending"
 msgstr "In behandeling"
 
-#: core/models.py:456
+#: core/models.py:474
 msgid "Ready"
 msgstr "Klaar"
 
-#: core/models.py:457 core/models.py:755
+#: core/models.py:475 core/models.py:773
 msgid "Done"
 msgstr "Klaar"
 
-#: core/models.py:458 core/models.py:756
+#: core/models.py:476 core/models.py:774
 msgid "Error"
 msgstr "Fout"
 
-#: core/models.py:466
+#: core/models.py:484
 msgid "user reconciliation"
 msgstr "gebruiker samenvoegen"
 
-#: core/models.py:467
+#: core/models.py:485
 msgid "user reconciliations"
 msgstr "gebruikers samenvoegen"
 
-#: core/models.py:705
+#: core/models.py:723
 msgid "You have requested a reconciliation of your user accounts on Docs.\n"
 "            To confirm that you are the one who initiated the request\n"
 "            and that this email belongs to you:"
@@ -296,53 +296,53 @@ msgstr "Je hebt gevraagd om een samenvoeging van je gebruikersaccounts op Docs.\
 "            Om te bevestigen dat u degene bent die het verzoek\n"
 "            heeft geïnitieerd en dat deze e-mail van u is:"
 
-#: core/models.py:711
+#: core/models.py:729
 msgid "Confirm by clicking the link to start the reconciliation"
 msgstr "Bevestig door te klikken op de link om de samenvoeging te starten"
 
-#: core/models.py:716 core/models.py:822
+#: core/models.py:734 core/models.py:840
 msgid "Click here"
 msgstr "Klik hier"
 
-#: core/models.py:717
+#: core/models.py:735
 msgid "Confirm"
 msgstr "Bevestig"
 
-#: core/models.py:728
+#: core/models.py:746
 msgid "Your reconciliation request has been processed.\n"
 "            New documents are likely associated with your account:"
 msgstr "Uw samenvoegingsverzoek is verwerkt.\n"
 "            Nieuwe documenten worden waarschijnlijk geassocieerd met uw account:"
 
-#: core/models.py:733
+#: core/models.py:751
 msgid "Your accounts have been merged"
 msgstr "Je accounts zijn samengevoegd"
 
-#: core/models.py:738
+#: core/models.py:756
 msgid "Click here to see"
 msgstr "Klik hier om te bekijken"
 
-#: core/models.py:739
+#: core/models.py:757
 msgid "See my documents"
 msgstr "Mijn documenten bekijken"
 
-#: core/models.py:749
+#: core/models.py:767
 msgid "CSV file"
 msgstr "CSV bestand"
 
-#: core/models.py:754
+#: core/models.py:772
 msgid "Running"
 msgstr "Bezig"
 
-#: core/models.py:764
+#: core/models.py:782
 msgid "user reconciliation CSV import"
 msgstr "gebruiker samenvoeging CSV import"
 
-#: core/models.py:765
+#: core/models.py:783
 msgid "user reconciliation CSV imports"
 msgstr "gebruiker reconciliation CSV imports"
 
-#: core/models.py:809
+#: core/models.py:827
 #, python-brace-format
 msgid "Your request for reconciliation was unsuccessful.\n"
 "            Reconciliation failed for the following email addresses:\n"
@@ -355,171 +355,275 @@ msgstr "Uw verzoek tot verzoening is mislukt.\n"
 "            Controleer op typefouten.\n"
 "            U kunt een ander verzoek indienen met de geldige e-mailadressen."
 
-#: core/models.py:817
+#: core/models.py:835
 msgid "Reconciliation of your Docs accounts not completed"
 msgstr "Samenvoeging van je Docs accounts is niet voltooid"
 
-#: core/models.py:823
+#: core/models.py:841
 msgid "Make a new request"
 msgstr "Maak een nieuw verzoek"
 
-#: core/models.py:938
+#: core/models.py:956
 msgid "title"
 msgstr "titel"
 
-#: core/models.py:939
+#: core/models.py:957
 msgid "excerpt"
 msgstr "uittreksel"
 
-#: core/models.py:988
+#: core/models.py:1004
 msgid "Document"
 msgstr "Document"
 
-#: core/models.py:989
+#: core/models.py:1005
 msgid "Documents"
 msgstr "Documenten"
 
-#: core/models.py:1006 core/models.py:1450
+#: core/models.py:1022 core/models.py:1351 core/models.py:2087
 msgid "Untitled Document"
 msgstr "Naamloos Document"
 
-#: core/models.py:1451
+#: core/models.py:1352
 msgid "Open"
 msgstr "Open"
 
-#: core/models.py:1486
+#: core/models.py:1387
 #, python-brace-format
 msgid "{name} shared a document with you!"
 msgstr "{name} heeft een document met u gedeeld!"
 
-#: core/models.py:1490
+#: core/models.py:1391
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
 msgstr "{name} heeft u uitgenodigd met de rol \"{role}\" op het volgende document:"
 
-#: core/models.py:1496
+#: core/models.py:1397
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
 msgstr "{name} heeft een document met u gedeeld: {title}"
 
-#: core/models.py:1596
+#: core/models.py:1497
 msgid "Document/user link trace"
 msgstr "Document/gebruiker link"
 
-#: core/models.py:1597
+#: core/models.py:1498
 msgid "Document/user link traces"
 msgstr "Document/gebruiker link"
 
-#: core/models.py:1603
+#: core/models.py:1504
 msgid "A link trace already exists for this document/user."
 msgstr "Een link bestaat al voor dit document/deze gebruiker."
 
-#: core/models.py:1626
+#: core/models.py:1527
 msgid "Document favorite"
 msgstr "Document favoriet"
 
-#: core/models.py:1627
+#: core/models.py:1528
 msgid "Document favorites"
 msgstr "Document favorieten"
 
-#: core/models.py:1633
+#: core/models.py:1534
 msgid "This document is already targeted by a favorite relation instance for the same user."
 msgstr "Dit document is al in gebruik als favoriet door dezelfde gebruiker."
 
-#: core/models.py:1655
+#: core/models.py:1556
 msgid "Document/user relation"
 msgstr "Document/gebruiker relatie"
 
-#: core/models.py:1656
+#: core/models.py:1557
 msgid "Document/user relations"
 msgstr "Document/gebruiker relaties"
 
-#: core/models.py:1662
+#: core/models.py:1563
 msgid "This user is already in this document."
 msgstr "De gebruiker bestaat al in dit document."
 
-#: core/models.py:1668
+#: core/models.py:1569
 msgid "This team is already in this document."
 msgstr "Dit team bestaat al in dit document."
 
-#: core/models.py:1674
+#: core/models.py:1575
 msgid "Either user or team must be set, not both."
 msgstr "Een gebruiker of team moet gekozen worden, maar niet beide."
 
-#: core/models.py:1825
+#: core/models.py:1726
 msgid "Document ask for access"
 msgstr "Document verzoekt om toegang"
 
-#: core/models.py:1826
+#: core/models.py:1727
 msgid "Document ask for accesses"
 msgstr "Document verzoekt om toegangen"
 
-#: core/models.py:1832
+#: core/models.py:1733
 msgid "This user has already asked for access to this document."
 msgstr "Deze gebruiker heeft al om toegang tot dit document gevraagd."
 
-#: core/models.py:1889
+#: core/models.py:1790
 #, python-brace-format
 msgid "{name} would like access to a document!"
 msgstr "{name} verzoekt toegang tot een document!"
 
-#: core/models.py:1893
+#: core/models.py:1794
 #, python-brace-format
 msgid "{name} would like access to the following document:"
 msgstr "{name} verzoekt toegang tot het volgende document:"
 
-#: core/models.py:1899
+#: core/models.py:1800
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
 msgstr "{name} verzoekt toegang tot het document: {title}"
 
-#: core/models.py:1941
+#: core/models.py:1842
 msgid "Thread"
 msgstr "Kanaal"
 
-#: core/models.py:1942
+#: core/models.py:1843
 msgid "Threads"
 msgstr "Kanalen"
 
-#: core/models.py:1945 core/models.py:1998
+#: core/models.py:1846 core/models.py:1899
 msgid "Anonymous"
 msgstr "Anoniem"
 
-#: core/models.py:1993
+#: core/models.py:1894
 msgid "Comment"
 msgstr "Reactie"
 
-#: core/models.py:1994
+#: core/models.py:1895
 msgid "Comments"
 msgstr "Reacties"
 
-#: core/models.py:2044
+#: core/models.py:1945
 msgid "This emoji has already been reacted to this comment."
 msgstr "Deze emoji is al op deze opmerking gereageerd."
 
-#: core/models.py:2048
+#: core/models.py:1949
 msgid "Reaction"
 msgstr "Reactie"
 
-#: core/models.py:2049
+#: core/models.py:1950
 msgid "Reactions"
 msgstr "Reacties"
 
-#: core/models.py:2059
+#: core/models.py:2001
+msgid "Mention"
+msgstr "Vermelding"
+
+#: core/models.py:2002
+msgid "Mentions"
+msgstr "Vermeldingen"
+
+#: core/models.py:2015
+msgid "a deleted user"
+msgstr "een verwijderde gebruiker"
+
+#: core/models.py:2025
+msgid "The thread does not belong to this document."
+msgstr "De discussie hoort niet bij dit document."
+
+#: core/models.py:2089
+#, python-brace-format
+msgid "{name} mentioned you in a comment in \"{title}\""
+msgstr "{name} noemde u in een opmerking in \"{title}\""
+
+#: core/models.py:2093
+#, python-brace-format
+msgid "{name} mentioned you in a comment in the following document:"
+msgstr "{name} noemde u in een opmerking in het volgende document:"
+
+#: core/models.py:2096
+#, python-brace-format
+msgid "{name} mentioned you in \"{title}\""
+msgstr "{name} noemde u in \"{title}\""
+
+#: core/models.py:2099
+#, python-brace-format
+msgid "{name} mentioned you in the following document:"
+msgstr "{name} noemde u in het volgende document:"
+
+#: core/models.py:2125
 msgid "email address"
 msgstr "e-mailadres"
 
-#: core/models.py:2078
+#: core/models.py:2144
 msgid "Document invitation"
 msgstr "Document uitnodiging"
 
-#: core/models.py:2079
+#: core/models.py:2145
 msgid "Document invitations"
 msgstr "Document uitnodigingen"
 
-#: core/models.py:2099
+#: core/models.py:2165
 msgid "This email is already associated to a registered user."
 msgstr "Deze email is al geassocieerd met een geregistreerde gebruiker."
+
+#: core/models.py:2208
+msgid "Migrated"
+msgstr "Gemigreerd"
+
+#: core/models.py:2209
+msgid "Already migrated"
+msgstr "Al gemigreerd"
+
+#: core/models.py:2210
+msgid "Nothing in the object storage"
+msgstr "Niets in de objectopslag"
+
+#: core/models.py:2211
+msgid "No readable version"
+msgstr "Geen leesbare versie"
+
+#: core/models.py:2212
+msgid "Failed"
+msgstr "Mislukt"
+
+#: core/models.py:2236
+msgid "status"
+msgstr "status"
+
+#: core/models.py:2238
+msgid "versions"
+msgstr "versies"
+
+#: core/models.py:2241
+msgid "applied"
+msgstr "toegepast"
+
+#: core/models.py:2242
+msgid "versions that added content, one activity entry each"
+msgstr "versies die inhoud hebben toegevoegd, met elk één activiteitvermelding"
+
+#: core/models.py:2246
+msgid "skipped"
+msgstr "overgeslagen"
+
+#: core/models.py:2247
+msgid "versions that could not be read"
+msgstr "versies die niet konden worden gelezen"
+
+#: core/models.py:2251
+msgid "dropped"
+msgstr "laten vallen"
+
+#: core/models.py:2252
+msgid "versions older than the ones the server replays"
+msgstr "versies ouder dan degene die de server opnieuw afspeelt"
+
+#: core/models.py:2254
+msgid "duration"
+msgstr "duur"
+
+#: core/models.py:2255
+msgid "error"
+msgstr "fout"
+
+#: core/models.py:2260
+msgid "Document migration"
+msgstr "Document migratie"
+
+#: core/models.py:2261
+msgid "Document migrations"
+msgstr "Document migraties"
 
 #: core/templates/mail/html/template.html:160
 #: core/templates/mail/text/template.txt:4
@@ -537,7 +641,7 @@ msgstr " Docs, jouw nieuwe essentiële tool voor het organiseren, delen en colla
 msgid " Brought to you by %(brandname)s "
 msgstr " Geleverd door %(brandname)s "
 
-#: impress/settings.py:892
+#: impress/settings.py:960
 msgid "Docs AI"
 msgstr "Docs AI"
 
