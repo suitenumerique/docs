@@ -44,7 +44,12 @@ export function useDeleteFavoriteDoc({
         });
       });
 
-      syncDocInTree(treeContext, id, { is_favorite: false });
+      syncDocInTree(
+        treeContext,
+        id,
+        { is_favorite: false },
+        { keepFocus: true },
+      );
 
       const message = t('Document unstarred successfully!');
       announce(message, 'polite');

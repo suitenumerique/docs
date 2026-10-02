@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 
 import {
   clickInDocOptionMenu,
@@ -8,7 +8,26 @@ import {
   waitForTransitionsEnd,
 } from './utils-common';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
-import { addChild, createRootSubPage, getTreeRow } from './utils-sub-pages';
+import {
+  addChild,
+  createRootSubPage,
+  getTreeRow,
+  navigateToTopParentFromTree,
+} from './utils-sub-pages';
+
+/** Whether the doc title, inside the main content, holds the focus. */
+const isDocTitleFocused = (page: Page) =>
+  page.evaluate(() => {
+    const active = document.activeElement;
+    const mainContent = document.getElementById('mainContent');
+
+    return (
+      !!active &&
+      !!mainContent &&
+      mainContent.contains(active) &&
+      active.classList.contains('--docs--doc-title')
+    );
+  });
 
 test.describe('Doc Tree', () => {
   test.beforeEach(async ({ page }) => {
@@ -449,6 +468,58 @@ test.describe('Doc Tree', () => {
 
     await page.keyboard.press('Enter');
     await verifyDocName(page, docParent);
+
+    await expect(docTree).toHaveAttribute('role', 'tree');
+    await expect(docTree.locator('[role="tree"]')).toHaveCount(0);
+    await expect(docTree.locator('[role="group"]').first()).toBeAttached();
+    await expect(rootItem).toHaveAttribute('tabindex', '0');
+    await expect(rootItem).toHaveAttribute(
+      'aria-describedby',
+      'doc-tree-keyboard-instructions',
+    );
+
+    await treeRow1.hover();
+    const optionsButton = treeRow1.getByRole('button', {
+      name: /Open the document options/i,
+    });
+    await expect(optionsButton).toHaveAttribute('aria-haspopup', 'menu');
+    await expect(optionsButton).toHaveAttribute('aria-expanded', 'false');
+    await optionsButton.click();
+    await expect(optionsButton).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Escape');
+
+    const starResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/favorite/') &&
+        response.request().method() === 'POST',
+    );
+    await clickInDocOptionMenu(page, treeRow1, 'Star');
+    await expect(optionsButton).toBeFocused();
+    await starResponse;
+    await expect(optionsButton).toBeFocused();
+
+    await rootItem.focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await expect(treeRow2).toBeFocused();
+    await page.keyboard.press('Enter');
+    await verifyDocName(page, docChild2);
+    await expect.poll(() => isDocTitleFocused(page)).toBe(true);
+    await page.waitForTimeout(500);
+    expect(await isDocTitleFocused(page)).toBe(true);
+
+    await rootItem.focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await expect(treeRow2).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect.poll(() => isDocTitleFocused(page)).toBe(true);
+
+    await page.keyboard.press('Tab');
+    await navigateToTopParentFromTree({ page });
+    await verifyDocName(page, docParent);
+    await page.waitForTimeout(500);
+    expect(await isDocTitleFocused(page)).toBe(false);
   });
 
   test('it updates the child icon from the tree', async ({

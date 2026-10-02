@@ -11,6 +11,8 @@ import { Doc } from '../doc-management';
 
 export const CLASS_TREE_ITEM_ACTIONS = 'doc-tree-root-item-actions';
 
+export const ID_TREE_KEYBOARD_INSTRUCTIONS = 'doc-tree-keyboard-instructions';
+
 export const isWithinTreeItemActions = (event: React.SyntheticEvent) =>
   !!(event.target as HTMLElement | null)?.closest(
     `.${CLASS_TREE_ITEM_ACTIONS}`,
@@ -50,6 +52,7 @@ export const syncDocInTree = (
   treeContext: TreeContextType<Doc> | null,
   docId: string,
   data: Partial<Doc>,
+  options?: { keepFocus?: boolean },
 ) => {
   if (!treeContext) {
     return;
@@ -58,11 +61,19 @@ export const syncDocInTree = (
   const { root } = treeContext;
   if (root && root.id === docId) {
     treeContext.setRoot({ ...root, ...data });
+  } else if (options?.keepFocus) {
+    // `updateNode` rebuilds the row and loses the focus inside it.
+    const node = treeContext.treeData.getNode(docId);
+    if (node) {
+      Object.assign(node, data);
+    }
   } else if (treeContext.treeData.getNode(docId)) {
     treeContext.treeData.updateNode(docId, data);
   }
 
-  treeContext.treeApiRef.current?.focus(docId);
+  if (!options?.keepFocus) {
+    treeContext.treeApiRef.current?.focus(docId);
+  }
 };
 
 export const reloadTree = (treeContext: TreeContextType<Doc | null> | null) => {
