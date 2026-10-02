@@ -2100,64 +2100,81 @@ class DocumentViewSet(
         user = request.user
         key = f"{url_params['pk']:s}/{url_params['attachment']:s}"
 
-        # Look for a document to which the user has access and that includes this
-        # attachment. Access is granted when the document holding the attachment,
-        # or any of its ancestors, is readable per se by the user.
-        #
-        # We answer this without materialising the user's whole readable set:
-        #   1. find the document(s) that hold this key (indexed by the GIN index
-        #      on `attachments`);
-        #   2. expand each to its own path plus every ancestor prefix -- pure
-        #      string slicing, no query, bounded by tree depth
-        #      (<= len(path) / steplen);
-        #   3. ask a single indexed EXISTS whether any of those candidate paths
-        #      is readable per se by this user, right now.
-        # "descendant-or-self of a readable node" and "ancestor-or-self is
-        # readable" are converses over the same fixed-width prefix relation, so
-        # this yields the exact same decision as scanning every readable path.
-        # NOTE: like the previous implementation, `self.queryset` here does not
-        # filter out soft-deleted (ancestors_deleted_at) documents, so a
-        # soft-deleted ancestor still grants access. Behaviour preserved on
-        # purpose; revisit separately if that is not intended.
-        attachment_paths = list(
-            self.queryset.select_related(None)
-            .filter(attachments__contains=[key])
-            .values_list("path", flat=True)
-        )
+        # Every attachment of a page is authorized through this endpoint, so
+        # a page holding many of them would otherwise multiply the very same
+        # database and object storage calls — the 2026-08-18 thundering herd
+        # on this endpoint (see generate_volumetry.py) came from that. The
+        # decision is cached for a short while, keyed by the user and the
+        # attachment: only an allow is cached, so a freshly granted access is
+        # effective at once, while a revoked one stays effective for the TTL
+        # at worst. That delay is the explicit trade-off for the load the
+        # cache removes; the signature of the answer is computed on every
+        # request regardless, so nothing about it goes stale.
+        cache_key = f"media_auth:{user.pk}:{key}"
+        if not cache.get(cache_key):
+            # Look for a document to which the user has access and that
+            # includes this attachment. Access is granted when the document
+            # holding the attachment, or any of its ancestors, is readable
+            # per se by the user.
+            #
+            # We answer this without materialising the user's whole readable set:
+            #   1. find the document(s) that hold this key (indexed by the GIN
+            #      index on `attachments`);
+            #   2. expand each to its own path plus every ancestor prefix --
+            #      pure string slicing, no query, bounded by tree depth
+            #      (<= len(path) / steplen);
+            #   3. ask a single indexed EXISTS whether any of those candidate
+            #      paths is readable per se by this user, right now.
+            # "descendant-or-self of a readable node" and "ancestor-or-self is
+            # readable" are converses over the same fixed-width prefix
+            # relation, so this yields the exact same decision as scanning
+            # every readable path.
+            # NOTE: like the previous implementation, `self.queryset` here
+            # does not filter out soft-deleted (ancestors_deleted_at)
+            # documents, so a soft-deleted ancestor still grants access.
+            # Behaviour preserved on purpose; revisit separately if that is
+            # not intended.
+            attachment_paths = list(
+                self.queryset.select_related(None)
+                .filter(attachments__contains=[key])
+                .values_list("path", flat=True)
+            )
 
-        candidate_paths = {
-            path[:pos]
-            for path in attachment_paths
-            for pos in range(len(path), 0, -models.Document.steplen)
-        }
+            candidate_paths = {
+                path[:pos]
+                for path in attachment_paths
+                for pos in range(len(path), 0, -models.Document.steplen)
+            }
 
-        if not candidate_paths or not (
-            self.queryset.readable_per_se(user)
-            .filter(path__in=candidate_paths)
-            .exists()
-        ):
-            logger.debug("User '%s' lacks permission for attachment", user)
-            raise drf.exceptions.PermissionDenied()
+            if not candidate_paths or not (
+                self.queryset.readable_per_se(user)
+                .filter(path__in=candidate_paths)
+                .exists()
+            ):
+                logger.debug("User '%s' lacks permission for attachment", user)
+                raise drf.exceptions.PermissionDenied()
 
-        # Check if the attachment is ready. Use the process-global S3 client
-        # (see core.utils.s3): django-storages caches its client per thread, so
-        # relying on default_storage.connection here rebuilds the boto3 client
-        # on every fresh thread -- profiling showed that client construction,
-        # not the DB, dominated this endpoint's CPU under load.
-        s3_client = get_s3_client()
-        bucket_name = default_storage.bucket_name
-        try:
-            head_resp = s3_client.head_object(Bucket=bucket_name, Key=key)
-        except ClientError as err:
-            raise drf.exceptions.PermissionDenied() from err
-        metadata = lowercase_keys(head_resp.get("Metadata", {}))
-        # In order to be compatible with existing upload without `status` metadata,
-        # we consider them as ready.
-        if (
-            metadata.get("status", enums.DocumentAttachmentStatus.READY)
-            != enums.DocumentAttachmentStatus.READY
-        ):
-            raise drf.exceptions.PermissionDenied()
+            # Check if the attachment is ready. Use the process-global S3 client
+            # (see core.utils.s3): django-storages caches its client per thread, so
+            # relying on default_storage.connection here rebuilds the boto3 client
+            # on every fresh thread -- profiling showed that client construction,
+            # not the DB, dominated this endpoint's CPU under load.
+            s3_client = get_s3_client()
+            bucket_name = default_storage.bucket_name
+            try:
+                head_resp = s3_client.head_object(Bucket=bucket_name, Key=key)
+            except ClientError as err:
+                raise drf.exceptions.PermissionDenied() from err
+            metadata = lowercase_keys(head_resp.get("Metadata", {}))
+            # In order to be compatible with existing upload without `status` metadata,
+            # we consider them as ready.
+            if (
+                metadata.get("status", enums.DocumentAttachmentStatus.READY)
+                != enums.DocumentAttachmentStatus.READY
+            ):
+                raise drf.exceptions.PermissionDenied()
+
+            cache.set(cache_key, True, timeout=settings.MEDIA_AUTH_CACHE_TTL)
 
         # Generate S3 authorization headers using the extracted URL parameters
         request = utils.generate_s3_authorization_headers(key)

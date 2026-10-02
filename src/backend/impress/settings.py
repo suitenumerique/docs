@@ -148,6 +148,19 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # How long an authorization decision of the media-auth endpoint is cached,
+    # in seconds. Every attachment of a page is authorized through this
+    # endpoint, and a page holding many of them otherwise multiplies the very
+    # same database and object storage calls. Only an allow is cached, so a
+    # freshly granted access is effective at once; a revoked one stays
+    # effective for this long at worst, the explicit trade-off for the load
+    # the cache removes.
+    MEDIA_AUTH_CACHE_TTL = values.IntegerValue(
+        default=60,
+        environ_name="MEDIA_AUTH_CACHE_TTL",
+        environ_prefix=None,
+    )
+
     # Static files (CSS, JavaScript, Images)
     STATIC_URL = "/static/"
     STATIC_ROOT = os.path.join(DATA_DIR, "static")
@@ -1570,6 +1583,11 @@ class Development(Base):
             ),
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                # like Production: a down redis must degrade the callers that
+                # merely decorate a decision with cache -- media-auth reads it
+                # before every authorization, it must not turn a redis outage
+                # into a media outage
+                "IGNORE_EXCEPTIONS": True,
             },
         },
     }
