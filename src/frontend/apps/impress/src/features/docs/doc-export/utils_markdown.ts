@@ -12,8 +12,152 @@ interface MediaReference {
   src: string;
 }
 
+interface ImageReference {
+  src: string;
+  width?: number;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
+
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+interface MarkdownRange {
+  from: number;
+  to: number;
+}
+
+/** Returns source ranges occupied by Markdown fenced code blocks. */
+const getFencedCodeRanges = (markdown: string): MarkdownRange[] => {
+  const ranges: MarkdownRange[] = [];
+  const lines = markdown.match(/.*(?:\n|$)/g) ?? [];
+  let offset = 0;
+  let openingFence:
+    { character: '`' | '~'; length: number; start: number } | undefined;
+
+  lines.forEach((line) => {
+    const content = line.replace(/\r?\n$/, '');
+
+    if (!openingFence) {
+      const match = /^ {0,3}(`{3,}|~{3,})/.exec(content);
+      if (match) {
+        openingFence = {
+          character: match[1][0] as '`' | '~',
+          length: match[1].length,
+          start: offset,
+        };
+      }
+    } else {
+      const closingFence = /^ {0,3}(`+|~+)[ \t]*$/.exec(content);
+      if (
+        closingFence &&
+        closingFence[1][0] === openingFence.character &&
+        closingFence[1].length >= openingFence.length
+      ) {
+        ranges.push({ from: openingFence.start, to: offset + line.length });
+        openingFence = undefined;
+      }
+    }
+
+    offset += line.length;
+  });
+
+  if (openingFence) {
+    ranges.push({ from: openingFence.start, to: markdown.length });
+  }
+
+  return ranges;
+};
+
+/** Finds the next matching image token that is not part of a code example. */
+const findImageOutsideFencedCode = (
+  markdown: string,
+  image: RegExp,
+  searchFrom: number,
+) => {
+  const fencedCodeRanges = getFencedCodeRanges(markdown);
+  image.lastIndex = searchFrom;
+
+  for (let match = image.exec(markdown); match; match = image.exec(markdown)) {
+    const isInsideFencedCode = fencedCodeRanges.some(
+      ({ from, to }) => match.index >= from && match.index < to,
+    );
+    if (!isInsideFencedCode) {
+      return match;
+    }
+  }
+
+  return null;
+};
+
+const collectImageReferences = (
+  blocks: unknown[],
+  references: ImageReference[],
+) => {
+  blocks.forEach((block) => {
+    if (!isRecord(block)) {
+      return;
+    }
+
+    const props = block.props;
+    if (
+      block.type === 'image' &&
+      isRecord(props) &&
+      typeof props.url === 'string'
+    ) {
+      const width = props.previewWidth;
+      references.push({
+        src: props.url,
+        width:
+          typeof width === 'number' && Number.isFinite(width) && width > 0
+            ? width
+            : undefined,
+      });
+    }
+
+    if (Array.isArray(block.children)) {
+      collectImageReferences(block.children, references);
+    }
+  });
+};
+
+/**
+ * Preserves BlockNote image widths using CodiMD's Markdown image-size syntax.
+ * BlockNote stores the height implicitly from the image's aspect ratio, so the
+ * exported syntax intentionally specifies only the width (`=WIDTHx`).
+ */
+export const preserveImageWidthsInMarkdown = (
+  markdown: string,
+  blocks: unknown[],
+) => {
+  const references: ImageReference[] = [];
+  collectImageReferences(blocks, references);
+  let result = markdown;
+  let searchFrom = 0;
+
+  references.forEach(({ src, width }) => {
+    const image = new RegExp(`!\\[([^\\]]*)\\]\\(${escapeRegExp(src)}\\)`, 'g');
+    const match = findImageOutsideFencedCode(result, image, searchFrom);
+    if (!match) {
+      return;
+    }
+
+    const start = match.index;
+    if (!width) {
+      searchFrom = start + match[0].length;
+      return;
+    }
+
+    const replacement = `![${match[1]}](${src} =${width}x)`;
+    result = `${result.slice(0, start)}${replacement}${result.slice(
+      start + match[0].length,
+    )}`;
+    searchFrom = start + replacement.length;
+  });
+
+  return result;
+};
 
 /** Collects media URL properties from a nested editor block tree. */
 const collectMediaReferences = (
