@@ -36,7 +36,6 @@ import LeaveIcon from '@/icons/leave.svg';
 import LinkIcon from '@/icons/link.svg';
 import MoreIcon from '@/icons/more_horiz.svg';
 import PrintIcon from '@/icons/print.svg';
-import SharedIcon from '@/icons/shared.svg';
 import StarSlashIcon from '@/icons/star-slash.svg';
 import StarIcon from '@/icons/star.svg';
 import DeleteIcon from '@/icons/trash.svg';
@@ -87,14 +86,6 @@ const ModalSelectVersion = dynamic(
     import('@/docs/doc-versioning/components/ModalSelectVersion').then(
       (mod) => ({ default: mod.ModalSelectVersion }),
     ),
-  { ssr: false },
-);
-
-const DocShareModal = dynamic(
-  () =>
-    import('@/docs/doc-share/components/DocShareModal').then((mod) => ({
-      default: mod.DocShareModal,
-    })),
   { ssr: false },
 );
 
@@ -153,7 +144,6 @@ const DocToolBoxComponent = ({
   const [isModalDuplicateOpen, setIsModalDuplicateOpen] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
-  const [isModalShareOpen, setIsModalShareOpen] = useState(false);
   const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
   const [isModalMoveOpen, setIsModalMoveOpen] = useState(false);
@@ -213,17 +203,6 @@ const DocToolBoxComponent = ({
         copyDocLink();
         restoreFocus();
       },
-    },
-    {
-      label: t('Share', {
-        description: 'Dropdown menu item to share the document',
-      }),
-      icon: <SharedIcon width={18} height={18} aria-hidden="true" />,
-      callback: () => {
-        setIsModalShareOpen(true);
-      },
-      isHidden: !authenticated,
-      showSeparator: isCurrentDoc,
     },
     {
       label: (
@@ -486,16 +465,6 @@ const DocToolBoxComponent = ({
             restoreFocus();
           }}
           doc={doc}
-        />
-      )}
-      {isModalShareOpen && (
-        <DocShareModal
-          onClose={() => {
-            setIsModalShareOpen(false);
-            restoreFocus();
-          }}
-          doc={doc}
-          isRootDoc={isTopParent}
         />
       )}
       {isModalLeaveOpen && (
