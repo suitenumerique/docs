@@ -7,11 +7,14 @@ import { css } from 'styled-components';
 import { Box, StyledLink } from '@/components';
 import { Doc, SimpleDocItem, useTrans } from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel/stores/useLeftPanelStore';
+import { focusMainContentStart } from '@/layouts/utils';
 import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
-import { CLASS_DOC_TITLE } from '../../doc-header';
 import { useTreeItemActions } from '../hooks/useTreeItemActions';
-import { isWithinTreeItemActions } from '../utils';
+import {
+  ID_TREE_KEYBOARD_INSTRUCTIONS,
+  isWithinTreeItemActions,
+} from '../utils';
 
 import { DocTreeItemActions } from './DocTreeItemActions';
 
@@ -99,7 +102,7 @@ export const DocTreeRoot = ({
 
         // Already on this document: move on to its title rather than reloading.
         if (currentDoc.id === root?.id) {
-          document.querySelector<HTMLElement>(`.${CLASS_DOC_TITLE}`)?.focus();
+          focusMainContentStart();
         } else if (root) {
           selectRoot();
           void router.push(`/docs/${root.id}`);
@@ -130,6 +133,7 @@ export const DocTreeRoot = ({
       data-testid="doc-tree-root-item"
       role="treeitem"
       aria-label={t('Root document {{title}}', { title })}
+      aria-describedby={ID_TREE_KEYBOARD_INSTRUCTIONS}
       aria-selected={isSelected}
       tabIndex={0}
       onKeyDown={handleKeyDown}
