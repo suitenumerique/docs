@@ -82,12 +82,16 @@ It is not a fork of yhub — it is a thin wrapper, written in TypeScript under
     server over a store it cannot reach would drop the websockets it is
     serving perfectly well,
   - `GET /collaboration/ready/v1` → `200 {"status":"ready","checks":{…}}`, or
-    `503` with the offending store marked `unreachable`, after asking postgres
-    (`SELECT 1`) and redis (`PING`) in parallel, each with a two second
-    budget. A **readiness** failure takes the pod out of the service endpoints
-    and leaves its siblings serving. The body names the store but never the
-    error: the route is public, and a postgres client will happily put its
-    connection string in the message it raises — that goes to the log instead,
+    `503` with the offending check marked, after asking postgres (`SELECT 1`),
+    redis (`PING`) and the postgres schema itself (the tables and columns the
+    installed yhub expects, see "Database schema" below) in parallel, each
+    with a two second budget. A store that does not answer reads
+    `unreachable`; a schema behind `yarn init-db` reads `incomplete` — the two
+    call for different operator responses. A **readiness** failure takes the
+    pod out of the service endpoints and leaves its siblings serving. The body
+    names the check but never the error: the route is public, and a postgres
+    client will happily put its connection string in the message it raises —
+    that goes to the log instead,
 - mirrors the environment conventions used elsewhere in this repository
   (`*_FILE` secret indirection, `COLLABORATION_SERVER_ORIGIN` allowlist, …).
 
@@ -565,8 +569,13 @@ yhub version needs. It is idempotent, so re-running it is always safe.
 Run it whenever `@y/hub` is upgraded — releases that add a table or a column
 say so in their changelog, and the server fails on every document read until
 the DDL is applied (`relation "yhub_ydoc_tombstones_v1" does not exist`, for
-instance). Nothing in this repository copies the schema, so an upgrade is
-`package.json` plus this script and nothing else.
+instance). The readiness probe verifies the schema itself against
+`src/schema.ts`'s `EXPECTED_SCHEMA`, so a pod whose init-db was missed never
+reports ready — and that table is the second half of the upgrade: when the
+changelog announces a schema change, update `EXPECTED_SCHEMA` in the same
+commit as the `@y/hub` bump. Nothing else in this repository copies the
+schema, so an upgrade is `package.json`, `src/schema.ts` plus this script and
+nothing else.
 
 The connection is not encrypted unless the url asks for it. A server that only
 has `hostssl` rules in its `pg_hba.conf` — the default of the Zalando/Spilo
