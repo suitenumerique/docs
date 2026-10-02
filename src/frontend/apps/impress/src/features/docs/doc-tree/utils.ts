@@ -11,6 +11,8 @@ import { Doc } from '../doc-management';
 
 export const CLASS_TREE_ITEM_ACTIONS = 'doc-tree-root-item-actions';
 
+export const ID_TREE_KEYBOARD_INSTRUCTIONS = 'doc-tree-keyboard-instructions';
+
 export const isWithinTreeItemActions = (event: React.SyntheticEvent) =>
   !!(event.target as HTMLElement | null)?.closest(
     `.${CLASS_TREE_ITEM_ACTIONS}`,
@@ -63,6 +65,34 @@ export const syncDocInTree = (
   }
 
   treeContext.treeApiRef.current?.focus(docId);
+};
+
+/**
+ * Same as `syncDocInTree`, for fields the tree does not display.
+ *
+ * `updateNode` re-renders the row, which re-inserts its DOM node and drops the
+ * focus held inside it. Mutating the value skips that render: the options menu
+ * is the only reader, and it reads the value again on each open.
+ */
+export const patchDocInTree = (
+  treeContext: TreeContextType<Doc> | null,
+  docId: string,
+  data: Partial<Doc>,
+) => {
+  if (!treeContext) {
+    return;
+  }
+
+  const { root } = treeContext;
+  if (root && root.id === docId) {
+    treeContext.setRoot({ ...root, ...data });
+    return;
+  }
+
+  const node = treeContext.treeData.getNode(docId);
+  if (node) {
+    Object.assign(node, data);
+  }
 };
 
 export const reloadTree = (treeContext: TreeContextType<Doc | null> | null) => {
