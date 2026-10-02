@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useCollaborationUrl, useConfig } from '@/core/config';
 import { KEY_DOC } from '@/docs/doc-management/api/useDoc';
 import { useProviderStore } from '@/docs/doc-management/stores/useProviderStore';
+import { Doc } from '@/docs/doc-management/types';
 import { useIsOffline } from '@/features/service-worker/hooks/useOffline';
 import { useBroadcastStore } from '@/stores/useBroadcastStore';
 
@@ -83,12 +84,14 @@ export const useCollaboration = (room: string, readOnly = false) => {
     void queryClient
       .invalidateQueries({ queryKey: [KEY_DOC, { id: room }] })
       .then(() => {
-        if (
-          queryClient.getQueryState([KEY_DOC, { id: room }])?.status ===
-          'success'
-        ) {
-          reconnect();
+        const { status, data } =
+          queryClient.getQueryState<Doc>([KEY_DOC, { id: room }]) ?? {};
+
+        if (status !== 'success' || data?.deleted_at) {
+          return;
         }
+
+        reconnect();
       });
   }, [isPermanentlyClosed, room, queryClient, reconnect]);
 

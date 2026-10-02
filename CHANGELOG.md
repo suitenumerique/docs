@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) stop reconnecting to a deleted document opened by its owner #2768
+
+
 ## [v6.0.0] - 2026-10-05
 
 ### Added
