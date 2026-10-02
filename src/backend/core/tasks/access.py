@@ -1,6 +1,7 @@
 """Tasks dedicated to document's accesses."""
 
 from logging import getLogger
+import time
 
 from core import models
 from core.services.yhub_services import YHubError, YHubService
@@ -8,6 +9,8 @@ from core.services.yhub_services import YHubError, YHubService
 from impress.celery_app import app
 
 logger = getLogger(__name__)
+
+RESET_CONNECTIONS_DELAY = 0.1
 
 
 @app.task
@@ -35,7 +38,10 @@ def reset_service_connections_in_cascade(document_id, user_id=None):
     ).order_by("path")
 
     service = YHubService()
-    for doc in documents:
+    for index, doc in enumerate(documents):
+        if index:
+            time.sleep(RESET_CONNECTIONS_DELAY)
+
         try:
             service.reset_connections(doc, user_id)
         except YHubError:
