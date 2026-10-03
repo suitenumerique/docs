@@ -70,11 +70,29 @@ We use GitHub Projects to:
 ## Technical contributions
 
 ### Before you get started
+We’re thrilled to have you on board! 🎉 
+We believe in **learning by doing**, start small, grow your skills, and gradually take on bigger challenges.
 
-* Run Docs locally, find detailed instructions in the [README.md](README.md)
-* Check out the LaSuite [dev handbook](https://suitenumerique.gitbook.io/handbook) to learn about our best practices
-* Join our [Matrix community channel](https://matrix.to/#/#docs-official:matrix.org)
-* Reach out to the product manager before working on feature
+### The contributing ladder 🪜 
+
+Here’s how you can **gradually** become contributor to LaSuite.
+
+**1️⃣ Set up the project 👶** on your machine/server (detailed instructions in the [README.md](README.md))
+    
+**2️⃣ Contribute documentation 📝** to help others.
+
+**3️⃣ File an issue 🐛** to report bugs or suggest improvements.
+
+**4️⃣ Fix a few bugs 🔧** to get familiar with the codebase. (Look for [good first issues](https://github.com/suitenumerique/docs/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22))
+
+**5️⃣ Work on a small feature 🐝** to gain confidence  (reach out to the PM first)
+
+**6️⃣ Take on a bigger feature ✨** once you’re ready! (reach out to the PM first)
+
+### Ressources
+* [LaSuite dev handbook](https://suitenumerique.gitbook.io/handbook)
+* [Design process](https://docs.numerique.gouv.fr/docs/2d5cf334-1d0b-402f-a8bd-3f12b4cba0ce/)
+* [Matrix community channel](https://matrix.to/#/#docs-official:matrix.org)
 
 ### Requirements
 
