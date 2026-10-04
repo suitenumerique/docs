@@ -34,6 +34,15 @@ const isCollaborationUrl = (url: URL, endpoint: string) =>
   new RegExp(`/${endpoint}/v1/[^/]+/[^/]+/?$`).test(url.pathname);
 
 /**
+ * The OIDC endpoints the browser navigates to during login and logout.
+ */
+const AUTH_PATHNAME =
+  /^\/api\/v[^/]+\/(authenticate|callback|logout|logout-callback)\/$/;
+
+const isAuthUrl = (url: URL) =>
+  isApiUrl(url.href) && AUTH_PATHNAME.test(url.pathname);
+
+/**
  * The collaboration server's rest api: document content (`ydoc`), the editing
  * history (`activity`, `changeset`) and the restore it feeds (`rollback`).
  *
@@ -159,6 +168,30 @@ registerRoute(
     ],
   }),
   'DELETE',
+);
+
+/**
+ * Login and logout: never from the cache. They go through the identity
+ * provider with redirects that carry a one-time OIDC `state`, and a redirect
+ * replayed from the cache sends a `state` already used: the login or the
+ * logout fails.
+ *
+ * `ApiPlugin` still replays the offline mutations first, while the session is
+ * valid, since the logout ends it. Registered before the catch-all route
+ * below, which would cache them.
+ */
+registerRoute(
+  ({ url }) => isAuthUrl(url),
+  new NetworkOnly({
+    plugins: [
+      new ApiPlugin({
+        type: 'synch',
+        syncManager,
+      }),
+      new OfflinePlugin(),
+    ],
+  }),
+  'GET',
 );
 
 registerRoute(
