@@ -49,7 +49,11 @@ export const DocShareInvitationItem = ({
   const { mutate: updateDocInvitation } = useUpdateDocInvitation({
     onError: (error) => {
       toast(
-        error?.data?.role?.[0] ?? t('Error during update invitation'),
+        error?.data?.role?.[0] ??
+          t('Error during update invitation', {
+            description:
+              'Toast shown when changing the role of an invitation failed',
+          }),
         VariantType.ERROR,
         {
           duration: 4000,
@@ -85,6 +89,8 @@ export const DocShareInvitationItem = ({
               doc={doc}
               access={invitation}
               ariaLabel={t('Change role for {{email}}', {
+                description:
+                  'Accessible name of the role dropdown of an invitation',
                 email: invitation.email,
               })}
             />
@@ -123,7 +129,10 @@ export const DocShareModalInviteUserRow = ({
             $gap="var(--c--globals--spacings--xxxs)"
           >
             <Text $withThemeInherited $size="sm">
-              {t('Add')}
+              {t('Add', {
+                description:
+                  'Label of the action adding people to the document',
+              })}
             </Text>
             <Icon $withThemeInherited iconName="add" />
           </BoxButton>
@@ -149,7 +158,9 @@ export const QuickSearchGroupInvitation = ({
     const invitations = data?.pages.flatMap((page) => page.results) || [];
 
     return {
-      groupName: t('Pending invitations'),
+      groupName: t('Pending invitations', {
+        description: 'Heading of the list of invitations not yet accepted',
+      }),
       elements: invitations,
       endActions: hasNextPage
         ? [
@@ -169,7 +180,9 @@ export const QuickSearchGroupInvitation = ({
   return (
     <>
       <Box
-        aria-label={t('List invitation card')}
+        aria-label={t('List invitation card', {
+          description: 'Accessible name of the list of invitations',
+        })}
         $padding={{ horizontal: 'base' }}
       >
         <QuickSearchGroup

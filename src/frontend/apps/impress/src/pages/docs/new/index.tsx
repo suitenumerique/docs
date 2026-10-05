@@ -101,10 +101,10 @@ const Page: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>{`${t('New document')} - ${t('Docs')}`}</title>
+        <title>{`${t('New document', { description: 'Page title when creating a document' })} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}</title>
         <meta
           property="og:title"
-          content={`${t('New document')} - ${t('Docs')}`}
+          content={`${t('New document', { description: 'Page title when creating a document' })} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}
           key="title"
         />
       </Head>

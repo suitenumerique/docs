@@ -43,7 +43,10 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
     <>
       <Box
         $width="100%"
-        aria-label={t('It is the card information about the document.')}
+        aria-label={t('It is the card information about the document.', {
+          description:
+            'Accessible name of the document header information block',
+        })}
         className="--docs--doc-header"
         $minHeight="125px"
         $css={css`
@@ -88,7 +91,15 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                         isAprilFools ? '🐟' : '📄',
                       );
                 }}
-                aria-label={emoji ? t('Remove emoji') : t('Add emoji')}
+                aria-label={
+                  emoji
+                    ? t('Remove emoji', {
+                        description: 'Button to remove the emoji of a document',
+                      })
+                    : t('Add emoji', {
+                        description: 'Button to add an emoji to a document',
+                      })
+                }
                 color="neutral"
                 variant="tertiary"
                 icon={
@@ -100,7 +111,13 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                 }
                 style={{ width: 'fit-content' }}
               >
-                {emoji ? t('Remove emoji') : t('Add emoji')}
+                {emoji
+                  ? t('Remove emoji', {
+                      description: 'Button to remove the emoji of a document',
+                    })
+                  : t('Add emoji', {
+                      description: 'Button to add an emoji to a document',
+                    })}
               </Button>
             )}
           </Box>

@@ -48,7 +48,7 @@ export const NewDocButton = ({ onClose }: NewDocButtonProps) => {
         }}
       >
         <Text $withThemeInherited $size="md" $weight="500">
-          {t('New')}
+          {t('New', { description: 'Button to create a new document' })}
         </Text>
       </ButtonLink>
       {isDropdownEnabled && <DropdownArrow />}
@@ -92,7 +92,9 @@ export function DropdownArrow() {
   const options = useMemo<DropdownMenuItem[]>(
     () => [
       {
-        label: t('New sub-doc'),
+        label: t('New sub-doc', {
+          description: 'Action to create a doc nested under the current doc',
+        }),
         icon: <SubDocIcon aria-hidden="true" width="24" height="24" />,
         callback: () => {
           if (currentDoc) {
@@ -104,7 +106,9 @@ export function DropdownArrow() {
         isHidden: !currentDoc,
       },
       {
-        label: t('Import a document'),
+        label: t('Import a document', {
+          description: 'Menu action to create a document from a file',
+        }),
         icon: <UploadIcon aria-hidden="true" width="24" height="24" />,
         callback: openImport,
         isHidden: !isImportEnabled || !!currentDoc,
@@ -121,7 +125,10 @@ export function DropdownArrow() {
         onOpenChange={setIsMenuOpen}
       >
         <Button
-          aria-label={t('Open new document options')}
+          aria-label={t('Open new document options', {
+            description:
+              'Accessible name of the button opening the new document menu',
+          })}
           color="brand"
           variant="primary"
           iconPosition="left"

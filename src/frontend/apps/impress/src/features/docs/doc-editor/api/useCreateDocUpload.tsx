@@ -26,7 +26,12 @@ export const createDocAttachment = async ({
     // A proxy sitting in front of the API can enforce a lower limit than the application
     // does, and answers a 413 with an HTML body carrying no usable cause.
     if (response.status === 413 && !causes.cause?.length) {
-      causes.cause = [t('This file is too large to be uploaded.')];
+      causes.cause = [
+        t('This file is too large to be uploaded.', {
+          description:
+            'Error shown when an uploaded file exceeds the size limit',
+        }),
+      ];
     }
 
     throw new APIError('Failed to upload on the doc', causes);

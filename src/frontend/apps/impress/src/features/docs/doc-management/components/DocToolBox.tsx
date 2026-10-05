@@ -287,7 +287,13 @@ const DocToolBoxComponent = ({
     },
     { type: 'separator' },
     {
-      label: doc.is_favorite ? t('Unstar') : t('Star'),
+      label: doc.is_favorite
+        ? t('Unstar', {
+            description: 'Menu action to remove a document from favorites',
+          })
+        : t('Star', {
+            description: 'Menu action to add a document to favorites',
+          }),
       icon: doc.is_favorite ? (
         <StarSlashIcon width={18} height={18} aria-hidden="true" />
       ) : (
@@ -324,7 +330,9 @@ const DocToolBoxComponent = ({
       isHidden: !doc.abilities.duplicate,
     },
     {
-      label: t('Move to my docs'),
+      label: t('Move to my docs', {
+        description: "Menu action to move a document into the user's own docs",
+      }),
       isHidden: isTopParent || doc.user_role !== Role.OWNER,
       icon: <DocMoveOutIcon width={18} height={18} aria-hidden="true" />,
       callback: () => {
@@ -350,7 +358,9 @@ const DocToolBoxComponent = ({
       },
     },
     {
-      label: t('Move into a doc'),
+      label: t('Move into a doc', {
+        description: 'Menu action to move a document under another doc',
+      }),
       icon: <DocMoveInIcon width={18} height={18} aria-hidden="true" />,
       callback: () => {
         setIsModalMoveOpen(true);
@@ -415,6 +425,7 @@ const DocToolBoxComponent = ({
       >
         <Button
           aria-label={t('Open the document options: {{title}}', {
+            description: 'Accessible name of the document actions menu button',
             title: doc.title || untitledDocument,
           })}
           size="small"

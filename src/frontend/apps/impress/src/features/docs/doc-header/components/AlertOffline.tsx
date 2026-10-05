@@ -10,7 +10,10 @@ export const AlertOffline = () => {
   return (
     <Card
       className="--docs--alert-offline"
-      aria-label={t('Alert offline document')}
+      aria-label={t('Alert offline document', {
+        description:
+          'Accessible name of the banner telling the user is offline',
+      })}
       $radius={spacingsTokens['3xs']}
       $padding="xs"
       $flex={1}
@@ -28,6 +31,7 @@ export const AlertOffline = () => {
         <Text $theme="warning">
           {t(
             "You're offline. You can keep editing, and your changes will sync automatically once you're back online.",
+            { description: 'Banner shown when the connection is lost' },
           )}
         </Text>
       </Box>

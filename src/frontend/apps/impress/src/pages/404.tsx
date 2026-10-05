@@ -11,7 +11,7 @@ import { NextPageWithLayout } from '@/types/next';
 
 const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
-  const pageTitle = `${t('Page Not Found - Error 404')} - ${t('Docs')}`;
+  const pageTitle = `${t('Page Not Found - Error 404', { description: 'Page title of the not found error' })} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`;
 
   return (
     <>
@@ -36,7 +36,9 @@ const Page: NextPageWithLayout = () => {
             $theme="neutral"
             $variation="primary"
           >
-            {t('Error 404')}
+            {t('Error 404', {
+              description: 'Heading of the not found error page',
+            })}
           </Text>
           <Text
             as="p"
@@ -49,6 +51,7 @@ const Page: NextPageWithLayout = () => {
           >
             {t(
               'It seems that the page you are looking for does not exist or cannot be displayed correctly.',
+              { description: 'Message of the not found error page' },
             )}
           </Text>
         </Box>
@@ -80,7 +83,9 @@ const Page: NextPageWithLayout = () => {
             $variation="tertiary"
             $margin="0"
           >
-            {t('Home')}
+            {t('Home', {
+              description: 'Button/link label to go back to the home page',
+            })}
           </Text>
         </StyledLink>
       </Box>

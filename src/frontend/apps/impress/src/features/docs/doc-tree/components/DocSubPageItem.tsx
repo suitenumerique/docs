@@ -91,7 +91,9 @@ const DocSubPageLoadMore = (props: TreeViewNodeProps<Doc>) => {
       $justify="center"
       $padding={{ vertical: 'xs' }}
       role="status"
-      aria-label={t('Loading more documents')}
+      aria-label={t('Loading more documents', {
+        description: 'Screen reader status while more tree items load',
+      })}
     >
       <Spinner size="sm" aria-hidden="true" />
     </Box>
@@ -189,8 +191,15 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
       tabIndex={-1}
       aria-label={
         isDeleted
-          ? t('{{title}} (deleted)', { title: displayTitle })
-          : t('Open document {{title}}', { title: displayTitle })
+          ? t('{{title}} (deleted)', {
+              description: 'Accessible name of a deleted doc in the tree',
+              title: displayTitle,
+            })
+          : t('Open document {{title}}', {
+              description:
+                'Accessible name of a document link, an action to open it',
+              title: displayTitle,
+            })
       }
       aria-current={isCurrentPage ? 'page' : undefined}
       data-testid={`doc-sub-page-item-${doc.id}`}

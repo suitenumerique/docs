@@ -121,11 +121,18 @@ export const DraggableDocGridContentList = ({
       screenReaderInstructions: {
         draggable: t(
           'To pick up a draggable item, press space or enter. While dragging, use the arrow keys to move the item. Press space or enter again to drop the item in its new position, or press escape to cancel.',
+          {
+            description:
+              'Screen reader instructions for keyboard drag and drop',
+          },
         ),
       },
       announcements: {
         onDragStart({ active }: { active: { id: UniqueIdentifier } }) {
-          return t('Picked up document {{id}}.', { id: active.id });
+          return t('Picked up document {{id}}.', {
+            description: 'Screen reader announcement when dragging starts',
+            id: active.id,
+          });
         },
         onDragOver({
           active,
@@ -136,11 +143,13 @@ export const DraggableDocGridContentList = ({
         }) {
           if (over) {
             return t('Document {{activeId}} is over document {{overId}}.', {
+              description: 'Screen reader announcement while dragging',
               activeId: active.id,
               overId: over.id,
             });
           }
           return t('Document {{id}} is no longer over a droppable area.', {
+            description: 'Screen reader announcement while dragging',
             id: active.id,
           });
         },
@@ -154,13 +163,23 @@ export const DraggableDocGridContentList = ({
           if (over) {
             return t(
               'Document {{activeId}} was dropped over document {{overId}}.',
-              { activeId: active.id, overId: over.id },
+              {
+                description:
+                  'Screen reader announcement when a doc is dropped on another',
+                activeId: active.id,
+                overId: over.id,
+              },
             );
           }
-          return t('Document {{id}} was dropped.', { id: active.id });
+          return t('Document {{id}} was dropped.', {
+            description: 'Screen reader announcement when a doc is dropped',
+            id: active.id,
+          });
         },
         onDragCancel({ active }: { active: { id: UniqueIdentifier } }) {
           return t('Dragging was cancelled. Document {{id}} was dropped.', {
+            description:
+              'Screen reader announcement when dragging is cancelled',
             id: active.id,
           });
         },
@@ -171,10 +190,15 @@ export const DraggableDocGridContentList = ({
 
   const overlayText = useMemo(() => {
     if (!canDrag) {
-      return t('You must be the owner to move the document');
+      return t('You must be the owner to move the document', {
+        description: 'Tooltip on a doc that cannot be dragged',
+      });
     }
     if (!canDrop) {
-      return t('You must be at least the administrator of the target document');
+      return t(
+        'You must be at least the administrator of the target document',
+        { description: 'Tooltip on a drop target the user cannot move into' },
+      );
     }
 
     return selectedDoc?.title || untitledDocument;
@@ -228,7 +252,9 @@ export const DraggableDocGridContentList = ({
               $radius="12px"
               data-testid="drag-doc-overlay"
               role="alert"
-              aria-label={t('Drag and drop status')}
+              aria-label={t('Drag and drop status', {
+                description: 'Accessible name of the drag and drop live region',
+              })}
               $theme={cannotMoveDoc ? 'error' : 'brand'}
               $variation="tertiary"
               $scope="semantic"

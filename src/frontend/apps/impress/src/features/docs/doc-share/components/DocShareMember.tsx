@@ -33,14 +33,24 @@ export const DocShareMemberItem = ({
   const message = isLastOwner
     ? t(
         'You are the sole owner of this group, make another member the group owner before you can change your own role or be removed from your document.',
+        {
+          description:
+            'Tooltip shown when the last owner cannot change their role',
+        },
       )
     : undefined;
 
   const { mutate: updateDocAccess } = useUpdateDocAccess({
     onError: () => {
-      toast(t('Error while updating the member role.'), VariantType.ERROR, {
-        duration: 4000,
-      });
+      toast(
+        t('Error while updating the member role.', {
+          description: 'Toast shown when changing a member role failed',
+        }),
+        VariantType.ERROR,
+        {
+          duration: 4000,
+        },
+      );
     },
   });
 
@@ -78,6 +88,7 @@ export const DocShareMemberItem = ({
               access={access}
               doc={doc}
               ariaLabel={t('Change role for {{name}}', {
+                description: 'Accessible name of the role dropdown of a member',
                 name: access.user.full_name || access.user.email,
               })}
             />
@@ -108,8 +119,12 @@ export const QuickSearchGroupMember = ({
     return {
       groupName:
         count === 1
-          ? t('Document owner')
+          ? t('Document owner', {
+              description: 'Label of the single owner of a document',
+            })
           : t('Share with {{count}} users', {
+              description:
+                'Number of people a document is shared with, plural form',
               count: count,
             }),
       elements: members,
@@ -119,7 +134,9 @@ export const QuickSearchGroupMember = ({
 
   return (
     <Box
-      aria-label={t('List members card')}
+      aria-label={t('List members card', {
+        description: 'Accessible name of the list of members',
+      })}
       $padding={{ horizontal: 'base', bottom: '3xs' }}
     >
       <QuickSearchGroup

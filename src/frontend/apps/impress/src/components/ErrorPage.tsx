@@ -47,18 +47,23 @@ export const ErrorPage = ({
 }: ErrorPageProps) => {
   const { t } = useTranslation();
 
-  const errorTitle = t('An unexpected error occurred.');
+  const errorTitle = t('An unexpected error occurred.', {
+    description: 'Generic error page title and message',
+  });
   const safeTarget = getSafeRefreshUrl(refreshTarget);
 
   return (
     <>
       <Head>
         <title>
-          {errorTitle} - {t('Docs')}
+          {errorTitle} -{' '}
+          {t('Docs', {
+            description: 'Product name, shown in page titles and the logo',
+          })}
         </title>
         <meta
           property="og:title"
-          content={`${errorTitle} - ${t('Docs')}`}
+          content={`${errorTitle} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}
           key="title"
         />
       </Head>
@@ -69,7 +74,10 @@ export const ErrorPage = ({
         $padding={{ bottom: '2rem' }}
       >
         <Text as="h1" $textAlign="center" className="sr-only">
-          {errorTitle} - {t('Docs')}
+          {errorTitle} -{' '}
+          {t('Docs', {
+            description: 'Product name, shown in page titles and the logo',
+          })}
         </Text>
         <Image
           src={image}
@@ -104,7 +112,9 @@ export const ErrorPage = ({
                 />
               }
             >
-              {t('Home')}
+              {t('Home', {
+                description: 'Button/link label to go back to the home page',
+              })}
             </StyledButton>
           </StyledLink>
 
@@ -125,7 +135,9 @@ export const ErrorPage = ({
                   : window.location.reload()
               }
             >
-              {t('Refresh page')}
+              {t('Refresh page', {
+                description: 'Button on the error page to reload the page',
+              })}
             </StyledButton>
           )}
         </Box>

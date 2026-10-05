@@ -93,7 +93,10 @@ const DocSearchModalGlobal = ({
       closeOnClickOutside
       size={isLargeScreen ? ModalSize.LARGE : ModalSize.FULL}
       hideCloseButton
-      aria-label={t('Search for a document')}
+      aria-label={t('Search for a document', {
+        description:
+          'Accessible name or placeholder of a document search field',
+      })}
       aria-labelledby="doc-search-modal-title"
       aria-describedby="doc-search-modal-description"
       title={
@@ -105,16 +108,25 @@ const DocSearchModalGlobal = ({
             $align="flex-start"
             id="doc-search-modal-title"
           >
-            {t('Search for a document')}
+            {t('Search for a document', {
+              description:
+                'Accessible name or placeholder of a document search field',
+            })}
           </Text>
           <Text id="doc-search-modal-description" className="sr-only">
             {t(
               'Search documents by name, navigate using arrows, and select a result with Enter.',
+              {
+                description: 'Screen reader instructions of the search dialog',
+              },
             )}
           </Text>
           <Box $position="absolute" $css="top: 8px; right: 8px;">
             <ButtonCloseModal
-              aria-label={t('Close the search modal')}
+              aria-label={t('Close the search modal', {
+                description:
+                  'Accessible name of the button closing the search dialog',
+              })}
               onClick={modalProps.onClose}
             />
           </Box>
@@ -129,8 +141,12 @@ const DocSearchModalGlobal = ({
         $padding={{ bottom: 'base' }}
       >
         <QuickSearch
-          label={t('Type the name of a document')}
-          placeholder={t('Type the name of a document')}
+          label={t('Type the name of a document', {
+            description: 'Label and placeholder of the search input',
+          })}
+          placeholder={t('Type the name of a document', {
+            description: 'Label and placeholder of the search input',
+          })}
           loading={loading}
           onFilter={handleInputSearch}
           beforeList={
@@ -237,15 +253,22 @@ const DocSearchStateText = ({
   const { t } = useTranslation();
 
   if (hasResults && filter === 'all') {
-    return t('Select a document');
+    return t('Select a document', {
+      description: 'Screen reader hint to pick one of the search results',
+    });
   }
 
   if (hasResults && filter === 'current') {
-    return t('Select a sub-document');
+    return t('Select a sub-document', {
+      description:
+        'Screen reader hint to pick one of the sub-doc search results',
+    });
   }
 
   if (isSearching && !hasResults) {
-    return t('No documents found');
+    return t('No documents found', {
+      description: 'Message when a search has no result',
+    });
   }
 
   return null;

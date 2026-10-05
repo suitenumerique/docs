@@ -56,9 +56,15 @@ export const ModalRemoveDoc = ({
 
         onClose();
 
-        toast(t('The document has been deleted.'), VariantType.SUCCESS, {
-          duration: 4000,
-        });
+        toast(
+          t('The document has been deleted.', {
+            description: 'Toast shown after deleting a document',
+          }),
+          VariantType.SUCCESS,
+          {
+            duration: 4000,
+          },
+        );
       },
     },
   });
@@ -82,26 +88,38 @@ export const ModalRemoveDoc = ({
       closeOnClickOutside
       hideCloseButton
       onClose={onClose}
-      aria-label={t('Delete a doc')}
+      aria-label={t('Delete a doc', {
+        description: 'Title and accessible name of the delete document dialog',
+      })}
       rightActions={
         <>
           <Button
             ref={cancelButtonRef}
-            aria-label={t('Cancel the deletion')}
+            aria-label={t('Cancel the deletion', {
+              description:
+                'Accessible name of the button cancelling the deletion',
+            })}
             variant="secondary"
             fullWidth
             autoFocus
             onClick={onClose}
           >
-            {t('Cancel')}
+            {t('Cancel', {
+              description: 'Button to dismiss a dialog without confirming',
+            })}
           </Button>
           <Button
-            aria-label={t('Delete document')}
+            aria-label={t('Delete document', {
+              description:
+                'Accessible name of the button confirming the deletion',
+            })}
             color="error"
             fullWidth
             onClick={handleDelete}
           >
-            {t('Delete')}
+            {t('Delete', {
+              description: 'Dropdown menu item to delete the document',
+            })}
           </Button>
         </>
       }
@@ -115,11 +133,17 @@ export const ModalRemoveDoc = ({
             $margin="0"
             $align="flex-start"
           >
-            {t('Delete a doc')}
+            {t('Delete a doc', {
+              description:
+                'Title and accessible name of the delete document dialog',
+            })}
           </Text>
           <Box $position="absolute" $css="top: 8px; right: 8px;">
             <ButtonCloseModal
-              aria-label={t('Close the delete modal')}
+              aria-label={t('Close the delete modal', {
+                description:
+                  'Accessible name of the button closing the delete dialog',
+              })}
               onClick={onClose}
             />
           </Box>
@@ -143,7 +167,10 @@ export const ModalRemoveDoc = ({
             ) : (
               t(
                 'This document will be placed in the trashbin. You can restore it within {{days}} days.',
-                { days: trashBinCutoffDays },
+                {
+                  description: 'Explanation in the delete dialog',
+                  days: trashBinCutoffDays,
+                },
               )
             )}
           </Text>

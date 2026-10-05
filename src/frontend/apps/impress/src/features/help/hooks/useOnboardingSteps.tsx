@@ -38,9 +38,12 @@ export const useOnboardingSteps = () => {
             <DragIndicatorIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
-        title: t('Compose your doc easily'),
+        title: t('Compose your doc easily', {
+          description: 'Product tour step title',
+        }),
         description: t(
           'Move, duplicate, and transform your texts, headings, lists, images without breaking your layout.',
+          { description: 'Product tour step description' },
         ),
         content: (
           <video
@@ -48,7 +51,9 @@ export const useOnboardingSteps = () => {
               description: 'URL of onboarding step 1 preview image',
               defaultValue: '/assets/on-boarding/step_1_EN.webm',
             })}
-            aria-label={t('Compose your doc easily')}
+            aria-label={t('Compose your doc easily', {
+              description: 'Product tour step title',
+            })}
             width={350}
             height={350}
             autoPlay
@@ -69,9 +74,12 @@ export const useOnboardingSteps = () => {
             <FormatTextIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
-        title: t('Format your content with the toolbar'),
+        title: t('Format your content with the toolbar', {
+          description: 'Product tour step title',
+        }),
         description: t(
           'Apply styles, structure, and emphasis in one click—keep documents clean, consistent, and easy to scan.',
+          { description: 'Product tour step description' },
         ),
         content: (
           <video
@@ -79,7 +87,9 @@ export const useOnboardingSteps = () => {
               description: 'URL of onboarding step 2 preview image',
               defaultValue: '/assets/on-boarding/step_2_EN.webm',
             })}
-            aria-label={t('Format your content with the toolbar')}
+            aria-label={t('Format your content with the toolbar', {
+              description: 'Product tour step title',
+            })}
             width={350}
             height={350}
             autoPlay
@@ -100,9 +110,12 @@ export const useOnboardingSteps = () => {
             <FileShareIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
-        title: t('Share and collaborate with ease'),
+        title: t('Share and collaborate with ease', {
+          description: 'Product tour step title',
+        }),
         description: t(
           'Decide exactly who can view, comment, edit—or simply use shareable links.',
+          { description: 'Product tour step description' },
         ),
         content: (
           <Image
@@ -110,7 +123,9 @@ export const useOnboardingSteps = () => {
               description: 'URL of onboarding step 3 preview image',
               defaultValue: '/assets/on-boarding/step_3_EN.webp',
             })}
-            alt={t('Share and collaborate with ease')}
+            alt={t('Share and collaborate with ease', {
+              description: 'Product tour step title',
+            })}
             width={350}
             height={350}
             priority
@@ -129,7 +144,9 @@ export const useOnboardingSteps = () => {
             <StackTemplateIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
-        title: t('Draw inspiration from the content library'),
+        title: t('Draw inspiration from the content library', {
+          description: 'Product tour step title',
+        }),
         description: (
           <Trans
             t={t}
@@ -140,7 +157,9 @@ export const useOnboardingSteps = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   href={readyTemplateUrl}
-                  aria-label={t('Ready-made templates (opens in a new tab)')}
+                  aria-label={t('Ready-made templates (opens in a new tab)', {
+                    description: 'Accessible name of the link to templates',
+                  })}
                 />
               ),
             }}
@@ -152,7 +171,9 @@ export const useOnboardingSteps = () => {
               description: 'URL of onboarding step 4 preview image',
               defaultValue: '/assets/on-boarding/step_4_EN.webp',
             })}
-            alt={t('Draw inspiration from the content library')}
+            alt={t('Draw inspiration from the content library', {
+              description: 'Product tour step title',
+            })}
             width={350}
             height={350}
             priority

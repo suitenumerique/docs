@@ -35,7 +35,9 @@ export const LeftPanel = ({ isResizable }: { isResizable?: boolean }) => {
         as="nav"
         className="--docs--left-panel"
         data-testid="left-panel"
-        aria-label={t('Left panel')}
+        aria-label={t('Left panel', {
+          description: 'Accessible name of the left navigation panel',
+        })}
         $width={isResizable ? '100%' : '300px'}
         $height="100dvh"
         $overflow="hidden"

@@ -39,7 +39,10 @@ export const AlertModalRequestAccess = ({
       onClose={onClose}
       isOpen={isOpen}
       title={title}
-      aria-label={t('Request access modal')}
+      aria-label={t('Request access modal', {
+        description:
+          'Accessible name of the dialog to request access to a document',
+      })}
       description={
         <>
           <Text $display="inline">
@@ -63,23 +66,31 @@ export const AlertModalRequestAccess = ({
                 $margin={{ right: 'xxs' }}
                 variant="symbols-outlined"
               />
-              {t('You have already requested access to this document.')}
+              {t('You have already requested access to this document.', {
+                description: 'Message in the request access dialog',
+              })}
             </Text>
           )}
         </>
       }
-      confirmLabel={t('Request access')}
+      confirmLabel={t('Request access', {
+        description: 'Button to ask the owners for access to a document',
+      })}
       onConfirm={onConfirm}
       rightActions={
         <Box $direction="row" $gap="small">
           <Button
-            aria-label={t('Cancel')}
+            aria-label={t('Cancel', {
+              description: 'Button to dismiss a dialog without confirming',
+            })}
             variant="secondary"
             fullWidth
             onClick={onClose}
             autoFocus
           >
-            {t('Cancel')}
+            {t('Cancel', {
+              description: 'Button to dismiss a dialog without confirming',
+            })}
           </Button>
           <ButtonAccessRequest docId={docId} onClick={onConfirm} />
         </Box>

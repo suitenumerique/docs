@@ -41,9 +41,13 @@ export const DocShareModalFooter = ({
           variant="secondary"
           icon={<Icon iconName="add_link" $withThemeInherited />}
         >
-          {t('Copy link')}
+          {t('Copy link', {
+            description: 'Dropdown menu item to copy the document link',
+          })}
         </Button>
-        <Button onClick={onClose}>{t('OK')}</Button>
+        <Button onClick={onClose}>
+          {t('OK', { description: 'Button closing a dialog' })}
+        </Button>
       </Box>
     </Box>
   );

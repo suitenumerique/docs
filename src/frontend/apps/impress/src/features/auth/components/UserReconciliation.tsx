@@ -55,8 +55,14 @@ export const UserReconciliation = ({
           $variation="primary"
         >
           {isError
-            ? t('An error occurred during email validation.')
-            : t('Email Address Confirmed')}
+            ? t('An error occurred during email validation.', {
+                description:
+                  'Title shown when the email confirmation of an account merge fails',
+              })
+            : t('Email Address Confirmed', {
+                description:
+                  'Title shown after an email address is confirmed during an account merge',
+              })}
         </Text>
         {!isError && (
           <Text
@@ -70,6 +76,7 @@ export const UserReconciliation = ({
           >
             {t(
               'To complete the unification of your user accounts, please click the confirmation links sent to all the email addresses you provided.',
+              { description: 'Instruction of the account merge page' },
             )}
           </Text>
         )}

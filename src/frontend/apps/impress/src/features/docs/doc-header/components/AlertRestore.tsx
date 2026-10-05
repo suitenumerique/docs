@@ -28,13 +28,20 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
     ],
     options: {
       onSuccess: (_data) => {
-        toast(t('The document has been restored.'), VariantType.SUCCESS, {
-          duration: 4000,
-        });
+        toast(
+          t('The document has been restored.', {
+            description: 'Toast shown after a deleted document is restored',
+          }),
+          VariantType.SUCCESS,
+          {
+            duration: 4000,
+          },
+        );
       },
       onError: () => {
         toast(
           t('An error occurred while restoring the document: {{error}}', {
+            description: 'Toast shown when restoring a deleted document fails',
             error: error?.message,
           }),
           VariantType.ERROR,
@@ -49,7 +56,10 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
   return (
     <Card
       className="--docs--alert-restore"
-      aria-label={t('Alert deleted document')}
+      aria-label={t('Alert deleted document', {
+        description:
+          'Accessible name of the banner shown on a deleted document',
+      })}
       $radius={spacingsTokens['3xs']}
       $direction="row"
       $padding="xs"
@@ -70,7 +80,9 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
           iconName="delete"
           variant="symbols-outlined"
         />
-        {t('Document deleted')}
+        {t('Document deleted', {
+          description: 'Banner text shown on a document in the trashbin',
+        })}
       </Box>
       {doc.abilities.restore && (
         <Button
@@ -91,7 +103,10 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
             />
           }
         >
-          {t('Restore')}
+          {t('Restore', {
+            description:
+              'Button to restore a deleted document or an older version',
+          })}
         </Button>
       )}
     </Card>

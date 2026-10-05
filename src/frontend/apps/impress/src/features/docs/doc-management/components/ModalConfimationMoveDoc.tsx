@@ -21,8 +21,12 @@ export const ModalConfirmationMoveDoc = ({
     <AlertModal
       onClose={onClose}
       isOpen={isOpen}
-      title={t('Move document')}
-      aria-label={t('Modal confirmation for moving a document')}
+      title={t('Move document', {
+        description: 'Title of the dialog to move a document',
+      })}
+      aria-label={t('Modal confirmation for moving a document', {
+        description: 'Accessible name of the move confirmation dialog',
+      })}
       description={
         <Text $display="inline">
           <Trans
@@ -34,7 +38,9 @@ export const ModalConfirmationMoveDoc = ({
           />
         </Text>
       }
-      confirmLabel={t('Move')}
+      confirmLabel={t('Move', {
+        description: 'Button confirming the move of a document',
+      })}
       onConfirm={onConfirm}
     />
   );

@@ -56,18 +56,26 @@ export const CommentSideBar = ({ onClose }: CommentSideBarProps) => {
         <Box $direction="row" $align="center" $justify="space-between">
           <Box $direction="row" $align="center" $gap="2xs">
             <Text as="h2" $weight="bold" $size="16px" $margin="0">
-              {t('Comments')}
+              {t('Comments', {
+                description: 'Title of the comments side panel',
+              })}
             </Text>
 
             <DropdownMenu
               options={[
                 {
-                  label: t('Open'),
+                  label: t('Open', {
+                    description:
+                      'Dropdown menu item to filter the comments sidebar to only show open (unresolved) comment threads. This is a state/adjective ("open comments"), not the verb "to open".',
+                  }),
                   callback: () => setFilter('open'),
                   isChecked: filter === 'open',
                 },
                 {
-                  label: t('Resolved'),
+                  label: t('Resolved', {
+                    description:
+                      'Dropdown menu item to filter the comments sidebar to only show resolved comment threads.',
+                  }),
                   callback: () => setFilter('resolved'),
                   isChecked: filter === 'resolved',
                 },
@@ -76,9 +84,18 @@ export const CommentSideBar = ({ onClose }: CommentSideBarProps) => {
               shouldCloseOnInteractOutside={() => true}
               onOpenChange={setOpen}
             >
-              <Tooltip content={t('Filter comments')} placement="bottom">
+              <Tooltip
+                content={t('Filter comments', {
+                  description:
+                    'Tooltip and accessible name of the button filtering comments by status',
+                })}
+                placement="bottom"
+              >
                 <Button
-                  aria-label={t('Filter comments')}
+                  aria-label={t('Filter comments', {
+                    description:
+                      'Tooltip and accessible name of the button filtering comments by status',
+                  })}
                   size="nano"
                   icon={
                     filter === 'open' ? (
@@ -107,7 +124,10 @@ export const CommentSideBar = ({ onClose }: CommentSideBarProps) => {
             </DropdownMenu>
           </Box>
           <ButtonCloseModal
-            aria-label={t('Close the comments sidebar')}
+            aria-label={t('Close the comments sidebar', {
+              description:
+                'Accessible name of the button closing the comments panel',
+            })}
             onClick={onClose}
           />
         </Box>
@@ -130,8 +150,12 @@ export const CommentSideBarButton = () => {
 
   const isActive = isPanelOpen && activePanel === 'comments';
   const ariaLabel = isActive
-    ? t('Hide the comments sidebar')
-    : t('Show the comments sidebar');
+    ? t('Hide the comments sidebar', {
+        description: 'Accessible name of the toggle hiding the comments panel',
+      })
+    : t('Show the comments sidebar', {
+        description: 'Accessible name of the toggle showing the comments panel',
+      });
 
   return (
     <Button

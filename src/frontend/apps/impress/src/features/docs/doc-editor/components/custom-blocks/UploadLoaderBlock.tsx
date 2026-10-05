@@ -121,6 +121,10 @@ const UploadLoaderBlockComponent = ({
               type: 'warning',
               information: t(
                 'The antivirus has detected an anomaly in your file.',
+                {
+                  description:
+                    'Message shown in the editor when an uploaded file is flagged by the antivirus',
+                },
               ),
             },
           });

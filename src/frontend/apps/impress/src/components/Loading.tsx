@@ -30,7 +30,9 @@ export const LoadMoreText = ({
         $size="md"
       />
       <Text $theme="brand" $variation="secondary">
-        {t('Load more')}
+        {t('Load more', {
+          description: 'Button to load the next items of a list',
+        })}
       </Text>
     </Box>
   );

@@ -71,10 +71,26 @@ export const DocShareButton = ({
               <SharedSVG width={24} height={24} aria-hidden="true" />
             ) : undefined
           }
-          aria-label={hasAccesses ? t('Shared') : t('Share')}
+          aria-label={
+            hasAccesses
+              ? t('Shared', {
+                  description:
+                    'Share button label when the document is already shared',
+                })
+              : t('Share', {
+                  description: 'Dropdown menu item to share the document',
+                })
+          }
           data-test="share-button"
         >
-          {hasAccesses ? t('Shared') : t('Share')}
+          {hasAccesses
+            ? t('Shared', {
+                description:
+                  'Share button label when the document is already shared',
+              })
+            : t('Share', {
+                description: 'Dropdown menu item to share the document',
+              })}
         </Button>
       </CardFloatingBar>
       {modalShare.isOpen && (

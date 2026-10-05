@@ -145,7 +145,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const aiExtension = useAI?.(doc.id, aiBlockNoteAllowed);
 
   const collabName = user?.full_name || user?.email;
-  const cursorName = collabName || t('Anonymous');
+  const cursorName =
+    collabName ||
+    t('Anonymous', {
+      description: 'Display name of a user without a known name',
+    });
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
   // Comments
@@ -363,7 +367,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         sideMenu={false}
         theme="light"
         comments={false}
-        aria-label={t('Document editor')}
+        aria-label={t('Document editor', {
+          description: 'Accessible name of the editor area',
+        })}
         // To not clipped the floating part in the editor area
         portalElements={{ default: null }}
       >
