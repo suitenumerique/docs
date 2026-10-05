@@ -16,6 +16,8 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-10-05
+
 ⚠️ This release replaces the collaboration server. The content of a document
 does not live in the object storage anymore, it lives in that server, and the
 `y-provider` that used to serve the websocket does not serve it. There is a new
