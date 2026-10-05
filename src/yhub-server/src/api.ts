@@ -26,6 +26,7 @@ import {
   UUID4,
 } from './config.js';
 import { SOFT_MIGRATION, fullMigrate } from './migration.js';
+import { findMissingSchemaColumns } from './schema.js';
 import type { AppAuthInfo, DocRef, YHub } from './yhub.js';
 
 // Mimic the old y-provider REST responses (JSON, not yhub's lib0-any
@@ -76,13 +77,19 @@ const resetLog = logger.child({ module: 'reset-ydoc' });
 // One readiness check: is that store answering? The error never leaves the
 // server — the route is unauthenticated, and a postgres client is happy to put
 // its connection string, password included, in the message it raises.
+// A probe that *answers* with a degraded condition (rather than failing)
+// resolves to the state it reports — 'incomplete' for a schema behind
+// `yarn init-db` — while a thrown error still means `failState`: the two read
+// alike in the response but call for different operator responses (run
+// init-db vs fix the network).
 const checkStore = async (
   name: string,
   probe: () => PromiseLike<unknown>,
+  failState = 'unreachable',
 ): Promise<[string, string]> => {
   let timer: NodeJS.Timeout | undefined;
   try {
-    await Promise.race([
+    const result = await Promise.race([
       probe(),
       new Promise((_, reject) => {
         timer = setTimeout(
@@ -91,16 +98,33 @@ const checkStore = async (
         );
       }),
     ]);
-    return [name, 'ok'];
+    return [name, typeof result === 'string' ? result : 'ok'];
   } catch (err) {
     readyLog.warn(
       { store: name, err: err instanceof Error ? err.message : String(err) },
-      'store is unreachable',
+      'readiness check failed',
     );
-    return [name, 'unreachable'];
+    return [name, failState];
   } finally {
     clearTimeout(timer);
   }
+};
+
+// yhub runs no DDL at boot — `yarn init-db` does, out of band. A pod that
+// answers `SELECT 1` can still be missing a table or an ALTER-added column
+// and fail every document read, so readiness checks the schema the installed
+// yhub expects rather than connectivity alone. Drift is *reported*, not
+// thrown — it is a condition of the database, not a failure to reach it, and
+// the two read differently in the response. The missing columns go to the
+// log, not the response: the route is public, and the schema layout is the
+// kind of detail an error page has no business publishing.
+const checkSchema = (sql: YHub['persistence']['sql']) => async () => {
+  const missing = await findMissingSchemaColumns(sql);
+  if (missing.length > 0) {
+    readyLog.warn({ missing }, 'postgres schema is behind `yarn init-db`');
+    return 'incomplete';
+  }
+  return 'ok';
 };
 
 export const api = [
@@ -115,20 +139,29 @@ export const api = [
     },
   }),
   // GET /collaboration/ready/v1 — readiness. The two stores this server cannot
-  // serve a single document without: the postgres holding the persisted state
-  // and the redis carrying the updates between replicas. Answering 503 takes
-  // this pod out of the service endpoints and leaves the others serving, which
-  // is the whole difference with the liveness probe above.
+  // serve a single document without — the postgres holding the persisted state
+  // and the redis carrying the updates between replicas — plus the schema yhub
+  // expects to find in that postgres, which connectivity alone says nothing
+  // about (see schema.ts). Answering 503 takes this pod out of the service
+  // endpoints and leaves the others serving, which is the whole difference
+  // with the liveness probe above.
   createApiEndpoint('ready', {
     scope: 'global',
     get: {
       handler: async (req) => {
-        // both at once: a probe is not the place to add the latency of one
+        // all at once: a probe is not the place to add the latency of one
         // store to the latency of the other
         const checks = Object.fromEntries(
           await Promise.all([
-            checkStore('postgres', () => req.yhub.persistence.sql`SELECT 1`),
-            checkStore('redis', () => req.yhub.stream.redis.ping()),
+            checkStore('postgres', async () => {
+              await req.yhub.persistence.sql`SELECT 1`;
+            }),
+            checkStore('redis', async () => {
+              // redis answers PONG — a resolved string is a state in this
+              // contract, so the probe itself must settle to undefined
+              await req.yhub.stream.redis.ping();
+            }),
+            checkStore('schema', checkSchema(req.yhub.persistence.sql)),
           ]),
         );
         const ready = Object.values(checks).every((state) => state === 'ok');
