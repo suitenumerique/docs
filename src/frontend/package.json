@@ -32,24 +32,25 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
-    "@tiptap/core": "3.31.3",
-    "@tiptap/extensions": "3.31.3",
-    "@tiptap/pm": "3.31.3",
+    "@tiptap/core": "3.31.4",
+    "@tiptap/extensions": "3.31.4",
+    "@tiptap/pm": "3.31.4",
     "@types/node": "24.13.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@xmldom/xmldom": "0.9.12",
-    "eslint": "10.11.0",
-    "postcss": "8.5.28",
+    "eslint": "10.12.0",
+    "figlet": "1.12.0",
+    "postcss": "8.5.29",
     "prosemirror-model": "1.25.12",
-    "prosemirror-view": "1.42.5",
+    "prosemirror-view": "1.42.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "serialize-javascript": "7.1.2",
     "typescript": "6.0.3",
     "wrap-ansi": "10.0.2",
     "y-protocols": "1.0.7",
-    "yjs": "13.6.32"
+    "yjs": "13.6.33"
   },
   "packageManager": "yarn@1.22.22"
 }
