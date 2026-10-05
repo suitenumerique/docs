@@ -1,3 +1,16 @@
-CVE-2026-26996
-CVE-2026-27903
-CVE-2026-27904
+# Debian packages of the yhub image (node:22-trixie-slim) for which Debian has
+# not published a fix yet. Remove an entry as soon as the scan passes without it.
+
+# util-linux
+CVE-2026-76642
+CVE-2026-78408
+CVE-2026-78409
+CVE-2026-78410
+# acl
+CVE-2026-54369
+# systemd
+CVE-2026-16742
+# ncurses
+CVE-2025-69720
+# perl
+CVE-2026-9538
