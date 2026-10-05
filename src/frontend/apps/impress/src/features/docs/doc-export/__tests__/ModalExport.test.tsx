@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   blocksToMarkdownLossy: vi.fn(),
   downloadFile: vi.fn(),
   docToBlob: vi.fn(),
+  editorDocument: [] as unknown[],
+  preserveImageWidthsInMarkdown: vi.fn(),
   toast: vi.fn(),
 }));
 
@@ -33,7 +35,7 @@ vi.mock('@/core', () => ({
 vi.mock('@/docs/doc-editor/stores/useEditorStore', () => ({
   useEditorStore: () => ({
     editor: {
-      document: [],
+      document: mocks.editorDocument,
       blocksToMarkdownLossy: mocks.blocksToMarkdownLossy,
     },
   }),
@@ -63,17 +65,37 @@ vi.mock('../utils', async (importOriginal) => {
 
 vi.mock('../utils_markdown', () => ({
   addMediaFilesToMarkdownZip: mocks.addMediaFilesToMarkdownZip,
+  preserveImageWidthsInMarkdown: mocks.preserveImageWidthsInMarkdown,
 }));
 
 describe('ModalExport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.editorDocument = [];
     mocks.addMediaFilesToMarkdownZip.mockResolvedValue(0);
     mocks.blocksToMarkdownLossy.mockResolvedValue('# Roadmap');
     mocks.docToBlob.mockResolvedValue(undefined);
+    mocks.preserveImageWidthsInMarkdown.mockReturnValue('# Roadmap');
   });
 
   test('downloads Markdown directly when no media is archived', async () => {
+    const imageBlock = {
+      id: 'image-1',
+      type: 'image',
+      props: {
+        url: 'https://external.test/photo.png',
+        previewWidth: 480,
+      },
+      content: [],
+      children: [],
+    };
+    mocks.editorDocument = [imageBlock];
+    mocks.blocksToMarkdownLossy.mockResolvedValue(
+      '![Photo](https://external.test/photo.png)',
+    );
+    mocks.preserveImageWidthsInMarkdown.mockReturnValue(
+      '![Photo](https://external.test/photo.png =480x)',
+    );
     const onClose = vi.fn();
     const user = userEvent.setup();
 
@@ -92,7 +114,15 @@ describe('ModalExport', () => {
         'roadmap.md',
       ),
     );
+    const [downloadedBlob] = mocks.downloadFile.mock.calls[0];
+    await expect(downloadedBlob.text()).resolves.toBe(
+      '![Photo](https://external.test/photo.png =480x)',
+    );
     expect(onClose).toHaveBeenCalledOnce();
+    expect(mocks.preserveImageWidthsInMarkdown).toHaveBeenCalledWith(
+      '![Photo](https://external.test/photo.png)',
+      [imageBlock],
+    );
   });
 
   test('downloads a ZIP when Markdown contains archived media', async () => {
