@@ -798,6 +798,10 @@ class Base(Configuration):
         default=[], environ_name="USER_OIDC_ESSENTIAL_CLAIMS", environ_prefix=None
     )
 
+    # OIDC claims to store on the user, e.g. "picture" or "locale"
+    OIDC_STORE_CLAIMS = values.ListValue(
+        default=[], environ_name="OIDC_STORE_CLAIMS", environ_prefix=None
+    )
     OIDC_USERINFO_FULLNAME_FIELDS = values.ListValue(
         default=values.ListValue(  # retrocompatibility
             default=["first_name", "last_name"],
