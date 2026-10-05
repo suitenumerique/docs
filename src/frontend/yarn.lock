@@ -30,20 +30,20 @@
     "@ai-sdk/provider-utils" "4.0.57"
     "@vercel/oidc" "3.2.0"
 
-"@ai-sdk/openai@3.0.112":
-  version "3.0.112"
-  resolved "https://registry.yarnpkg.com/@ai-sdk/openai/-/openai-3.0.112.tgz#951976283eec76042eeb57614a549eb41ed2a332"
-  integrity sha512-0ho3a9CJ+3KCcrPdBQx8fX7/gyUxFHsfs1M6++SpunYk8+pgGOPMskr0GVOOxY+94jsJbuGxksKfMuSYhYHcxw==
+"@ai-sdk/openai@3.0.119":
+  version "3.0.119"
+  resolved "https://registry.yarnpkg.com/@ai-sdk/openai/-/openai-3.0.119.tgz#12a6f41d461508fac9e5682dfd5d4f27db97cdb4"
+  integrity sha512-lSEz9/2OuNcrJN0bvzEEblWyCjLcc6nI+ua3mstzPRYj404Rehp8KhzLKRK521iVWykPECwqnJhKbnfkE6/tmg==
   dependencies:
-    "@ai-sdk/provider" "3.0.16"
-    "@ai-sdk/provider-utils" "4.0.51"
+    "@ai-sdk/provider" "3.0.18"
+    "@ai-sdk/provider-utils" "4.0.55"
 
-"@ai-sdk/provider-utils@4.0.51":
-  version "4.0.51"
-  resolved "https://registry.yarnpkg.com/@ai-sdk/provider-utils/-/provider-utils-4.0.51.tgz#705ce13868a01e45f2ee346e36079d6e697086f4"
-  integrity sha512-ukLTs9x1Xm6lxSIwbJIxYQxbZHmVeIczNntARZrBcOa6pjdBhqeZnATNnJMHa7M9dZ8Ji5NJbpKpvz7o5XyBtg==
+"@ai-sdk/provider-utils@4.0.55":
+  version "4.0.55"
+  resolved "https://registry.yarnpkg.com/@ai-sdk/provider-utils/-/provider-utils-4.0.55.tgz#efd13a64a6cbd65adbedd837f92a7121e41f1aa2"
+  integrity sha512-YSnAX4yORwMDNrl1JMc10qNbYKOltpQz9vJRrKWMOObdSa+N3reggfPbUy9GB0en9kUhm8Pbe9UsFgTFwsUKLA==
   dependencies:
-    "@ai-sdk/provider" "3.0.16"
+    "@ai-sdk/provider" "3.0.18"
     "@standard-schema/spec" "^1.1.0"
     eventsource-parser "^3.0.8"
     undici "^6.28.0"
@@ -67,13 +67,6 @@
     "@standard-schema/spec" "^1.1.0"
     eventsource-parser "^3.0.8"
     undici "^6.28.0"
-
-"@ai-sdk/provider@3.0.16":
-  version "3.0.16"
-  resolved "https://registry.yarnpkg.com/@ai-sdk/provider/-/provider-3.0.16.tgz#f267ea7e9df9ee2aa782c0e50651dd3ac2d145f8"
-  integrity sha512-9Av6kg0t/IN/dcYAAmEJ4B9OPhcEJqwSR+GfHEA8olRkindXpUHadc3p3cyvgFUQFTVm1G5thtsmgZ9yVb2w3A==
-  dependencies:
-    json-schema "^0.4.0"
 
 "@ai-sdk/provider@3.0.18":
   version "3.0.18"
