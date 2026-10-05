@@ -14,7 +14,9 @@ const Error = () => {
   return (
     <ErrorPage
       image={error_img}
-      description={t('An unexpected error occurred.')}
+      description={t('An unexpected error occurred.', {
+        description: 'Generic error page title and message',
+      })}
       showReload
     />
   );

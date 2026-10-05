@@ -71,7 +71,10 @@ export const LeftPanelHeaderActions = () => {
             <Button
               data-testid="home-button"
               onClick={goToHome}
-              aria-label={t('Back to homepage')}
+              aria-label={t('Back to homepage', {
+                description:
+                  'Accessible name of the button going back to the home page',
+              })}
               size="medium"
               color="brand"
               variant="tertiary"

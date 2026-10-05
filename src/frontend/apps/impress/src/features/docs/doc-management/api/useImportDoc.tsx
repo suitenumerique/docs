@@ -122,6 +122,7 @@ export function useImportDoc(props?: UseImportDocOptions) {
 
       toast(
         t('The document "{{documentName}}" has been successfully imported', {
+          description: 'Toast shown after a file is imported as a document',
           documentName: importedDoc.title || '',
         }),
         VariantType.SUCCESS,
@@ -132,6 +133,7 @@ export function useImportDoc(props?: UseImportDocOptions) {
     onError: (...errorProps) => {
       toast(
         t(`The document "{{documentName}}" import has failed`, {
+          description: 'Toast shown when importing a file as a document failed',
           documentName: errorProps?.[1][0].name || '',
         }),
         VariantType.ERROR,

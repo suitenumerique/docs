@@ -104,7 +104,10 @@ export function AIGroupButton() {
           className="bn-button bn-menu-item --docs--ai-actions-menu-trigger"
           data-test="ai-actions"
           label="AI"
-          mainTooltip={t('AI Actions')}
+          mainTooltip={t('AI Actions', {
+            description:
+              'Tooltip of the editor toolbar button opening AI actions',
+          })}
           icon={<Icon iconName="auto_awesome" $size="md" />}
         />
       </Components.Generic.Menu.Trigger>
@@ -119,42 +122,59 @@ export function AIGroupButton() {
               docId={currentDoc.id}
               icon={<Icon iconName="text_fields" $size="s" />}
             >
-              {t('Use as prompt')}
+              {t('Use as prompt', {
+                description:
+                  'AI menu action: use the selected text as the instruction for the AI',
+              })}
             </AIMenuItemTransform>
             <AIMenuItemTransform
               action="rephrase"
               docId={currentDoc.id}
               icon={<Icon iconName="refresh" $size="s" />}
             >
-              {t('Rephrase')}
+              {t('Rephrase', {
+                description:
+                  'AI menu action: rewrite the selected text differently',
+              })}
             </AIMenuItemTransform>
             <AIMenuItemTransform
               action="summarize"
               docId={currentDoc.id}
               icon={<Icon iconName="summarize" $size="s" />}
             >
-              {t('Summarize')}
+              {t('Summarize', {
+                description:
+                  'AI menu action: shorten the selected text into a summary',
+              })}
             </AIMenuItemTransform>
             <AIMenuItemTransform
               action="correct"
               docId={currentDoc.id}
               icon={<Icon iconName="check" $size="s" />}
             >
-              {t('Correct')}
+              {t('Correct', {
+                description:
+                  'AI menu action: fix spelling and grammar of the selected text',
+              })}
             </AIMenuItemTransform>
             <AIMenuItemTransform
               action="beautify"
               docId={currentDoc.id}
               icon={<Icon iconName="draw" $size="s" />}
             >
-              {t('Beautify')}
+              {t('Beautify', {
+                description:
+                  'AI menu action: improve the style and formatting of the selected text',
+              })}
             </AIMenuItemTransform>
             <AIMenuItemTransform
               action="emojify"
               docId={currentDoc.id}
               icon={<Icon iconName="emoji_emotions" $size="s" />}
             >
-              {t('Emojify')}
+              {t('Emojify', {
+                description: 'AI menu action: add emojis to the selected text',
+              })}
             </AIMenuItemTransform>
           </>
         )}
@@ -167,7 +187,10 @@ export function AIGroupButton() {
               >
                 <Box $direction="row" $gap="0.6rem">
                   <Icon iconName="translate" $size="s" />
-                  {t('Language')}
+                  {t('Language', {
+                    description:
+                      'AI menu entry to translate the selected text into another language',
+                  })}
                 </Box>
               </Components.Generic.Menu.Item>
             </Components.Generic.Menu.Trigger>
@@ -321,7 +344,13 @@ const AIMenuItem = ({
     ];
 
     if (!selectedBlocks?.length) {
-      toast(t('No text selected'), VariantType.WARNING);
+      toast(
+        t('No text selected', {
+          description:
+            'Warning shown when an AI action is used with no text selected',
+        }),
+        VariantType.WARNING,
+      );
       return;
     }
 
@@ -359,10 +388,20 @@ const useHandleAIError = () => {
 
   return (error: unknown) => {
     if (isAPIError(error) && error.status === 429) {
-      toast(t('Too many requests. Please wait 60 seconds.'), VariantType.ERROR);
+      toast(
+        t('Too many requests. Please wait 60 seconds.', {
+          description: 'Error shown when the AI rate limit is reached',
+        }),
+        VariantType.ERROR,
+      );
       return;
     }
 
-    toast(t('AI seems busy! Please try again.'), VariantType.ERROR);
+    toast(
+      t('AI seems busy! Please try again.', {
+        description: 'Error shown when the AI service fails',
+      }),
+      VariantType.ERROR,
+    );
   };
 };

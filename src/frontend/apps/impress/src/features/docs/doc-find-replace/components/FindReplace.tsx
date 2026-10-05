@@ -169,7 +169,10 @@ export const FindReplace = () => {
   return (
     <Card
       role="search"
-      aria-label={t('Find and replace')}
+      aria-label={t('Find and replace', {
+        description:
+          'Accessible name of the find and replace bar in the editor',
+      })}
       onKeyDown={handlePanelKeyDown}
       $radius="var(--c--globals--spacings--xs)"
       $width="331px"
@@ -191,8 +194,12 @@ export const FindReplace = () => {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={handleFindKeyDown}
-          placeholder={t('Find, replace...')}
-          aria-label={t('Find in document')}
+          placeholder={t('Find, replace...', {
+            description: 'Placeholder of the find input',
+          })}
+          aria-label={t('Find in document', {
+            description: 'Accessible name of the find input',
+          })}
           aria-describedby="find-replace-status"
         />
         <Text
@@ -217,7 +224,10 @@ export const FindReplace = () => {
               {counterLabel}
             </Text>
             <Button
-              aria-label={t('Previous match')}
+              aria-label={t('Previous match', {
+                description:
+                  'Accessible name of the button going to the previous search result',
+              })}
               onClick={goToPrevious}
               disabled={!hasMatches}
               icon={<ArrowUpIcon aria-hidden="true" width="16" height="16" />}
@@ -226,7 +236,10 @@ export const FindReplace = () => {
               size="nano"
             />
             <Button
-              aria-label={t('Next match')}
+              aria-label={t('Next match', {
+                description:
+                  'Accessible name of the button going to the next search result',
+              })}
               onClick={goToNext}
               disabled={!hasMatches}
               icon={<ArrowDownIcon aria-hidden="true" width="16" height="16" />}
@@ -243,7 +256,10 @@ export const FindReplace = () => {
           </>
         )}
         <Button
-          aria-label={t('Toggle replace')}
+          aria-label={t('Toggle replace', {
+            description:
+              'Accessible name of the button showing or hiding the replace field',
+          })}
           aria-expanded={isReplaceOpen}
           color={isReplaceOpen ? 'brand' : 'neutral'}
           variant={isReplaceOpen ? 'secondary' : 'tertiary'}
@@ -254,7 +270,10 @@ export const FindReplace = () => {
           }
         />
         <ButtonCloseModal
-          aria-label={t('Close find and replace')}
+          aria-label={t('Close find and replace', {
+            description:
+              'Accessible name of the button closing the find and replace bar',
+          })}
           onClick={handleClose}
           size="nano"
           iconProps={{ width: '16', height: '16' }}
@@ -280,28 +299,40 @@ export const FindReplace = () => {
             value={replacement}
             onChange={(event) => setReplacement(event.target.value)}
             onKeyDown={handleReplaceKeyDown}
-            placeholder={t('Replace by...')}
-            aria-label={t('Replace with')}
+            placeholder={t('Replace by...', {
+              description: 'Placeholder of the replacement text input',
+            })}
+            aria-label={t('Replace with', {
+              description: 'Accessible name of the replacement text input',
+            })}
           />
           <Button
-            aria-label={t('Replace all')}
+            aria-label={t('Replace all', {
+              description: 'Button to replace every match of the search',
+            })}
             onClick={handleReplaceAll}
             color="neutral"
             variant="tertiary"
             size="nano"
             disabled={!hasMatches}
           >
-            {t('Replace all')}
+            {t('Replace all', {
+              description: 'Button to replace every match of the search',
+            })}
           </Button>
           <Button
-            aria-label={t('Replace')}
+            aria-label={t('Replace', {
+              description: 'Button to replace the current match of the search',
+            })}
             onClick={handleReplaceCurrent}
             color="brand"
             variant="primary"
             size="nano"
             disabled={!hasMatches}
           >
-            {t('Replace')}
+            {t('Replace', {
+              description: 'Button to replace the current match of the search',
+            })}
           </Button>
         </Box>
       )}

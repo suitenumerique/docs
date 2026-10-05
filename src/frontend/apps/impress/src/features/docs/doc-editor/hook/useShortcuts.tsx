@@ -1,4 +1,5 @@
 import { announce } from '@react-aria/live-announcer';
+import type { TFunction } from 'i18next';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -8,7 +9,7 @@ import { DocsBlockNoteEditor } from '../types';
 
 const getFormattingShortcutLabel = (
   event: KeyboardEvent,
-  t: (key: string) => string,
+  t: TFunction<'translation', undefined>,
 ): string | null => {
   const isMod = event.ctrlKey || event.metaKey;
   if (!isMod) {
@@ -18,11 +19,20 @@ const getFormattingShortcutLabel = (
   if (event.altKey) {
     switch (event.code) {
       case 'Digit1':
-        return t('Heading 1 applied');
+        return t('Heading 1 applied', {
+          description:
+            'Screen reader announcement after a keyboard shortcut applied a heading level 1',
+        });
       case 'Digit2':
-        return t('Heading 2 applied');
+        return t('Heading 2 applied', {
+          description:
+            'Screen reader announcement after a keyboard shortcut applied a heading level 2',
+        });
       case 'Digit3':
-        return t('Heading 3 applied');
+        return t('Heading 3 applied', {
+          description:
+            'Screen reader announcement after a keyboard shortcut applied a heading level 3',
+        });
       default:
         return null;
     }
@@ -31,17 +41,35 @@ const getFormattingShortcutLabel = (
   if (event.shiftKey) {
     switch (event.code) {
       case 'Digit0':
-        return t('Paragraph applied');
+        return t('Paragraph applied', {
+          description:
+            'Screen reader announcement after a keyboard shortcut turned a block into a paragraph',
+        });
       case 'Digit6':
-        return t('Toggle list applied');
+        return t('Toggle list applied', {
+          description:
+            'Screen reader announcement after a keyboard shortcut applied a collapsible list',
+        });
       case 'Digit7':
-        return t('Numbered list applied');
+        return t('Numbered list applied', {
+          description:
+            'Screen reader announcement after a keyboard shortcut applied a numbered list',
+        });
       case 'Digit8':
-        return t('Bulleted list applied');
+        return t('Bulleted list applied', {
+          description:
+            'Screen reader announcement after a keyboard shortcut applied a bulleted list',
+        });
       case 'Digit9':
-        return t('Checklist applied');
+        return t('Checklist applied', {
+          description:
+            'Screen reader announcement after a keyboard shortcut applied a checklist',
+        });
       case 'KeyC':
-        return t('Code block applied');
+        return t('Code block applied', {
+          description:
+            'Screen reader announcement after a keyboard shortcut applied a code block',
+        });
       default:
         return null;
     }

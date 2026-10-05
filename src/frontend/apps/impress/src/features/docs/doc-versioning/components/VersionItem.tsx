@@ -15,7 +15,10 @@ export const VersionItem = ({ text, isActive, onSelect }: VersionItemProps) => {
 
   return (
     <BoxButton
-      aria-label={t('Restore version of {{date}}', { date: text })}
+      aria-label={t('Restore version of {{date}}', {
+        description: 'Accessible name of a version item',
+        date: text,
+      })}
       aria-pressed={isActive}
       $width="100%"
       $css={`

@@ -82,7 +82,10 @@ export function MarkdownButton() {
 
   return (
     <Components.FormattingToolbar.Button
-      mainTooltip={t('Convert Markdown')}
+      mainTooltip={t('Convert Markdown', {
+        description:
+          'Tooltip of the editor toolbar button converting selected Markdown text into formatted content',
+      })}
       onClick={handleConvertMarkdown}
       className="--docs--editor-markdown-button"
       label="M"

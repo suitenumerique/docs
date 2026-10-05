@@ -21,7 +21,10 @@ export const DocSearchFilters = () => {
     <Box
       role="switch"
       aria-checked={isAll}
-      aria-label={t('Search in all documents')}
+      aria-label={t('Search in all documents', {
+        description:
+          'Accessible name of the filter searching the whole workspace',
+      })}
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === ' ' || e.key === 'Enter') {
@@ -52,11 +55,14 @@ export const DocSearchFilters = () => {
     >
       <Switch
         labelSide="right"
-        label={t('All docs')}
+        label={t('All docs', {
+          description: 'Group title listing every doc the user can access',
+        })}
         checked={isAll}
         onChange={toggle}
         aria-label={t(
           'Toggle to search in all documents or only in current document',
+          { description: 'Accessible name of the switch scoping the search' },
         )}
         tabIndex={-1}
       />

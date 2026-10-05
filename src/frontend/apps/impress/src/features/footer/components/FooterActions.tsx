@@ -23,7 +23,9 @@ export const FooterActions = ({ withLogin }: FooterActionsProps) => {
   const { user } = useAuth();
 
   const userMenu = user || {
-    full_name: t('Guest'),
+    full_name: t('Guest', {
+      description: 'Name displayed for a user not logged in',
+    }),
     email: '',
   };
 

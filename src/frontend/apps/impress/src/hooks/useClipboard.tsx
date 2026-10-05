@@ -13,13 +13,21 @@ export const useClipboard = () => {
       navigator.clipboard
         .writeText(text)
         .then(() => {
-          const message = successMessage ?? t('Copied to clipboard');
+          const message =
+            successMessage ??
+            t('Copied to clipboard', {
+              description: 'Toast after copying something to the clipboard',
+            });
           toast(message, VariantType.SUCCESS, {
             duration: 3000,
           });
         })
         .catch(() => {
-          const message = errorMessage ?? t('Failed to copy to clipboard');
+          const message =
+            errorMessage ??
+            t('Failed to copy to clipboard', {
+              description: 'Toast when copying to the clipboard failed',
+            });
           toast(message, VariantType.ERROR, {
             duration: 3000,
           });

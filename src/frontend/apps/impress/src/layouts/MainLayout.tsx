@@ -90,7 +90,9 @@ export const MainContent = ({
     <Box
       as="main"
       role="main"
-      aria-label={t('Main content')}
+      aria-label={t('Main content', {
+        description: 'Accessible name of the main area of the page',
+      })}
       id={MAIN_LAYOUT_ID}
       $align="center"
       $flex={1}

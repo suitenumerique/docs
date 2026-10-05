@@ -62,6 +62,8 @@ export const useImport = ({ onDragOver, onImportSuccess }: UseImportProps) => {
             ? `The document "{{documentName}}" import has failed (only {{allowedExtensions}} files are allowed)`
             : `The document "{{documentName}}" import has failed`,
           {
+            description:
+              'Toast shown when a file to import has an unsupported type',
             documentName: fileName,
             allowedExtensions,
           },
@@ -108,6 +110,8 @@ export const useImport = ({ onDragOver, onImportSuccess }: UseImportProps) => {
             t(
               'The document "{{documentName}}" is too large. Maximum file size is {{maxFileSize}}.',
               {
+                description:
+                  'Toast shown when an imported file exceeds the size limit',
                 documentName: rejection.file.name,
                 maxFileSize: MAX_FILE_SIZE.text,
               },

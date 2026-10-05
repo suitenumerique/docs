@@ -49,10 +49,10 @@ const Page: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>{`${t('Home')} - ${t('Docs')}`}</title>
+        <title>{`${t('Home', { description: 'Button/link label to go back to the home page' })} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}</title>
         <meta
           property="og:title"
-          content={`${t('Home')} - ${t('Docs')}`}
+          content={`${t('Home', { description: 'Button/link label to go back to the home page' })} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}
           key="title"
         />
       </Head>

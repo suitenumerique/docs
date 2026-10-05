@@ -48,15 +48,19 @@ export const DocShareAddMemberList = ({
     let messageError =
       dataError['data']?.type === OptionType.INVITATION
         ? t(`Failed to create the invitation for {{email}}.`, {
+            description: 'Toast shown when inviting an email failed',
             email: dataError['data']?.value,
           })
-        : t(`Failed to add the member in the document.`);
+        : t(`Failed to add the member in the document.`, {
+            description: 'Toast shown when adding a member failed',
+          });
 
     if (
       dataError.cause?.[0] ===
       'Document invitation with this Email address and Document already exists.'
     ) {
       messageError = t('"{{email}}" is already invited to the document.', {
+        description: 'Error shown when inviting an email already invited',
         email: dataError['data']?.value,
       });
     }
@@ -66,6 +70,7 @@ export const DocShareAddMemberList = ({
       'This email is already associated to a registered user.'
     ) {
       messageError = t('"{{email}}" is already member of the document.', {
+        description: 'Error shown when inviting an existing member',
         email: dataError['data']?.value,
       });
     }
@@ -108,9 +113,13 @@ export const DocShareAddMemberList = ({
   const inviteLabel =
     selectedUsers.length === 1
       ? t('Invite {{name}}', {
+          description: 'Button to invite one person',
           name: selectedUsers[0].full_name || selectedUsers[0].email,
         })
-      : t('Invite {{count}} members', { count: selectedUsers.length });
+      : t('Invite {{count}} members', {
+          description: 'Button to invite several people, plural form',
+          count: selectedUsers.length,
+        });
 
   return (
     <Card
@@ -151,7 +160,10 @@ export const DocShareAddMemberList = ({
           canUpdate={canShare}
           currentRole={invitationRole}
           onSelectRole={setInvitationRole}
-          ariaLabel={t('Invite new members')}
+          ariaLabel={t('Invite new members', {
+            description:
+              'Accessible name of the role selector for new invitees',
+          })}
         />
         <Button
           onClick={() => void onInvite()}
@@ -160,7 +172,9 @@ export const DocShareAddMemberList = ({
           data-testid="doc-share-invite-button"
           size={isSmallMobile ? 'small' : 'medium'}
         >
-          {t('Invite')}
+          {t('Invite', {
+            description: 'Button to invite people to a document',
+          })}
         </Button>
       </Box>
     </Card>

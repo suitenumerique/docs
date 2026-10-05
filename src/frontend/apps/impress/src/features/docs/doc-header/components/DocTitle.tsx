@@ -98,7 +98,9 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
             width="25px"
             height="25px"
             aria-hidden="true"
-            aria-label={t('Simple document icon')}
+            aria-label={t('Simple document icon', {
+              description: 'Accessible name of the default icon of a document',
+            })}
             color={colorsTokens['brand-500']}
           />
         }
@@ -244,7 +246,7 @@ const DocTitleInput = ({ doc, onTitleUpdate }: DocTitleProps) => {
           defaultValue={titleDisplay || undefined}
           onKeyDownCapture={handleKeyDown}
           suppressContentEditableWarning={true}
-          aria-label={`${t('Document title')}`}
+          aria-label={`${t('Document title', { description: 'Accessible name of the editable document title' })}`}
           aria-multiline={false}
           onBlurCapture={(event) =>
             handleTitleSubmit(event.target.textContent || '')

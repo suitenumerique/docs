@@ -46,11 +46,18 @@ function HomeProConnect() {
           $css="zoom: 1.9;"
           $theme="brand"
         >
-          <IconDocs aria-label={t('Docs Logo')} width={34} />
+          <IconDocs
+            aria-label={t('Docs Logo', {
+              description: 'Accessible name of the Docs logo',
+            })}
+            width={34}
+          />
           <Title />
         </Box>
         <Text $size="md" $variation="secondary" $textAlign="center">
-          {t('Docs is already available, log in to use it now.')}
+          {t('Docs is already available, log in to use it now.', {
+            description: 'Call-to-action text at the bottom of the home page',
+          })}
         </Text>
         <ProConnectButton />
       </Box>

@@ -58,10 +58,15 @@ export const DocIcon = ({
 
   const emojiLabel = withEmojiPicker
     ? emoji
-      ? t('Edit document emoji')
-      : t('Add emoji')
+      ? t('Edit document emoji', {
+          description:
+            'Accessible name of the button changing a document emoji',
+        })
+      : t('Add emoji', { description: 'Button to add an emoji to a document' })
     : emoji
-      ? t('Document emoji')
+      ? t('Document emoji', {
+          description: 'Accessible name of the emoji of a document',
+        })
       : undefined;
 
   const toggleEmojiPicker = (e: MouseEvent) => {

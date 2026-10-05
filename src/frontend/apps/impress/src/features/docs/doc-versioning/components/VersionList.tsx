@@ -121,7 +121,9 @@ export const VersionList = ({
         {versions?.length === 0 && (
           <Box $align="center" $margin="large">
             <Text $size="h6" $weight="bold">
-              {t('No versions')}
+              {t('No versions', {
+                description: 'Message when a document has no past version',
+              })}
             </Text>
           </Box>
         )}
@@ -135,7 +137,10 @@ export const VersionList = ({
       </Box>
       <Text className="sr-only" aria-live="polite">
         {selectedVersionDate
-          ? t('Selected version {{date}}', { date: selectedVersionDate })
+          ? t('Selected version {{date}}', {
+              description: 'Screen reader text of the selected version',
+              date: selectedVersionDate,
+            })
           : ''}
       </Text>
     </Box>

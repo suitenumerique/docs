@@ -19,19 +19,26 @@ export const ModalConfirmDownloadUnsafe = ({
       isOpen
       closeOnClickOutside
       onClose={() => onClose()}
-      aria-label={t('Warning')}
+      aria-label={t('Warning', { description: 'Title of a warning dialog' })}
       rightActions={
         <>
           <Button
-            aria-label={t('Cancel the download')}
+            aria-label={t('Cancel the download', {
+              description:
+                'Accessible name of the button cancelling a download',
+            })}
             autoFocus
             variant="secondary"
             onClick={() => onClose()}
           >
-            {t('Cancel')}
+            {t('Cancel', {
+              description: 'Button to dismiss a dialog without confirming',
+            })}
           </Button>
           <Button
-            aria-label={t('Download')}
+            aria-label={t('Download', {
+              description: 'Dropdown menu item to download the document',
+            })}
             color="error"
             data-testid="modal-download-unsafe-button"
             onClick={() => {
@@ -41,7 +48,9 @@ export const ModalConfirmDownloadUnsafe = ({
               onClose();
             }}
           >
-            {t('Download anyway')}
+            {t('Download anyway', {
+              description: 'Button to download a file flagged as unsafe',
+            })}
           </Button>
         </>
       }
@@ -57,7 +66,7 @@ export const ModalConfirmDownloadUnsafe = ({
           $margin="0"
         >
           <Icon iconName="warning" $theme="warning" />
-          {t('Warning')}
+          {t('Warning', { description: 'Title of a warning dialog' })}
         </Text>
       }
     >
@@ -65,10 +74,16 @@ export const ModalConfirmDownloadUnsafe = ({
         <Box>
           <Box $direction="column" $gap="0.35rem" $margin={{ top: 'sm' }}>
             <Text $variation="secondary">
-              {t('This file is flagged as unsafe.')}
+              {t('This file is flagged as unsafe.', {
+                description:
+                  'Warning shown before downloading a file detected as malicious',
+              })}
             </Text>
             <Text $variation="secondary">
-              {t('Please download it only if it comes from a trusted source.')}
+              {t('Please download it only if it comes from a trusted source.', {
+                description:
+                  'Advice shown before downloading a file flagged as unsafe',
+              })}
             </Text>
           </Box>
         </Box>

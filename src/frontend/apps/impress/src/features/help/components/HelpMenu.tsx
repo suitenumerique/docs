@@ -75,7 +75,9 @@ export const HelpMenu = ({
   const options = useMemo<DropdownMenuItem[]>(
     () => [
       {
-        label: t('Get Support'),
+        label: t('Get Support', {
+          description: 'Help menu link to the support',
+        }),
         icon: <BubbleTextIcon aria-hidden="true" width="24" height="24" />,
         callback: () => {
           if (supportMailto) {
@@ -85,7 +87,9 @@ export const HelpMenu = ({
         isHidden: !supportMailto,
       },
       {
-        label: t('Documentation'),
+        label: t('Documentation', {
+          description: 'Help menu link to the documentation',
+        }),
         icon: <DocIcon aria-hidden="true" width="24" height="24" />,
         callback: () => {
           if (documentationUrl) {
@@ -95,18 +99,22 @@ export const HelpMenu = ({
         isHidden: !documentationUrl,
       },
       {
-        label: t('Onboarding'),
+        label: t('Onboarding', {
+          description: 'Help menu entry replaying the product tour',
+        }),
         icon: <WandAndStarsIcon aria-hidden="true" width="24" height="24" />,
         callback: modalOnbording.open,
         isHidden: !onboardingEnabled,
       },
       {
-        label: t('Legal'),
+        label: t('Legal', { description: 'Help menu group of legal pages' }),
         icon: <LegalIcon aria-hidden="true" width="24" height="24" />,
         isHidden: !hasLegalLinks,
         children: [
           {
-            label: t('Personal data and cookies'),
+            label: t('Personal data and cookies', {
+              description: 'Help menu link to the privacy policy',
+            }),
             callback: () => {
               if (legalLinks?.personal_data) {
                 openExternalLink(legalLinks.personal_data);
@@ -115,7 +123,9 @@ export const HelpMenu = ({
             isHidden: !legalLinks?.personal_data,
           },
           {
-            label: t('Terms of use'),
+            label: t('Terms of use', {
+              description: 'Help menu link to the terms of use',
+            }),
             callback: () => {
               if (legalLinks?.terms_of_use) {
                 openExternalLink(legalLinks.terms_of_use);
@@ -124,7 +134,9 @@ export const HelpMenu = ({
             isHidden: !legalLinks?.terms_of_use,
           },
           {
-            label: t('Accessibility statement'),
+            label: t('Accessibility statement', {
+              description: 'Help menu link to the accessibility statement',
+            }),
             callback: () => {
               if (legalLinks?.accessibility_statement) {
                 openExternalLink(legalLinks.accessibility_statement);
@@ -133,7 +145,9 @@ export const HelpMenu = ({
             isHidden: !legalLinks?.accessibility_statement,
           },
           {
-            label: t('Legal notice'),
+            label: t('Legal notice', {
+              description: 'Help menu link to the legal notice',
+            }),
             callback: () => {
               if (legalLinks?.legal_notice) {
                 openExternalLink(legalLinks.legal_notice);
@@ -179,7 +193,10 @@ export const HelpMenu = ({
         >
           <Box $direction="row" $align="center">
             <Button
-              aria-label={t('Open help menu')}
+              aria-label={t('Open help menu', {
+                description:
+                  'Accessible name of the button opening the help menu',
+              })}
               color={colorButton || 'neutral'}
               variant="tertiary"
               iconPosition="left"

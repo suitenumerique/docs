@@ -45,7 +45,12 @@ export const ModalConfirmationVersion = ({
    */
   const { mutate: restoreVersion, isPending } = useRestoreDocVersion({
     onSuccess: () => {
-      toast(t('Version restored successfully'), VariantType.SUCCESS);
+      toast(
+        t('Version restored successfully', {
+          description: 'Toast shown after restoring an older version',
+        }),
+        VariantType.SUCCESS,
+      );
       onSuccess();
 
       threadStore?.refreshThreads();
@@ -57,26 +62,34 @@ export const ModalConfirmationVersion = ({
       isOpen
       closeOnClickOutside
       onClose={() => onClose()}
-      aria-label={t('Warning')}
+      aria-label={t('Warning', { description: 'Title of a warning dialog' })}
       rightActions={
         <>
           <Button
-            aria-label={`${t('Cancel')} - ${t('Warning')}`}
+            aria-label={`${t('Cancel', { description: 'Button to dismiss a dialog without confirming' })} - ${t('Warning', { description: 'Title of a warning dialog' })}`}
             variant="secondary"
             fullWidth
             autoFocus
             onClick={() => onClose()}
           >
-            {t('Cancel')}
+            {t('Cancel', {
+              description: 'Button to dismiss a dialog without confirming',
+            })}
           </Button>
           <Button
-            aria-label={t('Restore')}
+            aria-label={t('Restore', {
+              description:
+                'Button to restore a deleted document or an older version',
+            })}
             color="error"
             fullWidth
             disabled={isPending}
             onClick={() => restoreVersion({ docId, versionId })}
           >
-            {t('Restore')}
+            {t('Restore', {
+              description:
+                'Button to restore a deleted document or an older version',
+            })}
           </Button>
         </>
       }
@@ -89,7 +102,9 @@ export const ModalConfirmationVersion = ({
           $size="h6"
           $align="flex-start"
         >
-          {t('Restoring an older version')}
+          {t('Restoring an older version', {
+            description: 'Title of the dialog confirming restoring a version',
+          })}
         </Text>
       }
     >
@@ -99,6 +114,7 @@ export const ModalConfirmationVersion = ({
           <Text $variation="secondary" as="p" $margin="none">
             {t(
               "The current document will be replaced, but you'll still find it in the version history.",
+              { description: 'Explanation in the restore version dialog' },
             )}
           </Text>
         </Box>
