@@ -1,5 +1,12 @@
-# trixie for glibc >= 2.38 — uws prebuilt binaries reject bookworm's 2.36
-FROM node:22-trixie AS base
+# trixie for glibc >= 2.38 — uws prebuilt binaries reject bookworm's 2.36.
+# slim: the full image ships compilers, imagemagick, mariadb... that the server
+# never uses and that the vulnerability scan of the CI reports.
+FROM node:22-trixie-slim AS base
+
+# Upgrade system packages to install security updates
+RUN apt-get update && \
+  apt-get upgrade -y && \
+  rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -48,7 +55,13 @@ RUN yarn build
 # ---- Production image ----
 FROM base AS yhub
 
-RUN yarn install --frozen-lockfile --production
+# the cache is cleaned in the same layer: it keeps a copy of every package of
+# the lockfile, the development ones included
+RUN yarn install --frozen-lockfile --production && \
+  yarn cache clean
+
+# npm is not needed at runtime and bundles its own, rarely updated, dependencies
+RUN rm -rf /usr/local/bin/npm /usr/local/bin/npx /usr/local/lib/node_modules/npm
 
 COPY --from=yhub-builder /app/dist ./dist
 
