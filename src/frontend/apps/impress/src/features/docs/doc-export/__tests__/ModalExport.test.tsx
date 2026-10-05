@@ -45,7 +45,7 @@ vi.mock('@/docs/doc-management', () => ({
 
 vi.mock('../hooks/', () => ({
   default: {
-    useExportAGPL: () => ({
+    useExportXL: () => ({
       formats: [{ label: 'PDF', value: 'pdf', labelDescription: '.pdf' }],
       docToBlob: mocks.docToBlob,
     }),
