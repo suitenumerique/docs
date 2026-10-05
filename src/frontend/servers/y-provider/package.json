@@ -35,12 +35,12 @@
     "cross-env": "10.1.0",
     "eslint-plugin-docs": "*",
     "nodemon": "3.1.14",
-    "supertest": "7.2.2",
+    "supertest": "7.3.1",
     "ts-node": "10.9.2",
-    "tsc-alias": "1.9.5",
+    "tsc-alias": "1.9.7",
     "typescript": "*",
-    "vite": "8.3.1",
-    "vitest": "5.0.1",
+    "vite": "8.3.2",
+    "vitest": "5.0.3",
     "vitest-mock-extended": "5.1.1"
   },
   "packageManager": "yarn@1.22.22"
