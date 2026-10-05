@@ -1,7 +1,7 @@
 import { Block } from '@blocknote/core';
 import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { captureException } from '@sentry/nextjs';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { backendUrl } from '@/api';
@@ -12,6 +12,7 @@ import { isSafeUrl } from '@/utils/url';
 
 import { useCreateDocAttachment } from '../api';
 import { ANALYZE_URL } from '../conf';
+import { useEditorStore } from '../stores';
 import { DocsBlockNoteEditor } from '../types';
 
 const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // Default to 10MB
@@ -49,11 +50,15 @@ export const useUploadFile = (docId: string) => {
     isError: isErrorAttachment,
     error: errorAttachment,
   } = useCreateDocAttachment();
+  const editor = useEditorStore((state) => state.editor);
+  const uploadBlockIdRef = useRef<string | undefined>(undefined);
 
   const maxFileSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? DEFAULT_MAX_FILE_SIZE;
 
   const uploadFile = useCallback(
-    async (file: File) => {
+    async (file: File, blockId?: string) => {
+      uploadBlockIdRef.current = blockId;
+
       // The server rejects an oversized file, but the proxy in front of it usually cuts the
       // request first and answers a bare 413 the editor cannot make sense of. Telling the
       // user before sending anything saves them the wait and the cryptic message.
@@ -84,6 +89,38 @@ export const useUploadFile = (docId: string) => {
     },
     [createDocAttachment, docId, maxFileSize, t, toast],
   );
+
+  /**
+   * Handle the upload error by replacing the block with an
+   * uploadLoader block displaying a warning message.
+   */
+  useEffect(() => {
+    const blockId = uploadBlockIdRef.current;
+    if (!errorAttachment || !blockId || !editor) {
+      return;
+    }
+
+    try {
+      editor.replaceBlocks(
+        [blockId],
+        [
+          {
+            type: 'uploadLoader',
+            props: {
+              information: t(
+                'A problem occurred while uploading the file, please try again.',
+              ),
+              type: 'warning',
+            },
+          },
+        ],
+      );
+    } catch {
+      /* The block may be gone already (removed or updated by a collaborator) */
+    }
+
+    uploadBlockIdRef.current = undefined;
+  }, [editor, errorAttachment, t]);
 
   return {
     uploadFile,
@@ -132,7 +169,7 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
             {
               type: 'uploadLoader',
               props: {
-                information: t('Analyzing file...'),
+                information: t('Analyzing the file'),
                 type: 'loading',
                 blockUploadName,
                 blockUploadType,

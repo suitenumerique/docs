@@ -33,7 +33,7 @@ import { useTranslation } from 'react-i18next';
 import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 
-import { Box, TextErrors } from '@/components';
+import { Box } from '@/components';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import {
@@ -133,7 +133,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       ? DEFAULT_LOCALE
       : i18n.resolvedLanguage;
 
-  const { uploadFile, errorAttachment } = useUploadFile(doc.id);
+  const { uploadFile } = useUploadFile(doc.id);
   const conf = useConfig().data;
   const { isFeatureFlagActivated } = useAnalytics();
   const aiBlockNoteAllowed = !!(
@@ -346,15 +346,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         currentUserAvatarUrl={currentUserAvatarUrl}
       />
       <DocsFindReplaceStyle />
-      {errorAttachment && (
-        <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
-          <TextErrors
-            causes={errorAttachment.cause}
-            canClose
-            $textAlign="left"
-          />
-        </Box>
-      )}
       <BlockNoteView
         className="--docs--main-editor"
         editor={editor}
