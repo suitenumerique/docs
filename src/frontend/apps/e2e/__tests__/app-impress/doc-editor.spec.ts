@@ -356,20 +356,20 @@ test.describe('Doc Editor', () => {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.html'));
 
-    await expect(editor.getByText('Analyzing file...')).toBeVisible();
+    await expect(editor.getByText('Analyzing the file')).toBeVisible();
 
     // To be sure the retry happens even after a page reload
     await goToGridDoc(page, {
       title: randomDoc,
     });
 
-    await expect(editor.getByText('Analyzing file...')).toBeVisible();
+    await expect(editor.getByText('Analyzing the file')).toBeVisible();
 
     // The retry takes a few seconds
     await expect(editor.getByText('test.html')).toBeVisible({
       timeout: 7000,
     });
-    await expect(editor.getByText('Analyzing file...')).toBeHidden();
+    await expect(editor.getByText('Analyzing the file')).toBeHidden();
   });
 
   test('it checks if callout custom block', async ({ page, browserName }) => {
