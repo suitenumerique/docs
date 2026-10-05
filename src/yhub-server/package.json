@@ -13,7 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1136.0",
+    "@aws-sdk/client-s3": "3.1146.0",
     "@sentry/node": "10.75.0",
     "@sentry/profiling-node": "10.75.0",
     "@y/hub": "0.9.0",
@@ -24,13 +24,13 @@
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@types/node": "24.13.6",
-    "eslint": "10.11.0",
+    "eslint": "10.12.0",
     "eslint-config-prettier": "10.1.8",
     "nodemon": "3.1.14",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.70.0",
-    "vite": "8.3.1",
-    "vitest": "5.0.1"
+    "typescript-eslint": "8.71.0",
+    "vite": "8.3.2",
+    "vitest": "5.0.3"
   },
   "engines": {
     "node": ">=22"
