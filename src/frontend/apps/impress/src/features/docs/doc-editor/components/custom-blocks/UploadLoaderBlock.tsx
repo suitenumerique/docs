@@ -9,7 +9,7 @@ import { createReactBlockSpec } from '@blocknote/react';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 
-import { Box, Icon, Text } from '@/components';
+import { Card, Icon, Text } from '@/components';
 import { useMediaUrl } from '@/core';
 import { isSafeUrl } from '@/utils/url';
 
@@ -135,18 +135,30 @@ const UploadLoaderBlockComponent = ({
   }, [block, editor, mediaUrl, isEditable]);
 
   return (
-    <Box className="bn-visual-media-wrapper" $direction="row" $gap="0.5rem">
+    <Card
+      className="bn-visual-media-wrapper"
+      $direction="row"
+      $gap="xs"
+      $withThemeBG
+      $border="none"
+      $theme="neutral"
+      $scope="semantic"
+      $width="100%"
+      $padding="xs"
+    >
       {block.props.type === 'warning' ? (
         <Warning />
       ) : (
         <Icon
-          $theme="brand"
+          $theme="neutral"
           $layer="border"
           icon={<Loader style={{ animation: 'spin 1.5s linear infinite' }} />}
         />
       )}
-      <Text>{block.props.information}</Text>
-    </Box>
+      <Text $variation="tertiary" $weight={500}>
+        {block.props.information}
+      </Text>
+    </Card>
   );
 };
 
