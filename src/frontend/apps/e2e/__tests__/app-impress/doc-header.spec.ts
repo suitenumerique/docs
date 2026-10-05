@@ -218,16 +218,10 @@ test.describe('Doc Header', () => {
     // Emoji picker should be hidden initially
     await expect(emojiPicker).toBeHidden();
 
-    // Add emoji
+    // Add emoji opens the picker; the document stays unchanged until a choice
     await expect(removeEmoji).toBeHidden();
     await addEmoji.click();
-    // The 1 April the emoji is a fish
-    await expect(emojiPicker).toHaveText(/📄|🐟/);
-
-    // Change emoji
-    await emojiPicker.click({
-      delay: 100,
-    });
+    await expect(emojiPicker).toBeHidden();
     await page.getByRole('button', { name: '😀' }).first().click();
     await expect(emojiPicker).toHaveText('😀');
 
