@@ -79,8 +79,7 @@ jobs:
       file: src/yhub-server/Dockerfile
       target: yhub
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
-      # no docker_user: the image defaults to uid 1000, the `node` user the
-      # base image already declares in /etc/passwd
+      docker_user: 1000
 
   notify-argocd:
     needs:
