@@ -25,7 +25,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from core.models import Document, DocumentAccess, User
+from core.models import Document, DocumentAccess, Invitation, User
 
 try:
     from zoneinfo import ZoneInfo as _ZoneInfo
@@ -72,6 +72,7 @@ class Command(BaseCommand):
         self._export_users(stream)
         self._export_documents(stream)
         self._export_document_accesses(stream)
+        self._export_invitations(stream)
 
     def _progress(self, label, count, done=False):
         """Overwrite the current stderr line with an incrementing count."""
@@ -123,3 +124,14 @@ class Command(BaseCommand):
             count += 1
             self._progress("document accesses", count)
         self._progress("document accesses", count, done=True)
+
+    def _export_invitations(self, stream):
+        """Export all concrete Invitation fields."""
+        self.stderr.write("Exporting invitations...")
+        count = 0
+        for invitation in Invitation.objects.order_by("created_at").values().iterator():
+            pk = invitation.pop("id")
+            _write(stream, "core.invitation", pk, invitation)
+            count += 1
+            self._progress("invitations", count)
+        self._progress("invitations", count, done=True)
