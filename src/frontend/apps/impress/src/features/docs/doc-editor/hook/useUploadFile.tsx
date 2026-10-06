@@ -1,5 +1,6 @@
 import { Block } from '@blocknote/core';
 import { VariantType } from '@gouvfr-lasuite/ui-components';
+import { announce } from '@react-aria/live-announcer';
 import { captureException } from '@sentry/nextjs';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +16,9 @@ import { ANALYZE_URL } from '../conf';
 import { DocsBlockNoteEditor } from '../types';
 
 const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // Default to 10MB
+
+// Upload errors carry a cause the user has to read: keep them longer than the default toast.
+const UPLOAD_ERROR_TOAST_DURATION = 10000;
 
 const TEXT_ALIGNMENTS = ['left', 'center', 'right', 'justify'] as const;
 
@@ -63,6 +67,7 @@ export const useUploadFile = (docId: string) => {
             },
           ),
           VariantType.ERROR,
+          { duration: UPLOAD_ERROR_TOAST_DURATION },
         );
 
         throw new Error('File is too large');
@@ -88,6 +93,7 @@ export const useUploadFile = (docId: string) => {
                 'A problem occurred while uploading the file, please try again.',
               ),
           VariantType.ERROR,
+          { duration: UPLOAD_ERROR_TOAST_DURATION },
         );
 
         throw error;
@@ -114,7 +120,7 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
    * Replace the resource block by a uploadLoader block to show analyzing status
    */
   const replaceBlockWithUploadLoader = useCallback(
-    (block: Block) => {
+    (block: Block, shouldAnnounce = false) => {
       if (
         !block ||
         !('url' in block.props) ||
@@ -133,13 +139,15 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
       const blockUploadTextAlignment = fileTextAlignment(block.props);
 
       try {
+        const information = t('Analyzing the file');
+
         editor.replaceBlocks(
           [block.id],
           [
             {
               type: 'uploadLoader',
               props: {
-                information: t('Analyzing the file'),
+                information,
                 type: 'loading',
                 blockUploadName,
                 blockUploadType,
@@ -151,6 +159,12 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
             },
           ],
         );
+
+        // Only the user who uploaded the file hears it, not the collaborators
+        // nor a page reload.
+        if (shouldAnnounce) {
+          announce(information, 'polite');
+        }
       } catch (error) {
         captureException(error, {
           extra: { info: 'Error replacing block for upload loader' },
@@ -194,7 +208,7 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
       const innerTimeoutId = setTimeout(() => {
         const block = editor.getBlock({ id: blockId });
 
-        replaceBlockWithUploadLoader(block as Block);
+        replaceBlockWithUploadLoader(block as Block, true);
       }, 300);
 
       return () => {

@@ -6,10 +6,11 @@ import {
   StyleSchema,
 } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
+import { announce } from '@react-aria/live-announcer';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 
-import { Card, Icon, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 import { useMediaUrl } from '@/core';
 import { isSafeUrl } from '@/utils/url';
 
@@ -114,16 +115,19 @@ const UploadLoaderBlockComponent = ({
 
         console.error('Error analyzing file:', error);
 
+        const information = t(
+          'The antivirus has detected an anomaly in your file.',
+        );
+
         try {
           editor.updateBlock(block.id, {
             type: 'uploadLoader',
             props: {
               type: 'warning',
-              information: t(
-                'The antivirus has detected an anomaly in your file.',
-              ),
+              information,
             },
           });
+          announce(information, 'assertive');
         } catch {
           /* During collaboration, another user might have updated the block */
         }
@@ -135,14 +139,16 @@ const UploadLoaderBlockComponent = ({
   }, [block, editor, mediaUrl, isEditable]);
 
   return (
-    <Card
+    <Box
       className="bn-visual-media-wrapper"
       $direction="row"
       $gap="xs"
       $withThemeBG
       $border="none"
+      $radius="var(--c--globals--spacings--st)"
       $theme="neutral"
       $scope="semantic"
+      $variation="tertiary"
       $width="100%"
       $padding="xs"
     >
@@ -158,7 +164,7 @@ const UploadLoaderBlockComponent = ({
       <Text $variation="tertiary" $weight={500}>
         {block.props.information}
       </Text>
-    </Card>
+    </Box>
   );
 };
 

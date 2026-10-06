@@ -69,6 +69,7 @@ describe('useUploadFile', () => {
     expect(mockToast).toHaveBeenCalledWith(
       'The file "video.mp4" is too large. Maximum file size is 1KB.',
       'error',
+      { duration: 10000 },
     );
   });
 
@@ -89,6 +90,7 @@ describe('useUploadFile', () => {
     expect(mockToast).toHaveBeenCalledWith(
       'A problem occurred while uploading the file, cause: File type not allowed.',
       'error',
+      { duration: 10000 },
     );
   });
 });
