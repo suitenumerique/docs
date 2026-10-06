@@ -25,7 +25,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from core.models import Document, DocumentAccess, Invitation, User
+from core.models import Document, DocumentAccess, Invitation, LinkTrace, User
 
 try:
     from zoneinfo import ZoneInfo as _ZoneInfo
@@ -73,6 +73,7 @@ class Command(BaseCommand):
         self._export_documents(stream)
         self._export_document_accesses(stream)
         self._export_invitations(stream)
+        self._export_link_traces(stream)
 
     def _progress(self, label, count, done=False):
         """Overwrite the current stderr line with an incrementing count."""
@@ -135,3 +136,14 @@ class Command(BaseCommand):
             count += 1
             self._progress("invitations", count)
         self._progress("invitations", count, done=True)
+
+    def _export_link_traces(self, stream):
+        """Export all concrete LinkTrace fields."""
+        self.stderr.write("Exporting link traces...")
+        count = 0
+        for trace in LinkTrace.objects.order_by("created_at").values().iterator():
+            pk = trace.pop("id")
+            _write(stream, "core.linktrace", pk, trace)
+            count += 1
+            self._progress("link traces", count)
+        self._progress("link traces", count, done=True)
