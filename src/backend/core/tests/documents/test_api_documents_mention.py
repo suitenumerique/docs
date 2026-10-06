@@ -366,10 +366,10 @@ def test_api_documents_mention_thread():
     Mentions can be attached to a comment thread of the document, in which case
     the email notification mentions the comment.
     """
-    user = factories.UserFactory(full_name="Mentioning User")
+    user = factories.UserFactory(full_name="Mentioning User", language="en-us")
     document = factories.DocumentFactory(title="My doc")
     factories.UserDocumentAccessFactory(document=document, user=user, role="commenter")
-    mentioned_user = factories.UserFactory()
+    mentioned_user = factories.UserFactory(language="en-us")
     factories.UserDocumentAccessFactory(
         document=document, user=mentioned_user, role="commenter"
     )
