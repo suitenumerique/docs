@@ -25,7 +25,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from core.models import Document, User
+from core.models import Document, DocumentAccess, User
 
 try:
     from zoneinfo import ZoneInfo as _ZoneInfo
@@ -71,6 +71,7 @@ class Command(BaseCommand):
     def _export(self, stream):
         self._export_users(stream)
         self._export_documents(stream)
+        self._export_document_accesses(stream)
 
     def _progress(self, label, count, done=False):
         """Overwrite the current stderr line with an incrementing count."""
@@ -111,3 +112,14 @@ class Command(BaseCommand):
             count += 1
             self._progress("documents", count)
         self._progress("documents", count, done=True)
+
+    def _export_document_accesses(self, stream):
+        """Export all concrete DocumentAccess fields."""
+        self.stderr.write("Exporting document accesses...")
+        count = 0
+        for access in DocumentAccess.objects.order_by("created_at").values().iterator():
+            pk = access.pop("id")
+            _write(stream, "core.documentaccess", pk, access)
+            count += 1
+            self._progress("document accesses", count)
+        self._progress("document accesses", count, done=True)
