@@ -50,6 +50,13 @@ except ImportError:
     _HAS_RECONCILIATION = False
 
 try:
+    from core.models import Mention
+
+    _HAS_MENTION = True
+except ImportError:
+    _HAS_MENTION = False
+
+try:
     from zoneinfo import ZoneInfo as _ZoneInfo
 except ImportError:
     _ZoneInfo = None
@@ -105,6 +112,8 @@ class Command(BaseCommand):
             self._export_threads(stream)
             self._export_comments(stream)
             self._export_reactions(stream)
+        if _HAS_MENTION:
+            self._export_mentions(stream)
 
     def _progress(self, label, count, done=False):
         """Overwrite the current stderr line with an incrementing count."""
@@ -279,3 +288,14 @@ class Command(BaseCommand):
             count += 1
             self._progress("reaction users", count)
         self._progress("reaction users", count, done=True)
+
+    def _export_mentions(self, stream):
+        """Export all concrete Mention fields."""
+        self.stderr.write("Exporting mentions...")
+        count = 0
+        for mention in Mention.objects.order_by("created_at").values().iterator():
+            pk = mention.pop("id")
+            _write(stream, "core.mention", pk, mention)
+            count += 1
+            self._progress("mentions", count)
+        self._progress("mentions", count, done=True)
