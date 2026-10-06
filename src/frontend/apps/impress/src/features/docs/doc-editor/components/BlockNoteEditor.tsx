@@ -23,6 +23,10 @@ import {
 import {
   FloatingComposerController,
   FloatingThreadController,
+  ReactAudioBlock,
+  ReactFileBlock,
+  ReactImageBlock,
+  ReactVideoBlock,
   ThreadsSidebar,
   useCreateBlockNote,
 } from '@blocknote/react';
@@ -83,6 +87,10 @@ const baseBlockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
+      audio: ReactAudioBlock(),
+      file: ReactFileBlock(),
+      image: ReactImageBlock(),
+      video: ReactVideoBlock(),
       callout: CalloutBlock(),
       codeBlock: createSafeCodeBlockSpec(),
       diagram: createReactDiagramBlockSpec(),

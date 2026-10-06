@@ -71,6 +71,26 @@ describe('useUploadFile', () => {
       'error',
     );
   });
+
+  it('toasts the causes of the API and rethrows when the upload fails', async () => {
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
+    fetchMock.post(uploadUrl, {
+      status: 400,
+      body: { file: ['File type not allowed.'] },
+    });
+
+    const result = renderUseUploadFile();
+
+    await expect(
+      result.current.uploadFile(createFile(MAX_FILE_SIZE)),
+    ).rejects.toThrow('Failed to upload on the doc');
+
+    expect(mockToast).toHaveBeenCalledWith(
+      'A problem occurred while uploading the file, cause: File type not allowed.',
+      'error',
+    );
+  });
 });
 
 describe('useUploadStatus', () => {

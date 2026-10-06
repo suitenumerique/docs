@@ -1,10 +1,10 @@
 import { Block } from '@blocknote/core';
 import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { captureException } from '@sentry/nextjs';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { backendUrl } from '@/api';
+import { APIError, backendUrl } from '@/api';
 import { useConfig } from '@/core';
 import { useToast } from '@/hooks';
 import { formatFileSize } from '@/utils';
@@ -12,7 +12,6 @@ import { isSafeUrl } from '@/utils/url';
 
 import { useCreateDocAttachment } from '../api';
 import { ANALYZE_URL } from '../conf';
-import { useEditorStore } from '../stores';
 import { DocsBlockNoteEditor } from '../types';
 
 const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // Default to 10MB
@@ -45,20 +44,12 @@ export const useUploadFile = (docId: string) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { data: config } = useConfig();
-  const {
-    mutateAsync: createDocAttachment,
-    isError: isErrorAttachment,
-    error: errorAttachment,
-  } = useCreateDocAttachment();
-  const editor = useEditorStore((state) => state.editor);
-  const uploadBlockIdRef = useRef<string | undefined>(undefined);
+  const { mutateAsync: createDocAttachment } = useCreateDocAttachment();
 
   const maxFileSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? DEFAULT_MAX_FILE_SIZE;
 
   const uploadFile = useCallback(
-    async (file: File, blockId?: string) => {
-      uploadBlockIdRef.current = blockId;
-
+    async (file: File) => {
       // The server rejects an oversized file, but the proxy in front of it usually cuts the
       // request first and answers a bare 413 the editor cannot make sense of. Telling the
       // user before sending anything saves them the wait and the cryptic message.
@@ -80,53 +71,32 @@ export const useUploadFile = (docId: string) => {
       const body = new FormData();
       body.append('file', file);
 
-      const ret = await createDocAttachment({
-        docId,
-        body,
-      });
+      try {
+        const ret = await createDocAttachment({
+          docId,
+          body,
+        });
 
-      return `${backendUrl()}${ret.file}`;
+        return `${backendUrl()}${ret.file}`;
+      } catch (error) {
+        const causes = error instanceof APIError ? error.cause : undefined;
+
+        toast(
+          causes?.length
+            ? `${t('A problem occurred while uploading the file, cause:')} ${causes.join(' ')}`
+            : t(
+                'A problem occurred while uploading the file, please try again.',
+              ),
+          VariantType.ERROR,
+        );
+
+        throw error;
+      }
     },
     [createDocAttachment, docId, maxFileSize, t, toast],
   );
 
-  /**
-   * Handle the upload error by replacing the block with an
-   * uploadLoader block displaying a warning message.
-   */
-  useEffect(() => {
-    const blockId = uploadBlockIdRef.current;
-    if (!errorAttachment || !blockId || !editor) {
-      return;
-    }
-
-    try {
-      editor.replaceBlocks(
-        [blockId],
-        [
-          {
-            type: 'uploadLoader',
-            props: {
-              information: t(
-                'A problem occurred while uploading the file, please try again.',
-              ),
-              type: 'warning',
-            },
-          },
-        ],
-      );
-    } catch {
-      /* The block may be gone already (removed or updated by a collaborator) */
-    }
-
-    uploadBlockIdRef.current = undefined;
-  }, [editor, errorAttachment, t]);
-
-  return {
-    uploadFile,
-    isErrorAttachment,
-    errorAttachment,
-  };
+  return { uploadFile };
 };
 
 /**
