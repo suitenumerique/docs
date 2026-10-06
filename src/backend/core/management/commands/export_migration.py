@@ -36,6 +36,13 @@ from core.models import (
 )
 
 try:
+    from core.models import Comment, Reaction, Thread
+
+    _HAS_THREADS = True
+except ImportError:
+    _HAS_THREADS = False
+
+try:
     from zoneinfo import ZoneInfo as _ZoneInfo
 except ImportError:
     _ZoneInfo = None
@@ -84,6 +91,10 @@ class Command(BaseCommand):
         self._export_link_traces(stream)
         self._export_document_ask_for_accesses(stream)
         self._export_document_favorites(stream)
+        if _HAS_THREADS:
+            self._export_threads(stream)
+            self._export_comments(stream)
+            self._export_reactions(stream)
 
     def _progress(self, label, count, done=False):
         """Overwrite the current stderr line with an incrementing count."""
@@ -183,3 +194,50 @@ class Command(BaseCommand):
             count += 1
             self._progress("document favorites", count)
         self._progress("document favorites", count, done=True)
+
+    def _export_threads(self, stream):
+        """Export all concrete Thread fields."""
+        self.stderr.write("Exporting threads...")
+        count = 0
+        for thread in Thread.objects.order_by("created_at").values().iterator():
+            pk = thread.pop("id")
+            _write(stream, "core.thread", pk, thread)
+            count += 1
+            self._progress("threads", count)
+        self._progress("threads", count, done=True)
+
+    def _export_comments(self, stream):
+        """Export all concrete Comment fields."""
+        self.stderr.write("Exporting comments...")
+        count = 0
+        for comment in Comment.objects.order_by("created_at").values().iterator():
+            pk = comment.pop("id")
+            _write(stream, "core.comment", pk, comment)
+            count += 1
+            self._progress("comments", count)
+        self._progress("comments", count, done=True)
+
+    def _export_reactions(self, stream):
+        """
+        Export Reaction rows and their M2M user associations separately.
+
+        values() skips the M2M users field, so the through table is exported
+        as a distinct record type (core.reaction_users).
+        """
+        self.stderr.write("Exporting reactions...")
+        count = 0
+        for reaction in Reaction.objects.order_by("created_at").values().iterator():
+            pk = reaction.pop("id")
+            _write(stream, "core.reaction", pk, reaction)
+            count += 1
+            self._progress("reactions", count)
+        self._progress("reactions", count, done=True)
+
+        self.stderr.write("Exporting reaction users...")
+        count = 0
+        for row in Reaction.users.through.objects.values().iterator():
+            pk = row.pop("id")
+            _write(stream, "core.reaction_users", pk, row)
+            count += 1
+            self._progress("reaction users", count)
+        self._progress("reaction users", count, done=True)
