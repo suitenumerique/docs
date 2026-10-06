@@ -25,7 +25,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from core.models import User
+from core.models import Document, User
 
 try:
     from zoneinfo import ZoneInfo as _ZoneInfo
@@ -70,6 +70,7 @@ class Command(BaseCommand):
 
     def _export(self, stream):
         self._export_users(stream)
+        self._export_documents(stream)
 
     def _progress(self, label, count, done=False):
         """Overwrite the current stderr line with an incrementing count."""
@@ -94,3 +95,19 @@ class Command(BaseCommand):
             count += 1
             self._progress("users", count)
         self._progress("users", count, done=True)
+
+    def _export_documents(self, stream):
+        """
+        Export all concrete Document fields, ordered by path.
+
+        Ordering by path guarantees parents appear before their children,
+        which the import script relies on to reconstruct the tree.
+        """
+        self.stderr.write("Exporting documents...")
+        count = 0
+        for document in Document.objects.order_by("path").values().iterator():
+            pk = document.pop("id")
+            _write(stream, "core.document", pk, document)
+            count += 1
+            self._progress("documents", count)
+        self._progress("documents", count, done=True)
