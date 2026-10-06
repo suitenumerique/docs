@@ -7,6 +7,10 @@ Describe the purpose of this pull request.
 * [ ] item 1...
 * [ ] item 2...
 
+## Rebase
+
+* [ ] Rebase this pull request on its base branch (tick to rebase automatically, only possible without conflict)
+
 ## External contributions
 
 Thank you for your contribution! 🎉

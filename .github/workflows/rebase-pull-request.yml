@@ -1,0 +1,53 @@
+name: Rebase Pull Request
+
+# Ticking the "Rebase" checkbox of the pull request description rebases the
+# branch on its base branch, only if it applies without conflict.
+#
+# `pull_request_target` gives a token able to write on pull requests coming
+# from forks. It is safe here because the pull request code is never checked
+# out nor run, and the description is only read through the environment.
+on:
+  pull_request_target:
+    types: [edited]
+
+permissions:
+  pull-requests: write
+
+# One run per pull request, never cancelled: a rebase must not be interrupted.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.body, '[x] Rebase this pull request')
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Untick the checkbox
+        # First, so that the edit of the description cannot run this again.
+        run: |
+          gh api "repos/$GH_REPO/pulls/$PR_NUMBER" --jq .body > body.md
+          sed -i -E 's/\[[xX]\] (Rebase this pull request)/[ ] \1/' body.md
+          gh api -X PATCH "repos/$GH_REPO/pulls/$PR_NUMBER" -F body=@body.md > /dev/null
+
+      - name: Rebase on the base branch
+        run: |
+          # Only rebases if HEAD_SHA is still the head of the branch.
+          if gh api -X PUT "repos/$GH_REPO/pulls/$PR_NUMBER/update-branch" \
+            -f update_method=rebase -f expected_head_sha="$HEAD_SHA" \
+            > result.txt 2>&1; then
+            message=":white_check_mark: The branch has been rebased on its base branch. Its commits were rewritten, so \`git pull --rebase\` before pushing again, and note that the signatures of the rebased commits are lost."
+          elif grep -qi "conflict" result.txt; then
+            message=":x: The rebase is not possible because of conflicts with the base branch. It has to be done manually."
+          elif grep -qi "no new commits" result.txt; then
+            message=":information_source: The branch is already up to date with its base branch."
+          else
+            message=":warning: The automatic rebase failed (for a pull request from a fork, the option \"Allow edits by maintainers\" must be enabled). It has to be done manually."
+            cat result.txt
+          fi
+          gh pr comment "$PR_NUMBER" --body "$message"
