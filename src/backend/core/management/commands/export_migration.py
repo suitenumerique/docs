@@ -25,7 +25,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from core.models import Document, DocumentAccess, Invitation, LinkTrace, User
+from core.models import Document, DocumentAccess, DocumentFavorite, Invitation, LinkTrace, User
 
 try:
     from zoneinfo import ZoneInfo as _ZoneInfo
@@ -74,6 +74,7 @@ class Command(BaseCommand):
         self._export_document_accesses(stream)
         self._export_invitations(stream)
         self._export_link_traces(stream)
+        self._export_document_favorites(stream)
 
     def _progress(self, label, count, done=False):
         """Overwrite the current stderr line with an incrementing count."""
@@ -147,3 +148,16 @@ class Command(BaseCommand):
             count += 1
             self._progress("link traces", count)
         self._progress("link traces", count, done=True)
+
+    def _export_document_favorites(self, stream):
+        """Export all concrete DocumentFavorite fields."""
+        self.stderr.write("Exporting document favorites...")
+        count = 0
+        for favorite in (
+            DocumentFavorite.objects.order_by("created_at").values().iterator()
+        ):
+            pk = favorite.pop("id")
+            _write(stream, "core.documentfavorite", pk, favorite)
+            count += 1
+            self._progress("document favorites", count)
+        self._progress("document favorites", count, done=True)
