@@ -91,8 +91,22 @@ export const mergeActivityEntries = (
     }
   });
 
-  return versions.map((version, index) => ({
-    ...version,
-    by: Array.from(authors[index]),
-  }));
+  /**
+   * Versions ending at the same moment are the same document but share an `id`
+   * (double selection, key clash): fold them, keeping every author.
+   */
+  const unique = new Map<string, DocVersion>();
+  versions.forEach((version, index) => {
+    const known = unique.get(version.id);
+    if (known) {
+      known.from = Math.min(known.from, version.from);
+      authors[index].forEach((author) => known.by.push(author));
+      known.by = Array.from(new Set(known.by));
+      return;
+    }
+
+    unique.set(version.id, { ...version, by: Array.from(authors[index]) });
+  });
+
+  return Array.from(unique.values());
 };
