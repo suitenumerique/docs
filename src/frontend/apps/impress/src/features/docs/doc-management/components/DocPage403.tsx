@@ -47,11 +47,17 @@ export const DocPage403 = ({ id }: DocProps) => {
       <Head>
         <meta name="robots" content="noindex" />
         <title>
-          {t('Access Denied - Error 403')} - {t('Docs')}
+          {t('Access Denied - Error 403', {
+            description: 'Page title when the user may not open a document',
+          })}{' '}
+          -{' '}
+          {t('Docs', {
+            description: 'Product name, shown in page titles and the logo',
+          })}
         </title>
         <meta
           property="og:title"
-          content={`${t('Access Denied - Error 403')} - ${t('Docs')}`}
+          content={`${t('Access Denied - Error 403', { description: 'Page title when the user may not open a document' })} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}
           key="title"
         />
       </Head>
@@ -73,7 +79,10 @@ export const DocPage403 = ({ id }: DocProps) => {
             $theme="neutral"
             $variation="primary"
           >
-            {t('Access denied')}
+            {t('Access denied', {
+              description:
+                'Heading shown when the user may not open a document',
+            })}
           </Text>
           <Text
             as="p"
@@ -85,8 +94,13 @@ export const DocPage403 = ({ id }: DocProps) => {
             $size="xs"
           >
             {hasRequested
-              ? t('Your access request for this document is pending.')
-              : t('Insufficient access rights to view the document.')}
+              ? t('Your access request for this document is pending.', {
+                  description:
+                    'Message on the access denied page after requesting access',
+                })
+              : t('Insufficient access rights to view the document.', {
+                  description: 'Message on the access denied page',
+                })}
           </Text>
           {isSubDocument && (
             <Text
@@ -100,6 +114,10 @@ export const DocPage403 = ({ id }: DocProps) => {
             >
               {t(
                 "You're currently viewing a sub-document. To gain access, please request permission from the main document.",
+                {
+                  description:
+                    'Message on the access denied page of a sub-document',
+                },
               )}
             </Text>
           )}
@@ -133,7 +151,9 @@ export const DocPage403 = ({ id }: DocProps) => {
               $variation="tertiary"
               $margin="0"
             >
-              {t('Home')}
+              {t('Home', {
+                description: 'Button/link label to go back to the home page',
+              })}
             </Text>
           </StyledLink>
           {!isSubDocument && (

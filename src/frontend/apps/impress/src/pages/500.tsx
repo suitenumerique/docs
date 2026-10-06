@@ -19,6 +19,7 @@ const Page: NextPageWithLayout = () => {
       image={error_img}
       description={t(
         'An unexpected error occurred. Go grab a coffee or try to refresh the page.',
+        { description: 'Message of the server error page, informal tone' },
       )}
       refreshTarget={refreshTarget}
     />

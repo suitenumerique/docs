@@ -92,7 +92,9 @@ export const AIToolbarButton = () => {
           $padding={{ right: '2xs' }}
         >
           <IconAI isHighlighted={isHighlighted} width="18px" />
-          {t('Ask AI')}
+          {t('Ask AI', {
+            description: 'Editor toolbar button opening the AI prompt',
+          })}
         </Box>
       </Components.Generic.Toolbar.Button>
       <Box

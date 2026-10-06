@@ -165,13 +165,19 @@ export const SearchPage = ({
               as="input"
               name="doc-search-input"
               role="combobox"
-              aria-label={t('Search for a document')}
+              aria-label={t('Search for a document', {
+                description:
+                  'Accessible name or placeholder of a document search field',
+              })}
               aria-expanded={popoverOpened}
               aria-haspopup="listbox"
               aria-autocomplete="list"
               aria-controls={dropdownId}
               $padding={{ left: '3px' }}
-              placeholder={t('mention a sub-doc...')}
+              placeholder={t('mention a sub-doc...', {
+                description:
+                  'Placeholder of the field to search a doc to link in the editor',
+              })}
               $css={inputStyle}
               ref={inputRef}
               $display="inline-flex"
@@ -189,7 +195,10 @@ export const SearchPage = ({
             ref={modalRef}
             id={dropdownId}
             role="listbox"
-            aria-label={t('Search results')}
+            aria-label={t('Search results', {
+              description:
+                'Accessible name or heading of the list of search results',
+            })}
             $minWidth={isDesktop ? '330px' : '220px'}
             $width="fit-content"
             $zIndex="10"
@@ -261,7 +270,10 @@ export const SearchPage = ({
                 $padding="none"
               >
                 <DocSearchContent
-                  groupName={t('Link a doc')}
+                  groupName={t('Link a doc', {
+                    description:
+                      'Editor menu entry to insert a link to another doc',
+                  })}
                   search={search}
                   parentDocId={treeContext?.root?.id}
                   isSearchNotMandatory

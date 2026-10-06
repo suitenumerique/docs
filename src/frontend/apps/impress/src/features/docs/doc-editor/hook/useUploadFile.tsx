@@ -62,6 +62,8 @@ export const useUploadFile = (docId: string) => {
           t(
             'The file "{{fileName}}" is too large. Maximum file size is {{maxFileSize}}.',
             {
+              description:
+                'Toast shown when an uploaded file exceeds the size limit',
               fileName: file.name,
               maxFileSize: formatFileSize(maxFileSize),
             },
@@ -132,7 +134,10 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
             {
               type: 'uploadLoader',
               props: {
-                information: t('Analyzing file...'),
+                information: t('Analyzing file...', {
+                  description:
+                    'Placeholder shown while an uploaded file is scanned by the antivirus',
+                }),
                 type: 'loading',
                 blockUploadName,
                 blockUploadType,

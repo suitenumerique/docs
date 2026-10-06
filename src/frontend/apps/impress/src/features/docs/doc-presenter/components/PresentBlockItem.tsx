@@ -48,7 +48,10 @@ export const PresentBlockItem = () => {
     >
       <Box $align="center" $gap="xxs" $direction="row">
         <PresentIcon width="16" height="16" aria-hidden="true" />
-        {t('Present from here')}
+        {t('Present from here', {
+          description:
+            'Editor side menu action starting the presentation from the current block',
+        })}
       </Box>
     </Components.Generic.Menu.Item>
   );

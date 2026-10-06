@@ -74,15 +74,21 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
   useEffect(() => {
     if (lang && locales[lang as keyof typeof locales]) {
       locales[lang as keyof typeof locales].file_blocks.add_button_text['pdf'] =
-        t('Add PDF');
+        t('Add PDF', {
+          description: 'Button label to add a PDF file in the editor',
+        });
       (
         locales[lang as keyof typeof locales].file_panel.embed
           .embed_button as Record<string, string>
-      )['pdf'] = t('Add PDF');
+      )['pdf'] = t('Add PDF', {
+        description: 'Button label to add a PDF file in the editor',
+      });
       (
         locales[lang as keyof typeof locales].file_panel.upload
           .file_placeholder as Record<string, string>
-      )['pdf'] = t('Upload PDF');
+      )['pdf'] = t('Upload PDF', {
+        description: 'Placeholder text of the PDF block upload area',
+      });
     }
   }, [lang, t]);
 
@@ -129,7 +135,10 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
         draggable={false}
       >
         <Warning />
-        {t('Invalid or missing PDF file.')}
+        {t('Invalid or missing PDF file.', {
+          description:
+            'Error shown in the PDF block when the file cannot be displayed',
+        })}
       </Box>
     );
   }
@@ -153,7 +162,12 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
             $width="100%"
             $height="450px"
             src={pdfUrl}
-            aria-label={block.props.name || t('PDF document')}
+            aria-label={
+              block.props.name ||
+              t('PDF document', {
+                description: 'Accessible name of an embedded PDF',
+              })
+            }
             contentEditable={false}
             draggable={false}
           />
@@ -191,13 +205,34 @@ export const getPdfReactSlashMenuItems = (
   group: string,
 ) => [
   {
-    title: t('PDF'),
+    title: t('PDF', {
+      description: 'Name of the PDF file format / editor block',
+    }),
     onItemClick: () => {
       insertOrUpdateBlockForSlashMenu(editor, { type: 'pdf' });
     },
-    aliases: [t('pdf'), t('document'), t('embed'), t('file')],
+    aliases: [
+      t('pdf', {
+        description:
+          'Search keyword for the PDF block in the editor slash menu',
+      }),
+      t('document', {
+        description:
+          'Search keyword for the PDF block in the editor slash menu',
+      }),
+      t('embed', {
+        description:
+          'Search keyword for the PDF block in the editor slash menu',
+      }),
+      t('file', {
+        description:
+          'Search keyword for the PDF block in the editor slash menu',
+      }),
+    ],
     group,
     icon: <Icon iconName="picture_as_pdf" $size="18px" />,
-    subtext: t('Embed a PDF file'),
+    subtext: t('Embed a PDF file', {
+      description: 'Description of the PDF block in the editor slash menu',
+    }),
   },
 ];

@@ -67,7 +67,11 @@ export function useComments(
 
           return {
             id: encodedURIUserId,
-            username: fullName || t('Anonymous'),
+            username:
+              fullName ||
+              t('Anonymous', {
+                description: 'Display name of a user without a known name',
+              }),
             avatarUrl: avatarUrlFromName(
               fullName,
               themeTokens?.font?.families?.base,

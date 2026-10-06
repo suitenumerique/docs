@@ -34,10 +34,16 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
 
   if (trashbinCutoff && doc.deleted_at) {
     const daysLeft = calculateDaysLeft(doc.deleted_at, trashbinCutoff);
-    dateLabel = t('Days remaining:');
-    dateValue = `${daysLeft} ${t('days', { count: daysLeft })}`;
+    dateLabel = t('Days remaining:', {
+      description:
+        'Label before the number of days left before a trashed document is permanently deleted',
+    });
+    dateValue = `${daysLeft} ${t('days', { description: 'Unit after a number of days, plural form', count: daysLeft })}`;
   } else {
-    dateLabel = t('Last update:');
+    dateLabel = t('Last update:', {
+      description:
+        'Label before the date of the last modification of a document',
+    });
     dateValue = relativeOnly;
   }
 
@@ -46,7 +52,10 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
       {doc.is_favorite && (
         <>
           <Text as="dt" className="sr-only">
-            {t('This document is starred')}
+            {t('This document is starred', {
+              description:
+                "Screen reader text indicating the document is in the user's favorites",
+            })}
           </Text>
           <Text
             as="dd"
@@ -68,7 +77,10 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
         </>
       )}
       <Text as="dt" className="sr-only">
-        {t('Role')}
+        {t('Role', {
+          description:
+            "Screen reader label before the user's role on the document",
+        })}
       </Text>
       <Text
         as="dd"
@@ -119,7 +131,11 @@ const VisibilityDoc = ({ doc }: { doc: Doc }) => {
     return (
       <>
         <PublicSVG aria-hidden="true" width="16" height="16" />
-        &nbsp;{t('Public')}&nbsp;·&nbsp;
+        &nbsp;
+        {t('Public', {
+          description: 'Document visibility: anyone with the link can access',
+        })}
+        &nbsp;·&nbsp;
       </>
     );
   }
@@ -128,7 +144,12 @@ const VisibilityDoc = ({ doc }: { doc: Doc }) => {
     return (
       <>
         <ProtedtedSVG aria-hidden="true" width="16" height="16" />
-        &nbsp;{t('Internal')}&nbsp;·&nbsp;
+        &nbsp;
+        {t('Internal', {
+          description:
+            'Document visibility: any logged-in user with the link can access',
+        })}
+        &nbsp;·&nbsp;
       </>
     );
   }

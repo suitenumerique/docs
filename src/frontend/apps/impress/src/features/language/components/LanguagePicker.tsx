@@ -46,6 +46,8 @@ export const LanguagePickerLegacy = () => {
           await changeLanguageSynchronized(backendLocale, user);
           announce(
             t('Language changed to {{language}}', {
+              description:
+                'Screen reader announcement after switching the interface language',
               language: backendLabel,
               defaultValue: `Language changed to ${backendLabel}`,
             }),
@@ -69,7 +71,9 @@ export const LanguagePickerLegacy = () => {
     <DropdownMenu
       options={optionsPicker}
       showArrow
-      label={t('Select language')}
+      label={t('Select language', {
+        description: 'Label of the interface language selector',
+      })}
       buttonCss={css`
         transition: all var(--c--globals--transitions--duration)
           var(--c--globals--transitions--ease-out) !important;
@@ -131,6 +135,8 @@ export const LanguagePicker = () => {
     void changeLanguageSynchronized(value, user).then(() => {
       announce(
         t('Language changed to {{language}}', {
+          description:
+            'Screen reader announcement after switching the interface language',
           language: backendLabel,
           defaultValue: `Language changed to ${backendLabel}`,
         }),

@@ -47,7 +47,9 @@ export const ConfirmationLeaveModal = ({
       onClose={onClose}
       // TODO: add a fix on the Modal component on Cunningham side
       // If aria-label is not set the modal add by default [object Object]
-      aria-label={t('Confirmation to leave the document')}
+      aria-label={t('Confirmation to leave the document', {
+        description: 'Accessible name of the leave document dialog',
+      })}
       aria-labelledby="modal-leave-doc-title"
       aria-describedby="modal-leave-doc-desc"
       rightActions={
@@ -78,11 +80,16 @@ export const ConfirmationLeaveModal = ({
             $margin="0"
             $align="flex-start"
           >
-            {t('Leave a doc')}
+            {t('Leave a doc', {
+              description: 'Title of the dialog to leave a shared document',
+            })}
           </Text>
           <Box $position="absolute" $css="top: 8px; right: 8px;">
             <ButtonCloseModal
-              aria-label={t('Close the leave modal')}
+              aria-label={t('Close the leave modal', {
+                description:
+                  'Accessible name of the button closing the leave dialog',
+              })}
               onClick={onClose}
             />
           </Box>
@@ -173,23 +180,31 @@ const ButtonsLeaveDoc = ({
   return (
     <>
       <Button
-        aria-label={t('Cancel leaving the document')}
+        aria-label={t('Cancel leaving the document', {
+          description: 'Accessible name of the button cancelling leaving',
+        })}
         variant="secondary"
         fullWidth
         autoFocus
         onClick={onClose}
         disabled={isPending}
       >
-        {t('Cancel')}
+        {t('Cancel', {
+          description: 'Button to dismiss a dialog without confirming',
+        })}
       </Button>
       <Button
-        aria-label={t('Confirm leaving the document')}
+        aria-label={t('Confirm leaving the document', {
+          description: 'Accessible name of the button confirming leaving',
+        })}
         color="error"
         fullWidth
         onClick={leave}
         disabled={isPending}
       >
-        {t('Leave')}
+        {t('Leave', {
+          description: 'Dropdown menu item to leave the document',
+        })}
       </Button>
     </>
   );

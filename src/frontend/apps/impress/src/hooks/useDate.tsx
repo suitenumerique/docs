@@ -38,7 +38,10 @@ export const useDate = () => {
 
     return Math.abs(differenceInSeconds) >= 5
       ? dateToCompare.toRelative({ base: dateNow, locale: i18n.language })
-      : t('just now');
+      : t('just now', {
+          description:
+            'Relative date for something that happened a few seconds ago',
+        });
   };
 
   const calculateDaysLeft = (date: string, daysLimit: number): number =>

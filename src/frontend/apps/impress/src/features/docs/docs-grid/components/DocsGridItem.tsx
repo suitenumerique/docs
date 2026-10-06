@@ -79,6 +79,7 @@ export const DocsGridItem = ({
       `}
       className="--docs--doc-grid-item"
       aria-label={t('Open document: {{title}}', {
+        description: 'Accessible name of a document row, an action to open it',
         title: doc.title || untitledDocument,
       })}
       {...boxProps}
@@ -132,6 +133,8 @@ export const DocsGridItem = ({
             href={`/docs/${doc.id}`}
             tabIndex={-1}
             aria-label={t('{{title}}, updated {{date}}', {
+              description:
+                'Accessible name of a document row with its last update',
               title: doc.title || untitledDocument,
               date: dateToDisplay,
             })}
@@ -191,7 +194,12 @@ export const DocsGridItemTitle = ({
               $size="sm"
               icon={<StarIcon aria-hidden="true" width={16} height={16} />}
             />
-            <span className="sr-only">{t('This document is starred')}</span>
+            <span className="sr-only">
+              {t('This document is starred', {
+                description:
+                  "Screen reader text indicating the document is in the user's favorites",
+              })}
+            </span>
           </>
         )}
         {isShared && !withTooltip && <IconPublic isPublic={isPublic} />}
@@ -200,8 +208,13 @@ export const DocsGridItemTitle = ({
             content={
               <Text $textAlign="center">
                 {isPublic
-                  ? t('Accessible to anyone')
-                  : t('Accessible to authenticated users')}
+                  ? t('Accessible to anyone', {
+                      description: 'Tooltip: the document is public',
+                    })
+                  : t('Accessible to authenticated users', {
+                      description:
+                        'Tooltip: the document is open to logged-in users',
+                    })}
               </Text>
             }
             placement="top"
@@ -227,8 +240,12 @@ const IconPublic = ({ isPublic }: { isPublic: boolean }) => {
       $size="sm"
       aria-label={
         isPublic
-          ? t('Accessible to anyone')
-          : t('Accessible to authenticated users')
+          ? t('Accessible to anyone', {
+              description: 'Tooltip: the document is public',
+            })
+          : t('Accessible to authenticated users', {
+              description: 'Tooltip: the document is open to logged-in users',
+            })
       }
       icon={
         isPublic ? (
@@ -255,7 +272,7 @@ const useDateToDisplay = (doc: Doc, isInTrashbin: boolean) => {
       config.TRASHBIN_CUTOFF_DAYS,
     );
 
-    dateToDisplay = `${daysLeft} ${t('days', { count: daysLeft })}`;
+    dateToDisplay = `${daysLeft} ${t('days', { description: 'Unit after a number of days, plural form', count: daysLeft })}`;
     isRelativeDate = false;
   }
 

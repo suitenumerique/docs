@@ -131,8 +131,14 @@ export const Waffle = () => {
     >
       <LaGaufreV2
         {...waffleConfig}
-        label={waffleConfig.label ?? t('Digital LaSuite services')}
-        newWindowLabelSuffix={` (${t('new window')})`}
+        label={
+          waffleConfig.label ??
+          t('Digital LaSuite services', {
+            description:
+              'Accessible label of the apps menu (waffle) listing La Suite services',
+          })
+        }
+        newWindowLabelSuffix={` (${t('new window', { description: 'Screen reader suffix added to links opening in a new window' })})`}
       />
     </Box>
   );

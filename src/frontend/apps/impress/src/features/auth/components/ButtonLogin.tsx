@@ -33,7 +33,7 @@ export const ButtonLogin = ({
       {...props}
       href={href}
     >
-      {children ?? t('Sign in')}
+      {children ?? t('Sign in', { description: 'Button to log in' })}
     </Button>
   );
 };
@@ -44,7 +44,10 @@ export const ProConnectButton = () => {
   return (
     <BoxButton
       onClick={() => gotoLogin()}
-      aria-label={t('Proconnect Login')}
+      aria-label={t('Proconnect Login', {
+        description:
+          'Accessible name of the ProConnect (French government SSO) login button',
+      })}
       $css={css`
         background-color: var(
           --c--contextuals--background--semantic--brand--primary

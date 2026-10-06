@@ -117,7 +117,9 @@ export const getInterlinkinghMenuItems = (
 ) => [
   {
     key: 'link-doc',
-    title: t('Link a doc'),
+    title: t('Link a doc', {
+      description: 'Editor menu entry to insert a link to another doc',
+    }),
     onItemClick: () => {
       editor.insertInlineContent([
         {
@@ -131,16 +133,22 @@ export const getInterlinkinghMenuItems = (
     aliases: ['interlinking', 'link', 'anchor', 'a'],
     group,
     icon: <LinkPageIcon />,
-    subtext: t('Link this doc to another doc'),
+    subtext: t('Link this doc to another doc', {
+      description: 'Description of the "Link a doc" editor menu entry',
+    }),
   },
   {
     key: 'new-sub-doc',
-    title: t('New sub-doc'),
+    title: t('New sub-doc', {
+      description: 'Action to create a doc nested under the current doc',
+    }),
     onItemClick: createPage,
     aliases: ['new sub-doc'],
     group,
     icon: <AddPageIcon />,
-    subtext: t('Create a new sub-doc'),
+    subtext: t('Create a new sub-doc', {
+      description: 'Description of the "New sub-doc" editor menu entry',
+    }),
   },
 ];
 
@@ -151,7 +159,15 @@ export const useGetInterlinkingMenuItems = () => {
   return (
     editor: DocsBlockNoteEditor,
     t: TFunction<'translation', undefined>,
-  ) => getInterlinkinghMenuItems(editor, t, t('Links'), createChildDoc);
+  ) =>
+    getInterlinkinghMenuItems(
+      editor,
+      t,
+      t('Links', {
+        description: 'Group title of the link entries in the editor menu',
+      }),
+      createChildDoc,
+    );
 };
 
 const DisableInvalidInterlink = ({

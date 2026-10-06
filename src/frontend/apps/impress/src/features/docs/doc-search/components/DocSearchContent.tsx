@@ -59,14 +59,23 @@ export const DocSearchContent = ({
     groupName: '',
     groupKey: 'docs',
     elements: [],
-    emptyString: t('Loading documents...'),
+    emptyString: t('Loading documents...', {
+      description:
+        'Placeholder and screen reader announcement while search results load',
+    }),
     endActions: [],
   });
 
   useEffect(() => {
     if (loading) {
       if (search || isSearchNotMandatory) {
-        announce(t('Loading documents...'), 'polite');
+        announce(
+          t('Loading documents...', {
+            description:
+              'Placeholder and screen reader announcement while search results load',
+          }),
+          'polite',
+        );
       }
       return;
     }
@@ -101,8 +110,14 @@ export const DocSearchContent = ({
     if (search && !loading) {
       announce(
         elements.length === 0
-          ? t('No documents found')
-          : t('{{count}} document found', { count: elements.length }),
+          ? t('No documents found', {
+              description: 'Message when a search has no result',
+            })
+          : t('{{count}} document found', {
+              description:
+                'Screen reader announcement of the number of search results, plural form',
+              count: elements.length,
+            }),
         'polite',
       );
     }

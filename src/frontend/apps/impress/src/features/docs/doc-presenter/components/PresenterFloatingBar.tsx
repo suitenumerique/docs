@@ -138,12 +138,16 @@ export const PresenterFloatingBar = ({
   const actionOptions = useMemo<DropdownMenuItem[]>(
     () => [
       {
-        label: t('Copy link to slide'),
+        label: t('Copy link to slide', {
+          description: 'Menu action copying a link to the current slide',
+        }),
         icon: <Link aria-hidden="true" width="16" height="16" />,
         callback: onCopyLink,
       },
       {
-        label: t('Download PDF'),
+        label: t('Download PDF', {
+          description: 'Menu action downloading the presentation as PDF',
+        }),
         icon: <Download aria-hidden="true" width="16" height="16" />,
         callback: onExportPdf,
         isDisabled: isExportingPdf,
@@ -161,7 +165,9 @@ export const PresenterFloatingBar = ({
         $align="center"
         $css={barCss}
         role="toolbar"
-        aria-label={t('Presenter controls')}
+        aria-label={t('Presenter controls', {
+          description: 'Accessible name of the presentation toolbar',
+        })}
       >
         <Button
           size="nano"
@@ -169,7 +175,10 @@ export const PresenterFloatingBar = ({
           variant="tertiary"
           aria-disabled={isFirst}
           onClick={isFirst ? undefined : onPrev}
-          aria-label={t('Previous slide')}
+          aria-label={t('Previous slide', {
+            description:
+              'Accessible name of the button going to the previous slide',
+          })}
           icon={<ChevronLeft size="small" />}
         />
         <Text as="span" $size="sm" $color="neutral" aria-hidden="true">
@@ -181,7 +190,10 @@ export const PresenterFloatingBar = ({
           variant="tertiary"
           aria-disabled={isLast}
           onClick={isLast ? undefined : onNext}
-          aria-label={t('Next slide')}
+          aria-label={t('Next slide', {
+            description:
+              'Accessible name of the button going to the next slide',
+          })}
           icon={<ChevronRight size="small" />}
         />
         <Box $css={separatorCss} aria-hidden />
@@ -197,7 +209,10 @@ export const PresenterFloatingBar = ({
             color="neutral"
             variant="tertiary"
             onClick={toggleActions}
-            aria-label={t('More options')}
+            aria-label={t('More options', {
+              description:
+                'Accessible name of the button opening more presentation actions',
+            })}
             aria-expanded={isActionsOpen}
             aria-haspopup="menu"
             icon={<Share size="small" />}
@@ -209,7 +224,15 @@ export const PresenterFloatingBar = ({
           variant="tertiary"
           onClick={onToggleFullscreen}
           aria-label={
-            isFullscreen ? t('Exit fullscreen') : t('Enter fullscreen')
+            isFullscreen
+              ? t('Exit fullscreen', {
+                  description:
+                    'Accessible name of the button leaving fullscreen',
+                })
+              : t('Enter fullscreen', {
+                  description:
+                    'Accessible name of the button entering fullscreen',
+                })
           }
           icon={
             isFullscreen ? <Minimize size="small" /> : <Maximize size="small" />
@@ -220,7 +243,10 @@ export const PresenterFloatingBar = ({
           color="neutral"
           variant="tertiary"
           onClick={onClose}
-          aria-label={t('Close presenter')}
+          aria-label={t('Close presenter', {
+            description:
+              'Accessible name of the button leaving the presentation mode',
+          })}
           icon={<XMark size="small" />}
         />
       </Box>

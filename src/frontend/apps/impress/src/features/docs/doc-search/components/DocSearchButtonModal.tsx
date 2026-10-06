@@ -50,7 +50,9 @@ export const DocSearchButtonModal = ({ ...props }: ButtonProps) => {
         size="medium"
         color="brand"
         variant="tertiary"
-        aria-label={t('Search docs')}
+        aria-label={t('Search docs', {
+          description: 'Accessible name of the button opening the doc search',
+        })}
         icon={<SearchSVG aria-hidden="true" width={24} height={24} />}
         {...props}
       />

@@ -129,7 +129,9 @@ export const DocMoveModal = ({
       })
       .catch(() => {
         toast(
-          t(`An error occurred while moving the document.`),
+          t(`An error occurred while moving the document.`, {
+            description: 'Toast shown when moving a document failed',
+          }),
           VariantType.ERROR,
         );
       });
@@ -144,7 +146,9 @@ export const DocMoveModal = ({
         closeOnClickOutside
         size={isModal ? ModalSize.MEDIUM : ModalSize.FULL}
         hideCloseButton
-        aria-label={t('Move Modal')}
+        aria-label={t('Move Modal', {
+          description: 'Accessible name of the dialog to move a document',
+        })}
         rightActions={
           <Box
             $direction="row-reverse"
@@ -152,7 +156,10 @@ export const DocMoveModal = ({
             $gap="small"
           >
             <Button
-              aria-label={t('Move the document to the selected location')}
+              aria-label={t('Move the document to the selected location', {
+                description:
+                  'Accessible name of the button confirming the move',
+              })}
               variant="primary"
               fullWidth
               onClick={() => {
@@ -170,26 +177,39 @@ export const DocMoveModal = ({
               }}
               disabled={!docSelected}
             >
-              {t('Move here')}
+              {t('Move here', {
+                description:
+                  'Button to move the document to the selected parent',
+              })}
             </Button>
             <Button
-              aria-label={t('Cancel the move')}
+              aria-label={t('Cancel the move', {
+                description:
+                  'Accessible name of the button cancelling the move',
+              })}
               variant="secondary"
               fullWidth
               onClick={onClose}
             >
-              {t('Cancel')}
+              {t('Cancel', {
+                description: 'Button to dismiss a dialog without confirming',
+              })}
             </Button>
           </Box>
         }
         title={
           <>
             <Text as="h2" $margin="0" $size="s" $align="flex-start">
-              {t('Choose a new parent doc')}
+              {t('Choose a new parent doc', {
+                description: 'Heading of the dialog to move a document',
+              })}
             </Text>
             <Box $position="absolute" $css="top: 8px; right: 8px;">
               <ButtonCloseModal
-                aria-label={t('Close the move modal')}
+                aria-label={t('Close the move modal', {
+                  description:
+                    'Accessible name of the button closing the move dialog',
+                })}
                 onClick={onClose}
               />
             </Box>
@@ -211,8 +231,14 @@ export const DocMoveModal = ({
           }}
         >
           <QuickSearch
-            label={t('Search for a doc...')}
-            placeholder={t('Search for a doc...')}
+            label={t('Search for a doc...', {
+              description:
+                'Label and placeholder of the doc search in the move dialog',
+            })}
+            placeholder={t('Search for a doc...', {
+              description:
+                'Label and placeholder of the doc search in the move dialog',
+            })}
             loading={loading}
             onFilter={handleInputSearch}
           >
@@ -223,7 +249,17 @@ export const DocMoveModal = ({
             >
               <Box>
                 <DocSearchContent
-                  groupName={search ? t('Search results') : t('All docs')}
+                  groupName={
+                    search
+                      ? t('Search results', {
+                          description:
+                            'Accessible name or heading of the list of search results',
+                        })
+                      : t('All docs', {
+                          description:
+                            'Group title listing every doc the user can access',
+                        })
+                  }
                   search={search}
                   filterResults={(docResults) => docResults.id !== doc.id}
                   onSelect={handleSelect}
@@ -303,7 +339,9 @@ export const DocMoveModal = ({
             onClose();
           }}
           targetDocumentTitle={docTargetTitle}
-          title={t('Move document')}
+          title={t('Move document', {
+            description: 'Title of the dialog to move a document',
+          })}
         />
       )}
     </>

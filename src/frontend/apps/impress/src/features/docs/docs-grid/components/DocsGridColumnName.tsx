@@ -70,8 +70,12 @@ const DocGridColumnWithSort = ({
     <>
       <Box $padding={{ all: '3xs' }}>
         <DocGridSortButton
-          label={t('Name')}
-          ariaLabel={t('Name')}
+          label={t('Name', {
+            description: 'Column header and sort button: document name',
+          })}
+          ariaLabel={t('Name', {
+            description: 'Column header and sort button: document name',
+          })}
           ordering={ordering}
           field="title"
           defaultOrdering={defaultOrdering.title}
@@ -91,10 +95,16 @@ const DocGridColumnWithSort = ({
                 $gap="2xs"
               >
                 <ClockIcon width={16} height={16} aria-hidden="true" />{' '}
-                {t('Last modified')}
+                {t('Last modified', {
+                  description:
+                    'Column header and sort button: date of last modification',
+                })}
               </Text>
             }
-            ariaLabel={t('Last modified')}
+            ariaLabel={t('Last modified', {
+              description:
+                'Column header and sort button: date of last modification',
+            })}
             ordering={ordering}
             field="updated_at"
             defaultOrdering={defaultOrdering.updated_at}
@@ -114,7 +124,9 @@ const DocGridColumnWithoutSort = ({ target }: { target: DocDefaultFilter }) => {
     <>
       <Box $padding={{ all: '3xs' }}>
         <Text $size="xs" $variation="secondary" $weight="500">
-          {t('Name')}
+          {t('Name', {
+            description: 'Column header and sort button: document name',
+          })}
         </Text>
       </Box>
       {!isSmallMobile && (
@@ -129,8 +141,14 @@ const DocGridColumnWithoutSort = ({ target }: { target: DocDefaultFilter }) => {
           >
             <ClockIcon width={16} height={16} aria-hidden="true" />{' '}
             {target === DocDefaultFilter.STARRED
-              ? t('Last modified')
-              : t('Days remaining')}
+              ? t('Last modified', {
+                  description:
+                    'Column header and sort button: date of last modification',
+                })
+              : t('Days remaining', {
+                  description:
+                    'Column header of the trashbin: days before permanent deletion',
+                })}
           </Text>
         </Box>
       )}
@@ -171,11 +189,21 @@ const DocGridSortButton = ({
             ? t(
                 'Sorted documents by {{label}}, {{direction}}. Activate to reverse.',
                 {
+                  description: 'Accessible name of a sort button, current sort',
                   label: ariaLabel,
-                  direction: isDesc ? t('descending') : t('ascending'),
+                  direction: isDesc
+                    ? t('descending', {
+                        description: 'Sort direction, from highest to lowest',
+                      })
+                    : t('ascending', {
+                        description: 'Sort direction, from lowest to highest',
+                      }),
                 },
               )
-            : t('Sort documents by {{label}}', { label: ariaLabel })
+            : t('Sort documents by {{label}}', {
+                description: 'Accessible name of a sort button',
+                label: ariaLabel,
+              })
         }
         iconPosition="right"
         icon={<ArrowUpDownIcon width={16} height={16} aria-hidden="true" />}

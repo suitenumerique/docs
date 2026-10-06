@@ -60,13 +60,20 @@ export const DocsGridTrashbinActions = ({
     ],
     options: {
       onSuccess: (_data) => {
-        toast(t('The document has been restored.'), VariantType.SUCCESS, {
-          duration: 4000,
-        });
+        toast(
+          t('The document has been restored.', {
+            description: 'Toast shown after a deleted document is restored',
+          }),
+          VariantType.SUCCESS,
+          {
+            duration: 4000,
+          },
+        );
       },
       onError: (error) => {
         toast(
           t('An error occurred while restoring the document: {{error}}', {
+            description: 'Toast shown when restoring a deleted document fails',
             error: error?.message,
           }),
           VariantType.ERROR,
@@ -84,7 +91,9 @@ export const DocsGridTrashbinActions = ({
 
   const options: DropdownMenuItem[] = [
     {
-      label: t('Restore'),
+      label: t('Restore', {
+        description: 'Button to restore a deleted document or an older version',
+      }),
       icon: (
         <Icon
           $size="20px"

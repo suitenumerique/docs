@@ -60,7 +60,9 @@ export const ModalSelectVersion = ({
         closeOnClickOutside={true}
         size={ModalSize.EXTRA_LARGE}
         onClose={onClose}
-        aria-label={t('Version history')}
+        aria-label={t('Version history', {
+          description: 'Title of the dialog listing past versions',
+        })}
       >
         <NoPaddingStyle />
         <Box
@@ -76,7 +78,9 @@ export const ModalSelectVersion = ({
             id="modal-select-version-title"
             className="sr-only"
           >
-            {t('Version history')}
+            {t('Version history', {
+              description: 'Title of the dialog listing past versions',
+            })}
           </Text>
           <Box
             $css={css`
@@ -101,7 +105,9 @@ export const ModalSelectVersion = ({
               {!selectedVersionId && (
                 <Box $align="center" $justify="center" $height="100%">
                   <Text $size="h6" $weight="bold">
-                    {t('Select a version on the right to restore')}
+                    {t('Select a version on the right to restore', {
+                      description: 'Hint in the version history dialog',
+                    })}
                   </Text>
                 </Box>
               )}
@@ -119,7 +125,9 @@ export const ModalSelectVersion = ({
             `}
           >
             <Box
-              aria-label={t('Version list')}
+              aria-label={t('Version list', {
+                description: 'Accessible name of the list of versions',
+              })}
               $css={css`
                 overflow-y: auto;
                 flex: 1;
@@ -137,10 +145,16 @@ export const ModalSelectVersion = ({
                 $padding="sm"
               >
                 <Text $size="h6" $weight="bold">
-                  {t('History')}
+                  {t('History', {
+                    description:
+                      'Dropdown menu item to view the document history',
+                  })}
                 </Text>
                 <ButtonCloseModal
-                  aria-label={t('Close the version history modal')}
+                  aria-label={t('Close the version history modal', {
+                    description:
+                      'Accessible name of the button closing the version history',
+                  })}
                   autoFocus
                   onClick={onClose}
                   size="nano"
@@ -166,7 +180,10 @@ export const ModalSelectVersion = ({
                   disabled={!selectedVersionId}
                   onClick={restoreModal.open}
                 >
-                  {t('Restore')}
+                  {t('Restore', {
+                    description:
+                      'Button to restore a deleted document or an older version',
+                  })}
                 </Button>
               </Box>
             )}

@@ -59,9 +59,15 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
 
   const { mutate: removeDocAccess } = useDeleteDocAccessRequest({
     onError: () => {
-      toast(t('Error while removing the request.'), VariantType.ERROR, {
-        duration: 4000,
-      });
+      toast(
+        t('Error while removing the request.', {
+          description: 'Toast shown when deleting an access request failed',
+        }),
+        VariantType.ERROR,
+        {
+          duration: 4000,
+        },
+      );
     },
   });
 
@@ -95,6 +101,7 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
               canUpdate={doc.abilities.accesses_manage}
               rolesAllowed={accessRequest.abilities.set_role_to}
               ariaLabel={t('Change role for {{name}}', {
+                description: 'Accessible name of the role dropdown of a member',
                 name: accessRequest.user.full_name || accessRequest.user.email,
               })}
             />
@@ -110,7 +117,9 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
               }
               size={isSmallMobile ? 'nano' : 'small'}
             >
-              {t('Approve')}
+              {t('Approve', {
+                description: 'Button to accept an access request',
+              })}
             </Button>
 
             {doc.abilities.accesses_manage && (
@@ -121,7 +130,10 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
                     docId: doc.id,
                   })
                 }
-                aria-label={t('Close the access request modal')}
+                aria-label={t('Close the access request modal', {
+                  description:
+                    'Accessible name of the button closing the access request dialog',
+                })}
               >
                 <Icon iconName="close" $size="16px" />
               </BoxButton>
@@ -148,7 +160,9 @@ export const QuickSearchGroupAccessRequest = ({
       accessRequestQuery.data?.pages.flatMap((page) => page.results) || [];
 
     return {
-      groupName: t('Access Requests'),
+      groupName: t('Access Requests', {
+        description: 'Heading of the list of pending access requests',
+      }),
       elements: accessRequests,
       endActions: accessRequestQuery.hasNextPage
         ? [
@@ -168,7 +182,9 @@ export const QuickSearchGroupAccessRequest = ({
   return (
     <>
       <Box
-        aria-label={t('List request access card')}
+        aria-label={t('List request access card', {
+          description: 'Accessible name of the list of access requests',
+        })}
         className="--docs--share-access-request"
         $padding={{ horizontal: 'base' }}
       >
@@ -212,9 +228,15 @@ export const ButtonAccessRequest = ({
   const { toast } = useToast();
   const { mutate: createRequest } = useCreateDocAccessRequest({
     onSuccess: () => {
-      toast(t('Access request sent successfully.'), VariantType.SUCCESS, {
-        duration: 3000,
-      });
+      toast(
+        t('Access request sent successfully.', {
+          description: 'Toast shown after requesting access',
+        }),
+        VariantType.SUCCESS,
+        {
+          duration: 3000,
+        },
+      );
     },
   });
 
@@ -227,6 +249,10 @@ export const ButtonAccessRequest = ({
       <Text $maxWidth="320px" $textAlign="center" $size="sm">
         {t(
           'As this is a sub-document, please request access to the parent document to enable these features.',
+          {
+            description:
+              'Message in the share dialog when the user lacks rights on a sub-doc',
+          },
         )}
       </Text>
     );
@@ -249,7 +275,10 @@ export const ButtonAccessRequest = ({
       disabled={hasRequested}
       {...buttonProps}
     >
-      {buttonProps.children || t('Request access')}
+      {buttonProps.children ||
+        t('Request access', {
+          description: 'Button to ask the owners for access to a document',
+        })}
     </Button>
   );
 };

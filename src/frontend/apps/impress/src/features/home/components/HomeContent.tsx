@@ -37,7 +37,9 @@ export function HomeContent() {
       id={MAIN_LAYOUT_ID}
       tabIndex={-1}
       className="--docs--home-content"
-      aria-label={t('Main content')}
+      aria-label={t('Main content', {
+        description: 'Accessible name of the main area of the page',
+      })}
       $css={css`
         &:focus {
           outline: 3px solid var(--c--globals--colors--primary-600);
@@ -75,8 +77,11 @@ export function HomeContent() {
                 isColumn={false}
                 isSmallDevice={isTablet}
                 illustration={SC5}
-                title={t('Govs ❤️ Open Source.')}
-                tag={t('Open Source')}
+                title={t('Govs ❤️ Open Source.', {
+                  description:
+                    'Home page section title about public sector and open source',
+                })}
+                tag={t('Open Source', { description: 'Home page section tag' })}
                 textWidth="60%"
                 $css={`min-height: calc(100vh - ${getHeaderHeight(isSmallMobile)}px);`}
                 description={
@@ -195,10 +200,13 @@ export function HomeContent() {
                 video={
                   isFrLanguage ? `/assets/SC1-fr.webm` : `/assets/SC1-en.webm`
                 }
-                title={t('An uncompromising writing experience.')}
-                tag={t('Write')}
+                title={t('An uncompromising writing experience.', {
+                  description: 'Home page section title',
+                })}
+                tag={t('Write', { description: 'Home page section tag' })}
                 description={t(
                   'Docs offers an intuitive writing experience. Its minimalist interface favors content over layout, while offering the essentials: media import, offline mode and keyboard shortcuts for greater efficiency.',
+                  { description: 'Home page section text' },
                 )}
               />
             </Box>
@@ -206,10 +214,13 @@ export function HomeContent() {
               isColumn={false}
               isSmallDevice={isMobile}
               illustration={isFrLanguage ? SC2Fr : SC2En}
-              title={t('Simple and secure collaboration.')}
-              tag={t('Collaborate')}
+              title={t('Simple and secure collaboration.', {
+                description: 'Home page section title',
+              })}
+              tag={t('Collaborate', { description: 'Home page section tag' })}
               description={t(
                 'Docs makes real-time collaboration simple. Invite collaborators - public officials or external partners - with one click to see their changes live, while maintaining precise access control for data security.',
+                { description: 'Home page section text' },
               )}
             />
             <HomeSection
@@ -217,10 +228,15 @@ export function HomeContent() {
               isSmallDevice={isMobile}
               reverse={true}
               illustration={isFrLanguage ? SC3Fr : SC3En}
-              title={t('Flexible export.')}
-              tag={t('Export')}
+              title={t('Flexible export.', {
+                description: 'Home page section title',
+              })}
+              tag={t('Export', {
+                description: 'Title of the dialog to export a document',
+              })}
               description={t(
                 'To facilitate the circulation of documents, Docs allows you to export your content to the most common formats: PDF, Word or OpenDocument.',
+                { description: 'Home page section text' },
               )}
             />
             <HomeSection
@@ -234,11 +250,14 @@ export function HomeContent() {
                     ? SC4Fr
                     : SC4En
               }
-              title={t('A new way to organize knowledge.')}
-              tag={t('Organize')}
+              title={t('A new way to organize knowledge.', {
+                description: 'Home page section title',
+              })}
+              tag={t('Organize', { description: 'Home page section tag' })}
               availableSoon={false}
               description={t(
                 'Docs transforms your documents into knowledge bases thanks to subpages, powerful search and the ability to pin your important documents.',
+                { description: 'Home page section text' },
               )}
             />
             <HomeBottom />

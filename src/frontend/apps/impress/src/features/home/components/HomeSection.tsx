@@ -109,7 +109,13 @@ export const HomeSection = ({
           <Box $direction="row" $gap={spacingsTokens['sm']} $wrap="wrap">
             <SectionTag tag={tag} />
             {availableSoon && (
-              <SectionTag tag={t('Available soon')} availableSoon />
+              <SectionTag
+                tag={t('Available soon', {
+                  description:
+                    'Tag on a home page section about an upcoming feature',
+                })}
+                availableSoon
+              />
             )}
           </Box>
           <Text
@@ -175,7 +181,9 @@ export const HomeSection = ({
         {illustration && (isSmallDevice || !video) && (
           <Image
             src={illustration}
-            alt={t('Illustration')}
+            alt={t('Illustration', {
+              description: 'Alt text of a decorative home page picture',
+            })}
             style={{
               width: 'fit-content',
               maxWidth: '100%',

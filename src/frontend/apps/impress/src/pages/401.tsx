@@ -14,7 +14,11 @@ const HeaderAuthActions = () => {
 
   return (
     <Box $direction="row" $align="center" $gap="sm">
-      <ButtonLogin variant="tertiary">{t('Try it now')}</ButtonLogin>
+      <ButtonLogin variant="tertiary">
+        {t('Try it now', {
+          description: 'Button on the sign-in page to log in',
+        })}
+      </ButtonLogin>
       <ButtonLogin />
     </Box>
   );
@@ -24,7 +28,7 @@ const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
   const { authenticated } = useAuth();
   const { replace } = useRouter();
-  const pageTitle = `${t('401 Unauthorized')} - ${t('Docs')}`;
+  const pageTitle = `${t('401 Unauthorized', { description: 'Page title when authentication is required' })} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`;
 
   useEffect(() => {
     if (authenticated) {
@@ -56,7 +60,9 @@ const Page: NextPageWithLayout = () => {
             $theme="neutral"
             $variation="primary"
           >
-            {t('Please sign in')}
+            {t('Please sign in', {
+              description: 'Heading of the sign-in required page',
+            })}
           </Text>
           <Text
             as="p"
@@ -67,7 +73,9 @@ const Page: NextPageWithLayout = () => {
             $margin="0"
             $size="xs"
           >
-            {t('You need to sign in before accessing the document')}
+            {t('You need to sign in before accessing the document', {
+              description: 'Message of the sign-in required page',
+            })}
           </Text>
         </Box>
         <ButtonLogin />

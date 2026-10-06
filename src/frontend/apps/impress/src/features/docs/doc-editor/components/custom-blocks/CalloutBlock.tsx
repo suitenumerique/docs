@@ -207,7 +207,10 @@ export const getCalloutReactSlashMenuItems = (
 ) => [
   {
     key: 'callout',
-    title: t('Callout'),
+    title: t('Callout', {
+      description:
+        'Name of the editor block type: a highlighted box with an emoji',
+    }),
     onItemClick: () => {
       insertOrUpdateBlockForSlashMenu(editor, {
         type: 'callout',
@@ -216,14 +219,19 @@ export const getCalloutReactSlashMenuItems = (
     aliases: ['callout', 'encadré', 'hervorhebung', 'benadrukken'],
     group,
     icon: <Icon iconName="lightbulb" $size="18px" />,
-    subtext: t('Add a callout block'),
+    subtext: t('Add a callout block', {
+      description: 'Description of the callout block in the editor slash menu',
+    }),
   },
 ];
 
 export const getCalloutFormattingToolbarItems = (
   t: TFunction<'translation', undefined>,
 ): BlockTypeSelectItem => ({
-  name: t('Callout'),
+  name: t('Callout', {
+    description:
+      'Name of the editor block type: a highlighted box with an emoji',
+  }),
   type: 'callout',
   icon: () => <Icon iconName="lightbulb" $size="16px" />,
 });
