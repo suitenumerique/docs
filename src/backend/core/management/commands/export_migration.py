@@ -43,6 +43,13 @@ except ImportError:
     _HAS_THREADS = False
 
 try:
+    from core.models import UserReconciliation, UserReconciliationCsvImport
+
+    _HAS_RECONCILIATION = True
+except ImportError:
+    _HAS_RECONCILIATION = False
+
+try:
     from zoneinfo import ZoneInfo as _ZoneInfo
 except ImportError:
     _ZoneInfo = None
@@ -91,6 +98,9 @@ class Command(BaseCommand):
         self._export_link_traces(stream)
         self._export_document_ask_for_accesses(stream)
         self._export_document_favorites(stream)
+        if _HAS_RECONCILIATION:
+            self._export_user_reconciliations(stream)
+            self._export_user_reconciliation_csv_imports(stream)
         if _HAS_THREADS:
             self._export_threads(stream)
             self._export_comments(stream)
@@ -194,6 +204,34 @@ class Command(BaseCommand):
             count += 1
             self._progress("document favorites", count)
         self._progress("document favorites", count, done=True)
+
+    def _export_user_reconciliations(self, stream):
+        """Export all concrete UserReconciliation fields."""
+        self.stderr.write("Exporting user reconciliations...")
+        count = 0
+        for reconciliation in (
+            UserReconciliation.objects.order_by("created_at").values().iterator()
+        ):
+            pk = reconciliation.pop("id")
+            _write(stream, "core.userreconciliation", pk, reconciliation)
+            count += 1
+            self._progress("user reconciliations", count)
+        self._progress("user reconciliations", count, done=True)
+
+    def _export_user_reconciliation_csv_imports(self, stream):
+        """Export all concrete UserReconciliationCsvImport fields."""
+        self.stderr.write("Exporting user reconciliation CSV imports...")
+        count = 0
+        for csv_import in (
+            UserReconciliationCsvImport.objects.order_by("created_at")
+            .values()
+            .iterator()
+        ):
+            pk = csv_import.pop("id")
+            _write(stream, "core.userreconciliationcsvimport", pk, csv_import)
+            count += 1
+            self._progress("user reconciliation CSV imports", count)
+        self._progress("user reconciliation CSV imports", count, done=True)
 
     def _export_threads(self, stream):
         """Export all concrete Thread fields."""
