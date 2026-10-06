@@ -25,7 +25,15 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from core.models import Document, DocumentAccess, DocumentFavorite, Invitation, LinkTrace, User
+from core.models import (
+    Document,
+    DocumentAccess,
+    DocumentAskForAccess,
+    DocumentFavorite,
+    Invitation,
+    LinkTrace,
+    User,
+)
 
 try:
     from zoneinfo import ZoneInfo as _ZoneInfo
@@ -74,6 +82,7 @@ class Command(BaseCommand):
         self._export_document_accesses(stream)
         self._export_invitations(stream)
         self._export_link_traces(stream)
+        self._export_document_ask_for_accesses(stream)
         self._export_document_favorites(stream)
 
     def _progress(self, label, count, done=False):
@@ -148,6 +157,19 @@ class Command(BaseCommand):
             count += 1
             self._progress("link traces", count)
         self._progress("link traces", count, done=True)
+
+    def _export_document_ask_for_accesses(self, stream):
+        """Export all concrete DocumentAskForAccess fields."""
+        self.stderr.write("Exporting document ask-for-accesses...")
+        count = 0
+        for ask in (
+            DocumentAskForAccess.objects.order_by("created_at").values().iterator()
+        ):
+            pk = ask.pop("id")
+            _write(stream, "core.documentaskforaccess", pk, ask)
+            count += 1
+            self._progress("document ask-for-accesses", count)
+        self._progress("document ask-for-accesses", count, done=True)
 
     def _export_document_favorites(self, stream):
         """Export all concrete DocumentFavorite fields."""
