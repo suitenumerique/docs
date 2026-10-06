@@ -72,6 +72,8 @@ and this project adheres to
   offline
 - 🐛(frontend) stop the service worker from caching the collaboration server's
   rest api
+- ✨(backend) export_migration management command to export data from an
+  instance to a JSONL file
 
 ### Changed
 
