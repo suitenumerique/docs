@@ -57,17 +57,21 @@ export const useImport = ({ onDragOver, onImportSuccess }: UseImportProps) => {
     (fileName: string) => {
       const allowedExtensions = Object.values(ACCEPT).flat().join(', ');
       toast(
-        t(
-          allowedExtensions
-            ? `The document "{{documentName}}" import has failed (only {{allowedExtensions}} files are allowed)`
-            : `The document "{{documentName}}" import has failed`,
-          {
-            description:
-              'Toast shown when a file to import has an unsupported type',
-            documentName: fileName,
-            allowedExtensions,
-          },
-        ),
+        allowedExtensions
+          ? t(
+              `The document "{{documentName}}" import has failed (only {{allowedExtensions}} files are allowed)`,
+              {
+                description:
+                  'Toast shown when a file to import has an unsupported type',
+                documentName: fileName,
+                allowedExtensions,
+              },
+            )
+          : t(`The document "{{documentName}}" import has failed`, {
+              description:
+                'Toast shown when importing a file as a document failed',
+              documentName: fileName,
+            }),
         VariantType.ERROR,
       );
     },

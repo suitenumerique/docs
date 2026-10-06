@@ -292,7 +292,7 @@ export const ToastActions = ({
         onClick={onCloseToast}
       >
         {isTopRoot
-          ? t('Open', {
+          ? t('Open document', {
               description: 'Action to open the duplicated document',
             })
           : t('Back to original', {
