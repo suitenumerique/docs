@@ -128,6 +128,32 @@ describe('mergeActivityEntries', () => {
     ]);
   });
 
+  it('never returns two versions with the same id', () => {
+    // the id is the moment a version ends, and the preview and the restore are
+    // asked for nothing else: two entries ending together are one version of
+    // the document. Kept apart they would both look selected and share a list
+    // key. An imported save and an edit ending together cannot merge...
+    const adjacent = mergeActivityEntries([
+      entry(0, 5_000, 'system'),
+      entry(100, 5_000, 'alice'),
+    ]);
+
+    expect(adjacent).toHaveLength(1);
+    expect(adjacent[0]).toMatchObject({ id: '5000', from: 0, to: 5_000 });
+    expect(adjacent[0].by.sort()).toEqual(['alice', 'system']);
+
+    // ...and neither can a later one that ends where an earlier one did, with
+    // a different version in between
+    const apart = mergeActivityEntries([
+      entry(0, 5_000, 'system'),
+      entry(100, 300, 'alice'),
+      entry(400, 5_000, 'system'),
+    ]);
+
+    expect(apart.map((v) => v.id)).toEqual(['5000', '300']);
+    expect(apart[0]).toMatchObject({ from: 0, by: ['system'] });
+  });
+
   it('keeps an unattributed change without inventing an author', () => {
     const [version] = mergeActivityEntries([entry(0, 0, null)]);
 

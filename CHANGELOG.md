@@ -87,6 +87,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) never list two versions ending at the same moment
 - 🐛(documentation) fix minio port and keycloak realm in the k8s guide #2751
 - 🐛(collaboration) bound the calls yhub makes to the backend with a timeout,
   `YHUB_BACKEND_REQUEST_TIMEOUT_MS`, 5s by default #2753
