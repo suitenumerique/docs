@@ -25,6 +25,7 @@ from core.models import (
     Document,
     DocumentAccess,
     DocumentAskForAccess,
+    DocumentFavorite,
     Invitation,
     LinkTrace,
     User,
@@ -105,6 +106,10 @@ class Command(BaseCommand):
                     created = self._import_link_trace(pk, fields, user_uuid_remap)
                 case "core.documentaskforaccess":
                     created = self._import_document_ask_for_access(
+                        pk, fields, user_uuid_remap
+                    )
+                case "core.documentfavorite":
+                    created = self._import_document_favorite(
                         pk, fields, user_uuid_remap
                     )
                 case _:
@@ -343,4 +348,20 @@ class Command(BaseCommand):
         DocumentAskForAccess.objects.bulk_create(
             [DocumentAskForAccess(**fields, id=pk)]
         )
+        return True
+
+    def _import_document_favorite(self, pk, fields, user_uuid_remap):
+        """
+        Import one document favorite record.
+
+        Returns True if a new row was created, False if it already existed.
+        """
+        user_id = fields.get("user_id")
+        if user_id and user_id in user_uuid_remap:
+            fields["user_id"] = user_uuid_remap[user_id]
+
+        if DocumentFavorite.objects.filter(id=pk).exists():
+            return False
+
+        DocumentFavorite.objects.bulk_create([DocumentFavorite(**fields, id=pk)])
         return True
