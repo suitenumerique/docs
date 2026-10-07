@@ -208,6 +208,18 @@ export const DocsEditorStyle = createGlobalStyle`
     }
 
     /**
+    * Sub-docs: BlockNote draws the node selection as an ::after overlay
+    * (translucent fill + inset ring), which is unwanted around the list.
+    */
+    .bn-block-content[data-content-type='docChildren'].ProseMirror-selectednode
+      > *::after,
+    .ProseMirror-selectednode
+      > .bn-block-content[data-content-type='docChildren']
+      > *::after {
+      content: none;
+    }
+
+    /**
     * Checklist items
     */
     .bn-block-content[data-content-type='checkListItem'] > div > input {

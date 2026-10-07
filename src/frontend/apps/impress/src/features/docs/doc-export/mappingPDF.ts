@@ -83,6 +83,8 @@ export const getPdfDocsSchemaMappings = (
         ...args,
       ),
     uploadLoader: blockMappingUploadLoaderPDF,
+    // Replaced by a list of links before export, see expandDocChildrenBlocks
+    docChildren: () => '',
     // Renders the LaTeX as a native Typst equation.
     mathBlock: mathBlockMapping,
     // Renders the Mermaid source to an embedded vector SVG.

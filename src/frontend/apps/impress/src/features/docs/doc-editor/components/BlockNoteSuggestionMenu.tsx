@@ -22,9 +22,13 @@ import {
 import BlockNoteAI from './AI';
 import {
   getCalloutReactSlashMenuItems,
+  getDocChildrenReactSlashMenuItems,
   getPdfReactSlashMenuItems,
 } from './custom-blocks';
-import { useGetInterlinkingMenuItems } from './custom-inline-content';
+import {
+  getLinksGroupTitle,
+  useGetInterlinkingMenuItems,
+} from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
 
 const getMultiColumnSlashMenuItems =
@@ -78,6 +82,7 @@ export const BlockNoteSuggestionMenu = ({
     const newSlashMenuItems = [
       ...combinedMenu.slice(0, index + 1),
       ...getInterlinkingMenuItems(editor, t),
+      ...getDocChildrenReactSlashMenuItems(editor, t, getLinksGroupTitle(t)),
       ...combinedMenu.slice(index + 1),
     ];
 

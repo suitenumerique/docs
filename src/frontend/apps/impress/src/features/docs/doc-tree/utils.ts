@@ -184,3 +184,24 @@ export const findIndexInTree = (
   }
   return -1;
 };
+
+/**
+ * Finds the item of a doc in the tree. Unlike `treeData.getNode`, which
+ * returns the doc it was loaded with, the children of the item follow the
+ * updates of the tree (`updateNode`, `addChild`, `deleteNode`).
+ */
+export const findItemInTree = (
+  nodes: TreeDataItem<TreeViewDataType<Doc>>[],
+  key: string,
+): TreeDataItem<TreeViewDataType<Doc>> | undefined => {
+  for (const node of nodes) {
+    if (node.key === key) {
+      return node;
+    }
+    const found = findItemInTree(node.children ?? [], key);
+    if (found) {
+      return found;
+    }
+  }
+  return undefined;
+};

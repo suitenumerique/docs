@@ -4,6 +4,7 @@
  */
 import { DOCXExporter } from '@blocknote/xl-docx-exporter';
 import { ODTExporter } from '@blocknote/xl-odt-exporter';
+import { useQueryClient } from '@tanstack/react-query';
 import i18next from 'i18next';
 import { useTranslation } from 'react-i18next';
 
@@ -17,16 +18,22 @@ import { getDocxDocsSchemaMappings } from '../mappingDocx';
 import { getOdtDocsSchemaMappings } from '../mappingODT';
 import { getPdfDocsSchemaMappings } from '../mappingPDF';
 import { resolveInterlinkTitles } from '../utils';
+import { expandDocChildrenBlocks } from '../utils_doc_children';
 
 export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   const docToBlob = async (format: string, documentTitle: string) => {
     if (!editor) {
       return;
     }
 
-    const exportDocument = editor.document;
+    const exportDocument = await expandDocChildrenBlocks(
+      editor.document,
+      doc.id,
+      queryClient,
+    );
     const interlinkTitles = await resolveInterlinkTitles(exportDocument);
     const imageUnavailableText = t('This image could not be exported.', {
       description:

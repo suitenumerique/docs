@@ -165,6 +165,14 @@ export const getInterlinkinghMenuItems = (
   },
 ];
 
+/**
+ * Group of the editor menu holding the link entries
+ */
+export const getLinksGroupTitle = (t: TFunction<'translation', undefined>) =>
+  t('Links', {
+    description: 'Group title of the link entries in the editor menu',
+  });
+
 export const useGetInterlinkingMenuItems = () => {
   const { currentDoc } = useDocStore();
   const createChildDoc = useCreateChildDocTree(currentDoc?.id);
@@ -173,14 +181,7 @@ export const useGetInterlinkingMenuItems = () => {
     editor: DocsBlockNoteEditor,
     t: TFunction<'translation', undefined>,
   ) =>
-    getInterlinkinghMenuItems(
-      editor,
-      t,
-      t('Links', {
-        description: 'Group title of the link entries in the editor menu',
-      }),
-      createChildDoc,
-    );
+    getInterlinkinghMenuItems(editor, t, getLinksGroupTitle(t), createChildDoc);
 };
 
 const DisableInvalidInterlink = ({

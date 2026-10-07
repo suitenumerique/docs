@@ -4,6 +4,7 @@ import {
   mathBlockMapping,
 } from '@blocknote/math-block/docx-exporter';
 import { docxDefaultSchemaMappings } from '@blocknote/xl-docx-exporter';
+import { Paragraph } from 'docx';
 
 import {
   blockMappingCalloutDocx,
@@ -38,6 +39,8 @@ export const getDocxDocsSchemaMappings = (
     quote: blockMappingQuoteDocx,
     image: createBlockMappingImageDocx(imageUnavailableText),
     uploadLoader: blockMappingUploadLoaderDocx,
+    // Replaced by a list of links before export, see expandDocChildrenBlocks
+    docChildren: () => new Paragraph(''),
     table: (block, exporter, nestedLevel, numberedListIndex) => {
       /**
        * Nan values are not supported, so we need to replace them with undefined

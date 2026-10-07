@@ -38,10 +38,10 @@ export const DocsDragHandleMenu = () => {
           {dict.drag_handle.colors_menuitem}
         </Box>
       </BlockColorsItem>
-      <SideMenuSeparator typeHide="codeBlock" />
+      <SideMenuSeparator typeHide={['codeBlock', 'docChildren']} />
       <LinkToBlockItem />
       <PresentBlockItem />
-      <SideMenuSeparator typeDisplay="table" />
+      <SideMenuSeparator typeDisplay={['table']} />
       <TableRowHeaderItem>
         <Box $align="center" $gap="xxs" $direction="row">
           <TableHeaderRowIcon width="16" height="16" aria-hidden="true" />
