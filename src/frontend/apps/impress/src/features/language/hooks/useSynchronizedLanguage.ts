@@ -41,10 +41,7 @@ export const useSynchronizedLanguage = () => {
         availableFrontendLanguages,
         [language],
       )[0];
-      if (
-        i18n.isInitialized &&
-        i18n.resolvedLanguage !== closestFrontendLanguage
-      ) {
+      if (i18n.isInitialized && i18n.language !== closestFrontendLanguage) {
         await i18n.changeLanguage(closestFrontendLanguage);
       }
     },
