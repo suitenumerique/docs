@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+-✨(backend) email thread participants on reply #2802
+
 ## [v6.0.0] - 2026-10-05
 
 ### Added

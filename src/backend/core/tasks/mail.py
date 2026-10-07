@@ -45,3 +45,18 @@ def send_mention_notification_mail(mention_id):
         },
         document=mention.document,
     )
+
+
+@app.task
+def send_thread_reply_notification_mail(comment_id):
+    """Notify the participants of a thread of a new reply, outside the
+    request/response cycle."""
+    try:
+        comment = models.Comment.objects.select_related(
+            "user", "thread__creator", "thread__document"
+        ).get(id=comment_id)
+    except models.Comment.DoesNotExist:
+        # The comment was deleted before the task ran, nothing to announce
+        return
+
+    comment.notify_thread_participants()
