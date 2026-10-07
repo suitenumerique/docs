@@ -58,6 +58,10 @@ and this project adheres to
 - 👷(ci) lint, typecheck, build and test the collaboration server (yhub) #2757
 - 👷(ci) check the load-test tooling: swarm, canary, k6 and dashboards #2757
 - 👷(ci) cancel the superseded runs of a pull request #2757
+- ✨(frontend) add a /children block listing the sub-docs #2686
+- 👷(ci) lint, typecheck, build and test the collaboration server (yhub)
+- 👷(ci) check the load-test tooling: swarm, canary, k6 and dashboards
+- 👷(ci) cancel the superseded runs of a pull request
 - ✨(backend) add mention endpoint with cooldown-limited email
   notification #2447
 - 🚩(setting) add feature flag on Duplicate with Children #2721
