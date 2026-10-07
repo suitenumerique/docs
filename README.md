@@ -196,6 +196,15 @@ username: impress
 password: impress
 ```
 
+Alternatively, you can start the project with the `/docs-start` agent skill.
+The skills live in `.agents/skills/`, which Codex, Cursor and other agents read
+directly. For Claude Code, run `make skills` once (and after each change to
+them) to generate `.claude/skills/`. Other agents that need their own copy
+can be targeted with `make skills SKILLS_AGENT=<agent>`.
+It checks what is already built, stale or running, then runs only the Make
+targets needed: `make bootstrap` on a first run, the rebuild of the images
+whose dependencies changed after a pull, or just `make run`.
+
 ### Frontend development mode
 
 For frontend work, running outside Docker is often more convenient:

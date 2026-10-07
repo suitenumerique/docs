@@ -72,6 +72,7 @@ and this project adheres to
   offline
 - 🐛(frontend) stop the service worker from caching the collaboration server's
   rest api
+- 🤖 Add Claude skills #2746
 
 ### Changed
 
