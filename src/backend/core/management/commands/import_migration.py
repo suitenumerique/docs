@@ -34,6 +34,8 @@ from core.models import (
     Reaction,
     Thread,
     User,
+    UserReconciliation,
+    UserReconciliationCsvImport,
 )
 
 
@@ -117,6 +119,12 @@ class Command(BaseCommand):
                     created = self._import_document_favorite(
                         pk, fields, user_uuid_remap
                     )
+                case "core.userreconciliation":
+                    created = self._import_user_reconciliation(
+                        pk, fields, user_uuid_remap
+                    )
+                case "core.userreconciliationcsvimport":
+                    created = self._import_user_reconciliation_csv_import(pk, fields)
                 case "core.thread":
                     created = self._import_thread(pk, fields, user_uuid_remap)
                 case "core.comment":
@@ -454,4 +462,46 @@ class Command(BaseCommand):
             return False
 
         ReactionUsers.objects.bulk_create([ReactionUsers(**fields, id=pk)])
+        return True
+
+    def _import_user_reconciliation(self, pk, fields, user_uuid_remap):
+        """
+        Import one user reconciliation record.
+
+        Returns True if a new row was created, False if it already existed.
+
+        UserReconciliation tracks admin-initiated requests to merge two accounts
+        (an active and an inactive one) into a single user. It carries two
+        nullable user FKs: active_user_id and inactive_user_id, both of which
+        may need remapping.
+        """
+        for field in ("active_user_id", "inactive_user_id"):
+            user_id = fields.get(field)
+            if user_id and user_id in user_uuid_remap:
+                fields[field] = user_uuid_remap[user_id]
+
+        if UserReconciliation.objects.filter(id=pk).exists():
+            return False
+
+        UserReconciliation.objects.bulk_create([UserReconciliation(**fields, id=pk)])
+        return True
+
+    def _import_user_reconciliation_csv_import(self, pk, fields):
+        """
+        Import one user reconciliation CSV import record.
+
+        Returns True if a new row was created, False if it already existed.
+
+        UserReconciliationCsvImport holds metadata about a batch CSV file that
+        was used to feed reconciliation requests. It has no user FK, only a
+        FileField pointing to the uploaded CSV in object storage. The file path
+        is preserved as-is from the export; the actual file bytes are not moved
+        by this script.
+        """
+        if UserReconciliationCsvImport.objects.filter(id=pk).exists():
+            return False
+
+        UserReconciliationCsvImport.objects.bulk_create(
+            [UserReconciliationCsvImport(**fields, id=pk)]
+        )
         return True
