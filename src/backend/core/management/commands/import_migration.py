@@ -21,7 +21,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 
-from core.models import Document, DocumentAccess, User
+from core.models import Document, DocumentAccess, Invitation, User
 
 
 class Command(BaseCommand):
@@ -92,6 +92,8 @@ class Command(BaseCommand):
                     )
                 case "core.documentaccess":
                     created = self._import_document_access(pk, fields, user_uuid_remap)
+                case "core.invitation":
+                    created = self._import_invitation(pk, fields, user_uuid_remap)
                 case _:
                     if model_label not in skipped_models:
                         self.stderr.write(
@@ -264,4 +266,26 @@ class Command(BaseCommand):
         #   and updated_at are not triggered — the exported timestamps are
         #   preserved as-is without needing a post-save UPDATE.
         DocumentAccess.objects.bulk_create([DocumentAccess(**fields, id=pk)])
+        return True
+
+    def _import_invitation(self, pk, fields, user_uuid_remap):
+        """
+        Import one invitation record.
+
+        Returns True if a new row was created, False if it already existed.
+
+        Invitation.clean() rejects emails that already belong to a registered
+        user. bulk_create bypasses clean(), which is intentional: we are
+        restoring historical data as-is, not validating new invitations.
+        """
+        # issuer_id is a nullable FK to User; remap to the local UUID when the
+        # source user was matched to an existing account during user import.
+        issuer_id = fields.get("issuer_id")
+        if issuer_id and issuer_id in user_uuid_remap:
+            fields["issuer_id"] = user_uuid_remap[issuer_id]
+
+        if Invitation.objects.filter(id=pk).exists():
+            return False
+
+        Invitation.objects.bulk_create([Invitation(**fields, id=pk)])
         return True
