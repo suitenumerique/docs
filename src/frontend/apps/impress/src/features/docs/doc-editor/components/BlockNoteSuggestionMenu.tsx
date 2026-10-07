@@ -22,6 +22,7 @@ import {
 import BlockNoteAI from './AI';
 import {
   getCalloutReactSlashMenuItems,
+  getDocChildrenReactSlashMenuItems,
   getPdfReactSlashMenuItems,
 } from './custom-blocks';
 import { useGetInterlinkingMenuItems } from './custom-inline-content';
@@ -73,6 +74,7 @@ export const BlockNoteSuggestionMenu = ({
     const newSlashMenuItems = [
       ...combinedMenu.slice(0, index + 1),
       ...getInterlinkingMenuItems(editor, t),
+      ...getDocChildrenReactSlashMenuItems(editor, t, t('Links')),
       ...combinedMenu.slice(index + 1),
     ];
 

@@ -64,7 +64,12 @@ import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { DocsSideMenu } from './DocsSideMenu/DocsSideMenu';
-import { CalloutBlock, PdfBlock, UploadLoaderBlock } from './custom-blocks';
+import {
+  CalloutBlock,
+  DocChildrenBlock,
+  PdfBlock,
+  UploadLoaderBlock,
+} from './custom-blocks';
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
@@ -86,6 +91,7 @@ const baseBlockNoteSchema = withPageBreak(
       callout: CalloutBlock(),
       codeBlock: createSafeCodeBlockSpec(),
       diagram: createReactDiagramBlockSpec(),
+      docChildren: DocChildrenBlock(),
       mathBlock: createReactMathBlockSpec(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),

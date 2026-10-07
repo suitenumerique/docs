@@ -4,6 +4,7 @@ import {
   mathBlockMapping,
 } from '@blocknote/math-block/odt-exporter';
 import { odtDefaultSchemaMappings } from '@blocknote/xl-odt-exporter';
+import React from 'react';
 
 import {
   blockMappingCalloutODT,
@@ -30,6 +31,8 @@ export const getOdtDocsSchemaMappings = (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pdf: odtDefaultSchemaMappings.blockMapping.file as any,
     uploadLoader: blockMappingUploadLoaderODT,
+    // Replaced by a list of links before export, see expandDocChildrenBlocks
+    docChildren: () => React.createElement('text:p'),
     // Renders the LaTeX as a native (editable) ODF formula object.
     mathBlock: mathBlockMapping,
     // Renders the Mermaid source to a PNG in the browser (async mapping).
