@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { KEY_DOC, KEY_LIST_DOC } from '@/docs/doc-management';
 
+import { KEY_LIST_DOC_CHILDREN } from './useDocChildren';
+
 export type DetachDocParam = {
   documentId: string;
   rootId: string;
@@ -42,6 +44,7 @@ export function useDetachDoc() {
     mutationFn: detachDoc,
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: [KEY_LIST_DOC] });
+      void queryClient.invalidateQueries({ queryKey: [KEY_LIST_DOC_CHILDREN] });
       void queryClient.invalidateQueries({
         queryKey: [KEY_DOC, { id: variables.documentId }],
       });
