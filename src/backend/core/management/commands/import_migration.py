@@ -21,7 +21,14 @@ import sys
 
 from django.core.management.base import BaseCommand
 
-from core.models import Document, DocumentAccess, Invitation, LinkTrace, User
+from core.models import (
+    Document,
+    DocumentAccess,
+    DocumentAskForAccess,
+    Invitation,
+    LinkTrace,
+    User,
+)
 
 
 class Command(BaseCommand):
@@ -96,6 +103,10 @@ class Command(BaseCommand):
                     created = self._import_invitation(pk, fields, user_uuid_remap)
                 case "core.linktrace":
                     created = self._import_link_trace(pk, fields, user_uuid_remap)
+                case "core.documentaskforaccess":
+                    created = self._import_document_ask_for_access(
+                        pk, fields, user_uuid_remap
+                    )
                 case _:
                     if model_label not in skipped_models:
                         self.stderr.write(
@@ -312,3 +323,24 @@ class Command(BaseCommand):
         LinkTrace.objects.bulk_create([LinkTrace(**fields, id=pk)])
         return True
 
+    def _import_document_ask_for_access(self, pk, fields, user_uuid_remap):
+        """
+        Import one ask-for-access record.
+
+        Returns True if a new row was created, False if it already existed.
+
+        DocumentAskForAccess records a user's request to be granted a role on a
+        document they cannot currently access. Owners/admins see these requests
+        and can accept or reject them.
+        """
+        user_id = fields.get("user_id")
+        if user_id and user_id in user_uuid_remap:
+            fields["user_id"] = user_uuid_remap[user_id]
+
+        if DocumentAskForAccess.objects.filter(id=pk).exists():
+            return False
+
+        DocumentAskForAccess.objects.bulk_create(
+            [DocumentAskForAccess(**fields, id=pk)]
+        )
+        return True
