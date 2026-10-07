@@ -177,6 +177,11 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         default=settings.TIME_ZONE,
         help_text=_("The timezone in which the user wants to see times."),
     )
+    claims = models.JSONField(
+        blank=True,
+        default=dict,
+        help_text=_("OIDC userinfo claims selected by OIDC_STORE_CLAIMS."),
+    )
     is_device = models.BooleanField(
         _("device"),
         default=False,

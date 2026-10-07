@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(backend) store configurable OIDC claims on the user
 - 👷(ci) lint, typecheck, build and test the collaboration server (yhub)
 - 👷(ci) check the load-test tooling: swarm, canary, k6 and dashboards
 - 👷(ci) cancel the superseded runs of a pull request
