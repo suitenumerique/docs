@@ -31,11 +31,11 @@ and this project adheres to
 - 🐛(frontend) hide source popup in read-only mode #2908
 - 🐛(frontend) duplicate the sub-docs created without reloading the page #2915
 - 🐛(frontend) show the doc tree actions of the item under the pointer
+- 🐛(backend) keep the case of titles and names in email subjects #2792
 
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
-
 
 
 ## [v6.0.4] - 2026-10-26

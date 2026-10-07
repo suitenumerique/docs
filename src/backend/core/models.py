@@ -26,6 +26,7 @@ from django.dispatch import Signal
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django.utils.text import capfirst
 from django.utils.translation import get_language, override
 from django.utils.translation import gettext_lazy as _
 
@@ -452,7 +453,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
 
             try:
                 send_mail(
-                    subject.capitalize(),
+                    capfirst(subject),
                     msg_plain,
                     settings.EMAIL_FROM,
                     emails,
@@ -875,7 +876,7 @@ class UserReconciliationCsvImport(BaseModel):
 
             try:
                 send_mail(
-                    subject.capitalize(),
+                    capfirst(subject),
                     msg_plain,
                     settings.EMAIL_FROM,
                     emails,
@@ -1494,7 +1495,7 @@ class Document(MP_Node, BaseModel):
 
             try:
                 send_mail(
-                    subject.capitalize(),
+                    capfirst(subject),
                     msg_plain,
                     settings.EMAIL_FROM,
                     emails,
