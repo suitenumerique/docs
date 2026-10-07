@@ -77,8 +77,8 @@ class Command(BaseCommand):
         total_entries = 0
         created_entries = 0
 
-        for line in stream:
-            line = line.strip()
+        for raw_line in stream:
+            line = raw_line.strip()
             if not line:
                 continue
 
@@ -99,50 +99,15 @@ class Command(BaseCommand):
                 current_model = model_label
                 self.stderr.write(f"Importing {current_model}...")
 
-            match model_label:
-                case "core.user":
-                    created = self._import_user(pk, fields, user_uuid_remap)
-                case "core.document":
-                    created = self._import_document(
-                        pk, fields, user_uuid_remap, source_path_to_node
-                    )
-                case "core.documentaccess":
-                    created = self._import_document_access(pk, fields, user_uuid_remap)
-                case "core.invitation":
-                    created = self._import_invitation(pk, fields, user_uuid_remap)
-                case "core.linktrace":
-                    created = self._import_link_trace(pk, fields, user_uuid_remap)
-                case "core.documentaskforaccess":
-                    created = self._import_document_ask_for_access(
-                        pk, fields, user_uuid_remap
-                    )
-                case "core.documentfavorite":
-                    created = self._import_document_favorite(
-                        pk, fields, user_uuid_remap
-                    )
-                case "core.userreconciliation":
-                    created = self._import_user_reconciliation(
-                        pk, fields, user_uuid_remap
-                    )
-                case "core.userreconciliationcsvimport":
-                    created = self._import_user_reconciliation_csv_import(pk, fields)
-                case "core.thread":
-                    created = self._import_thread(pk, fields, user_uuid_remap)
-                case "core.comment":
-                    created = self._import_comment(pk, fields, user_uuid_remap)
-                case "core.reaction":
-                    created = self._import_reaction(pk, fields)
-                case "core.reaction_users":
-                    created = self._import_reaction_users(pk, fields, user_uuid_remap)
-                case "core.mention":
-                    created = self._import_mention(pk, fields, user_uuid_remap)
-                case _:
-                    if model_label not in skipped_models:
-                        self.stderr.write(
-                            f"  skipping {model_label} (not yet implemented)"
-                        )
-                        skipped_models.add(model_label)
-                    continue
+            created = self._dispatch_record(
+                model_label, pk, fields, user_uuid_remap, source_path_to_node
+            )
+            if created is None:
+                # Unknown model label: warn once and skip.
+                if model_label not in skipped_models:
+                    self.stderr.write(f"  skipping {model_label} (not yet implemented)")
+                    skipped_models.add(model_label)
+                continue
 
             total_entries += 1
             if created:
@@ -168,6 +133,62 @@ class Command(BaseCommand):
         ending = "\n" if done else ""
         self.stderr.write(f"\r  {label}: {count}", ending=ending)
         self.stderr.flush()
+
+    def _dispatch_record(
+        self, model_label, pk, fields, user_uuid_remap, source_path_to_node
+    ):
+        """
+        Route one JSONL record to the appropriate import method.
+
+        Returns True if a new row was created, False if it already existed, or
+        None if the model label is not recognised.
+        """
+        # Each handler is a callable(pk, fields) — extra arguments are closed
+        # over so every entry has the same signature.
+        handlers = {
+            "core.user": lambda pk, fields: self._import_user(
+                pk, fields, user_uuid_remap
+            ),
+            "core.document": lambda pk, fields: self._import_document(
+                pk, fields, user_uuid_remap, source_path_to_node
+            ),
+            "core.documentaccess": lambda pk, fields: self._import_document_access(
+                pk, fields, user_uuid_remap
+            ),
+            "core.invitation": lambda pk, fields: self._import_invitation(
+                pk, fields, user_uuid_remap
+            ),
+            "core.linktrace": lambda pk, fields: self._import_link_trace(
+                pk, fields, user_uuid_remap
+            ),
+            "core.documentaskforaccess": lambda pk, fields: (
+                self._import_document_ask_for_access(pk, fields, user_uuid_remap)
+            ),
+            "core.documentfavorite": lambda pk, fields: self._import_document_favorite(
+                pk, fields, user_uuid_remap
+            ),
+            "core.userreconciliation": lambda pk, fields: (
+                self._import_user_reconciliation(pk, fields, user_uuid_remap)
+            ),
+            "core.userreconciliationcsvimport": self._import_user_reconciliation_csv_import,
+            "core.thread": lambda pk, fields: self._import_thread(
+                pk, fields, user_uuid_remap
+            ),
+            "core.comment": lambda pk, fields: self._import_comment(
+                pk, fields, user_uuid_remap
+            ),
+            "core.reaction": self._import_reaction,
+            "core.reaction_users": lambda pk, fields: self._import_reaction_users(
+                pk, fields, user_uuid_remap
+            ),
+            "core.mention": lambda pk, fields: self._import_mention(
+                pk, fields, user_uuid_remap
+            ),
+        }
+        handler = handlers.get(model_label)
+        if handler is None:
+            return None
+        return handler(pk, fields)
 
     def _import_user(self, pk, fields, user_uuid_remap):
         """
