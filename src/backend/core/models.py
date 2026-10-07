@@ -33,6 +33,7 @@ from timezone_field import TimeZoneField
 from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
 
 from core.choices import (
+    COMMENTING_ROLES,
     PRIVILEGED_ROLES,
     LinkReachChoices,
     LinkRoleChoices,
@@ -1431,6 +1432,7 @@ class Document(MP_Node, BaseModel):
         """Generate and send email from a template.
 
         Keys passed in `context` take precedence over the default values.
+        Return whether the email was sent: an SMTP failure is logged, not raised.
         """
         domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
         language = language or get_language()
@@ -1461,6 +1463,9 @@ class Document(MP_Node, BaseModel):
                 )
             except smtplib.SMTPException as exception:
                 logger.error("invitation to %s was not sent: %s", emails, exception)
+                return False
+
+        return True
 
     def send_invitation_email(self, email, role, sender, language=None):
         """Method allowing a user to send an email invitation to another user for a document."""
@@ -2008,6 +2013,158 @@ class Comment(BaseModel):
             "reactions": can_react,
             "retrieve": read_access,
         }
+
+    def get_notification_recipients(self):
+        """Return the users to notify of this comment as a reply in its thread.
+
+        The recipients are the participants of the thread: its creator, the
+        authors of the comments posted before this one and the users mentioned
+        in the thread. Are left out:
+
+        - the author of this comment,
+        - inactive users and users without an email address,
+        - users who do not hold an explicit access (directly, through a team or
+          inherited from an ancestor) with a role allowed to comment: they
+          cannot see the thread, and a link or public access alone does not
+          make someone a collaborator (same rule as for mentions),
+        - users mentioned by the author of this comment in this thread within
+          the mention cooldown period: the mention notification already tells
+          them about the reply, so they do not get two emails.
+        """
+        thread = self.thread
+
+        candidate_ids = set(
+            Comment.objects.filter(thread=thread, created_at__lt=self.created_at)
+            .exclude(pk=self.pk)
+            .values_list("user_id", flat=True)
+        )
+        candidate_ids.add(thread.creator_id)
+        candidate_ids.update(
+            Mention.objects.filter(thread=thread).values_list(
+                "mentioned_user_id", flat=True
+            )
+        )
+
+        if self.user_id is not None:
+            candidate_ids.discard(self.user_id)
+            candidate_ids.difference_update(
+                Mention.objects.filter(
+                    thread=thread,
+                    mentioned_by_user_id=self.user_id,
+                    created_at__gte=self.created_at
+                    - timedelta(minutes=settings.MENTION_NOTIFICATION_COOLDOWN_MINUTES),
+                ).values_list("mentioned_user_id", flat=True)
+            )
+        candidate_ids.discard(None)
+
+        users = [
+            user
+            for user in User.objects.filter(
+                is_active=True, id__in=candidate_ids
+            ).order_by("created_at")
+            if user.email
+        ]
+        if not users:
+            return []
+
+        # Fetch the accesses of all the candidates in one query rather than
+        # calling `document.get_role` (one query each) for every user
+        accesses = list(
+            DocumentAccess.objects.filter(
+                models.Q(user_id__in=[user.pk for user in users])
+                | models.Q(team__in={team for user in users for team in user.teams}),
+                document__path__in=thread.document.get_self_and_ancestors_paths(),
+            ).values_list("user_id", "team", "role")
+        )
+        return [
+            user
+            for user in users
+            if RoleChoices.max(
+                *(
+                    role
+                    for user_id, team, role in accesses
+                    if user_id == user.pk or (team and team in user.teams)
+                )
+            )
+            in COMMENTING_ROLES
+        ]
+
+    def notify_thread_participants(self):
+        """Email the participants of the thread about this comment.
+
+        Return the list of the users who were notified. A failure while
+        notifying a user is logged and does not prevent notifying the others.
+        """
+        recipients = self.get_notification_recipients()
+        if not recipients:
+            return []
+
+        document = self.thread.document
+        sender = self.user
+        domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
+        notified = []
+
+        for user in recipients:
+            # Guard against a task delivered twice for the same comment.
+            # `add` returns False when the key exists, but None when the cache
+            # is unreachable and its exceptions are ignored: in that case send
+            # the email rather than silently dropping it
+            guard_key = f"thread-reply-notify:{self.pk}:{user.pk}"
+            if (
+                cache.add(
+                    guard_key,
+                    "1",
+                    timeout=THREAD_REPLY_NOTIFICATION_GUARD_TIMEOUT_SECONDS,
+                )
+                is False
+            ):
+                continue
+
+            language = (
+                user.language
+                or (sender.language if sender else None)
+                or settings.LANGUAGE_CODE
+            )
+            with override(language):
+                sender_name = (
+                    (sender.full_name or sender.email) if sender else _("Someone")
+                )
+                title = document.title or str(_("Untitled Document"))
+                subject = _('{name} replied in a comment thread in "{title}"').format(
+                    name=sender_name, title=title
+                )
+                message = _(
+                    "{name} replied in a comment thread in the following document:"
+                ).format(name=sender_name)
+                context = {
+                    "title": subject,
+                    "message": message,
+                    "link": f"{domain}/docs/{document.pk}/",
+                }
+
+            try:
+                sent = document.send_email(subject, [user.email], context, language)
+            except Exception:  # pylint: disable=broad-exception-caught
+                sent = False
+                logger.exception(
+                    "thread reply notification of comment %s to user %s failed",
+                    self.pk,
+                    user.pk,
+                )
+
+            if sent:
+                notified.append(user)
+            else:
+                # Release the slot so a retry can notify this user, and carry
+                # on with the other participants
+                cache.delete(guard_key)
+
+        return notified
+
+
+# A key only has to outlive the redelivery of a task: a leaked key (e.g. killed
+# worker) must not silence the notification for long
+THREAD_REPLY_NOTIFICATION_GUARD_TIMEOUT_SECONDS = 3600
 
 
 class Reaction(BaseModel):
