@@ -21,7 +21,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 
-from core.models import Document, DocumentAccess, Invitation, User
+from core.models import Document, DocumentAccess, Invitation, LinkTrace, User
 
 
 class Command(BaseCommand):
@@ -94,6 +94,8 @@ class Command(BaseCommand):
                     created = self._import_document_access(pk, fields, user_uuid_remap)
                 case "core.invitation":
                     created = self._import_invitation(pk, fields, user_uuid_remap)
+                case "core.linktrace":
+                    created = self._import_link_trace(pk, fields, user_uuid_remap)
                 case _:
                     if model_label not in skipped_models:
                         self.stderr.write(
@@ -289,3 +291,24 @@ class Command(BaseCommand):
 
         Invitation.objects.bulk_create([Invitation(**fields, id=pk)])
         return True
+
+    def _import_link_trace(self, pk, fields, user_uuid_remap):
+        """
+        Import one link trace record.
+
+        Returns True if a new row was created, False if it already existed.
+
+        LinkTrace records which logged-in users have accessed a document via a
+        shared link. They make the document appear in the user's document list
+        even when the user has no explicit role on it.
+        """
+        user_id = fields.get("user_id")
+        if user_id and user_id in user_uuid_remap:
+            fields["user_id"] = user_uuid_remap[user_id]
+
+        if LinkTrace.objects.filter(id=pk).exists():
+            return False
+
+        LinkTrace.objects.bulk_create([LinkTrace(**fields, id=pk)])
+        return True
+
