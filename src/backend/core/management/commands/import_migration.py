@@ -31,6 +31,7 @@ from core.models import (
     DocumentFavorite,
     Invitation,
     LinkTrace,
+    Mention,
     Reaction,
     Thread,
     User,
@@ -133,6 +134,8 @@ class Command(BaseCommand):
                     created = self._import_reaction(pk, fields)
                 case "core.reaction_users":
                     created = self._import_reaction_users(pk, fields, user_uuid_remap)
+                case "core.mention":
+                    created = self._import_mention(pk, fields, user_uuid_remap)
                 case _:
                     if model_label not in skipped_models:
                         self.stderr.write(
@@ -504,4 +507,26 @@ class Command(BaseCommand):
         UserReconciliationCsvImport.objects.bulk_create(
             [UserReconciliationCsvImport(**fields, id=pk)]
         )
+        return True
+
+    def _import_mention(self, pk, fields, user_uuid_remap):
+        """
+        Import one mention record.
+
+        Returns True if a new row was created, False if it already existed.
+
+        A Mention is created whenever a user is @-mentioned in a document body
+        or in a comment thread. It carries two user FKs: mentioned_user_id
+        (nullable — the mentioned person) and mentioned_by_user_id (the author
+        of the mention, non-nullable). Both may need remapping.
+        """
+        for field in ("mentioned_user_id", "mentioned_by_user_id"):
+            user_id = fields.get(field)
+            if user_id and user_id in user_uuid_remap:
+                fields[field] = user_uuid_remap[user_id]
+
+        if Mention.objects.filter(id=pk).exists():
+            return False
+
+        Mention.objects.bulk_create([Mention(**fields, id=pk)])
         return True
