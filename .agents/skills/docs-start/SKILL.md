@@ -13,7 +13,7 @@ usually all that is needed.
 ## 1. Check first, change nothing
 
 ```bash
-bash .claude/skills/docs-start/check-stack.sh
+bash .agents/skills/docs-start/check-stack.sh
 ```
 
 Run it with the Bash tool (Git Bash on Windows). It is read-only and takes

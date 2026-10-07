@@ -5,7 +5,7 @@
 # It prints what is missing, stale or running, then a suggested plan made of
 # Makefile targets where one exists. Run it from anywhere in the repository:
 #
-#   bash .claude/skills/docs-start/check-stack.sh
+#   bash .agents/skills/docs-start/check-stack.sh
 #
 # Works in Git Bash (Windows), Linux and macOS.
 

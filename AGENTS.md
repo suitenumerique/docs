@@ -293,7 +293,7 @@ Never record facts about the current issue, temporary bugs, line numbers, branch
 Put it in the narrowest place that fits:
 
 - **This file**: repository-wide rules and conventions that most tasks need, whatever the agent
-- **An existing Skill** for the workflow it belongs to (E2E tests, backend, review, running the stack…), when your agent setup has one. Claude Code Skills are versioned in `.claude/skills/<name>/SKILL.md`, except the `local-*` ones, which are gitignored: an edit there will not show in `git diff`, so name it in your report
+- **An existing Skill** for the workflow it belongs to (E2E tests, backend, review, running the stack…), when your agent setup has one. Skills are versioned in `.agents/skills/<name>/SKILL.md`, the one place to edit them: `.claude/` is gitignored and `make skills` regenerates `.claude/skills/` from it, so an edit there is lost and will not show in `git diff`. The same goes for the `local-*` skills, which only exist in `.claude/skills/`: name them in your report
 - **The subsystem's own documentation** (e.g. `src/yhub-server/README.md`, `documentation/`) when it is useful to humans too
 - **A new Skill** only for a substantial, repeatable workflow with no natural home, never for a single tip
 

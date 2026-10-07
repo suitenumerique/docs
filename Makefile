@@ -454,6 +454,16 @@ mails-install: ## install the mail generator
 .PHONY: mails-install
 
 # -- Misc
+SKILLS_CLI    = npx --yes skills@1.7.1
+# Agents that do not read .agents/skills and need their own copy of the skills
+SKILLS_AGENTS = claude-code augment continue goose junie kiro-cli
+SKILLS_AGENT ?= claude-code
+
+skills: ## generate the skills of an agent from .agents/skills (SKILLS_AGENT=claude-code)
+	@$(if $(filter $(SKILLS_AGENT),$(SKILLS_AGENTS)),,$(error SKILLS_AGENT must be one of: $(SKILLS_AGENTS) (got '$(SKILLS_AGENT)')))
+	$(SKILLS_CLI) add ./.agents/skills --skill '*' --agent $(SKILLS_AGENT) --copy --yes
+.PHONY: skills
+
 clean: ## restore repository state as it was freshly cloned
 	git clean -idx
 .PHONY: clean
