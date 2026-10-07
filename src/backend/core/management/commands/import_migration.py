@@ -21,7 +21,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 
-from core.models import User
+from core.models import Document, User
 
 
 class Command(BaseCommand):
@@ -47,6 +47,11 @@ class Command(BaseCommand):
 
     def _import(self, stream):
         user_uuid_remap = {}
+        # Maps source-instance document path → newly created Document node on
+        # this instance. Used to resolve the parent when inserting a child: the
+        # exported path is meaningless here (treebeard recomputes paths), but it
+        # uniquely identifies the parent within a single import run.
+        source_path_to_node = {}
         skipped_models = set()
 
         # Track the current model section to finalize progress lines cleanly
@@ -55,7 +60,6 @@ class Command(BaseCommand):
 
         total_entries = 0
         created_entries = 0
-        created = False
 
         for line in stream:
             line = line.strip()
@@ -67,34 +71,55 @@ class Command(BaseCommand):
             pk = record["pk"]
             fields = record["fields"]
 
-            if model_label != current_model:  # Starting a new model
+            if model_label != current_model:  # Starting a new model section
                 if current_model is not None:
                     self._progress(current_model, total_entries, done=True)
-                if current_model == "core.user":
-                    # Special case the user import, as some may be remapped to existing.
-                    self.stderr.write(
-                        f"  {created_entries} created, "
-                        f"{total_entries - created_entries} remapped to existing"
+                    self._print_section_summary(
+                        current_model, total_entries, created_entries
                     )
 
                 total_entries = 0
                 created_entries = 0
-                created = False
                 current_model = model_label
                 self.stderr.write(f"Importing {current_model}...")
 
-            if model_label == "core.user":
-                created = self._import_user(pk, fields, user_uuid_remap)
-                total_entries += 1
-                if created:
-                    created_entries += 1
-                self._progress(model_label, total_entries)
-            elif model_label not in skipped_models:
-                self.stderr.write(f"  skipping {model_label} (not yet implemented)")
-                skipped_models.add(model_label)
+            match model_label:
+                case "core.user":
+                    created = self._import_user(pk, fields, user_uuid_remap)
+                case "core.document":
+                    created = self._import_document(
+                        pk, fields, user_uuid_remap, source_path_to_node
+                    )
+                case _:
+                    if model_label not in skipped_models:
+                        self.stderr.write(
+                            f"  skipping {model_label} (not yet implemented)"
+                        )
+                        skipped_models.add(model_label)
+                    continue
 
-        # Finalize the last section if the stream ended mid-section.
+            total_entries += 1
+            if created:
+                created_entries += 1
+            self._progress(model_label, total_entries)
+
+        # Finalize the last section.
         self._progress(current_model, total_entries, done=True)
+        self._print_section_summary(current_model, total_entries, created_entries)
+
+    def _print_section_summary(self, model_label, total, created):
+        """Print a one-line breakdown after each model section finishes."""
+        skipped = total - created
+        match model_label:
+            case "core.user":
+                self.stderr.write(
+                    f"  {created} created, {skipped} remapped to existing"
+                )
+            case "core.document":
+                self.stderr.write(
+                    f"  {created} imported, {skipped} already existed (skipped)"
+                )
+            # Other models don't need a breakdown for now.
 
     def _progress(self, label, count, done=False):
         """Overwrite the current stderr line with an incrementing count."""
@@ -137,4 +162,83 @@ class Command(BaseCommand):
         # side-effects (document access grants, sandbox duplication, invitation
         # conversion) for imported users.
         User.objects.bulk_create([User(**fields, id=pk)])
+        return True
+
+    def _import_document(self, pk, fields, user_uuid_remap, source_path_to_node):
+        """
+        Import one document record.
+
+        Returns True if a new row was created, False if the document already
+        existed (matched by UUID) and was skipped.
+
+        Documents are inserted via treebeard's add_root / add_child so that the
+        materialized path is computed fresh for this instance. The source path
+        from the export is only used as a transient key to resolve parent nodes
+        within this import run; it is never written to the database.
+        """
+        source_path = fields.pop("path")
+
+        # treebeard sets depth and recomputes path itself; passing exported
+        # values would leave numchild wrong (add_child increments it per child,
+        # so a non-zero starting value would produce double-counting).
+        fields.pop("depth")
+        fields.pop("numchild")
+
+        # add_root / add_child call save(), which triggers Django's pre_save()
+        # on every field. For fields with auto_now_add=True (created_at) and
+        # auto_now=True (updated_at), pre_save() always overrides whatever value
+        # we set with the current time — the exported timestamps would be lost.
+        # We pop them here to keep the call clean, then restore the originals
+        # with a direct UPDATE once the row exists, bypassing pre_save entirely.
+        # (bulk_create, used for other models, does not call pre_save, so those
+        # models don't need this workaround.)
+        created_at = fields.pop("created_at")
+        updated_at = fields.pop("updated_at")
+
+        # creator_id is a FK to User. Users from the source instance may have
+        # been remapped to a different UUID on this instance (when a user with
+        # the same OIDC sub already existed here). Rewrite the FK so it points
+        # to the correct local user.
+        creator_id = fields.get("creator_id")
+        if creator_id and creator_id in user_uuid_remap:
+            fields["creator_id"] = user_uuid_remap[creator_id]
+
+        # duplicated_from_id points to another Document that this one was
+        # duplicated from (the "Duplicate document" feature). It is a nullable
+        # self-referential FK. Documents are exported ordered by tree path, so a
+        # document that was duplicated from a node in a different branch may
+        # appear before its source in the file, causing a FK constraint failure
+        # on insert. Clearing it here is safe because this field is purely
+        # informational; restoring it would require a second pass over all rows.
+        fields["duplicated_from_id"] = None
+
+        existing = Document.objects.filter(id=pk).first()
+        if existing:
+            # Already imported (re-run): register in the path map so that any
+            # children that follow can still resolve their parent.
+            source_path_to_node[source_path] = existing
+            return False
+
+        # Document.steplen is the fixed number of characters treebeard uses per
+        # tree level in the materialized path (e.g. 7 means each node occupies
+        # exactly 7 characters). Trimming the last steplen characters from a
+        # path gives the parent's path; a path of exactly steplen characters has
+        # no parent and is a root node.
+        parent_source_path = (
+            source_path[: -Document.steplen]
+            if len(source_path) > Document.steplen
+            else None
+        )
+
+        if parent_source_path is None:
+            node = Document.add_root(**fields, id=pk)
+        else:
+            node = source_path_to_node[parent_source_path].add_child(**fields, id=pk)
+
+        # Restore the original timestamps now that the row exists.
+        Document.objects.filter(id=pk).update(
+            created_at=created_at, updated_at=updated_at
+        )
+
+        source_path_to_node[source_path] = node
         return True
