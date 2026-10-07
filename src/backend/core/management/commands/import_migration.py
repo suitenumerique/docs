@@ -9,6 +9,8 @@ Such a file can be produced by the export_migration management command.
 
 Unknown model labels are skipped with a one-time warning.
 
+Note: this script was written to be run from a version 5.2.1 or above.
+
 Usage:
     python manage.py import_migration migration.jsonl
 
@@ -22,12 +24,15 @@ import sys
 from django.core.management.base import BaseCommand
 
 from core.models import (
+    Comment,
     Document,
     DocumentAccess,
     DocumentAskForAccess,
     DocumentFavorite,
     Invitation,
     LinkTrace,
+    Reaction,
+    Thread,
     User,
 )
 
@@ -112,6 +117,14 @@ class Command(BaseCommand):
                     created = self._import_document_favorite(
                         pk, fields, user_uuid_remap
                     )
+                case "core.thread":
+                    created = self._import_thread(pk, fields, user_uuid_remap)
+                case "core.comment":
+                    created = self._import_comment(pk, fields, user_uuid_remap)
+                case "core.reaction":
+                    created = self._import_reaction(pk, fields)
+                case "core.reaction_users":
+                    created = self._import_reaction_users(pk, fields, user_uuid_remap)
                 case _:
                     if model_label not in skipped_models:
                         self.stderr.write(
@@ -364,4 +377,81 @@ class Command(BaseCommand):
             return False
 
         DocumentFavorite.objects.bulk_create([DocumentFavorite(**fields, id=pk)])
+        return True
+
+    def _import_thread(self, pk, fields, user_uuid_remap):
+        """
+        Import one thread record.
+
+        Returns True if a new row was created, False if it already existed.
+
+        A thread groups one or more comments on a document. It carries two
+        nullable user FKs: creator_id (who opened the thread) and
+        resolved_by_id (who resolved it, if resolved).
+        """
+        for field in ("creator_id", "resolved_by_id"):
+            user_id = fields.get(field)
+            if user_id and user_id in user_uuid_remap:
+                fields[field] = user_uuid_remap[user_id]
+
+        if Thread.objects.filter(id=pk).exists():
+            return False
+
+        Thread.objects.bulk_create([Thread(**fields, id=pk)])
+        return True
+
+    def _import_comment(self, pk, fields, user_uuid_remap):
+        """
+        Import one comment record.
+
+        Returns True if a new row was created, False if it already existed.
+
+        Comments must be imported after their parent thread (export_migration
+        guarantees this ordering).
+        """
+        user_id = fields.get("user_id")
+        if user_id and user_id in user_uuid_remap:
+            fields["user_id"] = user_uuid_remap[user_id]
+
+        if Comment.objects.filter(id=pk).exists():
+            return False
+
+        Comment.objects.bulk_create([Comment(**fields, id=pk)])
+        return True
+
+    def _import_reaction(self, pk, fields):
+        """
+        Import one reaction record (the emoji + comment row, without users).
+
+        Returns True if a new row was created, False if it already existed.
+
+        Reactions have no direct user FK — the reacting users are stored in the
+        M2M through table, exported separately as core.reaction_users and
+        imported by _import_reaction_users.
+        """
+        if Reaction.objects.filter(id=pk).exists():
+            return False
+
+        Reaction.objects.bulk_create([Reaction(**fields, id=pk)])
+        return True
+
+    def _import_reaction_users(self, pk, fields, user_uuid_remap):
+        """
+        Import one row from the Reaction.users M2M through table.
+
+        Returns True if a new row was created, False if it already existed.
+
+        Each row links one Reaction to one User. The user_id needs remapping
+        when the source user was matched to a different local UUID during user
+        import.
+        """
+        user_id = fields.get("user_id")
+        if user_id and user_id in user_uuid_remap:
+            fields["user_id"] = user_uuid_remap[user_id]
+
+        ReactionUsers = Reaction.users.through
+        if ReactionUsers.objects.filter(id=pk).exists():
+            return False
+
+        ReactionUsers.objects.bulk_create([ReactionUsers(**fields, id=pk)])
         return True
