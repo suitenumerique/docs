@@ -105,6 +105,7 @@ and this project adheres to
 - 📝(docs) fix markdown typo in installation README #2766
 - 🐛(i18n) export locale correctly #2750
 - 🐛(frontend) keep login and logout out of the service worker cache #2771
+- 🐛(backend) keep the case of titles and names in email subjects #2792
 
 ### Removed
 
