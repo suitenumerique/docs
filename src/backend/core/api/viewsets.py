@@ -1897,7 +1897,7 @@ class DocumentViewSet(
 
         # saving a changed link definition is what tells the collaboration
         # server to re-check the connections of the document and its descendants
-        serializer.save()
+        serializer.save(update_fields=["link_reach", "link_role", "updated_at"])
 
         return drf.response.Response(serializer.data, status=drf.status.HTTP_200_OK)
 
@@ -2024,7 +2024,10 @@ class DocumentViewSet(
 
         # Make the attachment readable by document readers
         document.attachments.append(key)
-        document.save()
+        # Only the attachments column is written: the instance was loaded at the
+        # start of the request and an overlapping change must not be undone
+        # (e.g. a withdrawal of the link configuration committed in between).
+        document.save(update_fields=["attachments", "updated_at"])
 
         malware_detection.analyse_file(key, document_id=document.id)
 

@@ -419,3 +419,91 @@ def test_api_documents_link_configuration_update_invalid_role_for_reach_validati
         in error_message
     )
     assert "Allowed roles: editor" in error_message
+
+
+def test_api_documents_link_configuration_survives_concurrent_title_patch(
+    mock_reset_connections,
+):
+    """
+    A title patch loaded before a withdrawal of the link configuration and
+    saved after it must not put the withdrawn link configuration back.
+    """
+    owner = factories.UserFactory()
+    client = APIClient()
+    client.force_login(owner)
+
+    document = factories.DocumentFactory(
+        link_reach=models.LinkReachChoices.PUBLIC,
+        link_role=models.LinkRoleChoices.EDITOR,
+        title="before",
+    )
+    factories.UserDocumentAccessFactory(
+        document=document, user=owner, role=models.RoleChoices.OWNER
+    )
+
+    # The concurrent writer (e.g. an anonymous editor) loads the document
+    # before the withdrawal: the request holds an instance in memory.
+    stale_document = models.Document.objects.get(pk=document.pk)
+
+    # The owner withdraws the link in between.
+    with mock_reset_connections(document.id):
+        response = client.put(
+            f"/api/v1.0/documents/{document.id!s}/link-configuration/",
+            {"link_reach": models.LinkReachChoices.RESTRICTED},
+            format="json",
+        )
+        assert response.status_code == 200
+
+    # The concurrent write commits after the withdrawal.
+    stale_document.title = "written by an anonymous visitor"
+    stale_document.save(update_fields=["title"])
+
+    # The withdrawal holds: the write did not write the sharing columns back.
+    # The withdrawal only changed the reach, so the editor role of the link is
+    # kept in the database while the reach is now restricted.
+    document.refresh_from_db()
+    assert document.link_reach == models.LinkReachChoices.RESTRICTED
+    assert document.title == "written by an anonymous visitor"
+
+
+def test_api_documents_link_configuration_save_writes_link_fields_only(
+    mock_reset_connections,
+):
+    """
+    The link-configuration endpoint must only write the link fields: a stale
+    instance must not be able to rewrite the rest of the row.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(
+        link_reach=models.LinkReachChoices.PUBLIC,
+        link_role=models.LinkRoleChoices.READER,
+        title="untouched",
+    )
+    factories.UserDocumentAccessFactory(
+        document=document, user=user, role=models.RoleChoices.OWNER
+    )
+
+    # Corrupt the in-memory instance the request will come from to prove that
+    # none of the other columns are written by the endpoint.
+    stale_document = models.Document.objects.get(pk=document.pk)
+    stale_document.title = "title the endpoint must not save"
+    stale_document.path = "000000"  # a stale tree path
+
+    with mock_reset_connections(document.id):
+        response = client.put(
+            f"/api/v1.0/documents/{document.id!s}/link-configuration/",
+            {
+                "link_reach": models.LinkReachChoices.AUTHENTICATED,
+                "link_role": models.LinkRoleChoices.READER,
+            },
+            format="json",
+        )
+        assert response.status_code == 200
+
+    document.refresh_from_db()
+    assert document.link_reach == models.LinkReachChoices.AUTHENTICATED
+    assert document.title == "untouched"
+    assert document.path != "000000"

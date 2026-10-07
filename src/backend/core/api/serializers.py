@@ -289,10 +289,26 @@ class DocumentSerializer(ListDocumentSerializer):
         """
         When no data is sent on the update, skip making the update in the database and return
         directly the instance unchanged.
+
+        We don't rely on the update methof from the ModelSerializer to only save
+        validated_data fields to not override updated value from other
+        serializer like the LinkDocumentSerializer. A race condition triggering both
+        serializer in the same time can lead to an overlap and data can be lost.
         """
         if not validated_data:
             return instance  # No data provided, skip the update
-        return super().update(instance, validated_data)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        try:
+            # `updated_at` is explicit because it is an `auto_now` field: it has
+            # no validated_data entry and would not be written otherwise.
+            instance.save(update_fields=[*validated_data, "updated_at"])
+        except Exception:
+            # The in-memory instance may hold values the database has not
+            # accepted: reload them so the response reports the row as it is.
+            instance.refresh_from_db(fields=validated_data.keys())
+            raise
+        return instance
 
 
 class SearchDocumentSerializer(ListDocumentSerializer):

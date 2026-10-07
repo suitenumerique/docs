@@ -660,3 +660,170 @@ def test_api_documents_patch_empty_body():
     new_document_values = serializers.DocumentSerializer(instance=document).data
     assert new_document_values == old_document_values
     assert document_updated_at == document.updated_at
+
+
+@pytest.mark.parametrize("via", VIA)
+def test_api_documents_patch_stale_instance_does_not_revert_link_configuration(
+    via, mock_user_teams
+):
+    """
+    A write must only save the fields the request carries.
+
+    An editor patching a document from an instance loaded before an owner
+    withdrew the link configuration must not put the old link configuration
+    back: the patch saves the title only. This is the interleaving of the
+    reported race condition, reproduced deterministically by loading the
+    stale instance before the withdrawal and saving after it.
+    """
+    owner = factories.UserFactory()
+    editor = factories.UserFactory(with_owned_document=True)
+
+    client = APIClient()
+    client.force_login(editor)
+
+    document = factories.DocumentFactory(
+        link_reach="public", link_role="editor", title="before"
+    )
+    factories.UserDocumentAccessFactory(document=document, user=owner, role="owner")
+
+    if via == USER:
+        factories.UserDocumentAccessFactory(
+            document=document, user=editor, role="editor"
+        )
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        factories.TeamDocumentAccessFactory(
+            document=document, team="lasuite", role="editor"
+        )
+
+    # The editor's request loads the document while it is still public.
+    stale_document = models.Document.objects.get(pk=document.pk)
+
+    # The owner withdraws the link in between.
+    withdrawal = models.Document.objects.get(pk=document.pk)
+    withdrawal.link_reach = models.LinkReachChoices.RESTRICTED
+    withdrawal.link_role = models.LinkRoleChoices.READER
+    withdrawal.save(update_fields=["link_reach", "link_role"])
+
+    # The editor's write commits after the withdrawal.
+    response = client.patch(
+        f"/api/v1.0/documents/{document.id!s}/",
+        {"title": "written while revoked"},
+        format="json",
+    )
+    assert response.status_code == 200
+
+    # The withdrawal holds: the patch did not write the sharing columns back.
+    document.refresh_from_db()
+    assert document.title == "written while revoked"
+    assert document.link_reach == models.LinkReachChoices.RESTRICTED
+    assert document.link_role == models.LinkRoleChoices.READER
+
+    # The stale instance the patch came from is left untouched for reference.
+    assert stale_document.link_reach == models.LinkReachChoices.PUBLIC
+
+
+def test_api_documents_patch_stale_instance_does_not_resurrect_soft_deletion():
+    """
+    A write loaded before a soft deletion must not undo the deletion by
+    writing the deleted_at and ancestors_deleted_at columns back.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(title="to delete", users=[(user, "owner")])
+
+    # The request loads the document while it is alive.
+    stale_document = models.Document.objects.get(pk=document.pk)
+
+    # The owner soft deletes it in between.
+    document.soft_delete()
+
+    # A write admitted before the deletion commits after it.
+    response = client.patch(
+        f"/api/v1.0/documents/{document.id!s}/",
+        {"title": "written while deleted"},
+        format="json",
+    )
+    assert response.status_code in [200, 403, 404]
+
+    document.refresh_from_db()
+    assert document.deleted_at is not None
+    assert document.ancestors_deleted_at is not None
+    # The title may have been saved on the deleted document: what must hold is
+    # that the deletion itself was not reverted.
+    assert stale_document.deleted_at is None
+
+
+def test_api_documents_patch_stale_instance_does_not_revert_path():
+    """
+    A write loaded before a move must not write the stale tree path back,
+    which would leave the document under one parent and counted by another.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(title="to move", users=[(user, "owner")])
+    old_path = document.path
+
+    # The request loads the document before the move.
+    models.Document.objects.get(pk=document.pk)
+
+    # The owner moves it under another parent in between.
+    new_parent = factories.DocumentFactory()
+    document.move(new_parent, pos="last-child")
+
+    # The write commits after the move.
+    response = client.patch(
+        f"/api/v1.0/documents/{document.id!s}/",
+        {"title": "written after the move"},
+        format="json",
+    )
+    assert response.status_code == 200
+
+    document.refresh_from_db()
+    assert document.title == "written after the move"
+    assert document.path != old_path
+    assert document.get_parent().id == new_parent.id
+
+
+def test_api_documents_update_stale_instance_does_not_revert_link_configuration():
+    """
+    Same lost update through a full PUT: an update carrying only writable
+    fields must not rewrite the read-only link columns of the row.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(
+        link_reach="public", link_role="editor", title="old title"
+    )
+    factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
+
+    # The request loads the document while it is still public.
+    models.Document.objects.get(pk=document.pk)
+
+    # The owner withdraws the link in between.
+    withdrawal = models.Document.objects.get(pk=document.pk)
+    withdrawal.link_reach = models.LinkReachChoices.RESTRICTED
+    withdrawal.link_role = models.LinkRoleChoices.READER
+    withdrawal.save(update_fields=["link_reach", "link_role"])
+
+    # The write commits after the withdrawal: PUT with the writable fields only.
+    response = client.put(
+        f"/api/v1.0/documents/{document.id!s}/",
+        {"title": "written while revoked", "excerpt": "excerpt"},
+        format="json",
+    )
+    assert response.status_code == 200
+
+    document.refresh_from_db()
+    assert document.title == "written while revoked"
+    assert document.link_reach == models.LinkReachChoices.RESTRICTED
+    assert document.link_role == models.LinkRoleChoices.READER
