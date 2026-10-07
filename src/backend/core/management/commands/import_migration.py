@@ -21,7 +21,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 
-from core.models import Document, User
+from core.models import Document, DocumentAccess, User
 
 
 class Command(BaseCommand):
@@ -90,6 +90,8 @@ class Command(BaseCommand):
                     created = self._import_document(
                         pk, fields, user_uuid_remap, source_path_to_node
                     )
+                case "core.documentaccess":
+                    created = self._import_document_access(pk, fields, user_uuid_remap)
                 case _:
                     if model_label not in skipped_models:
                         self.stderr.write(
@@ -110,16 +112,12 @@ class Command(BaseCommand):
     def _print_section_summary(self, model_label, total, created):
         """Print a one-line breakdown after each model section finishes."""
         skipped = total - created
-        match model_label:
-            case "core.user":
-                self.stderr.write(
-                    f"  {created} created, {skipped} remapped to existing"
-                )
-            case "core.document":
-                self.stderr.write(
-                    f"  {created} imported, {skipped} already existed (skipped)"
-                )
-            # Other models don't need a breakdown for now.
+        if model_label == "core.user":
+            self.stderr.write(f"  {created} created, {skipped} remapped to existing")
+        else:
+            self.stderr.write(
+                f"  {created} imported, {skipped} already existed (skipped)"
+            )
 
     def _progress(self, label, count, done=False):
         """Overwrite the current stderr line with an incrementing count."""
@@ -241,4 +239,29 @@ class Command(BaseCommand):
         )
 
         source_path_to_node[source_path] = node
+        return True
+
+    def _import_document_access(self, pk, fields, user_uuid_remap):
+        """
+        Import one document access record.
+
+        Returns True if a new row was created, False if it already existed.
+        """
+        # user_id is a nullable FK to User (team-based accesses have no user).
+        # Remap to the local UUID when the source user was matched to an
+        # existing account during the user import phase.
+        user_id = fields.get("user_id")
+        if user_id and user_id in user_uuid_remap:
+            fields["user_id"] = user_uuid_remap[user_id]
+
+        if DocumentAccess.objects.filter(id=pk).exists():
+            return False
+
+        # bulk_create bypasses save() entirely, which has two benefits here:
+        # - DocumentAccess.save() clears a per-document cache; skipping it
+        #   avoids unnecessary cache invalidation during import.
+        # - pre_save() is not called, so auto_now/auto_now_add on created_at
+        #   and updated_at are not triggered — the exported timestamps are
+        #   preserved as-is without needing a post-save UPDATE.
+        DocumentAccess.objects.bulk_create([DocumentAccess(**fields, id=pk)])
         return True
