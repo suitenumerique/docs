@@ -10,6 +10,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) link a new sub-doc in its parent doc #2798
 - 👷(ci) lint, typecheck, build and test the collaboration server (yhub) #2757
 - 👷(ci) check the load-test tooling: swarm, canary, k6 and dashboards #2757
 - 👷(ci) cancel the superseded runs of a pull request #2757
