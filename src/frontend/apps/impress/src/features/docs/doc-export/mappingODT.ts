@@ -13,6 +13,7 @@ import {
 import {
   createInlineContentMappingInterlinkingLinkODT,
   inlineContentMappingMentionSearchODT,
+  inlineContentMappingUserMentionODT,
 } from './inline-content-mapping';
 import { DocsExporterODT } from './types';
 
@@ -44,6 +45,7 @@ export const getOdtDocsSchemaMappings = (
     interlinkingLinkInline:
       createInlineContentMappingInterlinkingLinkODT(interlinkTitles),
     mentionSearchInline: inlineContentMappingMentionSearchODT,
+    userMentionInline: inlineContentMappingUserMentionODT,
     // Renders inline math as a native (editable) ODF formula object.
     math: inlineMathMapping,
   },

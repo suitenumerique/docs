@@ -85,9 +85,9 @@ export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
       onKeyDown={handleKeyDown}
       draggable="false"
       $height="28px"
+      $display="inline"
       $css={css`
-        display: inline;
-        padding: 0.1rem 0.4rem;
+        padding: 0.1rem 0;
         border-radius: 4px;
         cursor: pointer;
         & svg {
@@ -99,9 +99,17 @@ export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
           background-color: var(
             --c--contextuals--background--semantic--contextual--primary
           );
+          box-shadow:
+            -0.25em 0 0
+              var(--c--contextuals--background--semantic--contextual--primary),
+            0.25em 0 0
+              var(--c--contextuals--background--semantic--contextual--primary);
         }
-        transition: background-color var(--c--globals--transitions--duration)
-          var(--c--globals--transitions--ease-out);
+        transition:
+          background-color var(--c--globals--transitions--duration)
+            var(--c--globals--transitions--ease-out),
+          box-shadow var(--c--globals--transitions--duration)
+            var(--c--globals--transitions--ease-out);
 
         .--docs--doc-deleted & {
           pointer-events: none;
