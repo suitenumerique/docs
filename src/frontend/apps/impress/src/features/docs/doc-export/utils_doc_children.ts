@@ -25,7 +25,9 @@ export async function expandDocChildrenBlocks<T>(
     return blocks;
   }
 
-  const children = await getAllDocChildren(docId).catch(() => []);
+  // A failed lookup must fail the export: an empty list would silently drop
+  // the sub-docs from a file the user thinks is complete.
+  const children = await getAllDocChildren(docId);
   const links = children.map((child) => ({
     id: `doc-children-${child.id}`,
     type: 'bulletListItem',
