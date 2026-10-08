@@ -14,25 +14,29 @@ logger = getLogger(__name__)
 
 
 @app.task
-def sync_service_deletions_in_cascade(document_id):
+def sync_service_restorations_in_cascade(document_id):
     """
-    Report the deletion of a document and of its descendants to the
+    Report the restoration of a document and of its descendants to the
     collaboration server.
 
-    The content of a document lives there, not here: until it is told, it keeps
-    serving a deleted document to the clients already editing it, and its
-    content outlives the document. The endpoint is document scoped, hence the
-    walk down the tree — deleting a document deletes the subtree under it.
+    A soft deletion is no longer reported: the document stays readable there
+    and the access rights it re-checks make it read-only, while a reset of the
+    connections on the deletion closes the clients still editing it (see
+    `reset_service_connections_on_commit`). A deletion report would tombstone
+    the document in the collaboration server and make it unreachable from the
+    editor, which is what restoring a document must undo.
 
-    Restoring goes through the very same walk. A restored document brings back
-    only the part of its subtree that was deleted with it, the documents deleted
-    on their own stay deleted, so what each document of the subtree needs is
-    read from what it is now rather than from what was just done to it. Running
-    this twice therefore changes nothing, and running it late still lands on the
+    The restoration is still reported, as a safety net: nothing on this code
+    tombstones the room of a soft-deleted document, but something acting on
+    yhub with the admin token could, and only this call lifts a tombstone.
+    Running it twice changes nothing, and running it late still lands on the
     right answer.
 
-    A document failing is logged and does not stop the ones after it; the
-    collaboration server keeps serving it until something says so again.
+    A restored document brings back only the part of its subtree that was
+    deleted with it, the documents deleted on their own stay deleted: what
+    each document of the subtree needs is read from what it is now rather than
+    from what was just done to it, so the walk reports the restoration of the
+    documents that are back and leaves the others alone.
     """
     # resolved at run time: the models queue these tasks, importing them here
     # would import the models back
@@ -51,16 +55,15 @@ def sync_service_deletions_in_cascade(document_id):
     for doc in documents:
         # a descendant carries the deletion of its ancestors, never its own
         # `deleted_at`, unless it was deleted on its own beforehand
-        deleted = doc.deleted_at is not None or doc.ancestors_deleted_at is not None
+        if doc.deleted_at is not None or doc.ancestors_deleted_at is not None:
+            # still deleted: its room was never deleted in the collaboration
+            # server, whose access re-checks already make it read-only
+            continue
         try:
-            if deleted:
-                service.delete_ydoc(doc)
-            else:
-                service.restore_ydoc(doc)
+            service.restore_ydoc(doc)
         except YHubError:
             logger.exception(
-                "impossible to %s document %s on the collaboration server",
-                "delete" if deleted else "restore",
+                "impossible to restore document %s on the collaboration server",
                 doc.id,
             )
 
@@ -75,11 +78,6 @@ def delete_service_documents(self, document_ids):
     """
     Report to the collaboration server the deletion of documents that are gone
     for good from the database.
-
-    `sync_service_deletions_in_cascade` reads the documents back to know what
-    to report, which a hard deletion leaves nothing of: the ids are all that
-    is left, and the walk down the tree is up to the caller. Each document is
-    deleted on its own, one failing does not stop the others.
 
     Nothing else knows of these deletions anymore, so a failure is retried,
     for the documents that failed only, with a countdown doubling at each
