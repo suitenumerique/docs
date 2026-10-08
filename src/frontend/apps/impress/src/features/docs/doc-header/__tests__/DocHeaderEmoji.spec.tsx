@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { AppWrapper } from '@/tests/utils';
 
@@ -40,6 +40,12 @@ const doc = {
 describe('DocHeader - Add emoji', () => {
   beforeEach(() => {
     mockUpdateDocEmoji.mockClear();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-08'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   test('opens the picker without setting a default emoji', async () => {
@@ -67,5 +73,22 @@ describe('DocHeader - Add emoji', () => {
       'My new document',
       '😀',
     );
+  });
+
+  test('sets a fish on April 1st, without opening the picker', async () => {
+    vi.setSystemTime(new Date('2026-04-01'));
+    const user = userEvent.setup();
+    render(<DocHeader doc={doc} />, { wrapper: AppWrapper });
+
+    await user.click(screen.getByRole('button', { name: 'Add emoji' }));
+
+    expect(mockUpdateDocEmoji).toHaveBeenCalledWith(
+      'doc-1',
+      'My document',
+      '🐟',
+    );
+    expect(
+      screen.queryByRole('button', { name: '😀' }),
+    ).not.toBeInTheDocument();
   });
 });
