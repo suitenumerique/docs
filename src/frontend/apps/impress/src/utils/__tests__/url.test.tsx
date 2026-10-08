@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isDataUrl,
   isLocalDevOrigin,
+  isSafeRelativePath,
   isSafeUrl,
   isSameOrigin,
 } from '@/utils/url';
@@ -113,6 +114,28 @@ describe('isSafeUrl', () => {
         expect(isSafeUrl(url)).toBe(true);
       });
     });
+  });
+});
+
+describe('isSafeRelativePath', () => {
+  it('accepts a path on this site, query and hash included', () => {
+    expect(isSafeRelativePath('/docs/123?from=a#part')).toBe(true);
+  });
+
+  it('rejects an absolute URL', () => {
+    expect(isSafeRelativePath('https://example.com/docs/123')).toBe(false);
+  });
+
+  it('rejects a protocol-relative URL', () => {
+    expect(isSafeRelativePath('//example.com/docs/123')).toBe(false);
+  });
+
+  it('rejects a path that does not start with a slash', () => {
+    expect(isSafeRelativePath('docs/123')).toBe(false);
+  });
+
+  it('rejects a javascript URL', () => {
+    expect(isSafeRelativePath('javascript:alert(1)')).toBe(false);
   });
 });
 
