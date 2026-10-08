@@ -116,6 +116,7 @@ and this project adheres to
 
 ### Security
 
+- 🔒️(backend) keep the content disposition when marking an attachment safe
 - 🔒️(collaboration) stop read-only users from sharing their cursor
 
 ## [v5.7.0] - 2026-09-15
