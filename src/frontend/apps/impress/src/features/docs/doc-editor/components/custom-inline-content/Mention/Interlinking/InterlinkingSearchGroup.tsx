@@ -15,6 +15,9 @@ import { getEmojiAndTitle } from '@/features/docs/doc-management/utils';
 
 import { type MentionedInlineContent } from '../types';
 
+/** The number of docs proposed at most in the dropdown. */
+export const MAX_INTERLINKING_DOCS = 4;
+
 interface InterlinkingSearchGroupProps {
   search: string;
   onPick: (inlineContent: MentionedInlineContent) => void;
@@ -22,6 +25,8 @@ interface InterlinkingSearchGroupProps {
   withSeparator?: boolean;
   onResults?: (results: DocSearch[]) => void;
   onLoadingChange?: (loading: boolean) => void;
+  /** The parent announces the results to the screen readers. */
+  silent?: boolean;
 }
 
 export const InterlinkingSearchGroup = ({
@@ -30,6 +35,7 @@ export const InterlinkingSearchGroup = ({
   withSeparator,
   onResults,
   onLoadingChange,
+  silent,
 }: InterlinkingSearchGroupProps) => {
   const { t } = useTranslation();
   const { untitledDocument } = useTrans();
@@ -52,9 +58,11 @@ export const InterlinkingSearchGroup = ({
         hideGroupNameWhenEmpty
         onResults={onResults}
         onLoadingChange={onLoadingChange}
+        silent={silent}
         search={search}
         parentDocId={treeContext?.root?.id}
         isSearchNotMandatory
+        limit={MAX_INTERLINKING_DOCS}
         onSelect={(doc) => {
           onPick({
             type: 'interlinkingLinkInline',

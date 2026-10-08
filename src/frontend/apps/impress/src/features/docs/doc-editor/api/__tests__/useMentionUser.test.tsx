@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppWrapper } from '@/tests/utils';
 
@@ -63,5 +63,18 @@ describe('useMentionUser', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(fetchMock.callHistory.calls(url)).toHaveLength(1);
+  });
+
+  it('calls the given error callback when the mention fails', async () => {
+    fetchMock.post(url, { status: 403, body: {} });
+    const onError = vi.fn();
+
+    const { result } = renderHook(() => useMentionUser({ onError }), {
+      wrapper: AppWrapper,
+    });
+
+    result.current.mutate(params);
+
+    await waitFor(() => expect(onError).toHaveBeenCalledTimes(1));
   });
 });

@@ -17,67 +17,68 @@ export const QuickSearchGroup = <T,>({
   onSelect,
   renderElement,
 }: Props<T>) => {
+  // cmdk names the group of options with its heading, a heading element
+  // inside the listbox would not be announced with the options.
   return (
-    <>
-      {group.groupName && (
+    <Command.Group
+      key={group.groupName}
+      forceMount={false}
+      contentEditable={false}
+      heading={
+        group.groupName && (
+          <Text
+            className="--docs--quick-search-group-title"
+            $weight="700"
+            $size="sm"
+            $margin="none"
+          >
+            {group.groupName}
+          </Text>
+        )
+      }
+    >
+      {group.startActions?.map((action, index) => {
+        return (
+          <QuickSearchItem
+            key={`${group.groupKey ?? group.groupName}-start-actions-${index}`}
+            onSelect={action.onSelect}
+          >
+            {action.content}
+          </QuickSearchItem>
+        );
+      })}
+      {group.elements.map((groupElement, index) => {
+        return (
+          <QuickSearchItem
+            id={`${group.groupKey ?? group.groupName}-element-${index}`}
+            key={`${group.groupKey ?? group.groupName}-element-${index}`}
+            onSelect={() => {
+              onSelect?.(groupElement);
+            }}
+          >
+            {renderElement?.(groupElement)}
+          </QuickSearchItem>
+        );
+      })}
+      {group.endActions?.map((action, index) => {
+        return (
+          <QuickSearchItem
+            key={`${group.groupKey ?? group.groupName}-end-actions-${index}`}
+            onSelect={action.onSelect}
+          >
+            {action.content}
+          </QuickSearchItem>
+        );
+      })}
+      {group.emptyString && group.elements.length === 0 && (
         <Text
-          className="--docs--quick-search-group-title"
-          as="h2"
-          $weight="700"
+          className="--docs--quick-search-group-empty"
+          $margin={{ left: '2xs', bottom: '3xs' }}
           $size="sm"
-          $margin="none"
         >
-          {group.groupName}
+          {group.emptyString}
         </Text>
       )}
-      <Command.Group
-        key={group.groupName}
-        forceMount={false}
-        contentEditable={false}
-      >
-        {group.startActions?.map((action, index) => {
-          return (
-            <QuickSearchItem
-              key={`${group.groupKey ?? group.groupName}-start-actions-${index}`}
-              onSelect={action.onSelect}
-            >
-              {action.content}
-            </QuickSearchItem>
-          );
-        })}
-        {group.elements.map((groupElement, index) => {
-          return (
-            <QuickSearchItem
-              id={`${group.groupKey ?? group.groupName}-element-${index}`}
-              key={`${group.groupKey ?? group.groupName}-element-${index}`}
-              onSelect={() => {
-                onSelect?.(groupElement);
-              }}
-            >
-              {renderElement?.(groupElement)}
-            </QuickSearchItem>
-          );
-        })}
-        {group.endActions?.map((action, index) => {
-          return (
-            <QuickSearchItem
-              key={`${group.groupKey ?? group.groupName}-end-actions-${index}`}
-              onSelect={action.onSelect}
-            >
-              {action.content}
-            </QuickSearchItem>
-          );
-        })}
-        {group.emptyString && group.elements.length === 0 && (
-          <Text
-            className="--docs--quick-search-group-empty"
-            $margin={{ left: '2xs', bottom: '3xs' }}
-            $size="sm"
-          >
-            {group.emptyString}
-          </Text>
-        )}
-      </Command.Group>
-    </>
+    </Command.Group>
   );
 };
