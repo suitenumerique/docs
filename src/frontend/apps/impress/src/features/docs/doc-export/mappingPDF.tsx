@@ -14,7 +14,10 @@ import {
   blockMappingTablePDF,
   blockMappingUploadLoaderPDF,
 } from './blocks-mapping';
-import { createInlineContentMappingInterlinkingLinkPDF } from './inline-content-mapping';
+import {
+  createInlineContentMappingInterlinkingLinkPDF,
+  inlineContentMappingMentionSearchPDF,
+} from './inline-content-mapping';
 import { DocsExporterPDF } from './types';
 
 export const getPdfDocsSchemaMappings = (
@@ -43,6 +46,7 @@ export const getPdfDocsSchemaMappings = (
     ...pdfDefaultSchemaMappings.inlineContentMapping,
     interlinkingLinkInline:
       createInlineContentMappingInterlinkingLinkPDF(interlinkTitles),
+    mentionSearchInline: inlineContentMappingMentionSearchPDF,
     // Inline math is rasterized to an image that flows with the text.
     math: inlineMathMapping,
   },

@@ -26,7 +26,7 @@ const t = ((key: string) => key) as unknown as Parameters<
 >[1];
 
 describe('getInterlinkinghMenuItems', () => {
-  it('inserts an interlink inline content when the "link-doc" item is clicked', () => {
+  it('inserts the mention search inline content when the "link-doc" item is clicked', () => {
     const insertInlineContent = vi.fn();
     const editor = { insertInlineContent } as unknown as DocsBlockNoteEditor;
     const createPage = vi.fn();
@@ -38,7 +38,7 @@ describe('getInterlinkinghMenuItems', () => {
 
     expect(insertInlineContent).toHaveBeenCalledWith([
       {
-        type: 'interlinkingLinkInline',
+        type: 'mentionSearchInline',
         props: { trigger: '/' },
       },
     ]);
