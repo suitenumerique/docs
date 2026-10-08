@@ -4,3 +4,6 @@ export * from './interlinkingLinkODT';
 export * from './mentionSearchPDF';
 export * from './mentionSearchDocx';
 export * from './mentionSearchODT';
+export * from './userMentionPDF';
+export * from './userMentionDocx';
+export * from './userMentionODT';

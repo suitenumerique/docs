@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { tokens } from '@/cunningham';
 
-import { AvatarSvg } from './AvatarSvg';
+import { AvatarSvg, AvatarSvgProps } from './AvatarSvg';
 
 const colors = tokens.themes.default.globals.colors;
 
@@ -16,7 +16,7 @@ const avatarsColors = [
   colors['yellow-500'],
 ];
 
-const getColorFromName = (name: string) => {
+export const getColorFromName = (name: string) => {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -24,7 +24,7 @@ const getColorFromName = (name: string) => {
   return avatarsColors[Math.abs(hash) % avatarsColors.length];
 };
 
-const getInitialFromName = (name: string) => {
+export const getInitialFromName = (name: string) => {
   const splitName = name?.split(' ');
   return (splitName[0]?.charAt(0) || '?') + (splitName?.[1]?.charAt(0) || '');
 };
@@ -32,9 +32,13 @@ const getInitialFromName = (name: string) => {
 type UserAvatarProps = {
   fullName?: string;
   background?: string;
-};
+} & Partial<AvatarSvgProps>;
 
-export const UserAvatar = ({ fullName, background }: UserAvatarProps) => {
+export const UserAvatar = ({
+  fullName,
+  background,
+  ...props
+}: UserAvatarProps) => {
   const name = fullName?.trim() || '?';
 
   return (
@@ -42,6 +46,7 @@ export const UserAvatar = ({ fullName, background }: UserAvatarProps) => {
       className="--docs--user-avatar"
       initials={getInitialFromName(name).toUpperCase()}
       background={background || getColorFromName(name)}
+      {...props}
     />
   );
 };

@@ -1,9 +1,16 @@
 import { Image, Link, Text } from '@react-pdf/renderer';
 
+import { tokens } from '@/cunningham';
 import { getEmojiAndTitle } from '@/docs/doc-management';
 
 import DocSelectedIcon from '../assets/doc-selected.png';
 import { DocsExporterPDF } from '../types';
+
+// The same light underline as the interlink of the editor
+const titleStyle = {
+  textDecoration: 'underline',
+  textDecorationColor: tokens.themes.default.globals.colors['gray-150'],
+} as const;
 
 export const createInlineContentMappingInterlinkingLinkPDF =
   (
@@ -31,7 +38,7 @@ export const createInlineContentMappingInterlinkingLinkPDF =
       >
         {' '}
         {emoji || <Image src={DocSelectedIcon.src} />}{' '}
-        <Text>{titleWithoutEmoji}</Text>{' '}
+        <Text style={titleStyle}>{titleWithoutEmoji}</Text>{' '}
       </Link>
     );
   };

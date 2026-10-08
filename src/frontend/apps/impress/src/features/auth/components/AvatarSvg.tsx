@@ -2,7 +2,7 @@ import React, { ComponentPropsWithRef } from 'react';
 
 import { Box, BoxProps } from '@/components';
 
-type AvatarSvgProps = BoxProps &
+export type AvatarSvgProps = BoxProps &
   Omit<ComponentPropsWithRef<'svg'>, keyof BoxProps> & {
     initials: string;
     background: string;

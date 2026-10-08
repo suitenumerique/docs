@@ -17,6 +17,7 @@ import {
 import {
   createInlineContentMappingInterlinkingLinkPDF,
   inlineContentMappingMentionSearchPDF,
+  inlineContentMappingUserMentionPDF,
 } from './inline-content-mapping';
 import { DocsExporterPDF } from './types';
 
@@ -47,6 +48,7 @@ export const getPdfDocsSchemaMappings = (
     interlinkingLinkInline:
       createInlineContentMappingInterlinkingLinkPDF(interlinkTitles),
     mentionSearchInline: inlineContentMappingMentionSearchPDF,
+    userMentionInline: inlineContentMappingUserMentionPDF,
     // Inline math is rasterized to an image that flows with the text.
     math: inlineMathMapping,
   },
