@@ -105,7 +105,7 @@ export const getDocChildrenReactSlashMenuItems = (
 ) => [
   {
     key: 'doc-children',
-    title: t('Sub-docs list'),
+    title: t('Sub-docs'),
     onItemClick: () => {
       insertOrUpdateBlockForSlashMenu(editor, {
         type: 'docChildren',
