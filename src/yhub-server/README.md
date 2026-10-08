@@ -584,11 +584,19 @@ already includes it, so a fresh checkout needs nothing extra; an upgrade is
 
 ## Deletion
 
-The content of a document lives here, so deleting one in Docs has to be said
-here too — otherwise the clients already connected keep editing it and the
-content outlives the document. The backend does that from
-`sync_service_deletions_in_cascade`, which walks the deleted subtree and tells
-this server what became of each of its documents.
+A soft deletion in Docs is no longer reported to this server: the room stays
+alive, its access re-checks — the backend answers read-only for a deleted
+document — keep it so for everyone, and the reset of connections the deletion
+queues (`reset_service_connections_on_commit`) closes the clients still
+connected with edit rights. Tombstoning the room here would make the document
+unreachable from the editor, which the trashbin and the restore feature need.
+
+The routes below remain what they are: `delete_ydoc` still reports the
+documents deleted for good from the database (`delete_service_documents`) and
+the duplicates of a failed duplication, and `restore_ydoc` is the safety net
+the backend's restoration walk (`sync_service_restorations_in_cascade`) keeps
+running: nothing tombstones the room of a soft-deleted document anymore, and
+only this call lifts a tombstone laid out of band.
 
 Deleting is `DELETE /collaboration/ydoc/v1/{org}/{docid}`, built into yhub
 0.6.0. It is a **soft** deletion: the deletion is recorded, the clients editing
@@ -601,7 +609,9 @@ Restoring is the custom `POST /collaboration/restore-ydoc/v1/{org}/{docid}`
 above: yhub 0.6.0 has no built-in route for it. The content was never touched,
 so the document comes back with its whole history. Restoring one that is not
 deleted answers 200 and changes nothing, which is what lets the backend restore
-a subtree without asking what became of each document in it.
+a subtree without asking what became of each document in it — and what lets the
+restoration walk skip the documents that stay deleted, instead of tombstoning
+them.
 
 Erasing the content for good is a third operation (`YHub.deleteDoc(docRef, {
 hard: true })`). yhub 0.8 exposes it over REST as `DELETE .../ydoc?hard=true`,

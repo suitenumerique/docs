@@ -70,7 +70,7 @@ from core.services.search_indexers import (
 )
 from core.services.yhub_services import YHubError, YHubService
 from core.tasks.access import reset_service_connections_on_commit
-from core.tasks.documents import sync_service_deletions_in_cascade
+from core.tasks.documents import sync_service_restorations_in_cascade
 from core.tasks.mail import send_ask_for_access_mail, send_mention_notification_mail
 from core.tasks.search import trigger_batch_document_indexer
 from core.utils.analytics import PosthogEventName, posthog_capture
@@ -1089,11 +1089,12 @@ class DocumentViewSet(
         except RuntimeError as err:
             raise drf.exceptions.ValidationError({"detail": str(err)}) from err
 
-        # the counterpart of the deletion: the same walk puts back the content
-        # of the documents that came back with this one, and it reads the
-        # restored state back, hence on commit as well
+        # A soft deletion is no longer reported: the room should never be
+        # tombstoned, and this safety net is what lifts one should any be laid
+        # out of band. Documents of the subtree deleted on their own stay
+        # deleted, and the restored state is read back: on commit.
         transaction.on_commit(
-            partial(sync_service_deletions_in_cascade.delay, str(document.id))
+            partial(sync_service_restorations_in_cascade.delay, str(document.id))
         )
 
         return drf_response.Response(
