@@ -84,10 +84,10 @@ and this project adheres to
 - 🔧(helm) run a valkey for the backend and one for yhub in dev and feature
 - ✨(frontend) turn pasted doc links into interlinks #2713
 - 💄(frontend) redesign 401 error standalone page #2716
+- ✨(frontend) open the emoji picker when adding a document emoji #2777
 
 ### Fixed
 
-- 🐛(frontend) open the emoji picker when adding a document emoji
 - 🐛(documentation) fix minio port and keycloak realm in the k8s guide #2751
 - 🐛(collaboration) bound the calls yhub makes to the backend with a timeout,
   `YHUB_BACKEND_REQUEST_TIMEOUT_MS`, 5s by default #2753
