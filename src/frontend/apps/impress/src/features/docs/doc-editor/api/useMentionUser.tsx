@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { UseMutationOptions, useMutation } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 
@@ -43,12 +43,19 @@ export const mentionUser = async ({
   return response.json() as Promise<MentionUserResponse>;
 };
 
+type UseMentionUserOptions = UseMutationOptions<
+  MentionUserResponse,
+  APIError,
+  MentionUser
+>;
+
 /**
  * Records the mention of a user in the doc body, the backend then notifies
  * the user by email.
  */
-export function useMentionUser() {
+export function useMentionUser(options?: UseMentionUserOptions) {
   return useMutation<MentionUserResponse, APIError, MentionUser>({
     mutationFn: mentionUser,
+    ...options,
   });
 }
