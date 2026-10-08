@@ -21,6 +21,7 @@ import { fallbackLng } from '@/i18n/config';
 
 import ModulesExport from '../hooks/';
 import { downloadFile, getExportFilename } from '../utils';
+import { expandDocChildrenBlocks } from '../utils_doc_children';
 import {
   addMediaFilesToZip,
   generateHtmlDocument,
@@ -108,7 +109,10 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
       if (!blobExport && format === 'markdown') {
         const zip = new JSZip();
-        const blocks = structuredClone(editor.document);
+        const blocks = await expandDocChildrenBlocks(
+          structuredClone(editor.document),
+          doc.id,
+        );
 
         const mediaFileCount = await addMediaFilesToMarkdownZip(
           blocks,
@@ -131,7 +135,9 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
       if (!blobExport && format === 'html') {
         // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
-        const fullHtml = await editor.blocksToFullHTML();
+        const fullHtml = editor.blocksToFullHTML(
+          await expandDocChildrenBlocks(editor.document, doc.id),
+        );
 
         // Parse HTML and fetch media so that we can package a fully offline HTML document in a ZIP.
         const domParser = new DOMParser();

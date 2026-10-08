@@ -34,6 +34,8 @@ export const getPdfDocsSchemaMappings = (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pdf: pdfDefaultSchemaMappings.blockMapping.file as any,
     uploadLoader: blockMappingUploadLoaderPDF,
+    // Replaced by a list of links before export, see expandDocChildrenBlocks
+    docChildren: () => <></>,
     // Renders the LaTeX as a vector formula (via @react-pdf/math).
     mathBlock: mathBlockMapping,
     // Renders the Mermaid source to a PNG in the browser (async mapping).

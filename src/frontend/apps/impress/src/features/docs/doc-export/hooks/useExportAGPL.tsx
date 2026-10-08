@@ -19,6 +19,7 @@ import { getDocxDocsSchemaMappings } from '../mappingDocx';
 import { getOdtDocsSchemaMappings } from '../mappingODT';
 import { getPdfDocsSchemaMappings } from '../mappingPDF';
 import { resolveInterlinkTitles } from '../utils';
+import { expandDocChildrenBlocks } from '../utils_doc_children';
 
 export const useExportAGPL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
   const { t } = useTranslation();
@@ -28,7 +29,10 @@ export const useExportAGPL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
       return;
     }
 
-    const exportDocument = editor.document;
+    const exportDocument = await expandDocChildrenBlocks(
+      editor.document,
+      doc.id,
+    );
     const interlinkTitles = await resolveInterlinkTitles(exportDocument);
     let blobExport: Blob | undefined = undefined;
     if (format === 'pdf') {

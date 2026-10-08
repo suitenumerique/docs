@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
+import { KEY_LIST_DOC_CHILDREN } from '@/docs/doc-tree/api/useDocChildren';
 import { KEY_DOC_TREE } from '@/docs/doc-tree/api/useDocTree';
 
 import { KEY_DOC } from './useDoc';
@@ -49,6 +50,7 @@ export function useMoveDoc(options?: UseMoveDocOptions) {
     onSuccess(data, variables, onMutateResult, context) {
       void queryClient.invalidateQueries({ queryKey: [KEY_LIST_DOC] });
       void queryClient.invalidateQueries({ queryKey: [KEY_DOC] });
+      void queryClient.invalidateQueries({ queryKey: [KEY_LIST_DOC_CHILDREN] });
       if (!variables.skipTreeInvalidation) {
         void queryClient.invalidateQueries({ queryKey: [KEY_DOC_TREE] });
       }
