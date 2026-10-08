@@ -1,5 +1,6 @@
 import { insertOrUpdateBlockForSlashMenu } from '@blocknote/core/extensions';
 import { createReactBlockSpec } from '@blocknote/react';
+import { Button } from '@gouvfr-lasuite/ui-components';
 import { useQuery } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { useEffect, useRef } from 'react';
@@ -17,13 +18,17 @@ import { isDocNode, useTreeContextOrNull } from '@/docs/doc-tree/utils';
 import type { DocsBlockNoteEditor } from '../../types';
 import { LinkSelected } from '../custom-inline-content/Interlinking/LinkSelected';
 
-const DocChildrenList = ({ isEditable }: { isEditable: boolean }) => {
+export const DocChildrenList = ({ isEditable }: { isEditable: boolean }) => {
   const { t } = useTranslation();
   const { currentDoc } = useDocStore();
   const docId = currentDoc?.id;
   const treeContext = useTreeContextOrNull();
 
-  const { data: children, refetch } = useQuery({
+  const {
+    data: children,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: [KEY_LIST_DOC_CHILDREN, { docId, all: true }],
     queryFn: () => getAllDocChildren(docId as string),
     enabled: !!docId,
@@ -53,6 +58,24 @@ const DocChildrenList = ({ isEditable }: { isEditable: boolean }) => {
     previousTreeSignature.current = treeSignature;
     void refetch();
   }, [treeSignature, refetch]);
+
+  if (isError) {
+    return (
+      <Box
+        $direction="row"
+        $align="center"
+        $gap="0.5rem"
+        contentEditable={false}
+      >
+        <Text $variation="secondary" $size="sm">
+          {t('The sub-docs could not be loaded.')}
+        </Text>
+        <Button size="small" variant="tertiary" onClick={() => void refetch()}>
+          {t('Retry')}
+        </Button>
+      </Box>
+    );
+  }
 
   if (!children) {
     return null;
