@@ -795,14 +795,6 @@ class DocumentViewSet(
         """Override to implement a soft delete instead of dumping the record in database."""
         instance.soft_delete()
 
-        # the collaboration server holds the content: until it is told, it goes
-        # on serving the document to the clients editing it. On commit, because
-        # the task reads back what was just written to know what to report — it
-        # would find the document alive and restore it instead
-        transaction.on_commit(
-            partial(sync_service_deletions_in_cascade.delay, str(instance.id))
-        )
-
         posthog_capture(
             PosthogEventName.DOC_DELETED, self.request.user, {}, document=instance
         )
