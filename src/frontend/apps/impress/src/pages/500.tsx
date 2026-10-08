@@ -35,11 +35,17 @@ const getSafeRefreshUrl = (target?: string): string | undefined => {
   if (!target) {
     return undefined;
   }
+  const isValidRelativePath =
+    target.startsWith('/') &&
+    !target.startsWith('//') &&
+    !target.includes('\\');
+
+  if (!isValidRelativePath) {
+    return undefined;
+  }
 
   if (typeof window === 'undefined') {
-    return target.startsWith('/') && !target.startsWith('//')
-      ? target
-      : undefined;
+    return target;
   }
 
   try {
@@ -55,8 +61,10 @@ const getSafeRefreshUrl = (target?: string): string | undefined => {
 
 const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
-  const { query } = useRouter();
-  const from = Array.isArray(query.from) ? query.from[0] : query.from;
+  const router = useRouter();
+  const from = Array.isArray(router.query.from)
+    ? router.query.from[0]
+    : router.query.from;
   const refreshTarget = getSafeRefreshUrl(from);
   const pageTitle = `${t('Error 500')} - ${t('Docs')}`;
 
@@ -122,7 +130,7 @@ const Page: NextPageWithLayout = () => {
             $css={actionCss}
             onClick={() =>
               refreshTarget
-                ? window.location.assign(refreshTarget)
+                ? router.replace(refreshTarget)
                 : window.location.reload()
             }
           >
