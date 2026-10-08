@@ -71,14 +71,14 @@ describe('expandDocChildrenBlocks', () => {
     ]);
   });
 
-  it('drops the block when the sub-docs cannot be fetched', async () => {
+  it('fails when the sub-docs cannot be fetched, rather than exporting without them', async () => {
     vi.mocked(getAllDocChildren).mockRejectedValue(new Error('403'));
 
-    const result = await expandDocChildrenBlocks(
-      [{ id: 'c1', type: 'docChildren', children: [] }],
-      'parent',
-    );
-
-    expect(result).toEqual([]);
+    await expect(
+      expandDocChildrenBlocks(
+        [{ id: 'c1', type: 'docChildren', children: [] }],
+        'parent',
+      ),
+    ).rejects.toThrow('403');
   });
 });
