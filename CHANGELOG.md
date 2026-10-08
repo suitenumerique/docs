@@ -72,6 +72,7 @@ and this project adheres to
   offline
 - 🐛(frontend) stop the service worker from caching the collaboration server's
   rest api
+- 💄(frontend) redesign 500 error standalone page #2801
 
 ### Changed
 
