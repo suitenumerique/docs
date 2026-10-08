@@ -57,6 +57,13 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
       return;
     }
 
+    const today = new Date();
+    const isAprilFools = today.getMonth() === 3 && today.getDate() === 1;
+    if (isAprilFools) {
+      updateDocEmoji(doc.id, latestTitleRef.current, '🐟');
+      return;
+    }
+
     event.stopPropagation();
     addLastFocus(event.currentTarget);
     setIsEmojiPickerOpen(true);
