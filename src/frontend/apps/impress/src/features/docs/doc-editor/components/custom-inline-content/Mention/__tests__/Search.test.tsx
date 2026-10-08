@@ -41,7 +41,7 @@ vi.mock('@/docs/doc-search', async () => {
   };
 });
 
-import { SearchPage } from '../SearchPage';
+import { Search } from '../Search';
 
 // cmdk and Mantine rely on browser APIs jsdom doesn't implement.
 beforeEach(() => {
@@ -75,7 +75,7 @@ beforeEach(() => {
   );
 });
 
-const renderSearchPage = async ({ isEditable = true, trigger = '/' } = {}) => {
+const renderSearch = async ({ isEditable = true, trigger = '/' } = {}) => {
   const updateInlineContent = vi.fn();
   const contentRef = vi.fn();
   const insertInlineContent = vi.fn();
@@ -88,12 +88,12 @@ const renderSearchPage = async ({ isEditable = true, trigger = '/' } = {}) => {
   } as unknown as DocsBlockNoteEditor;
 
   render(
-    <SearchPage
+    <Search
       editor={editor as any}
       inlineContent={
         {
-          type: 'interlinkingLinkInline',
-          props: { trigger, disabled: false, docId: '' },
+          type: 'mentionSearchInline',
+          props: { trigger, disabled: false },
         } as any
       }
       updateInlineContent={updateInlineContent}
@@ -105,13 +105,13 @@ const renderSearchPage = async ({ isEditable = true, trigger = '/' } = {}) => {
     { wrapper: Wrapper },
   );
 
-  // SearchPage focuses the input and opens the popover after a 100ms timeout.
+  // Search focuses the input and opens the popover after a 100ms timeout.
   await waitFor(() => expect(screen.getByRole('combobox')).toHaveFocus());
 
   return { updateInlineContent, contentRef, insertInlineContent, focus };
 };
 
-describe('SearchPage', () => {
+describe('Search', () => {
   beforeEach(() => {
     capturedProps.length = 0;
     useDocSearchFilterStore.setState({ filter: 'all' });
@@ -122,20 +122,20 @@ describe('SearchPage', () => {
   });
 
   it('limits the search to the current doc subtree on mount', async () => {
-    await renderSearchPage();
+    await renderSearch();
 
     expect(useDocSearchFilterStore.getState().filter).toBe('current');
   });
 
   it('renders the trigger character and focuses the search input', async () => {
-    await renderSearchPage({ trigger: '@' });
+    await renderSearch({ trigger: '@' });
 
     expect(screen.getByText('@')).toBeInTheDocument();
     expect(screen.getByRole('combobox')).toHaveFocus();
   });
 
   it('forwards the typed text to the search results', async () => {
-    await renderSearchPage();
+    await renderSearch();
 
     fireEvent.input(screen.getByRole('combobox'), {
       target: { value: 'my query' },
@@ -150,7 +150,7 @@ describe('SearchPage', () => {
   });
 
   it('selects a result and inserts the interlink', async () => {
-    const { updateInlineContent, contentRef, focus } = await renderSearchPage();
+    const { updateInlineContent, contentRef, focus } = await renderSearch();
 
     fireEvent.click(await screen.findByText('First result'));
 
@@ -163,7 +163,7 @@ describe('SearchPage', () => {
   });
 
   it('ignores a selection when the editor is not editable', async () => {
-    const { updateInlineContent } = await renderSearchPage({
+    const { updateInlineContent } = await renderSearch({
       isEditable: false,
     });
 
@@ -174,7 +174,7 @@ describe('SearchPage', () => {
 
   it('closes and re-inserts the trigger and typed text on Escape', async () => {
     const { updateInlineContent, insertInlineContent, focus } =
-      await renderSearchPage({ trigger: '/' });
+      await renderSearch({ trigger: '/' });
 
     fireEvent.input(screen.getByRole('combobox'), {
       target: { value: 'abc' },
@@ -182,7 +182,7 @@ describe('SearchPage', () => {
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Escape' });
 
     expect(updateInlineContent).toHaveBeenCalledWith({
-      type: 'interlinkingLinkInline',
+      type: 'mentionSearchInline',
       props: { disabled: true },
     });
     expect(focus).toHaveBeenCalled();
@@ -190,20 +190,19 @@ describe('SearchPage', () => {
   });
 
   it('closes without inserting anything on Backspace when the search is empty', async () => {
-    const { updateInlineContent, insertInlineContent } =
-      await renderSearchPage();
+    const { updateInlineContent, insertInlineContent } = await renderSearch();
 
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Backspace' });
 
     expect(updateInlineContent).toHaveBeenCalledWith({
-      type: 'interlinkingLinkInline',
+      type: 'mentionSearchInline',
       props: { disabled: true },
     });
     expect(insertInlineContent).not.toHaveBeenCalled();
   });
 
   it('lets a Backspace with existing text fall through to normal editing', async () => {
-    const { updateInlineContent } = await renderSearchPage();
+    const { updateInlineContent } = await renderSearch();
 
     fireEvent.input(screen.getByRole('combobox'), {
       target: { value: 'abc' },
@@ -214,7 +213,7 @@ describe('SearchPage', () => {
   });
 
   it('moves the highlighted result with ArrowDown/ArrowUp and selects it on Enter', async () => {
-    const { updateInlineContent } = await renderSearchPage();
+    const { updateInlineContent } = await renderSearch();
 
     await screen.findByText('First result');
     const input = screen.getByRole('combobox');

@@ -1,1 +1,1 @@
-export * from './Interlinking';
+export * from './Mention';

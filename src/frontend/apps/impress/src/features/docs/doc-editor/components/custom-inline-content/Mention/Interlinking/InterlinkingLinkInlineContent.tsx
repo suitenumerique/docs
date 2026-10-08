@@ -11,11 +11,14 @@ import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { useCreateChildDocTree, useDocStore } from '@/docs/doc-management';
 
 import { LinkSelected } from './LinkSelected';
-import { SearchPage } from './SearchPage';
 
 export type InterlinkingLinkInlineContentType = {
   type: 'interlinkingLinkInline';
   propSchema: {
+    /**
+     * @deprecated Only set by the former search state of this inline content,
+     * now `mentionSearchInline`. Kept to read the documents saved before.
+     */
     disabled?: {
       default: false;
       values: [true, false];
@@ -26,6 +29,9 @@ export type InterlinkingLinkInlineContentType = {
     blockId?: {
       default: '';
     };
+    /**
+     * @deprecated See `disabled`.
+     */
     trigger?: {
       default: '/';
       values: readonly ['/', '@'];
@@ -59,55 +65,62 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
     content: 'none',
   },
   {
-    /**
-     * Can have 3 render states:
-     * 1. Disabled state: when the inline content is disabled, it renders nothing
-     * 2. Search state: when the inline content has no docId, it renders the search page
-     * 3. Linked state: when the inline content has a docId, it renders the linked doc.
-     *
-     * Info: We keep everything in the same inline content to easily preserve
-     * the element position when switching between states
-     */
-    render: (props) => {
-      const { disabled, docId, blockId } = props.inlineContent.props;
-
-      if (disabled) {
-        return null;
-      }
-
-      if (docId) {
-        /**
-         * Should not happen
-         */
-        if (!uuidValidate(docId)) {
-          return (
-            <DisableInvalidInterlink
-              docId={docId}
-              onUpdateInlineContent={() => {
-                props.updateInlineContent({
-                  type: 'interlinkingLinkInline',
-                  props: {
-                    disabled: true,
-                  },
-                });
-              }}
-            />
-          );
-        }
-
-        return (
-          <LinkSelected
-            docId={docId}
-            blockId={blockId}
-            isEditable={props.editor.isEditable}
-          />
-        );
-      }
-
-      return <SearchPage {...props} />;
-    },
+    render: (props) => (
+      <InterlinkingLink
+        docId={props.inlineContent.props.docId}
+        blockId={props.inlineContent.props.blockId}
+        disabled={props.inlineContent.props.disabled}
+        isEditable={props.editor.isEditable}
+        onDisable={() => {
+          props.updateInlineContent({
+            type: 'interlinkingLinkInline',
+            props: {
+              disabled: true,
+            },
+          });
+        }}
+      />
+    ),
   },
 );
+
+interface InterlinkingLinkProps {
+  docId?: string;
+  blockId?: string;
+  disabled?: boolean;
+  isEditable: boolean;
+  onDisable: () => void;
+}
+
+/**
+ * Can have 2 render states:
+ * 1. Linked state: when the inline content has a docId, it renders the linked doc.
+ * 2. Empty state: otherwise, it renders nothing. It is what remains in the
+ *    documents saved while this inline content was also the search of the
+ *    mentions, now `mentionSearchInline`.
+ */
+export const InterlinkingLink = ({
+  docId,
+  blockId,
+  disabled,
+  isEditable,
+  onDisable,
+}: InterlinkingLinkProps) => {
+  if (disabled || !docId) {
+    return null;
+  }
+
+  /**
+   * Should not happen
+   */
+  if (!uuidValidate(docId)) {
+    return <DisableInvalidInterlink docId={docId} onDisable={onDisable} />;
+  }
+
+  return (
+    <LinkSelected docId={docId} blockId={blockId} isEditable={isEditable} />
+  );
+};
 
 export const getInterlinkinghMenuItems = (
   editor: DocsBlockNoteEditor,
@@ -121,7 +134,7 @@ export const getInterlinkinghMenuItems = (
     onItemClick: () => {
       editor.insertInlineContent([
         {
-          type: 'interlinkingLinkInline',
+          type: 'mentionSearchInline',
           props: {
             trigger: '/',
           },
@@ -156,18 +169,18 @@ export const useGetInterlinkingMenuItems = () => {
 
 const DisableInvalidInterlink = ({
   docId,
-  onUpdateInlineContent,
+  onDisable,
 }: {
   docId: string;
-  onUpdateInlineContent: () => void;
+  onDisable: () => void;
 }) => {
   useEffect(() => {
     Sentry.captureException(new Error(`Invalid docId: ${docId}`), {
       extra: { info: 'InterlinkingInlineContent' },
     });
 
-    onUpdateInlineContent();
-  }, [docId, onUpdateInlineContent]);
+    onDisable();
+  }, [docId, onDisable]);
 
   return null;
 };

@@ -1,28 +1,19 @@
 import { StyleSchema } from '@blocknote/core';
 import { ReactCustomInlineContentRenderProps } from '@blocknote/react';
-import { useTreeContext } from '@gouvfr-lasuite/ui-components';
 import { Popover } from '@mantine/core';
 import type { KeyboardEvent } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import DocIcon from '@/assets/icons/ui-kit/doc.svg';
-import ArrowIcon from '@/assets/icons/ui-kit/keyboard_return.svg';
-import {
-  Box,
-  Card,
-  QuickSearch,
-  QuickSearchItemContent,
-  Text,
-} from '@/components';
+import { Box, Card, QuickSearch } from '@/components';
 import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
-import { Doc, getEmojiAndTitle, useTrans } from '@/docs/doc-management';
-import { DocSearchContent } from '@/docs/doc-search';
 import { useDocSearchFilterStore } from '@/docs/doc-search/stores/useDocSearchFilterStore';
 import { useResponsiveStore } from '@/stores';
 
-import { InterlinkingLinkInlineContentType } from './InterlinkingLinkInlineContent';
+import { InterlinkingSearchGroup } from './Interlinking';
+import { MentionSearchInlineContentType } from './MentionSearchInlineContent';
+import { MentionedInlineContent } from './types';
 
 const inputStyle = css`
   background-color: transparent;
@@ -34,32 +25,37 @@ const inputStyle = css`
   font-family: 'Inter';
 `;
 
-type ReactInterlinkingSearch = ReactCustomInlineContentRenderProps<
-  InterlinkingLinkInlineContentType,
+type ReactMentionSearch = ReactCustomInlineContentRenderProps<
+  MentionSearchInlineContentType,
   StyleSchema
 >;
 
-export const SearchPage = ({
+/**
+ * The search replaces itself by the content the user picked. At runtime
+ * `updateInlineContent` accepts any inline content, but it is typed with the
+ * one of the search.
+ */
+type ReplaceByMentioned = (inlineContent: MentionedInlineContent) => void;
+
+export const Search = ({
   contentRef,
   updateInlineContent,
   editor,
   inlineContent,
-}: ReactInterlinkingSearch) => {
+}: ReactMentionSearch) => {
   const trigger = inlineContent.props.trigger;
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const { isDesktop } = useResponsiveStore();
-  const { untitledDocument } = useTrans();
   const isEditable = editor.isEditable;
-  const treeContext = useTreeContext<Doc>();
   const modalRef = useRef<HTMLDivElement>(null);
   const dropdownId = useId();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const { setFilter } = useDocSearchFilterStore();
 
   /**
-   * When the search page is opened, we set the search
+   * When the search is opened, we set the search
    * target to 'current' to limit the search to the current
    * document and its sub-documents.
    */
@@ -91,7 +87,7 @@ export const SearchPage = ({
     }
 
     updateInlineContent({
-      type: 'interlinkingLinkInline',
+      type: 'mentionSearchInline',
       props: {
         disabled: true,
       },
@@ -104,6 +100,17 @@ export const SearchPage = ({
       editor.focus();
       (editor as DocsBlockNoteEditor).insertInlineContent([insertContent]);
     }
+  };
+
+  const pick = (mentioned: MentionedInlineContent) => {
+    if (!isEditable) {
+      return;
+    }
+
+    (updateInlineContent as unknown as ReplaceByMentioned)(mentioned);
+
+    contentRef(null);
+    editor.focus();
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -260,84 +267,7 @@ export const SearchPage = ({
                 $margin="sm"
                 $padding="none"
               >
-                <DocSearchContent
-                  groupName={t('Link a doc')}
-                  search={search}
-                  parentDocId={treeContext?.root?.id}
-                  isSearchNotMandatory
-                  onSelect={(doc) => {
-                    if (!isEditable) {
-                      return;
-                    }
-
-                    updateInlineContent({
-                      type: 'interlinkingLinkInline',
-                      props: {
-                        docId: doc.id,
-                      },
-                    });
-
-                    contentRef(null);
-                    editor.focus();
-                  }}
-                  renderSearchElement={(doc) => {
-                    const { emoji, titleWithoutEmoji } = getEmojiAndTitle(
-                      doc.title || untitledDocument,
-                    );
-
-                    return (
-                      <QuickSearchItemContent
-                        left={
-                          <Box
-                            $direction="row"
-                            $gap="0.2rem"
-                            $align="center"
-                            $padding={{
-                              vertical: '0.5rem',
-                              horizontal: '0.2rem',
-                            }}
-                            $width="100%"
-                          >
-                            <Box
-                              $css={css`
-                                width: 24px;
-                                flex-shrink: 0;
-                              `}
-                            >
-                              {emoji ? (
-                                <Text $size="18px">{emoji}</Text>
-                              ) : (
-                                <DocIcon
-                                  aria-hidden="true"
-                                  width="24px"
-                                  height="24px"
-                                  color="var(--c--contextuals--content--semantic--neutral--primary)"
-                                />
-                              )}
-                            </Box>
-
-                            <Text
-                              $size="sm"
-                              $color="var(--c--contextuals--content--semantic--neutral--primary)"
-                              spellCheck="false"
-                              $weight="500"
-                            >
-                              {titleWithoutEmoji}
-                            </Text>
-                          </Box>
-                        }
-                        right={
-                          <ArrowIcon
-                            aria-hidden="true"
-                            width="24px"
-                            height="24px"
-                            color="var(--c--contextuals--content--semantic--neutral--tertiary)"
-                          />
-                        }
-                      />
-                    );
-                  }}
-                />
+                <InterlinkingSearchGroup search={search} onPick={pick} />
               </Card>
             </QuickSearch>
           </Box>
