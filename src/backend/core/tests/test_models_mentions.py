@@ -111,6 +111,21 @@ def test_models_mentions_notify_concurrent_duplicate():
     assert len(mail.outbox) == 1
 
 
+def test_models_mentions_notify_cache_unreachable():
+    """A notification should be sent when the cache is unreachable.
+
+    The guard is best-effort: the database cooldown still applies.
+    """
+    mention = factories.MentionFactory()
+
+    with mock.patch.object(cache, "add", return_value=None):
+        assert mention.notify() is True
+
+    assert mention.notified_at is not None
+    # pylint: disable-next=no-member
+    assert len(mail.outbox) == 1
+
+
 def test_models_mentions_notify_failure_releases_guard():
     """A failed notification should release the context guard.
 
