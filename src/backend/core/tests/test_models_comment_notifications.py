@@ -402,3 +402,124 @@ def test_models_comment_notify_thread_participants_cache_unavailable():
 
     # pylint: disable-next=no-member
     assert len(mail.outbox) == 1
+
+
+def _conversation():
+    """Return a thread started by a first user, with a second one able to reply."""
+    document, thread, first = _document_with_thread(creator=None)
+    second = _participant(document)
+    factories.CommentFactory(thread=thread, user=first)
+    return thread, first, second
+
+
+def test_models_comment_notify_thread_participants_everyone_hears_of_the_conversation():
+    """A user who was not emailed yet is not silenced by the emails sent to others."""
+    thread, first, second = _conversation()
+
+    # The second user answers: the first one is emailed
+    reply = factories.CommentFactory(thread=thread, user=second)
+    assert reply.notify_thread_participants() == [first]
+
+    # The first user answers right after: the second one, never emailed, hears of it
+    reply = factories.CommentFactory(thread=thread, user=first)
+    assert reply.notify_thread_participants() == [second]
+
+    # pylint: disable-next=no-member
+    assert len(mail.outbox) == 2
+
+
+def test_models_comment_notify_thread_participants_ongoing_conversation():
+    """A user already emailed about a thread is not emailed again by the replies."""
+    thread, first, second = _conversation()
+
+    for author in (second, first, second, first, second):
+        factories.CommentFactory(
+            thread=thread, user=author
+        ).notify_thread_participants()
+
+    # One email each, the following replies are part of the conversation
+    # pylint: disable-next=no-member
+    assert [m.to for m in mail.outbox] == [[first.email], [second.email]]
+
+
+def test_models_comment_notify_thread_participants_delay_is_not_restarted(settings):
+    """The delay is fixed: it starts with the email and the replies do not extend it."""
+    settings.THREAD_REPLY_NOTIFICATION_COOLDOWN_MINUTES = 10
+    thread, first, second = _conversation()
+
+    with (
+        mock.patch.object(models.cache, "add", wraps=models.cache.add) as mock_add,
+        mock.patch.object(models.cache, "touch") as mock_touch,
+    ):
+        reply = factories.CommentFactory(thread=thread, user=second)
+        assert reply.notify_thread_participants() == [first]
+        mock_add.assert_any_call(
+            reply.thread_reply_cooldown_key(first), "1", timeout=600
+        )
+
+        follow_up = factories.CommentFactory(thread=thread, user=second)
+        assert follow_up.notify_thread_participants() == []
+        mock_touch.assert_not_called()
+
+
+def test_models_comment_notify_thread_participants_after_the_delay():
+    """A user is emailed again once their delay is over."""
+    thread, first, second = _conversation()
+
+    reply = factories.CommentFactory(thread=thread, user=second)
+    assert reply.notify_thread_participants() == [first]
+
+    # The delay of the first user expired
+    models.cache.delete(reply.thread_reply_cooldown_key(first))
+
+    later = factories.CommentFactory(thread=thread, user=second)
+    assert later.notify_thread_participants() == [first]
+    # pylint: disable-next=no-member
+    assert len(mail.outbox) == 2
+
+
+def test_models_comment_notify_thread_participants_delays_are_per_thread():
+    """The delay of a user in a thread does not silence the other threads."""
+    document, thread, author = _document_with_thread(creator=None)
+    other_thread = factories.ThreadFactory(document=document, creator=None)
+    participant = _participant(document)
+    for current in (thread, other_thread):
+        factories.CommentFactory(thread=current, user=participant)
+        reply = factories.CommentFactory(thread=current, user=author)
+        assert reply.notify_thread_participants() == [participant]
+
+
+def test_models_comment_notify_thread_participants_cooldown_disabled(settings):
+    """Every reply is notified when the cooldown is set to 0."""
+    settings.THREAD_REPLY_NOTIFICATION_COOLDOWN_MINUTES = 0
+    thread, first, second = _conversation()
+
+    assert factories.CommentFactory(
+        thread=thread, user=second
+    ).notify_thread_participants() == [first]
+    assert factories.CommentFactory(
+        thread=thread, user=second
+    ).notify_thread_participants() == [first]
+
+
+def test_models_comment_notify_thread_participants_failure_releases_the_delay():
+    """A user who could not be emailed is notified by the next reply."""
+    thread, first, second = _conversation()
+
+    with mock.patch.object(models.Document, "send_email", return_value=False):
+        reply = factories.CommentFactory(thread=thread, user=second)
+        assert reply.notify_thread_participants() == []
+
+    follow_up = factories.CommentFactory(thread=thread, user=second)
+    assert follow_up.notify_thread_participants() == [first]
+
+
+def test_models_comment_notify_thread_participants_failure_is_retried():
+    """The redelivery of the task of a reply that failed to send still goes on."""
+    thread, first, second = _conversation()
+    reply = factories.CommentFactory(thread=thread, user=second)
+
+    with mock.patch.object(models.Document, "send_email", return_value=False):
+        assert reply.notify_thread_participants() == []
+
+    assert reply.notify_thread_participants() == [first]

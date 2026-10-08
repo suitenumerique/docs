@@ -2019,8 +2019,8 @@ class Comment(BaseModel):
 
         The recipients are the participants of the thread: its creator, the
         authors of the comments posted before this one and the users mentioned
-        in the thread. Are left out:
-
+        in the thread.
+        Are left out:
         - the author of this comment,
         - inactive users and users without an email address,
         - users who do not hold an explicit access (directly, through a team or
@@ -2033,6 +2033,7 @@ class Comment(BaseModel):
         """
         thread = self.thread
 
+        # Participants: authors of the earlier comments, thread creator, mentioned users
         candidate_ids = set(
             Comment.objects.filter(thread=thread, created_at__lt=self.created_at)
             .exclude(pk=self.pk)
@@ -2045,6 +2046,7 @@ class Comment(BaseModel):
             )
         )
 
+        # Skip the author, and the users they just mentioned (already emailed)
         if self.user_id is not None:
             candidate_ids.discard(self.user_id)
             candidate_ids.difference_update(
@@ -2057,6 +2059,7 @@ class Comment(BaseModel):
             )
         candidate_ids.discard(None)
 
+        # Keep only active users who have an email address
         users = [
             user
             for user in User.objects.filter(
@@ -2076,6 +2079,7 @@ class Comment(BaseModel):
                 document__path__in=thread.document.get_self_and_ancestors_paths(),
             ).values_list("user_id", "team", "role")
         )
+        # Keep the users whose best role (direct, team or inherited) can comment
         return [
             user
             for user in users
@@ -2089,10 +2093,38 @@ class Comment(BaseModel):
             in COMMENTING_ROLES
         ]
 
+    def thread_reply_cooldown_key(self, user):
+        """Cache key of the delay of a user in the thread of this comment."""
+        return f"thread-reply-cooldown:{self.thread_id}:{user.pk}"
+
+    def claim_thread_reply_cooldown(self, user):
+        """Claim the delay of a user in this thread, return whether to email them.
+
+        A user is emailed at most once per `THREAD_REPLY_NOTIFICATION_COOLDOWN_MINUTES`
+        in a thread, whatever happens in the meantime, so a conversation in
+        progress does not flood its participants. The delay is per user, not per
+        thread: a participant who was not emailed yet is never silenced by the
+        emails sent to the others. It is fixed (not restarted by the following
+        replies), so the silence of a user cannot last as long as the thread is
+        active.
+
+        A cache that cannot be reached does not throttle (`add` then returns None,
+        whereas an existing key gives False).
+        """
+        timeout = settings.THREAD_REPLY_NOTIFICATION_COOLDOWN_MINUTES * 60
+        if timeout <= 0:
+            return True
+
+        return (
+            cache.add(self.thread_reply_cooldown_key(user), "1", timeout=timeout)
+            is not False
+        )
+
     def notify_thread_participants(self):
         """Email the participants of the thread about this comment.
 
-        Return the list of the users who were notified. A failure while
+        Return the list of the users who were notified, the ones already emailed
+        about this thread within the cooldown period are left out. A failure while
         notifying a user is logged and does not prevent notifying the others.
         """
         recipients = self.get_notification_recipients()
@@ -2120,6 +2152,10 @@ class Comment(BaseModel):
             ):
                 continue
 
+            if not self.claim_thread_reply_cooldown(user):
+                continue
+
+            # Language of the recipient, else of the sender, else the default one
             language = (
                 user.language
                 or (sender.language if sender else None)
@@ -2142,6 +2178,7 @@ class Comment(BaseModel):
                     "link": f"{domain}/docs/{document.pk}/",
                 }
 
+            # One recipient failing must not prevent notifying the others
             try:
                 sent = document.send_email(subject, [user.email], context, language)
             except Exception:  # pylint: disable=broad-exception-caught
@@ -2155,9 +2192,10 @@ class Comment(BaseModel):
             if sent:
                 notified.append(user)
             else:
-                # Release the slot so a retry can notify this user, and carry
-                # on with the other participants
+                # Release the slots so a retry, or the next reply, can notify this
+                # user, and carry on with the other participants
                 cache.delete(guard_key)
+                cache.delete(self.thread_reply_cooldown_key(user))
 
         return notified
 

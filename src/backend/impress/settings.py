@@ -528,6 +528,13 @@ class Base(Configuration):
         15, environ_name="MENTION_NOTIFICATION_COOLDOWN_MINUTES", environ_prefix=None
     )
 
+    # Comment threads
+    THREAD_REPLY_NOTIFICATION_COOLDOWN_MINUTES = values.IntegerValue(
+        15,
+        environ_name="THREAD_REPLY_NOTIFICATION_COOLDOWN_MINUTES",
+        environ_prefix=None,
+    )
+
     # Mail
     EMAIL_BACKEND = values.Value("django.core.mail.backends.smtp.EmailBackend")
     EMAIL_BRAND_NAME = values.Value(None)
