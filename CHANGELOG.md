@@ -15,6 +15,7 @@ and this project adheres to
 - 💄(frontend) restore native task checkboxes and dim completed tasks #2857
 - ⬆️(frontend) upgrade BlockNote to 0.56.0 #2936
 - ♻️(frontend) export PDFs with the Typst engine #2936
+- 💄(frontend) redesign 500 error standalone page #2801
 
 ### Fixed
 
@@ -189,6 +190,9 @@ and this project adheres to
   `COLLABORATION_VERSION_GRANULARITY_MS` #2556
 - ✨(frontend) keep a local copy of documents, so they open and stay editable
   offline #2556
+  offline
+- 🐛(frontend) stop the service worker from caching the collaboration server's
+  rest api
 
 ### Changed
 
