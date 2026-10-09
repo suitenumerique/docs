@@ -194,6 +194,7 @@ and this project adheres to
 - 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
 - 🐛(backend) fix duplicating a document that has no content #2609
 - 📄(frontend) allowed partially export when MIT #2551
+- 🐛(frontend) fix search highlight hidden inside code blocks #2681
 - 🐛(backend) manage async support for Docs custom middleware #2619
 - 🐛(frontend) save the doc with a keepalive
   request when leaving the page #2619
