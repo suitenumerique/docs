@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(backend) bypass throttling on access/me action from yhub
+
 ## [v6.0.0] - 2026-10-05
 
 ### Added

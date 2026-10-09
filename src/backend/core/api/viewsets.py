@@ -88,6 +88,7 @@ from .filters import (
     UserSearchFilter,
 )
 from .throttling import (
+    DocumentAccessThrottle,
     DocumentThrottle,
     UserListThrottleBurst,
     UserListThrottleSustained,
@@ -2664,6 +2665,7 @@ class DocumentAccessViewSet(
         "document__depth",
     )
     resource_field_name = "document"
+    throttle_classes = [DocumentAccessThrottle]
     throttle_scope = "document_access"
 
     @cached_property
