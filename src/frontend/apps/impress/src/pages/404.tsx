@@ -74,7 +74,7 @@ const Page: NextPageWithLayout = () => {
             $variation="tertiary"
           />
           <Text
-            $size="sm"
+            $size="xs"
             $weight={500}
             $theme="neutral"
             $variation="tertiary"
