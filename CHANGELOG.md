@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) wrap long text in the print export #2813
+
 ## [v6.0.0] - 2026-10-05
 
 ### Added
