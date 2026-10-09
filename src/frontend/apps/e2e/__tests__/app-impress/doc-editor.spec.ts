@@ -705,6 +705,29 @@ test.describe('Doc Editor', () => {
     await expect(editor.getByText('Hello Docs - Hello Docs')).toBeVisible();
   });
 
+  test('it highlights search matches inside code blocks', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-search-code-block', browserName);
+
+    await writeInEditor({ page, text: 'intro text' });
+
+    await openSuggestionMenu({ page, suggestion: 'Code Block' });
+    await page.keyboard.type('this is a test code block');
+
+    await page.keyboard.press('Control+f');
+    await page.getByRole('textbox', { name: 'Find in document' }).fill('test');
+
+    const codeHighlight = page
+      .locator('[data-content-type="codeBlock"] .find-and-replace-result')
+      .first();
+    await expect(codeHighlight).toBeVisible();
+    // mix-blend-mode: darken collapses the highlight to black on the code
+    // block's dark background, hiding the match. The fix opts out there.
+    await expect(codeHighlight).toHaveCSS('mix-blend-mode', 'normal');
+  });
+
   test('it checks "Copy link to block" feature', async ({
     page,
     browserName,

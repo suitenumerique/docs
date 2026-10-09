@@ -24,6 +24,7 @@ and this project adheres to
 
 - 🐛(frontend) fix clipped formatting toolbar in new comment composer #2585
 - 📄(frontend) allowed partially export when MIT #2551
+- 🐛(frontend) fix search highlight hidden inside code blocks #2681
 
 ## [v5.5.0] - 2026-08-24
 
