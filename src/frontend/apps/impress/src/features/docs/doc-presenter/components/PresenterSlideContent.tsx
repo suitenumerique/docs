@@ -28,6 +28,16 @@ const slideContentCss = css`
     outline: 0 !important;
   }
 
+  /* BlockNote 0.54 draws the node selection as an ::after overlay
+     (translucent fill + inset ring), so zeroing the outline above is not
+     enough to hide it. */
+  .bn-block-content.ProseMirror-selectednode > *::after,
+  .ProseMirror-selectednode > .bn-block-content > *::after,
+  .bn-block-content .ProseMirror-selectednode::after,
+  .bn-inline-content .ProseMirror-selectednode::after {
+    content: none !important;
+  }
+
   .bn-block-content[data-content-type='divider'] {
     display: none;
   }

@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 
@@ -20,10 +21,15 @@ export const createDocAttachment = async ({
   });
 
   if (!response.ok) {
-    throw new APIError(
-      'Failed to upload on the doc',
-      await errorCauses(response),
-    );
+    const causes = await errorCauses(response);
+
+    // A proxy sitting in front of the API can enforce a lower limit than the application
+    // does, and answers a 413 with an HTML body carrying no usable cause.
+    if (response.status === 413 && !causes.cause?.length) {
+      causes.cause = [t('This file is too large to be uploaded.')];
+    }
+
+    throw new APIError('Failed to upload on the doc', causes);
   }
 
   return response.json() as Promise<DocAttachment>;

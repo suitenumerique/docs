@@ -18,12 +18,15 @@ export const CONFIG = {
   AI_FEATURE_BLOCKNOTE_ENABLED: false,
   AI_FEATURE_LEGACY_ENABLED: true,
   API_USERS_SEARCH_QUERY_MIN_LENGTH: 3,
+  COLLABORATION_LOCAL_DOC_RETENTION_DAYS: 30,
+  COLLABORATION_VERSION_GRANULARITY_MS: 60000,
   COLLABORATION_WS_INACTIVITY_TIMEOUT: 15,
   COLLABORATION_WS_URL: process.env.COLLABORATION_WS_URL,
-  COLLABORATION_WS_NOT_CONNECTED_READ_ONLY: true,
   CONVERSION_UPLOAD_ENABLED: true,
   CONVERSION_FILE_EXTENSIONS_ALLOWED: ['.docx', '.md'],
   CONVERSION_FILE_MAX_SIZE: 20971520,
+  DOCUMENT_IMAGE_MAX_SIZE: 10485760,
+  DUPLICATE_CHILDREN_FEATURE_ENABLED: true,
   ENVIRONMENT: 'development',
   FRONTEND_CSS_URL: null,
   FRONTEND_JS_URL: null,
@@ -261,8 +264,7 @@ export const goToGridDoc = async (
 
 export const updateDocTitle = async (page: Page, title: string) => {
   const input = page.getByRole('textbox', { name: 'Document title' });
-  await expect(input).toHaveText('');
-  await expect(input).toBeVisible();
+  await expect(input).toBeEmpty({ timeout: 10000 });
   await input.fill(title, {
     force: true,
   });
@@ -277,31 +279,6 @@ export const waitForResponseCreateDoc = (page: Page) => {
       response.url().includes('/children/') &&
       response.request().method() === 'POST',
   );
-};
-
-/**
- * Navigates back to the homepage, waits for the PATCH /content/ request
- * triggered by the route change to complete, then navigates back to the doc.
- *
- * Use this instead of goToGridDoc when the test must assert on content that
- * was just written in the editor, to avoid a race condition where the GET
- * request fired on doc mount returns stale data because the server has not
- * yet processed the PATCH.
- */
-export const saveContent = async (page: Page, title: string) => {
-  const savePromise = page.waitForResponse(
-    (response) =>
-      response.url().includes('/content/') &&
-      response.request().method() === 'PATCH',
-  );
-
-  await page.getByRole('button', { name: 'Back to homepage' }).click();
-  await expect(page.getByTestId('docs-grid')).toBeVisible();
-  await expect(page.getByTestId('grid-loader')).toBeHidden();
-
-  await savePromise;
-
-  await goToGridDoc(page, { title });
 };
 
 export const mockedDocument = async (page: Page, data: object) => {
@@ -322,9 +299,7 @@ export const mockedDocument = async (page: Page, data: object) => {
           abilities: {
             destroy: false, // Means not owner
             link_configuration: false,
-            versions_destroy: false,
             versions_list: true,
-            versions_retrieve: true,
             accesses_manage: false, // Means not admin
             update: false,
             partial_update: false, // Means not editor
@@ -438,6 +413,27 @@ export async function waitForLanguageSwitch(
   await page.keyboard.press('Escape');
 }
 
+/**
+ * Wait until no CSS transition runs on the page.
+ *
+ * Moving the focus with the keyboard starts the focus ring transitions of the
+ * buttons. Since Chromium 153, a button that loses the focus or becomes inert
+ * mid-transition gets them cancelled, and react-aria (`runAfterTransition`)
+ * then waits forever before focusing a menu or restoring the focus.
+ * Call it after a keyboard focus move, before the next key press.
+ */
+export const waitForTransitionsEnd = async (page: Page) => {
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every(
+        (animation) =>
+          !(animation instanceof CSSTransition) ||
+          animation.playState !== 'running',
+      ),
+  );
+};
+
 export const clickInEditorShareButton = async (page: Page) => {
   await page
     .getByTestId('floating-bar')
@@ -445,21 +441,24 @@ export const clickInEditorShareButton = async (page: Page) => {
     .click();
 };
 
-export const clickInEditorMenu = async (page: Page, textButton: string) => {
-  await page
-    .getByTestId('floating-bar')
-    .getByRole('button', { name: 'Open the document options' })
-    .click();
-  await page.getByRole('menuitem', { name: textButton }).click();
+export const clickInEditorMenu = async (
+  page: Page,
+  textButton: string | RegExp,
+) => {
+  await clickInDocOptionMenu(
+    page,
+    page.getByTestId('floating-bar'),
+    textButton,
+  );
 };
 
-export const clickInGridMenu = async (
+export const clickInDocOptionMenu = async (
   page: Page,
-  row: Locator,
-  textButton: string,
+  selector: Locator,
+  textButton: string | RegExp,
 ) => {
-  await row
-    .getByRole('button', { name: /Open the menu of actions for the document/ })
+  await selector
+    .getByRole('button', { name: /Open the document options/ })
     .click();
   await page.getByRole('menuitem', { name: textButton }).click();
 };

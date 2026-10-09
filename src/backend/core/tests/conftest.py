@@ -1,15 +1,19 @@
 """Fixtures for tests in the impress core application"""
 
 import base64
+from contextlib import contextmanager
 from unittest import mock
 
 from django.core.cache import cache
+from django.db import transaction
 
 import pytest
 import responses
 
 from core import factories
-from core.tests.utils.urls import reload_urls
+from core.services.yhub_services import YHubService
+from core.tasks.access import PENDING_RESETS_ATTRIBUTE
+from core.tests.utils.urls import reload_urls, restore_urls
 
 USER = "user"
 TEAM = "team"
@@ -22,6 +26,73 @@ def clear_cache():
     cache.clear()
 
 
+@pytest.fixture(autouse=True)
+def restore_urlconf():
+    """
+    Put the URLs back after a test that reloaded them.
+
+    Reloading is how a test makes the resource server routes appear or checks
+    that they are absent, but the URLconf belongs to the process: without this,
+    a test asserting a 404 on `/external_api/` and one asserting a 401 pass or
+    fail depending on which ran first in their worker.
+
+    Autouse and asking for nothing, so it is set up before the `settings`
+    fixture and torn down after it: the reload then sees the settings of the
+    project, not the ones of the test.
+    """
+    yield
+
+    restore_urls()
+
+
+@pytest.fixture(autouse=True, name="mock_reset_service_connections")
+def mock_reset_service_connections_fixture():
+    """
+    Take the resets of connections queued for the collaboration server.
+
+    Every change of an access queues one, at the commit of the transaction: in
+    a transactional test the Celery task would then run inline and reach for
+    the collaboration server. What was queued is checked on this mock, once
+    the callbacks on commit have run (`django_capture_on_commit_callbacks`).
+    """
+    with mock.patch(
+        "core.tasks.access.reset_service_connections_in_cascade.delay"
+    ) as mock_delay:
+        yield mock_delay
+
+
+@pytest.fixture(name="capture_service_resets")
+def capture_service_resets_fixture(
+    mock_reset_service_connections, django_capture_on_commit_callbacks
+):
+    """
+    Provide a context manager taking the resets queued by what runs in it.
+
+    The resets of a transaction are coalesced and sent on commit, and a test
+    runs whole in one transaction: what its setup queued is forgotten first,
+    then the callbacks queued on commit by the block are run, and the resets
+    they send are on the mock this yields.
+    """
+
+    @contextmanager
+    def _capture_service_resets():
+        setattr(transaction.get_connection(), PENDING_RESETS_ATTRIBUTE, None)
+        mock_reset_service_connections.reset_mock()
+        with django_capture_on_commit_callbacks(execute=True):
+            yield mock_reset_service_connections
+
+    return _capture_service_resets
+
+
+@pytest.fixture(autouse=True, name="mock_delete_service_documents")
+def mock_delete_service_documents_fixture():
+    """Take the deletions of documents queued for the collaboration server, as above."""
+    with mock.patch(
+        "core.tasks.documents.delete_service_documents.delay"
+    ) as mock_delay:
+        yield mock_delay
+
+
 @pytest.fixture
 def mock_user_teams():
     """Mock for the "teams" property on the User model."""
@@ -31,10 +102,32 @@ def mock_user_teams():
         yield mock_teams
 
 
+@pytest.fixture(name="yhub_content")
+def yhub_content_fixture():
+    """
+    Serve the content of every document, as the collaboration server does.
+
+    It owns the content: a document built by the factories has none in the
+    database, and what it holds is whatever this fake answers for it. The mock
+    is yielded, so a test can serve another document (`return_value`), none at
+    all (`return_value = None`) or a different one per document
+    (`side_effect`).
+    """
+    with mock.patch.object(
+        YHubService, "get_ydoc", return_value=factories.YDOC_HELLO_WORLD_UPDATE
+    ) as mock_get_ydoc:
+        yield mock_get_ydoc
+
+
 @pytest.fixture(name="indexer_settings")
 def indexer_settings_fixture(settings):
     """
     Setup valid settings for the document indexer. Clear the indexer cache.
+
+    The indexer reads the content of a document from the collaboration server,
+    which is faked here: it holds the same content for every document, and a
+    test wanting one without content answers `None` for it (see the
+    `yhub_content` fixture, this is the same fake).
     """
 
     # pylint: disable-next=import-outside-toplevel
@@ -50,7 +143,10 @@ def indexer_settings_fixture(settings):
     settings.SEARCH_URL = "http://localhost:8081/api/v1.0/documents/search/"
     settings.SEARCH_INDEXER_COUNTDOWN = 1
 
-    yield settings
+    with mock.patch.object(
+        YHubService, "get_ydoc", return_value=factories.YDOC_HELLO_WORLD_UPDATE
+    ):
+        yield settings
 
     # clear cache to prevent issues with other tests
     get_document_indexer.cache_clear()

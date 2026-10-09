@@ -1,9 +1,4 @@
-import {
-  Button,
-  VariantType,
-  useToastProvider,
-  useTreeContext,
-} from '@gouvfr-lasuite/ui-components';
+import { Button, VariantType } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Card, Icon } from '@/components';
@@ -15,12 +10,13 @@ import {
   KEY_LIST_FAVORITE_DOC,
   useRestoreDoc,
 } from '@/docs/doc-management';
+import { KEY_DOC_TREE } from '@/docs/doc-tree';
 import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid';
+import { useToast } from '@/hooks';
 
 export const AlertRestore = ({ doc }: { doc: Doc }) => {
   const { t } = useTranslation();
-  const { toast } = useToastProvider();
-  const treeContext = useTreeContext<Doc>();
+  const { toast } = useToast();
   const { spacingsTokens } = useCunninghamTheme();
   const { mutate: restoreDoc, error } = useRestoreDoc({
     listInvalidQueries: [
@@ -28,12 +24,10 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
       KEY_LIST_DOC_TRASHBIN,
       KEY_DOC,
       KEY_LIST_FAVORITE_DOC,
+      KEY_DOC_TREE,
     ],
     options: {
       onSuccess: (_data) => {
-        // It will force the tree to be reloaded
-        treeContext?.setRoot(undefined as unknown as Doc);
-
         toast(t('The document has been restored.'), VariantType.SUCCESS, {
           duration: 4000,
         });

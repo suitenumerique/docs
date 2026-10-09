@@ -49,9 +49,14 @@ spec:
           args:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if $envVars}}
+          {{- $metricsEnv := include "impress.backend.metrics.env" . }}
+          {{- if or $envVars .Values.jwtKeys.enabled $metricsEnv }}
           env:
             {{- $envVars | indent 12 }}
+            {{- if .Values.jwtKeys.enabled }}
+            {{- include "impress.jwtKeys.backendEnv" . | nindent 12 }}
+            {{- end }}
+            {{- $metricsEnv | nindent 12 }}
           {{- end }}
           {{- $envFrom := concat (.Values.backend.envFrom | default list) ((.Values.backend.django | default dict).envFrom | default list) }}
           {{- if $envFrom }}
@@ -83,6 +88,9 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
+            {{- if .Values.jwtKeys.enabled }}
+            {{- include "impress.jwtKeys.volumeMount" . | nindent 12 }}
+            {{- end }}
             {{- range $index, $value := .Values.mountFiles }}
             - name: "files-{{ $index }}"
               mountPath: {{ $value.path }}
@@ -116,6 +124,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        {{- if .Values.jwtKeys.enabled }}
+        {{- include "impress.jwtKeys.volume" . | nindent 8 }}
+        {{- end }}
         {{- range $index, $value := .Values.mountFiles }}
         - name: "files-{{ $index }}"
           configMap:

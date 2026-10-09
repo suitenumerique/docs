@@ -11,7 +11,14 @@ from django.db import transaction
 import pytest
 
 from core import factories
+from core.factories import YDOC_HELLO_WORLD_UPDATE
 from core.services.search_indexers import FindDocumentIndexer
+from core.services.yhub_services import YHubService
+from core.utils.yjs import base64_yjs_to_text
+
+# what the fake collaboration server of the indexer_settings fixture serves
+# for a document created with the content of the factory
+CONTENT = base64_yjs_to_text(factories.YDOC_HELLO_WORLD_BASE64)
 
 
 @pytest.mark.django_db
@@ -23,7 +30,7 @@ def test_index():
 
     with transaction.atomic():
         doc = factories.DocumentFactory()
-        empty_doc = factories.DocumentFactory(title=None, content="")
+        empty_doc = factories.DocumentFactory(title=None)
         no_title_doc = factories.DocumentFactory(title=None)
 
         factories.UserDocumentAccessFactory(document=doc, user=user)
@@ -36,7 +43,15 @@ def test_index():
         str(no_title_doc.path): {"users": [user.sub]},
     }
 
-    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
+    # the empty document is the one the collaboration server holds no content
+    # for, and it has no title either: nothing to index
+    def get_ydoc(document):
+        return None if document.pk == empty_doc.pk else YDOC_HELLO_WORLD_UPDATE
+
+    with (
+        mock.patch.object(FindDocumentIndexer, "push") as mock_push,
+        mock.patch.object(YHubService, "get_ydoc", side_effect=get_ydoc),
+    ):
         call_command("index")
 
         push_call_args = [call.args[0] for call in mock_push.call_args_list]
@@ -46,8 +61,8 @@ def test_index():
 
         assert sorted(push_call_args[0], key=itemgetter("id")) == sorted(
             [
-                indexer.serialize_document(doc, accesses),
-                indexer.serialize_document(no_title_doc, accesses),
+                indexer.serialize_document(doc, CONTENT, accesses),
+                indexer.serialize_document(no_title_doc, CONTENT, accesses),
             ],
             key=itemgetter("id"),
         )

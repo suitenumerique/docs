@@ -11,7 +11,6 @@ import {
   useDocStore,
   useDocTitleUpdate,
   useDocUtils,
-  useIsCollaborativeEditable,
   useTrans,
 } from '@/docs/doc-management';
 import SimpleFileIcon from '@/features/docs/doc-management/assets/simple-document.svg';
@@ -21,28 +20,38 @@ export const CLASS_DOC_TITLE = '--docs--doc-title';
 
 interface DocTitleProps {
   doc: Doc;
+  onTitleUpdate?: (title: string) => void;
 }
 
-export const DocTitle = ({ doc }: DocTitleProps) => {
-  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
-  const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
+export const DocTitle = ({ doc, onTitleUpdate }: DocTitleProps) => {
+  const readOnly = !doc.abilities.partial_update;
 
   if (readOnly) {
     return <DocTitleText />;
   }
 
-  return <DocTitleInput doc={doc} />;
+  return <DocTitleInput doc={doc} onTitleUpdate={onTitleUpdate} />;
 };
 
 export const DocTitleText = () => {
   const { isMobile } = useResponsiveStore();
   const { currentDoc } = useDocStore();
   const { untitledDocument } = useTrans();
+  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(
+    currentDoc?.title ?? '',
+  );
+  const displayTitle = titleWithoutEmoji || untitledDocument;
 
   return (
     <Box className={CLASS_DOC_TITLE} $direction="row" $align="center">
-      <Text as="h2" $margin="none" $size={isMobile ? 'h4' : 'h2'}>
-        {currentDoc?.title || untitledDocument}
+      <Text
+        as="h2"
+        $margin="none"
+        $size={isMobile ? 'h4' : 'h2'}
+        $display="unset"
+      >
+        {emoji && <span aria-hidden="true">{emoji} </span>}
+        {displayTitle}
       </Text>
     </Box>
   );
@@ -98,7 +107,7 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
   );
 };
 
-const DocTitleInput = ({ doc }: DocTitleProps) => {
+const DocTitleInput = ({ doc, onTitleUpdate }: DocTitleProps) => {
   const { isSmallMobile } = useResponsiveStore();
   const { t } = useTranslation();
   const { isTopRoot } = useDocUtils(doc);
@@ -116,6 +125,8 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       if (isTopRoot) {
         const sanitizedTitle = updateDocTitle(doc, inputText);
         setTitleDisplay(sanitizedTitle);
+        onTitleUpdate?.(sanitizedTitle);
+
         return sanitizedTitle;
       } else {
         const { emoji: pastedEmoji } = getEmojiAndTitle(inputText);
@@ -131,9 +142,10 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           getEmojiAndTitle(sanitizedTitle);
 
         setTitleDisplay(sanitizedTitleWithoutEmoji);
+        onTitleUpdate?.(sanitizedTitle);
       }
     },
-    [updateDocTitle, doc, emoji, isTopRoot],
+    [updateDocTitle, doc, emoji, isTopRoot, onTitleUpdate],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -188,6 +200,11 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       $align="center"
       $gap="4px"
       $minHeight="40px"
+      $css={css`
+        &:focus-within {
+          outline: none;
+        }
+      `}
     >
       {!isTopRoot && <DocTitleEmojiPicker doc={doc} />}
       {/**

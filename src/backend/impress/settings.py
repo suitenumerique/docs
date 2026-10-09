@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 import os
+import stat
+import tempfile
 import tomllib
 from socket import gethostbyname, gethostname
 
@@ -77,6 +79,9 @@ class Base(Configuration):
 
     # Security
     ALLOWED_HOSTS = values.ListValue([])
+    # Django's default, made explicit because setup_prometheus_metrics may add
+    # to it in place: Production redefines it with the probes
+    SECURE_REDIRECT_EXEMPT = []
     SECRET_KEY = SecretFileValue(None)
     SERVER_TO_SERVER_API_TOKENS = values.ListValue([])
 
@@ -160,7 +165,7 @@ class Base(Configuration):
         },
         "staticfiles": {
             "BACKEND": values.Value(
-                "whitenoise.storage.CompressedManifestStaticFilesStorage",
+                "servestatic.storage.CompressedManifestStaticFilesStorage",
                 environ_name="STORAGES_STATICFILES_BACKEND",
             ),
         },
@@ -205,6 +210,15 @@ class Base(Configuration):
         environ_name="DOCUMENT_IMAGE_MAX_SIZE",
         environ_prefix=None,
     )
+
+    # Allow duplicating a document together with its children
+    DUPLICATE_CHILDREN_FEATURE_ENABLED = values.BooleanValue(
+        default=True,
+        environ_name="DUPLICATE_CHILDREN_FEATURE_ENABLED",
+        environ_prefix=None,
+    )
+
+    DATA_UPLOAD_MAX_MEMORY_SIZE = values.IntegerValue(20 * MB)  # 20 MB
 
     REACTIONS_MAX_PER_COMMENT = values.IntegerValue(
         15,
@@ -285,9 +299,6 @@ class Base(Configuration):
         environ_name="DOCUMENT_ATTACHMENT_CHECK_UNSAFE_MIME_TYPES_ENABLED",
         environ_prefix=None,
     )
-    # Document versions
-    DOCUMENT_VERSIONS_PAGE_SIZE = 50
-
     # Document /all endpoint
     DOCUMENT_ALL_ENDPOINT_ENABLED = values.BooleanValue(
         default=True,
@@ -354,7 +365,8 @@ class Base(Configuration):
 
     MIDDLEWARE = [
         "django.middleware.security.SecurityMiddleware",
-        "whitenoise.middleware.WhiteNoiseMiddleware",
+        "dockerflow.django.middleware.DockerflowMiddleware",
+        "servestatic.middleware.ServeStaticMiddleware",
         "django.contrib.sessions.middleware.SessionMiddleware",
         "django.middleware.locale.LocaleMiddleware",
         "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -365,7 +377,6 @@ class Base(Configuration):
         "core.middleware.ForceSessionMiddleware",
         "core.middleware.SaveRawBodyMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
-        "dockerflow.django.middleware.DockerflowMiddleware",
         "csp.middleware.CSPMiddleware",
         "waffle.middleware.WaffleMiddleware",
     ]
@@ -380,6 +391,7 @@ class Base(Configuration):
         # impress
         "core",
         "demo",
+        "servestatic",
         "drf_spectacular",
         # Third party apps
         "corsheaders",
@@ -401,6 +413,7 @@ class Base(Configuration):
         "django.contrib.staticfiles",
         # OIDC third party
         "mozilla_django_oidc",
+        "lasuite.oidc_login",
         "lasuite.malware_detection",
         "lasuite.marketing",
         "csp",
@@ -410,6 +423,16 @@ class Base(Configuration):
     CACHES = {
         "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
     }
+    DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = values.BooleanValue(
+        default=True,
+        environ_name="DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS",
+        environ_prefix=None,
+    )
+    DJANGO_REDIS_LOGGER = values.Value(
+        default="core.cache.redis",
+        environ_name="DJANGO_REDIS_LOGGER",
+        environ_prefix=None,
+    )
 
     REST_FRAMEWORK = {
         "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -464,6 +487,11 @@ class Base(Configuration):
                 environ_name="API_DOCUMENT_ASK_FOR_ACCESS_THROTTLE_RATE",
                 environ_prefix=None,
             ),
+            "mention": values.Value(
+                default="30/minute",
+                environ_name="API_MENTION_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
             "config": values.Value(
                 default="30/minute",
                 environ_name="API_CONFIG_THROTTLE_RATE",
@@ -495,6 +523,11 @@ class Base(Configuration):
         30, environ_name="TRASHBIN_CUTOFF_DAYS", environ_prefix=None
     )
 
+    # Mentions
+    MENTION_NOTIFICATION_COOLDOWN_MINUTES = values.IntegerValue(
+        15, environ_name="MENTION_NOTIFICATION_COOLDOWN_MINUTES", environ_prefix=None
+    )
+
     # Mail
     EMAIL_BACKEND = values.Value("django.core.mail.backends.smtp.EmailBackend")
     EMAIL_BRAND_NAME = values.Value(None)
@@ -519,29 +552,91 @@ class Base(Configuration):
 
     # Sentry
     SENTRY_DSN = values.Value(None, environ_name="SENTRY_DSN", environ_prefix=None)
+    SENTRY_TRACES_SAMPLE_RATE = values.FloatValue(
+        0.0, environ_name="SENTRY_TRACES_SAMPLE_RATE", environ_prefix=None
+    )
 
     # Collaboration
-    COLLABORATION_API_URL = values.Value(
-        None, environ_name="COLLABORATION_API_URL", environ_prefix=None
-    )
-    COLLABORATION_SERVER_SECRET = SecretFileValue(
-        None, environ_name="COLLABORATION_SERVER_SECRET", environ_prefix=None
-    )
     COLLABORATION_WS_URL = values.Value(
         None, environ_name="COLLABORATION_WS_URL", environ_prefix=None
-    )
-    COLLABORATION_WS_NOT_CONNECTED_READ_ONLY = values.BooleanValue(
-        default=values.BooleanValue(  # COLLABORATION_WS_NOT_CONNECTED_READY_ONLY compat
-            default=False,
-            environ_name="COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
-            environ_prefix=None,
-        ),
-        environ_name="COLLABORATION_WS_NOT_CONNECTED_READ_ONLY",
-        environ_prefix=None,
     )
     COLLABORATION_WS_INACTIVITY_TIMEOUT = values.IntegerValue(
         None,
         environ_name="COLLABORATION_WS_INACTIVITY_TIMEOUT",
+        environ_prefix=None,
+    )
+    # Granularity of the document version history, in milliseconds.
+    # Increase or decrease this value to adjust the granularity of version history.
+    COLLABORATION_VERSION_GRANULARITY_MS = values.IntegerValue(
+        60000,
+        environ_name="COLLABORATION_VERSION_GRANULARITY_MS",
+        environ_prefix=None,
+    )
+    # How long a browser keeps its local (offline) copy of a document after the
+    # last time it was opened, in days. The frontend drops copies older than this
+    # on startup.
+    COLLABORATION_LOCAL_DOC_RETENTION_DAYS = values.IntegerValue(
+        30,
+        environ_name="COLLABORATION_LOCAL_DOC_RETENTION_DAYS",
+        environ_prefix=None,
+    )
+    # Base url of the collaboration server's REST api, including its route
+    # prefix (e.g. "http://yhub:3002/collaboration"). Server-to-server only:
+    # used with an admin JWT to migrate legacy documents and, later, to kick
+    # connections when permissions change.
+    COLLABORATION_API_URL = values.Value(
+        None, environ_name="COLLABORATION_API_URL", environ_prefix=None
+    )
+
+    # yhub collaboration server, as reached by core.services.yhub_services
+    YHUB_API_BASE_URL = values.Value(
+        None, environ_name="YHUB_API_BASE_URL", environ_prefix=None
+    )
+    # The yhub organization our documents live in. It must match the YHUB_ORG
+    # of the yhub server, which rejects the rooms of any other organization.
+    YHUB_ORG = values.Value("docs", environ_name="YHUB_ORG", environ_prefix=None)
+    YHUB_API_TIMEOUT = values.IntegerValue(
+        default=30,
+        environ_name="YHUB_API_TIMEOUT",
+        environ_prefix=None,
+    )
+    # Replaying the legacy history of a document reads every one of its S3
+    # versions, so it is the one call that can take minutes. Timing it out does
+    # not stop the collaboration server, it only loses the answer.
+    YHUB_MIGRATION_TIMEOUT = values.IntegerValue(
+        default=600,
+        environ_name="YHUB_MIGRATION_TIMEOUT",
+        environ_prefix=None,
+    )
+    # A change of accesses has the connections of a whole subtree re-checked,
+    # one call to the collaboration server per document. The walk resets this
+    # many documents per run and queues the rest after this many seconds, so
+    # that a large subtree is spread over time instead of fired at once.
+    YHUB_RESET_CONNECTIONS_BATCH_SIZE = values.PositiveIntegerValue(
+        default=50,
+        environ_name="YHUB_RESET_CONNECTIONS_BATCH_SIZE",
+        environ_prefix=None,
+    )
+    YHUB_RESET_CONNECTIONS_DELAY = values.FloatValue(
+        default=1.0,
+        environ_name="YHUB_RESET_CONNECTIONS_DELAY",
+        environ_prefix=None,
+    )
+
+    # JWT
+    # RSA private key (PEM) used to sign the tokens issued by
+    # core.services.jwt_services.JWTService. Prefer the JWT_PRIVATE_KEY_FILE
+    # environment variable, a PEM does not fit well in an environment variable.
+    JWT_PRIVATE_KEY = SecretFileValue(
+        None,
+        environ_name="JWT_PRIVATE_KEY",
+        environ_prefix=None,
+    )
+    # Lifetime, in seconds, of the tokens issued by the JWT service. It is both
+    # the "exp" claim horizon and the cache timeout of the generated tokens.
+    JWT_TOKEN_LIFETIME = values.IntegerValue(
+        default=3600,
+        environ_name="JWT_TOKEN_LIFETIME",
         environ_prefix=None,
     )
 
@@ -645,6 +740,9 @@ class Base(Configuration):
     )
     OIDC_OP_LOGOUT_ENDPOINT = values.Value(
         None, environ_name="OIDC_OP_LOGOUT_ENDPOINT", environ_prefix=None
+    )
+    OIDC_OP_LOGOUT_USE_POST = values.BooleanValue(
+        False, environ_name="OIDC_OP_LOGOUT_USE_POST", environ_prefix=None
     )
     OIDC_AUTH_REQUEST_EXTRA_PARAMS = values.DictValue(
         {}, environ_name="OIDC_AUTH_REQUEST_EXTRA_PARAMS", environ_prefix=None
@@ -938,7 +1036,7 @@ class Base(Configuration):
         False, environ_name="CONVERSION_UPLOAD_ENABLED", environ_prefix=None
     )
     CONVERSION_FILE_MAX_SIZE = values.IntegerValue(
-        20 * MB,
+        default=DATA_UPLOAD_MAX_MEMORY_SIZE,
         environ_name="CONVERSION_FILE_MAX_SIZE",
         environ_prefix=None,
     )
@@ -971,9 +1069,9 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
-    NO_WEBSOCKET_CACHE_TIMEOUT = values.Value(
-        default=120,
-        environ_name="NO_WEBSOCKET_CACHE_TIMEOUT",
+    DOCUMENT_NB_ACCESSES_CACHE_TIMEOUT = values.IntegerValue(
+        default=600,
+        environ_name="DOCUMENT_NB_ACCESSES_CACHE_TIMEOUT",
         environ_prefix=None,
     )
 
@@ -1020,6 +1118,13 @@ class Base(Configuration):
                     environ_prefix=None,
                 ),
                 "propagate": True,
+            },
+            "request.summary": {
+                "level": values.Value(
+                    "WARNING",
+                    environ_name="LOGGING_LEVEL_REQUEST_SUMMARY",
+                    environ_prefix=None,
+                )
             },
         },
     }
@@ -1116,10 +1221,6 @@ class Base(Configuration):
         ),
     }
 
-    CONTENT_METADATA_CACHE_TIMEOUT = values.IntegerValue(
-        60 * 60 * 24, environ_name="CONTENT_METADATA_CACHE_TIMEOUT", environ_prefix=None
-    )
-
     TREEBEARD_PATH_COMPUTE_RETRY_MAX_ATTEMPTS = values.IntegerValue(
         10,
         environ_name="TREEBEARD_PATH_COMPUTE_RETRY_MAX_ATTEMPTS",
@@ -1172,6 +1273,67 @@ class Base(Configuration):
     SILKY_MAX_REQUEST_BODY_SIZE = 0
     SILKY_MAX_RESPONSE_BODY_SIZE = 0
 
+    # -- Load-test tooling ---------------------------------------------------
+    # The `loadtest` application mints sessions for existing users, which is
+    # what lets a load generator act as thousands of them without going through
+    # the OIDC login. It is not in INSTALLED_APPS: only the `LoadTest`
+    # configuration below installs it and turns this on. Deliberately not read
+    # from the environment — no variable can enable it on another configuration —
+    # and pinned to False again in `Production`, which every deployed
+    # configuration inherits from.
+    LOAD_TEST_TOOLS_ENABLED = False
+
+    # -- Metrics (django-prometheus) -----------------------------------------
+    # Opt-in Prometheus instrumentation, OFF by default. When enabled,
+    # `django_prometheus` is added to INSTALLED_APPS and its two middlewares
+    # wrap MIDDLEWARE (see setup_prometheus_metrics below) to count and time
+    # every request, labelled by view name, method and status — never by path,
+    # user or document, so no identifier leaves the application through a label.
+    #
+    # The metrics are served on /metrics, outside of /api/ so that the ingress
+    # of the application does not publish them: a deployment that wants them
+    # reachable from outside routes that path on purpose, and filters who may
+    # call it. Whoever reaches it still has to present PROMETHEUS_API_KEY as a
+    # bearer token (core.middleware.PrometheusAuthMiddleware), and the
+    # application refuses to start with the metrics enabled and no key.
+    PROMETHEUS_METRICS_ENABLED = values.BooleanValue(
+        False, environ_name="PROMETHEUS_METRICS_ENABLED", environ_prefix=None
+    )
+    PROMETHEUS_API_KEY = SecretFileValue(
+        None, environ_name="PROMETHEUS_API_KEY", environ_prefix=None
+    )
+    # Let /metrics be scraped over plain http where SECURE_SSL_REDIRECT is on,
+    # i.e. take it out of the redirect to https the way the probes are. For a
+    # scraper that reaches the process itself, past the proxy terminating TLS
+    # — a Prometheus inside a kubernetes cluster calling the pods. Leave it off
+    # when the application is reached directly: the redirect is then what keeps
+    # the bearer token off the wire in clear.
+    PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT = values.BooleanValue(
+        False,
+        environ_name="PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT",
+        environ_prefix=None,
+    )
+    # Also count and time the SQL queries, by swapping the database engine for
+    # django-prometheus' instrumented subclass of it.
+    PROMETHEUS_DB_METRICS_ENABLED = values.BooleanValue(
+        True, environ_name="PROMETHEUS_DB_METRICS_ENABLED", environ_prefix=None
+    )
+    # Report the length of the Celery queue on /metrics. It is asked to the
+    # broker at every scrape, by whichever replica answers it.
+    PROMETHEUS_CELERY_QUEUE_METRICS_ENABLED = values.BooleanValue(
+        True,
+        environ_name="PROMETHEUS_CELERY_QUEUE_METRICS_ENABLED",
+        environ_prefix=None,
+    )
+    # uvicorn runs several worker processes, and a scrape is answered by one of
+    # them: they all write their numbers to this directory so that whichever
+    # answers can add them up. It has to be the same for every worker, hence a
+    # fixed default rather than a random one. Defaults to a directory of the
+    # system's temporary directory, named after the user running the application.
+    PROMETHEUS_MULTIPROC_DIR = values.Value(
+        None, environ_name="PROMETHEUS_MULTIPROC_DIR", environ_prefix=None
+    )
+
     # pylint: disable=invalid-name
     @property
     def ENVIRONMENT(self):
@@ -1203,6 +1365,72 @@ class Base(Configuration):
         }
 
     @classmethod
+    def setup_prometheus_metrics(cls):
+        """Wire django-prometheus into the settings (PROMETHEUS_METRICS_ENABLED)."""
+        if not cls.PROMETHEUS_API_KEY:
+            # fail closed: without a key the endpoint would answer to anybody
+            raise ValueError(
+                "PROMETHEUS_METRICS_ENABLED requires PROMETHEUS_API_KEY to be set."
+            )
+
+        # prometheus_client decides whether the workers share their numbers
+        # when it is first imported, by looking for this variable in the
+        # environment of the process: a setting alone would come too late.
+        multiproc_dir = cls.PROMETHEUS_MULTIPROC_DIR or os.path.join(
+            tempfile.gettempdir(), f"impress-prometheus-{os.getuid()}"
+        )
+        try:
+            os.makedirs(multiproc_dir, mode=0o700, exist_ok=True)
+            stat_result = os.lstat(multiproc_dir)
+        except OSError as error:
+            raise ValueError(
+                f"PROMETHEUS_MULTIPROC_DIR ({multiproc_dir}) cannot be created: {error}"
+            ) from error
+        # A shared temporary directory is writable by every local user: refuse a
+        # directory somebody else prepared, or a link to somewhere else.
+        if not stat.S_ISDIR(stat_result.st_mode) or stat_result.st_uid != os.getuid():
+            raise ValueError(
+                f"PROMETHEUS_MULTIPROC_DIR ({multiproc_dir}) must be a directory "
+                "owned by the user running the application."
+            )
+        cls.PROMETHEUS_MULTIPROC_DIR = multiproc_dir
+        os.environ["PROMETHEUS_MULTIPROC_DIR"] = multiproc_dir
+
+        # Edited in place, like silk above: post_setup runs once the settings
+        # have been handed to Django, which only sees an assignment made
+        # here through the objects it already holds.
+        if "django_prometheus" not in cls.INSTALLED_APPS:
+            cls.INSTALLED_APPS.append("django_prometheus")
+        # The measuring middlewares go first and last, so that the time spent in
+        # every other middleware is part of what is measured. The authentication
+        # goes before them all: a refused scrape costs nothing and touches
+        # neither the session store nor the database.
+        auth = "core.middleware.PrometheusAuthMiddleware"
+        before = "django_prometheus.middleware.PrometheusBeforeMiddleware"
+        after = "django_prometheus.middleware.PrometheusAfterMiddleware"
+        if before not in cls.MIDDLEWARE:
+            cls.MIDDLEWARE.insert(0, before)
+            cls.MIDDLEWARE.insert(0, auth)
+            cls.MIDDLEWARE.append(after)
+
+        default_database = cls.DATABASES["default"]
+        if (
+            cls.PROMETHEUS_DB_METRICS_ENABLED
+            and default_database.get("ENGINE") == "django.db.backends.postgresql"
+        ):
+            default_database["ENGINE"] = "django_prometheus.db.backends.postgresql"
+
+        # in place, like the lists above: a reassignment would go unseen. The
+        # path is core.middleware.METRICS_PATH, not imported here: the settings
+        # are read before the applications are.
+        metrics_pattern = "^metrics$"
+        if (
+            cls.PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT
+            and metrics_pattern not in cls.SECURE_REDIRECT_EXEMPT
+        ):
+            cls.SECURE_REDIRECT_EXEMPT.append(metrics_pattern)
+
+    @classmethod
     def post_setup(cls):
         """Post setup configuration.
         This is the place where you can configure settings that require other
@@ -1216,7 +1444,14 @@ class Base(Configuration):
                 dsn=cls.SENTRY_DSN,
                 environment=cls.__name__.lower(),
                 release=get_release(),
-                integrations=[DjangoIntegration()],
+                traces_sample_rate=cls.SENTRY_TRACES_SAMPLE_RATE,
+                integrations=[
+                    DjangoIntegration(
+                        transaction_style="url",
+                        middleware_spans=True,
+                        cache_spans=True,
+                    )
+                ],
             )
             sentry_sdk.set_tag("application", "backend")
 
@@ -1267,6 +1502,10 @@ class Base(Configuration):
                 "Both OPENAI_SDK and MISTRAL_SDK parameters can not be set simultaneously."
             )
 
+        # a batch of nothing would walk no subtree and never end
+        if cls.YHUB_RESET_CONNECTIONS_BATCH_SIZE < 1:
+            raise ValueError("YHUB_RESET_CONNECTIONS_BATCH_SIZE must be at least 1.")
+
         if cls.POSTHOG_KEY is not None:
             posthog.api_key = cls.POSTHOG_KEY
             posthog.host = cls.POSTHOG_HOST
@@ -1286,6 +1525,9 @@ class Base(Configuration):
             if "silk.middleware.SilkyMiddleware" not in cls.MIDDLEWARE:
                 cls.MIDDLEWARE.insert(1, "silk.middleware.SilkyMiddleware")
 
+        if cls.PROMETHEUS_METRICS_ENABLED:
+            cls.setup_prometheus_metrics()
+
 
 class Build(Base):
     """Settings used when the application is built.
@@ -1301,7 +1543,7 @@ class Build(Base):
         },
         "staticfiles": {
             "BACKEND": values.Value(
-                "whitenoise.storage.CompressedManifestStaticFilesStorage",
+                "servestatic.storage.CompressedManifestStaticFilesStorage",
                 environ_name="STORAGES_STATICFILES_BACKEND",
             ),
         },
@@ -1373,6 +1615,18 @@ class Test(Base):
 
     CELERY_TASK_ALWAYS_EAGER = values.BooleanValue(True)
 
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": values.Value(
+                "servestatic.storage.CompressedStaticFilesStorage",
+                environ_name="STORAGES_STATICFILES_BACKEND",
+            ),
+        },
+    }
+
     def __init__(self):
         # pylint: disable=invalid-name
         self.INSTALLED_APPS += ["drf_spectacular_sidecar"]
@@ -1422,6 +1676,9 @@ class Production(Base):
     SECURE_HSTS_PRELOAD = True
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_SSL_REDIRECT = True
+    # The probes are called on the process itself, over plain http: a redirect
+    # to https is a probe that fails. /metrics joins them only with
+    # PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT, see setup_prometheus_metrics
     SECURE_REDIRECT_EXEMPT = [
         "^__lbheartbeat__",
         "^__heartbeat__",
@@ -1431,6 +1688,11 @@ class Production(Base):
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
     SESSION_CACHE_ALIAS = "session"
+
+    # Never in production: sessions are only minted for a load test, with the
+    # `LoadTest` configuration. Everything that tooling adds is switched off
+    # here explicitly, whatever the defaults of `Base` become.
+    LOAD_TEST_TOOLS_ENABLED = False
 
     # Privacy
     SECURE_REFERRER_POLICY = "same-origin"
@@ -1454,6 +1716,21 @@ class Production(Base):
             ),
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "SOCKET_CONNECT_TIMEOUT": values.FloatValue(
+                    default=0.5,
+                    environ_name="CACHES_DEFAULT_SOCKET_CONNECT_TIMEOUT",
+                    environ_prefix=None,
+                ),
+                "SOCKET_TIMEOUT": values.FloatValue(
+                    default=1,
+                    environ_name="CACHES_DEFAULT_SOCKET_TIMEOUT",
+                    environ_prefix=None,
+                ),
+                "IGNORE_EXCEPTIONS": values.BooleanValue(
+                    default=True,
+                    environ_name="CACHES_DEFAULT_IGNORE_EXCEPTIONS",
+                    environ_prefix=None,
+                ),
             },
             "KEY_PREFIX": values.Value(
                 "docs",
@@ -1475,6 +1752,21 @@ class Production(Base):
             ),
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "SOCKET_CONNECT_TIMEOUT": values.FloatValue(
+                    default=0.5,
+                    environ_name="CACHES_SESSION_SOCKET_CONNECT_TIMEOUT",
+                    environ_prefix=None,
+                ),
+                "SOCKET_TIMEOUT": values.FloatValue(
+                    default=1,
+                    environ_name="CACHES_SESSION_SOCKET_TIMEOUT",
+                    environ_prefix=None,
+                ),
+                "IGNORE_EXCEPTIONS": values.BooleanValue(
+                    default=False,
+                    environ_name="CACHES_SESSION_IGNORE_EXCEPTIONS",
+                    environ_prefix=None,
+                ),
             },
         },
     }
@@ -1502,6 +1794,22 @@ class PreProduction(Production):
 
     nota bene: it should inherit from the Production environment.
     """
+
+
+class LoadTest(Production):
+    """
+    Load-test environment settings: a production-like deployment, on anonymised
+    data, that a load generator can log into.
+
+    It is `Production` plus the `loadtest` application, whose commands mint
+    sessions for existing users (see `documentation/stress-test-plan.md`). Select
+    it with DJANGO_CONFIGURATION=LoadTest, and never on an instance holding real
+    users: anybody able to run a command there can act as any of them.
+    """
+
+    LOAD_TEST_TOOLS_ENABLED = True
+    # a list of its own: the one of `Base` is shared by every configuration
+    INSTALLED_APPS = [*Production.INSTALLED_APPS, "loadtest"]
 
 
 class Demo(Production):

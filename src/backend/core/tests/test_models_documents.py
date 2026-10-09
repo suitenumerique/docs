@@ -12,7 +12,6 @@ from django.contrib.auth.models import AnonymousUser
 from django.core import mail
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.core.files.storage import default_storage
 from django.test.utils import override_settings
 from django.utils import timezone
 
@@ -159,7 +158,6 @@ def test_models_documents_get_abilities_forbidden(
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
-        "can_edit": False,
         "children_create": False,
         "children_list": False,
         "collaboration_auth": False,
@@ -171,11 +169,10 @@ def test_models_documents_get_abilities_forbidden(
         "favorite": False,
         "comment": False,
         "invite_owner": False,
-        "content_patch": False,
-        "content_retrieve": False,
         "leave": False,
         "media_auth": False,
         "media_check": False,
+        "mention": False,
         "move": False,
         "link_configuration": False,
         "link_select_options": {
@@ -188,9 +185,7 @@ def test_models_documents_get_abilities_forbidden(
         "retrieve": False,
         "tree": False,
         "update": False,
-        "versions_destroy": False,
         "versions_list": False,
-        "versions_retrieve": False,
         "search": False,
     }
     nb_queries = 2 if is_authenticated else 0
@@ -228,7 +223,6 @@ def test_models_documents_get_abilities_reader(
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
-        "can_edit": False,
         "children_create": False,
         "children_list": True,
         "collaboration_auth": True,
@@ -246,20 +240,17 @@ def test_models_documents_get_abilities_reader(
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "content_patch": False,
-        "content_retrieve": True,
         "leave": False,
         "media_auth": True,
         "media_check": True,
+        "mention": False,
         "move": False,
         "partial_update": False,
         "restore": False,
         "retrieve": True,
         "tree": True,
         "update": False,
-        "versions_destroy": False,
         "versions_list": False,
-        "versions_retrieve": False,
         "search": True,
     }
     nb_queries = 2 if is_authenticated else 0
@@ -302,7 +293,6 @@ def test_models_documents_get_abilities_commenter(
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
-        "can_edit": False,
         "children_create": False,
         "children_list": True,
         "collaboration_auth": True,
@@ -320,20 +310,17 @@ def test_models_documents_get_abilities_commenter(
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "content_patch": False,
-        "content_retrieve": True,
         "leave": False,
         "media_auth": True,
         "media_check": True,
+        "mention": False,
         "move": False,
         "partial_update": False,
         "restore": False,
         "retrieve": True,
         "tree": True,
         "update": False,
-        "versions_destroy": False,
         "versions_list": False,
-        "versions_retrieve": False,
         "search": True,
     }
     nb_queries = 2 if is_authenticated else 0
@@ -373,7 +360,6 @@ def test_models_documents_get_abilities_editor(
         "ai_transform": is_authenticated,
         "ai_translate": is_authenticated,
         "attachment_upload": True,
-        "can_edit": True,
         "children_create": is_authenticated,
         "children_list": True,
         "collaboration_auth": True,
@@ -391,20 +377,17 @@ def test_models_documents_get_abilities_editor(
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "content_patch": True,
-        "content_retrieve": True,
         "leave": False,
         "media_auth": True,
         "media_check": True,
+        "mention": False,
         "move": False,
         "partial_update": True,
         "restore": False,
         "retrieve": True,
         "tree": True,
         "update": True,
-        "versions_destroy": False,
         "versions_list": False,
-        "versions_retrieve": False,
         "search": True,
     }
     nb_queries = 2 if is_authenticated else 0
@@ -433,7 +416,6 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "ai_transform": True,
         "ai_translate": True,
         "attachment_upload": True,
-        "can_edit": True,
         "children_create": True,
         "children_list": True,
         "collaboration_auth": True,
@@ -451,20 +433,17 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "content_patch": True,
-        "content_retrieve": True,
         "leave": False,
         "media_auth": True,
         "media_check": True,
+        "mention": True,
         "move": True,
         "partial_update": True,
         "restore": False,
         "retrieve": True,
         "tree": True,
         "update": True,
-        "versions_destroy": True,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
     with django_assert_num_queries(1):
@@ -479,7 +458,6 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
-        "can_edit": False,
         "children_create": False,
         "children_list": False,
         "collaboration_auth": False,
@@ -497,20 +475,17 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "content_patch": False,
-        "content_retrieve": True,
         "leave": False,
         "media_auth": False,
         "media_check": False,
+        "mention": False,
         "move": False,
         "partial_update": False,
         "restore": True,
         "retrieve": True,
         "tree": True,
         "update": False,
-        "versions_destroy": False,
         "versions_list": False,
-        "versions_retrieve": False,
         "search": False,
     }
 
@@ -529,7 +504,6 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "ai_transform": True,
         "ai_translate": True,
         "attachment_upload": True,
-        "can_edit": True,
         "children_create": True,
         "children_list": True,
         "collaboration_auth": True,
@@ -547,20 +521,17 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "content_patch": True,
-        "content_retrieve": True,
         "leave": False,
         "media_auth": True,
         "media_check": True,
+        "mention": True,
         "move": True,
         "partial_update": True,
         "restore": False,
         "retrieve": True,
         "tree": True,
         "update": True,
-        "versions_destroy": True,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
     with django_assert_num_queries(1):
@@ -589,7 +560,6 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "ai_transform": True,
         "ai_translate": True,
         "attachment_upload": True,
-        "can_edit": True,
         "children_create": True,
         "children_list": True,
         "collaboration_auth": True,
@@ -607,20 +577,17 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "content_patch": True,
-        "content_retrieve": True,
         "leave": True,
         "media_auth": True,
         "media_check": True,
+        "mention": True,
         "move": False,
         "partial_update": True,
         "restore": False,
         "retrieve": True,
         "tree": True,
         "update": True,
-        "versions_destroy": False,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
     with django_assert_num_queries(1):
@@ -656,7 +623,6 @@ def test_models_documents_get_abilities_reader_user(
         "ai_transform": access_from_link and ai_access_setting != "restricted",
         "ai_translate": access_from_link and ai_access_setting != "restricted",
         "attachment_upload": access_from_link,
-        "can_edit": access_from_link,
         "children_create": access_from_link,
         "children_list": True,
         "collaboration_auth": True,
@@ -675,20 +641,18 @@ def test_models_documents_get_abilities_reader_user(
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "content_patch": access_from_link,
-        "content_retrieve": True,
         "leave": True,
         "media_auth": True,
         "media_check": True,
+        "mention": document.link_reach != "restricted"
+        and document.link_role in ["commenter", "editor"],
         "move": False,
         "partial_update": access_from_link,
         "restore": False,
         "retrieve": True,
         "tree": True,
         "update": access_from_link,
-        "versions_destroy": False,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
 
@@ -726,7 +690,6 @@ def test_models_documents_get_abilities_commenter_user(
         "ai_transform": access_from_link and ai_access_setting != "restricted",
         "ai_translate": access_from_link and ai_access_setting != "restricted",
         "attachment_upload": access_from_link,
-        "can_edit": access_from_link,
         "children_create": access_from_link,
         "children_list": True,
         "collaboration_auth": True,
@@ -744,20 +707,17 @@ def test_models_documents_get_abilities_commenter_user(
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "content_patch": access_from_link,
-        "content_retrieve": True,
         "leave": True,
         "media_auth": True,
         "media_check": True,
+        "mention": True,
         "move": False,
         "partial_update": access_from_link,
         "restore": False,
         "retrieve": True,
         "tree": True,
         "update": access_from_link,
-        "versions_destroy": False,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
 
@@ -791,7 +751,6 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
-        "can_edit": False,
         "children_create": False,
         "children_list": True,
         "collaboration_auth": True,
@@ -809,20 +768,17 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
             "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
-        "content_patch": False,
-        "content_retrieve": True,
         "leave": True,
         "media_auth": True,
         "media_check": True,
+        "mention": False,
         "move": False,
         "partial_update": False,
         "restore": False,
         "retrieve": True,
         "tree": True,
         "update": False,
-        "versions_destroy": False,
         "versions_list": True,
-        "versions_retrieve": True,
         "search": True,
     }
 
@@ -961,99 +917,6 @@ def test_models_document_get_abilities_ai_access_public(is_authenticated, reach)
     assert abilities["ai_proxy"] == is_authenticated
     assert abilities["ai_transform"] == is_authenticated
     assert abilities["ai_translate"] == is_authenticated
-
-
-def test_models_documents_get_versions_slice_pagination(settings):
-    """
-    The "get_versions_slice" method should allow navigating all versions of
-    the document with pagination.
-    """
-    settings.DOCUMENT_VERSIONS_PAGE_SIZE = 4
-
-    # Create a document with 7 versions
-    document = factories.DocumentFactory()
-    for i in range(6):
-        document.content = f"bar{i:d}"
-        document.save()
-
-    # Add a document version not related to the first document
-    factories.DocumentFactory()
-
-    # - Get default max versions
-    response = document.get_versions_slice()
-    assert response["is_truncated"] is True
-    assert len(response["versions"]) == 4
-    assert response["next_version_id_marker"] != ""
-
-    expected_keys = ["etag", "is_latest", "last_modified", "version_id"]
-    for i in range(4):
-        assert list(response["versions"][i].keys()) == expected_keys
-
-    # - Get page 2
-    response = document.get_versions_slice(
-        from_version_id=response["next_version_id_marker"]
-    )
-    assert response["is_truncated"] is False
-    assert len(response["versions"]) == 2
-    assert response["next_version_id_marker"] == ""
-
-    # - Get custom max versions
-    response = document.get_versions_slice(page_size=2)
-    assert response["is_truncated"] is True
-    assert len(response["versions"]) == 2
-    assert response["next_version_id_marker"] != ""
-
-
-def test_models_documents_get_versions_slice_min_datetime():
-    """
-    The "get_versions_slice" method should filter out versions anterior to
-    the from_datetime passed in argument and the current version.
-    """
-    document = factories.DocumentFactory()
-    from_dt = []
-    for i in range(6):
-        from_dt.append(timezone.now())
-        document.content = f"bar{i:d}"
-        document.save()
-
-    response = document.get_versions_slice(min_datetime=from_dt[2])
-
-    assert len(response["versions"]) == 3
-    for version in response["versions"]:
-        assert version["last_modified"] > from_dt[2]
-
-    response = document.get_versions_slice(min_datetime=from_dt[4])
-
-    assert len(response["versions"]) == 1
-    assert response["versions"][0]["last_modified"] > from_dt[4]
-
-
-def test_models_documents_version_duplicate():
-    """A new version should be created in object storage only if the content has changed."""
-    document = factories.DocumentFactory()
-
-    file_key = str(document.pk)
-    response = default_storage.connection.meta.client.list_object_versions(
-        Bucket=default_storage.bucket_name, Prefix=file_key
-    )
-    assert len(response["Versions"]) == 1
-
-    # Save again with the same content
-    document.save()
-
-    response = default_storage.connection.meta.client.list_object_versions(
-        Bucket=default_storage.bucket_name, Prefix=file_key
-    )
-    assert len(response["Versions"]) == 1
-
-    # Save modified content
-    document.content = "new content"
-    document.save()
-
-    response = default_storage.connection.meta.client.list_object_versions(
-        Bucket=default_storage.bucket_name, Prefix=file_key
-    )
-    assert len(response["Versions"]) == 2
 
 
 def test_models_documents__email_invitation__success():
@@ -1729,3 +1592,59 @@ def test_models_documents_compute_ancestors_links_paths_mapping_structure(
                 {"link_reach": sibling.link_reach, "link_role": sibling.link_role},
             ],
         }
+
+
+def test_models_documents_get_self_and_ancestors_paths_root():
+    """A root document should only return its own path."""
+    document = factories.DocumentFactory()
+
+    assert len(document.path) == models.Document.steplen
+    assert document.get_self_and_ancestors_paths() == [document.path]
+
+
+def test_models_documents_get_self_and_ancestors_paths_tree(
+    django_assert_num_queries,
+):
+    """
+    The method should return the paths of the document and all its ancestors,
+    ordered from the root down to the document itself, without hitting the database.
+    """
+    root = factories.DocumentFactory()
+    factories.DocumentFactory(parent=root)  # sibling branch, should be ignored
+    parent = factories.DocumentFactory(parent=root)
+    document = factories.DocumentFactory(parent=parent)
+    child = factories.DocumentFactory(parent=document)
+
+    with django_assert_num_queries(0):
+        paths = child.get_self_and_ancestors_paths()
+
+    assert paths == [root.path, parent.path, document.path, child.path]
+
+    # Should match what treebeard computes with a database query
+    ancestors_paths = list(
+        child.get_ancestors().order_by("path").values_list("path", flat=True)
+    )
+    assert paths == ancestors_paths + [child.path]
+
+    # Filtering on these paths should return exactly the ancestors and the document
+    assert set(
+        models.Document.objects.filter(path__in=paths).values_list("id", flat=True)
+    ) == {root.id, parent.id, document.id, child.id}
+
+
+def test_models_documents_get_self_and_ancestors_paths_from_path_only():
+    """
+    The method should only rely on the materialized path and the step length,
+    so it can be used on an unsaved instance.
+    """
+    steplen = models.Document.steplen
+    document = models.Document(path="0000001" + "000000A" + "00000Zz")
+
+    assert document.get_self_and_ancestors_paths() == [
+        "0000001",
+        "0000001000000A",
+        "0000001000000A00000Zz",
+    ]
+    assert all(
+        len(path) % steplen == 0 for path in document.get_self_and_ancestors_paths()
+    )

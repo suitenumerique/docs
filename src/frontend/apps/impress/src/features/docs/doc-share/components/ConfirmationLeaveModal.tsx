@@ -80,7 +80,7 @@ export const ConfirmationLeaveModal = ({
           >
             {t('Leave a doc')}
           </Text>
-          <Box $position="absolute" $css="top: 4px; right: 4px;">
+          <Box $position="absolute" $css="top: 8px; right: 8px;">
             <ButtonCloseModal
               aria-label={t('Close the leave modal')}
               onClick={onClose}

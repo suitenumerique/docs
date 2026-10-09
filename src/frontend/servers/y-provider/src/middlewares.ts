@@ -1,16 +1,9 @@
 import cors from 'cors';
 import { NextFunction, Request, Response } from 'express';
-import * as ws from 'ws';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-import {
-  COLLABORATION_SERVER_ORIGIN,
-  COLLABORATION_SERVER_SECRET,
-  Y_PROVIDER_API_KEY,
-} from '@/env';
+import { COLLABORATION_SERVER_ORIGIN, JWKS_URL } from '@/env';
 
-import { logger } from './utils';
-
-const VALID_API_KEYS = [COLLABORATION_SERVER_SECRET, Y_PROVIDER_API_KEY];
 const allowedOrigins = COLLABORATION_SERVER_ORIGIN.split(',');
 
 export const corsMiddleware = cors({
@@ -19,11 +12,36 @@ export const corsMiddleware = cors({
   credentials: true,
 });
 
-export const httpSecurity = (
+// Cached across requests: fetches the Django backend's public keys lazily and
+// keeps them until their "kid" no longer matches a token, per jose's own policy.
+const jwks = createRemoteJWKSet(new URL(JWKS_URL));
+
+// Requiring this audience stops a valid admin JWT issued for another service
+// from being replayed against y-provider.
+const Y_CONVERTER_AUDIENCE = 'y-converter';
+export const JWT_ALGORITHM = 'RS256';
+
+/**
+ * Verify that the given token is an admin JWT signed by the Django backend
+ * for the y-converter audience.
+ */
+const isValidAdminToken = async (token: string): Promise<boolean> => {
+  try {
+    const { payload } = await jwtVerify(token, jwks, {
+      algorithms: [JWT_ALGORITHM],
+      audience: Y_CONVERTER_AUDIENCE,
+    });
+    return payload.admin === true;
+  } catch {
+    return false;
+  }
+};
+
+export const httpSecurity = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   let apiKey = req.headers['authorization'];
 
   if (!apiKey) {
@@ -35,33 +53,8 @@ export const httpSecurity = (
     apiKey = apiKey.slice('Bearer '.length);
   }
 
-  if (!VALID_API_KEYS.includes(apiKey)) {
+  if (!(await isValidAdminToken(apiKey))) {
     res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
-    return;
-  }
-
-  next();
-};
-
-export const wsSecurity = (
-  ws: ws.WebSocket,
-  req: Request,
-  next: NextFunction,
-): void => {
-  // Origin check
-  const origin = req.headers['origin'];
-  if (!origin || !allowedOrigins.includes(origin)) {
-    ws.close(4001, 'Origin not allowed');
-    logger('CORS policy violation: Invalid Origin', origin);
-    return;
-  }
-
-  const cookies = req.headers['cookie'];
-  if (!cookies) {
-    ws.close(4001, 'No cookies');
-    logger('CORS policy violation: No cookies');
-    logger('UA:', req.headers['user-agent']);
-    logger('URL:', req.url);
     return;
   }
 

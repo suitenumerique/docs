@@ -2,7 +2,6 @@ import {
   Button,
   ButtonProps,
   VariantType,
-  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import { MouseEventHandler, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +20,7 @@ import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
 import { AccessRequest, Doc, Role } from '@/docs/doc-management/';
 import { useAuth } from '@/features/auth';
+import { useToast } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 import {
@@ -52,7 +52,7 @@ type Props = {
 const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
   const { t } = useTranslation();
   const { isSmallMobile } = useResponsiveStore();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { spacingsTokens } = useCunninghamTheme();
   const { mutate: acceptDocAccessRequests } = useAcceptDocAccessRequest();
   const [role, setRole] = useState(accessRequest.role);
@@ -209,7 +209,7 @@ export const ButtonAccessRequest = ({
     page: 1,
   });
   const { t } = useTranslation();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { mutate: createRequest } = useCreateDocAccessRequest({
     onSuccess: () => {
       toast(t('Access request sent successfully.'), VariantType.SUCCESS, {

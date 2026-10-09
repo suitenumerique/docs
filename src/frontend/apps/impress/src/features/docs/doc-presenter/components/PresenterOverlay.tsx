@@ -15,7 +15,9 @@ import { useCopyPresenterLink } from '../hooks/useCopyPresenterLink';
 import { usePresenterShortcuts } from '../hooks/usePresenterShortcuts';
 import { getSlideTitle, useSlides } from '../hooks/useSlides';
 import type { PresenterBlock, PresenterSlideData } from '../types';
+import { printPresenterSlides } from '../utils_print';
 
+import { PresenterDocsLogo } from './PresenterDocsLogo';
 import { PresenterFloatingBar } from './PresenterFloatingBar';
 import { PresenterSlide } from './PresenterSlide';
 
@@ -46,6 +48,13 @@ const slideAreaCss = css`
 const clampSlideIndex = (index: number, total: number) =>
   Math.max(0, Math.min(index, Math.max(total - 1, 0)));
 
+const docsLogoCss = css`
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 1;
+`;
+
 export const PresenterOverlay = ({
   doc,
   initialSlideIndex,
@@ -55,6 +64,10 @@ export const PresenterOverlay = ({
   const { t } = useTranslation();
   const editor = useEditorStore((state) => state.editor);
   const copyPresenterLink = useCopyPresenterLink(doc.id);
+
+  // Track the floating bar's actions popover state so keyboard shortcuts
+  // can avoid closing the presenter while the popover is open.
+  const [isActionsOpen, setIsActionsOpen] = useState(false);
 
   // Snapshot the editor's blocks once at mount. Subsequent collaborator
   // edits do not affect the ongoing presentation (by design).
@@ -78,6 +91,8 @@ export const PresenterOverlay = ({
     ],
     [contentSlides, title],
   );
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
   const total = slides.length;
   const [currentIndex, setCurrentIndex] = useState(() =>
     clampSlideIndex(initialSlideIndex, total),
@@ -120,6 +135,18 @@ export const PresenterOverlay = ({
     () => setCurrentIndex(clamp(total - 1)),
     [clamp, total],
   );
+  const exportPdf = useCallback(async () => {
+    if (isExportingPdf) {
+      return;
+    }
+
+    setIsExportingPdf(true);
+    try {
+      await printPresenterSlides(slides);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  }, [isExportingPdf, slides]);
 
   const { isFullscreen, enter, exitIfOwned, toggle } = useBrowserFullscreen();
 
@@ -138,6 +165,7 @@ export const PresenterOverlay = ({
     onToggleFullscreen: () => void toggle(),
     onClose,
     isFullscreen,
+    isPopoverOpen: isActionsOpen,
   });
 
   const mountedIndices = useMemo(() => {
@@ -173,7 +201,7 @@ export const PresenterOverlay = ({
   }
 
   return createPortal(
-    <FocusScope autoFocus restoreFocus>
+    <FocusScope contain={!isActionsOpen} autoFocus restoreFocus>
       <Box
         $css={overlayCss}
         role="dialog"
@@ -195,6 +223,10 @@ export const PresenterOverlay = ({
           ))}
         </Box>
 
+        <Box $css={docsLogoCss}>
+          <PresenterDocsLogo />
+        </Box>
+
         <PresenterFloatingBar
           index={currentIndex}
           total={total}
@@ -202,6 +234,9 @@ export const PresenterOverlay = ({
           onPrev={goPrev}
           onNext={goNext}
           onCopyLink={() => copyPresenterLink(currentIndex)}
+          onExportPdf={() => void exportPdf()}
+          isExportingPdf={isExportingPdf}
+          onActionsOpenChange={setIsActionsOpen}
           onToggleFullscreen={() => void toggle()}
           onClose={onClose}
         />

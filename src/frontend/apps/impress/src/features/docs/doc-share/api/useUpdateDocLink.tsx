@@ -6,6 +6,7 @@ import {
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Doc, LinkReach, LinkRole } from '@/docs/doc-management';
+import { syncDocInTree, useTreeContextOrNull } from '@/docs/doc-tree/utils';
 
 export type UpdateDocLinkParams = Pick<Doc, 'id' | 'link_reach'> &
   Partial<Pick<Doc, 'link_role'>>;
@@ -43,6 +44,7 @@ type UseUpdateDocLinkOptions = UseMutationOptions<
 
 export function useUpdateDocLink(options?: UseUpdateDocLinkOptions) {
   const queryClient = useQueryClient();
+  const treeContext = useTreeContextOrNull();
 
   return useMutation<UpdateDocLinkResponse, APIError, UpdateDocLinkParams>({
     mutationFn: updateDocLink,
@@ -52,6 +54,17 @@ export function useUpdateDocLink(options?: UseUpdateDocLinkOptions) {
         void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });
+      });
+
+      /**
+       * Can be loaded from the doc tree, we need to resync the doc tree
+       * in order to reflect the changes in the tree view.
+       */
+      syncDocInTree(treeContext, variables.id, {
+        link_reach: data.link_reach,
+        link_role: data.link_role,
+        computed_link_reach: data.link_reach,
+        computed_link_role: data.link_role,
       });
 
       options?.onSuccess?.(data, variables, onMutateResult, context);

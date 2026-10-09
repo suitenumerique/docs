@@ -19,6 +19,7 @@ from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,
 )
+from core.services.yhub_services import ServiceUnavailableError, YHubService
 from core.utils.yjs import base64_yjs_to_text
 
 pytestmark = pytest.mark.django_db
@@ -27,7 +28,7 @@ pytestmark = pytest.mark.django_db
 class FakeDocumentIndexer(BaseDocumentIndexer):
     """Fake indexer for test purpose"""
 
-    def serialize_document(self, document, accesses):
+    def serialize_document(self, document, content, accesses):
         return {}
 
     def push(self, data):
@@ -190,7 +191,9 @@ def test_services_search_indexers_serialize_document_returns_expected_json():
     }
 
     indexer = FindDocumentIndexer()
-    result = indexer.serialize_document(document, accesses)
+    # the content is read from the collaboration server and passed in, the
+    # serialization never reaches for it itself
+    result = indexer.serialize_document(document, "Hello world", accesses)
 
     assert set(result.pop("users")) == {str(user_a.sub), str(user_b.sub)}
     assert set(result.pop("groups")) == {"team1", "team2"}
@@ -200,11 +203,11 @@ def test_services_search_indexers_serialize_document_returns_expected_json():
         "depth": 1,
         "path": document.path,
         "numchild": 1,
-        "content": base64_yjs_to_text(document.content),
+        "content": "Hello world",
         "created_at": document.created_at.isoformat(),
         "updated_at": document.updated_at.isoformat(),
         "reach": document.link_reach,
-        "size": 13,
+        "size": 11,
         "is_active": True,
     }
 
@@ -219,7 +222,7 @@ def test_services_search_indexers_serialize_document_deleted():
     document.refresh_from_db()
 
     indexer = FindDocumentIndexer()
-    result = indexer.serialize_document(document, {})
+    result = indexer.serialize_document(document, "", {})
 
     assert result["is_active"] is False
 
@@ -227,10 +230,10 @@ def test_services_search_indexers_serialize_document_deleted():
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_serialize_document_empty():
     """Empty documents returns empty content in the serialized json."""
-    document = factories.DocumentFactory(content="", title=None)
+    document = factories.DocumentFactory(title=None)
 
     indexer = FindDocumentIndexer()
-    result = indexer.serialize_document(document, {})
+    result = indexer.serialize_document(document, "", {})
 
     assert result["content"] == ""
     assert result["title"] == ""
@@ -336,17 +339,66 @@ def test_services_search_indexers_batch_size_argument(mock_push):
 
 @patch.object(FindDocumentIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
+def test_services_search_indexers_index_the_content_of_the_collaboration_server(
+    mock_push,
+):
+    """The indexed content is the one the collaboration server holds."""
+    document = factories.DocumentFactory()
+
+    assert FindDocumentIndexer().index() == 1
+
+    indexed = mock_push.call_args[0][0][0]
+    assert indexed["id"] == str(document.id)
+    assert indexed["content"] == base64_yjs_to_text(factories.YDOC_HELLO_WORLD_BASE64)
+
+
+@patch.object(FindDocumentIndexer, "push")
+@pytest.mark.usefixtures("indexer_settings")
+def test_services_search_indexers_skip_documents_the_content_of_which_is_unreadable(
+    mock_push,
+):
+    """
+    A document whose content cannot be read is left out of the batch.
+
+    Indexing it with an empty content would erase what the search backend knows
+    of it, on nothing more than a collaboration server hiccup.
+    """
+    unreadable, readable = factories.DocumentFactory.create_batch(2)
+
+    def get_ydoc(document):
+        if document.pk == unreadable.pk:
+            raise ServiceUnavailableError("yhub is unreachable")
+        return factories.YDOC_HELLO_WORLD_UPDATE
+
+    # the indexer_settings fixture serves content for every document, this
+    # test needs one of them to fail
+    with patch.object(YHubService, "get_ydoc", side_effect=get_ydoc):
+        assert FindDocumentIndexer().index() == 1
+
+    results = {doc["id"] for doc in mock_push.call_args[0][0]}
+    assert results == {str(readable.id)}
+
+
+@patch.object(FindDocumentIndexer, "push")
+@pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ignore_empty_documents(mock_push):
     """
     Documents indexing should be processed in batches,
     and only the access data relevant to each batch should be used.
     """
     document = factories.DocumentFactory()
-    factories.DocumentFactory(content="", title="")
+    empty = factories.DocumentFactory(title="")
     empty_title = factories.DocumentFactory(title="")
-    empty_content = factories.DocumentFactory(content="")
+    empty_content = factories.DocumentFactory()
 
-    assert FindDocumentIndexer().index() == 3
+    # a document with no content is one the collaboration server holds none for
+    def get_ydoc(doc):
+        if doc.pk in (empty.pk, empty_content.pk):
+            return None
+        return factories.YDOC_HELLO_WORLD_UPDATE
+
+    with patch.object(YHubService, "get_ydoc", side_effect=get_ydoc):
+        assert FindDocumentIndexer().index() == 3
 
     assert mock_push.call_count == 1
 
@@ -371,10 +423,18 @@ def test_services_search_indexers_skip_empty_batches(mock_push, indexer_settings
 
     document = factories.DocumentFactory()
 
-    # Only empty docs
-    factories.DocumentFactory.create_batch(5, content="", title="")
+    # Only empty docs: no title, and no content in the collaboration server
+    empty = factories.DocumentFactory.create_batch(5, title="")
+    empty_ids = {doc.pk for doc in empty}
 
-    assert FindDocumentIndexer().index() == 1
+    with patch.object(
+        YHubService,
+        "get_ydoc",
+        side_effect=lambda doc: (
+            None if doc.pk in empty_ids else factories.YDOC_HELLO_WORLD_UPDATE
+        ),
+    ):
+        assert FindDocumentIndexer().index() == 1
     assert mock_push.call_count == 1
 
     results = [doc["id"] for doc in mock_push.call_args[0][0]]

@@ -46,18 +46,29 @@ export const createRootSubPage = async (
   }
 
   // Update sub page name
-  const randomDocs = randomName(docName, browserName, 1);
-  await updateDocTitle(page, randomDocs[0]);
+  const [randomDoc] = randomName(docName, browserName, 1);
+  await updateDocTitle(page, randomDoc);
+
+  await expect(docTree.getByText(randomDoc)).toBeVisible();
 
   // Return sub page data
-  return { name: randomDocs[0], docTreeItem: subPageItem, item: subPageJson };
+  return { name: randomDoc, docTreeItem: subPageItem, item: subPageJson };
 };
 
 export const clickOnAddRootSubPage = async (page: Page) => {
+  const currentUrl = page.url();
+  const docTree = page.getByTestId('doc-tree');
   const rootItem = page.getByTestId('doc-tree-root-item');
   await expect(rootItem).toBeVisible();
   await rootItem.hover();
+  const responsePromise = waitForResponseCreateDoc(page);
   await rootItem.getByTestId('doc-tree-item-actions-add-child').click();
+  const response = await responsePromise;
+  const { id } = (await response.json()) as { id: string };
+  await page.waitForURL((url) => url.href !== currentUrl);
+  await expect(docTree.getByTestId(`doc-sub-page-item-${id}`)).toBeVisible({
+    timeout: 10000,
+  });
 };
 
 export const addChild = async ({
@@ -90,8 +101,12 @@ export const addChild = async ({
       .first();
   }
 
-  await item.hover();
-  await item.getByTestId('doc-tree-item-actions-add-child').click();
+  await expect(async () => {
+    await item.hover();
+    await item
+      .getByTestId('doc-tree-item-actions-add-child')
+      .click({ timeout: 2000 });
+  }).toPass({ timeout: 15000 });
 
   const [name] = randomName(docName, browserName, 1);
   await updateDocTitle(page, name);

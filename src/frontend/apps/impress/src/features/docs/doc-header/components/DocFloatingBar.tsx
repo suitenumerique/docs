@@ -24,7 +24,9 @@ export const DocFloatingBar = () => {
           {!isDeletedDoc && currentDoc && <DocShareButton doc={currentDoc} />}
           <CardFloatingBar>
             <RightPanelCollapseButton />
-            {!isDeletedDoc && currentDoc && <DocToolBox doc={currentDoc} />}
+            {!isDeletedDoc && currentDoc && (
+              <DocToolBox doc={currentDoc} isCurrentDoc={true} />
+            )}
           </CardFloatingBar>
         </Box>
       )}

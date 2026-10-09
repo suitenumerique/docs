@@ -15,9 +15,10 @@ import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { Doc } from '@/docs/doc-management/types';
 
 import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
-import { docxDocsSchemaMappings } from '../mappingDocx';
-import { odtDocsSchemaMappings } from '../mappingODT';
-import { pdfDocsSchemaMappings } from '../mappingPDF';
+import { getDocxDocsSchemaMappings } from '../mappingDocx';
+import { getOdtDocsSchemaMappings } from '../mappingODT';
+import { getPdfDocsSchemaMappings } from '../mappingPDF';
+import { resolveInterlinkTitles } from '../utils';
 
 export const useExportAGPL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
   const { t } = useTranslation();
@@ -28,31 +29,36 @@ export const useExportAGPL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
     }
 
     const exportDocument = editor.document;
+    const interlinkTitles = await resolveInterlinkTitles(exportDocument);
     let blobExport: Blob | undefined = undefined;
     if (format === 'pdf') {
-      const exporter = new PDFExporter(editor.schema, pdfDocsSchemaMappings, {
-        resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
-        emojiSource: {
-          format: 'png',
-          builder(code) {
-            const emojisFound = jsonemoji.filter(
-              (e) =>
-                e.unified.split('-')[0].toLowerCase() ===
-                code.split('-')[0].toLowerCase(),
-            );
+      const exporter = new PDFExporter(
+        editor.schema,
+        getPdfDocsSchemaMappings(interlinkTitles),
+        {
+          resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
+          emojiSource: {
+            format: 'png',
+            builder(code) {
+              const emojisFound = jsonemoji.filter(
+                (e) =>
+                  e.unified.split('-')[0].toLowerCase() ===
+                  code.split('-')[0].toLowerCase(),
+              );
 
-            const emoji = emojisFound.find((e) =>
-              e.unified.toLocaleLowerCase().includes(code.toLowerCase()),
-            );
+              const emoji = emojisFound.find((e) =>
+                e.unified.toLocaleLowerCase().includes(code.toLowerCase()),
+              );
 
-            if (emoji) {
-              return `/assets/fonts/emoji/${emoji.image}`;
-            }
+              if (emoji) {
+                return `/assets/fonts/emoji/${emoji.image}`;
+              }
 
-            return '/assets/fonts/emoji/fallback.png';
+              return '/assets/fonts/emoji/fallback.png';
+            },
           },
         },
-      });
+      );
       const rawPdfDocument = (await exporter.toReactPDFDocument(
         exportDocument,
       )) as React.ReactElement<DocumentProps>;
@@ -68,18 +74,26 @@ export const useExportAGPL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
 
       blobExport = await pdf(pdfDocument).toBlob();
     } else if (format === 'docx') {
-      const exporter = new DOCXExporter(editor.schema, docxDocsSchemaMappings, {
-        resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
-      });
+      const exporter = new DOCXExporter(
+        editor.schema,
+        getDocxDocsSchemaMappings(interlinkTitles),
+        {
+          resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
+        },
+      );
 
       blobExport = await exporter.toBlob(exportDocument, {
         documentOptions: { title: documentTitle },
         sectionOptions: {},
       });
     } else if (format === 'odt') {
-      const exporter = new ODTExporter(editor.schema, odtDocsSchemaMappings, {
-        resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
-      });
+      const exporter = new ODTExporter(
+        editor.schema,
+        getOdtDocsSchemaMappings(interlinkTitles),
+        {
+          resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
+        },
+      );
 
       blobExport = await exporter.toODTDocument(exportDocument);
     }

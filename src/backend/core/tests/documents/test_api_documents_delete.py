@@ -148,3 +148,25 @@ def test_api_documents_delete_authenticated_owner(via, mock_user_teams):
         {},
         document=document,
     )
+
+
+def test_api_documents_delete_reset_yhub_service(
+    mock_reset_service_connections, capture_service_resets
+):
+    """Deleting a document must reset the connection on the collaboration server."""
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[(user, "owner")])
+
+    with capture_service_resets():
+        response = client.delete(
+            f"/api/v1.0/documents/{document.id}/",
+        )
+
+    assert response.status_code == 204
+
+    # Make sure the reset service connection is called
+    mock_reset_service_connections.assert_called_once_with(str(document.id), None)

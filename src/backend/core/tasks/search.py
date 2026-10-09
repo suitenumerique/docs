@@ -63,12 +63,13 @@ def batch_document_indexer_task(timestamp):
         logger.info("Indexed %d documents", count)
 
 
-def trigger_batch_document_indexer(document):
+def trigger_batch_document_indexer(document_id, updated_at):
     """
     Trigger indexation task with debounce a delay set by the SEARCH_INDEXER_COUNTDOWN setting.
 
     Args:
-        document (Document): The document instance.
+        document_id (UUID): The id of the document that changed.
+        updated_at (datetime): When it changed, the horizon of the batch.
     """
     countdown = int(settings.SEARCH_INDEXER_COUNTDOWN)
 
@@ -82,14 +83,17 @@ def trigger_batch_document_indexer(document):
         if batch_indexer_throttle_acquire(timeout=countdown):
             logger.info(
                 "Add task for batch document indexation from updated_at=%s in %d seconds",
-                document.updated_at.isoformat(),
+                updated_at.isoformat(),
                 countdown,
             )
 
             batch_document_indexer_task.apply_async(
-                args=[document.updated_at], countdown=countdown
+                args=[updated_at], countdown=countdown
             )
         else:
-            logger.info("Skip task for batch document %s indexation", document.pk)
+            logger.info("Skip task for batch document %s indexation", document_id)
     else:
-        document_indexer_task.apply(args=[document.pk])
+        # Indexing reads the content of the document from the collaboration
+        # server and pushes it to the search backend: never in the process
+        # asking for it.
+        document_indexer_task.delay(document_id)

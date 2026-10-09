@@ -69,6 +69,7 @@ export function PostHogProvider({
       },
       capture_pageview: false,
       capture_pageleave: true,
+      capture_performance: { web_vitals: false },
     });
 
     const handleRouteChange = () => posthog?.capture('$pageview');
@@ -85,7 +86,7 @@ export function PostHogProvider({
     if (isOffline) {
       posthog.opt_out_capturing();
     } else {
-      posthog.opt_in_capturing();
+      posthog.opt_in_capturing({ captureEventName: false });
     }
   }, [isOffline]);
 

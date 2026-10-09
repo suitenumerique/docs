@@ -13,7 +13,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
 from rest_framework.test import APIClient
 
-from core import factories
+from core import factories, models
 from core.api.viewsets import malware_detection
 from core.tests.conftest import TEAM, USER, VIA
 
@@ -492,3 +492,45 @@ def test_api_documents_attachment_upload_unsafe_mime_types_disabled(settings):
         "application/octet-stream",
     ]
     assert file_head["ContentDisposition"] == 'attachment; filename="script.exe"'
+
+
+def test_api_documents_attachment_upload_stale_instance_does_not_revert_link_configuration():
+    """
+    An attachment upload must only write the attachments column.
+
+    A request that loaded the document before an owner withdrew the link
+    configuration must not put the old configuration back when it saves the
+    attachment.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(
+        link_reach="public", link_role="editor", users=[(user, "editor")]
+    )
+
+    # The upload request loads the document while it is still public.
+    stale_document = models.Document.objects.get(pk=document.pk)
+
+    # The owner withdraws the link in between.
+    withdrawal = models.Document.objects.get(pk=document.pk)
+    withdrawal.link_reach = models.LinkReachChoices.RESTRICTED
+    withdrawal.link_role = models.LinkRoleChoices.READER
+    withdrawal.save(update_fields=["link_reach", "link_role"])
+
+    # The upload commits after the withdrawal.
+    file = SimpleUploadedFile(name="test.png", content=PIXEL, content_type="image/png")
+    url = f"/api/v1.0/documents/{document.id!s}/attachment-upload/"
+    with mock.patch.object(malware_detection, "analyse_file"):
+        response = client.post(url, {"file": file}, format="multipart")
+
+    assert response.status_code == 201
+
+    document.refresh_from_db()
+    assert len(document.attachments) == 1
+    assert document.link_reach == models.LinkReachChoices.RESTRICTED
+    assert document.link_role == models.LinkRoleChoices.READER
+
+    # The stale in-memory instance is left untouched for reference.
+    assert stale_document.link_reach == "public"

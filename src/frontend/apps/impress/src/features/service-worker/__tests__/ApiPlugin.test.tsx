@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { RequestSerializer } from '../RequestSerializer';
 import { SyncManager } from '../SyncManager';
-import { ApiPlugin } from '../plugins/ApiPlugin';
+import { ApiPlugin, patchTreeNode, pruneTreeNode } from '../plugins/ApiPlugin';
 
 const mockedGet = vi.fn().mockResolvedValue({});
 const mockedGetAllKeys = vi.fn().mockResolvedValue([]);
@@ -17,6 +17,7 @@ const mockedOpendDB = vi.fn().mockResolvedValue({
   delete: mockedDelete,
   clear: vi.fn().mockResolvedValue({}),
   close: mockedClose,
+  objectStoreNames: { contains: () => true },
 });
 
 vi.mock('idb', async () => ({
@@ -30,6 +31,7 @@ describe('ApiPlugin', () => {
   [
     { type: 'item', table: 'doc-item' },
     { type: 'list', table: 'doc-list' },
+    { type: 'tree', table: 'doc-tree' },
     { type: 'update', table: 'doc-item' },
   ].forEach(({ type, table }) => {
     it(`calls fetchDidSucceed with type ${type} and status 200`, async () => {
@@ -139,60 +141,6 @@ describe('ApiPlugin', () => {
     });
   });
 
-  it(`calls requestWillFetch with type content and sets If-None-Match when etag is cached`, async () => {
-    const mockedSync = vi.fn().mockResolvedValue({});
-    const apiPlugin = new ApiPlugin({
-      type: 'content',
-      tableName: 'doc-content',
-      syncManager: { sync: () => mockedSync() } as any,
-    });
-
-    mockedGet.mockResolvedValue({
-      etag: '"abc123"',
-      lastModified: '',
-      content: 'hello',
-    });
-
-    const requestInit = {
-      request: new Request('http://test.jest/documents/123456/content/'),
-    } as any;
-
-    const request = await apiPlugin.requestWillFetch?.(requestInit);
-    expect(mockedGet).toHaveBeenCalledWith(
-      'doc-content',
-      'http://test.jest/documents/123456/content/',
-    );
-    expect(request?.headers.get('If-None-Match')).toBe('"abc123"');
-  });
-
-  it(`calls requestWillFetch with type content and sets If-Modified-Since when only lastModified is cached`, async () => {
-    const mockedSync = vi.fn().mockResolvedValue({});
-    const apiPlugin = new ApiPlugin({
-      type: 'content',
-      tableName: 'doc-content',
-      syncManager: { sync: () => mockedSync() } as SyncManager,
-    });
-
-    mockedGet.mockResolvedValue({
-      etag: '',
-      lastModified: 'Mon, 14 Apr 2026 00:00:00 GMT',
-      content: 'hello',
-    });
-
-    const requestInit = {
-      request: new Request('http://test.jest/documents/123456/content/'),
-    } as any;
-
-    const request = await apiPlugin.requestWillFetch?.(requestInit);
-    expect(mockedGet).toHaveBeenCalledWith(
-      'doc-content',
-      'http://test.jest/documents/123456/content/',
-    );
-    expect(request?.headers.get('If-Modified-Since')).toBe(
-      'Mon, 14 Apr 2026 00:00:00 GMT',
-    );
-  });
-
   it(`checks getApiCatchHandler`, async () => {
     const response = ApiPlugin.getApiCatchHandler();
     expect(await response.json()).toEqual({ error: 'Network is unavailable.' });
@@ -201,7 +149,7 @@ describe('ApiPlugin', () => {
   [
     { type: 'list', tableName: 'doc-list' },
     { type: 'item', tableName: 'doc-item' },
-    { type: 'content', tableName: 'doc-content' },
+    { type: 'tree', tableName: 'doc-tree' },
   ].forEach(({ type, tableName }) => {
     it(`checks handlerDidError with type ${type}`, async () => {
       const requestInit = {
@@ -211,8 +159,8 @@ describe('ApiPlugin', () => {
       } as any;
 
       const apiPlugin = new ApiPlugin({
-        type: type as 'list' | 'item' | 'update' | 'create' | 'delete',
-        tableName: tableName as 'doc-list' | 'doc-item',
+        type: type as 'list' | 'item' | 'tree' | 'update' | 'create' | 'delete',
+        tableName: tableName as 'doc-list' | 'doc-item' | 'doc-tree',
         syncManager: {} as SyncManager,
       });
 
@@ -269,6 +217,7 @@ describe('ApiPlugin', () => {
       'http://test.jest/documents/123456/',
     );
     expect(mockedGetAllKeys).toHaveBeenCalledWith('doc-list');
+    expect(mockedGetAllKeys).toHaveBeenCalledWith('doc-tree');
 
     expect(mockedPut).toHaveBeenCalledWith(
       'doc-mutation',
@@ -293,76 +242,16 @@ describe('ApiPlugin', () => {
       { results: [{ id: '123456', test: 'test', title: 'test' }] },
       'http://test.jest/documents/?page=1',
     );
+    // the tree cache is patched too — mutation, item, list, tree
+    expect(mockedPut).toHaveBeenCalledWith(
+      'doc-tree',
+      expect.anything(),
+      'http://test.jest/documents/?page=1',
+    );
 
-    expect(mockedPut).toHaveBeenCalledTimes(3);
+    expect(mockedPut).toHaveBeenCalledTimes(4);
     expect(mockedClose).toHaveBeenCalled();
     expect(response?.status).toBe(200);
-  });
-
-  it(`checks handlerDidError with type content-update`, async () => {
-    const requestInit = {
-      request: {
-        url: 'http://test.jest/documents/123456/content/',
-        clone: () => mockedClone(),
-        headers: new Headers({
-          'Content-Type': 'application/json',
-        }),
-        arrayBuffer: () =>
-          RequestSerializer.objectToArrayBuffer({
-            content: 'test',
-          }),
-        json: () => ({
-          content: 'test',
-        }),
-      } as unknown as Request,
-    } as any;
-
-    const mockedClone = vi.fn().mockReturnValue(requestInit.request);
-
-    const mockedSync = vi.fn().mockResolvedValue({});
-    const apiPlugin = new ApiPlugin({
-      type: 'content-update',
-      syncManager: {
-        sync: () => mockedSync(),
-      } as any,
-    });
-
-    mockedGet.mockResolvedValue({
-      etag: '',
-      lastModified: '',
-      content: '',
-    });
-
-    await apiPlugin.requestWillFetch?.(requestInit);
-    await apiPlugin.fetchDidFail?.({} as any);
-    const response = await apiPlugin.handlerDidError?.(requestInit);
-    expect(mockedGet).toHaveBeenCalledWith(
-      'doc-content',
-      'http://test.jest/documents/123456/content/',
-    );
-
-    expect(mockedPut).toHaveBeenCalledWith(
-      'doc-mutation',
-      expect.objectContaining({
-        key: expect.any(String),
-        requestData: expect.objectContaining({
-          url: 'http://test.jest/documents/123456/content/',
-          headers: {
-            'content-type': 'application/json',
-          },
-        }),
-      }),
-      expect.any(String),
-    );
-    expect(mockedPut).toHaveBeenCalledWith(
-      'doc-content',
-      { etag: '', lastModified: '', content: 'test' },
-      'http://test.jest/documents/123456/content/',
-    );
-
-    expect(mockedPut).toHaveBeenCalledTimes(2);
-    expect(mockedClose).toHaveBeenCalled();
-    expect(response?.status).toBe(204);
   });
 
   it(`checks handlerDidError with type delete`, async () => {
@@ -414,10 +303,6 @@ describe('ApiPlugin', () => {
       'doc-item',
       'http://test.jest/documents/123456/',
     );
-    expect(mockedDelete).toHaveBeenCalledWith(
-      'doc-content',
-      'http://test.jest/documents/123456/content/',
-    );
     expect(mockedGetAllKeys).toHaveBeenCalledWith('doc-list');
     expect(mockedGet).toHaveBeenCalledWith(
       'doc-list',
@@ -446,8 +331,10 @@ describe('ApiPlugin', () => {
       }),
       'http://test.jest/documents/?page=1',
     );
+    // the tree cache is pruned too — the queued mutation, the list, the tree
+    expect(mockedGetAllKeys).toHaveBeenCalledWith('doc-tree');
 
-    expect(mockedPut).toHaveBeenCalledTimes(2);
+    expect(mockedPut).toHaveBeenCalledTimes(3);
     expect(mockedClose).toHaveBeenCalled();
     expect(response?.status).toBe(204);
   });
@@ -510,13 +397,9 @@ describe('ApiPlugin', () => {
       'http://test.jest/documents/444555/',
     );
     expect(mockedPut).toHaveBeenCalledWith(
-      'doc-content',
-      expect.objectContaining({
-        content: '',
-        etag: '',
-        lastModified: '',
-      }),
-      'http://test.jest/documents/444555/content/',
+      'doc-tree',
+      expect.objectContaining({ id: '444555', children: [] }),
+      'http://test.jest/documents/444555/tree/',
     );
     expect(mockedPut).toHaveBeenCalledWith(
       'doc-list',
@@ -534,8 +417,66 @@ describe('ApiPlugin', () => {
       'doc-list',
       'http://test.jest/documents/?page=1',
     );
+    // the queued mutation, doc-item, doc-tree and doc-list
     expect(mockedPut).toHaveBeenCalledTimes(4);
     expect(mockedClose).toHaveBeenCalled();
     expect(response?.status).toBe(201);
+  });
+});
+
+const tree = () =>
+  ({
+    id: 'root',
+    title: 'Root',
+    children: [
+      {
+        id: 'a',
+        title: 'A',
+        children: [{ id: 'b', title: 'B', children: [] }],
+      },
+      { id: 'c', title: 'C', children: [] },
+    ],
+  }) as any;
+
+describe('patchTreeNode', () => {
+  it('merges the patch into a matching node, root or nested', () => {
+    const patchedRoot = patchTreeNode(tree(), 'root', { title: 'Renamed' });
+    expect(patchedRoot.title).toBe('Renamed');
+
+    const patchedDeep = patchTreeNode(tree(), 'b', { title: 'Renamed' });
+    expect(patchedDeep.children?.[0].children?.[0].title).toBe('Renamed');
+  });
+
+  it('leaves the input untouched and non-matching nodes alone', () => {
+    const input = tree();
+    const patched = patchTreeNode(input, 'a', { title: 'Renamed' });
+
+    expect(input.children[0].title).toBe('A');
+    expect(patched.children?.[1].title).toBe('C');
+  });
+
+  it('is a no-op when nothing matches', () => {
+    expect(patchTreeNode(tree(), 'missing', { title: 'x' })).toEqual(tree());
+  });
+});
+
+describe('pruneTreeNode', () => {
+  it('removes a matching node from its parent', () => {
+    const pruned = pruneTreeNode(tree(), 'a');
+
+    expect(pruned.children?.map((c) => c.id)).toEqual(['c']);
+  });
+
+  it('removes a deeply nested node', () => {
+    const pruned = pruneTreeNode(tree(), 'b');
+
+    expect(pruned.children?.[0].children).toEqual([]);
+  });
+
+  it('leaves the input untouched', () => {
+    const input = tree();
+    pruneTreeNode(input, 'a');
+
+    expect(input.children.map((c: { id: string }) => c.id)).toEqual(['a', 'c']);
   });
 });

@@ -1,12 +1,11 @@
 """Client serializers for the impress core app."""
 # pylint: disable=too-many-lines
 
-import binascii
 import mimetypes
-from base64 import b64decode
 from os.path import splitext
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Q
 from django.utils.functional import lazy
 from django.utils.text import slugify
@@ -23,6 +22,7 @@ from core.services.converter_services import (
     ConversionError,
     Converter,
 )
+from core.services.yhub_services import YHubError, YHubService
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.treebeard import create_tree_node_with_retry
 
@@ -73,8 +73,8 @@ class UserLightSerializer(UserSerializer):
 
     class Meta:
         model = models.User
-        fields = ["full_name", "short_name"]
-        read_only_fields = ["full_name", "short_name"]
+        fields = ["id", "full_name", "short_name"]
+        read_only_fields = ["id", "full_name", "short_name"]
 
 
 class ListDocumentSerializer(serializers.ModelSerializer):
@@ -180,7 +180,6 @@ class DocumentLightSerializer(serializers.ModelSerializer):
 class DocumentSerializer(ListDocumentSerializer):
     """Serialize documents with all fields for display in detail views."""
 
-    websocket = serializers.BooleanField(required=False, write_only=True)
     file = serializers.FileField(
         required=False, write_only=True, allow_null=True, max_length=255
     )
@@ -210,7 +209,6 @@ class DocumentSerializer(ListDocumentSerializer):
             "title",
             "updated_at",
             "user_role",
-            "websocket",
         ]
         read_only_fields = [
             "id",
@@ -291,10 +289,26 @@ class DocumentSerializer(ListDocumentSerializer):
         """
         When no data is sent on the update, skip making the update in the database and return
         directly the instance unchanged.
+
+        We don't rely on the update methof from the ModelSerializer to only save
+        validated_data fields to not override updated value from other
+        serializer like the LinkDocumentSerializer. A race condition triggering both
+        serializer in the same time can lead to an overlap and data can be lost.
         """
         if not validated_data:
             return instance  # No data provided, skip the update
-        return super().update(instance, validated_data)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        try:
+            # `updated_at` is explicit because it is an `auto_now` field: it has
+            # no validated_data entry and would not be written otherwise.
+            instance.save(update_fields=[*validated_data, "updated_at"])
+        except Exception:
+            # The in-memory instance may hold values the database has not
+            # accepted: reload them so the response reports the row as it is.
+            instance.refresh_from_db(fields=validated_data.keys())
+            raise
+        return instance
 
 
 class SearchDocumentSerializer(ListDocumentSerializer):
@@ -306,34 +320,6 @@ class SearchDocumentSerializer(ListDocumentSerializer):
         model = models.Document
         fields = ListDocumentSerializer.Meta.fields + ["parent"]
         read_only_fields = ListDocumentSerializer.Meta.read_only_fields + ["parent"]
-
-
-class DocumentContentSerializer(serializers.Serializer):
-    """Serializer for updating only the raw content of a document stored in S3."""
-
-    content = serializers.CharField(required=True)
-    websocket = serializers.BooleanField(required=False)
-
-    def validate_content(self, value):
-        """Validate the content field."""
-        try:
-            b64decode(value, validate=True)
-        except binascii.Error as err:
-            raise serializers.ValidationError("Invalid base64 content.") from err
-
-        return value
-
-    def update(self, instance, validated_data):
-        """
-        This serializer does not support updates.
-        """
-        raise NotImplementedError("Update is not supported for this serializer.")
-
-    def create(self, validated_data):
-        """
-        This serializer does not support create.
-        """
-        raise NotImplementedError("Create is not supported for this serializer.")
 
 
 class DocumentAccessSerializer(serializers.ModelSerializer):
@@ -366,6 +352,8 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "abilities",
             "max_ancestors_role",
             "max_role",
+            "updated_at",
+            "created_at",
         ]
         read_only_fields = [
             "id",
@@ -373,6 +361,8 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "abilities",
             "max_ancestors_role",
             "max_role",
+            "updated_at",
+            "created_at",
         ]
 
     def get_abilities(self, instance) -> dict:
@@ -417,6 +407,8 @@ class DocumentAccessLightSerializer(DocumentAccessSerializer):
             "abilities",
             "max_ancestors_role",
             "max_role",
+            "updated_at",
+            "created_at",
         ]
         read_only_fields = [
             "id",
@@ -426,6 +418,8 @@ class DocumentAccessLightSerializer(DocumentAccessSerializer):
             "abilities",
             "max_ancestors_role",
             "max_role",
+            "updated_at",
+            "created_at",
         ]
 
 
@@ -485,12 +479,37 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 {"content": ["Could not convert content"]}
             ) from err
 
-        document = create_tree_node_with_retry(
-            lambda: models.Document.add_root(
-                title=validated_data["title"],
-                creator=user,
+        with transaction.atomic():
+            document = create_tree_node_with_retry(
+                lambda: models.Document.add_root(
+                    title=validated_data["title"],
+                    creator=user,
+                )
             )
-        )
+
+            if user:
+                # Associate the document with the pre-existing user
+                models.DocumentAccess.objects.create(
+                    document=document,
+                    role=models.RoleChoices.OWNER,
+                    user=user,
+                )
+            else:
+                # The user doesn't exist in our database: we need to invite him/her
+                models.Invitation.objects.create(
+                    document=document,
+                    email=email,
+                    role=models.RoleChoices.OWNER,
+                )
+
+            # the accesses exist by now, so the owner has access to the very
+            # first version of the document the collaboration server saves
+            try:
+                YHubService(user=user).create_ydoc(document, document_content)
+            except YHubError as err:
+                raise serializers.ValidationError(
+                    {"content": ["Could not save the document content"]}
+                ) from err
 
         posthog_capture(PosthogEventName.DOC_CREATED, user, {}, document=document)
         posthog_capture(
@@ -502,24 +521,6 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
             },
             document=document,
         )
-
-        if user:
-            # Associate the document with the pre-existing user
-            models.DocumentAccess.objects.create(
-                document=document,
-                role=models.RoleChoices.OWNER,
-                user=user,
-            )
-        else:
-            # The user doesn't exist in our database: we need to invite him/her
-            models.Invitation.objects.create(
-                document=document,
-                email=email,
-                role=models.RoleChoices.OWNER,
-            )
-
-        document.content = document_content
-        document.save()
 
         if validated_data.get("send_notification_email", True):
             self._send_email_notification(document, validated_data, email, language)
@@ -812,15 +813,6 @@ class DocumentAskForAccessSerializer(serializers.ModelSerializer):
         return {}
 
 
-class VersionFilterSerializer(serializers.Serializer):
-    """Validate version filters applied to the list endpoint."""
-
-    version_id = serializers.CharField(required=False, allow_blank=True)
-    page_size = serializers.IntegerField(
-        required=False, min_value=1, max_value=50, default=20
-    )
-
-
 class AITransformSerializer(serializers.Serializer):
     """Serializer for AI transform requests."""
 
@@ -1005,6 +997,77 @@ class ThreadSerializer(serializers.ModelSerializer):
         if request:
             return thread.get_abilities(request.user)
         return {}
+
+
+class MentionSerializer(serializers.ModelSerializer):
+    """Serialize mentions of users in a document body or comment thread.
+
+    Expects the document on which the mention is created in the context.
+    """
+
+    document_id = serializers.PrimaryKeyRelatedField(source="document", read_only=True)
+    anchor_id = serializers.UUIDField()
+    mentioned_user_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.User.objects.filter(is_active=True),
+        source="mentioned_user",
+    )
+    mentioned_by_user_id = serializers.PrimaryKeyRelatedField(
+        source="mentioned_by_user", read_only=True
+    )
+    thread_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Thread.objects.all(),
+        source="thread",
+        required=False,
+        allow_null=True,
+        default=None,
+    )
+
+    class Meta:
+        model = models.Mention
+        fields = [
+            "id",
+            "document_id",
+            "anchor_id",
+            "thread_id",
+            "mentioned_user_id",
+            "mentioned_by_user_id",
+            "created_at",
+            "notified_at",
+        ]
+        read_only_fields = [
+            "id",
+            "document_id",
+            "mentioned_by_user_id",
+            "created_at",
+            "notified_at",
+        ]
+
+    def validate_mentioned_user_id(self, user):
+        """Ensure the mentioned user is allowed to comment on the document."""
+        document = models.Document.objects.annotate_user_roles(user).get(
+            pk=self.context["document"].pk
+        )
+        role = document.get_role(user)
+        if role is None:
+            raise serializers.ValidationError(
+                "This user does not have access to the document."
+            )
+
+        # A reader cannot see comments, mentioning them would lead nowhere
+        if role not in choices.COMMENTING_ROLES:
+            raise serializers.ValidationError(
+                "This user is not allowed to comment on the document."
+            )
+        return user
+
+    def validate_thread_id(self, thread):
+        """Ensure the thread belongs to the document on which the mention is created."""
+        document = self.context["document"]
+        if thread is not None and thread.document_id != document.id:
+            raise serializers.ValidationError(
+                "The thread does not belong to this document."
+            )
+        return thread
 
 
 class SearchQueryParamDocumentSerializer(serializers.Serializer):

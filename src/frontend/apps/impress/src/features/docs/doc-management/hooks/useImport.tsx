@@ -1,9 +1,11 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { t } from 'i18next';
 import { useCallback, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 import { useConfig } from '@/core';
+import { useToast } from '@/hooks';
+import { formatFileSize } from '@/utils';
 
 import { ContentTypes, useImportDoc } from '../api/useImportDoc';
 import { Doc } from '../types';
@@ -18,24 +20,15 @@ interface AcceptedMap {
 }
 
 export const useImport = ({ onDragOver, onImportSuccess }: UseImportProps) => {
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { data: config } = useConfig();
 
   const MAX_FILE_SIZE = useMemo(() => {
     const maxSizeInBytes = config?.CONVERSION_FILE_MAX_SIZE ?? 10 * 1024 * 1024; // Default to 10MB
 
-    const units = ['bytes', 'KB', 'MB', 'GB'];
-    let size = maxSizeInBytes;
-    let unitIndex = 0;
-
-    while (size >= 1024 && unitIndex < units.length - 1) {
-      size /= 1024;
-      unitIndex += 1;
-    }
-
     return {
       bytes: maxSizeInBytes,
-      text: `${Math.round(size * 10) / 10}${units[unitIndex]}`,
+      text: formatFileSize(maxSizeInBytes),
     };
   }, [config?.CONVERSION_FILE_MAX_SIZE]);
 

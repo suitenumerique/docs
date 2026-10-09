@@ -1,3 +1,4 @@
+import { Tooltip } from '@gouvfr-lasuite/ui-components';
 import { t } from 'i18next';
 
 import { Box, Icon, Text } from '@/components';
@@ -7,7 +8,6 @@ import {
   LinkReach,
   Role,
   getDocLinkReach,
-  useIsCollaborativeEditable,
   useTrans,
 } from '@/docs/doc-management';
 import { useDate } from '@/hooks';
@@ -21,11 +21,11 @@ interface DocHeaderInfoProps {
 
 export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
   const { transRole } = useTrans();
-  const { isEditable } = useIsCollaborativeEditable(doc);
-  const { relativeDate, calculateDaysLeft } = useDate();
+  const { relativeDate, formatDate, calculateDaysLeft } = useDate();
   const { data: config } = useConfig();
 
   const relativeOnly = relativeDate(doc.updated_at);
+  const fullDate = formatDate(doc.updated_at);
 
   const trashbinCutoff = config?.TRASHBIN_CUTOFF_DAYS;
 
@@ -53,7 +53,7 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
             $variation="tertiary"
             $size="s"
             $weight="bold"
-            $theme={isEditable ? 'neutral' : 'warning'}
+            $theme={doc.abilities.partial_update ? 'neutral' : 'warning'}
             $direction="row"
             $margin="0"
           >
@@ -75,20 +75,37 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
         $variation="tertiary"
         $size="s"
         $weight="bold"
-        $theme={isEditable ? 'neutral' : 'warning'}
+        $theme={doc.abilities.partial_update ? 'neutral' : 'warning'}
         $direction="row"
         $margin="0"
       >
         <VisibilityDoc doc={doc} />
-        {transRole(isEditable ? doc.user_role || doc.link_role : Role.READER)}
+        {transRole(
+          doc.abilities.partial_update
+            ? doc.user_role || doc.link_role
+            : Role.READER,
+        )}
         &nbsp;&nbsp;·&nbsp;
       </Text>
       <Text as="dt" $variation="tertiary" $size="s" $margin="0">
         {dateLabel}
         &nbsp;
       </Text>
-      <Text as="dd" $variation="tertiary" $size="s" $margin="0">
-        {dateValue}
+      <Text
+        as="dd"
+        $variation="tertiary"
+        $size="s"
+        $direction="row"
+        $align="center"
+        $margin="0"
+      >
+        {trashbinCutoff && doc.deleted_at ? (
+          dateValue
+        ) : (
+          <Tooltip content={fullDate} placement="top">
+            <time dateTime={doc.updated_at}>{relativeOnly}</time>
+          </Tooltip>
+        )}
       </Text>
     </Box>
   );

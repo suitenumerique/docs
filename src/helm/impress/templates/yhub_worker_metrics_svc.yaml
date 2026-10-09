@@ -1,0 +1,22 @@
+{{- if and .Values.yhub.enabled .Values.yhub.worker.enabled .Values.yhub.metrics.enabled -}}
+{{- $fullName := include "impress.yhub.worker.fullname" . -}}
+{{- $component := "yhub-worker" -}}
+# The worker serves nothing but its metrics, so this Service only exists with
+# them: it is what the metrics ingress routes to.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-metrics
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.yhub.metrics.port }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "impress.common.selectorLabels" (list . $component) | nindent 4 }}
+{{- end }}

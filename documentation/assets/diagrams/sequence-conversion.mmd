@@ -1,0 +1,32 @@
+sequenceDiagram
+  autonumber
+  actor U as Browser
+  participant D as Django backend
+  participant K as Docspec
+  participant C as y-provider
+  participant Y as yhub server
+
+  rect rgb(240,247,255)
+    Note over U,Y: importing a file
+    U->>D: POST /documents/create-for-owner/ or import
+    alt .docx
+      D->>K: POST /conversion
+      K-->>D: BlockNote blocks
+    else markdown
+      Note over D: kept as is
+    end
+    D->>C: POST /api/convert/ (admin JWT)
+    C-->>D: Yjs update, binary
+    D->>Y: POST /collaboration/create-ydoc/v1/docs/:id
+    Y-->>D: 201, or 409 if the document already has content
+  end
+
+  rect rgb(245,255,248)
+    Note over U,Y: exporting or reading the content
+    U->>D: GET /documents/:id/formatted-content/?content_format=markdown
+    D->>Y: GET /collaboration/ydoc/v1/docs/:id
+    Y-->>D: current state, the source of truth
+    D->>C: POST /api/convert/ Yjs to markdown
+    C-->>D: markdown
+    D-->>U: converted content
+  end

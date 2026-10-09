@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  clickInDocOptionMenu,
   clickInEditorMenu,
-  clickInEditorShareButton,
   createDoc,
   getGridRow,
   goToGridDoc,
@@ -16,7 +16,11 @@ import {
   mockedInvitations,
   updateShareLink,
 } from './utils-share';
-import { createRootSubPage, getTreeRow } from './utils-sub-pages';
+import {
+  createRootSubPage,
+  getTreeRow,
+  navigateToTopParentFromTree,
+} from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -189,9 +193,12 @@ test.describe('Doc Header', () => {
     await createDoc(page, 'doc-update-emoji', browserName, 1);
 
     const emojiPicker = page.locator('.--docs--doc-title').getByRole('button');
-    const addEmoji = page.getByRole('button', { name: 'Add icon' });
-    const removeEmoji = page.getByRole('button', {
-      name: 'Remove icon',
+    const docHeader = page.getByLabel(
+      'It is the card information about the document.',
+    );
+    const addEmoji = docHeader.getByRole('button', { name: 'Add emoji' });
+    const removeEmoji = docHeader.getByRole('button', {
+      name: 'Remove emoji',
     });
 
     // Top parent should not have emoji picker
@@ -281,9 +288,7 @@ test.describe('Doc Header', () => {
         accesses_view: true,
         destroy: false, // Means not owner
         link_configuration: true,
-        versions_destroy: true,
         versions_list: true,
-        versions_retrieve: true,
         update: true,
         partial_update: true,
         retrieve: true,
@@ -351,9 +356,7 @@ test.describe('Doc Header', () => {
         accesses_view: true,
         destroy: false, // Means not owner
         link_configuration: false,
-        versions_destroy: true,
         versions_list: true,
-        versions_retrieve: true,
         update: true,
         partial_update: true, // Means editor
         retrieve: true,
@@ -421,9 +424,7 @@ test.describe('Doc Header', () => {
         accesses_view: true,
         destroy: false, // Means not owner
         link_configuration: false,
-        versions_destroy: false,
         versions_list: true,
-        versions_retrieve: true,
         update: false,
         partial_update: false, // Means not editor
         retrieve: true,
@@ -492,9 +493,7 @@ test.describe('Doc Header', () => {
       abilities: {
         destroy: false, // Means owner
         link_configuration: true,
-        versions_destroy: true,
         versions_list: true,
-        versions_retrieve: true,
         accesses_manage: false,
         accesses_view: false,
         update: true,
@@ -527,33 +526,29 @@ test.describe('Doc Header', () => {
     await createDoc(page, `Star doc`, browserName);
 
     // Star
-    await page
-      .getByRole('button', { name: 'Open the document options' })
-      .click();
-    await page.getByRole('menuitem', { name: 'Star' }).click();
+    await clickInEditorMenu(page, 'Star');
     await expect(page.getByText('This document is starred')).toBeVisible();
 
     // UnStar
-    await page
-      .getByRole('button', { name: 'Open the document options' })
-      .click();
-    await page.getByRole('menuitem', { name: 'Unstar' }).click();
+    await clickInEditorMenu(page, 'Unstar');
     await expect(page.getByText('This document is starred')).toBeHidden();
   });
 
   test('it duplicates a document', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, `Duplicate doc`, browserName);
 
-    const editor = page.locator('.ProseMirror');
-    await editor.click();
-    await editor.fill('Hello Duplicated World');
+    await writeInEditor({
+      page,
+      text: 'Hello Duplicated World',
+    });
 
-    await page.getByLabel('Open the document options').click();
+    await clickInEditorMenu(page, 'Duplicate');
 
-    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    const toast = page.getByRole('alert');
     await expect(
-      page.getByText('Document duplicated successfully!'),
+      toast.getByText('Document duplicated to My docs'),
     ).toBeVisible();
+    await toast.getByRole('link', { name: 'Open' }).click();
 
     const duplicateTitle = 'Copy of ' + docTitle;
     await verifyDocName(page, duplicateTitle);
@@ -564,10 +559,14 @@ test.describe('Doc Header', () => {
 
     await expect(row.getByText(duplicateTitle)).toBeVisible();
 
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    await clickInDocOptionMenu(page, row, 'Duplicate');
+
+    const gridToast = page.getByRole('alert');
+    await expect(gridToast.getByText('Document duplicated')).toBeVisible();
+    await gridToast.getByRole('link', { name: 'Open' }).click();
+
     const duplicateDuplicateTitle = 'Copy of ' + duplicateTitle;
-    await page.getByText(duplicateDuplicateTitle).click();
+    await verifyDocName(page, duplicateDuplicateTitle);
     await expect(page.getByText('Hello Duplicated World')).toBeVisible();
   });
 
@@ -586,6 +585,7 @@ test.describe('Doc Header', () => {
 
     const duplicateTitle = 'Copy of ' + childTitle;
     const docTree = page.getByTestId('doc-tree');
+    const currentUrl = page.url();
 
     const child = docTree
       .getByRole('treeitem')
@@ -593,89 +593,97 @@ test.describe('Doc Header', () => {
       .filter({
         hasText: childTitle,
       });
+
     await child.hover();
-    await child.getByRole('button', { name: /More options/ }).click();
+    await clickInDocOptionMenu(page, child, 'Duplicate');
 
-    const currentUrl = page.url();
-
-    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
-
-    await expect(page).not.toHaveURL(new RegExp(currentUrl));
+    await expect(page).not.toHaveURL(currentUrl);
 
     await verifyDocName(page, duplicateTitle);
 
     await expect(
       page.getByTestId('doc-tree').getByText(duplicateTitle),
     ).toBeVisible();
-  });
-});
 
-test.describe('Documents Header mobile', () => {
-  test.use({ viewport: { width: 500, height: 1200 } });
+    // The toast lets the user undo the duplication and go back to the original document
+    const toast = page.getByRole('alert');
+    await expect(toast.getByText('Document duplicated')).toBeVisible();
+    await toast.getByRole('button', { name: 'Undo' }).click();
 
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-  });
-
-  test('it checks the copy link button is displayed', async ({ page }) => {
-    await mockedDocument(page, {
-      abilities: {
-        destroy: false,
-        link_configuration: true,
-        versions_destroy: true,
-        versions_list: true,
-        versions_retrieve: true,
-        accesses_manage: false,
-        accesses_view: false,
-        update: true,
-        partial_update: true,
-        retrieve: true,
-      },
-    });
-
-    await goToGridDoc(page);
-
-    await page.getByLabel('Open the document options').click();
+    await expect(page).toHaveURL(currentUrl);
+    await verifyDocName(page, childTitle);
     await expect(
-      page.getByRole('menuitem', { name: 'Copy link' }),
+      page.getByTestId('doc-tree').getByText(duplicateTitle),
+    ).toBeHidden();
+  });
+
+  test('it asks whether to duplicate subdocuments when the document has some', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      `Duplicate doc parent`,
+      browserName,
+    );
+
+    const { name: childTitle } = await createRootSubPage(
+      page,
+      browserName,
+      'Duplicate doc parent - child',
+    );
+
+    await navigateToTopParentFromTree({ page });
+    await verifyDocName(page, docTitle);
+
+    // The document has a subdocument, so a confirmation modal is shown
+    await clickInEditorMenu(page, 'Duplicate');
+    const modal = page.getByRole('dialog', {
+      name: 'Confirmation to duplicate the document',
+    });
+    await expect(modal).toBeVisible();
+    const subdocsCheckbox = modal.getByRole('checkbox', {
+      name: 'Duplicate subdocs',
+    });
+    await expect(subdocsCheckbox).toBeChecked();
+
+    // Duplicate with subdocuments included (default)
+    await modal
+      .getByRole('button', { name: 'Confirm the duplicate action' })
+      .click();
+    await expect(modal).toBeHidden();
+
+    const toast = page.getByRole('alert');
+    await expect(
+      toast.getByText('Document duplicated to My docs'),
     ).toBeVisible();
-    await page.keyboard.press('Escape');
-    await page.getByRole('button', { name: 'Share' }).click();
-    const shareModal = page.getByRole('dialog', {
-      name: 'Share the document',
-    });
+    await toast.getByRole('link', { name: 'Open' }).click();
+
+    const duplicateTitle = 'Copy of ' + docTitle;
+    await verifyDocName(page, duplicateTitle);
     await expect(
-      shareModal.getByRole('button', { name: 'Copy link' }),
+      page.getByTestId('doc-tree').getByText(childTitle),
     ).toBeVisible();
-  });
 
-  test('it checks the close button on Share modal', async ({ page }) => {
-    await mockedDocument(page, {
-      abilities: {
-        destroy: true, // Means owner
-        link_configuration: true,
-        versions_destroy: true,
-        versions_list: true,
-        versions_retrieve: true,
-        accesses_manage: true,
-        accesses_view: true,
-        update: true,
-        partial_update: true,
-        retrieve: true,
-      },
-    });
+    // Duplicate again, this time excluding the subdocuments
+    await clickInEditorMenu(page, 'Duplicate');
+    await expect(modal).toBeVisible();
+    await modal.getByText('Duplicate subdocs').click();
+    await expect(subdocsCheckbox).not.toBeChecked();
+    await modal
+      .getByRole('button', { name: 'Confirm the duplicate action' })
+      .click();
+    await expect(modal).toBeHidden();
 
-    await goToGridDoc(page);
-
-    await clickInEditorShareButton(page);
-
-    const shareModal = page.getByRole('dialog', {
-      name: 'Share the document',
-    });
-    await expect(shareModal).toBeVisible();
-    await page.getByRole('button', { name: 'close' }).click();
     await expect(
-      page.getByRole('dialog', { name: 'Share the document' }),
+      toast.getByText('Document duplicated to My docs'),
+    ).toBeVisible();
+    await toast.getByRole('link', { name: 'Open' }).click();
+
+    const duplicateWithoutSubdocsTitle = 'Copy of ' + duplicateTitle;
+    await verifyDocName(page, duplicateWithoutSubdocsTitle);
+    await expect(
+      page.getByTestId('doc-tree').getByText(childTitle),
     ).toBeHidden();
   });
 });

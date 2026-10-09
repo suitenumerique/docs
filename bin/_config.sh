@@ -38,6 +38,10 @@ function _set_user() {
 # options: docker compose command options
 # ARGS   : docker compose command arguments
 function _docker_compose() {
+    # The backend settings point at this key and the containers mount it, so it
+    # has to exist before any of them starts.
+    "${REPO_DIR}/bin/generate-jwt-private-key.sh"
+
     # Set DOCKER_USER for Windows compatibility with MinIO
     if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || -n "${WSL_DISTRO_NAME:-}" ]]; then
         export DOCKER_USER="0:0"

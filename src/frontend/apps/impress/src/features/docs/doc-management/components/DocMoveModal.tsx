@@ -5,7 +5,6 @@ import {
   TreeViewMoveModeEnum,
   VariantType,
   useModal,
-  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
@@ -21,6 +20,7 @@ import {
   DocsGridItemDate,
   DocsGridItemTitle,
 } from '@/docs/docs-grid/components/DocsGridItem';
+import { useToast } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 const AlertModalRequestAccess = dynamic(
@@ -106,7 +106,7 @@ export const DocMoveModal = ({
   const { isDesktop, isTablet, isMobile } = useResponsiveStore();
   const isModal = (isDesktop || isTablet) && !isMobile;
   const handleInputSearch = useDebouncedCallback(setSearch, 700);
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
 
   const handleSelect = (docSelected: Doc) => {
     setDocSelected(docSelected);
@@ -187,7 +187,7 @@ export const DocMoveModal = ({
             <Text as="h2" $margin="0" $size="s" $align="flex-start">
               {t('Choose a new parent doc')}
             </Text>
-            <Box $position="absolute" $css="top: 4px; right: 4px;">
+            <Box $position="absolute" $css="top: 8px; right: 8px;">
               <ButtonCloseModal
                 aria-label={t('Close the move modal')}
                 onClick={onClose}

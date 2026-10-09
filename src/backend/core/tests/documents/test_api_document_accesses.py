@@ -20,20 +20,22 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(name="mock_reset_connections")
-def mock_reset_connections_fixture():
+def mock_reset_connections_fixture(
+    mock_reset_service_connections, capture_service_resets
+):
     """
-    Provide a context manager that patches the ``reset_service_connections_in_cascade``
-    Celery task and asserts its ``delay`` method is called exactly once for the given
-    document and user when leaving the context.
+    Provide a context manager that takes the resets queued on commit and
+    asserts the ``reset_service_connections_in_cascade`` Celery task is queued
+    exactly once for the given document and user when leaving the context.
     """
 
     @contextmanager
     def _mock_reset_connections(document_id, user_id=None):
-        with mock.patch(
-            "core.api.viewsets.reset_service_connections_in_cascade.delay"
-        ) as mock_delay:
-            yield mock_delay
-            mock_delay.assert_called_once_with(str(document_id), user_id)
+        with capture_service_resets():
+            yield mock_reset_service_connections
+        mock_reset_service_connections.assert_called_once_with(
+            str(document_id), user_id
+        )
 
     return _mock_reset_connections
 
@@ -98,7 +100,9 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
 ):
     """
     Authenticated users with no privileged role should only be able to list document
-    accesses associated with privileged roles for a document, including from ancestors.
+    accesses associated with privileged roles, including from ancestors. Users allowed
+    to comment should also see the accesses of the other roles allowed to comment, with
+    limited user information, so that they can mention each other.
     """
     user = factories.UserFactory()
     client = APIClient()
@@ -125,18 +129,20 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
     factories.UserDocumentAccessFactory(document=child)
 
     if via == USER:
-        models.DocumentAccess.objects.create(
+        user_access = models.DocumentAccess.objects.create(
             document=document,
             user=user,
             role=role,
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
-        models.DocumentAccess.objects.create(
+        user_access = models.DocumentAccess.objects.create(
             document=document,
             team="lasuite",
             role=role,
         )
+    else:
+        raise RuntimeError()
 
     # Accesses for other documents to which the user is related should not be listed either
     other_access = factories.UserDocumentAccessFactory(user=user)
@@ -148,11 +154,17 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
     assert response.status_code == 200
     content = response.json()
 
-    # Make sure only privileged roles are returned
-    privileged_accesses = [
-        acc for acc in accesses if acc.role in choices.PRIVILEGED_ROLES
+    # Readers only see privileged accesses, users allowed to comment
+    # see the accesses of every role allowed to comment
+    visible_roles = (
+        choices.COMMENTING_ROLES
+        if role in choices.COMMENTING_ROLES
+        else choices.PRIVILEGED_ROLES
+    )
+    visible_accesses = [
+        access for access in [*accesses, user_access] if access.role in visible_roles
     ]
-    assert len(content) == len(privileged_accesses)
+    assert len(content) == len(visible_accesses)
 
     assert sorted(content, key=lambda x: x["id"]) == sorted(
         [
@@ -164,6 +176,7 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                     "depth": access.document.depth,
                 },
                 "user": {
+                    "id": str(access.user.id),
                     "full_name": access.user.full_name,
                     "short_name": access.user.short_name,
                 }
@@ -176,12 +189,14 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                 "abilities": {
                     "destroy": False,
                     "partial_update": False,
-                    "retrieve": False,
+                    "retrieve": access.user is not None and access.user.id == user.id,
                     "set_role_to": [],
                     "update": False,
                 },
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+                "created_at": access.created_at.isoformat().replace("+00:00", "Z"),
             }
-            for access in privileged_accesses
+            for access in visible_accesses
         ],
         key=lambda x: x["id"],
     )
@@ -280,6 +295,8 @@ def test_api_document_accesses_list_authenticated_related_privileged(
                 "team": access.team,
                 "role": access.role,
                 "abilities": access.get_abilities(user),
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+                "created_at": access.created_at.isoformat().replace("+00:00", "Z"),
             }
             for access in ancestors_accesses + document_accesses
         ],
@@ -646,6 +663,8 @@ def test_api_document_accesses_retrieve_authenticated_related(
             "max_ancestors_role": None,
             "max_role": access.role,
             "abilities": access.get_abilities(user),
+            "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+            "created_at": access.created_at.isoformat().replace("+00:00", "Z"),
         }
 
 
@@ -808,9 +827,13 @@ def test_api_document_accesses_update_administrator_except_owner(
                 **old_values,
                 "role": new_values["role"],
                 "max_role": new_values["role"],
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
             }
         else:
-            assert updated_values == old_values
+            assert updated_values == {
+                **old_values,
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+            }
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -857,7 +880,10 @@ def test_api_document_accesses_update_administrator_from_owner(via, mock_user_te
         assert response.status_code == 403
         access.refresh_from_db()
         updated_values = serializers.DocumentAccessSerializer(instance=access).data
-        assert updated_values == old_values
+        assert updated_values == {
+            **old_values,
+            "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+        }
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -922,7 +948,10 @@ def test_api_document_accesses_update_administrator_to_owner(
 
         access.refresh_from_db()
         updated_values = serializers.DocumentAccessSerializer(instance=access).data
-        assert updated_values == old_values
+        assert updated_values == {
+            **old_values,
+            "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+        }
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -985,9 +1014,13 @@ def test_api_document_accesses_update_owner(
                 **old_values,
                 "role": new_values["role"],
                 "max_role": new_values["role"],
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
             }
         else:
-            assert updated_values == old_values
+            assert updated_values == {
+                **old_values,
+                "updated_at": access.updated_at.isoformat().replace("+00:00", "Z"),
+            }
 
 
 @pytest.mark.parametrize("via", VIA)

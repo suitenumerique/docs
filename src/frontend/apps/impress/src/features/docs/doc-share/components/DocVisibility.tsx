@@ -1,4 +1,4 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -21,6 +21,7 @@ import {
   getDocLinkRole,
   useDocUtils,
 } from '@/docs/doc-management';
+import { useToast } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 import { useUpdateDocLink } from '../api/useUpdateDocLink';
@@ -42,7 +43,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const { isDesynchronized } = useDocUtils(doc);
   const { linkModeTranslations, linkReachChoices, linkReachTranslations } =
     useTranslatedShareSettings();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
 
   const description =
     docLinkRole === LinkRole.READER

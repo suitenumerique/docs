@@ -1,0 +1,30 @@
+sequenceDiagram
+  autonumber
+  actor U as Browser
+  participant N as Ingress / Nginx
+  participant D as Django backend
+  participant S as S3 / MinIO
+  participant C as Celery worker
+  participant A as Malware scanner
+
+  rect rgb(240,247,255)
+    Note over U,A: upload
+    U->>D: POST /documents/:id/attachment-upload/
+    D->>D: check write access, size, mime type
+    D->>S: PUT object, status=processing
+    D->>C: queue the scan
+    C->>A: scan the object
+    A-->>D: callback, safe or infected
+    D->>S: metadata status=ready, or delete
+    D-->>U: media url
+  end
+
+  rect rgb(245,255,248)
+    Note over U,S: read
+    U->>N: GET /media/:key
+    N->>D: auth_request /documents/media-auth/<br/>X-Original-URL
+    D->>D: resolve the document, check read access
+    D-->>N: 200 + Authorization, X-Amz-Date, X-Amz-Content-SHA256
+    N->>S: GET the object with those signed headers
+    S-->>U: file, with Content-Security-Policy default-src none
+  end

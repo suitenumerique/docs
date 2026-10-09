@@ -17,6 +17,7 @@ type AppPropsWithLayout = AppProps & {
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
   useSWRegister();
   useOffline();
+
   const getLayout = Component.getLayout ?? ((page) => page);
   const { t } = useTranslation();
 

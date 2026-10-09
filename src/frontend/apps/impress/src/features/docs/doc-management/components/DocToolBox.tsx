@@ -1,37 +1,48 @@
 import {
   Button,
+  ButtonProps,
   DropdownMenu,
   DropdownMenuItem,
-  useTreeContext,
+  DropdownMenuOption,
+  MenuItemSeparator,
 } from '@gouvfr-lasuite/ui-components';
 import { Present } from '@gouvfr-lasuite/ui-components/icons';
 import { announce } from '@react-aria/live-announcer';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import { ReactNode, memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Box } from '@/components/Box';
 import { Text } from '@/components/Text';
+import { useConfig } from '@/core/config/api';
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { getWordCount } from '@/docs/doc-editor/utils';
 import { printDocumentWithStyles } from '@/docs/doc-export/utils_print';
+import { useDuplicatedDoc } from '@/docs/doc-management/components/ConfirmationDuplicateModal';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useDetachDoc } from '@/docs/doc-tree/api/useDetach';
+import {
+  deleteDocFromTreeAfterNavigate,
+  useTreeContextOrNull,
+} from '@/docs/doc-tree/utils';
 import { useAuth } from '@/features/auth';
 import ContentCopyIcon from '@/icons/copy.svg';
 import DocMoveInIcon from '@/icons/doc-move-in.svg';
 import DocMoveOutIcon from '@/icons/doc-move-out.svg';
-import DownloadSVG from '@/icons/download.svg';
-import HistorySVG from '@/icons/history.svg';
-import LeaveSVG from '@/icons/leave.svg';
+import DownloadIcon from '@/icons/download.svg';
+import HistoryIcon from '@/icons/history.svg';
+import LeaveIcon from '@/icons/leave.svg';
 import LinkIcon from '@/icons/link.svg';
-import MoreSVG from '@/icons/more_horiz.svg';
+import MoreIcon from '@/icons/more_horiz.svg';
 import PrintIcon from '@/icons/print.svg';
 import SharedIcon from '@/icons/shared.svg';
 import StarSlashIcon from '@/icons/star-slash.svg';
 import StarIcon from '@/icons/star.svg';
 import DeleteIcon from '@/icons/trash.svg';
+import { useAnalytics } from '@/libs/Analytics';
 import { useFocusStore, useResponsiveStore } from '@/stores';
+import { isMacOS } from '@/utils/userAgent';
 
 import {
   KEY_DOC,
@@ -39,10 +50,21 @@ import {
   KEY_LIST_FAVORITE_DOC,
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
-  useDuplicateDoc,
 } from '../api';
-import { useCopyDocLink } from '../hooks';
+import { useCopyDocLink, useTrans } from '../hooks';
 import { Doc, Role } from '../types';
+
+const DUPLICATE_WITH_CHILDREN_FEATURE_FLAG = 'duplicate_with_children';
+
+const ConfirmationDuplicateModal = dynamic(
+  () =>
+    import('@/docs/doc-management/components/ConfirmationDuplicateModal').then(
+      (mod) => ({
+        default: mod.ConfirmationDuplicateModal,
+      }),
+    ),
+  { ssr: false },
+);
 
 const DocMoveModal = dynamic(
   () =>
@@ -94,34 +116,66 @@ const ModalExport = dynamic(
   { ssr: false },
 );
 
+/**
+ * We widen the type of `DropdownMenuOption.label` to accept
+ * `ReactNode` instead of just `string`.
+ * @todo Widen the label type in the ui-kit package itself.
+ * This is a temporary workaround until the ui-kit package is updated.
+ */
+type MenuOptionWithNodeLabel = Omit<DropdownMenuOption, 'label'> & {
+  label: ReactNode;
+};
+type DropdownMenuItemWithNodeLabel =
+  MenuOptionWithNodeLabel | MenuItemSeparator;
+
 interface DocToolBoxProps {
   doc: Doc;
+  isCurrentDoc: boolean;
+  buttonProps?: ButtonProps;
+  onOpenChange?: (isOpen: boolean) => void;
+  optionsDefault?: DropdownMenuItem[];
 }
 
-export const DocToolBox = ({ doc }: DocToolBoxProps) => {
+const DocToolBoxComponent = ({
+  buttonProps,
+  doc,
+  isCurrentDoc,
+  onOpenChange,
+  optionsDefault,
+}: DocToolBoxProps) => {
   const { t } = useTranslation();
-  const treeContext = useTreeContext<Doc | null>();
+  const { untitledDocument } = useTrans();
+  const treeContext = useTreeContextOrNull<Doc | null>();
   const router = useRouter();
-  const isTopParent = doc.id === treeContext?.root?.id; // it can be a child but not for the current user
+  const isTopParent = !treeContext || doc.id === treeContext?.root?.id; // it can be a child but not for the current user
   const { authenticated } = useAuth();
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [isModalDuplicateOpen, setIsModalDuplicateOpen] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const [isModalShareOpen, setIsModalShareOpen] = useState(false);
   const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
   const [isModalMoveOpen, setIsModalMoveOpen] = useState(false);
+  const { onClick: onButtonClick, ...buttonPropsLeft } = buttonProps || {};
+  const { isFeatureFlagActivated } = useAnalytics();
+  const { data: conf } = useConfig();
+  const duplicateWithChildrenAllowed = !!(
+    isFeatureFlagActivated(DUPLICATE_WITH_CHILDREN_FEATURE_FLAG) &&
+    conf?.DUPLICATE_CHILDREN_FEATURE_ENABLED &&
+    doc.numchild
+  );
 
-  const { editor } = useEditorStore();
+  const editor = useEditorStore((state) => state.editor);
   const wordCountLabel = useMemo(() => {
-    if (openDropdown) {
+    if (openDropdown && isCurrentDoc && editor) {
       return t('Word count: {{count}} words', {
         count: getWordCount(editor),
         description:
           'In the document options menu, showing the number of words in the document.',
       });
     }
-  }, [editor, openDropdown, t]);
+  }, [editor, isCurrentDoc, openDropdown, t]);
 
   useEffect(() => {
     if (wordCountLabel) {
@@ -131,15 +185,15 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
 
   const { mutate: detachDoc } = useDetachDoc();
 
-  const { restoreFocus, addLastFocus } = useFocusStore();
-  const { isMobile } = useResponsiveStore();
+  const restoreFocus = useFocusStore((state) => state.restoreFocus);
+  const addLastFocus = useFocusStore((state) => state.addLastFocus);
+  const isMobile = useResponsiveStore((state) => state.isMobile);
   const copyDocLink = useCopyDocLink(doc.id);
-
   const openPresenter = usePresenterStore((state) => state.open);
-  const { mutate: duplicateDoc } = useDuplicateDoc({
-    onSuccess: (data) => {
-      void router.push(`/docs/${data.id}`);
-    },
+  const { mutate: duplicateDoc } = useDuplicatedDoc({
+    doc,
+    treeContext,
+    isCurrentDoc,
   });
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
@@ -149,13 +203,16 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
     listInvalidQueries: [KEY_LIST_DOC, KEY_DOC, KEY_LIST_FAVORITE_DOC],
   });
 
-  const options: DropdownMenuItem[] = [
+  const options: DropdownMenuItemWithNodeLabel[] = [
     {
       label: t('Copy link', {
         description: 'Dropdown menu item to copy the document link',
       }),
       icon: <LinkIcon width={18} height={18} aria-hidden="true" />,
-      callback: copyDocLink,
+      callback: () => {
+        copyDocLink();
+        restoreFocus();
+      },
     },
     {
       label: t('Share', {
@@ -166,28 +223,57 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         setIsModalShareOpen(true);
       },
       isHidden: !authenticated,
+      showSeparator: isCurrentDoc,
     },
-    { type: 'separator' },
     {
-      label: t('Present', {
-        description:
-          'Dropdown menu item to open the document in presentation mode',
-      }),
+      label: (
+        <Box $direction="row" $gap="xxs">
+          <Text>
+            {t('Present', {
+              description:
+                'Dropdown menu item to open the document in presentation mode',
+            })}
+          </Text>
+          <Text
+            $variation="tertiary"
+            $size="xs"
+            $css={`
+              opacity: 0;
+              transition: opacity 0.2s;
+              .c__dropdown-menu-item:hover &,
+              .c__dropdown-menu-item[data-focused] & {
+                opacity: 1;
+              }
+            `}
+          >
+            {isMacOS
+              ? t('Cmd+Alt+P', {
+                  description:
+                    'Dropdown menu item to open the document in presentation mode, macOS shortcut',
+                })
+              : t('Ctrl+Alt+P', {
+                  description:
+                    'Dropdown menu item to open the document in presentation mode, Windows/Linux shortcut',
+                })}
+          </Text>
+        </Box>
+      ),
       icon: <Present width={18} height={18} aria-hidden="true" />,
       callback: () => {
         openPresenter(0);
       },
-      isHidden: Boolean(doc.deleted_at) || isMobile,
+      isHidden: Boolean(doc.deleted_at) || isMobile || !isCurrentDoc,
       testId: `docs-actions-present-${doc.id}`,
     },
     {
       label: t('Download', {
         description: 'Dropdown menu item to download the document',
       }),
-      icon: <DownloadSVG width={18} height={18} aria-hidden="true" />,
+      icon: <DownloadIcon width={18} height={18} aria-hidden="true" />,
       callback: () => {
         setIsModalExportOpen(true);
       },
+      isHidden: !isCurrentDoc,
     },
     {
       label: t('Print', {
@@ -197,6 +283,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       callback: () => {
         printDocumentWithStyles();
       },
+      isHidden: !isCurrentDoc,
     },
     { type: 'separator' },
     {
@@ -212,6 +299,8 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         } else {
           makeFavoriteDoc.mutate({ id: doc.id });
         }
+
+        restoreFocus();
       },
       isHidden: !doc.abilities.favorite,
       testId: `docs-actions-${doc.is_favorite ? 'unstar' : 'star'}-${doc.id}`,
@@ -223,11 +312,14 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       icon: <ContentCopyIcon width={18} height={18} aria-hidden="true" />,
       isDisabled: !doc.abilities.duplicate,
       callback: () => {
-        duplicateDoc({
-          docId: doc.id,
-          with_accesses: false,
-          canSave: doc.abilities.partial_update,
-        });
+        if (duplicateWithChildrenAllowed) {
+          setIsModalDuplicateOpen(true);
+        } else {
+          duplicateDoc({
+            docId: doc.id,
+            canSave: doc.abilities.partial_update,
+          });
+        }
       },
       isHidden: !doc.abilities.duplicate,
     },
@@ -246,11 +338,11 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             onSuccess: () => {
               if (treeContext.root) {
                 treeContext.treeData.setSelectedNode(treeContext.root);
-                void router.push(`/docs/${treeContext.root.id}`).then(() => {
-                  setTimeout(() => {
-                    treeContext?.treeData.deleteNode(doc.id);
-                  }, 100);
-                });
+                deleteDocFromTreeAfterNavigate(
+                  treeContext,
+                  doc.id,
+                  router.push(`/docs/${treeContext.root.id}`),
+                );
               }
             },
           },
@@ -270,19 +362,19 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       label: t('History', {
         description: 'Dropdown menu item to view the document history',
       }),
-      icon: <HistorySVG width={18} height={18} aria-hidden="true" />,
+      icon: <HistoryIcon width={18} height={18} aria-hidden="true" />,
       isDisabled: !doc.abilities.versions_list,
       callback: () => {
         setIsModalHistoryOpen(true);
       },
-      isHidden: isMobile || !doc.abilities.versions_list,
+      isHidden: isMobile || !doc.abilities.versions_list || !isCurrentDoc,
       showSeparator: true,
     },
     {
       label: t('Leave', {
         description: 'Dropdown menu item to leave the document',
       }),
-      icon: <LeaveSVG width={18} height={18} aria-hidden="true" />,
+      icon: <LeaveIcon width={18} height={18} aria-hidden="true" />,
       callback: () => {
         setIsModalLeaveOpen(true);
       },
@@ -290,8 +382,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
        * A user can only leave a top parent because we cannot
        * leave a child if the parent is not left.
        * ⚠️ This doc can still be a child for other users.
+       * Unauthenticated visitors also cannot leave.
        */
-      isHidden: !isTopParent,
+      isHidden: !isTopParent || !authenticated,
     },
     {
       label: t('Delete', {
@@ -302,35 +395,44 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         setIsModalRemoveOpen(true);
       },
       isHidden: !doc.abilities.destroy,
-    },
-    {
-      type: 'separator',
+      showSeparator: isCurrentDoc,
     },
   ];
 
   return (
     <>
       <DropdownMenu
-        options={options}
+        options={(optionsDefault ?? options) as DropdownMenuItem[]}
         isOpen={openDropdown}
         shouldCloseOnInteractOutside={() => true}
-        onOpenChange={setOpenDropdown}
+        onOpenChange={(isOpen) => {
+          setOpenDropdown(isOpen);
+          onOpenChange?.(isOpen);
+        }}
         bottomMessage={
           wordCountLabel && <Text $variation="tertiary">{wordCountLabel}</Text>
         }
       >
         <Button
-          aria-label={t('Open the document options')}
+          aria-label={t('Open the document options: {{title}}', {
+            title: doc.title || untitledDocument,
+          })}
           size="small"
-          icon={<MoreSVG width={24} height={24} aria-hidden="true" />}
+          icon={<MoreIcon width={24} height={24} aria-hidden="true" />}
           color="neutral"
           variant="tertiary"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
-            setOpenDropdown((o) => !o);
+            const isOpen = !openDropdown;
+            setOpenDropdown(isOpen);
+            onOpenChange?.(isOpen);
             addLastFocus(e.currentTarget);
+            onButtonClick?.(
+              e as React.MouseEvent<HTMLButtonElement, MouseEvent>,
+            );
           }}
+          {...buttonPropsLeft}
         />
       </DropdownMenu>
 
@@ -355,16 +457,26 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
               treeContext?.treeData.getParentId(doc.id) ||
               treeContext?.root?.id;
 
-            if (isTopParent) {
+            if (isTopParent && isCurrentDoc) {
               void router.push(`/`);
             } else if (parentId) {
-              void router.push(`/docs/${parentId}`).then(() => {
-                setTimeout(() => {
-                  treeContext?.treeData.deleteNode(doc.id);
-                }, 100);
-              });
+              deleteDocFromTreeAfterNavigate(
+                treeContext,
+                doc.id,
+                router.push(`/docs/${parentId}`),
+              );
             }
           }}
+        />
+      )}
+      {isModalDuplicateOpen && (
+        <ConfirmationDuplicateModal
+          onClose={() => {
+            setIsModalDuplicateOpen(false);
+            restoreFocus();
+          }}
+          doc={doc}
+          treeContext={treeContext}
         />
       )}
       {isModalHistoryOpen && (
@@ -409,3 +521,5 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
     </>
   );
 };
+
+export const DocToolBox = memo(DocToolBoxComponent);

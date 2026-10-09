@@ -274,7 +274,6 @@ export const SearchPage = ({
                       type: 'interlinkingLinkInline',
                       props: {
                         docId: doc.id,
-                        title: doc.title || untitledDocument,
                       },
                     });
 

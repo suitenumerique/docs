@@ -89,7 +89,7 @@ Production deployments differ significantly from development environments. The t
 | --------- | --------------------- |
 | 3000      | Next.js               |
 | 8071      | Django                |
-| 4444      | Y-Provider            |
+| 3002      | yhub (collaboration WS) |
 | 8080      | Keycloak              |
 | 8083      | Nginx proxy           |
 | 9000/9001 | MinIO                 |

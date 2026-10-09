@@ -16,10 +16,6 @@ import {
 
 if (process.env.IS_INSTANCE !== 'true') {
   test.describe('Doc AI feature', () => {
-    test.beforeEach(async ({ page }) => {
-      await page.goto('/');
-    });
-
     [
       {
         AI_FEATURE_ENABLED: false,
@@ -190,6 +186,8 @@ if (process.env.IS_INSTANCE !== 'true') {
         }
       });
 
+      await page.goto('/');
+
       await createDoc(page, 'doc-ai', browserName, 1);
 
       await page.locator('.bn-block-outer').last().fill('Hello World');
@@ -273,18 +271,11 @@ if (process.env.IS_INSTANCE !== 'true') {
           title: '',
         });
 
-        const [randomDoc] = await createDoc(
-          page,
-          'doc-editor-ai',
-          browserName,
-          1,
-        );
+        await page.goto('/');
 
-        await verifyDocName(page, randomDoc);
+        await createDoc(page, 'doc-editor-ai', browserName, 1);
 
-        await page.locator('.bn-block-outer').last().fill('Hello World');
-
-        const editor = page.locator('.ProseMirror');
+        const editor = await writeInEditor({ page, text: 'Hello World' });
         await editor.getByText('Hello').selectText();
 
         if (!ai_transform && !ai_translate) {
@@ -350,6 +341,8 @@ if (process.env.IS_INSTANCE !== 'true') {
         created_at: '2021-09-01T09:00:00Z',
         title: '',
       });
+
+      await page.goto('/');
 
       const [randomDoc] = await createDoc(
         page,

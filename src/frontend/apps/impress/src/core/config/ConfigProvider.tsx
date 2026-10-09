@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { sweepLocalDocs } from '@/docs/doc-management/localDocs';
 import { useAuthQuery } from '@/features/auth';
 import {
   useCustomTranslations,
@@ -64,6 +65,16 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
 
     setTheme(conf.FRONTEND_THEME);
   }, [conf?.FRONTEND_THEME, setTheme]);
+
+  /**
+   * Offline local document sweep based on retention days.
+   */
+  useEffect(() => {
+    if (!conf?.COLLABORATION_LOCAL_DOC_RETENTION_DAYS) {
+      return;
+    }
+    void sweepLocalDocs(conf.COLLABORATION_LOCAL_DOC_RETENTION_DAYS);
+  }, [conf?.COLLABORATION_LOCAL_DOC_RETENTION_DAYS]);
 
   useEffect(() => {
     if (!conf?.POSTHOG_KEY || !conf?.POSTHOG_HOST) {

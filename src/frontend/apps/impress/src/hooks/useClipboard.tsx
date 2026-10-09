@@ -1,9 +1,11 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useToast } from './useToast';
+
 export const useClipboard = () => {
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { t } = useTranslation();
 
   return useCallback(

@@ -2,15 +2,13 @@
 
 # pylint: disable=too-many-lines
 
-import base64
-import datetime as dt
 import ipaddress
 import json
 import logging
 import socket
 import uuid
 from collections import defaultdict
-from io import BytesIO
+from functools import partial
 from urllib.parse import unquote, urlencode, urlparse
 
 from django.conf import settings
@@ -20,7 +18,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import URLValidator
-from django.db import DatabaseError, connection, transaction
+from django.db import DatabaseError, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Greatest, Left, Length
@@ -36,7 +34,6 @@ import requests
 import rest_framework as drf
 import waffle
 from botocore.exceptions import ClientError
-from botocore.response import StreamingBody
 from csp.constants import NONE
 from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
@@ -53,7 +50,6 @@ from core.api.filters import remove_accents
 from core.services import mime_types
 from core.services.ai_services.blocknote import AIService
 from core.services.ai_services.legacy import get_legacy_ai_service
-from core.services.collaboration_services import CollaborationService
 from core.services.converter_services import (
     ConversionError,
     Converter,
@@ -64,20 +60,25 @@ from core.services.converter_services import (
 from core.services.converter_services import (
     ValidationError as YProviderValidationError,
 )
+from core.services.jwt_services import (
+    ConfigurationError as JWTConfigurationError,
+)
+from core.services.jwt_services import JWTService
 from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,
 )
-from core.tasks.access import reset_service_connections_in_cascade
-from core.tasks.mail import send_ask_for_access_mail
+from core.services.yhub_services import YHubError, YHubService
+from core.tasks.access import reset_service_connections_on_commit
+from core.tasks.documents import sync_service_restorations_in_cascade
+from core.tasks.mail import send_ask_for_access_mail, send_mention_notification_mail
+from core.tasks.search import trigger_batch_document_indexer
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.dicts import lowercase_keys
-from core.utils.paths import filter_descendants
 from core.utils.s3 import get_s3_client
-from core.utils.s3_response_stream import content_stream
 from core.utils.treebeard import create_tree_node_with_retry
 from core.utils.users import users_sharing_documents_with
-from core.utils.yjs import extract_attachments
+from core.utils.yjs import extract_attachments_from_update
 
 from ..enums import FeatureFlag, SearchType
 from . import permissions, serializers, utils
@@ -477,31 +478,25 @@ class DocumentViewSet(
     5. **Children**: List or create child documents.
         Example: GET, POST /documents/{id}/children/
 
-    6. **Versions List**: Retrieve version history of a document.
-        Example: GET /documents/{id}/versions/
-
-    7. **Version Detail**: Get or delete a specific document version.
-        Example: GET, DELETE /documents/{id}/versions/{version_id}/
-
-    8. **Favorite**: Get list of favorite documents for a user. Mark or unmark
+    6. **Favorite**: Get list of favorite documents for a user. Mark or unmark
         a document as favorite.
         Examples:
-        - GET /documents/favorite_list/
+        - GET /documents/favorites/
         - POST, DELETE /documents/{id}/favorite/
 
-    9. **Create for Owner**: Create a document via server-to-server on behalf of a user.
+    7. **Create for Owner**: Create a document via server-to-server on behalf of a user.
         Example: POST /documents/create-for-owner/
 
-    10. **Link Configuration**: Update document link configuration.
+    8. **Link Configuration**: Update document link configuration.
         Example: PUT /documents/{id}/link-configuration/
 
-    11. **Attachment Upload**: Upload a file attachment for the document.
+    9. **Attachment Upload**: Upload a file attachment for the document.
         Example: POST /documents/{id}/attachment-upload/
 
-    12. **Media Auth**: Authorize access to document media.
+    10. **Media Auth**: Authorize access to document media.
         Example: GET /documents/media-auth/
 
-    13. **AI Transform**: Apply a transformation action on a piece of text with AI.
+    11. **AI Transform**: Apply a transformation action on a piece of text with AI.
         Example: POST /documents/{id}/ai-transform/
         Expected data:
         - text (str): The input text.
@@ -509,7 +504,7 @@ class DocumentViewSet(
         Returns: JSON response with the processed text.
         Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
 
-    14. **AI Translate**: Translate a piece of text with AI.
+    12. **AI Translate**: Translate a piece of text with AI.
         Example: POST /documents/{id}/ai-translate/
         Expected data:
         - text (str): The input text.
@@ -517,8 +512,19 @@ class DocumentViewSet(
         Returns: JSON response with the translated text.
         Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
 
-    15. **AI Proxy**: Proxy an AI request to an external AI service.
+    13. **AI Proxy**: Proxy an AI request to an external AI service.
         Example: POST /api/v1.0/documents/<resource_id>/ai-proxy
+
+    16. **Mention**: Mention a user on the document and notify them by email.
+        Example: POST /documents/{id}/mention/
+        Expected data:
+        - anchor_id (uuid): The block or comment id of the mention, used for
+          the email deeplink.
+        - mentioned_user_id (uuid): The user being mentioned, must have access
+          to the document.
+        - thread_id (uuid, optional): The comment thread in which the mention
+          occurs. Omit for mentions in the document body.
+        Returns: 201 with the created mention.
 
     ### Ordering: created_at, updated_at, is_favorite, title
 
@@ -561,6 +567,7 @@ class DocumentViewSet(
     all_serializer_class = serializers.ListDocumentSerializer
     children_serializer_class = serializers.ListDocumentSerializer
     descendants_serializer_class = serializers.ListDocumentSerializer
+    favorite_list_serializer_class = serializers.ListDocumentSerializer
     list_serializer_class = serializers.ListDocumentSerializer
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
@@ -581,22 +588,27 @@ class DocumentViewSet(
         queryset = queryset.filter(ancestors_deleted_at__isnull=True)
 
         # Filter documents to which the current user has access...
-        access_documents_ids = models.DocumentAccess.objects.filter(
-            db.Q(user=user) | db.Q(team__in=user.teams)
-        ).values_list("document_id", flat=True)
+        access_documents_ids = (
+            models.DocumentAccess.objects.filter(
+                db.Q(user=user) | db.Q(team__in=user.teams)
+            )
+            .order_by()
+            .values_list("document_id", flat=True)
+        )
 
         # ...or that were previously accessed and are not restricted
-        traced_documents_ids = models.LinkTrace.objects.filter(user=user).values_list(
-            "document_id", flat=True
+        traced_documents_ids = (
+            models.LinkTrace.objects.filter(user=user)
+            .exclude(document__link_reach=models.LinkReachChoices.RESTRICTED)
+            .order_by()
+            .values_list("document_id", flat=True)
         )
 
-        return queryset.filter(
-            db.Q(id__in=access_documents_ids)
-            | (
-                db.Q(id__in=traced_documents_ids)
-                & ~db.Q(link_reach=models.LinkReachChoices.RESTRICTED)
-            )
-        )
+        # A single `IN (... UNION ...)` lets PostgreSQL drive the query from the
+        # (small) set of document ids and probe the primary key index. The
+        # equivalent `id IN (...) OR (id IN (...) AND ...)` results in a sequential
+        # scan of the whole document table.
+        return queryset.filter(id__in=access_documents_ids.union(traced_documents_ids))
 
     def filter_queryset(self, queryset):
         """Override to apply annotations to generic views."""
@@ -693,8 +705,13 @@ class DocumentViewSet(
         """
         Check if a file has been uploaded with a doc or a children is created.
         If a file is present and the conversion upload enabled, the file is converted
-        using the converter service and the validated_data in the serializer are filled
-        with the converted file and the file name.
+        using the converter service and the title in the serializer is filled with
+        the file name.
+
+        Return the converted content, as a raw Yjs update the collaboration
+        server can be seeded with, or None when no file was uploaded. The
+        content itself is not stored by Django, it is saved by the
+        collaboration server.
         """
         uploaded_file = serializer.validated_data.pop("file", None)
 
@@ -703,49 +720,72 @@ class DocumentViewSet(
                 {"file": ["file upload is not allowed"]}
             )
 
-        # If a file is uploaded, convert it to Yjs format and set as content
-        if uploaded_file:
-            try:
-                file_content = uploaded_file.read()
+        if not uploaded_file:
+            return None
 
-                converter = Converter()
-                converted_content = converter.convert(
-                    file_content,
-                    content_type=uploaded_file.content_type,
-                    accept=mime_types.YJS,
-                )
-                serializer.validated_data["content"] = converted_content
-                serializer.validated_data["title"] = uploaded_file.name
-                logger.info("conversion ended successfully")
+        # If a file is uploaded, convert it to Yjs format
+        try:
+            file_content = uploaded_file.read()
 
-                posthog_capture(
-                    PosthogEventName.DOC_IMPORTED,
-                    self.request.user,
-                    {"content_type": uploaded_file.content_type},
-                )
-            except ConversionError as err:
-                logger.error("could not convert file content with error: %s", err)
-                raise drf.exceptions.ValidationError(
-                    {"file": ["Could not convert file content"]}
-                ) from err
+            converter = Converter()
+            converted_content = converter.convert(
+                file_content,
+                content_type=uploaded_file.content_type,
+                accept=mime_types.YJS,
+            )
+            serializer.validated_data["title"] = uploaded_file.name
+            logger.info("conversion ended successfully")
+
+            posthog_capture(
+                PosthogEventName.DOC_IMPORTED,
+                self.request.user,
+                {"content_type": uploaded_file.content_type},
+            )
+        except ConversionError as err:
+            logger.error("could not convert file content with error: %s", err)
+            raise drf.exceptions.ValidationError(
+                {"file": ["Could not convert file content"]}
+            ) from err
+
+        return converted_content
+
+    def _create_collaboration_document(self, document, update):
+        """
+        Seed a freshly created document with the content it was imported from.
+
+        The collaboration server owns the content from there on, so a failure
+        here leaves a document that lost what was uploaded: it is reported to
+        the caller, who is left to create it again.
+        """
+        try:
+            YHubService(user=self.request.user).create_ydoc(document, update)
+        except YHubError as err:
+            logger.error("could not save the imported content with error: %s", err)
+            raise drf.exceptions.ValidationError(
+                {"file": ["Could not save the imported file content"]}
+            ) from err
 
     def perform_create(self, serializer):
         """Set the current user as creator and owner of the newly created object."""
 
-        self._apply_uploaded_file_conversion(serializer)
+        update = self._apply_uploaded_file_conversion(serializer)
 
-        obj = create_tree_node_with_retry(
-            lambda: models.Document.add_root(
-                creator=self.request.user,
-                **serializer.validated_data,
+        with transaction.atomic():
+            obj = create_tree_node_with_retry(
+                lambda: models.Document.add_root(
+                    creator=self.request.user,
+                    **serializer.validated_data,
+                )
             )
-        )
-        serializer.instance = obj
-        models.DocumentAccess.objects.create(
-            document=obj,
-            user=self.request.user,
-            role=models.RoleChoices.OWNER,
-        )
+            serializer.instance = obj
+            models.DocumentAccess.objects.create(
+                document=obj,
+                user=self.request.user,
+                role=models.RoleChoices.OWNER,
+            )
+
+            if update is not None:
+                self._create_collaboration_document(obj, update)
 
         posthog_capture(
             PosthogEventName.DOC_CREATED, self.request.user, {}, document=obj
@@ -755,89 +795,17 @@ class DocumentViewSet(
         """Override to implement a soft delete instead of dumping the record in database."""
         instance.soft_delete()
 
+        reset_service_connections_on_commit(instance.pk)
+
         posthog_capture(
             PosthogEventName.DOC_DELETED, self.request.user, {}, document=instance
         )
-
-    def _can_user_edit_document(self, document_id, set_cache=False):
-        """Check if the user can edit the document."""
-        try:
-            count, exists = CollaborationService().get_document_connection_info(
-                document_id,
-                self.request.session.session_key,
-            )
-        except requests.HTTPError as e:
-            logger.exception("Failed to call collaboration server: %s", e)
-            count = 0
-            exists = False
-
-        if count == 0:
-            # Nobody is connected to the websocket server
-            logger.debug("update without connection found in the websocket server")
-            cache_key = f"docs:no-websocket:{document_id}"
-            current_editor = cache.get(cache_key)
-
-            if not current_editor:
-                if set_cache:
-                    cache.set(
-                        cache_key,
-                        self.request.session.session_key,
-                        settings.NO_WEBSOCKET_CACHE_TIMEOUT,
-                    )
-                return True
-
-            if current_editor != self.request.session.session_key:
-                return False
-
-            if set_cache:
-                cache.touch(cache_key, settings.NO_WEBSOCKET_CACHE_TIMEOUT)
-            return True
-
-        if exists:
-            # Current user is connected to the websocket server
-            logger.debug("session key found in the websocket server")
-            return True
-
-        logger.debug(
-            "Users connected to the websocket but current editor not connected to it. Can not edit."
-        )
-
-        return False
-
-    def perform_update(self, serializer):
-        """Check rules about collaboration."""
-        if (
-            not serializer.validated_data.get("websocket", False)
-            and settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY
-            and not self._can_user_edit_document(serializer.instance.id, set_cache=True)
-        ):
-            raise drf.exceptions.PermissionDenied(
-                "You are not allowed to edit this document."
-            )
-
-        return super().perform_update(serializer)
-
-    @drf.decorators.action(
-        detail=True,
-        methods=["get"],
-        url_path="can-edit",
-    )
-    def can_edit(self, request, *args, **kwargs):
-        """Check if the current user can edit the document."""
-        document = self.get_object()
-
-        can_edit = (
-            True
-            if not settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY
-            else self._can_user_edit_document(document.id)
-        )
-
-        return drf.response.Response({"can_edit": can_edit})
 
     @drf.decorators.action(
         detail=False,
         methods=["get"],
         permission_classes=[permissions.IsAuthenticated],
+        url_path="favorites",
     )
     def favorite_list(self, request, *args, **kwargs):
         """Get list of favorite documents for the current user."""
@@ -943,6 +911,47 @@ class DocumentViewSet(
             {"id": str(document.id)}, status=status.HTTP_201_CREATED
         )
 
+    @drf.decorators.action(
+        authentication_classes=[authentication.CollaborationServerAuthentication],
+        detail=True,
+        methods=["post"],
+        permission_classes=[],
+        throttle_classes=[],
+        url_path="content-updated",
+    )
+    def content_updated(self, request, *args, **kwargs):
+        """
+        Record that the collaboration server saved a new content for a document.
+
+        The content of a document does not go through Django anymore, so nothing
+        would refresh its "updated_at" as it is edited and the lists ordered by
+        it would freeze. The collaboration server calls this once it persisted
+        the changes of a document, at most once per debounce window.
+
+        The new content is then read back from the collaboration server to
+        refresh the search index, in a task: this call is on the path of a
+        worker persisting a document, it only records what happened.
+
+        The update is written without going through the model: saving it would
+        index the document a second time, through the post_save signal.
+        """
+        try:
+            document_id = uuid.UUID(kwargs["pk"])
+        except ValueError as err:
+            raise Http404 from err
+
+        updated_at = timezone.now()
+        if not models.Document.objects.filter(pk=document_id).update(
+            updated_at=updated_at
+        ):
+            raise Http404
+
+        # Throttled like any other change: the collaboration server calls this
+        # once per debounce window, for as long as a document is being edited.
+        trigger_batch_document_indexer(document_id, updated_at)
+
+        return drf_response.Response(status=status.HTTP_204_NO_CONTENT)
+
     @drf.decorators.action(detail=True, methods=["post"])
     @transaction.atomic
     def move(self, request, *args, **kwargs):
@@ -1044,6 +1053,14 @@ class DocumentViewSet(
                     defaults={"role": models.RoleChoices.OWNER},
                 )
 
+        # Invalidate the nb_accesses cache, the value has probably changed after the move.
+        document.invalidate_nb_accesses_cache()
+
+        # The document and its descendants now inherit the accesses and the link
+        # definition of other ancestors, whether or not a direct access was
+        # touched: every connection of the subtree is re-checked.
+        reset_service_connections_on_commit(document.id)
+
         posthog_capture(
             PosthogEventName.DOC_MOVED,
             user,
@@ -1072,6 +1089,14 @@ class DocumentViewSet(
         except RuntimeError as err:
             raise drf.exceptions.ValidationError({"detail": str(err)}) from err
 
+        # A soft deletion is no longer reported: the room should never be
+        # tombstoned, and this safety net is what lifts one should any be laid
+        # out of band. Documents of the subtree deleted on their own stay
+        # deleted, and the restored state is read back: on commit.
+        transaction.on_commit(
+            partial(sync_service_restorations_in_cascade.delay, str(document.id))
+        )
+
         return drf_response.Response(
             {"detail": "Document has been successfully restored."},
             status=status.HTTP_200_OK,
@@ -1093,14 +1118,18 @@ class DocumentViewSet(
             )
             serializer.is_valid(raise_exception=True)
 
-            self._apply_uploaded_file_conversion(serializer)
+            update = self._apply_uploaded_file_conversion(serializer)
 
-            child_document = create_tree_node_with_retry(
-                lambda: document.add_child(
-                    creator=request.user,
-                    **serializer.validated_data,
+            with transaction.atomic():
+                child_document = create_tree_node_with_retry(
+                    lambda: document.add_child(
+                        creator=request.user,
+                        **serializer.validated_data,
+                    )
                 )
-            )
+
+                if update is not None:
+                    self._create_collaboration_document(child_document, update)
 
             # Set the created instance to the serializer
             serializer.instance = child_document
@@ -1311,7 +1340,6 @@ class DocumentViewSet(
         ],
         url_path="duplicate",
     )
-    @transaction.atomic
     def duplicate(self, request, *args, **kwargs):
         """
         Duplicate a document, alongside its descendants if requested.
@@ -1325,11 +1353,21 @@ class DocumentViewSet(
         serializer.is_valid(raise_exception=True)
         user = request.user
 
-        duplicated_document = self._duplicate_document(
-            document_to_duplicate=document_to_duplicate,
-            serializer=serializer,
-            user=user,
-        )
+        # First phase: replicate the structure, in a transaction making no
+        # call to the collaboration server. It stays short, and its rollback
+        # on a failure leaves nothing behind anywhere.
+        with transaction.atomic():
+            duplicated_document, duplicates = self._duplicate_document_structure(
+                document_to_duplicate=document_to_duplicate,
+                serializer=serializer,
+                user=user,
+            )
+
+        # Second phase: seed each duplicate with the content of its source,
+        # out of any transaction. A failure undoes the whole duplication, so
+        # neither the database nor the collaboration server is left with an
+        # orphan.
+        self._duplicate_documents_content(duplicates, user)
 
         posthog_capture(
             PosthogEventName.DOC_DUPLICATED,
@@ -1340,11 +1378,17 @@ class DocumentViewSet(
             document=duplicated_document,
         )
 
-        return drf_response.Response(
-            {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
+        # Set the `is_favorite` attribute to False for the duplicated document, as it
+        # cannot be a favorite immediately after creation.
+        duplicated_document.is_favorite = False
+
+        serializer = serializers.DocumentSerializer(
+            duplicated_document, context=self.get_serializer_context()
         )
 
-    def _duplicate_document(
+        return drf_response.Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def _duplicate_document_structure(
         self,
         document_to_duplicate,
         serializer,
@@ -1352,26 +1396,31 @@ class DocumentViewSet(
         new_parent=None,
     ):
         """
-        Duplicate a document and store the links to attached files in the duplicated
-        document to allow cross-access.
+        Replicate a document, and its descendants when requested, in the
+        database only: no call to the collaboration server is made here, so
+        the transaction wrapping the replication of a whole tree stays short.
+
+        A duplicate is created without its attachments: which ones its content
+        refers to is only known once the content is copied, what
+        `_duplicate_documents_content` does next. Return the duplicate along
+        with the (source, duplicate) pairs of the whole replication for it,
+        in creation order.
 
         Optionally duplicates accesses if `with_accesses` is set to true
         in the payload.
 
-        Optionally duplicates sub-documents if `with_descendants` is set to true in
-        the payload. In this case, the whole subtree of the document will be duplicated,
-        and the links to attached files will be stored in all duplicated documents.
-
-        The `with_accesses` option will also be applied to all duplicated documents
-        if `with_descendants` is set to true.
+        Optionally replicates sub-documents if `with_descendants` is set to
+        true in the payload. The `with_accesses` option is then applied to
+        every replicated document.
         """
         with_accesses = serializer.validated_data.get("with_accesses", False)
-        with_descendants = serializer.validated_data.get("with_descendants", False)
+        with_descendants = (
+            serializer.validated_data.get("with_descendants", False)
+            and settings.DUPLICATE_CHILDREN_FEATURE_ENABLED
+        )
 
         user_role = document_to_duplicate.get_role(user)
         is_owner_or_admin = user_role in models.PRIVILEGED_ROLES
-
-        base64_yjs_content = document_to_duplicate.content
 
         # Duplicate the document instance
         link_kwargs = (
@@ -1382,17 +1431,14 @@ class DocumentViewSet(
             if with_accesses
             else {}
         )
-        extracted_attachments = set(extract_attachments(document_to_duplicate.content))
-        attachments = list(
-            extracted_attachments & set(document_to_duplicate.attachments)
-        )
         title = capfirst(_("copy of {title}").format(title=document_to_duplicate.title))
-        # If parent_duplicate is provided we must add the duplicated document as a child
+        # If parent_duplicate is provided we must add the duplicated document as a child.
+        # No retry here: the parent was created by this very transaction, nobody
+        # else can add children under it, so its child paths cannot collide
         if new_parent is not None:
             duplicated_document = new_parent.add_child(
                 title=title,
-                content=base64_yjs_content,
-                attachments=attachments,
+                attachments=[],
                 duplicated_from=document_to_duplicate,
                 creator=user,
                 **link_kwargs,
@@ -1420,13 +1466,14 @@ class DocumentViewSet(
         elif not document_to_duplicate.is_root() and choices.RoleChoices.get_priority(
             user_role
         ) < choices.RoleChoices.get_priority(models.RoleChoices.EDITOR):
-            duplicated_document = models.Document.add_root(
-                creator=user,
-                title=title,
-                content=base64_yjs_content,
-                attachments=attachments,
-                duplicated_from=document_to_duplicate,
-                **link_kwargs,
+            duplicated_document = create_tree_node_with_retry(
+                lambda: models.Document.add_root(
+                    creator=user,
+                    title=title,
+                    attachments=[],
+                    duplicated_from=document_to_duplicate,
+                    **link_kwargs,
+                )
             )
             models.DocumentAccess.objects.create(
                 document=duplicated_document,
@@ -1434,14 +1481,18 @@ class DocumentViewSet(
                 role=models.RoleChoices.OWNER,
             )
         else:
-            duplicated_document = document_to_duplicate.add_sibling(
-                "last-sibling",
-                title=title,
-                content=base64_yjs_content,
-                attachments=attachments,
-                duplicated_from=document_to_duplicate,
-                creator=user,
-                **link_kwargs,
+            # Treebeard computes the path of the new sibling from the current
+            # last one: two requests creating a node at the same level at the
+            # same time compute the same path, the loser retries with a fresh one
+            duplicated_document = create_tree_node_with_retry(
+                lambda: document_to_duplicate.add_sibling(
+                    "last-sibling",
+                    title=title,
+                    attachments=[],
+                    duplicated_from=document_to_duplicate,
+                    creator=user,
+                    **link_kwargs,
+                )
             )
 
             # Always add the logged-in user as OWNER for root documents
@@ -1474,19 +1525,114 @@ class DocumentViewSet(
                 # Bulk create all the duplicated accesses
                 models.DocumentAccess.objects.bulk_create(accesses_to_create)
 
+        duplicates = [(document_to_duplicate, duplicated_document)]
+
         if with_descendants:
             for child in document_to_duplicate.get_children().filter(
                 ancestors_deleted_at__isnull=True
             ):
-                # When duplicating descendants, attach duplicates under the duplicated_document
-                self._duplicate_document(
+                # When duplicating descendants, attach duplicates under the
+                # duplicated_document. Indexed rather than unpacked: `_` is the
+                # gettext alias in this scope, binding anything to it here makes
+                # every `_()` above raise UnboundLocalError.
+                children_duplicates = self._duplicate_document_structure(
                     document_to_duplicate=child,
                     serializer=serializer,
                     user=user,
                     new_parent=duplicated_document,
+                )[1]
+                duplicates += children_duplicates
+
+        return duplicated_document, duplicates
+
+    def _duplicate_documents_content(self, duplicates, user):
+        """
+        Seed each duplicated document with the content of its source.
+
+        `duplicates` holds the (source, duplicate) pairs of a duplication in
+        creation order, the duplicate of the root first. It runs once the
+        transaction that created the duplicates is committed, so no call to
+        the collaboration server is ever made with a transaction held open.
+
+        A failure undoes the whole duplication: what was seeded on the
+        collaboration server is deleted — its deletion is idempotent and never
+        refused — and the duplicates are removed from the database, so neither
+        side is left with an orphan.
+        """
+        service = YHubService(user=user)
+        seeded = []
+        try:
+            for source, duplicated in duplicates:
+                try:
+                    update = service.get_ydoc(source)
+                except YHubError as err:
+                    logger.error(
+                        "could not fetch the content of document %s with error: %s",
+                        source.id,
+                        err,
+                    )
+                    raise drf.exceptions.APIException(
+                        "Failed to fetch the document content"
+                    ) from err
+
+                if not update:
+                    continue
+
+                seeded.append(duplicated)
+                try:
+                    service.create_ydoc(duplicated, update)
+                except YHubError as err:
+                    # 409 included: the duplicate was created moments ago with
+                    # a fresh id, content on the collaboration server for it
+                    # is not a state this flow can reach — a 409 says content
+                    # exists, nothing about it being the source's, and a 201
+                    # served on top of unknown content would be a lie.
+                    # Whatever it is, it undoes the duplication.
+                    logger.error(
+                        "could not copy the content into document %s with error: %s",
+                        duplicated.id,
+                        err,
+                    )
+                    raise drf.exceptions.APIException(
+                        "Failed to duplicate the document content"
+                    ) from err
+
+                # The attachments the content refers to are the ones the
+                # duplicate allows a cross-access to
+                extracted_attachments = set(extract_attachments_from_update(update))
+                duplicated.attachments = list(
+                    extracted_attachments & set(source.attachments)
                 )
 
-        return duplicated_document
+            models.Document.objects.bulk_update(seeded, ["attachments"])
+        except Exception:
+            # a saga must compensate on any failure, expected or not: whatever
+            # escapes the seeding of a subtree undoes the whole duplication
+            self._compensate_duplication(service, seeded, duplicates[0][1])
+            raise
+
+    @staticmethod
+    def _compensate_duplication(service, seeded, duplicated_root):
+        """
+        Undo a failed duplication.
+
+        What was seeded on the collaboration server is deleted first, then the
+        duplicated documents themselves: a deleted document answers 404 there,
+        so no editor can ever open a duplicate the database no longer holds.
+        A deletion the collaboration server cannot honour is logged rather
+        than raised, the duplicated documents must go down all the same.
+        """
+        for document in seeded:
+            try:
+                service.delete_ydoc(document)
+            except YHubError:
+                logger.exception(
+                    "could not delete the content of duplicated document %s "
+                    "from the collaboration server",
+                    document.id,
+                )
+
+        duplicated_root.delete()
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
     @utils.conditional_refresh_oidc_token
@@ -1732,87 +1878,6 @@ class DocumentViewSet(
             lambda paths: {parent.path: parent},
         )
 
-    @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
-    def versions_list(self, request, *args, **kwargs):
-        """
-        Return the document's versions but only those created after the user got access
-        to the document
-        """
-        user = request.user
-        if not user.is_authenticated:
-            raise drf.exceptions.PermissionDenied("Authentication required.")
-
-        # Validate query parameters using dedicated serializer
-        serializer = serializers.VersionFilterSerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
-
-        document = self.get_object()
-
-        # Users should not see version history dating from before they gained access to the
-        # document. Filter to get the minimum access date for the logged-in user
-        access_queryset = models.DocumentAccess.objects.filter(
-            db.Q(user=user) | db.Q(team__in=user.teams),
-            document__path=Left(db.Value(document.path), Length("document__path")),
-        ).aggregate(min_date=db.Min("created_at"))
-
-        # Handle the case where the user has no accesses
-        min_datetime = access_queryset["min_date"]
-        if not min_datetime:
-            return drf.exceptions.PermissionDenied(
-                "Only users with specific access can see version history"
-            )
-
-        versions_data = document.get_versions_slice(
-            from_version_id=serializer.validated_data.get("version_id"),
-            min_datetime=min_datetime,
-            page_size=serializer.validated_data.get("page_size"),
-        )
-
-        return drf.response.Response(versions_data)
-
-    @drf.decorators.action(
-        detail=True,
-        methods=["get", "delete"],
-        url_path=r"versions/(?P<version_id>[A-Za-z0-9._+\-=~]{1,1024})",
-    )
-    # pylint: disable=unused-argument
-    def versions_detail(self, request, pk, version_id, *args, **kwargs):
-        """Custom action to retrieve a specific version of a document"""
-        document = self.get_object()
-
-        try:
-            response = document.get_content_response(version_id=version_id)
-        except (FileNotFoundError, ClientError) as err:
-            raise Http404 from err
-
-        # Don't let users access versions that were created before they were given access
-        # to the document
-        user = request.user
-        min_datetime = min(
-            access.created_at
-            for access in models.DocumentAccess.objects.filter(
-                db.Q(user=user) | db.Q(team__in=user.teams),
-                document__path=Left(db.Value(document.path), Length("document__path")),
-            )
-        )
-
-        if response["LastModified"] < min_datetime:
-            raise Http404
-
-        if request.method == "DELETE":
-            response = document.delete_version(version_id)
-            return drf.response.Response(
-                status=response["ResponseMetadata"]["HTTPStatusCode"]
-            )
-
-        return drf.response.Response(
-            {
-                "content": response["Body"].read().decode("utf-8"),
-                "last_modified": response["LastModified"],
-                "id": version_id,
-            }
-        )
-
     @drf.decorators.action(detail=True, methods=["put"], url_path="link-configuration")
     def link_configuration(self, request, *args, **kwargs):
         """Update link configuration with specific rights (cf get_abilities)."""
@@ -1825,10 +1890,9 @@ class DocumentViewSet(
         )
         serializer.is_valid(raise_exception=True)
 
-        serializer.save()
-
-        # Notify collaboration server about the link updated
-        reset_service_connections_in_cascade.delay(str(document.id))
+        # saving a changed link definition is what tells the collaboration
+        # server to re-check the connections of the document and its descendants
+        serializer.save(update_fields=["link_reach", "link_role", "updated_at"])
 
         return drf.response.Response(serializer.data, status=drf.status.HTTP_200_OK)
 
@@ -1866,6 +1930,36 @@ class DocumentViewSet(
         return drf.response.Response(
             {"detail": "Document was already not marked as favorite"},
             status=drf.status.HTTP_200_OK,
+        )
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
+        url_path="mention",
+        throttle_scope="mention",
+    )
+    def mention(self, request, *args, **kwargs):
+        """Mention a user on the document and notify them by email.
+
+        The mention record is created synchronously; the email notification is
+        sent asynchronously by a Celery task, which suppresses it when the same
+        user was already notified in the same context (document body or thread)
+        within the cooldown period.
+        """
+        # Check permissions first
+        document = self.get_object()
+
+        serializer = serializers.MentionSerializer(
+            data=request.data,
+            context={**self.get_serializer_context(), "document": document},
+        )
+        serializer.is_valid(raise_exception=True)
+        mention = serializer.save(document=document, mentioned_by_user=request.user)
+
+        send_mention_notification_mail.delay(str(mention.id))
+
+        return drf.response.Response(
+            serializer.data, status=drf.status.HTTP_201_CREATED
         )
 
     @drf.decorators.action(detail=True, methods=["post"], url_path="attachment-upload")
@@ -1925,7 +2019,10 @@ class DocumentViewSet(
 
         # Make the attachment readable by document readers
         document.attachments.append(key)
-        document.save()
+        # Only the attachments column is written: the instance was loaded at the
+        # start of the request and an overlapping change must not be undone
+        # (e.g. a withdrawal of the link configuration committed in between).
+        document.save(update_fields=["attachments", "updated_at"])
 
         malware_detection.analyse_file(key, document_id=document.id)
 
@@ -2068,165 +2165,6 @@ class DocumentViewSet(
         request = utils.generate_s3_authorization_headers(key)
 
         return drf.response.Response("authorized", headers=request.headers, status=200)
-
-    @drf.decorators.action(detail=True, methods=["patch"])
-    def content(self, request, *args, **kwargs):
-        """Update the raw Yjs content of a document stored in S3."""
-        document = self.get_object()
-
-        serializer = serializers.DocumentContentSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        if (
-            not serializer.validated_data.get("websocket", False)
-            and settings.COLLABORATION_WS_NOT_CONNECTED_READ_ONLY
-            and not self._can_user_edit_document(document.id, set_cache=True)
-        ):
-            raise drf.exceptions.PermissionDenied(
-                "You are not allowed to edit this document."
-            )
-
-        content = serializer.validated_data["content"]
-        try:
-            extracted_attachments = set(extract_attachments(content))
-        except ValueError:
-            return drf_response.Response(
-                "invalid yjs document", status=status.HTTP_400_BAD_REQUEST
-            )
-
-        existing_attachments = set(document.attachments or [])
-        new_attachments = extracted_attachments - existing_attachments
-
-        # Ensure we update attachments the request user is allowed to read
-        if new_attachments:
-            attachments_documents = (
-                models.Document.objects.filter(
-                    attachments__overlap=list(new_attachments)
-                )
-                .only("path", "attachments")
-                .order_by("path")
-            )
-
-            user = self.request.user
-            readable_per_se_paths = (
-                models.Document.objects.readable_per_se(user)
-                .order_by("path")
-                .values_list("path", flat=True)
-            )
-            readable_attachments_paths = filter_descendants(
-                [doc.path for doc in attachments_documents],
-                readable_per_se_paths,
-                skip_sorting=True,
-            )
-
-            readable_attachments = set()
-            for attachments_document in attachments_documents:
-                if attachments_document.path not in readable_attachments_paths:
-                    continue
-                readable_attachments.update(
-                    set(attachments_document.attachments) & new_attachments
-                )
-
-            # Update attachments with readable keys
-            document.attachments = list(existing_attachments | readable_attachments)
-        document.content = content
-        document.save()
-        cache.delete(utils.get_content_metadata_cache_key(document.id))
-
-        return drf_response.Response(status=status.HTTP_204_NO_CONTENT)
-
-    @content.mapping.get
-    def content_retrieve(self, request, *args, **kwargs):
-        """
-        Retrieve the raw content file from s3 and stream it.
-
-        We implement a HTTP cache based on the ETag and LastModified headers.
-        The ETag and LastModified are retrieved in the S3 get_object operation to be consistent with
-        the content Body retrieved at the same time. These metadata are saved in cache for
-        future requests.
-        We check in the request if the ETag is present in the If-None-Match header and if it's the
-        same as the one from the S3 get_object, we return a 304 response.
-        If the ETag is not present or not the same, we do the same check based on the LastModified
-        value if present in the If-Modified-Since header.
-        """
-        document = self.get_object()
-        # The S3 call to fetch the document can take time and the database
-        # connection is useless in this process. Hence we are closing it now
-        # to prevent having a massive number of database connections during
-        # the web-socket re-connection burst.
-        connection.close()
-
-        if_none_match, if_modified_since_dt = utils.parse_http_conditional_headers(
-            request
-        )
-
-        # First check if a cache is existing to return earlier a 304 without reaching s3
-        # if etag or last_modified have not changed.
-        cache_key = utils.get_content_metadata_cache_key(document.id)
-        if content_metadata := cache.get(cache_key):
-            if (if_none_match and if_none_match == content_metadata.get("etag")) or (
-                if_modified_since_dt
-                and dt.datetime.fromisoformat(content_metadata.get("last_modified"))
-                <= if_modified_since_dt
-            ):
-                return drf_response.Response(status=status.HTTP_304_NOT_MODIFIED)
-
-        # Prepare get_object S3 operation. The get_object manages ETag and last_modified
-        # headers will raise a 304 client error if one of them matches the value existing in
-        # S3.
-        get_object_kwargs = {
-            "Bucket": default_storage.bucket_name,
-            "Key": document.file_key,
-        }
-        if if_none_match:
-            get_object_kwargs["IfNoneMatch"] = if_none_match
-        if if_modified_since_dt:
-            get_object_kwargs["IfModifiedSince"] = if_modified_since_dt
-
-        try:
-            s3_response = default_storage.connection.meta.client.get_object(
-                **get_object_kwargs
-            )
-        except ClientError as exc:
-            code = exc.response["Error"]["Code"]
-            match code:
-                case "304" | "PreconditionFailed" | "NotModified":
-                    return drf_response.Response(status=status.HTTP_304_NOT_MODIFIED)
-                case "NoSuchKey" | "404":
-                    return StreamingHttpResponse(
-                        content_stream(StreamingBody(BytesIO(b""), content_length=0)),
-                        content_type="text/plain",
-                        status=200,
-                    )
-                case _:
-                    raise
-
-        last_modified = s3_response["LastModified"]
-        etag = s3_response["ETag"]
-        size = s3_response["ContentLength"]
-
-        # Refresh the metadata cache
-        cache.set(
-            cache_key,
-            {
-                "last_modified": last_modified.isoformat(),
-                "etag": etag,
-            },
-            settings.CONTENT_METADATA_CACHE_TIMEOUT,
-        )
-
-        response = StreamingHttpResponse(
-            streaming_content=content_stream(s3_response["Body"]),
-            content_type="text/plain",
-            status=status.HTTP_200_OK,
-        )
-
-        response["Content-Length"] = size
-        response["ETag"] = etag
-        response["Last-Modified"] = last_modified.strftime("%a, %d %b %Y %H:%M:%S %Z")
-        response["Cache-Control"] = "private, no-cache"
-
-        return response
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="media-check")
     def media_check(self, request, *args, **kwargs):
@@ -2595,15 +2533,24 @@ class DocumentViewSet(
                 "Invalid format. Must be one of: json, markdown, html"
             )
 
-        # Get the base64 content from the document
+        # Get the content from the collaboration server, it is the source of
+        # truth for it
+        try:
+            update = YHubService(user=request.user).get_ydoc(document)
+        except YHubError as e:
+            logger.error("Error getting content for document %s: %s", pk, e)
+            return drf_response.Response(
+                {"error": "Failed to get document content"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
         content = None
-        base64_content = document.content
-        if base64_content is not None:
+        if update is not None:
             # Convert using the y-provider service
             try:
                 yprovider = Converter()
                 result = yprovider.convert(
-                    base64.b64decode(base64_content),
+                    update,
                     mime_types.YJS,
                     {
                         "markdown": mime_types.MARKDOWN,
@@ -2705,6 +2652,7 @@ class DocumentAccessViewSet(
         "created_at",
         "role",
         "team",
+        "updated_at",
         "user__id",
         "user__short_name",
         "user__full_name",
@@ -2751,8 +2699,13 @@ class DocumentAccessViewSet(
 
         queryset = self.get_queryset().filter(document__in=ancestors)
 
-        if role not in choices.PRIVILEGED_ROLES:
+        # Readers only see privileged accesses. Users allowed to comment also
+        # see the other roles allowed to comment (with limited user details)
+        # so that they can mention each other. Privileged users see everything.
+        if role not in choices.COMMENTING_ROLES:
             queryset = queryset.filter(role__in=choices.PRIVILEGED_ROLES)
+        elif role not in choices.PRIVILEGED_ROLES:
+            queryset = queryset.filter(role__in=choices.COMMENTING_ROLES)
 
         accesses = list(queryset.order_by("document__path"))
 
@@ -2852,26 +2805,17 @@ class DocumentAccessViewSet(
                 or settings.LANGUAGE_CODE,
             )
 
-    def perform_update(self, serializer):
-        """Update an access to the document and notify the collaboration server."""
-        access = serializer.save()
-
-        access_user_id = None
-        if access.user:
-            access_user_id = str(access.user.id)
-
-        # Notify collaboration server about the access change
-        reset_service_connections_in_cascade.delay(
-            str(access.document.id), access_user_id
-        )
-
     def perform_destroy(self, instance):
-        """Delete an access to the document and notify the collaboration server."""
+        """
+        Delete an access to the document.
+
+        Saving or deleting an access is what notifies the collaboration server,
+        through the signals of the model: nothing to do here beyond deleting.
+        """
         # Snapshot the identifiers before deletion as Django resets the primary key
         # on the instance once it is deleted.
         access_id = str(instance.id)
         document_id = str(instance.document_id)
-        user_id = str(instance.user.id)
 
         instance.delete()
 
@@ -2881,8 +2825,35 @@ class DocumentAccessViewSet(
             {"access_id": access_id, "document_id": document_id},
         )
 
-        # Notify collaboration server about the access removed
-        reset_service_connections_in_cascade.delay(document_id, user_id)
+    @drf.decorators.action(
+        detail=False,
+        methods=["get"],
+        url_name="me",
+        url_path="me",
+    )
+    def get_user_access(self, request, *args, **kwargs):
+        """Retrieve the access related to the current user and return it."""
+
+        document = self.document
+        user = request.user
+        access = (
+            self.get_queryset()
+            .filter(
+                db.Q(user=user) | db.Q(team__in=user.teams),
+                document__path=Left(db.Value(document.path), Length("document__path")),
+                document__ancestors_deleted_at__isnull=True,
+            )
+            .order_by("created_at")
+            .first()
+        )
+
+        if not access:
+            raise drf.exceptions.PermissionDenied()
+
+        serializer = serializers.DocumentAccessLightSerializer(
+            access, context=self.get_serializer_context()
+        )
+        return drf.response.Response(serializer.data)
 
 
 class InvitationViewset(
@@ -3100,12 +3071,15 @@ class ConfigView(drf.views.APIView):
             "AI_FEATURE_BLOCKNOTE_ENABLED",
             "AI_FEATURE_LEGACY_ENABLED",
             "API_USERS_SEARCH_QUERY_MIN_LENGTH",
+            "COLLABORATION_LOCAL_DOC_RETENTION_DAYS",
+            "COLLABORATION_VERSION_GRANULARITY_MS",
             "COLLABORATION_WS_URL",
-            "COLLABORATION_WS_NOT_CONNECTED_READ_ONLY",
             "COLLABORATION_WS_INACTIVITY_TIMEOUT",
             "CONVERSION_FILE_EXTENSIONS_ALLOWED",
             "CONVERSION_FILE_MAX_SIZE",
             "CONVERSION_UPLOAD_ENABLED",
+            "DOCUMENT_IMAGE_MAX_SIZE",
+            "DUPLICATE_CHILDREN_FEATURE_ENABLED",
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
@@ -3165,6 +3139,26 @@ class ConfigView(drf.views.APIView):
             )
 
         return theme_customization
+
+
+class JWKSView(drf.views.APIView):
+    """API ViewSet exposing the public key validating the tokens we issue."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        """
+        GET /api/v1.0/jwks
+            Return the JSON Web Key Set of the tokens issued by this service.
+        """
+        try:
+            jwks = JWTService().get_jwks()
+        except JWTConfigurationError:
+            logger.exception("Unable to publish the JWKS")
+            raise drf.exceptions.NotFound("No JWKS available.") from None
+
+        return drf.response.Response(jwks)
 
 
 class CommentViewSetMixin:

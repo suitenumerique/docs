@@ -4,18 +4,27 @@
  * This is typically used to parse structured error responses from an API
  * and normalize them into a consistent format with `status`, `cause`, and optional `data`.
  *
+ * Errors raised before the API is reached, by a proxy for instance, come with an HTML body:
+ * those have no cause to extract, but they must not make this helper throw.
+ *
  * @param response - The HTTP response object from `fetch()`.
  * @param data - Optional custom data to include with the error output.
  * @returns An object containing:
  *   - `status`: HTTP status code from the response
- *   - `cause`: A flattened list of error messages, or undefined if no body
+ *   - `cause`: A flattened list of error messages, or undefined if no parsable body
  *   - `data`: The optional data passed in
  */
 export const errorCauses = async (response: Response, data?: unknown) => {
-  const errorsBody = (await response.json()) as Record<
-    string,
-    string | string[]
-  > | null;
+  let errorsBody: Record<string, string | string[]> | null;
+
+  try {
+    errorsBody = (await response.json()) as Record<
+      string,
+      string | string[]
+    > | null;
+  } catch {
+    errorsBody = null;
+  }
 
   const causes = errorsBody
     ? Object.entries(errorsBody)

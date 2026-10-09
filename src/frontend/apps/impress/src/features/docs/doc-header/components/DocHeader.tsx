@@ -1,4 +1,5 @@
 import { Button } from '@gouvfr-lasuite/ui-components';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -10,10 +11,10 @@ import {
   getEmojiAndTitle,
   useDocTitleUpdate,
   useDocUtils,
-  useIsCollaborativeEditable,
 } from '@/docs/doc-management';
+import { useIsOffline } from '@/features/service-worker/hooks/useOffline';
 
-import { AlertNetwork } from './AlertNetwork';
+import { AlertOffline } from './AlertOffline';
 import { AlertRestore } from './AlertRestore';
 import { DocHeaderInfo } from './DocHeaderInfo';
 import { DocTitle } from './DocTitle';
@@ -24,13 +25,19 @@ interface DocHeaderProps {
 
 export const DocHeader = ({ doc }: DocHeaderProps) => {
   const { t } = useTranslation();
-  const { isEditable } = useIsCollaborativeEditable(doc);
   const isDeletedDoc = !!doc.deleted_at;
-  // Emoji Management
+  const isOffline = useIsOffline((state) => state.isOffline);
+
   const { emoji } = getEmojiAndTitle(doc.title ?? '');
   const { updateDocEmoji } = useDocTitleUpdate();
+
   const { isTopRoot } = useDocUtils(doc);
   const displayEmojiButton = doc.abilities.partial_update && !isTopRoot;
+  const latestTitleRef = useRef(doc.title ?? '');
+
+  useEffect(() => {
+    latestTitleRef.current = doc.title ?? '';
+  }, [doc.title]);
 
   return (
     <>
@@ -57,11 +64,11 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
         <Box
           $gap="base"
           $padding={{
-            bottom: isDeletedDoc || !isEditable ? 'base' : undefined,
+            bottom: isDeletedDoc ? 'base' : undefined,
           }}
         >
           {isDeletedDoc && <AlertRestore doc={doc} />}
-          {!isEditable && <AlertNetwork />}
+          {isOffline && <AlertOffline />}
         </Box>
         <Box $gap="sm">
           <Box>
@@ -74,14 +81,14 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                   const isAprilFools =
                     today.getMonth() === 3 && today.getDate() === 1;
                   emoji
-                    ? updateDocEmoji(doc.id, doc.title ?? '', '')
+                    ? updateDocEmoji(doc.id, latestTitleRef.current, '')
                     : updateDocEmoji(
                         doc.id,
-                        doc.title ?? '',
+                        latestTitleRef.current,
                         isAprilFools ? '🐟' : '📄',
                       );
                 }}
-                aria-label={emoji ? t('Remove icon') : t('Add icon')}
+                aria-label={emoji ? t('Remove emoji') : t('Add emoji')}
                 color="neutral"
                 variant="tertiary"
                 icon={
@@ -93,11 +100,16 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                 }
                 style={{ width: 'fit-content' }}
               >
-                {emoji ? t('Remove icon') : t('Add icon')}
+                {emoji ? t('Remove emoji') : t('Add emoji')}
               </Button>
             )}
           </Box>
-          <DocTitle doc={doc} />
+          <DocTitle
+            doc={doc}
+            onTitleUpdate={(title) => {
+              latestTitleRef.current = title;
+            }}
+          />
           <DocHeaderInfo doc={doc} />
         </Box>
         <HorizontalSeparator $margin={{ top: '24px' }} />

@@ -1,10 +1,12 @@
 environments:
   dev:
     values:
-      - version: 5.5.0
+      - version: 6.0.0-alpha.2
+        # a Prometheus scraping the metrics of the backend and of yhub
+        monitoring: true
   feature:
     values:
-      - version: 5.5.0
+      - version: 6.0.0-alpha.1
         feature: ci
         domain: example.com
         imageTag: demo
@@ -12,20 +14,64 @@ environments:
 repositories:
 - name: dev-backends
   url: https://suitenumerique.github.io/helm-dev-backend
+- name: valkey
+  url: https://valkey.io/valkey-helm/
+- name: prometheus-community
+  url: https://prometheus-community.github.io/helm-charts
 ---
 
 releases:
   - name: dev-backend
     namespace: {{ .Namespace }}
     chart: dev-backends/dev-backend
-    version: 0.0.4
+    version: 0.0.10
     values:
       - env.d/{{ .Environment.Name }}/values.dev-backend.yaml.gotmpl
 
+  # One Valkey instance for the backend (cache, sessions, celery) and one for
+  # yhub, each a single standalone pod
+  - name: valkey-docs
+    namespace: {{ .Namespace }}
+    chart: valkey/valkey
+    version: 0.12.0
+    {{- if .Values | get "monitoring" false }}
+    # its ServiceMonitor needs the CRDs of the operator
+    needs:
+      - {{ .Namespace }}/prometheus
+    {{- end }}
+    values:
+      - env.d/{{ .Environment.Name }}/values.valkey.yaml.gotmpl
+
+  - name: valkey-yhub
+    namespace: {{ .Namespace }}
+    chart: valkey/valkey
+    version: 0.12.0
+    {{- if .Values | get "monitoring" false }}
+    # its ServiceMonitor needs the CRDs of the operator
+    needs:
+      - {{ .Namespace }}/prometheus
+    {{- end }}
+    values:
+      - env.d/{{ .Environment.Name }}/values.valkey.yaml.gotmpl
+
+  # The Prometheus Operator and a Prometheus, in the environments that ask for
+  # it: what the ServiceMonitors of the impress release are for
+  - name: prometheus
+    namespace: {{ .Namespace }}
+    chart: prometheus-community/kube-prometheus-stack
+    version: 91.4.1
+    installed: {{ .Values | get "monitoring" false }}
+    values:
+      - env.d/{{ .Environment.Name }}/values.prometheus.yaml.gotmpl
 
   - name: impress
     version: {{ .Values.version }}
     namespace: {{ .Namespace }}
     chart: ./impress
+    {{- if .Values | get "monitoring" false }}
+    # its ServiceMonitors need the CRDs of the operator
+    needs:
+      - {{ .Namespace }}/prometheus
+    {{- end }}
     values:
       - env.d/{{ .Environment.Name }}/values.impress.yaml.gotmpl

@@ -10,10 +10,7 @@ import { css } from 'styled-components';
 import { Box, DropdownMenu, Icon } from '@/components/';
 import { useConfig } from '@/core';
 import { useAuthQuery } from '@/features/auth';
-import {
-  getMatchingLocales,
-  useSynchronizedLanguage,
-} from '@/features/language';
+import { getClosestLocale, useSynchronizedLanguage } from '@/features/language';
 import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 /**
@@ -35,12 +32,16 @@ export const LanguagePickerLegacy = () => {
   // Compute options for dropdown
   const optionsPicker = useMemo(() => {
     const backendOptions = conf?.LANGUAGES ?? [[language, language]];
+    const currentLocale = getClosestLocale(
+      backendOptions.map(([locale]) => locale),
+      language,
+    );
     return backendOptions.map(([backendLocale, backendLabel]) => {
       return {
         label: backendLabel,
         lang: toLangTag(backendLocale),
         value: backendLocale,
-        isSelected: getMatchingLocales([backendLocale], [language]).length > 0,
+        isSelected: backendLocale === currentLocale,
         callback: async () => {
           await changeLanguageSynchronized(backendLocale, user);
           announce(
@@ -56,8 +57,12 @@ export const LanguagePickerLegacy = () => {
   }, [changeLanguageSynchronized, conf?.LANGUAGES, language, t, user]);
 
   // Extract current language label for display
+  const currentLocale = getClosestLocale(
+    conf?.LANGUAGES.map(([code]) => code) ?? [],
+    language,
+  );
   const [currentLanguageCode, currentLanguageLabel] = conf?.LANGUAGES.find(
-    ([code]) => getMatchingLocales([code], [language]).length > 0,
+    ([code]) => code === currentLocale,
   ) ?? [language, language];
 
   return (
@@ -109,10 +114,14 @@ export const LanguagePicker = () => {
 
   const languages: LanguagesOption[] = useMemo(() => {
     const backendOptions = conf?.LANGUAGES ?? [[language, language]];
+    const currentLocale = getClosestLocale(
+      backendOptions.map(([locale]) => locale),
+      language,
+    );
     return backendOptions.map(([backendLocale, backendLabel]) => ({
       label: backendLabel,
       value: backendLocale,
-      isChecked: getMatchingLocales([backendLocale], [language]).length > 0,
+      isChecked: backendLocale === currentLocale,
     }));
   }, [conf?.LANGUAGES, language]);
 

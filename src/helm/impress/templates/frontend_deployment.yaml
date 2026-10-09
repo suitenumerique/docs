@@ -97,6 +97,12 @@ spec:
               subPath: {{ .subPath | default "" }}
               readOnly: {{ .readOnly }}
             {{- end }}
+            {{- if .Values.frontend.robotsTxt.enabled }}
+            - name: robots-txt
+              mountPath: /app/robots.txt
+              subPath: robots.txt
+              readOnly: true
+            {{- end }}
       {{- with .Values.frontend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -147,6 +153,11 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        {{- end }}
+        {{- if .Values.frontend.robotsTxt.enabled }}
+        - name: robots-txt
+          configMap:
+            name: docs-frontend-robots-txt
         {{- end }}
 ---
 {{ if .Values.frontend.pdb.enabled }}

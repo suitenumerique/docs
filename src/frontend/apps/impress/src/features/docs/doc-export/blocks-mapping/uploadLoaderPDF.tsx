@@ -1,6 +1,6 @@
 import { Text, View } from '@react-pdf/renderer';
 
-import { DocsExporterPDF } from '../types';
+import { type DocsExporterPDF } from '../types';
 
 export const blockMappingUploadLoaderPDF: DocsExporterPDF['mappings']['blockMapping']['uploadLoader'] =
   (block) => {

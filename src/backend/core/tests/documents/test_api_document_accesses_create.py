@@ -199,6 +199,8 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_user(
         "role": role,
         "team": "",
         "user": other_user,
+        "updated_at": new_document_access.updated_at.isoformat().replace("+00:00", "Z"),
+        "created_at": new_document_access.created_at.isoformat().replace("+00:00", "Z"),
     }
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -306,6 +308,8 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_team(
         "role": role,
         "team": "new-team",
         "user": None,
+        "updated_at": new_document_access.updated_at.isoformat().replace("+00:00", "Z"),
+        "created_at": new_document_access.created_at.isoformat().replace("+00:00", "Z"),
     }
     assert len(mail.outbox) == 0
 
@@ -387,6 +391,8 @@ def test_api_document_accesses_create_authenticated_owner_share_to_user(
         "role": role,
         "team": "",
         "user": other_user,
+        "updated_at": new_document_access.updated_at.isoformat().replace("+00:00", "Z"),
+        "created_at": new_document_access.created_at.isoformat().replace("+00:00", "Z"),
     }
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -477,6 +483,8 @@ def test_api_document_accesses_create_authenticated_owner_share_to_team(
         "role": role,
         "team": "new-team",
         "user": None,
+        "updated_at": new_document_access.updated_at.isoformat().replace("+00:00", "Z"),
+        "created_at": new_document_access.created_at.isoformat().replace("+00:00", "Z"),
     }
     assert len(mail.outbox) == 0
 
@@ -555,6 +563,12 @@ def test_api_document_accesses_create_email_in_receivers_language(via, mock_user
             "role": role,
             "team": "",
             "user": other_user_data,
+            "updated_at": new_document_access.updated_at.isoformat().replace(
+                "+00:00", "Z"
+            ),
+            "created_at": new_document_access.created_at.isoformat().replace(
+                "+00:00", "Z"
+            ),
         }
         assert len(mail.outbox) == index + 1
         email = mail.outbox[index]
@@ -572,3 +586,39 @@ def test_api_document_accesses_create_email_in_receivers_language(via, mock_user
                 in email_subject.lower()
             )
         assert "docs/" + str(document.id) + "/" in email_content.lower()
+
+
+@pytest.mark.parametrize("via", VIA)
+def test_api_document_accesses_create_resets_connections(
+    via,
+    mock_user_teams,
+    mock_reset_service_connections,
+    capture_service_resets,
+):
+    """
+    Creating an access should have the collaboration server re-check the
+    connections: the user's own for a user, everybody's for a team.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+    document = factories.DocumentFactory(users=[(user, "owner")])
+
+    if via == USER:
+        other_user = factories.UserFactory()
+        data = {"user_id": str(other_user.id), "role": "editor"}
+        expected_user_id = str(other_user.id)
+    else:
+        mock_user_teams.return_value = ["lasuite"]
+        data = {"team": "lasuite", "role": "editor"}
+        expected_user_id = None
+
+    with capture_service_resets():
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/accesses/", data, format="json"
+        )
+
+    assert response.status_code == 201
+    mock_reset_service_connections.assert_called_once_with(
+        str(document.id), expected_user_id
+    )

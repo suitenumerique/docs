@@ -4,10 +4,11 @@ Declare and configure the models for the impress core application
 
 # pylint: disable=too-many-lines
 
-import hashlib
+import operator
 import smtplib
 import uuid
 from datetime import timedelta
+from functools import partial, reduce
 from logging import getLogger
 
 from django.conf import settings
@@ -17,8 +18,6 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.sites.models import Site
 from django.core.cache import cache
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.db import models, transaction
 from django.db.models import Count
@@ -29,7 +28,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import get_language, override
 from django.utils.translation import gettext_lazy as _
 
-from botocore.exceptions import ClientError
 from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
 from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
@@ -41,6 +39,7 @@ from core.choices import (
     RoleChoices,
     get_equivalent_link_definition,
 )
+from core.services.yhub_services import YHubError, YHubService
 from core.utils.treebeard import create_tree_node_with_retry
 from core.validators import sub_validator
 
@@ -259,14 +258,41 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         )
 
     def _delete_documents_single_owner(self):
-        """Delete the documents where the user is the single owner."""
-        Document.objects.filter(
+        """
+        Delete the documents where the user is the single owner.
+
+        Deleted for good, so the collaboration server, which holds their
+        content and serves them to whoever is editing them, is told by id
+        once the deletion is committed.
+        """
+        from core.tasks.documents import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            delete_service_documents,
+        )
+
+        documents = Document.objects.filter(
             accesses__user=self, accesses__role=RoleChoices.OWNER
-        ).delete()
+        )
+        # the descendants go with their ancestor, whoever they are shared with
+        paths = list(documents.values_list("path", flat=True))
+        document_ids = []
+        if paths:
+            subtrees = reduce(
+                operator.or_, (models.Q(path__startswith=path) for path in paths)
+            )
+            document_ids = [
+                str(document_id)
+                for document_id in Document.objects.filter(subtrees).values_list(
+                    "id", flat=True
+                )
+            ]
+        documents.delete()
         logger.info(
             "user_delete: documents where the user %s is the sole owner deleted",
             self.id,
         )
+
+        if document_ids:
+            transaction.on_commit(partial(delete_service_documents.delay, document_ids))
 
     def _clear_user_created_documents(self):
         """Set creator to Null for documents where the user is the creator."""
@@ -315,6 +341,10 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         """
         If the user is new and there is a sandbox document configured,
         duplicate the sandbox document for the user
+
+        The content of the template is read from the collaboration server, which
+        owns it, and seeded into the copy under the identity of the user: the
+        sandbox is theirs from its very first revision.
         """
         if settings.USER_ONBOARDING_SANDBOX_DOCUMENT:
             sandbox_id = settings.USER_ONBOARDING_SANDBOX_DOCUMENT
@@ -326,19 +356,36 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
                     sandbox_id,
                 )
                 return
-            with transaction.atomic():
-                sandbox_document = create_tree_node_with_retry(
-                    lambda: Document.add_root(
-                        title=template_document.title,
-                        content=template_document.content,
-                        attachments=template_document.attachments,
-                        duplicated_from=template_document,
-                        creator=self,
-                    )
-                )
 
-                DocumentAccess.objects.create(
-                    user=self, document=sandbox_document, role=RoleChoices.OWNER
+            service = YHubService(user=self)
+            try:
+                # a template the collaboration server holds nothing for is an
+                # empty template: the sandbox is created, empty as well
+                ydoc_update = service.get_ydoc(template_document)
+
+                with transaction.atomic():
+                    sandbox_document = create_tree_node_with_retry(
+                        lambda: Document.add_root(
+                            title=template_document.title,
+                            attachments=template_document.attachments,
+                            duplicated_from=template_document,
+                            creator=self,
+                        )
+                    )
+
+                    DocumentAccess.objects.create(
+                        user=self, document=sandbox_document, role=RoleChoices.OWNER
+                    )
+
+                    if ydoc_update:
+                        service.create_ydoc(sandbox_document, ydoc_update)
+            except YHubError:
+                # Onboarding is not worth failing a signup for, and a sandbox
+                # the content of which could not be copied is not one we want
+                # to leave behind: the transaction takes it back.
+                logger.exception(
+                    "Onboarding sandbox document with id %s could not be copied. Skipping.",
+                    sandbox_id,
                 )
 
     def _convert_valid_invitations(self):
@@ -368,6 +415,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
 
         # Set creator of documents if not yet set (e.g. documents created via server-to-server API)
         document_ids = [invitation.document_id for invitation in valid_invitations]
+
         Document.objects.filter(id__in=document_ids, creator__isnull=True).update(
             creator=self
         )
@@ -531,6 +579,17 @@ class UserReconciliation(BaseModel):
         if removed_accesses:
             ids_to_delete = [entry.id for entry in removed_accesses]
             DocumentAccess.objects.filter(id__in=ids_to_delete).delete()
+
+        # Updated in bulk, so without the signal that reports a changed access to
+        # the collaboration server. Both users are concerned, the one gaining
+        # the accesses and the one being deactivated: every connection of the
+        # document is re-checked.
+        from core.tasks.access import (  # noqa: PLC0415 # pylint: disable=import-outside-toplevel
+            reset_service_connections_on_commit,
+        )
+
+        for document_id in {access.document_id for access in updated_accesses}:
+            reset_service_connections_on_commit(document_id)
 
         DocumentFavorite.objects.bulk_update(update_favorites, ["user"])
         if removed_favorites:
@@ -933,7 +992,7 @@ class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
 
 # pylint: disable=too-many-public-methods
 class Document(MP_Node, BaseModel):
-    """Pad document carrying the content."""
+    """Pad document, the content of which lives in the collaboration server."""
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
     excerpt = models.TextField(_("excerpt"), max_length=300, null=True, blank=True)
@@ -970,8 +1029,6 @@ class Document(MP_Node, BaseModel):
         blank=True,
         null=True,
     )
-
-    _content = None
 
     # Tree structure
     alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -1011,39 +1068,6 @@ class Document(MP_Node, BaseModel):
         self._ancestors_link_definition = None
         self._computed_link_definition = None
 
-    def save(self, *args, **kwargs):
-        """Write content to object storage only if _content has changed."""
-        super().save(*args, **kwargs)
-        if self._content:
-            self.save_content(self._content)
-
-    def save_content(self, content):
-        """Save content to object storage."""
-
-        file_key = self.file_key
-        bytes_content = content.encode("utf-8")
-
-        # Attempt to directly check if the object exists using the storage client.
-        try:
-            response = default_storage.connection.meta.client.head_object(
-                Bucket=default_storage.bucket_name, Key=file_key
-            )
-        except ClientError as excpt:
-            # If the error is a 404, the object doesn't exist, so we should create it.
-            if excpt.response["Error"]["Code"] == "404":
-                has_changed = True
-            else:
-                raise
-        else:
-            # Compare the existing ETag with the MD5 hash of the new content.
-            has_changed = (
-                response["ETag"].strip('"') != hashlib.md5(bytes_content).hexdigest()  # noqa: S324
-            )
-
-        if has_changed:
-            content_file = ContentFile(bytes_content)
-            default_storage.save(file_key, content_file)
-
     def is_leaf(self):
         """
         :returns: True if the node is has no children
@@ -1061,102 +1085,30 @@ class Document(MP_Node, BaseModel):
 
     @property
     def file_key(self):
-        """Key of the object storage file to which the document content is stored"""
+        """
+        Key of the legacy object storage file that used to hold the content.
+
+        The collaboration server owns the content now, and Django neither reads
+        nor writes this object any more. The key outlives it: the collaboration
+        server seeds a room from that object on first access and replays its
+        versions to rebuild the history, and `clean_document` purges it so that
+        a document it reset cannot be seeded back from what it left behind.
+        """
         return f"{self.key_base}/file"
 
-    @property
-    def content(self):
-        """Return the json content from object storage if available"""
-        if self._content is None and self.id:
-            try:
-                response = self.get_content_response()
-            except FileNotFoundError, ClientError:
-                pass
-            else:
-                self._content = response["Body"].read().decode("utf-8")
-        return self._content
+    def get_self_and_ancestors_paths(self):
+        """
+        Return the paths of the document and of all its ancestors, computed from
+        the materialized path without querying the database.
 
-    @content.setter
-    def content(self, content):
-        """Cache the content, don't write to object storage yet"""
-        if not isinstance(content, str):
-            raise ValueError("content should be a string.")
-
-        self._content = content
-
-    def get_content_response(self, version_id=""):
-        """Get the content in a specific version of the document"""
-        params = {
-            "Bucket": default_storage.bucket_name,
-            "Key": self.file_key,
-        }
-        if version_id:
-            params["VersionId"] = version_id
-        return default_storage.connection.meta.client.get_object(**params)
-
-    def get_versions_slice(self, from_version_id="", min_datetime=None, page_size=None):
-        """Get document versions from object storage with pagination and starting conditions"""
-        # /!\ Trick here /!\
-        # The "KeyMarker" and "VersionIdMarker" fields must either be both set or both not set.
-        # The error we get otherwise is not helpful at all.
-        markers = {}
-        if from_version_id:
-            markers.update(
-                {"KeyMarker": self.file_key, "VersionIdMarker": from_version_id}
-            )
-
-        real_page_size = (
-            min(page_size, settings.DOCUMENT_VERSIONS_PAGE_SIZE)
-            if page_size
-            else settings.DOCUMENT_VERSIONS_PAGE_SIZE
-        )
-
-        response = default_storage.connection.meta.client.list_object_versions(
-            Bucket=default_storage.bucket_name,
-            Prefix=self.file_key,
-            # compensate the latest version that we exclude below and get one more to
-            # know if there are more pages
-            MaxKeys=real_page_size + 2,
-            **markers,
-        )
-
-        min_last_modified = min_datetime or self.created_at
-        versions = [
-            {
-                key_snake: version[key_camel]
-                for key_snake, key_camel in [
-                    ("etag", "ETag"),
-                    ("is_latest", "IsLatest"),
-                    ("last_modified", "LastModified"),
-                    ("version_id", "VersionId"),
-                ]
-            }
-            for version in response.get("Versions", [])
-            if version["LastModified"] >= min_last_modified
-            and version["IsLatest"] is False
+        Filtering on `path__in` with this list hits the unique index on `path`,
+        whereas comparing `path` with `LEFT(value, LENGTH(path))` forces a
+        sequential scan of the whole table.
+        """
+        return [
+            self.path[:pos]
+            for pos in range(self.steplen, len(self.path) + 1, self.steplen)
         ]
-        results = versions[:real_page_size]
-
-        count = len(results)
-        if count == len(versions):
-            is_truncated = False
-            next_version_id_marker = ""
-        else:
-            is_truncated = True
-            next_version_id_marker = versions[count - 1]["version_id"]
-
-        return {
-            "next_version_id_marker": next_version_id_marker,
-            "is_truncated": is_truncated,
-            "versions": results,
-            "count": count,
-        }
-
-    def delete_version(self, version_id):
-        """Delete a version from object storage given its version id"""
-        return default_storage.connection.meta.client.delete_object(
-            Bucket=default_storage.bucket_name, Key=self.file_key, VersionId=version_id
-        )
 
     def get_nb_accesses_cache_key(self):
         """Generate a unique cache key for each document."""
@@ -1175,13 +1127,13 @@ class Document(MP_Node, BaseModel):
             nb_accesses = (
                 DocumentAccess.objects.filter(document=self).count(),
                 DocumentAccess.objects.filter(
-                    document__path=Left(
-                        models.Value(self.path), Length("document__path")
-                    ),
+                    document__path__in=self.get_self_and_ancestors_paths(),
                     document__ancestors_deleted_at__isnull=True,
                 ).count(),
             )
-            cache.set(cache_key, nb_accesses)
+            cache.set(
+                cache_key, nb_accesses, settings.DOCUMENT_NB_ACCESSES_CACHE_TIMEOUT
+            )
 
         return nb_accesses
 
@@ -1194,6 +1146,56 @@ class Document(MP_Node, BaseModel):
     def nb_accesses_ancestors(self):
         """Returns the number of accesses related to the document or one of its ancestors."""
         return self.get_nb_accesses()[1]
+
+    # the link definition as it was loaded from, or saved to, the database
+    _saved_link_definition = None
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        """Load a document, remembering its link definition to spot its changes."""
+        instance = super().from_db(db, field_names, values)
+        instance.remember_link_definition()  # pylint: disable=no-member
+        return instance
+
+    def refresh_from_db(self, *args, **kwargs):
+        """
+        Reload a document, taking a new snapshot of the link fields reloaded.
+
+        Django reloads a single field this way when a deferred one is read:
+        the other one keeps its snapshot, its value in memory may be unsaved.
+        """
+        super().refresh_from_db(*args, **kwargs)
+        # `fields` is the second positional argument of Django's signature
+        fields = kwargs.get("fields", args[1] if len(args) > 1 else None)
+        if fields is None or {"link_reach", "link_role"} & set(fields):
+            self.remember_link_definition(fields)
+
+    def remember_link_definition(self, fields=None):
+        """
+        Snapshot the link definition as it is in the database.
+
+        Read from the instance's own state so that a deferred field is not
+        loaded for it; a field not loaded is remembered as unknown. Naming
+        `fields` restricts the snapshot to the link fields among them, the
+        others keep what was remembered of them.
+        """
+        reach, role = self._saved_link_definition or (None, None)
+        if fields is None or "link_reach" in fields:
+            reach = self.__dict__.get("link_reach")
+        if fields is None or "link_role" in fields:
+            role = self.__dict__.get("link_role")
+        self._saved_link_definition = (reach, role)
+
+    def link_definition_changed(self):
+        """
+        Tell whether `link_reach` or `link_role` differ from the last snapshot.
+
+        A document that was never loaded from the database, nor saved, is
+        reported as changed: nothing is known of what its link definition was.
+        """
+        if self._saved_link_definition is None:
+            return True
+        return self._saved_link_definition != (self.link_reach, self.link_role)
 
     def invalidate_nb_accesses_cache(self):
         """
@@ -1217,7 +1219,7 @@ class Document(MP_Node, BaseModel):
         except AttributeError:
             roles = DocumentAccess.objects.filter(
                 models.Q(user=user) | models.Q(team__in=user.teams),
-                document__path=Left(models.Value(self.path), Length("document__path")),
+                document__path__in=self.get_self_and_ancestors_paths(),
             ).values_list("role", flat=True)
 
         return RoleChoices.max(*roles)
@@ -1326,6 +1328,13 @@ class Document(MP_Node, BaseModel):
         # want anonymous users to access versions (we wouldn't know from
         # which date to allow them anyway)
         # Anonymous users should also not see document accesses
+        #
+        # This is what `versions_list` reports. The history itself lives in the
+        # collaboration server, which reads the ability to decide whether to ask
+        # this backend for the caller's access — the `created_at` it answers with
+        # bounds what it serves. So the ability and `accesses/me/` have to agree,
+        # and a test holds them to it
+        # (test_api_document_accesses_me_agrees_with_the_versions_list_ability).
         has_access_role = bool(role) and not is_deleted
         can_update_from_access = (
             is_owner_or_admin or role == RoleChoices.EDITOR
@@ -1392,14 +1401,11 @@ class Document(MP_Node, BaseModel):
             "ai_translate": ai_access,
             "attachment_upload": can_update,
             "media_check": can_get,
-            "can_edit": can_update,
             "children_list": can_get,
             "children_create": can_create_children,
             "collaboration_auth": can_get,
             "comment": can_comment,
             "formatted_content": can_get,
-            "content_patch": can_update,
-            "content_retrieve": retrieve,
             "cors_proxy": can_get,
             "descendants": can_get,
             "destroy": can_destroy,
@@ -1408,6 +1414,7 @@ class Document(MP_Node, BaseModel):
             "link_configuration": is_owner_or_admin,
             "invite_owner": is_owner and not is_deleted,
             "leave": can_leave,
+            "mention": has_access_role and can_comment,
             "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
             "restore": is_owner and bool(self.deleted_at),
@@ -1416,28 +1423,27 @@ class Document(MP_Node, BaseModel):
             "link_select_options": link_select_options,
             "tree": retrieve,
             "update": can_update,
-            "versions_destroy": is_owner_or_admin,
             "versions_list": has_access_role,
-            "versions_retrieve": has_access_role,
             "search": can_get,
         }
 
     def send_email(self, subject, emails, context=None, language=None):
-        """Generate and send email from a template."""
-        context = context or {}
+        """Generate and send email from a template.
+
+        Keys passed in `context` take precedence over the default values.
+        """
         domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
         language = language or get_language()
-        context.update(
-            {
-                "brandname": settings.EMAIL_BRAND_NAME,
-                "document": self,
-                "domain": domain,
-                "link": f"{domain}/docs/{self.id}/?utm_source=docssharelink&utm_campaign={self.id}",
-                "link_label": self.title or str(_("Untitled Document")),
-                "button_label": _("Open"),
-                "logo_img": settings.EMAIL_LOGO_IMG,
-            }
-        )
+        context = {
+            "brandname": settings.EMAIL_BRAND_NAME,
+            "document": self,
+            "domain": domain,
+            "link": f"{domain}/docs/{self.id}/?utm_source=docssharelink&utm_campaign={self.id}",
+            "link_label": self.title or str(_("Untitled Document")),
+            "button_label": _("Open"),
+            "logo_img": settings.EMAIL_LOGO_IMG,
+            **(context or {}),
+        }
 
         with override(language):
             msg_html = render_to_string("mail/html/template.html", context)
@@ -2039,6 +2045,171 @@ class Reaction(BaseModel):
         return f"Reaction {self.emoji} on comment {self.comment.id}"
 
 
+# The notification guard only has to cover the window between the cooldown
+# check and the `notified_at` save: a leaked key (e.g. killed worker) must not
+# silence a context for the whole cooldown period
+MENTION_NOTIFICATION_GUARD_TIMEOUT_SECONDS = 60
+
+
+class Mention(BaseModel):
+    """A mention of a user in a document body or in a comment thread.
+
+    A mention record is always created, but the email notification is only
+    sent if no notification was already sent to the same user in the same
+    context (the document or a specific thread) within the cooldown period.
+    """
+
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="mentions",
+    )
+    anchor_id = models.TextField()
+    thread = models.ForeignKey(
+        Thread,
+        on_delete=models.CASCADE,
+        related_name="mentions",
+        null=True,
+        blank=True,
+    )
+    mentioned_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="mentions_received",
+        null=True,
+        blank=True,
+    )
+    mentioned_by_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="mentions_sent",
+    )
+    notified_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "impress_mention"
+        ordering = ("-created_at",)
+        verbose_name = _("Mention")
+        verbose_name_plural = _("Mentions")
+        indexes = [
+            models.Index(
+                fields=["mentioned_user", "-created_at"],
+                name="mention_user_created_idx",
+            ),
+            models.Index(
+                fields=["document", "mentioned_user"],
+                name="mention_document_user_idx",
+            ),
+        ]
+
+    def __str__(self):
+        mentioned = self.mentioned_user or _("a deleted user")
+        return (
+            f"{self.mentioned_by_user!s} mentioned {mentioned!s} on {self.document!s}"
+        )
+
+    def clean(self):
+        """Validate that the thread, if any, belongs to the mention's document."""
+        super().clean()
+        if self.thread_id and self.thread.document_id != self.document_id:
+            raise ValidationError(
+                {"thread_id": [_("The thread does not belong to this document.")]}
+            )
+
+    def is_notification_in_cooldown(self):
+        """Return whether the mentioned user was already notified in the same context
+        (same document and thread, the document body when the thread is null) within
+        the cooldown period."""
+        cooldown_start = timezone.now() - timedelta(
+            minutes=settings.MENTION_NOTIFICATION_COOLDOWN_MINUTES
+        )
+        return (
+            self._meta.model.objects.filter(
+                document_id=self.document_id,
+                mentioned_user_id=self.mentioned_user_id,
+                thread_id=self.thread_id,
+                notified_at__isnull=False,
+                created_at__gt=cooldown_start,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        )
+
+    @property
+    def notification_guard_key(self):
+        """Cache key claiming a notification slot for this mention's context."""
+        return (
+            "mention-notify:"
+            f"{self.document_id}:{self.mentioned_user_id}:{self.thread_id or ''}"
+        )
+
+    def notify(self, language=None):
+        """Send the mention notification email unless the context is in cooldown.
+
+        Set `notified_at` on the mention and return True if an email was sent,
+        return False otherwise.
+        """
+
+        if self.mentioned_user_id == self.mentioned_by_user_id:
+            return False
+
+        user = self.mentioned_user
+        if user is None or not user.email or self.is_notification_in_cooldown():
+            return False
+
+        # Guard against concurrent notification tasks for the same context.
+        # cache.add is atomic on the shared Redis backend: only the first task
+        # acquires the key and proceeds, the others get False
+        if not cache.add(
+            self.notification_guard_key,
+            str(self.pk),
+            timeout=MENTION_NOTIFICATION_GUARD_TIMEOUT_SECONDS,
+        ):
+            return False
+
+        sender = self.mentioned_by_user
+        language = (
+            language or user.language or sender.language or settings.LANGUAGE_CODE
+        )
+        sender_name = sender.full_name or sender.email
+        domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
+
+        with override(language):
+            title = self.document.title or str(_("Untitled Document"))
+            if self.thread_id:
+                subject = _('{name} mentioned you in a comment in "{title}"').format(
+                    name=sender_name, title=title
+                )
+                message = _(
+                    "{name} mentioned you in a comment in the following document:"
+                ).format(name=sender_name)
+            else:
+                subject = _('{name} mentioned you in "{title}"').format(
+                    name=sender_name, title=title
+                )
+                message = _("{name} mentioned you in the following document:").format(
+                    name=sender_name
+                )
+            context = {
+                "title": subject,
+                "message": message,
+                "link": f"{domain}/docs/{self.document_id}/#{self.anchor_id}",
+            }
+
+        sent = False
+        try:
+            self.document.send_email(subject, [user.email], context, language)
+            self.notified_at = timezone.now()
+            self.save(update_fields=["notified_at", "updated_at"])
+            sent = True
+        finally:
+            # Release the context so the next mention can notify
+            if not sent:
+                cache.delete(self.notification_guard_key)
+
+        return True
+
+
 class Invitation(BaseModel):
     """User invitation to a document."""
 
@@ -2120,3 +2291,66 @@ class Invitation(BaseModel):
             "partial_update": is_admin_or_owner,
             "retrieve": is_admin_or_owner,
         }
+
+
+class DocumentMigrationStatus(models.TextChoices):
+    """What became of a document handed to the collaboration server to migrate."""
+
+    MIGRATED = "ok", _("Migrated")
+    ALREADY = "already", _("Already migrated")
+    EMPTY = "empty", _("Nothing in the object storage")
+    NOTHING = "nothing", _("No readable version")
+    FAILED = "failed", _("Failed")
+
+
+class DocumentMigration(models.Model):
+    """
+    What the collaboration server did with the legacy content of a document.
+
+    The ledger of the backfill: the collaboration server keeps its own set of
+    the documents it migrated, but only of those it actually wrote history for.
+    A document it found nothing for is not in it and would be handed over again
+    on every run, and a valkey configured to evict would lose the set entirely.
+    This table is what the command reads to know what is left to do, and what
+    an operator reads to know how it went.
+    """
+
+    document = models.OneToOneField(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="migration",
+        primary_key=True,
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=DocumentMigrationStatus.choices,
+        verbose_name=_("status"),
+    )
+    versions = models.PositiveIntegerField(default=0, verbose_name=_("versions"))
+    applied = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("applied"),
+        help_text=_("versions that added content, one activity entry each"),
+    )
+    skipped = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("skipped"),
+        help_text=_("versions that could not be read"),
+    )
+    dropped = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("dropped"),
+        help_text=_("versions older than the ones the server replays"),
+    )
+    duration_ms = models.PositiveIntegerField(default=0, verbose_name=_("duration"))
+    error = models.TextField(blank=True, default="", verbose_name=_("error"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("updated on"))
+
+    class Meta:
+        db_table = "impress_document_migration"
+        verbose_name = _("Document migration")
+        verbose_name_plural = _("Document migrations")
+        indexes = [models.Index(fields=["status"])]
+
+    def __str__(self):
+        return f"{self.document_id!s}: {self.status:s}"

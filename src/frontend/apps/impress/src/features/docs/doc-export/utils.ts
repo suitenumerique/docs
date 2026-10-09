@@ -7,6 +7,127 @@ import { Canvg } from 'canvg';
 import { IParagraphOptions, ShadingType } from 'docx';
 import React from 'react';
 
+import { getDoc } from '@/docs/doc-management/api/useDoc';
+
+const WINDOWS_RESERVED_FILENAME =
+  /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+/**
+ * Recursively collects the distinct doc ids referenced by
+ * `interlinkingLinkInline` inline content nodes across a block tree,
+ * including nested blocks (lists, callouts) and table cells.
+ */
+export function collectInterlinkingDocIds(blocks: unknown[]): string[] {
+  const docIds = new Set<string>();
+
+  const collectFromInlineContent = (content: unknown) => {
+    if (!Array.isArray(content)) {
+      return;
+    }
+    content.forEach((item) => {
+      if (!isRecord(item) || item.type !== 'interlinkingLinkInline') {
+        return;
+      }
+      const props = item.props;
+      if (isRecord(props) && typeof props.docId === 'string' && props.docId) {
+        docIds.add(props.docId);
+      }
+    });
+  };
+
+  const walkBlocks = (items: unknown[]) => {
+    items.forEach((block) => {
+      if (!isRecord(block)) {
+        return;
+      }
+
+      const content = block.content;
+      if (Array.isArray(content)) {
+        collectFromInlineContent(content);
+      } else if (isRecord(content) && Array.isArray(content.rows)) {
+        // Table content: { type: "tableContent", rows: [{ cells: [...] }] }
+        content.rows.forEach((row) => {
+          if (!isRecord(row) || !Array.isArray(row.cells)) {
+            return;
+          }
+          row.cells.forEach((cell) => {
+            collectFromInlineContent(isRecord(cell) ? cell.content : cell);
+          });
+        });
+      }
+
+      if (Array.isArray(block.children)) {
+        walkBlocks(block.children);
+      }
+    });
+  };
+
+  walkBlocks(blocks);
+
+  return Array.from(docIds);
+}
+
+/**
+ * Resolves the titles of every doc referenced by an `interlinkingLinkInline`
+ * node in a block tree. Export mappings call inline content mappings
+ * synchronously, so this must run once up front rather than inside the
+ * mapping functions themselves; a doc with no title, or that fails to
+ * resolve (deleted, no access, ...), falls back to its relative URL, same
+ * as the live editor's `LinkSelected` display.
+ */
+export async function resolveInterlinkTitles(
+  blocks: unknown[],
+): Promise<Map<string, string>> {
+  const docIds = collectInterlinkingDocIds(blocks);
+  const titleMap = new Map<string, string>();
+
+  await Promise.all(
+    docIds.map(async (docId) => {
+      const href = `/docs/${docId}/`;
+      try {
+        const linkedDoc = await getDoc({ id: docId });
+        titleMap.set(docId, linkedDoc.title || href);
+      } catch {
+        titleMap.set(docId, href);
+      }
+    }),
+  );
+
+  return titleMap;
+}
+
+/**
+ * Converts a document title into a safe filename for exported files.
+ */
+export function getExportFilename(title: string): string {
+  const filename = title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[<>:"/\\|?*]/g, '-')
+    .split('')
+    .map((character) => (character.charCodeAt(0) < 32 ? '-' : character))
+    .join('')
+    .replace(/[. ]+$/g, '');
+
+  if (!filename) {
+    return 'document';
+  }
+
+  return WINDOWS_RESERVED_FILENAME.test(filename) ? `_${filename}` : filename;
+}
+
+/**
+ * Triggers a browser download of a Blob with the given filename.
+ *
+ * @param blob - The data to download.
+ * @param filename - The name the downloaded file should have.
+ */
 export function downloadFile(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -75,7 +196,7 @@ export async function convertSvgToPng(
   await svg.render();
 
   const returnWidth = width || originalWidth || FALLBACK_WIDTH;
-  const returnHeight = calculatedHeight || returnWidth;
+  const returnHeight = calculatedHeight || originalHeight || returnWidth;
 
   return {
     png: canvas.toDataURL('image/png'),
@@ -84,6 +205,72 @@ export async function convertSvgToPng(
   };
 }
 
+/**
+ * Converts any raster format (PNG, WebP, JPEG, ...) into a PNG data URL via canvas.
+ *
+ * This function creates a canvas, draws the image to it, and returns its data URL and size.
+ *
+ * @param {Blob} blob - The raw raster image to convert.
+ * @param {number} width - The desired width of the output PNG (height is auto-calculated to preserve aspect ratio).
+ * @returns {Promise<{ png: string; width: number; height: number }>} A Promise that resolves to an object containing the PNG data URL and its dimensions.
+ *
+ * @throws Will throw an error if the canvas context cannot be initialized.
+ */
+// Convert any raster format (PNG, WebP, JPEG, …) to a PNG data URL via
+// canvas. This has two benefits:
+//   1. Formats unsupported by @react-pdf/renderer (e.g. WebP) are
+//      transcoded to PNG which react-pdf can embed.
+//   2. Passing a raw Blob to react-pdf triggers a WASM "too many
+//      arguments" error in its internal image pipeline; a canvas-derived
+//      data URL sidesteps that entirely.
+export async function convertBlobToPng(
+  blob: Blob,
+  width?: number,
+): Promise<{ png: string; width: number; height: number } | undefined> {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  const bmp = await createImageBitmap(blob);
+  try {
+    const canvas = document.createElement('canvas');
+
+    let calculatedHeight: number | undefined;
+    // Resize if width provided, preserving aspect ratio
+    if (width) {
+      canvas.width = width;
+      const aspectRatio = bmp.height / bmp.width;
+      calculatedHeight = Math.round(width * aspectRatio);
+      canvas.height = calculatedHeight;
+    } else {
+      canvas.width = bmp.width;
+      canvas.height = bmp.height;
+    }
+
+    const ctx = canvas.getContext('2d', {
+      alpha: true,
+    });
+    if (!ctx) {
+      throw new Error('Canvas context is null');
+    }
+    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    return {
+      png: canvas.toDataURL('image/png'),
+      width: canvas.width,
+      height: canvas.height,
+    };
+  } finally {
+    bmp.close();
+  }
+}
+
+/**
+ * Converts BlockNote block props (background color, text color, alignment)
+ * into a docx IParagraphOptions object for use with the docx exporter.
+ *
+ * @param props - Partial BlockNote default props.
+ * @param colors - The color palette to resolve named colors.
+ * @returns A docx paragraph options object with shading, run color, and alignment.
+ */
 export function docxBlockPropsToStyles(
   props: Partial<DefaultProps>,
   colors: typeof COLORS_DEFAULT,

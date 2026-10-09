@@ -87,7 +87,7 @@ test.describe('Doc Visibility: Restricted', () => {
     await page.goto(urlDoc);
 
     await expect(
-      page.getByText('Log in to access the document.'),
+      page.getByText('You need to sign in before accessing the document'),
     ).toBeVisible();
   });
 
@@ -247,6 +247,13 @@ test.describe('Doc Visibility: Public', () => {
     await writeInEditor({ page, text: 'Can you see it ?' });
     await expect(otherEditor.getByText('Can you see it ?')).toBeVisible();
 
+    await otherPage
+      .getByRole('button', { name: 'Open the document options' })
+      .click();
+    await expect(
+      otherPage.getByRole('menuitem', { name: 'Leave' }),
+    ).toBeHidden();
+
     await cleanup();
   });
 
@@ -354,7 +361,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await expect(otherPage.locator('h2').getByText(docTitle)).toBeHidden();
 
     await expect(
-      otherPage.getByText('Log in to access the document.'),
+      otherPage.getByText('You need to sign in before accessing the document'),
     ).toBeVisible();
 
     await cleanup();

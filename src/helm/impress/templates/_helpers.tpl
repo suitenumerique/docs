@@ -187,22 +187,129 @@ Requires top level scope
 {{- end }}
 
 {{/*
-Full name for the yProvider converter
-
-Requires top level scope
-*/}}
-{{- define "impress.yProvider.converter.fullname" -}}
-{{ include "impress.yProvider.fullname" . }}-converter
-{{- end }}
-
-
-{{/*
 Full name for the docSpec
 
 Requires top level scope
 */}}
 {{- define "impress.docSpec.fullname" -}}
 {{ include "impress.fullname" . }}-docspec
+{{- end }}
+
+{{/*
+Full name for the yhub collaboration server
+
+Requires top level scope
+*/}}
+{{- define "impress.yhub.fullname" -}}
+{{ include "impress.fullname" . }}-yhub
+{{- end }}
+
+{{/*
+Full name for the yhub worker, when it is deployed apart from the server
+
+Requires top level scope
+*/}}
+{{- define "impress.yhub.worker.fullname" -}}
+{{ include "impress.yhub.fullname" . }}-worker
+{{- end }}
+
+{{/*
+yhub worker env vars - combines common yhub.envVars with yhub.worker.envVars
+
+Merged rather than appended: a variable the worker sets differently from the
+server (YHUB_TASK_CONCURRENCY, typically) is meant to replace it, and emitting
+both would leave the value to kubernetes' last-one-wins rule and show the
+variable twice in the pod. deepCopy because merge writes into its first
+argument, which is a live values map.
+*/}}
+{{- define "impress.yhub.worker.env" -}}
+{{- $topLevelScope := index . 0 -}}
+{{- $workerScope := index . 1 -}}
+{{- $workerEnvVars := ($workerScope.worker | default dict).envVars | default dict -}}
+{{- include "impress.env.transformDict" (merge (deepCopy $workerEnvVars) $workerScope.envVars) -}}
+{{- end }}
+
+{{/*
+The role a yhub pod runs, as an environment variable. Only when the worker is
+deployed apart: a single deployment runs both halves, which is what yhub does
+when the variable is absent. Skipped when the deployment names the role itself,
+in either env map — an explicit value wins, as everywhere else here.
+
+Usage: {{ include "impress.yhub.roleEnv" (dict "root" $ "role" "server") }}
+*/}}
+{{- define "impress.yhub.roleEnv" -}}
+{{- $root := .root -}}
+{{- $named := merge (dict) (($root.Values.yhub.worker | default dict).envVars | default dict) ($root.Values.yhub.envVars | default dict) -}}
+{{- if and $root.Values.yhub.worker.enabled (not (hasKey $named "YHUB_ROLE")) }}
+- name: "YHUB_ROLE"
+  value: {{ .role | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+JWT signing keys — the RSA keys the services sign the calls they make to each
+other with. The jwt-keys job generates them once into a secret every service
+mounts read-only, so no key is ever templated into a manifest, written in a
+values file, or kept anywhere the services themselves can write.
+
+Requires top level scope
+*/}}
+{{- define "impress.jwtKeys.secretName" -}}
+{{- .Values.jwtKeys.existingSecret | default (printf "%s-jwt-keys" (include "impress.fullname" .)) -}}
+{{- end }}
+
+{{- define "impress.jwtKeys.serviceAccountName" -}}
+{{- .Values.jwtKeys.job.serviceAccountName | default (printf "%s-jwt-keys" (include "impress.fullname" .)) -}}
+{{- end }}
+
+{{- define "impress.jwtKeys.backendPath" -}}
+{{ .Values.jwtKeys.mountPath }}/{{ .Values.jwtKeys.backendKeyFilename }}
+{{- end }}
+
+{{- define "impress.jwtKeys.yhubPath" -}}
+{{ .Values.jwtKeys.mountPath }}/{{ .Values.jwtKeys.yhubKeyFilename }}
+{{- end }}
+
+{{/*
+The volume holding the keys. A pod referencing a secret that does not exist yet
+stays in ContainerCreating and mounts it as soon as the job creates it, so
+nothing else is needed to order the two.
+
+Requires top level scope
+*/}}
+{{- define "impress.jwtKeys.volume" -}}
+- name: jwt-keys
+  secret:
+    secretName: {{ include "impress.jwtKeys.secretName" . }}
+    # read-only for everyone, as the files the job generates are
+    defaultMode: 0444
+{{- end }}
+
+{{- define "impress.jwtKeys.volumeMount" -}}
+- name: jwt-keys
+  mountPath: {{ .Values.jwtKeys.mountPath }}
+  readOnly: true
+{{- end }}
+
+{{/*
+`*_FILE` environment variables pointing at the keys, added only when the
+deployment did not set them by hand — configuring a key of your own stays
+possible, and wins.
+
+Requires top level scope
+*/}}
+{{- define "impress.jwtKeys.backendEnv" -}}
+{{- if not (hasKey (.Values.backend.envVars | default dict) "JWT_PRIVATE_KEY_FILE") }}
+- name: "JWT_PRIVATE_KEY_FILE"
+  value: {{ include "impress.jwtKeys.backendPath" . | quote }}
+{{- end }}
+{{- end }}
+
+{{- define "impress.jwtKeys.yhubEnv" -}}
+{{- if not (hasKey (.Values.yhub.envVars | default dict) "YHUB_JWT_PRIVATE_KEY_FILE") }}
+- name: "YHUB_JWT_PRIVATE_KEY_FILE"
+  value: {{ include "impress.jwtKeys.yhubPath" . | quote }}
+{{- end }}
 {{- end }}
 
 
@@ -241,4 +348,164 @@ type: kubernetes.io/dockerconfigjson
 data:
   .dockerconfigjson: {{ template "impress.secret.dockerconfigjson.data" .imageCredentials }}
 {{- end -}}
+{{- end }}
+
+{{/*
+Environment serving the prometheus metrics of a yhub pod on a port of its own.
+The bearer token (PROMETHEUS_API_KEY) is not set here: it is a secret, given
+through `yhub.envVars`, which the worker inherits.
+
+Requires a dict with "root" (top level scope) and "path" (where to serve them)
+*/}}
+{{- define "impress.yhub.metrics.env" -}}
+{{- if .root.Values.yhub.metrics.enabled }}
+- name: PROMETHEUS_METRICS_ENABLED
+  value: "true"
+- name: PROMETHEUS_METRICS_PORT
+  value: {{ .root.Values.yhub.metrics.port | quote }}
+- name: PROMETHEUS_METRICS_PATH
+  value: {{ .path | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+One exact path of the metrics ingress.
+
+Requires a dict with "root", "path", "service" and "port"
+*/}}
+{{- define "impress.ingressMetrics.path" -}}
+- path: {{ .path | quote }}
+  {{- if semverCompare ">=1.18-0" .root.Capabilities.KubeVersion.GitVersion }}
+  pathType: Exact
+  {{- end }}
+  backend:
+    {{- if semverCompare ">=1.19-0" .root.Capabilities.KubeVersion.GitVersion }}
+    service:
+      name: {{ .service }}
+      port:
+        number: {{ .port }}
+    {{- else }}
+    serviceName: {{ .service }}
+    servicePort: {{ .port }}
+    {{- end }}
+{{- end }}
+
+{{/*
+Every path of the metrics ingress: the backend, and the two halves of yhub when
+their metrics are enabled. Distinct exact paths on one host, so that one ingress
+and one address filter cover them all without rewriting anything — each service
+is told to serve its metrics on the path it is published at.
+*/}}
+{{- define "impress.ingressMetrics.paths" -}}
+{{ include "impress.ingressMetrics.path" (dict "root" . "path" .Values.ingressMetrics.path "service" (include "impress.backend.fullname" .) "port" .Values.backend.service.port) }}
+{{- if and .Values.yhub.enabled .Values.yhub.metrics.enabled }}
+{{ include "impress.ingressMetrics.path" (dict "root" . "path" .Values.yhub.metrics.path "service" (include "impress.yhub.fullname" .) "port" .Values.yhub.metrics.port) }}
+{{- if .Values.yhub.worker.enabled }}
+{{ include "impress.ingressMetrics.path" (dict "root" . "path" .Values.yhub.metrics.workerPath "service" (printf "%s-metrics" (include "impress.yhub.worker.fullname" .)) "port" .Values.yhub.metrics.port) }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Environment enabling the prometheus metrics of the backend on the django
+container, and on it only: the celery worker serves no request, so its metrics
+would never be read. A pod is only ever scraped over plain http — TLS ends at
+the ingress, and a Prometheus of the cluster calls the pods themselves — so the
+path is also taken out of the redirect to https. Each variable is skipped when
+the deployment sets it by hand, in either env map — an explicit value wins, as
+everywhere else here. The bearer token (PROMETHEUS_API_KEY) is not set here: it
+is a secret, given through `backend.envVars`.
+
+Requires top level scope
+*/}}
+{{- define "impress.backend.metrics.env" -}}
+{{- if .Values.backend.metrics.enabled -}}
+{{- $named := merge (dict) ((.Values.backend.django | default dict).envVars | default dict) (.Values.backend.envVars | default dict) -}}
+{{- range $variable := list "PROMETHEUS_METRICS_ENABLED" "PROMETHEUS_METRICS_SSL_REDIRECT_EXEMPT" -}}
+{{- if not (hasKey $named $variable) }}
+- name: {{ $variable | quote }}
+  value: "True"
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+The Secret a monitor reads the bearer token of a scrape from: the one named in
+`<component>.metrics.apiKeySecret`, or else the one PROMETHEUS_API_KEY is taken
+from in the env of the scraped process. A token that comes from nowhere the
+Prometheus Operator can read is refused at render time, rather than left to
+fail at scrape time with a 401.
+
+Requires a dict with "name" (of the monitor, for the message), "metrics" (the
+`<component>.metrics` values) and "envVars" (the env map of the scraped process)
+*/}}
+{{- define "impress.metrics.apiKeySecret" -}}
+{{- $ref := .metrics.apiKeySecret | default dict -}}
+{{- if not $ref.name -}}
+{{- $fromEnv := index (.envVars | default dict) "PROMETHEUS_API_KEY" -}}
+{{- $ref = (kindIs "map" $fromEnv) | ternary $fromEnv dict -}}
+{{- $ref = $ref.secretKeyRef | default dict -}}
+{{- end -}}
+{{- if not (and $ref.name $ref.key) -}}
+{{- fail (printf "%s: a monitor scrapes with the bearer token of PROMETHEUS_API_KEY, which has to come from a Secret. Give it as a secretKeyRef in the envVars of the component, or name the Secret in its metrics.apiKeySecret" .name) -}}
+{{- end -}}
+name: {{ $ref.name | quote }}
+key: {{ $ref.key | quote }}
+{{- end }}
+
+{{/*
+The components whose metrics are enabled, as the monitors see them: one entry
+per pod kind to scrape, with the labels selecting it (its Service and its pods
+carry the same ones), the name of the port — the same on the Service and on the
+container — and the path the process serves on.
+
+Requires top level scope
+*/}}
+{{- define "impress.metrics.targets" -}}
+{{- $targets := list -}}
+{{- if .Values.backend.metrics.enabled -}}
+{{- $envVars := merge (dict) ((.Values.backend.django | default dict).envVars | default dict) (.Values.backend.envVars | default dict) -}}
+{{- $targets = append $targets (dict "name" (include "impress.backend.fullname" .) "component" "backend" "port" "http" "path" "/metrics" "metrics" .Values.backend.metrics "envVars" $envVars) -}}
+{{- end -}}
+{{- if and .Values.yhub.enabled .Values.yhub.metrics.enabled -}}
+{{- $targets = append $targets (dict "name" (include "impress.yhub.fullname" .) "component" "yhub" "port" "metrics" "path" .Values.yhub.metrics.path "metrics" .Values.yhub.metrics "envVars" (.Values.yhub.envVars | default dict)) -}}
+{{- if .Values.yhub.worker.enabled -}}
+{{- $envVars := merge (dict) ((.Values.yhub.worker | default dict).envVars | default dict) (.Values.yhub.envVars | default dict) -}}
+{{- $targets = append $targets (dict "name" (include "impress.yhub.worker.fullname" .) "component" "yhub-worker" "port" "metrics" "path" .Values.yhub.metrics.workerPath "metrics" .Values.yhub.metrics "envVars" $envVars) -}}
+{{- end -}}
+{{- end -}}
+{{- toJson $targets -}}
+{{- end }}
+
+{{/*
+One endpoint of a ServiceMonitor or a PodMonitor: the port and path of a target,
+the scrape settings of the monitor and the bearer token of the component.
+
+Requires a dict with "target" (an entry of impress.metrics.targets) and
+"monitor" (the serviceMonitor or podMonitor values)
+*/}}
+{{- define "impress.metrics.endpoint" -}}
+- port: {{ .target.port }}
+  path: {{ .target.path | quote }}
+  scheme: http
+  {{- with .monitor.interval }}
+  interval: {{ . }}
+  {{- end }}
+  {{- with .monitor.scrapeTimeout }}
+  scrapeTimeout: {{ . }}
+  {{- end }}
+  honorLabels: {{ .monitor.honorLabels }}
+  authorization:
+    type: Bearer
+    credentials:
+      {{- include "impress.metrics.apiKeySecret" (dict "name" .target.name "metrics" .target.metrics "envVars" .target.envVars) | nindent 6 }}
+  {{- with .monitor.relabelings }}
+  relabelings:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .monitor.metricRelabelings }}
+  metricRelabelings:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}

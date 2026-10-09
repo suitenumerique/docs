@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "delay": 1000,
+  "exec": "yarn build && yarn start"
+}

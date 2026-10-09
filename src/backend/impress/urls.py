@@ -17,6 +17,18 @@ urlpatterns = [
     path("", include("core.urls")),
 ]
 
+# Serve the Prometheus metrics only when they are enabled for this environment
+# (PROMETHEUS_METRICS_ENABLED=1). Outside of /api/ on purpose, so that the ingress
+# of the application does not publish them, and behind a bearer token
+# (core.middleware.PrometheusAuthMiddleware) — see documentation/metrics.md.
+if settings.PROMETHEUS_METRICS_ENABLED:
+    from core.metrics import metrics_view
+    from core.middleware import METRICS_PATH
+
+    urlpatterns += [
+        path(METRICS_PATH.lstrip("/"), metrics_view, name="prometheus-metrics")
+    ]
+
 # Serve the django-silk profiling UI at /silk/ only when profiling is enabled
 # for this environment (SILK_ENABLED=1). The view itself is further gated behind
 # a staff session by SILKY_AUTHENTICATION / SILKY_AUTHORISATION.

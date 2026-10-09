@@ -20,6 +20,11 @@ OIDC_RS_ALLOWED_AUDIENCES=
 
 It implements the resource server using `django-lasuite`, see the [documentation](https://github.com/suitenumerique/django-lasuite/blob/main/documentation/how-to-use-oidc-resource-server-backend.md)
 
+When `OIDC_RS_PRIVATE_KEY_STR` is set, the resource server publishes its public
+key on `/external_api/{version}/jwks`. This is the URI to declare to your OIDC
+provider. Do not confuse it with `/api/{version}/jwks`, which publishes the key
+validating the tokens Docs itself issues to call external services.
+
 ## Customise allowed routes
 
 Configure the `EXTERNAL_API` setting to control which routes and actions are available in the external API. Set it via the `EXTERNAL_API` environment variable (as JSON) or in Django settings.

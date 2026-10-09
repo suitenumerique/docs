@@ -1,24 +1,77 @@
 import { Block } from '@blocknote/core';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { captureException } from '@sentry/nextjs';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { backendUrl } from '@/api';
+import { useConfig } from '@/core';
+import { useToast } from '@/hooks';
+import { formatFileSize } from '@/utils';
 import { isSafeUrl } from '@/utils/url';
 
 import { useCreateDocAttachment } from '../api';
 import { ANALYZE_URL } from '../conf';
 import { DocsBlockNoteEditor } from '../types';
 
+const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // Default to 10MB
+
+const TEXT_ALIGNMENTS = ['left', 'center', 'right', 'justify'] as const;
+
+type TextAlignment = (typeof TEXT_ALIGNMENTS)[number];
+
+const fileCaption = (props: object) => {
+  if ('caption' in props && typeof props.caption === 'string') {
+    return props.caption;
+  }
+
+  return '';
+};
+
+const fileTextAlignment = (props: object): TextAlignment => {
+  if (
+    'textAlignment' in props &&
+    typeof props.textAlignment === 'string' &&
+    TEXT_ALIGNMENTS.includes(props.textAlignment as TextAlignment)
+  ) {
+    return props.textAlignment as TextAlignment;
+  }
+
+  return 'left';
+};
+
 export const useUploadFile = (docId: string) => {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const { data: config } = useConfig();
   const {
     mutateAsync: createDocAttachment,
     isError: isErrorAttachment,
     error: errorAttachment,
   } = useCreateDocAttachment();
 
+  const maxFileSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? DEFAULT_MAX_FILE_SIZE;
+
   const uploadFile = useCallback(
     async (file: File) => {
+      // The server rejects an oversized file, but the proxy in front of it usually cuts the
+      // request first and answers a bare 413 the editor cannot make sense of. Telling the
+      // user before sending anything saves them the wait and the cryptic message.
+      if (file.size > maxFileSize) {
+        toast(
+          t(
+            'The file "{{fileName}}" is too large. Maximum file size is {{maxFileSize}}.',
+            {
+              fileName: file.name,
+              maxFileSize: formatFileSize(maxFileSize),
+            },
+          ),
+          VariantType.ERROR,
+        );
+
+        throw new Error('File is too large');
+      }
+
       const body = new FormData();
       body.append('file', file);
 
@@ -29,7 +82,7 @@ export const useUploadFile = (docId: string) => {
 
       return `${backendUrl()}${ret.file}`;
     },
-    [createDocAttachment, docId],
+    [createDocAttachment, docId, maxFileSize, t, toast],
   );
 
   return {
@@ -69,6 +122,8 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
       const blockUploadName = block.props.name;
       const blockUploadShowPreview =
         ('showPreview' in block.props && block.props.showPreview) || false;
+      const blockUploadCaption = fileCaption(block.props);
+      const blockUploadTextAlignment = fileTextAlignment(block.props);
 
       try {
         editor.replaceBlocks(
@@ -83,6 +138,8 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
                 blockUploadType,
                 blockUploadUrl,
                 blockUploadShowPreview,
+                blockUploadCaption,
+                blockUploadTextAlignment,
               },
             },
           ],

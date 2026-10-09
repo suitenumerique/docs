@@ -1,0 +1,10 @@
+{{- if .Values.frontend.robotsTxt.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: docs-frontend-robots-txt
+  namespace: {{ .Release.Namespace }}
+data:
+  robots.txt: |
+    {{- .Values.frontend.robotsTxt.content | nindent 4 }}
+{{- end }}

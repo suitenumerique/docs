@@ -4,16 +4,21 @@ import { Page } from '@playwright/test';
 
 export const getEditor = async ({ page }: { page: Page }) => {
   const editor = page.locator('.--docs--editor-container .ProseMirror');
-  await editor.click();
+  await editor.focus();
   return editor;
 };
 
 export const tryFocusEditorContent = async ({ page }: { page: Page }) => {
   const editor = await getEditor({ page });
   if (
-    (await editor.locator('.bn-trailing-block.ProseMirror-widget').count()) > 0
+    (await editor
+      .locator('.bn-block-outer div[data-content-type="paragraph"]')
+      .count()) > 0
   ) {
-    await editor.locator('.bn-trailing-block.ProseMirror-widget').click();
+    await editor
+      .locator('.bn-block-outer div[data-content-type="paragraph"]')
+      .last()
+      .click();
   } else {
     await editor.click();
   }

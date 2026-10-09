@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  clickInDocOptionMenu,
   clickInEditorShareButton,
   createDoc,
   getGridRow,
@@ -58,9 +59,7 @@ test.describe('Documents Grid mobile', () => {
                   partial_update: true,
                   retrieve: true,
                   update: true,
-                  versions_destroy: true,
                   versions_list: true,
-                  versions_retrieve: true,
                 },
                 link_role: 'reader',
                 link_reach: 'public',
@@ -103,9 +102,7 @@ test.describe('Document grid item options', () => {
 
     await expect(page.getByText(docTitle)).toBeVisible();
     const row = await getGridRow(page, docTitle);
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-
-    await page.getByRole('menuitem', { name: 'Share' }).click();
+    await clickInDocOptionMenu(page, row, 'Share');
 
     await expect(
       page.getByRole('dialog').getByText('Share the document'),
@@ -121,8 +118,7 @@ test.describe('Document grid item options', () => {
     const row = await getGridRow(page, docTitle);
 
     // Star
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-    await page.getByRole('menuitem', { name: 'Star' }).click();
+    await clickInDocOptionMenu(page, row, 'Star');
 
     // Check is starred
     await expect(row.getByText(/This document is starred/)).toBeVisible();
@@ -133,8 +129,7 @@ test.describe('Document grid item options', () => {
     await expect(page.getByText(docTitle2)).toBeHidden();
 
     // Unstar
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-    await page.getByText('Unstar').click();
+    await clickInDocOptionMenu(page, row, 'Unstar');
     await expect(row).toBeHidden();
 
     // Check is unstarred
@@ -153,8 +148,7 @@ test.describe('Document grid item options', () => {
     await expect(page.getByText(docTitle)).toBeVisible();
     const row = await getGridRow(page, docTitle);
 
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await clickInDocOptionMenu(page, row, 'Delete');
 
     await expect(
       page.getByRole('heading', { name: 'Delete a doc' }),
@@ -186,9 +180,7 @@ test.describe('Document grid item options', () => {
     ).toBeVisible();
 
     const row = await getGridRow(page, docTitle);
-    await row.getByRole('button', { name: /Open the menu of actions/ }).click();
-
-    await page.getByRole('menuitem', { name: 'Leave' }).click();
+    await clickInDocOptionMenu(page, row, 'Leave');
 
     const modal = page.getByRole('dialog', {
       name: 'Confirmation to leave the document',

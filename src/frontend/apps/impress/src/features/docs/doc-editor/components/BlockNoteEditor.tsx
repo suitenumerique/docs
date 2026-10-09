@@ -1,7 +1,6 @@
-import { codeBlockOptions } from '@blocknote/code-block';
+import { syntaxHighlighter } from '@blocknote/code-block';
 import {
   BlockNoteSchema,
-  createCodeBlockSpec,
   defaultBlockSpecs,
   defaultInlineContentSpecs,
   withPageBreak,
@@ -9,20 +8,29 @@ import {
 import { CommentsExtension } from '@blocknote/core/comments';
 import '@blocknote/core/fonts/inter.css';
 import * as localesBN from '@blocknote/core/locales';
+import { withCollaboration } from '@blocknote/core/yjs';
+import {
+  createReactDiagramBlockSpec,
+  locales as diagramLocales,
+} from '@blocknote/diagram-block';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
+import {
+  createReactInlineMathSpec,
+  createReactMathBlockSpec,
+  locales as mathLocales,
+} from '@blocknote/math-block';
 import {
   FloatingComposerController,
   FloatingThreadController,
   ThreadsSidebar,
   useCreateBlockNote,
 } from '@blocknote/react';
-import { HocuspocusProvider } from '@hocuspocus/provider';
 import { FindAndReplace } from '@tiptap/extension-find-and-replace';
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import type { Awareness } from 'y-protocols/awareness';
+import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
@@ -34,7 +42,7 @@ import {
   useComments,
 } from '@/docs/doc-comments';
 import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
-import { Doc } from '@/docs/doc-management';
+import { type Doc } from '@/docs/doc-management/types';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 import { useAnalytics } from '@/libs/Analytics';
@@ -42,7 +50,6 @@ import { useAnalytics } from '@/libs/Analytics';
 import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
 import {
   useHeadings,
-  useSaveDoc,
   useScrollToBlockAnchor,
   useShortcuts,
   useUploadFile,
@@ -50,7 +57,7 @@ import {
 } from '../hook';
 import { useEditorStore } from '../stores';
 import { DocsEditorStyle } from '../styles';
-import { DocsBlockNoteEditor } from '../types';
+import { type DocsBlockNoteEditor } from '../types';
 import { randomColor, sanitizeColor } from '../utils';
 
 import BlockNoteAI from './AI';
@@ -62,7 +69,11 @@ const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
 const localesBNAI = BlockNoteAI?.localesAI || {};
-import { InterlinkingLinkInlineContent } from './custom-inline-content';
+import { createSafeCodeBlockSpec } from './custom-blocks/CodeBlock';
+import {
+  InterlinkingLinkInlineContent,
+  getPastedDocInterlink,
+} from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
 
 const localesBNMultiColumn = XLMultiColumn?.locales;
@@ -73,13 +84,16 @@ const baseBlockNoteSchema = withPageBreak(
     blockSpecs: {
       ...defaultBlockSpecs,
       callout: CalloutBlock(),
-      codeBlock: createCodeBlockSpec(codeBlockOptions),
+      codeBlock: createSafeCodeBlockSpec(),
+      diagram: createReactDiagramBlockSpec(),
+      mathBlock: createReactMathBlockSpec(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
       interlinkingLinkInline: InterlinkingLinkInlineContent,
+      math: createReactInlineMathSpec(),
     },
   }),
 );
@@ -89,7 +103,7 @@ export const blockNoteSchema = (withMultiColumn?.(baseBlockNoteSchema) ||
 
 interface BlockNoteEditorProps {
   doc: Doc;
-  provider: HocuspocusProvider;
+  provider: WebsocketProvider;
 }
 
 export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
@@ -97,7 +111,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { setEditor } = useEditorStore();
   const { themeTokens } = useCunninghamTheme();
   const refEditorContainer = useRef<HTMLDivElement>(null);
-  useSaveDoc(doc.id, provider.document);
 
   const { i18n, t } = useTranslation();
   const langLocalesBN =
@@ -112,6 +125,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       : i18n.resolvedLanguage;
   const langLocalesBNAI =
     !i18n.resolvedLanguage || !(i18n.resolvedLanguage in localesBNAI)
+      ? DEFAULT_LOCALE
+      : i18n.resolvedLanguage;
+  // The math and diagram blocks ship the same set of locales.
+  const langLocalesBNMathDiagram =
+    !i18n.resolvedLanguage || !(i18n.resolvedLanguage in mathLocales)
       ? DEFAULT_LOCALE
       : i18n.resolvedLanguage;
 
@@ -152,10 +170,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }, [canSeeComment, collabName, themeTokens?.font?.families?.base]);
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
-    {
+    withCollaboration({
       collaboration: {
-        provider: provider as { awareness?: Awareness | undefined },
-        fragment: provider.document.getXmlFragment('document-store'),
+        provider,
+        fragment: provider.doc.getXmlFragment('document-store'),
         user: {
           name: cursorName,
           color: randomColor(),
@@ -204,6 +222,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
       dictionary: {
         ...localesBN[langLocalesBN as keyof typeof localesBN],
+        math: mathLocales[langLocalesBNMathDiagram as keyof typeof mathLocales],
+        diagram:
+          diagramLocales[
+            langLocalesBNMathDiagram as keyof typeof diagramLocales
+          ],
         ...(localesBNMultiColumn && {
           multi_column:
             localesBNMultiColumn[
@@ -212,7 +235,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           ai: localesBNAI?.[langLocalesBNAI as keyof typeof localesBNAI],
         }),
       },
-      pasteHandler: ({ event, defaultPasteHandler }) => {
+      pasteHandler: ({ event, editor: pasteEditor, defaultPasteHandler }) => {
         // Get clipboard data
         const blocknoteData = event.clipboardData?.getData('blocknote/html');
 
@@ -230,9 +253,36 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           void threadStore.refreshThreads();
         }
 
+        /**
+         * When pasting a bare link to a doc on this same domain, turn it
+         * into an interlink instead of a plain link, so it benefits from
+         * the title-sync and navigation behaviour of the interlinking system.
+         */
+        const pastedInterlink = getPastedDocInterlink(
+          event,
+          pasteEditor as DocsBlockNoteEditor,
+        );
+        if (pastedInterlink?.docId) {
+          editor.insertInlineContent([
+            {
+              type: 'interlinkingLinkInline',
+              props: {
+                docId: pastedInterlink.docId,
+                ...(pastedInterlink.blockId && {
+                  blockId: pastedInterlink.blockId,
+                }),
+              },
+            },
+          ]);
+          return true;
+        }
+
         return defaultPasteHandler();
       },
       extensions: [
+        // Highlights the source of code blocks and of the math / diagram
+        // blocks' editable LaTeX / Mermaid popups.
+        syntaxHighlighter,
         CommentsExtension({ threadStore, resolveUsers }),
         ...(aiExtension ? [aiExtension] : []),
       ],
@@ -257,13 +307,14 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       setIdAttribute: true,
       uploadFile,
       schema: blockNoteSchema,
-    },
+    }),
     [
       aiExtension,
       cursorName,
       langLocalesBN,
       langLocalesBNMultiColumn,
       langLocalesBNAI,
+      langLocalesBNMathDiagram,
       provider,
       uploadFile,
       threadStore,
@@ -352,7 +403,7 @@ export const BlockNoteReader = ({
   const { setEditor } = useEditorStore();
   const { threadStore } = useComments(docId, false, user);
   const editor = useCreateBlockNote(
-    {
+    withCollaboration({
       collaboration: {
         fragment: initialContent,
         user: {
@@ -371,7 +422,7 @@ export const BlockNoteReader = ({
           },
         }),
       ],
-    },
+    }),
     [initialContent, threadStore],
   );
 
@@ -391,6 +442,8 @@ export const BlockNoteReader = ({
   }, [setEditor, editor, isMainEditor]);
 
   useHeadings(editor);
+
+  useScrollToBlockAnchor();
 
   return (
     <Box>

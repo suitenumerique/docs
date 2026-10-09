@@ -1,30 +1,20 @@
 import { Button } from '@gouvfr-lasuite/ui-components';
-import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
-import {
-  Box,
-  ButtonCloseModal,
-  SeparatedSection,
-  StyledLink,
-} from '@/components';
-import { Title } from '@/components/Title';
-import { useConfig } from '@/core';
+import { Box, ButtonCloseModal, SeparatedSection } from '@/components';
 import { NewDocButton } from '@/docs/doc-management/components/NewDocButton';
 import { DocSearchButtonModal } from '@/docs/doc-search/components/DocSearchButtonModal';
 import { useAuth } from '@/features/auth';
+import { HEADER_ROW_MIN_HEIGHT, HeaderLogoLink } from '@/features/header';
 import HomeSVG from '@/icons/house-rounded.svg';
 import { useResponsiveStore } from '@/stores';
 
 import { useLeftPanelStore } from '../stores';
 
 export const LeftPanelHeader = () => {
-  const { data: config } = useConfig();
   const { isMobile } = useResponsiveStore();
   const { closePanel } = useLeftPanelStore();
-  const icon = config?.theme_customization?.header?.icon;
 
   return (
     <Box $width="100%" className="--docs--left-panel-header">
@@ -33,43 +23,9 @@ export const LeftPanelHeader = () => {
         $direction="row"
         $align="center"
         $gap="2xs"
-        $minHeight="64px"
+        $minHeight={HEADER_ROW_MIN_HEIGHT}
       >
-        <StyledLink
-          href="/"
-          data-testid="header-logo-link"
-          $css={css`
-            outline: none;
-            &:focus-visible {
-              box-shadow: 0 0 0 2px var(--c--globals--colors--brand-400) !important;
-              border-radius: var(--c--globals--spacings--st);
-            }
-          `}
-        >
-          <Box
-            $align="center"
-            $gap="var(--c--globals--spacings--4xs)"
-            $direction="row"
-            $position="relative"
-            $height="fit-content"
-            $margin={{ top: 'auto' }}
-          >
-            {icon && (
-              <Image
-                data-testid="header-icon-docs"
-                width={0}
-                height={0}
-                priority
-                {...(({ withTitle: _, ...rest }) => rest)(icon)}
-              />
-            )}
-            <Title
-              headingLevel="h1"
-              className={icon?.withTitle ? undefined : 'sr-only'}
-              $size="1.7rem"
-            />
-          </Box>
-        </StyledLink>
+        <HeaderLogoLink headingLevel="h1" />
         {isMobile && (
           <Box $margin={{ left: 'auto' }}>
             <ButtonCloseModal

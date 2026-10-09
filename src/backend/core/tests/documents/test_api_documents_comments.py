@@ -1,5 +1,6 @@
 """Test API for comments on documents."""
 
+# pylint: disable=too-many-lines
 import random
 from unittest import mock
 
@@ -41,6 +42,7 @@ def test_list_comments_anonymous_user_public_document():
                 "created_at": comment1.created_at.isoformat().replace("+00:00", "Z"),
                 "updated_at": comment1.updated_at.isoformat().replace("+00:00", "Z"),
                 "user": {
+                    "id": str(comment1.user.id),
                     "full_name": comment1.user.full_name,
                     "short_name": comment1.user.short_name,
                 },
@@ -53,6 +55,7 @@ def test_list_comments_anonymous_user_public_document():
                 "created_at": comment2.created_at.isoformat().replace("+00:00", "Z"),
                 "updated_at": comment2.updated_at.isoformat().replace("+00:00", "Z"),
                 "user": {
+                    "id": str(comment2.user.id),
                     "full_name": comment2.user.full_name,
                     "short_name": comment2.user.short_name,
                 },
@@ -110,6 +113,7 @@ def test_list_comments_authenticated_user_accessible_document():
                 "created_at": comment1.created_at.isoformat().replace("+00:00", "Z"),
                 "updated_at": comment1.updated_at.isoformat().replace("+00:00", "Z"),
                 "user": {
+                    "id": str(comment1.user.id),
                     "full_name": comment1.user.full_name,
                     "short_name": comment1.user.short_name,
                 },
@@ -122,6 +126,7 @@ def test_list_comments_authenticated_user_accessible_document():
                 "created_at": comment2.created_at.isoformat().replace("+00:00", "Z"),
                 "updated_at": comment2.updated_at.isoformat().replace("+00:00", "Z"),
                 "user": {
+                    "id": str(comment2.user.id),
                     "full_name": comment2.user.full_name,
                     "short_name": comment2.user.short_name,
                 },
@@ -263,6 +268,7 @@ def test_create_comment_authenticated_user_accessible_document():
         "created_at": response.json()["created_at"],
         "updated_at": response.json()["updated_at"],
         "user": {
+            "id": str(user.id),
             "full_name": user.full_name,
             "short_name": user.short_name,
         },
@@ -317,6 +323,7 @@ def test_retrieve_comment_anonymous_user_public_document():
         "created_at": comment.created_at.isoformat().replace("+00:00", "Z"),
         "updated_at": comment.updated_at.isoformat().replace("+00:00", "Z"),
         "user": {
+            "id": str(comment.user.id),
             "full_name": comment.user.full_name,
             "short_name": comment.user.short_name,
         },

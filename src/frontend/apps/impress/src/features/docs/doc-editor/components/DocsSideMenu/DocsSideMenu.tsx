@@ -1,74 +1,105 @@
 /**
- * Overrides the default DragHandleMenu with a custom implementation for the Docs editor.
- * See: https://github.com/TypeCellOS/BlockNote/blob/main/packages/react/src/components/SideMenu/DragHandleMenu/DragHandleMenu.tsx
+ * Overrides the default SideMenu with a custom implementation for the Docs editor.
+ * See: https://github.com/TypeCellOS/BlockNote/blob/main/packages/react/src/components/SideMenu/SideMenu.tsx
  */
+import type { Block } from '@blocknote/core';
+import { SideMenuExtension } from '@blocknote/core/extensions';
 import {
-  BlockColorsItem,
-  DragHandleMenu,
-  RemoveBlockItem,
   SideMenu,
   SideMenuController,
-  TableColumnHeaderItem,
-  TableRowHeaderItem,
-  useComponentsContext,
-  useDictionary,
+  useBlockNoteEditor,
+  useExtensionState,
 } from '@blocknote/react';
+import { offset } from '@floating-ui/react';
+import { useMemo } from 'react';
 
-import { Box, HorizontalSeparator } from '@/components';
-import { PresentBlockItem } from '@/docs/doc-presenter/components/PresentBlockItem';
-import ColorIcon from '@/icons/color.svg';
-import TableHeaderColumnIcon from '@/icons/table-header-column.svg';
-import TableHeaderRowIcon from '@/icons/table-header-row.svg';
-import TrashIcon from '@/icons/trash.svg';
+import type {
+  DocsBlockNoteEditor,
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema,
+} from '../../types';
 
-import { LinkToBlockItem } from './LinkToBlockItem';
-import { TableHeaderSeparator } from './TableHeaderSeparator';
+import { DocsDragHandleMenu } from './DocsDragHandleMenu';
 
-const DocsDragHandleMenu = () => {
-  const Components = useComponentsContext();
-  const dict = useDictionary();
-
-  if (Components === undefined) {
-    return null;
+/**
+ * Blocknote v0.54.0
+ * See: https://github.com/TypeCellOS/BlockNote/blob/main/packages/react/src/components/SideMenu/SideMenuController.tsx#L21
+ *
+ * Blocknote changed the way the side menu is positioned.
+ * Because we are modifying the height of the heading blocks we need to adjust the offset of the side menu to match the
+ * new height of the heading blocks.
+ *
+ * @todo Try to see with Blocknote if we can have a better way to handle this, maybe a prop to set the offset of the side menu.
+ */
+function getBlockOffset(
+  editor: DocsBlockNoteEditor,
+  block: Block<DocsBlockSchema, DocsInlineContentSchema, DocsStyleSchema>,
+): number {
+  if (block.type === 'heading') {
+    switch (block.props.level) {
+      case 1:
+        return 13;
+      case 2:
+        return 7;
+      case 3:
+        return 4;
+      default:
+        return 0;
+    }
   }
 
+  // File blocks without a URL all render the same "Add file" button,
+  // regardless of their type.
+  if (
+    editor.schema.blockSpecs[block.type]?.implementation.meta
+      ?.fileBlockAccept &&
+    (!('url' in block.props) || !block.props.url)
+  ) {
+    return 12;
+  }
+
+  if (block.type === 'file') {
+    return 4;
+  }
+
+  if (block.type === 'audio' || block.type === 'table') {
+    return 15;
+  }
+
+  return 0;
+}
+
+export const DocsSideMenu = () => {
+  const editor = useBlockNoteEditor<
+    DocsBlockSchema,
+    DocsInlineContentSchema,
+    DocsStyleSchema
+  >();
+  const block = useExtensionState(SideMenuExtension, {
+    selector: (state) =>
+      state?.block as Block<
+        DocsBlockSchema,
+        DocsInlineContentSchema,
+        DocsStyleSchema
+      > | null,
+  });
+
+  const floatingUIOptions = useMemo(
+    () => ({
+      useFloatingOptions: {
+        middleware: [
+          offset({ crossAxis: block ? getBlockOffset(editor, block) : 0 }),
+        ],
+      },
+    }),
+    [editor, block],
+  );
+
   return (
-    <DragHandleMenu>
-      <BlockColorsItem>
-        <Box $align="center" $gap="xxs" $direction="row">
-          <ColorIcon width="16" height="16" aria-hidden="true" />
-          {dict.drag_handle.colors_menuitem}
-        </Box>
-      </BlockColorsItem>
-      <HorizontalSeparator $margin={{ vertical: '3xs' }} />
-      <LinkToBlockItem />
-      <PresentBlockItem />
-      <TableHeaderSeparator />
-      <TableRowHeaderItem>
-        <Box $align="center" $gap="xxs" $direction="row">
-          <TableHeaderRowIcon width="16" height="16" aria-hidden="true" />
-          {dict.drag_handle.header_row_menuitem}
-        </Box>
-      </TableRowHeaderItem>
-      <TableColumnHeaderItem>
-        <Box $align="center" $gap="xxs" $direction="row">
-          <TableHeaderColumnIcon width="16" height="16" aria-hidden="true" />
-          {dict.drag_handle.header_column_menuitem}
-        </Box>
-      </TableColumnHeaderItem>
-      <HorizontalSeparator $margin={{ vertical: '3xs' }} />
-      <RemoveBlockItem>
-        <Box $align="center" $gap="xxs" $direction="row">
-          <TrashIcon width="16" height="16" aria-hidden="true" />
-          {dict.drag_handle.delete_menuitem}
-        </Box>
-      </RemoveBlockItem>
-    </DragHandleMenu>
+    <SideMenuController
+      floatingUIOptions={floatingUIOptions}
+      sideMenu={() => <SideMenu dragHandleMenu={DocsDragHandleMenu} />}
+    />
   );
 };
-
-export const DocsSideMenu = () => (
-  <SideMenuController
-    sideMenu={() => <SideMenu dragHandleMenu={DocsDragHandleMenu} />}
-  />
-);

@@ -8,14 +8,10 @@ postgres:
   database: docs
   size: 5Gi
 redis:
-  enabled: true
-  name: redis
-  image: redis:8.2-alpine
-  username: user
-  password: pass
+  enabled: false
 minio:
   enabled: true
-  image: minio/minio
+  image: pgsty/silo
   name: minio
   ingress:
     enabled: true
@@ -53,9 +49,8 @@ keycloak:
     database: keycloak
     size: 5Gi
     image: postgres:16-alpine
-  realm: 
+  realm:
     name: docs
     username: docs
     password: docs
     email: docs@example.com
-
