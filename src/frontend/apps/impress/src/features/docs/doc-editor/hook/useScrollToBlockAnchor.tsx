@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { parseThreadHash } from '@/docs/doc-comments/hooks/useScrollToThread';
 import { getMainContentElement } from '@/layouts/utils';
 
 const SCROLL_MARGIN_TOP = 50;
@@ -15,7 +16,8 @@ export const useScrollToBlockAnchor = () => {
   useEffect(() => {
     const blockId = window.location.hash.slice(1);
 
-    if (!blockId) {
+    // A thread link is handled by `useScrollToThread`
+    if (!blockId || parseThreadHash(window.location.hash)) {
       return;
     }
 

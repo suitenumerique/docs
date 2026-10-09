@@ -41,6 +41,7 @@ import {
   useCommentSidebarStore,
   useComments,
 } from '@/docs/doc-comments';
+import { useScrollToThread } from '@/docs/doc-comments/hooks/useScrollToThread';
 import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
 import { type Doc } from '@/docs/doc-management/types';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
@@ -329,6 +330,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   useUploadStatus(editor);
 
   useScrollToBlockAnchor();
+
+  useScrollToThread(editor, threadStore, showComments);
 
   useEffect(() => {
     setEditor(editor);
