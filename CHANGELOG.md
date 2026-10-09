@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(yhub) measure migration durations with a monotonic clock #2814
+
 ## [v6.0.0] - 2026-10-05
 
 ### Added
