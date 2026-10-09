@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -90,5 +90,34 @@ describe('DocHeader - Add emoji', () => {
     expect(
       screen.queryByRole('button', { name: '😀' }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('DocHeader - Add emoji (April Fools easter egg)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockUpdateDocEmoji.mockClear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  [
+    { emoji: '🐟', date: '2026-04-01' },
+    { emoji: null, date: '2026-03-30' },
+    { emoji: null, date: '2026-04-02' },
+  ].forEach(({ emoji, date }) => {
+    test(`uses ${emoji} emoji on ${date}`, () => {
+      vi.setSystemTime(new Date(date));
+
+      render(<DocHeader doc={doc} />, { wrapper: AppWrapper });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Add emoji' }));
+
+      expect(mockUpdateDocEmoji.mock.calls).toEqual(
+        emoji ? [['doc-1', 'My document', emoji]] : [],
+      );
+    });
   });
 });
