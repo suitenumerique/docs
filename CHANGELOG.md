@@ -12,6 +12,7 @@ and this project adheres to
 - 🔧(yhub) SENTRY_PROFILES_SAMPLE_RATE samples processes since sentry 11 #2872
 - ⚡️(backend) probe the celery worker with heartbeat files, 
   not inspect ping #2956
+- 💄(frontend) redesign offline error page #2808
 
 ### Fixed
 

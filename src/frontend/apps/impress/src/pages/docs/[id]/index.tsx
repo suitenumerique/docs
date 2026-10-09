@@ -175,7 +175,8 @@ const DocPage = ({ id }: DocProps) => {
     }
 
     if (error.status === 502) {
-      void replace('/offline');
+      const fromPath = encodeURIComponent(asPath);
+      void replace(`/offline?from=${fromPath}`);
       return;
     }
 

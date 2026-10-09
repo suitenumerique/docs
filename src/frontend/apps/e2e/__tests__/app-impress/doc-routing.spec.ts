@@ -80,6 +80,52 @@ test.describe('Doc Routing', () => {
     await verifyDocName(page, docTitle);
   });
 
+  test('checks 502 refresh returns to the original document', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(page, 'doc-routing-502', browserName, 1);
+    await verifyDocName(page, docTitle);
+
+    const docId = page.url().split('/docs/')[1]?.split('/')[0];
+    const docPath = `/docs/${docId}/?retry=1`;
+    await page.goto(docPath);
+    await verifyDocName(page, docTitle);
+
+    let failDocumentGet = true;
+
+    await page.route(/\**\/documents\/\**/, async (route) => {
+      const request = route.request();
+      if (
+        failDocumentGet &&
+        request.method().includes('GET') &&
+        docId &&
+        request.url().includes(`/documents/${docId}/`)
+      ) {
+        await route.fulfill({
+          status: 502,
+          json: { detail: 'Bad Gateway' },
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.reload();
+
+    await expect(page).toHaveURL(/\/offline\/?\?from=/, { timeout: 15000 });
+    expect(new URL(page.url()).searchParams.get('from')).toBe(docPath);
+
+    const refreshButton = page.getByRole('button', { name: 'Refresh page' });
+    await expect(refreshButton).toBeVisible();
+
+    failDocumentGet = false;
+    await refreshButton.click();
+
+    await expect(page).toHaveURL(new RegExp(`/docs/${docId}/\\?retry=1`));
+    await verifyDocName(page, docTitle);
+  });
+
   test('checks 404 on docs/[id] page', async ({ page }) => {
     await page.waitForTimeout(300);
 
