@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) keep the loading skeleton until an empty doc has synced #2817
+
 ## [v6.0.0] - 2026-10-05
 
 ### Added

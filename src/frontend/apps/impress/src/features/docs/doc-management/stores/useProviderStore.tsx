@@ -146,9 +146,15 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
 
       /**
        * The editor waits on `isReady` (see `DocEditor`), and local content is enough to render:
-       * whatever the connection then brings merges into what is already on screen.
+       * whatever the connection then brings merges into what is already on screen. An empty local
+       * copy is not: on a device that never opened the doc it would show the empty-doc placeholder
+       * until the server's content lands, which reads as a deleted doc. Those wait for the sync.
        */
-      persistence.on('synced', () => set({ isReady: true }));
+      persistence.on('synced', () => {
+        if (doc.getXmlFragment('document-store').length > 0) {
+          set({ isReady: true });
+        }
+      });
     }
 
     const provider = new WebsocketProvider(wsUrl, storeId, doc, {
@@ -213,8 +219,9 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       // for sockets that failed to open).
       if (status === 'connected') {
         clearTimeout(lostConnectionTimeout);
-        // An open socket means we are authenticated (auth happens at upgrade)
-        set({ isConnected: true, isReady: true });
+        // An open socket means we are authenticated (auth happens at upgrade). Not ready yet:
+        // the content arrives with the `sync` that follows.
+        set({ isConnected: true });
       }
     });
 
