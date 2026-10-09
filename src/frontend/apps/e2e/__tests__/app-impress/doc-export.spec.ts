@@ -428,6 +428,30 @@ test.describe('Doc Export', () => {
     await expect(page.locator('#print-only-content-styles')).not.toBeAttached();
   });
 
+  test('it wraps long text inside the page when printing', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-print-wrap', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'a'.repeat(300) });
+    await editor.press('Enter');
+    await writeInEditor({ page, text: 'long text '.repeat(60) });
+
+    await clickInEditorMenu(page, 'Print');
+
+    await expect(page.locator('#print-only-content-styles')).toBeAttached();
+
+    await page.emulateMedia({ media: 'print' });
+
+    const { scrollWidth, clientWidth } = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    }));
+
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+  });
+
   test('it exports the doc to PDF and checks regressions', async ({
     page,
     browserName,
