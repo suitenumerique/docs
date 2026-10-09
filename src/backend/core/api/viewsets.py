@@ -71,7 +71,11 @@ from core.services.search_indexers import (
 from core.services.yhub_services import YHubError, YHubService
 from core.tasks.access import reset_service_connections_on_commit
 from core.tasks.documents import sync_service_restorations_in_cascade
-from core.tasks.mail import send_ask_for_access_mail, send_mention_notification_mail
+from core.tasks.mail import (
+    send_ask_for_access_mail,
+    send_mention_notification_mail,
+    send_thread_reply_notification_mail,
+)
 from core.tasks.search import trigger_batch_document_indexer
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.dicts import lowercase_keys
@@ -3282,7 +3286,9 @@ class CommentViewSet(
         return context
 
     def perform_create(self, serializer):
-        """Attach the request user as the comment author."""
+        """Attach the request user as the comment author and notify the
+        participants of the thread, a comment here always replies to an existing
+        thread (the first comment of a thread is created with the thread)."""
         user = self.request.user if self.request.user.is_authenticated else None
         comment = serializer.save(user=user)
 
@@ -3292,6 +3298,15 @@ class CommentViewSet(
             {"comment_id": str(comment.id), "thread_id": str(comment.thread_id)},
             document=self.get_document_or_404(),
         )
+
+        # Notifying is best effort: the comment is already saved and a broker
+        # outage must not turn its creation into an error
+        try:
+            send_thread_reply_notification_mail.delay(str(comment.id))
+        except Exception:  # pylint: disable=broad-exception-caught
+            logger.exception(
+                "unable to queue the notification of comment %s", comment.id
+            )
 
     @drf.decorators.action(
         detail=True,
