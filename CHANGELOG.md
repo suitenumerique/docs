@@ -22,6 +22,7 @@ and this project adheres to
 - 🐛(backend) bypass throttling on access/me action from yhub
 - 🐛(frontend) switch language when the current one is untranslated #2790
 - 🐛(frontend) keep the loading skeleton until an empty doc has synced #2817
+- 🐛(frontend) wrap long text in the print export #2813
 ### Changed
 
 - ♿️(frontend) fix the accessibility of the document tree #2769

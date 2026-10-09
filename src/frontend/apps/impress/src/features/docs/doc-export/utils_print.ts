@@ -100,6 +100,11 @@ const PRINT_ONLY_CONTENT_CSS = `
     max-width: 100% !important;
   }
 
+  /* Wrap long words so they cannot widen the page */
+  .bn-inline-content {
+    overflow-wrap: anywhere;
+  }
+
   /* Hide media/embed placeholders and render their URLs */
   [data-content-type="file"] .bn-file-block-content-wrapper, 
   [data-content-type="pdf"] .bn-file-block-content-wrapper, 
