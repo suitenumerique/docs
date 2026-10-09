@@ -263,15 +263,12 @@ def test_models_comment_notify_thread_participants():
         [creator.email, earlier.email]
     )
     email = next(email for email in mail.outbox if email.to == [earlier.email])
-    assert email.subject.lower() == (
-        'replying user replied in a comment thread in "my doc"'
-    )
+    assert email.subject.lower() == 'replying user replied to a comment in "my doc"'
     body = " ".join(email.body.split())
     assert (
-        "Replying User replied in a comment thread in the following document: My doc"
-        in body
+        "Replying User replied to a comment in the following document: My doc" in body
     )
-    assert f"docs/{document.id!s}/" in body
+    assert f"docs/{document.id!s}/#thread={thread.id!s},comment={reply.id!s}" in body
 
 
 def test_models_comment_notify_thread_participants_uses_recipient_language():

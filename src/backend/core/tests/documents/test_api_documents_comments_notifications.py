@@ -60,10 +60,12 @@ def test_api_comments_reply_notifies_participants():
         [creator.email, earlier.email]
     )
     email = next(email for email in mail.outbox if email.to == [creator.email])
-    assert email.subject.lower() == (
-        'replying user replied in a comment thread in "my doc"'
+    assert email.subject.lower() == 'replying user replied to a comment in "my doc"'
+    # The link opens the thread and scrolls to the new comment
+    assert (
+        f"docs/{document.id!s}/#thread={thread.id!s},comment={response.json()['id']}"
+        in email.body
     )
-    assert f"docs/{document.id!s}/" in email.body
 
 
 def test_api_comments_reply_does_not_notify_on_thread_creation():

@@ -2166,16 +2166,21 @@ class Comment(BaseModel):
                     (sender.full_name or sender.email) if sender else _("Someone")
                 )
                 title = document.title or str(_("Untitled Document"))
-                subject = _('{name} replied in a comment thread in "{title}"').format(
+                subject = _('{name} replied to a comment in "{title}"').format(
                     name=sender_name, title=title
                 )
                 message = _(
-                    "{name} replied in a comment thread in the following document:"
+                    "{name} replied to a comment in the following document:"
                 ).format(name=sender_name)
+                # The frontend opens the thread and scrolls to the comment. No
+                # "&" in the fragment: the plain text template escapes it
                 context = {
                     "title": subject,
                     "message": message,
-                    "link": f"{domain}/docs/{document.pk}/",
+                    "link": (
+                        f"{domain}/docs/{document.pk}/"
+                        f"#thread={self.thread_id},comment={self.pk}"
+                    ),
                 }
 
             # One recipient failing must not prevent notifying the others
