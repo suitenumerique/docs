@@ -19,6 +19,11 @@ export interface UseResponsiveStore {
   screenWidth: number;
   setScreenSize: (size: ScreenSize) => void;
   isDesktop: boolean;
+  /**
+   * Indicates whether the primary input device has a coarse pointer (e.g., a touchscreen)
+   * rather than a fine pointer (e.g., a mouse or trackpad).
+   */
+  hasCoarsePointer: boolean;
   initializeResizeListener: () => () => void;
 }
 
@@ -28,6 +33,7 @@ const initialState = {
   isSmallMobile: false,
   isTablet: false,
   isDesktop: false,
+  hasCoarsePointer: false,
   screenSize: 'desktop' as ScreenSize,
   screenWidth: 0,
 };
@@ -38,6 +44,7 @@ export const useResponsiveStore = create<UseResponsiveStore>((set) => ({
   isMobile: initialState.isMobile,
   isSmallMobile: initialState.isSmallMobile,
   isTablet: initialState.isTablet,
+  hasCoarsePointer: initialState.hasCoarsePointer,
   screenSize: initialState.screenSize,
   screenWidth: initialState.screenWidth,
   setScreenSize: (size: ScreenSize) => set(() => ({ screenSize: size })),
@@ -107,9 +114,18 @@ export const useResponsiveStore = create<UseResponsiveStore>((set) => ({
 
     resizeHandler();
 
+    // Listen for changes to the primary input device's pointer type (coarse vs fine).
+    const coarsePointerQuery = window.matchMedia('(pointer: coarse)');
+    const pointerHandler = () => {
+      set({ hasCoarsePointer: coarsePointerQuery.matches });
+    };
+    pointerHandler();
+    coarsePointerQuery.addEventListener('change', pointerHandler);
+
     return () => {
       clearTimeout(resizeTimeout);
       window.removeEventListener('resize', debouncedResizeHandler);
+      coarsePointerQuery.removeEventListener('change', pointerHandler);
     };
   },
 }));

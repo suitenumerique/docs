@@ -8,7 +8,6 @@ import {
 } from '@dnd-kit/core';
 import { getEventCoordinates } from '@dnd-kit/utilities';
 import { TreeViewMoveModeEnum, useModal } from '@gouvfr-lasuite/ui-components';
-import { useMediaQuery } from '@mantine/hooks';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -17,6 +16,7 @@ import { css } from 'styled-components';
 
 import { Card, Text } from '@/components';
 import { Doc, useMoveDoc, useTrans } from '@/docs/doc-management';
+import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 import { DocDragEndData, useDragAndDrop } from '../hooks/useDragAndDrop';
 
@@ -322,24 +322,18 @@ export const DraggableDocGridItem = ({
   );
 };
 
-/**
- * Browser zoom shrinks the viewport below the mobile breakpoint on a desktop,
- * so dnD depends on the pointer, not on the width. `any-pointer` also covers a
- * mouse plugged into a touch-first computer, where the primary pointer is coarse.
- */
-const FINE_POINTER_QUERY = '(any-pointer: fine)';
-
 export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
-  const hasFinePointer = useMediaQuery(FINE_POINTER_QUERY);
+  const { hasCoarsePointer } = useResponsiveStore();
 
   if (docs.length === 0) {
     return null;
   }
 
-  if (hasFinePointer) {
+  if (!hasCoarsePointer) {
     return <DraggableDocGridContentList docs={docs} />;
   }
 
+  // Render a non-draggable list for touch-primary devices.
   return docs.map((doc) => (
     <DocsGridItem key={doc.id} dragMode={false} doc={doc} />
   ));

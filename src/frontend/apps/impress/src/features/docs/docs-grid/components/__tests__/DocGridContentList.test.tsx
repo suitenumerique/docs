@@ -3,6 +3,7 @@ import type { Ref } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Doc } from '@/docs/doc-management';
+import { useResponsiveStore } from '@/stores';
 import { AppWrapper } from '@/tests/utils';
 
 import { DocGridContentList } from '../DocGridContentList';
@@ -26,7 +27,7 @@ vi.mock('../DocsGridItem', () => ({
   ),
 }));
 
-const mockPointer = (isFine: boolean) => {
+const mockPointer = (isCoarse: boolean) => {
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
     writable: true,
@@ -34,13 +35,16 @@ const mockPointer = (isFine: boolean) => {
       addEventListener: vi.fn(),
       addListener: vi.fn(),
       dispatchEvent: vi.fn(),
-      matches: query === '(any-pointer: fine)' && isFine,
+      matches: query === '(pointer: coarse)' && isCoarse,
       media: query,
       onchange: null,
       removeEventListener: vi.fn(),
       removeListener: vi.fn(),
     })),
   });
+
+  // AppWrapper does not mount the AppProvider that wires the store.
+  return useResponsiveStore.getState().initializeResizeListener();
 };
 
 const doc = {
@@ -50,12 +54,15 @@ const doc = {
 } as Doc;
 
 describe('DocGridContentList', () => {
+  let cleanup: (() => void) | undefined;
+
   afterEach(() => {
+    cleanup?.();
     vi.restoreAllMocks();
   });
 
   it('lets a mouse drag a document whatever the viewport width', () => {
-    mockPointer(true);
+    cleanup = mockPointer(false);
 
     render(<DocGridContentList docs={[doc]} />, { wrapper: AppWrapper });
 
@@ -65,8 +72,8 @@ describe('DocGridContentList', () => {
     );
   });
 
-  it('does not make documents draggable without a fine pointer', () => {
-    mockPointer(false);
+  it('does not make documents draggable with a coarse pointer', () => {
+    cleanup = mockPointer(true);
 
     render(<DocGridContentList docs={[doc]} />, { wrapper: AppWrapper });
 
