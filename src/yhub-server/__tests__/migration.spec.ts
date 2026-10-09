@@ -412,6 +412,19 @@ describe('fullMigrate — the version-history backfill', () => {
     expect(yhub.persistence.store).not.toHaveBeenCalled();
   });
 
+  it('reports a duration that a backwards clock step cannot make negative', async () => {
+    // an NTP correction mid-run moved the wall clock back; the backend stores
+    // durationMs in a positive-only column and refused the row
+    routeS3({ list: { Versions: [], IsTruncated: false } });
+    const { fullMigrate } = await load();
+    vi.spyOn(Date, 'now').mockReturnValueOnce(10_000).mockReturnValue(5_000);
+
+    const result = await fullMigrate(makeYhub(), docRef());
+
+    expect(result.durationMs).toBeGreaterThanOrEqual(0);
+    vi.restoreAllMocks();
+  });
+
   it('replays every version oldest-first into one clock-0 row', async () => {
     const [v1, v2] = makeVersionChain(['a', 'bc']);
     routeS3({

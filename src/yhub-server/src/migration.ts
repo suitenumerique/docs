@@ -434,7 +434,7 @@ const migrate = async (yhub: YHub, docRef: DocRef): Promise<Verdict> => {
     const endSeed = seedDuration.startTimer();
     let seedResult: 'seeded' | 'empty' | 'failed' = 'failed';
     try {
-      const start = Date.now();
+      const start = performance.now();
       const update = await fetchLegacyDoc(docRef.docid);
       if (update == null) {
         migrationLog.info(
@@ -484,7 +484,7 @@ const migrate = async (yhub: YHub, docRef: DocRef): Promise<Verdict> => {
           event: 'seed.ok',
           docid: docRef.docid,
           bytes: update.byteLength,
-          durationMs: Date.now() - start,
+          durationMs: Math.round(performance.now() - start),
         },
         'seeded legacy doc from s3',
       );
@@ -594,7 +594,7 @@ export const fullMigrate = async (
   docRef: DocRef,
   { force = false }: { force?: boolean } = {},
 ): Promise<FullMigrateResult> => {
-  const start = Date.now();
+  const start = performance.now();
   const redis = yhub.stream.redis;
   // Membership is the guard against attributing the same content twice: once
   // compaction has folded the clock-0 row into a normal one and deleted it,
@@ -608,7 +608,7 @@ export const fullMigrate = async (
   }
   const { versions, dropped } = await listLegacyVersions(docRef.docid);
   if (versions.length === 0) {
-    return { status: 'empty', versions: 0, durationMs: Date.now() - start };
+    return { status: 'empty', versions: 0, durationMs: Math.round(performance.now() - start) };
   }
   // Replay every snapshot into one gc:false document. gc matters: a collected
   // doc would lose the content later versions deleted, which is most of what
@@ -684,7 +684,7 @@ export const fullMigrate = async (
         skipped,
         dropped,
         bytes,
-        durationMs: Date.now() - start,
+        durationMs: Math.round(performance.now() - start),
       };
     }
     const nongcDoc = Y.encodeStateAsUpdate(ydoc);
@@ -706,7 +706,7 @@ export const fullMigrate = async (
     skipped,
     dropped,
     bytes,
-    durationMs: Date.now() - start,
+    durationMs: Math.round(performance.now() - start),
   };
   migrationLog.info(
     { event: 'full.ok', docid: docRef.docid, ...result },
