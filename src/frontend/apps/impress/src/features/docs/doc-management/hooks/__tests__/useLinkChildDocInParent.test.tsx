@@ -1,5 +1,7 @@
 import { renderHook } from '@testing-library/react';
+import { HttpProvider } from '@y/yhub-http-fallback';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { WebsocketProvider } from 'y-websocket';
 
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
@@ -30,7 +32,11 @@ const mockEditor = (document: unknown[], isEditable = true) => {
 describe('useLinkChildDocInParent', () => {
   beforeEach(() => {
     useDocStore.setState({ currentDoc: { id: 'parent-id' } as Doc });
-    useProviderStore.setState({ isSynced: true });
+    useProviderStore.setState({
+      isSynced: true,
+      provider: undefined,
+      httpProvider: undefined,
+    });
   });
 
   it('inserts the link at the cursor', async () => {
@@ -98,6 +104,53 @@ describe('useLinkChildDocInParent', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(resolved).toBe(true);
     vi.useRealTimers();
+  });
+
+  it('waits for the http fallback to publish the link when already synced', async () => {
+    let publish = () => {};
+    const sync = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          publish = resolve;
+        }),
+    );
+    useProviderStore.setState({
+      isSynced: true,
+      provider: { wsconnected: false } as WebsocketProvider,
+      httpProvider: { shouldConnect: true, sync } as unknown as HttpProvider,
+    });
+    const editor = mockEditor([]);
+    const { result } = renderHook(() => useLinkChildDocInParent());
+
+    let resolved = false;
+    void result.current('parent-id', 'child-id', 'cursor').then(() => {
+      resolved = true;
+    });
+    await Promise.resolve();
+
+    expect(sync).toHaveBeenCalledTimes(1);
+    expect(sync.mock.invocationCallOrder[0]).toBeGreaterThan(
+      editor.insertInlineContent.mock.invocationCallOrder[0],
+    );
+    expect(resolved).toBe(false);
+
+    publish();
+    await vi.waitFor(() => expect(resolved).toBe(true));
+  });
+
+  it('does not force an http round when the socket is connected', async () => {
+    const sync = vi.fn();
+    useProviderStore.setState({
+      isSynced: true,
+      provider: { wsconnected: true } as WebsocketProvider,
+      httpProvider: { shouldConnect: false, sync } as unknown as HttpProvider,
+    });
+    mockEditor([]);
+    const { result } = renderHook(() => useLinkChildDocInParent());
+
+    await result.current('parent-id', 'child-id', 'cursor');
+
+    expect(sync).not.toHaveBeenCalled();
   });
 
   it('does nothing when the editor is read-only', async () => {

@@ -31,6 +31,35 @@ const waitForProviderSync = () =>
   });
 
 /**
+ * Resolves once the edit just made has been sent to the collaboration server.
+ *
+ * The socket sends an update as soon as it is made. The http fallback only
+ * publishes it on its next round, and its `synced` flag stays true from its
+ * first one, so `isSynced` says nothing about this edit: a round is forced.
+ */
+const waitForPublish = async () => {
+  const { provider, httpProvider } = useProviderStore.getState();
+
+  if (provider?.wsconnected) {
+    return;
+  }
+
+  if (!httpProvider?.shouldConnect) {
+    return waitForProviderSync();
+  }
+
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    // a failed round keeps the edit queued for the next one
+    httpProvider.sync().catch(() => undefined),
+    new Promise<void>((resolve) => {
+      timeout = setTimeout(resolve, SYNC_TIMEOUT_MS);
+    }),
+  ]);
+  clearTimeout(timeout);
+};
+
+/**
  * Inserts an interlink to a freshly created sub-doc in its parent, so the
  * parent content references its children. Only possible when the parent is
  * the doc currently open in an editable editor. Await it before navigating
@@ -71,7 +100,7 @@ export const useLinkChildDocInParent = () => {
         }
       }
 
-      await waitForProviderSync();
+      await waitForPublish();
     },
     [editor, currentDoc?.id],
   );
