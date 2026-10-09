@@ -87,6 +87,7 @@ and this project adheres to
 - 🔧(helm) run a valkey for the backend and one for yhub in dev and
   feature #2556
 - 💄(frontend) redesign 401 error standalone page #2716
+- 💄(frontend) use 12px for error page home links #2809
 
 ### Fixed
 
