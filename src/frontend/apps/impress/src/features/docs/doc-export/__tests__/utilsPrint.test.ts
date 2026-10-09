@@ -62,6 +62,11 @@ describe('print DOM helpers', () => {
       'inside',
     );
     expect(document.querySelectorAll('a[data-print-link]')).toHaveLength(1);
+    // The interlink has its own underline, the anchor must not add another
+    expect(
+      root.querySelector<HTMLElement>('a[data-print-link]')?.style
+        .textDecoration,
+    ).toBe('none');
 
     cleanup();
 

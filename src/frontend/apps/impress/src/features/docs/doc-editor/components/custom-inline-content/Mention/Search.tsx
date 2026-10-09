@@ -1,28 +1,22 @@
 import { StyleSchema } from '@blocknote/core';
 import { ReactCustomInlineContentRenderProps } from '@blocknote/react';
-import { useTreeContext } from '@gouvfr-lasuite/ui-components';
 import { Popover } from '@mantine/core';
 import type { KeyboardEvent } from 'react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import DocIcon from '@/assets/icons/ui-kit/doc.svg';
-import ArrowIcon from '@/assets/icons/ui-kit/keyboard_return.svg';
-import {
-  Box,
-  Card,
-  QuickSearch,
-  QuickSearchItemContent,
-  Text,
-} from '@/components';
+import { Box, Card, QuickSearch, Text } from '@/components';
 import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
-import { Doc, getEmojiAndTitle, useTrans } from '@/docs/doc-management';
-import { DocSearchContent } from '@/docs/doc-search';
+import { DocSearch } from '@/docs/doc-search/api/useSearchDocs';
 import { useDocSearchFilterStore } from '@/docs/doc-search/stores/useDocSearchFilterStore';
 import { useResponsiveStore } from '@/stores';
 
-import { InterlinkingLinkInlineContentType } from './InterlinkingLinkInlineContent';
+import { InterlinkingSearchGroup } from './Interlinking';
+import { MentionSearchInlineContentType } from './MentionSearchInlineContent';
+import { UserMentionSearchGroup, useSearchUserMention } from './UserMention';
+import { MentionedInlineContent } from './types';
+import { moveCursorAfterMention } from './utils';
 
 const inputStyle = css`
   background-color: transparent;
@@ -34,32 +28,45 @@ const inputStyle = css`
   font-family: 'Inter';
 `;
 
-type ReactInterlinkingSearch = ReactCustomInlineContentRenderProps<
-  InterlinkingLinkInlineContentType,
+type ReactMentionSearch = ReactCustomInlineContentRenderProps<
+  MentionSearchInlineContentType,
   StyleSchema
 >;
 
-export const SearchPage = ({
+/**
+ * The search replaces itself by the content the user picked. At runtime
+ * `updateInlineContent` accepts any inline content, but it is typed with the
+ * one of the search.
+ */
+type ReplaceByMentioned = (inlineContent: MentionedInlineContent) => void;
+
+export const Search = ({
   contentRef,
   updateInlineContent,
   editor,
   inlineContent,
-}: ReactInterlinkingSearch) => {
+  getPos,
+}: ReactMentionSearch) => {
   const trigger = inlineContent.props.trigger;
+  const isMentionTrigger = trigger === '@';
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const { isDesktop } = useResponsiveStore();
-  const { untitledDocument } = useTrans();
   const isEditable = editor.isEditable;
-  const treeContext = useTreeContext<Doc>();
   const modalRef = useRef<HTMLDivElement>(null);
   const dropdownId = useId();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const { setFilter } = useDocSearchFilterStore();
+  const [docsCount, setDocsCount] = useState(0);
+  const [docsLoading, setDocsLoading] = useState(true);
+  const onDocsResults = useCallback(
+    (results: DocSearch[]) => setDocsCount(results.length),
+    [],
+  );
 
   /**
-   * When the search page is opened, we set the search
+   * When the search is opened, we set the search
    * target to 'current' to limit the search to the current
    * document and its sub-documents.
    */
@@ -91,7 +98,7 @@ export const SearchPage = ({
     }
 
     updateInlineContent({
-      type: 'interlinkingLinkInline',
+      type: 'mentionSearchInline',
       props: {
         disabled: true,
       },
@@ -105,6 +112,42 @@ export const SearchPage = ({
       (editor as DocsBlockNoteEditor).insertInlineContent([insertContent]);
     }
   };
+
+  /**
+   * Pick a mentioned user from the search results.
+   * @param mentioned
+   * @returns
+   */
+  const pick = (mentioned: MentionedInlineContent) => {
+    if (!isEditable) {
+      return;
+    }
+
+    const pos = getPos();
+
+    (updateInlineContent as unknown as ReplaceByMentioned)(mentioned);
+
+    contentRef(null);
+    editor.focus();
+
+    if (pos !== undefined) {
+      moveCursorAfterMention(editor as DocsBlockNoteEditor, pos);
+    }
+  };
+
+  /**
+   * Users can be mentioned only when the search is opened with "@",
+   * not with the slash menu.
+   */
+  const { users, selectUser } = useSearchUserMention({
+    editor: editor as DocsBlockNoteEditor,
+    getPos,
+    search,
+    enabled: isMentionTrigger,
+    onPick: pick,
+  });
+
+  const nothingFound = !docsLoading && docsCount === 0 && users.length === 0;
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
@@ -165,13 +208,21 @@ export const SearchPage = ({
               as="input"
               name="doc-search-input"
               role="combobox"
-              aria-label={t('Search for a document')}
+              aria-label={
+                isMentionTrigger
+                  ? t('Search for a person or a document')
+                  : t('Search for a document')
+              }
               aria-expanded={popoverOpened}
               aria-haspopup="listbox"
               aria-autocomplete="list"
               aria-controls={dropdownId}
               $padding={{ left: '3px' }}
-              placeholder={t('mention a sub-doc...')}
+              placeholder={
+                isMentionTrigger
+                  ? t('mention something')
+                  : t('mention a sub-doc')
+              }
               $css={inputStyle}
               ref={inputRef}
               $display="inline-flex"
@@ -209,7 +260,14 @@ export const SearchPage = ({
               }
             `}
           >
-            <QuickSearch showInput={false} isSelectByDefault>
+            {/* The highlighted item is picked when the list mounts. The key
+                remounts it when the users appear or disappear, so the first
+                item is always highlighted and never one that went away. */}
+            <QuickSearch
+              key={users.length > 0 ? 'with-users' : 'without-users'}
+              showInput={false}
+              isSelectByDefault
+            >
               <Card
                 $css={css`
                   box-shadow: 0 0 6px 0 rgba(0, 0, 145, 0.1);
@@ -260,84 +318,26 @@ export const SearchPage = ({
                 $margin="sm"
                 $padding="none"
               >
-                <DocSearchContent
-                  groupName={t('Link a doc')}
+                <UserMentionSearchGroup users={users} onSelect={selectUser} />
+                <InterlinkingSearchGroup
                   search={search}
-                  parentDocId={treeContext?.root?.id}
-                  isSearchNotMandatory
-                  onSelect={(doc) => {
-                    if (!isEditable) {
-                      return;
-                    }
-
-                    updateInlineContent({
-                      type: 'interlinkingLinkInline',
-                      props: {
-                        docId: doc.id,
-                      },
-                    });
-
-                    contentRef(null);
-                    editor.focus();
-                  }}
-                  renderSearchElement={(doc) => {
-                    const { emoji, titleWithoutEmoji } = getEmojiAndTitle(
-                      doc.title || untitledDocument,
-                    );
-
-                    return (
-                      <QuickSearchItemContent
-                        left={
-                          <Box
-                            $direction="row"
-                            $gap="0.2rem"
-                            $align="center"
-                            $padding={{
-                              vertical: '0.5rem',
-                              horizontal: '0.2rem',
-                            }}
-                            $width="100%"
-                          >
-                            <Box
-                              $css={css`
-                                width: 24px;
-                                flex-shrink: 0;
-                              `}
-                            >
-                              {emoji ? (
-                                <Text $size="18px">{emoji}</Text>
-                              ) : (
-                                <DocIcon
-                                  aria-hidden="true"
-                                  width="24px"
-                                  height="24px"
-                                  color="var(--c--contextuals--content--semantic--neutral--primary)"
-                                />
-                              )}
-                            </Box>
-
-                            <Text
-                              $size="sm"
-                              $color="var(--c--contextuals--content--semantic--neutral--primary)"
-                              spellCheck="false"
-                              $weight="500"
-                            >
-                              {titleWithoutEmoji}
-                            </Text>
-                          </Box>
-                        }
-                        right={
-                          <ArrowIcon
-                            aria-hidden="true"
-                            width="24px"
-                            height="24px"
-                            color="var(--c--contextuals--content--semantic--neutral--tertiary)"
-                          />
-                        }
-                      />
-                    );
-                  }}
+                  onPick={pick}
+                  withSeparator={users.length > 0 && docsCount > 0}
+                  onResults={onDocsResults}
+                  onLoadingChange={setDocsLoading}
                 />
+                {nothingFound && (
+                  <Text
+                    className="--docs--quick-search-group-empty"
+                    $size="sm"
+                    role="status"
+                    $padding="sm"
+                  >
+                    {isMentionTrigger
+                      ? t('No results found..')
+                      : t('No documents found...')}
+                  </Text>
+                )}
               </Card>
             </QuickSearch>
           </Box>

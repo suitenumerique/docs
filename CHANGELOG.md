@@ -15,6 +15,7 @@ and this project adheres to
 - 👷(ci) cancel the superseded runs of a pull request #2757
 - ✨(backend) add mention endpoint with cooldown-limited email
   notification #2447
+- ✨(frontend) mention users in the editor from the "@" dropdown
 - 🚩(setting) add feature flag on Duplicate with Children #2721
 - 💄(frontend) redesign 404 error standalone page #2696
 - 💄(frontend) redesign 403 access denied page #2720

@@ -13,6 +13,7 @@ import { DocSearchItem } from './DocSearchItem';
 
 type DocSearchContentProps = {
   groupName?: string;
+  hideGroupNameWhenEmpty?: boolean;
   search: string;
   filterResults?: (doc: DocSearch) => boolean;
   isSearchNotMandatory?: boolean;
@@ -25,6 +26,7 @@ type DocSearchContentProps = {
 
 export const DocSearchContent = ({
   groupName,
+  hideGroupNameWhenEmpty,
   search,
   filterResults,
   onResults,
@@ -82,7 +84,8 @@ export const DocSearchContent = ({
     onResults?.(elements);
 
     setDocsData({
-      groupName: groupName,
+      groupName:
+        hideGroupNameWhenEmpty && elements.length === 0 ? '' : groupName,
       groupKey: 'docs',
       elements,
       endActions: hasNextPage
@@ -111,6 +114,7 @@ export const DocSearchContent = ({
     data?.pages,
     filterResults,
     groupName,
+    hideGroupNameWhenEmpty,
     isSearchNotMandatory,
     loading,
     hasNextPage,
