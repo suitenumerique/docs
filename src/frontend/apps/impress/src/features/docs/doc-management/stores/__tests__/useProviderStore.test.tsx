@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as Y from 'yjs';
 
 import { useProviderStore } from '../useProviderStore';
 
@@ -377,11 +378,29 @@ describe('useProviderStore', () => {
   it('renders as soon as the local copy is loaded, without waiting for a connection', () => {
     expect(useProviderStore.getState().isReady).toBe(false);
 
+    // the document the store built, which the local copy loads into
+    const doc = IndexeddbPersistenceMock.mock.calls[0][1] as Y.Doc;
+    doc
+      .getXmlFragment('document-store')
+      .insert(0, [new Y.XmlElement('blockGroup')]);
     persistence.emit('synced');
 
     expect(useProviderStore.getState().isReady).toBe(true);
     // nothing was connected: this is the offline path
     expect(useProviderStore.getState().isConnected).toBe(false);
+  });
+
+  it('keeps loading when the local copy is empty, until the content is synced', () => {
+    // a device that never opened this doc: rendering now would show the empty-doc placeholder
+    persistence.emit('synced');
+    provider.emit('status', { status: 'connected' });
+
+    expect(useProviderStore.getState().isReady).toBe(false);
+
+    provider.synced = true;
+    provider.emit('sync', true);
+
+    expect(useProviderStore.getState().isReady).toBe(true);
   });
 
   it('remembers the document, so the sweep leaves its copy alone', () => {
