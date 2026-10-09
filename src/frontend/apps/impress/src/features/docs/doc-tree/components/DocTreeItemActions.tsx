@@ -5,7 +5,12 @@ import { css } from 'styled-components';
 
 import AddSVG from '@/assets/icons/ui-kit/add.svg';
 import { Box, Icon } from '@/components';
-import { Doc, useCreateChildDoc, useTrans } from '@/docs/doc-management';
+import {
+  Doc,
+  useCreateChildDoc,
+  useLinkChildDocInParent,
+  useTrans,
+} from '@/docs/doc-management';
 import { DocToolBox } from '@/docs/doc-management/components/DocToolBox';
 import MoreIcon from '@/icons/more_horiz.svg';
 
@@ -34,10 +39,12 @@ export const DocTreeItemActions = ({
   const router = useRouter();
   const { t } = useTranslation();
   const { untitledDocument } = useTrans();
+  const linkChildDocInParent = useLinkChildDocInParent();
 
   const { mutate: createChildDoc } = useCreateChildDoc({
-    onSuccess: (newDoc) => {
+    onSuccess: async (newDoc) => {
       onCreateSuccess?.(newDoc);
+      await linkChildDocInParent(doc.id, newDoc.id, 'end');
       void router.push(`/docs/${newDoc.id}`);
     },
   });

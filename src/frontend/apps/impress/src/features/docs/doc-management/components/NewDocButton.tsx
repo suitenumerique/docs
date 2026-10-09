@@ -19,6 +19,7 @@ import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 import { useCreateChildDoc } from '../api/useCreateChildDoc';
 import { useImport } from '../hooks/useImport';
+import { useLinkChildDocInParent } from '../hooks/useLinkChildDocInParent';
 import { useDocStore } from '../stores/useDocStore';
 
 interface NewDocButtonProps {
@@ -62,6 +63,7 @@ export function DropdownArrow() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentDoc } = useDocStore();
+  const linkChildDocInParent = useLinkChildDocInParent();
   const { t } = useTranslation();
   const {
     getInputProps,
@@ -77,7 +79,10 @@ export function DropdownArrow() {
     },
   });
   const { mutate: createChildDoc } = useCreateChildDoc({
-    onSuccess: (newDoc) => {
+    onSuccess: async (newDoc) => {
+      if (currentDoc) {
+        await linkChildDocInParent(currentDoc.id, newDoc.id, 'end');
+      }
       void router.push(`/docs/${newDoc.id}`);
       if (isMobile) {
         closePanel();

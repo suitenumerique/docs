@@ -6,9 +6,10 @@ import {
   randomName,
   verifyDocName,
 } from './utils-common';
-import { openSuggestionMenu } from './utils-editor';
+import { getEditor, openSuggestionMenu } from './utils-editor';
 import { connectOtherUserToDoc } from './utils-share';
 import { SignIn } from './utils-signin';
+import { navigateToPageFromTree } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -34,7 +35,12 @@ test.describe('Doc Create', () => {
     page,
     browserName,
   }) => {
-    await createDoc(page, 'my-new-button-sub-doc', browserName, 1);
+    const [title] = await createDoc(
+      page,
+      'my-new-button-sub-doc',
+      browserName,
+      1,
+    );
 
     await page.getByLabel('Open new document options').click();
     await page.getByRole('menuitem', { name: 'New sub-doc' }).click();
@@ -43,6 +49,15 @@ test.describe('Doc Create', () => {
     await expect(input).toHaveText('', { timeout: 10000 });
     await expect(
       page.locator('.c__tree-view--row-content').getByText('Untitled document'),
+    ).toBeVisible();
+
+    // The parent links to its new sub-doc
+    await navigateToPageFromTree({ page, title });
+    const editor = await getEditor({ page });
+    await expect(
+      editor
+        .locator('.--docs--interlinking-link-inline-content')
+        .getByText('Untitled document'),
     ).toBeVisible();
   });
 
@@ -63,6 +78,15 @@ test.describe('Doc Create', () => {
     await expect(input).toHaveText('', { timeout: 10000 });
     await expect(
       page.locator('.c__tree-view--row-content').getByText('Untitled document'),
+    ).toBeVisible();
+
+    // The parent links to its new sub-doc where the slash command was typed
+    await navigateToPageFromTree({ page, title });
+    const editor = await getEditor({ page });
+    await expect(
+      editor
+        .locator('.--docs--interlinking-link-inline-content')
+        .getByText('Untitled document'),
     ).toBeVisible();
   });
 

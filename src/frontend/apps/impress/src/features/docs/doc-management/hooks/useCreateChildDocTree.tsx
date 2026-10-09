@@ -4,12 +4,15 @@ import { useRouter } from 'next/navigation';
 import { useCreateChildDoc } from '../api';
 import { Doc } from '../types';
 
+import { useLinkChildDocInParent } from './useLinkChildDocInParent';
+
 export const useCreateChildDocTree = (parentId?: string) => {
   const treeContext = useTreeContext<Doc>();
   const router = useRouter();
+  const linkChildDocInParent = useLinkChildDocInParent();
 
   const { mutate: createChildDoc } = useCreateChildDoc({
-    onSuccess: (createdDoc) => {
+    onSuccess: async (createdDoc) => {
       const newDoc = {
         ...createdDoc,
         children: [],
@@ -17,6 +20,10 @@ export const useCreateChildDocTree = (parentId?: string) => {
         parentId: parentId ?? undefined,
       };
       treeContext?.treeData.addChild(parentId || null, newDoc);
+
+      if (parentId) {
+        await linkChildDocInParent(parentId, newDoc.id, 'cursor');
+      }
 
       router.push(`/docs/${newDoc.id}`);
       treeContext?.treeData.setSelectedNode(createdDoc);
