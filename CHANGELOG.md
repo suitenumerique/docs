@@ -87,6 +87,7 @@ and this project adheres to
 - 🔧(helm) run a valkey for the backend and one for yhub in dev and
   feature #2556
 - 💄(frontend) redesign 401 error standalone page #2716
+- ♿️(frontend) fix the accessibility of the document tree #2769
 
 ### Fixed
 

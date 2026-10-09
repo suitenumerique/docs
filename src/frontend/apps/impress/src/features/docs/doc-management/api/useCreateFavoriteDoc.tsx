@@ -44,7 +44,12 @@ export function useCreateFavoriteDoc({
         });
       });
 
-      syncDocInTree(treeContext, id, { is_favorite: true });
+      syncDocInTree(
+        treeContext,
+        id,
+        { is_favorite: true },
+        { keepFocus: true },
+      );
 
       const message = t('Document starred successfully!');
       announce(message, 'polite');
