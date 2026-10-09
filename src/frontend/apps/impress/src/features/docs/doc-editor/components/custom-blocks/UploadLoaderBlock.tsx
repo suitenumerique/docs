@@ -6,6 +6,7 @@ import {
   StyleSchema,
 } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
+import { announce } from '@react-aria/live-announcer';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 
@@ -114,16 +115,19 @@ const UploadLoaderBlockComponent = ({
 
         console.error('Error analyzing file:', error);
 
+        const information = t(
+          'The antivirus has detected an anomaly in your file.',
+        );
+
         try {
           editor.updateBlock(block.id, {
             type: 'uploadLoader',
             props: {
               type: 'warning',
-              information: t(
-                'The antivirus has detected an anomaly in your file.',
-              ),
+              information,
             },
           });
+          announce(information, 'assertive');
         } catch {
           /* During collaboration, another user might have updated the block */
         }
@@ -135,17 +139,31 @@ const UploadLoaderBlockComponent = ({
   }, [block, editor, mediaUrl, isEditable]);
 
   return (
-    <Box className="bn-visual-media-wrapper" $direction="row" $gap="0.5rem">
+    <Box
+      className="bn-visual-media-wrapper"
+      $direction="row"
+      $gap="xs"
+      $withThemeBG
+      $border="none"
+      $radius="var(--c--globals--spacings--st)"
+      $theme="neutral"
+      $scope="semantic"
+      $variation="tertiary"
+      $width="100%"
+      $padding="xs"
+    >
       {block.props.type === 'warning' ? (
         <Warning />
       ) : (
         <Icon
-          $theme="brand"
+          $theme="neutral"
           $layer="border"
           icon={<Loader style={{ animation: 'spin 1.5s linear infinite' }} />}
         />
       )}
-      <Text>{block.props.information}</Text>
+      <Text $variation="tertiary" $weight={500}>
+        {block.props.information}
+      </Text>
     </Box>
   );
 };

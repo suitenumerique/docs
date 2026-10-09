@@ -69,6 +69,28 @@ describe('useUploadFile', () => {
     expect(mockToast).toHaveBeenCalledWith(
       'The file "video.mp4" is too large. Maximum file size is 1KB.',
       'error',
+      { duration: 10000 },
+    );
+  });
+
+  it('toasts the causes of the API and rethrows when the upload fails', async () => {
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
+    fetchMock.post(uploadUrl, {
+      status: 400,
+      body: { file: ['File type not allowed.'] },
+    });
+
+    const result = renderUseUploadFile();
+
+    await expect(
+      result.current.uploadFile(createFile(MAX_FILE_SIZE)),
+    ).rejects.toThrow('Failed to upload on the doc');
+
+    expect(mockToast).toHaveBeenCalledWith(
+      'A problem occurred while uploading the file, cause: File type not allowed.',
+      'error',
+      { duration: 10000 },
     );
   });
 });
