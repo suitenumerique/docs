@@ -4,15 +4,15 @@
  * the application is not published as MIT.
  */
 
-import * as useExportAGPL from './useExportAGPL';
+import * as useExportXL from './useExportXL';
 
 let modulesExport = undefined;
 if (process.env.NEXT_PUBLIC_PUBLISH_AS_MIT === 'false') {
   modulesExport = {
-    ...useExportAGPL,
+    ...useExportXL,
   };
 }
 
-type ModulesExport = typeof useExportAGPL;
+type ModulesExport = typeof useExportXL;
 
 export default modulesExport as ModulesExport;

@@ -28,7 +28,7 @@ import {
 } from '../utils_html';
 import { addMediaFilesToMarkdownZip } from '../utils_markdown';
 
-const useExportAGPL = ModulesExport?.useExportAGPL;
+const useExportXL = ModulesExport?.useExportXL;
 
 interface ModalExportProps {
   onClose: () => void;
@@ -43,9 +43,9 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const { untitledDocument } = useTrans();
   const mediaUrl = useMediaUrl();
   const selectRef = useRef<HTMLDivElement>(null);
-  const exportAGPL = useExportAGPL?.(doc, editor);
+  const exportXL = useExportXL?.(doc, editor);
   const [format, setFormat] = useState(
-    exportAGPL?.formats.find((opt) => opt.value === 'pdf')?.value || 'html',
+    exportXL?.formats.find((opt) => opt.value === 'pdf')?.value || 'html',
   );
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   }, []);
 
   const formatSelect = useMemo(() => {
-    const formatOptions = (exportAGPL?.formats || []).concat([
+    const formatOptions = (exportXL?.formats || []).concat([
       {
         label: t('Markdown'),
         value: 'markdown',
@@ -87,7 +87,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         : labels.join('');
 
     return { formatOptions, formatLabels, allFormatsLabel };
-  }, [t, exportAGPL?.formats]);
+  }, [t, exportXL?.formats]);
 
   /** Exports the selected format and always releases the loading state. */
   async function onSubmit() {
@@ -104,7 +104,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       const filename = getExportFilename(documentTitle);
       let downloadExtension = format === 'markdown' ? 'md' : format;
 
-      let blobExport = await exportAGPL?.docToBlob(format, documentTitle);
+      let blobExport = await exportXL?.docToBlob(format, documentTitle);
 
       if (!blobExport && format === 'markdown') {
         const zip = new JSZip();

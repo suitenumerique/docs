@@ -1,5 +1,5 @@
 /**
- * This exports modules are AGPL licensed and should only
+ * These export modules are GPL licensed and should only
  * be used when the application is not published as MIT.
  */
 import { DOCXExporter } from '@blocknote/xl-docx-exporter';
@@ -20,7 +20,7 @@ import { getOdtDocsSchemaMappings } from '../mappingODT';
 import { getPdfDocsSchemaMappings } from '../mappingPDF';
 import { resolveInterlinkTitles } from '../utils';
 
-export const useExportAGPL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
+export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
   const { t } = useTranslation();
 
   const docToBlob = async (format: string, documentTitle: string) => {

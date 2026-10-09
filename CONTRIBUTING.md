@@ -56,7 +56,7 @@ If you find an issue with the editor and are able to reproduce it on their [demo
 
 Please consider contributing to BlockNotejs, as a library, it's useful to many projects not just Docs.
 
-The project is licensed with Mozilla Public License Version 2.0 but be aware that [XL packages](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-docx-exporter/LICENSE) are dual licensed with GNU AFFERO GENERAL PUBLIC LICENSE Version 3 and proprietary license if you are a [sponsor](https://www.blocknotejs.org/pricing).
+The project is licensed with Mozilla Public License Version 2.0 but be aware that [XL packages](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-docx-exporter/LICENSE) are dual licensed with GNU GENERAL PUBLIC LICENSE Version 3 and proprietary license if you are a [sponsor](https://www.blocknotejs.org/pricing).
 
 ### Coordination around issues
 

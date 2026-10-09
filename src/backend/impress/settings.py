@@ -988,7 +988,7 @@ class Base(Configuration):
         default=False, environ_name="AI_FEATURE_ENABLED", environ_prefix=None
     )
     # Far better UI but more flaky for the moment
-    # ⚠️ AGPL license, be sure to comply with the Blocknote license
+    # ⚠️ GPL license, be sure to comply with the Blocknote license
     # if you enable it (https://www.blocknotejs.org/)
     AI_FEATURE_BLOCKNOTE_ENABLED = values.BooleanValue(
         default=False, environ_name="AI_FEATURE_BLOCKNOTE_ENABLED", environ_prefix=None
