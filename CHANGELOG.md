@@ -96,6 +96,7 @@ and this project adheres to
   `YHUB_BACKEND_REQUEST_TIMEOUT_MS`, 5s by default #2753
 - 🐛(frontend) cache hashed `/_next/static/` assets and revalidate HTML #2770
 - 🐛(backend) compensate document duplication failures #2755
+- 🐛(backend) send the mention email when the cache is unreachable
 - 🐛(frontend) open search results in a new tab with ctrl/cmd+click #2719
 - 🐛(docker) pull minio images from pgsty #2739
 - 🐛(backend) retry the duplicate of a document on a tree path collision #2726
