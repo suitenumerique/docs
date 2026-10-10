@@ -1,6 +1,7 @@
 """Throttling modules for the API."""
 
 from django.conf import settings
+from django.utils.crypto import constant_time_compare
 
 from lasuite.drf.throttling import MonitoredScopedRateThrottle
 from rest_framework.throttling import UserRateThrottle
@@ -24,28 +25,28 @@ class UserListThrottleSustained(UserRateThrottle):
     scope = "user_list_sustained"
 
 
-class DocumentThrottle(MonitoredScopedRateThrottle):
-    """
-    Throttle for document-related endpoints, with an exception for requests from the
-    collaboration server.
-    """
-
-    scope = "document"
+class YProviderThrottleMixin:
+    """Skip throttling for requests from the collaboration server."""
 
     def allow_request(self, request, view):
-        """
-        Override to skip throttling for requests from the collaboration server.
-
-        Verifies the X-Y-Provider-Key header contains a valid Y_PROVIDER_API_KEY.
-        Using a custom header instead of Authorization to avoid triggering
-        authentication middleware.
-        """
-
-        y_provider_header = request.headers.get("X-Y-Provider-Key", "")
-
-        # Check if this is a valid y-provider request and exempt from throttling
-        y_provider_key = getattr(settings, "Y_PROVIDER_API_KEY", None)
-        if y_provider_key and y_provider_header == y_provider_key:
+        """Skip throttling when the X-Y-Provider-Key header carries the shared key."""
+        if (
+            y_provider_key := getattr(settings, "Y_PROVIDER_API_KEY", None)
+        ) and constant_time_compare(
+            request.headers.get("X-Y-Provider-Key", ""), y_provider_key
+        ):
             return True
 
         return super().allow_request(request, view)
+
+
+class DocumentThrottle(YProviderThrottleMixin, MonitoredScopedRateThrottle):
+    """Throttle for document-related endpoints, except collaboration-server requests."""
+
+    scope = "document"
+
+
+class DocumentAccessThrottle(YProviderThrottleMixin, MonitoredScopedRateThrottle):
+    """Throttle for document access endpoints, except collaboration-server requests."""
+
+    scope = "document_access"
