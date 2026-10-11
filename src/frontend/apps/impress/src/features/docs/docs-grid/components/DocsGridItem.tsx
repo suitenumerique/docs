@@ -160,9 +160,11 @@ export const DocsGridItem = ({
 export const DocsGridItemTitle = ({
   doc,
   withTooltip,
+  breadcrumb,
 }: {
   doc: Doc;
   withTooltip: boolean;
+  breadcrumb?: string;
 }) => {
   const { t } = useTranslation();
   const { isDesktop, isSmallMobile } = useResponsiveStore();
@@ -180,7 +182,7 @@ export const DocsGridItemTitle = ({
       $padding={{ right: isDesktop ? 'md' : '3xs' }}
       $maxWidth="100%"
     >
-      <SimpleDocItem doc={doc} showDate={isSmallMobile} />
+      <SimpleDocItem doc={doc} showDate={isSmallMobile} breadcrumb={breadcrumb} />
       <Box $direction="row" $align="center" $gap="3xs">
         {doc.is_favorite && (
           <>

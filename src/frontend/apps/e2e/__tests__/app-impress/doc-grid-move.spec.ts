@@ -399,6 +399,41 @@ test.describe('Doc grid move', () => {
 
     await cleanup();
   });
+  test('it displays the parent of a sub-document in the move search modal', async ({
+    page,
+    browserName,
+  }) => {
+    await page.goto('/');
+
+    const [titleDocToMove] = await createDoc(page, 'Doc to move', browserName, 1);
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+
+    const [parentTitle] = await createDoc(page, 'Parent doc', browserName, 1);
+    const { name: childTitle } = await createRootSubPage(page, browserName, 'Child doc', false);
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(docsGrid.getByText(titleDocToMove)).toBeVisible();
+
+    const row = await getGridRow(page, titleDocToMove);
+    await clickInDocOptionMenu(page, row, 'Move into a doc');
+
+    await expect(
+      page
+        .getByRole('dialog')
+        .getByRole('heading', { name: 'Choose a new parent doc' }),
+    ).toBeVisible();
+
+    const input = page.getByRole('combobox', { name: 'Search for a doc...' });
+    await input.click();
+    await input.fill(childTitle);
+
+    const option = page.getByRole('option').first();
+    await expect(option.getByText(childTitle)).toBeVisible();
+    await expect(option.getByText(parentTitle)).toBeVisible();
+
+    await page.keyboard.press('Escape');
+  });
 });
 
 test.describe('Doc grid dnd mobile', () => {
