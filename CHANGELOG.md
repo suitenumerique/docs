@@ -15,6 +15,7 @@ and this project adheres to
 - 💄(frontend) restore native task checkboxes and dim completed tasks #2857
 - ⬆️(frontend) upgrade BlockNote to 0.56.0 #2936
 - ♻️(frontend) export PDFs with the Typst engine #2936
+- 💄(frontend) redesign offline error page #2808
 
 ### Fixed
 
@@ -202,7 +203,6 @@ and this project adheres to
 - 🔧(helm) run a valkey for the backend and one for yhub in dev and
   feature #2556
 - 💄(frontend) redesign 401 error standalone page #2716
-- 💄(frontend) redesign offline error page #2808
 
 ### Fixed
 
