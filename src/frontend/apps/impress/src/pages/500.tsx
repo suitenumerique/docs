@@ -31,21 +31,11 @@ const actionCss = css`
   }
 `;
 
+const SAFE_RELATIVE_PATH = /^\/(?!\/)[\w\-.~%!$&'()*+,;=:@/?#[\]]*$/;
+
 const getSafeRefreshUrl = (target?: string): string | undefined => {
-  if (!target) {
+  if (!target || !SAFE_RELATIVE_PATH.test(target)) {
     return undefined;
-  }
-  const isValidRelativePath =
-    target.startsWith('/') &&
-    !target.startsWith('//') &&
-    !target.includes('\\');
-
-  if (!isValidRelativePath) {
-    return undefined;
-  }
-
-  if (typeof window === 'undefined') {
-    return target;
   }
 
   try {
@@ -65,8 +55,16 @@ const Page: NextPageWithLayout = () => {
   const from = Array.isArray(router.query.from)
     ? router.query.from[0]
     : router.query.from;
-  const refreshTarget = getSafeRefreshUrl(from);
   const pageTitle = `${t('Error 500')} - ${t('Docs')}`;
+
+  const handleRefresh = () => {
+    const refreshTarget = getSafeRefreshUrl(from);
+    if (!refreshTarget) {
+      window.location.reload();
+      return;
+    }
+    void router.replace(refreshTarget);
+  };
 
   return (
     <>
@@ -129,11 +127,7 @@ const Page: NextPageWithLayout = () => {
             as="button"
             type="button"
             $css={actionCss}
-            onClick={() =>
-              refreshTarget
-                ? router.replace(refreshTarget)
-                : window.location.reload()
-            }
+            onClick={handleRefresh}
           >
             <Icon
               icon={<RetrySvg width={16} height={16} />}
