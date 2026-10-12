@@ -474,14 +474,20 @@ backend:
   ## @param backend.probes.liveness.targetPort [nullable] Configure port for backend HTTP liveness probe
   ## @param backend.probes.liveness.initialDelaySeconds [nullable] Configure initial delay for backend liveness probe
   ## @param backend.probes.liveness.timeoutSeconds [nullable] Configure timeout for backend liveness probe
+  ## @param backend.probes.liveness.periodSeconds [nullable] Configure period for backend liveness probe
+  ## @param backend.probes.liveness.failureThreshold [nullable] Configure failure threshold for backend liveness probe
   ## @extra backend.probes.startup.path [nullable] Configure path for backend HTTP startup probe
   ## @extra backend.probes.startup.targetPort [nullable] Configure port for backend HTTP startup probe
   ## @extra backend.probes.startup.initialDelaySeconds [nullable] Configure initial delay for backend startup probe
   ## @extra backend.probes.startup.timeoutSeconds [nullable] Configure timeout for backend startup probe
+  ## @extra backend.probes.startup.periodSeconds [nullable] Configure period for backend startup probe
+  ## @extra backend.probes.startup.failureThreshold [nullable] Configure failure threshold for backend startup probe
   ## @param backend.probes.readiness.path [nullable] Configure path for backend HTTP readiness probe
   ## @param backend.probes.readiness.targetPort [nullable] Configure port for backend HTTP readiness probe
   ## @param backend.probes.readiness.initialDelaySeconds [nullable] Configure initial delay for backend readiness probe
   ## @param backend.probes.readiness.timeoutSeconds [nullable] Configure timeout for backend readiness probe
+  ## @param backend.probes.readiness.periodSeconds [nullable] Configure period for backend readiness probe
+  ## @param backend.probes.readiness.failureThreshold [nullable] Configure failure threshold for backend readiness probe
   probes:
     liveness:
       path: /__lbheartbeat__
@@ -539,6 +545,10 @@ backend:
   ## @param backend.celery.probes.readiness.exec.command Override the celery container readiness probe command
   ## @param backend.celery.probes.readiness.initialDelaySeconds Initial delay for the celery container readiness probe
   ## @param backend.celery.probes.readiness.timeoutSeconds Timeout for the celery container readiness probe
+  ## @extra backend.celery.probes.liveness.periodSeconds Period for the celery container liveness probe
+  ## @extra backend.celery.probes.liveness.failureThreshold Failure threshold for the celery container liveness probe
+  ## @extra backend.celery.probes.readiness.periodSeconds Period for the celery container readiness probe
+  ## @extra backend.celery.probes.readiness.failureThreshold Failure threshold for the celery container readiness probe
   ## @extra backend.celery.envVars Celery worker specific environment variables (not shared with the backend web deployment)
   ## @skip backend.celery.envVars
   ## @skip backend.celery.envFrom List of environment variables taken from Secrets or configMaps, specific to celery worker
@@ -667,6 +677,12 @@ frontend:
   ## @extra frontend.probes.readiness.targetPort Configure port for frontend HTTP readiness probe
   ## @extra frontend.probes.readiness.initialDelaySeconds Configure initial delay for frontend readiness probe
   ## @extra frontend.probes.readiness.initialDelaySeconds Configure timeout for frontend readiness probe
+  ## @extra frontend.probes.liveness.periodSeconds Configure period for frontend liveness probe
+  ## @extra frontend.probes.liveness.failureThreshold Configure failure threshold for frontend liveness probe
+  ## @extra frontend.probes.startup.periodSeconds Configure period for frontend startup probe
+  ## @extra frontend.probes.startup.failureThreshold Configure failure threshold for frontend startup probe
+  ## @extra frontend.probes.readiness.periodSeconds Configure period for frontend readiness probe
+  ## @extra frontend.probes.readiness.failureThreshold Configure failure threshold for frontend readiness probe
   probes: {}
 
   ## @param frontend.resources Resource requirements for the frontend container
@@ -866,6 +882,12 @@ yProvider:
   ## @extra yProvider.probes.readiness.targetPort Configure port for yProvider HTTP readiness probe
   ## @extra yProvider.probes.readiness.initialDelaySeconds Configure initial delay for yProvider readiness probe
   ## @extra yProvider.probes.readiness.timeoutSeconds Configure timeout for yProvider readiness probe
+  ## @extra yProvider.probes.liveness.periodSeconds Configure period for yProvider liveness probe
+  ## @extra yProvider.probes.liveness.failureThreshold Configure failure threshold for yProvider liveness probe
+  ## @extra yProvider.probes.startup.periodSeconds Configure period for yProvider startup probe
+  ## @extra yProvider.probes.startup.failureThreshold Configure failure threshold for yProvider startup probe
+  ## @extra yProvider.probes.readiness.periodSeconds Configure period for yProvider readiness probe
+  ## @extra yProvider.probes.readiness.failureThreshold Configure failure threshold for yProvider readiness probe
   probes:
     liveness:
       path: /ping
@@ -1253,6 +1275,12 @@ yhub:
   ## @extra yhub.probes.startup.targetPort Configure port for yhub HTTP startup probe
   ## @extra yhub.probes.startup.initialDelaySeconds Configure initial delay for yhub startup probe
   ## @extra yhub.probes.startup.timeoutSeconds Configure timeout for yhub startup probe
+  ## @extra yhub.probes.liveness.periodSeconds Configure period for yhub liveness probe
+  ## @extra yhub.probes.liveness.failureThreshold Configure failure threshold for yhub liveness probe
+  ## @extra yhub.probes.readiness.periodSeconds Configure period for yhub readiness probe
+  ## @extra yhub.probes.readiness.failureThreshold Configure failure threshold for yhub readiness probe
+  ## @extra yhub.probes.startup.periodSeconds Configure period for yhub startup probe
+  ## @extra yhub.probes.startup.failureThreshold Configure failure threshold for yhub startup probe
   ##
   ## Two routes yhub serves unauthenticated, and they answer different
   ## questions on purpose:
@@ -1363,6 +1391,10 @@ docSpec:
 
   ## @param docSpec.probes.liveness.path Configure path for docSpec HTTP liveness probe
   ## @param docSpec.probes.readiness.path Configure path for docSpec HTTP readiness probe
+  ## @extra docSpec.probes.liveness.periodSeconds Configure period for docSpec liveness probe
+  ## @extra docSpec.probes.liveness.failureThreshold Configure failure threshold for docSpec liveness probe
+  ## @extra docSpec.probes.readiness.periodSeconds Configure period for docSpec readiness probe
+  ## @extra docSpec.probes.readiness.failureThreshold Configure failure threshold for docSpec readiness probe
   probes:
     liveness:
       path: /health

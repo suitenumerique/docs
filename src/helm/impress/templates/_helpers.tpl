@@ -148,6 +148,12 @@ httpGet:
 {{- end }}
 initialDelaySeconds: {{ .initialDelaySeconds | eq nil | ternary 0 .initialDelaySeconds }}
 timeoutSeconds: {{ .timeoutSeconds | eq nil | ternary 1 .timeoutSeconds }}
+{{- if not (eq .periodSeconds nil) }}
+periodSeconds: {{ .periodSeconds }}
+{{- end }}
+{{- if not (eq .failureThreshold nil) }}
+failureThreshold: {{ .failureThreshold }}
+{{- end }}
 {{- end }}
 
 {{/*

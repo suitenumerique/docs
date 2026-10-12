@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 🔧(helm) allow to set the period and failure threshold of probes
+
 ### Fixed
 
 - 🐛(backend) bypass throttling on access/me action from yhub
