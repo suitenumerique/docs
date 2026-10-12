@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 💄(frontend) redesign 500 error standalone page #2801
+
 ## [v6.0.0] - 2026-10-05
 
 ### Added
@@ -74,6 +78,9 @@ and this project adheres to
   `COLLABORATION_VERSION_GRANULARITY_MS` #2556
 - ✨(frontend) keep a local copy of documents, so they open and stay editable
   offline #2556
+  offline
+- 🐛(frontend) stop the service worker from caching the collaboration server's
+  rest api
 
 ### Changed
 
