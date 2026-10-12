@@ -137,8 +137,9 @@ export const DocsEditorStyle = createGlobalStyle`
       cursor: pointer;
     }
     .bn-block-group
+      .bn-block:not(:has(.bn-toggle-wrapper))
       .bn-block-group
-      .bn-block-outer:not([data-prev-depth-changed]):before {
+      .bn-block-outer:not([data-prev-depth-changed])::before {
       border-left: none;
     }
 
