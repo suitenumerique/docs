@@ -22,4 +22,16 @@ test.describe('500', () => {
     ).toBeVisible();
     await expect(page).toHaveTitle(/Error 500 - Docs/);
   });
+
+  test('checks refresh reloads the page when no origin is known', async ({
+    page,
+  }) => {
+    await page.goto('/500');
+
+    const reloaded = page.waitForEvent('load');
+    await page.getByRole('button', { name: 'Refresh page' }).click();
+    await reloaded;
+
+    await expect(page).toHaveURL(/\/500\/?$/);
+  });
 });
