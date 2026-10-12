@@ -30,13 +30,11 @@ const actionCss = css`
   }
 `;
 
-const getSafeRefreshUrl = (target?: string): string | undefined => {
-  if (!target?.startsWith('/') || target.startsWith('//')) {
-    return undefined;
-  }
+const SAFE_RELATIVE_PATH = /^\/(?!\/)[\w\-.~%!$&'()*+,;=:@/?#[\]]*$/;
 
-  if (typeof window === 'undefined') {
-    return target;
+const getSafeRefreshUrl = (target?: string): string | undefined => {
+  if (!target || !SAFE_RELATIVE_PATH.test(target)) {
+    return undefined;
   }
 
   try {
@@ -54,8 +52,16 @@ const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
   const { query, push } = useRouter();
   const from = Array.isArray(query.from) ? query.from[0] : query.from;
-  const refreshTarget = getSafeRefreshUrl(from);
   const pageTitle = `${t('Error 502')} - ${t('Docs')}`;
+
+  const handleRefresh = () => {
+    const refreshTarget = getSafeRefreshUrl(from);
+    if (!refreshTarget) {
+      window.location.reload();
+      return;
+    }
+    void push(refreshTarget);
+  };
 
   return (
     <>
@@ -96,14 +102,7 @@ const Page: NextPageWithLayout = () => {
             )}
           </Text>
         </Box>
-        <Box
-          as="button"
-          type="button"
-          $css={actionCss}
-          onClick={() =>
-            refreshTarget ? void push(refreshTarget) : window.location.reload()
-          }
-        >
+        <Box as="button" type="button" $css={actionCss} onClick={handleRefresh}>
           <Icon
             icon={<RetrySvg width={16} height={16} />}
             $theme="neutral"
