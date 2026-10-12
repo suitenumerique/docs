@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed 
+
+- 💄(frontend) redesign offline error page #2808
+
 ## [v6.0.0] - 2026-10-05
 
 ### Added
