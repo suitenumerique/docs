@@ -419,6 +419,28 @@ test.describe('Doc Editor', () => {
     ).toHaveAttribute('data-background-color', 'pink');
   });
 
+  test('it does not draw a vertical line next to nested blocks', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-nested-line', browserName, 1);
+
+    await writeInEditor({ page, text: 'Parent block' });
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Nested block');
+    await page.keyboard.press('Tab');
+
+    const nestedBlock = page
+      .locator('.bn-block-group .bn-block-group > .bn-block-outer')
+      .filter({ hasText: 'Nested block' });
+    await expect(nestedBlock).toBeVisible();
+
+    const borderLeftStyle = await nestedBlock.evaluate(
+      (element) => window.getComputedStyle(element, '::before').borderLeftStyle,
+    );
+    expect(borderLeftStyle).toBe('none');
+  });
+
   test('it checks interlink feature', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-interlink', browserName, 1);
 

@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+💄(frontend) remove the vertical line next to nested blocks #2825
+
 ## [v6.0.0] - 2026-10-05
 
 ### Added
