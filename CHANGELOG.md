@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 💄(frontend) use 12px for error page home links #2809
+
 ## [v6.0.0] - 2026-10-05
 
 ### Added
