@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed 
+
+- 💄(frontend) redesign offline error page #2808
+
 ## [v6.0.0] - 2026-10-05
 
 ### Added
@@ -87,7 +91,6 @@ and this project adheres to
 - 🔧(helm) run a valkey for the backend and one for yhub in dev and
   feature #2556
 - 💄(frontend) redesign 401 error standalone page #2716
-- 💄(frontend) redesign offline error page #2808
 
 ### Fixed
 
