@@ -20,6 +20,7 @@
     "@y/hub": "0.9.0",
     "@y/y": "14.0.0-rc.25",
     "jose": "6.2.12",
+    "lru-cache": "11.5.3",
     "prom-client": "15.1.3"
   },
   "devDependencies": {

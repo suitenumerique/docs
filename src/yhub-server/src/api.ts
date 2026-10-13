@@ -17,6 +17,7 @@ import {
 } from '@y/hub';
 
 import { backendPublicJwk } from './backend.js';
+import { invalidateDocumentAuthz } from './authz-cache.js';
 import {
   EMPTY_UPDATE_MAX_BYTES,
   EMPTY_YDOC,
@@ -171,6 +172,9 @@ export const api = [
         if (!UUID4.test(req.docid)) {
           return jsonResponse(400, { error: 'Room name is invalid' });
         }
+        // cached verdicts go before the recheck, or the recheck would read
+        // the pre-revocation ones — see invalidateDocumentAuthz
+        await invalidateDocumentAuthz(req.yhub, req.org, req.docid);
         // in-place recheck: every yhub server re-runs `authorize` per
         // matching connection and closes 4401 only when the access changed —
         // no reconnect churn for unaffected clients

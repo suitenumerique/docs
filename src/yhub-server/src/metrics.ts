@@ -76,6 +76,13 @@ export const backendRequestsInflight = new Gauge({
   registers: [registry],
 });
 
+export const authzCacheLookups = new Counter({
+  name: 'yhub_authz_cache_lookups_total',
+  help: 'Authz cache lookups by layer (identity, abilities, access) and result (hit, miss)',
+  labelNames: ['layer', 'result'] as const,
+  registers: [registry],
+});
+
 export const workerTaskDuration = new Histogram({
   name: 'yhub_worker_task_duration_seconds',
   help: 'Duration of the compaction tasks run by this worker',

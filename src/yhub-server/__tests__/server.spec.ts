@@ -9,10 +9,34 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// An in-memory stand-in for the redis client the authz cache uses. The real
+// entries carry a PX expiration the fake does not model — no test spans the
+// TTLs; what the fake must honor is the MGET-after-SET round trip.
+const fakeYhubRedis = () => {
+  const store = new Map<string, string>();
+  return {
+    store,
+    mGet: async (keys: string[]) => keys.map((key) => store.get(key) ?? null),
+    set: async (key: string, value: string) => {
+      store.set(key, value);
+      return 'OK';
+    },
+  };
+};
+
 const { createYHub, s3PluginArgs } = vi.hoisted(() => {
   const createYHub = vi.fn(async (config: any) => {
     createYHub.lastConfig = config;
-    return { stream: { taskDebounce: 0, minMessageLifetime: 0 } };
+    return {
+      stream: {
+        taskDebounce: 0,
+        minMessageLifetime: 0,
+        // the authz cache reads its entries through the stream client: an
+        // in-memory map stands in, shared for the life of one boot
+        prefix: config.redis.prefix,
+        redis: fakeYhubRedis(),
+      },
+    };
   }) as ReturnType<typeof vi.fn> & { lastConfig?: any };
   return { createYHub, s3PluginArgs: [] as any[] };
 });
@@ -32,7 +56,10 @@ vi.mock('@y/hub', () => {
     checkPermissions: vi.fn(),
     createApiEndpoint: (name: string, opts: unknown) => ({ name, opts }),
     createAuthPlugin: (plugin: unknown) => plugin,
-    createAuthorize: (handlers: unknown) => handlers,
+    createAuthorize:
+      (handlers: Record<string, (...args: unknown[]) => Promise<unknown>>) =>
+      async (scope: string, resourceId: unknown, user: unknown) =>
+        (await handlers[scope]?.(resourceId, user)) ?? null,
     createDocumentPermissions: (x: unknown) => x,
   };
 });
@@ -262,5 +289,57 @@ describe('the authenticate cookie gate', () => {
     expect(fetchMock.mock.calls[0][1].headers).toMatchObject({
       cookie: 'csrftoken=x; docs_sessionid=abc',
     });
+  });
+});
+
+describe('the authorize authz-cache wiring', () => {
+  // The refusal mapping (401/403/404 → cached deny) exists only in the
+  // `authorize` wiring of server.ts — the unit specs feed `cachedAbilities`
+  // happy payloads only. These drive the real plugin against a spied `fetch`.
+  const docid = '00000000-0000-4000-8000-000000000000';
+  const user = (id: string) => ({
+    userid: id,
+    cookie: 'csrftoken=x; docs_sessionid=abc',
+    origin: 'http://localhost:3000',
+    endpoint: 'ydoc',
+  });
+
+  const bootAuthorize = async () => {
+    // TTLs on: the wiring under test is the cached path, not the disabled one
+    vi.stubEnv('YHUB_ABILITIES_CACHE_TTL_MS', '30000');
+    vi.stubEnv('YHUB_IDENTITY_CACHE_TTL_MS', '60000');
+    vi.stubEnv('Y_PROVIDER_API_KEY', 'the-provider-key');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await boot();
+    expect(createYHub.lastConfig.server).not.toBeNull();
+    return {
+      authorize: createYHub.lastConfig.server.auth.authorize as (
+        scope: string,
+        resource: { org: string; docid: string; branch: string },
+        user: unknown,
+      ) => Promise<unknown>,
+      fetchMock,
+    };
+  };
+
+  it('caches a backend refusal as a deny, and the next connection reads it', async () => {
+    const { authorize, fetchMock } = await bootAuthorize();
+    fetchMock.mockResolvedValue({ ok: false, status: 403 });
+
+    // timedAuth's authorize signature: (scope, resourceId, user)
+    await expect(
+      authorize('document', { org: 'docs', docid, branch: 'main' }, user('u1')),
+    ).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `http://app-dev:8000/api/v1.0/documents/${docid}/`,
+    );
+
+    // the second connection costs no backend call: the refusal was cached
+    await expect(
+      authorize('document', { org: 'docs', docid, branch: 'main' }, user('u1')),
+    ).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

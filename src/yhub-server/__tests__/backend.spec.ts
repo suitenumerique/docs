@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { exportPKCS8, generateKeyPair } from 'jose';
 
+import type { YHub } from '../src/yhub.js';
+
 vi.mock('@y/hub', () => {
   const logger = {
     info: vi.fn(),
@@ -15,7 +17,11 @@ vi.mock('@y/hub', () => {
     error: vi.fn(),
     child: () => logger,
   };
-  return { logger };
+  return {
+    logger,
+    apiError: (status: number, message: string) =>
+      Object.assign(new Error(message), { status }),
+  };
 });
 
 const BASE_ENV = {
@@ -169,6 +175,119 @@ describe('backendFetch', () => {
     }).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(Error);
     expect((err as { status?: number }).status).toBeUndefined();
+  });
+});
+
+// The authz cache is off in these specs (its TTLs default to 0), so redis is
+// never reached — the handle only carries the key prefix. What is under test is
+// the backend call and how its answers map to verdicts; the cached path is
+// covered in authz-cache.spec.ts.
+describe('the resolve* lookups', () => {
+  const noYhub = { stream: { prefix: 'yhub' } } as unknown as YHub;
+  const docid = '00000000-0000-4000-8000-000000000000';
+  const user = {
+    userid: 'u1',
+    cookie: 'docs_sessionid=abc',
+    origin: 'http://localhost:3000',
+  };
+
+  it('resolveUserid answers the backend id as a string', async () => {
+    fetchMock.mockResolvedValue(jsonOk({ id: 42 }));
+    const { resolveUserid } = await load();
+
+    await expect(resolveUserid(user.cookie, user.origin)).resolves.toBe('42');
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'https://backend.example.test/api/v1.0/users/me/',
+    );
+  });
+
+  it('resolveUserid rejects with the backend status, for authenticate to read', async () => {
+    fetchMock.mockResolvedValue(httpError(401));
+    const { resolveUserid } = await load();
+
+    await expect(resolveUserid(user.cookie, user.origin)).rejects.toMatchObject(
+      { status: 401 },
+    );
+  });
+
+  it('resolveAbilities answers the verdict of an identified caller', async () => {
+    fetchMock.mockResolvedValue(
+      jsonOk({ abilities: { retrieve: true, update: false } }),
+    );
+    const { resolveAbilities } = await load();
+
+    await expect(
+      resolveAbilities(noYhub, 'docs', docid, user),
+    ).resolves.toEqual({
+      abilities: { retrieve: true, update: false, versions_list: undefined },
+      identified: true,
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://backend.example.test/api/v1.0/documents/${docid}/`,
+    );
+  });
+
+  it('resolveAbilities does not identify an anonymous caller', async () => {
+    fetchMock.mockResolvedValue(jsonOk({ abilities: { retrieve: true } }));
+    const { resolveAbilities } = await load();
+
+    await expect(
+      resolveAbilities(noYhub, 'docs', docid, null),
+    ).resolves.toMatchObject({ identified: false });
+  });
+
+  it.each([401, 403, 404])(
+    'resolveAbilities turns a %i refusal into a deny',
+    async (status) => {
+      fetchMock.mockResolvedValue(httpError(status));
+      const { resolveAbilities } = await load();
+
+      await expect(
+        resolveAbilities(noYhub, 'docs', docid, user),
+      ).resolves.toMatchObject({ abilities: { retrieve: false } });
+    },
+  );
+
+  it('resolveAbilities answers a retryable 503 when the backend does not answer', async () => {
+    fetchMock.mockResolvedValue(httpError(500));
+    const { resolveAbilities } = await load();
+
+    await expect(
+      resolveAbilities(noYhub, 'docs', docid, user),
+    ).rejects.toMatchObject({
+      status: 503,
+      message: 'Document authorization backend is unavailable',
+    });
+  });
+
+  it('resolveAccess answers the access payload', async () => {
+    fetchMock.mockResolvedValue(jsonOk({ created_at: '2026-01-01T00:00:00Z' }));
+    const { resolveAccess } = await load();
+
+    await expect(resolveAccess(noYhub, 'docs', docid, user)).resolves.toEqual({
+      created_at: '2026-01-01T00:00:00Z',
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://backend.example.test/api/v1.0/documents/${docid}/accesses/me/`,
+    );
+  });
+
+  it('resolveAccess turns a refusal into no access', async () => {
+    fetchMock.mockResolvedValue(httpError(404));
+    const { resolveAccess } = await load();
+
+    await expect(
+      resolveAccess(noYhub, 'docs', docid, user),
+    ).resolves.toBeNull();
+  });
+
+  it('resolveAccess answers a retryable 503 when the backend does not answer', async () => {
+    fetchMock.mockResolvedValue(httpError(502));
+    const { resolveAccess } = await load();
+
+    await expect(
+      resolveAccess(noYhub, 'docs', docid, user),
+    ).rejects.toMatchObject({ status: 503 });
   });
 });
 

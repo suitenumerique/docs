@@ -2,8 +2,10 @@
  * Everything this server sends to the Docs Django backend, and the keys both
  * ends verify each other with.
  *
- *   `backendFetch` — a GET carrying the caller's session (the auth plugin reads
- *     `/users/me/` and `/documents/{id}/` through it)
+ *   `backendFetch` — a GET carrying the caller's session
+ *   `resolveUserid`, `resolveAbilities`, `resolveAccess` — the three questions
+ *     the auth plugin asks about a caller (`/users/me/`, `/documents/{id}/`,
+ *     `/documents/{id}/accesses/me/`), answered through the authz cache
  *   `touchDocument` — the `content-updated` notification a compaction fires
  *   `JWKS` — Django's public keys, for verifying the admin tokens it signs to
  *     call us (consumed by `server.ts`)
@@ -15,7 +17,7 @@
  */
 import { createPublicKey } from 'node:crypto';
 
-import { logger } from '@y/hub';
+import { apiError, logger } from '@y/hub';
 import type { JWK } from 'jose';
 import {
   calculateJwkThumbprint,
@@ -25,8 +27,11 @@ import {
   SignJWT,
 } from 'jose';
 
-import type { DocumentAbilities } from './permissions.js';
+import type { CachedAbilities } from './authz-cache.js';
+import { cachedAbilities, cachedAccess, identityCache } from './authz-cache.js';
+import type { AccessPayload, DocumentAbilities } from './permissions.js';
 import {
+  ANONYMOUS_USERID,
   BACKEND_AUDIENCE,
   BACKEND_NOTIFY_TIMEOUT_MS,
   BACKEND_REQUEST_TIMEOUT_MS,
@@ -38,6 +43,7 @@ import {
   YHUB_JWT_PRIVATE_KEY,
 } from './config.js';
 import { timedBackendRequest } from './metrics.js';
+import type { AppAuthInfo, YHub } from './yhub.js';
 
 // The shape of the backend payload a caller name resolves to.
 export interface BackendUser {
@@ -169,6 +175,102 @@ export const backendFetch = async <T = unknown>(
   );
   return body as T;
 };
+
+// The HTTP status `backendFetch` tags its rejections with, read back without
+// trusting the error's runtime shape.
+export const errStatus = (err: unknown): number | undefined =>
+  typeof err === 'object' &&
+  err !== null &&
+  'status' in err &&
+  typeof (err as { status: unknown }).status === 'number'
+    ? (err as { status: number }).status
+    : undefined;
+
+// The backend answered "no": a verdict, not an outage.
+const isRefusal = (err: unknown): boolean => {
+  const status = errStatus(err);
+  return status === 401 || status === 403 || status === 404;
+};
+
+// The backend did not answer at all: the caller must retry, never read a 5xx
+// or a network blip as a permission decision.
+const authorizationUnavailable = () =>
+  apiError(503, 'Document authorization backend is unavailable');
+
+type Caller = Pick<AppAuthInfo, 'userid' | 'cookie' | 'origin'>;
+
+/**
+ * Who the session cookie belongs to. Rejects with the backend's error, so the
+ * caller tells a dead session (401/403) from an outage.
+ */
+export const resolveUserid = async (
+  cookie: string,
+  origin: string | undefined,
+): Promise<string> => {
+  const cached = identityCache.get(cookie);
+  if (cached != null) return cached;
+  const user = await backendFetch<BackendUser>('/api/v1.0/users/me/', {
+    cookie,
+    origin,
+  });
+  const userid = String(user.id);
+  identityCache.set(cookie, userid);
+  return userid;
+};
+
+/**
+ * What the caller may do with the document. A refusal is a deny, cached like
+ * any verdict — a client that lost access costs one call per TTL, not one per
+ * poll. An unanswered backend is a 503 and is never cached.
+ */
+export const resolveAbilities = (
+  yhub: YHub,
+  org: string,
+  docid: string,
+  user: Caller | null | undefined,
+): Promise<CachedAbilities> =>
+  cachedAbilities(
+    yhub,
+    org,
+    docid,
+    user?.cookie,
+    user?.userid ?? ANONYMOUS_USERID,
+    async () => {
+      try {
+        return await backendFetch<BackendDocument>(
+          `/api/v1.0/documents/${docid}/`,
+          user ?? {},
+        );
+      } catch (err) {
+        if (isRefusal(err)) return { abilities: { retrieve: false } };
+        throw authorizationUnavailable();
+      }
+    },
+  );
+
+/**
+ * When the caller was given access to the document — the payload
+ * `resolveHistoryFrom` turns into the start of the history they may read. A
+ * refusal means no access row (`null`); an unanswered backend is a 503.
+ */
+export const resolveAccess = (
+  yhub: YHub,
+  org: string,
+  docid: string,
+  user: Caller | null | undefined,
+): Promise<AccessPayload | null> =>
+  cachedAccess(yhub, org, docid, user?.userid ?? ANONYMOUS_USERID, async () => {
+    try {
+      const access = await backendFetch<AccessPayload>(
+        `/api/v1.0/documents/${docid}/accesses/me/`,
+        user ?? {},
+      );
+      return access ?? null;
+    } catch (err) {
+      if (isRefusal(err)) return null;
+      throw authorizationUnavailable();
+    }
+  });
 
 // Django orders the document lists by `updated_at` and no edit goes through it
 // anymore, so it is told here that a document moved on.

@@ -178,6 +178,22 @@ export const BACKEND_REQUEST_TIMEOUT_MS = intEnv(
   'YHUB_BACKEND_REQUEST_TIMEOUT_MS',
   5000,
 );
+// The authz cache (see authz-cache.ts): how long each layer may serve what a
+// previous connection read from the backend. All three default to 0 — caching
+// off, the behavior yhub has always had — and a deployment turns them up once
+// it has watched the backend-call rates. The abilities TTL is the one that
+// trades against revocation latency, and `reset-connections` deletes those
+// keys cluster-wide anyway: the TTL is only the backstop for a kick that was
+// lost, not the mechanism. Identity is safe to live longest: it fails closed
+// at the abilities fetch. The access date bounds history reads only, and only
+// a new grant can move it.
+export const IDENTITY_CACHE_TTL_MS = intEnv('YHUB_IDENTITY_CACHE_TTL_MS', 0, 0);
+export const ABILITIES_CACHE_TTL_MS = intEnv(
+  'YHUB_ABILITIES_CACHE_TTL_MS',
+  0,
+  0,
+);
+export const ACCESS_CACHE_TTL_MS = intEnv('YHUB_ACCESS_CACHE_TTL_MS', 0, 0);
 // Audience of the tokens the backend accepts from us. It must match the one
 // its CollaborationServerAuthentication requires, a token minted for anything
 // else is refused there.

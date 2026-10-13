@@ -274,6 +274,69 @@ were configurable:
 | `YHUB_TASK_DEBOUNCE_MS` | `10000` | How long an update waits on the stream before a worker persists it |
 | `YHUB_MIN_MESSAGE_LIFETIME_MS` | `60000` | How long persisted updates stay replayable from redis |
 | `YHUB_BACKEND_REQUEST_TIMEOUT_MS` | `5000` | How long a call to the Docs backend may take before it is given up on |
+| `YHUB_IDENTITY_CACHE_TTL_MS` | `0` | How long a resolved `users/me` identity is reused for the same Cookie header (authz cache, off by default) |
+| `YHUB_ABILITIES_CACHE_TTL_MS` | `0` | How long a `documents/{id}` verdict is served from cache before it is re-read (deleted by `reset-connections`, see the authz-cache section) |
+| `YHUB_ACCESS_CACHE_TTL_MS` | `0` | How long an `accesses/me` date is served from cache before it is re-read |
+
+### The authz cache
+
+Off by default, the three TTLs above turn on a cache that keeps the
+connection path from calling the backend on every request. The three payloads
+it holds go stale differently, so each has its own layer:
+
+- **identity** (`users/me` → userid, keyed on the SHA-256 of the whole
+  `Cookie` header): kept in-process, per replica, no invalidation. Nothing on
+  the backend side can name the key, and nothing needs to — a logged-out
+  caller is at most one TTL stale, and the stale userid then fails closed at
+  the abilities fetch, which answers 401 and denies. One nuance of that
+  staleness: a caller editing a *public* document keeps their userid for up
+  to one TTL after a server-side logout, so those edits stay attributed to
+  the logged-out user instead of `anonymous` — access is unaffected.
+- **abilities** (`documents/{id}` → the verdict): the one payload a stale
+  entry would over-grant, so it lives in yhub's own redis — the one already
+  carrying the document streams, shared between the replicas and never
+  touched by the backend — under
+  `{prefix}:authz:abilities:{{org}:{docid}}:{sha256(cookie)}`, and the
+  shortest TTL bounds what any lost invalidation can leave behind. Anonymous
+  callers share one entry per document (`…:anon`): what they may do is the
+  document's link configuration, and nothing about them distinguishes one
+  from another.
+- **access** (`accesses/me` → the stored `created_at` bounding history
+  reads): keyed per user, in redis like the abilities and retired by the same
+  kick. Not frozen: an access removed then granted again comes back with a
+  later date, and a stale earlier one would widen the history.
+
+**Revocation stays immediate.** Every document has a *generation* in yhub's
+redis (`{prefix}:authz:gen:{{org}:{docid}}`), and every entry stores the
+generation it was read under next to its value. A lookup reads both with a
+single `MGET` — their names are known up front — and an entry of another
+generation is a miss. The backend's `reset-connections` kick — a plain HTTP
+POST, it reads nothing of yhub's stores — reaches one replica, which — before
+triggering the recheck — writes a new generation for that document (see
+`invalidateDocumentAuthz`). That one write retires every `authz` entry of the
+document on every replica: nothing is searched for or deleted, and the
+retired entries expire on their own TTL. The recheck itself is distributed to
+all replicas through the same redis stream, and every recheck re-runs
+`authorize`, which then reads post-invalidation state. The abilities TTL is
+therefore only the backstop for a lost kick, not the mechanism.
+
+The generation is read *before* the backend is asked, and the answer is
+stored under that generation: an `authorize` already in flight when the kick
+lands stores its pre-revocation verdict under the retired generation, where
+every later lookup reads a miss. `{org}:{docid}` is a redis hash tag, so the
+keys of one document share a slot, which `MGET` requires should this redis
+ever become a cluster.
+
+A backend refusal (403/404) is cached like any other verdict: a client that
+lost access costs one call per TTL, not one per poll. A backend that did not
+answer is never cached — an error is not a permission decision. Concurrent
+misses of one entry share a single backend call per replica, so a burst of
+anonymous visitors on a cold public document costs one request.
+
+Watch `yhub_authz_cache_lookups_total{layer,result}` alongside
+`yhub_backend_request_duration_seconds{route}`: the hit rate tells you what
+the cache is saving, and the remaining `users_me` / `document` /
+`accesses_me` rates tell you what is left.
 
 **Concurrency** multiplies with the number of processes running a worker, since
 redis hands each task to exactly one of them: the two are interchangeable up to
