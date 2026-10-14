@@ -2,6 +2,7 @@
 
 # pylint: disable=too-many-lines
 import random
+import uuid
 from unittest import mock
 
 from django.contrib.auth.models import AnonymousUser
@@ -300,6 +301,118 @@ def test_create_comment_authenticated_user_not_enough_access():
         {"body": "test"},
     )
     assert response.status_code == 403
+
+
+def test_create_comment_thread_from_another_document():
+    """
+    A user allowed to comment on a document should not be able to store a
+    comment into a thread belonging to another document by naming their own
+    document in the URL path.
+    """
+    user = factories.UserFactory()
+    other_document = factories.DocumentFactory(
+        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTER)]
+    )
+    thread = factories.ThreadFactory()  # belongs to another document
+
+    client = APIClient()
+    client.force_login(user)
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{other_document.id!s}/threads/{thread.id!s}/comments/",
+            {"body": "test"},
+        )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "thread_id": ["This thread does not belong to this document."]
+    }
+    # No comment must have been written anywhere
+    assert models.Comment.objects.count() == 0
+    mock_capture.assert_not_called()
+
+
+def test_create_comment_nonexistent_thread():
+    """
+    A nonexistent thread id should be refused with a 400, not crash with a 500
+    as it did before the thread-to-document binding was enforced.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(
+        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTER)]
+    )
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/threads/{uuid.uuid4()!s}/comments/",
+        {"body": "test"},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "thread_id": ["This thread does not belong to this document."]
+    }
+    assert models.Comment.objects.count() == 0
+
+
+@pytest.mark.parametrize(
+    "link_reach",
+    [models.LinkReachChoices.RESTRICTED, models.LinkReachChoices.AUTHENTICATED],
+)
+def test_create_comment_anonymous_user_cross_document_thread(link_reach):
+    """
+    An anonymous user should not be able to write into a thread of a private
+    document by naming a public document they are allowed to comment on in the
+    URL path.
+    """
+    public_document = factories.DocumentFactory(
+        link_reach="public", link_role=models.LinkRoleChoices.EDITOR
+    )
+    thread = factories.ThreadFactory(
+        document__link_reach=link_reach
+    )  # belongs to another document
+
+    client = APIClient()
+    response = client.post(
+        f"/api/v1.0/documents/{public_document.id!s}/threads/{thread.id!s}/comments/",
+        {"body": "test"},
+    )
+
+    assert response.status_code == 400
+    assert models.Comment.objects.count() == 0
+
+
+def test_create_comment_reader_cross_document_thread():
+    """
+    A reader of a document should not be able to escalate to writing comments
+    by naming another document they can comment on in the URL path.
+    """
+    reader = factories.UserFactory()
+    owner = factories.UserFactory()
+    victim_document = factories.DocumentFactory(users=[(owner, "owner")])
+    factories.UserDocumentAccessFactory(
+        document=victim_document, user=reader, role=models.RoleChoices.READER
+    )
+    thread = factories.ThreadFactory(document=victim_document)
+
+    attacker_document = factories.DocumentFactory(
+        link_reach="restricted", users=[(reader, models.LinkRoleChoices.COMMENTER)]
+    )
+
+    client = APIClient()
+    client.force_login(reader)
+    response = client.post(
+        f"/api/v1.0/documents/{attacker_document.id!s}/threads/{thread.id!s}/comments/",
+        {"body": "test"},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "thread_id": ["This thread does not belong to this document."]
+    }
+    # The victim's thread was not polluted
+    assert models.Comment.objects.count() == 0
 
 
 # Retrieve comment
