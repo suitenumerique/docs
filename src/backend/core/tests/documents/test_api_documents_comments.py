@@ -284,6 +284,25 @@ def test_create_comment_authenticated_user_accessible_document():
     }
 
 
+def test_create_comment_revoked_collaborator():
+    """A collaborator whose access was revoked must not comment on the document."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach="restricted")
+    factories.UserDocumentAccessFactory(document=document, user=user, role="editor")
+    thread = factories.ThreadFactory(document=document, creator=user)
+
+    # Revoke the collaborator's access only, as an owner would
+    document.accesses.filter(user=user).delete()
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/",
+        {"body": "test"},
+    )
+    assert response.status_code == 403
+
+
 def test_create_comment_authenticated_user_not_enough_access():
     """
     Authenticated users should not be allowed to create comments on a document they don't have
@@ -617,6 +636,55 @@ def test_update_comment_authenticated_no_access():
         {"body": "other content"},
     )
     assert response.status_code == 403
+
+
+def test_update_comment_revoked_collaborator():
+    """
+    A collaborator whose access was revoked must not edit their own comment, even though
+    they are its author.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach="restricted")
+    factories.UserDocumentAccessFactory(document=document, user=user, role="editor")
+    thread = factories.ThreadFactory(document=document, creator=user)
+    comment = factories.CommentFactory(thread=thread, body="test", user=user)
+
+    # Revoke the collaborator's access, as an owner would
+    document.accesses.filter(user=user).delete()
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.patch(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/{comment.id!s}/",
+        {"body": "edited after revocation"},
+    )
+    assert response.status_code == 403
+
+    comment.refresh_from_db()
+    assert comment.body == "test"
+
+
+def test_delete_comment_revoked_collaborator():
+    """
+    A collaborator whose access was revoked must not delete their own comment, even
+    though they are its author.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach="restricted")
+    factories.UserDocumentAccessFactory(document=document, user=user, role="editor")
+    thread = factories.ThreadFactory(document=document, creator=user)
+    comment = factories.CommentFactory(thread=thread, body="test", user=user)
+
+    # Revoke the collaborator's access, as an owner would
+    document.accesses.filter(user=user).delete()
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.delete(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/{comment.id!s}/",
+    )
+    assert response.status_code == 403
+    assert models.Comment.objects.filter(pk=comment.pk).exists()
 
 
 @pytest.mark.parametrize("role", [models.RoleChoices.ADMIN, models.RoleChoices.OWNER])

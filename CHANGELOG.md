@@ -23,6 +23,8 @@ and this project adheres to
 
 - 🔒️(backend) bind comment thread to the path document on creation #2838
 - 🐛(frontend) fix search highlight hidden inside code blocks #2681
+- 🔒️(backend) require present document access for thread and comment 
+  writes #2840
 
 ## [v6.0.1] - 2026-10-15
 
