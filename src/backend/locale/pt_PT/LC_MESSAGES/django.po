@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 12:41+0000\n"
-"PO-Revision-Date: 2026-10-05 14:54\n"
+"POT-Creation-Date: 2026-10-15 10:24+0000\n"
+"PO-Revision-Date: 2026-10-15 10:43\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese\n"
 "Language: pt_PT\n"
@@ -61,29 +61,29 @@ msgstr "Eu sou o criador"
 msgid "Favorite"
 msgstr "Favorito"
 
-#: core/api/serializers.py:516
+#: core/api/serializers.py:532
 msgid "A new document was created on your behalf!"
 msgstr "Um novo documento foi criado em seu nome!"
 
-#: core/api/serializers.py:520
+#: core/api/serializers.py:536
 msgid "You have been granted ownership of a new document:"
 msgstr "A propriedade de um novo documento foi concedida a você:"
 
-#: core/api/serializers.py:556
+#: core/api/serializers.py:572
 msgid "This field is required."
 msgstr ""
 
-#: core/api/serializers.py:567
+#: core/api/serializers.py:583
 #, python-format
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr ""
 
-#: core/api/viewsets.py:1439
+#: core/api/viewsets.py:1435
 #, python-brace-format
 msgid "copy of {title}"
 msgstr "cópia de {title}"
 
-#: core/api/viewsets.py:3324
+#: core/api/viewsets.py:3327
 #, python-format
 msgid "A comment can have a maximum of %(max)d distinct reactions."
 msgstr ""
@@ -634,7 +634,7 @@ msgstr ""
 msgid " Brought to you by %(brandname)s "
 msgstr ""
 
-#: impress/settings.py:974
+#: impress/settings.py:997
 msgid "Docs AI"
 msgstr ""
 
