@@ -43,12 +43,20 @@ export const DocTitleText = () => {
   const displayTitle = titleWithoutEmoji || untitledDocument;
 
   return (
-    <Box className={CLASS_DOC_TITLE} $direction="row" $align="center">
+    <Box
+      className={CLASS_DOC_TITLE}
+      $direction="row"
+      $align="center"
+      $minWidth="0"
+    >
       <Text
         as="h2"
         $margin="none"
         $size={isMobile ? 'h4' : 'h2'}
         $display="unset"
+        $css={css`
+          overflow-wrap: anywhere;
+        `}
       >
         {emoji && <span aria-hidden="true">{emoji} </span>}
         {displayTitle}
@@ -217,6 +225,7 @@ const DocTitleInput = ({ doc, onTitleUpdate }: DocTitleProps) => {
       <Box
         ref={wrapperRef}
         $flex="1"
+        $minWidth="0"
         $css={css`
           cursor: text;
         `}
@@ -267,6 +276,7 @@ const DocTitleInput = ({ doc, onTitleUpdate }: DocTitleProps) => {
             };
             font-weight: 700;
             outline: none;
+            overflow-wrap: anywhere;
           `}
           $width="fit-content"
         >

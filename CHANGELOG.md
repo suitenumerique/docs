@@ -20,10 +20,12 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) wrap long unbroken document titles
 - 🐛(frontend) stop the http fallback when the collaboration server refuses it
 - 🐛(backend) bypass throttling on access/me action from yhub
 - 🐛(frontend) switch language when the current one is untranslated #2790
 - 🐛(frontend) keep the loading skeleton until an empty doc has synced #2817
+
 ### Changed
 
 - ♿️(frontend) fix the accessibility of the document tree #2769
@@ -32,7 +34,6 @@ and this project adheres to
 
 - 🔥(backend) remove `ForceSessionMiddleware`, an orphan of the removed
   non-websocket save safeguard
-
 
 ## [v6.0.0] - 2026-10-05
 
