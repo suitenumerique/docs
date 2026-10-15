@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v6.0.1] - 2026-10-15
+
 ### Added
 
 - ✨(backend) add a setting for the http fallback polling interval #2827
@@ -14,24 +16,23 @@ and this project adheres to
 
 ### Changed
 
-- ⚡️(yhub) skip the `users/me` call for callers without a session cookie
-- 🔧(helm) allow to set the period and failure threshold of probes
+- ⚡️(yhub) skip the `users/me` call for callers without a session
+  cookie #2830
+- 🔧(helm) allow to set the period and failure threshold of probes #2828
+- ♿️(frontend) fix the accessibility of the document tree #2769
 
 ### Fixed
 
-- 🐛(frontend) stop the http fallback when the collaboration server refuses it
-- 🐛(backend) bypass throttling on access/me action from yhub
+- 🐛(frontend) stop the http fallback when the collaboration server
+  refuses it #2827
+- 🐛(backend) bypass throttling on access/me action from yhub #2811
 - 🐛(frontend) switch language when the current one is untranslated #2790
 - 🐛(frontend) keep the loading skeleton until an empty doc has synced #2817
-### Changed
-
-- ♿️(frontend) fix the accessibility of the document tree #2769
 
 ### Removed
 
 - 🔥(backend) remove `ForceSessionMiddleware`, an orphan of the removed
-  non-websocket save safeguard
-
+  non-websocket save safeguard #2830
 
 ## [v6.0.0] - 2026-10-05
 
@@ -1671,7 +1672,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v6.0.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v6.0.1...main
+[v6.0.1]: https://github.com/suitenumerique/docs/releases/v6.0.1
 [v6.0.0]: https://github.com/suitenumerique/docs/releases/v6.0.0
 [v5.7.0]: https://github.com/suitenumerique/docs/releases/v5.7.0
 [v5.6.1]: https://github.com/suitenumerique/docs/releases/v5.6.1
