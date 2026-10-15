@@ -629,12 +629,43 @@ describe('fullMigrate — the version-history backfill', () => {
   });
 
   it('rejects when the version listing itself fails', async () => {
-    routeS3({ list: () => { throw new Error('S3 is down'); } });
+    const error = Object.assign(
+      new Error('write EPROTO: wrong version number'),
+      { code: 'EPROTO' },
+    );
+    routeS3({ list: () => { throw error; } });
     const { fullMigrate } = await load();
     const yhub = makeYhub();
 
-    await expect(fullMigrate(yhub, docRef())).rejects.toThrow('S3 is down');
+    await expect(fullMigrate(yhub, docRef())).rejects.toThrow(
+      'wrong version number',
+    );
     const { logger } = await import('@y/hub');
-    expect(logger.error).toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'list_version.failed',
+        legacyS3Endpoint: 'https://legacy.example.test',
+        hint: expect.stringContaining('same http:// or https:// scheme'),
+      }),
+      'impossible to list object version',
+    );
+  });
+
+  it('includes the endpoint when a soft-seed request fails with a scheme error', async () => {
+    const error = Object.assign(new Error('EPROTO'), { code: 'EPROTO' });
+    routeS3({ get: () => { throw error; } });
+    const { maybeMigrate } = await load();
+    const yhub = makeYhub();
+
+    await expect(maybeMigrate(yhub, docRef())).rejects.toThrow('EPROTO');
+    const { logger } = await import('@y/hub');
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'seed.failed',
+        legacyS3Endpoint: 'https://legacy.example.test',
+        hint: expect.stringContaining('same http:// or https:// scheme'),
+      }),
+      'soft migration failed; the caller is asked to retry',
+    );
   });
 });

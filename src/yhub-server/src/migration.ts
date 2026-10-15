@@ -145,6 +145,45 @@ interface TaggedError {
 const asTagged = (err: unknown): TaggedError =>
   typeof err === 'object' && err !== null ? (err as TaggedError) : {};
 
+// S3-compatible servers often answer a plain-HTTP request with a TLS error
+// (or the reverse) when the configured URL scheme is wrong. SDK errors can
+// wrap the socket error, so inspect the cause chain before adding a hint.
+const legacyS3ErrorContext = (err: unknown): Record<string, string> => {
+  const endpoint = LEGACY_S3_ENDPOINT_URL
+    ? new URL(LEGACY_S3_ENDPOINT_URL).origin
+    : 'not configured';
+  const seen = new Set<unknown>();
+  let current: unknown = err;
+  let protocolMismatch = false;
+
+  while (typeof current === 'object' && current !== null && !seen.has(current)) {
+    seen.add(current);
+    const error = current as {
+      code?: unknown;
+      message?: unknown;
+      cause?: unknown;
+    };
+    if (
+      error.code === 'EPROTO' ||
+      (typeof error.message === 'string' &&
+        /wrong version number|tls_validate_record_header/i.test(error.message))
+    ) {
+      protocolMismatch = true;
+      break;
+    }
+    current = error.cause;
+  }
+
+  return {
+    legacyS3Endpoint: endpoint,
+    ...(protocolMismatch
+      ? {
+          hint: 'Check that LEGACY_S3_ENDPOINT_URL uses the same http:// or https:// scheme as the S3-compatible server.',
+        }
+      : {}),
+  };
+};
+
 // Is this legacy object beyond saving, as opposed to merely out of reach right
 // now? Only a failure raised while *interpreting* bytes we already hold
 // qualifies: the object does not decode, or it is larger than we will load.
@@ -296,6 +335,7 @@ const listLegacyVersions = async (
       {
         event: 'list_version.failed',
         err: failure,
+        ...legacyS3ErrorContext(failure),
         docid,
         bucket: LEGACY_S3_BUCKET_NAME,
         key,
@@ -535,6 +575,7 @@ export const maybeMigrate = async (
             {
               event: 'seed.failed',
               err,
+              ...legacyS3ErrorContext(err),
               docid: docRef.docid,
               permanent,
               bucket: LEGACY_S3_BUCKET_NAME,
