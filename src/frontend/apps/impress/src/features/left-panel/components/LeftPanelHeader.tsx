@@ -1,8 +1,12 @@
-import { Button } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 
-import { Box, ButtonCloseModal, SeparatedSection } from '@/components';
+import {
+  Box,
+  ButtonCloseModal,
+  SeparatedSection,
+  StyledLink,
+} from '@/components';
 import { NewDocButton } from '@/docs/doc-management/components/NewDocButton';
 import { DocSearchButtonModal } from '@/docs/doc-search/components/DocSearchButtonModal';
 import { useAuth } from '@/features/auth';
@@ -47,8 +51,6 @@ export const LeftPanelHeaderActions = () => {
   const { isMobile } = useResponsiveStore();
 
   const goToHome = () => {
-    void router.push('/');
-
     if (isMobile) {
       togglePanel();
     }
@@ -68,15 +70,30 @@ export const LeftPanelHeaderActions = () => {
         )}
         <Box $direction="row" $gap="2px" $margin={{ left: 'auto' }}>
           {router.pathname !== '/' && (
-            <Button
+            <StyledLink
+              href="/"
               data-testid="home-button"
               onClick={goToHome}
               aria-label={t('Back to homepage')}
-              size="medium"
-              color="brand"
-              variant="tertiary"
-              icon={<HomeSVG aria-hidden="true" width={24} height={24} />}
-            />
+              title={t('Back to homepage')}
+              $css={`
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                color: var(--c--contextuals--content--semantic--brand--tertiary);
+                border-radius: var(--c--globals--spacings--3xs);
+                &:hover {
+                  background-color: var(--c--contextuals--background--semantic--brand--tertiary);
+                }
+                &:focus-visible {
+                  outline: 2px solid var(--c--contextuals--content--semantic--brand--tertiary);
+                  outline-offset: var(--c--globals--spacings--st);
+                }
+              `}
+            >
+              <HomeSVG aria-hidden="true" width={24} height={24} />
+            </StyledLink>
           )}
           <DocSearchButtonModal />
         </Box>
