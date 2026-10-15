@@ -42,6 +42,14 @@ export const SOFT_MIGRATION = process.env.SOFT_MIGRATION === 'true';
 // `AWS_S3_*` settings — which a pod may perfectly well carry — name a third.
 // Each set is read by exactly the process it belongs to.
 const LEGACY_S3_ENDPOINT_URL = process.env.LEGACY_S3_ENDPOINT_URL;
+const LEGACY_S3_ENDPOINT_ORIGIN = (() => {
+  if (!LEGACY_S3_ENDPOINT_URL) return 'not configured';
+  try {
+    return new URL(LEGACY_S3_ENDPOINT_URL).origin;
+  } catch {
+    return 'invalid URL';
+  }
+})();
 const LEGACY_S3_ACCESS_KEY_ID = secret('LEGACY_S3_ACCESS_KEY_ID');
 const LEGACY_S3_SECRET_ACCESS_KEY = secret('LEGACY_S3_SECRET_ACCESS_KEY');
 const LEGACY_S3_REGION_NAME = process.env.LEGACY_S3_REGION_NAME;
@@ -144,6 +152,42 @@ interface TaggedError {
 }
 const asTagged = (err: unknown): TaggedError =>
   typeof err === 'object' && err !== null ? (err as TaggedError) : {};
+
+// S3-compatible servers often answer a plain-HTTP request with a TLS error
+// (or the reverse) when the configured URL scheme is wrong. SDK errors can
+// wrap the socket error, so inspect the cause chain before adding a hint.
+const legacyS3ErrorContext = (err: unknown): Record<string, string> => {
+  const seen = new Set<unknown>();
+  let current: unknown = err;
+  let protocolMismatch = false;
+
+  while (typeof current === 'object' && current !== null && !seen.has(current)) {
+    seen.add(current);
+    const error = current as {
+      code?: unknown;
+      message?: unknown;
+      cause?: unknown;
+    };
+    if (
+      error.code === 'EPROTO' ||
+      (typeof error.message === 'string' &&
+        /wrong version number|tls_validate_record_header/i.test(error.message))
+    ) {
+      protocolMismatch = true;
+      break;
+    }
+    current = error.cause;
+  }
+
+  return {
+    legacyS3Endpoint: LEGACY_S3_ENDPOINT_ORIGIN,
+    ...(protocolMismatch
+      ? {
+          hint: 'Check that LEGACY_S3_ENDPOINT_URL uses the same http:// or https:// scheme as the S3-compatible server.',
+        }
+      : {}),
+  };
+};
 
 // Is this legacy object beyond saving, as opposed to merely out of reach right
 // now? Only a failure raised while *interpreting* bytes we already hold
@@ -296,6 +340,7 @@ const listLegacyVersions = async (
       {
         event: 'list_version.failed',
         err: failure,
+        ...legacyS3ErrorContext(failure),
         docid,
         bucket: LEGACY_S3_BUCKET_NAME,
         key,
@@ -535,6 +580,7 @@ export const maybeMigrate = async (
             {
               event: 'seed.failed',
               err,
+              ...legacyS3ErrorContext(err),
               docid: docRef.docid,
               permanent,
               bucket: LEGACY_S3_BUCKET_NAME,
