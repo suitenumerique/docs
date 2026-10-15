@@ -2159,11 +2159,16 @@ class Mention(BaseModel):
 
         # Guard against concurrent notification tasks for the same context.
         # cache.add is atomic on the shared Redis backend: only the first task
-        # acquires the key and proceeds, the others get False
-        if not cache.add(
-            self.notification_guard_key,
-            str(self.pk),
-            timeout=MENTION_NOTIFICATION_GUARD_TIMEOUT_SECONDS,
+        # acquires the key and proceeds, the others get False.
+        # When the cache is down we send anyway, the guard is
+        # best-effort and the database cooldown still applies
+        if (
+            cache.add(
+                self.notification_guard_key,
+                str(self.pk),
+                timeout=MENTION_NOTIFICATION_GUARD_TIMEOUT_SECONDS,
+            )
+            is False
         ):
             return False
 
