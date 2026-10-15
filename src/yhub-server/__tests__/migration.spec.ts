@@ -332,6 +332,25 @@ describe('maybeMigrate — the lazy seed', () => {
     expect(isPermanentFailure(err)).toBe(false);
   });
 
+  it('preserves the migration error when the configured endpoint is invalid', async () => {
+    vi.stubEnv('SOFT_MIGRATION', 'false');
+    vi.stubEnv('LEGACY_S3_ENDPOINT_URL', 'not a URL');
+    const { maybeMigrate } = await load();
+    const yhub = makeYhub();
+
+    await expect(maybeMigrate(yhub, docRef())).rejects.toThrow(
+      'the legacy S3 document store is not configured',
+    );
+    const { logger } = await import('@y/hub');
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'seed.failed',
+        legacyS3Endpoint: 'invalid URL',
+      }),
+      'soft migration failed; the caller is asked to retry',
+    );
+  });
+
   it('collapses concurrent first-connections to one S3 fetch and one seed', async () => {
     routeS3({ get: () => ({ Body: s3Body(makeUpdate()) }) });
     const { maybeMigrate } = await load();
