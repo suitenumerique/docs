@@ -55,6 +55,7 @@ export const DocsEditorStyle = createGlobalStyle`
       overflow: hidden;
       width: inherit;
       height: inherit;
+      font-style: normal;
     }
     .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
       .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child) {
