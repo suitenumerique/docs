@@ -274,6 +274,7 @@ export function wrapInterlinksWithAnchor(root: ParentNode = document) {
       anchor.target = '_blank';
       anchor.rel = 'noopener noreferrer';
       anchor.setAttribute('data-print-link', 'true');
+      anchor.style.textDecoration = 'none';
 
       parent.insertBefore(anchor, el);
       anchor.appendChild(el);

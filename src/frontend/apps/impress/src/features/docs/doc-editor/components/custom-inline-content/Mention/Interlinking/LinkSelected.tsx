@@ -87,7 +87,7 @@ export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
       $height="28px"
       $css={css`
         display: inline;
-        padding: 0.1rem 0.4rem;
+        padding: 0.1rem 0.4rem 0.1rem 0;
         border-radius: 4px;
         cursor: pointer;
         & svg {
@@ -108,6 +108,7 @@ export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
         }
       `}
     >
+      &nbsp;
       {emoji ? (
         <Text $size="16px">{emoji}</Text>
       ) : (

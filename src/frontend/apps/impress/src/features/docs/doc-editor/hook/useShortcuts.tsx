@@ -102,7 +102,7 @@ export const useShortcuts = (
         event.preventDefault();
         editor.insertInlineContent([
           {
-            type: 'interlinkingLinkInline',
+            type: 'mentionSearchInline',
             props: {
               trigger: '@',
             },

@@ -3,9 +3,18 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 
-import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
+import {
+  createDoc,
+  getOtherBrowserName,
+  goToGridDoc,
+  verifyDocName,
+} from './utils-common';
 import { getEditor, openSuggestionMenu, writeInEditor } from './utils-editor';
-import { connectOtherUserToDoc, updateShareLink } from './utils-share';
+import {
+  addNewMember,
+  connectOtherUserToDoc,
+  updateShareLink,
+} from './utils-share';
 import {
   createRootSubPage,
   getTreeRow,
@@ -448,7 +457,7 @@ test.describe('Doc Editor', () => {
     await page.getByText('Link a doc').first().click();
 
     const input = page.locator(
-      "span[data-inline-content-type='interlinkingLinkInline'] input",
+      "span[data-inline-content-type='mentionSearchInline'] input",
     );
     const searchContainer = page.locator('.quick-search-container');
 
@@ -530,6 +539,49 @@ test.describe('Doc Editor', () => {
     await expect(interlinkChild).toContainText(docChild2);
     await interlinkChild.click();
     await verifyDocName(page, docChild2);
+  });
+
+  test('it checks user mention feature', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-user-mention', browserName, 1);
+
+    // Only the users of the doc allowed to comment can be mentioned
+    const otherBrowserName = getOtherBrowserName(browserName);
+    await page.getByRole('button', { name: 'Share' }).click();
+    await addNewMember(page, 0, 'Editor', otherBrowserName);
+    await page.getByRole('button', { name: 'close' }).click();
+
+    // The first block of a new doc has no real id yet, the mention is
+    // recorded on an anchor block, so we mention from a second one
+    const editor = await writeInEditor({ page, text: 'Hello' });
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('@');
+
+    const input = page.getByRole('combobox', {
+      name: 'Search for a person or a document',
+    });
+    const searchContainer = page.locator('.quick-search-container');
+
+    await input.fill(otherBrowserName);
+
+    const userOption = searchContainer
+      .getByRole('option')
+      .filter({ hasText: new RegExp(otherBrowserName, 'i') })
+      .first();
+    await expect(searchContainer.getByText('Mention a person')).toBeVisible();
+    await expect(userOption).toBeVisible();
+
+    const responseMention = page.waitForResponse(
+      (response) =>
+        response.url().includes('/mention/') && response.status() === 201,
+    );
+    await userOption.click();
+    await responseMention;
+
+    await expect(searchContainer).toBeHidden();
+
+    const userMention = editor.locator('.--docs--user-mention-inline-content');
+    await expect(userMention).toBeVisible();
+    await expect(userMention).toContainText(new RegExp(otherBrowserName, 'i'));
   });
 
   test('it checks multiple big doc scroll to the top', async ({
