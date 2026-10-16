@@ -407,13 +407,12 @@ def test_external_api_documents_list_with_multiple_roles(
             assert result["user_role"] == models.RoleChoices.READER
 
 
-def test_external_api_documents_duplicate_allowed(
+def test_external_api_documents_duplicate_not_allowed(
     user_token, resource_server_backend, user_specific_sub
 ):
     """
-    Connected users CAN DUPLICATE a document from a resource server
-    when they have the required permissions on the document,
-    as this action bypasses the permission checks.
+    By default the "duplicate" action is not permitted on the external API.
+    POST to the endpoint must return 403.
     """
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {user_token}")
@@ -428,8 +427,39 @@ def test_external_api_documents_duplicate_allowed(
         role=models.RoleChoices.OWNER,
     )
 
+    response = client.post(
+        f"/external_api/v1.0/documents/{document.id!s}/duplicate/",
+    )
+
+    assert response.status_code == 403
+
+
+@override_settings(
+    EXTERNAL_API={
+        "documents": {
+            "enabled": True,
+            "actions": ["list", "retrieve", "children", "duplicate"],
+        },
+    }
+)
+def test_external_api_documents_duplicate_can_be_allowed(
+    user_token, resource_server_backend, user_specific_sub
+):
+    """The duplicate action is available when it is configured."""
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {user_token}")
+
+    document = factories.DocumentFactory(
+        link_reach=models.LinkReachChoices.RESTRICTED,
+        creator=user_specific_sub,
+    )
+    factories.UserDocumentAccessFactory(
+        document=document,
+        user=user_specific_sub,
+        role=models.RoleChoices.OWNER,
+    )
+
     with patch("core.api.viewsets.YHubService") as mock_yhub:
-        # the collaboration server holds no content for this document
         mock_yhub.return_value.get_ydoc.return_value = None
         response = client.post(
             f"/external_api/v1.0/documents/{document.id!s}/duplicate/",
