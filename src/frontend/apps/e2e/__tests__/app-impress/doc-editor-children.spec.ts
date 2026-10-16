@@ -21,7 +21,7 @@ test.describe('Doc Editor - Children block', () => {
     );
     await verifyDocName(page, parentTitle);
 
-    await openSuggestionMenu({ page, suggestion: 'Sub-docs list' });
+    await openSuggestionMenu({ page, suggestion: 'Sub-docs' });
 
     const editor = await getEditor({ page });
     await expect(editor.getByText('No sub-docs yet')).toBeVisible();
