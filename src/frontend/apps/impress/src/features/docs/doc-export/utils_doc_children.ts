@@ -14,7 +14,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  *
  * The Markdown and HTML exports render each interlink once, synchronously, so
  * the sub-docs are put in the query cache: an uncached one would come out as a
- * loader instead of its title.
+ * loader instead of its title. Only missing entries are added, marked stale,
+ * so opening a sub-doc still fetches it: the detail endpoint also records the
+ * visit, which the children list does not.
  */
 export async function expandDocChildrenBlocks<T>(
   blocks: T[],
@@ -37,9 +39,12 @@ export async function expandDocChildrenBlocks<T>(
   // A failed lookup must fail the export: an empty list would silently drop
   // the sub-docs from a file the user thinks is complete.
   const children = await getAllDocChildren(docId);
-  children.forEach((child) =>
-    queryClient.setQueryData([KEY_DOC, { id: child.id }], child),
-  );
+  children.forEach((child) => {
+    const queryKey = [KEY_DOC, { id: child.id }];
+    if (queryClient.getQueryData(queryKey) === undefined) {
+      queryClient.setQueryData(queryKey, child, { updatedAt: 0 });
+    }
+  });
   const links = children.map((child) => ({
     id: `doc-children-${child.id}`,
     type: 'paragraph',
