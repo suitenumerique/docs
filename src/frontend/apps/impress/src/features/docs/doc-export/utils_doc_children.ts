@@ -4,9 +4,10 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
 /**
- * Replaces every `docChildren` block with a bullet list of interlinks to the
- * doc's sub-docs as they are at export time, since an exported file cannot
- * query them.
+ * Replaces every `docChildren` block with one paragraph per sub-doc holding an
+ * interlink to it, as they are at export time, since an exported file cannot
+ * query them. Paragraphs rather than list items, so the file shows no bullets,
+ * like the editor.
  */
 export async function expandDocChildrenBlocks<T>(
   blocks: T[],
@@ -30,7 +31,7 @@ export async function expandDocChildrenBlocks<T>(
   const children = await getAllDocChildren(docId);
   const links = children.map((child) => ({
     id: `doc-children-${child.id}`,
-    type: 'bulletListItem',
+    type: 'paragraph',
     props: {
       backgroundColor: 'default',
       textColor: 'default',

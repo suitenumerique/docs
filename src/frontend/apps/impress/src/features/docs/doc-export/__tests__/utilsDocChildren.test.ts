@@ -10,7 +10,7 @@ vi.mock('@/docs/doc-tree/api/useDocChildren', () => ({
 
 const linkTo = (docId: string) => ({
   id: `doc-children-${docId}`,
-  type: 'bulletListItem',
+  type: 'paragraph',
   props: {
     backgroundColor: 'default',
     textColor: 'default',
