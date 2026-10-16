@@ -1,4 +1,9 @@
 import {
+  BlockNoteSchema,
+  createBlockSpec,
+  defaultBlockSpecs,
+} from '@blocknote/core';
+import {
   CommentsExtension,
   DefaultThreadStoreAuth,
 } from '@blocknote/core/comments';
@@ -701,6 +706,57 @@ describe('Conversion Testing', () => {
       blockUploadCaption: 'Pont Neuf',
       blockUploadTextAlignment: 'center',
     });
+  });
+
+  test('POST /api/convert keeps the docChildren block in JSON and leaves no trace of it in HTML or Markdown', async () => {
+    const app = initApp();
+    // Written the way the frontend writes it, with its own docChildren spec,
+    // so the test fails if the server schema drops the block when reading
+    const frontendEditor = ServerBlockNoteEditor.create({
+      schema: BlockNoteSchema.create({
+        blockSpecs: {
+          ...defaultBlockSpecs,
+          docChildren: createBlockSpec(
+            { type: 'docChildren', propSchema: {}, content: 'none' },
+            { render: () => ({ dom: document.createElement('div') }) },
+          )(),
+        },
+      }),
+    });
+    const yDocument = frontendEditor.blocksToYDoc(
+      [
+        { type: 'paragraph' as const, content: 'Before' },
+        { type: 'docChildren' as const },
+        { type: 'paragraph' as const, content: 'After' },
+      ],
+      'document-store',
+    );
+    const yjsUpdate = Buffer.from(Y.encodeStateAsUpdate(yDocument));
+    const convert = (accept: string) =>
+      request(app)
+        .post('/api/convert')
+        .set('origin', origin)
+        .set('authorization', `Bearer ${apiKey}`)
+        .set('content-type', 'application/vnd.yjs.doc')
+        .set('accept', accept)
+        .send(yjsUpdate);
+
+    const jsonResponse = await convert('application/json');
+    expect(jsonResponse.status).toBe(200);
+    expect(
+      (jsonResponse.body as { type: string }[]).map((block) => block.type),
+    ).toContain('docChildren');
+
+    const htmlResponse = await convert('text/html');
+    expect(htmlResponse.status).toBe(200);
+    expect(htmlResponse.text).toContain('After');
+    expect(htmlResponse.text).not.toContain('\uFFFC');
+
+    const markdownResponse = await convert('text/markdown');
+    expect(markdownResponse.status).toBe(200);
+    expect(markdownResponse.text).toContain('Before');
+    expect(markdownResponse.text).toContain('After');
+    expect(markdownResponse.text).not.toContain('\uFFFC');
   });
 
   test('POST /api/convert with invalid Yjs content returns 400', async () => {

@@ -6,6 +6,7 @@ import {
 } from '@blocknote/core';
 
 import { CalloutBlock } from './Callout';
+import { DocChildrenBlock } from './DocChildren';
 import { InterlinkingLinkInline } from './InterlinkingLinkInline';
 import { PdfBlock } from './Pdf';
 import { UploadLoaderBlock } from './UploadLoader';
@@ -17,6 +18,7 @@ export const docsBlockNoteSchema = withPageBreak(
     blockSpecs: {
       ...defaultBlockSpecs,
       callout: CalloutBlock(),
+      docChildren: DocChildrenBlock(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
     },
