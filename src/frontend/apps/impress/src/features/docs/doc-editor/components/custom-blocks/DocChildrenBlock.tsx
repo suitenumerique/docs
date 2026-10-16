@@ -61,7 +61,8 @@ export const DocChildrenList = ({ isEditable }: { isEditable: boolean }) => {
     void refetch();
   }, [treeSignature, refetch]);
 
-  if (isError) {
+  // A failed background refetch keeps the list it already has
+  if (isError && !children) {
     return (
       <Box
         $direction="row"
