@@ -27,7 +27,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.http import content_disposition_header
-from django.utils.text import capfirst, slugify
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 import requests
@@ -1450,7 +1450,17 @@ class DocumentViewSet(
             if with_accesses
             else {}
         )
-        title = capfirst(_("copy of {title}").format(title=document_to_duplicate.title))
+        if new_parent is None:
+            # Only the top duplicate is marked as a copy, at the end of its title
+            # so that a leading emoji, used as the document icon, stays first.
+            title = (
+                _("{title} (copy)").format(title=document_to_duplicate.title)
+                if document_to_duplicate.title
+                else _("Untitled document (copy)")
+            )
+        else:
+            # Descendants keep their title untouched, untitled ones included
+            title = document_to_duplicate.title
         # If parent_duplicate is provided we must add the duplicated document as a child.
         # No retry here: the parent was created by this very transaction, nobody
         # else can add children under it, so its child paths cannot collide

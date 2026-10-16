@@ -73,7 +73,7 @@ def test_api_documents_duplicate_retries_sibling_path_collision():
     duplicated = models.Document.objects.get(id=response.json()["id"])
     assert duplicated.is_root()
     assert duplicated.get_siblings().count() == 2
-    assert [child.title for child in duplicated.get_children()] == ["Copy of Child"]
+    assert [child.title for child in duplicated.get_children()] == ["Child"]
     assert models.Document.objects.count() == 4
     assert duplicated.accesses.filter(user=user, role="owner").exists()
 
@@ -117,9 +117,7 @@ def test_api_documents_duplicate_retries_root_path_collision():
 
     duplicated = models.Document.objects.get(id=response.json()["id"])
     assert duplicated.is_root()
-    assert [child.title for child in duplicated.get_children()] == [
-        "Copy of Grandchild"
-    ]
+    assert [child.title for child in duplicated.get_children()] == ["Grandchild"]
     assert models.Document.objects.count() == 5
     assert duplicated.accesses.filter(user=user, role="owner").exists()
 

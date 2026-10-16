@@ -149,7 +149,7 @@ def test_api_documents_duplicate_success(index, mock_yhub, settings):
     assert response.status_code == 201
 
     duplicated_document = models.Document.objects.get(id=response.json()["id"])
-    assert duplicated_document.title == "Copy of document with an image"
+    assert duplicated_document.title == "document with an image (copy)"
     # the content is copied through the collaboration server
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         duplicated_document, update
@@ -183,7 +183,7 @@ def test_api_documents_duplicate_success(index, mock_yhub, settings):
         "nb_accesses_direct": duplicated_document.nb_accesses_direct,
         "numchild": 0,
         "path": duplicated_document.path,
-        "title": "Copy of document with an image",
+        "title": "document with an image (copy)",
         "updated_at": duplicated_document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": "owner",
     }
@@ -275,7 +275,7 @@ def test_api_documents_duplicate_with_accesses_admin(role, mock_yhub):
     assert response.status_code == 201
 
     duplicated_document = models.Document.objects.get(id=response.json()["id"])
-    assert duplicated_document.title == "Copy of document with accesses"
+    assert duplicated_document.title == "document with accesses (copy)"
     # the content is copied through the collaboration server
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         duplicated_document, YDOC_HELLO_WORLD_UPDATE
@@ -333,7 +333,7 @@ def test_api_documents_duplicate_with_accesses_non_admin(role, mock_yhub):
     assert response.status_code == 201
 
     duplicated_document = models.Document.objects.get(id=response.json()["id"])
-    assert duplicated_document.title == "Copy of document with accesses"
+    assert duplicated_document.title == "document with accesses (copy)"
     # the content is copied through the collaboration server
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         duplicated_document, YDOC_HELLO_WORLD_UPDATE
@@ -384,7 +384,7 @@ def test_api_documents_duplicate_non_root_document(role, mock_yhub):
     assert response.status_code == 201
 
     duplicated_document = models.Document.objects.get(id=response.json()["id"])
-    assert duplicated_document.title == "Copy of document with accesses"
+    assert duplicated_document.title == "document with accesses (copy)"
     # the content is copied through the collaboration server
     mock_yhub.return_value.create_ydoc.assert_called_once_with(
         duplicated_document, YDOC_HELLO_WORLD_UPDATE
@@ -482,7 +482,7 @@ def test_api_documents_duplicate_with_descendants_simple():
     assert models.Document.objects.count() == 6
 
     # Check root duplication
-    assert duplicated_root.title == "Copy of Root Document"
+    assert duplicated_root.title == "Root Document (copy)"
     assert duplicated_root.creator == user
     assert duplicated_root.duplicated_from == root
     assert duplicated_root.get_children().count() == 2
@@ -499,16 +499,85 @@ def test_api_documents_duplicate_with_descendants_simple():
     assert duplicated_children.count() == 2
 
     duplicated_child1 = duplicated_children.first()
-    assert duplicated_child1.title == "Copy of Child 1"
+    assert duplicated_child1.title == "Child 1"
     assert duplicated_child1.creator == user
     assert duplicated_child1.duplicated_from == child1
     assert duplicated_child1.get_parent() == duplicated_root
 
     duplicated_child2 = duplicated_children.last()
-    assert duplicated_child2.title == "Copy of Child 2"
+    assert duplicated_child2.title == "Child 2"
     assert duplicated_child2.creator == user
     assert duplicated_child2.duplicated_from == child2
     assert duplicated_child2.get_parent() == duplicated_root
+
+
+@pytest.mark.parametrize(
+    "title, expected_title",
+    [
+        ("Roadmap", "Roadmap (copy)"),
+        ("🚀 Roadmap", "🚀 Roadmap (copy)"),
+        (None, "Untitled document (copy)"),
+        ("", "Untitled document (copy)"),
+    ],
+)
+def test_api_documents_duplicate_title(title, expected_title):
+    """
+    The duplicate is marked as a copy at the end of its title, so that a leading
+    emoji, used as the document icon, stays first. An untitled document gets a
+    title saying it is a copy.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[(user, "owner")], title=title)
+
+    with mock.patch("core.api.viewsets.posthog_capture"):
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/duplicate/", format="json"
+        )
+
+    assert response.status_code == 201
+    assert response.json()["title"] == expected_title
+    assert models.Document.objects.get(id=response.json()["id"]).title == (
+        expected_title
+    )
+
+
+def test_api_documents_duplicate_with_descendants_keeps_descendant_titles():
+    """
+    Only the top duplicate is marked as a copy: its descendants keep their title
+    untouched, leading emoji and absence of title included.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    root = factories.DocumentFactory(users=[(user, "owner")], title="Handbook")
+    emoji_child = factories.DocumentFactory(parent=root, title="🚀 Onboarding")
+    untitled_child = factories.DocumentFactory(parent=root, title=None)
+    untitled_grandchild = factories.DocumentFactory(parent=untitled_child, title="")
+
+    with mock.patch("core.api.viewsets.posthog_capture"):
+        response = client.post(
+            f"/api/v1.0/documents/{root.id!s}/duplicate/",
+            {"with_descendants": True},
+            format="json",
+        )
+
+    assert response.status_code == 201
+    duplicated_root = models.Document.objects.get(id=response.json()["id"])
+    assert duplicated_root.title == "Handbook (copy)"
+
+    duplicated_titles = {
+        duplicate.duplicated_from_id: duplicate.title
+        for duplicate in duplicated_root.get_descendants()
+    }
+    assert duplicated_titles == {
+        emoji_child.id: "🚀 Onboarding",
+        untitled_child.id: None,
+        untitled_grandchild.id: "",
+    }
 
 
 def test_api_documents_duplicate_with_descendants_multi_level():
@@ -566,19 +635,19 @@ def test_api_documents_duplicate_with_descendants_multi_level():
     assert dup_children.count() == 1
 
     dup_child = dup_children.first()
-    assert dup_child.title == "Copy of Level 1"
+    assert dup_child.title == "Level 1"
     assert dup_child.duplicated_from == child
     dup_grandchildren = dup_child.get_children()
     assert dup_grandchildren.count() == 1
 
     dup_grandchild = dup_grandchildren.first()
-    assert dup_grandchild.title == "Copy of Level 2"
+    assert dup_grandchild.title == "Level 2"
     assert dup_grandchild.duplicated_from == grandchild
     dup_great_grandchildren = dup_grandchild.get_children()
     assert dup_great_grandchildren.count() == 1
 
     dup_great_grandchild = dup_great_grandchildren.first()
-    assert dup_great_grandchild.title == "Copy of Level 3"
+    assert dup_great_grandchild.title == "Level 3"
     assert dup_great_grandchild.duplicated_from == great_grandchild
 
 
@@ -761,12 +830,12 @@ def test_api_documents_duplicate_with_descendants_non_root_document_becomes_root
         document=duplicated_child,
     )
 
-    assert duplicated_child.title == "Copy of Sub Document"
+    assert duplicated_child.title == "Sub Document (copy)"
 
     dup_grandchildren = duplicated_child.get_children()
     assert dup_grandchildren.count() == 1
     dup_grandchild = dup_grandchildren.first()
-    assert dup_grandchild.title == "Copy of Grandchild"
+    assert dup_grandchild.title == "Grandchild"
     assert dup_grandchild.duplicated_from == grandchild
 
 
@@ -968,17 +1037,17 @@ def test_api_documents_duplicate_with_descendants_complex_tree():
     assert dup_children.count() == 2
 
     dup_child1 = dup_children.first()
-    assert dup_child1.title == "Copy of Child 1"
+    assert dup_child1.title == "Child 1"
     dup_grandchildren1 = dup_child1.get_children().order_by("title")
     assert dup_grandchildren1.count() == 2
-    assert dup_grandchildren1.first().title == "Copy of GrandChild 1"
-    assert dup_grandchildren1.last().title == "Copy of GrandChild 2"
+    assert dup_grandchildren1.first().title == "GrandChild 1"
+    assert dup_grandchildren1.last().title == "GrandChild 2"
 
     dup_child2 = dup_children.last()
-    assert dup_child2.title == "Copy of Child 2"
+    assert dup_child2.title == "Child 2"
     dup_grandchildren2 = dup_child2.get_children()
     assert dup_grandchildren2.count() == 1
-    assert dup_grandchildren2.first().title == "Copy of GrandChild 3"
+    assert dup_grandchildren2.first().title == "GrandChild 3"
 
 
 def test_api_documents_duplicate_content_from_collaboration_server(mock_yhub):

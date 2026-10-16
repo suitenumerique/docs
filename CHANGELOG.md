@@ -21,6 +21,7 @@ and this project adheres to
 ### Fixed
 
 - 🔒️(backend) bind comment thread to the path document on creation #2838
+- 🐛(backend) mark only the top duplicate as a copy, after its title #2855
 
 ## [v6.0.1] - 2026-10-15
 
