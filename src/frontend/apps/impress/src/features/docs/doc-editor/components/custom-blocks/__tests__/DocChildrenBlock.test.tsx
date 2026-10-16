@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { focusManager } from '@tanstack/react-query';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getAllDocChildren } from '@/docs/doc-tree/api/useDocChildren';
@@ -47,5 +48,30 @@ describe('DocChildrenList', () => {
 
     expect(await screen.findByText('Meeting notes')).toBeInTheDocument();
     expect(getAllDocChildren).toHaveBeenCalledTimes(2);
+  });
+
+  it('refetches the sub-docs when the tab regains focus', async () => {
+    vi.mocked(getAllDocChildren)
+      .mockResolvedValueOnce([
+        { id: 'child-1', title: 'Meeting notes' },
+      ] as Awaited<ReturnType<typeof getAllDocChildren>>)
+      .mockResolvedValueOnce([
+        { id: 'child-1', title: 'Meeting notes' },
+        { id: 'child-2', title: 'Added by a colleague' },
+      ] as Awaited<ReturnType<typeof getAllDocChildren>>);
+
+    render(<DocChildrenList isEditable />, { wrapper: AppWrapper });
+    expect(await screen.findByText('Meeting notes')).toBeInTheDocument();
+
+    act(() => {
+      focusManager.setFocused(false);
+    });
+    act(() => {
+      focusManager.setFocused(true);
+    });
+
+    expect(await screen.findByText('Added by a colleague')).toBeInTheDocument();
+    expect(getAllDocChildren).toHaveBeenCalledTimes(2);
+    focusManager.setFocused(undefined);
   });
 });
