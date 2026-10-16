@@ -101,6 +101,12 @@ export const DocChildrenList = ({ isEditable }: { isEditable: boolean }) => {
         list-style: none;
         padding: 0;
         margin: 0;
+        /* An emoji is wider than the page icon, keep the titles aligned */
+        & .--docs--interlinking-link-icon {
+          display: inline-block;
+          width: 1.25rem;
+          text-align: center;
+        }
       `}
     >
       {children.map((child) => (

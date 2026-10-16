@@ -117,14 +117,16 @@ export const LinkSelected = ({
         }
       `}
     >
-      {emoji ? (
-        <Text $size="16px">{emoji}</Text>
-      ) : (
-        <SelectedPageIcon
-          width={11.5}
-          color="var(--c--contextuals--content--semantic--brand--tertiary)"
-        />
-      )}
+      <span className="--docs--interlinking-link-icon">
+        {emoji ? (
+          <Text $size="16px">{emoji}</Text>
+        ) : (
+          <SelectedPageIcon
+            width={11.5}
+            color="var(--c--contextuals--content--semantic--brand--tertiary)"
+          />
+        )}
+      </span>
       <Text
         $weight="500"
         spellCheck="false"
