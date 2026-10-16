@@ -1,0 +1,108 @@
+import { focusManager } from '@tanstack/react-query';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getAllDocChildren } from '@/docs/doc-tree/api/useDocChildren';
+import { AppWrapper } from '@/tests/utils';
+
+import { DocChildrenList } from '../DocChildrenBlock';
+
+vi.mock('@/docs/doc-management', async () => {
+  const actual = await vi.importActual('@/docs/doc-management');
+  return {
+    ...actual,
+    useDocStore: () => ({ currentDoc: { id: 'parent' } }),
+  };
+});
+
+vi.mock('@/docs/doc-tree/api/useDocChildren', async () => {
+  const actual = await vi.importActual('@/docs/doc-tree/api/useDocChildren');
+  return { ...actual, getAllDocChildren: vi.fn() };
+});
+
+vi.mock('../../custom-inline-content/Interlinking/LinkSelected', () => ({
+  LinkSelected: ({ doc }: { doc: { title: string } }) => (
+    <span>{doc.title}</span>
+  ),
+}));
+
+describe('DocChildrenList', () => {
+  beforeEach(() => {
+    vi.mocked(getAllDocChildren).mockReset();
+  });
+
+  it('says so when the sub-docs cannot be loaded, and retries on demand', async () => {
+    vi.mocked(getAllDocChildren)
+      .mockRejectedValueOnce(new Error('500'))
+      .mockResolvedValueOnce([
+        { id: 'child-1', title: 'Meeting notes' },
+      ] as Awaited<ReturnType<typeof getAllDocChildren>>);
+
+    render(<DocChildrenList isEditable />, { wrapper: AppWrapper });
+
+    expect(
+      await screen.findByText('The sub-docs could not be loaded.'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Meeting notes')).toBeInTheDocument();
+    expect(getAllDocChildren).toHaveBeenCalledTimes(2);
+  });
+
+  it('refetches the sub-docs when the tab regains focus', async () => {
+    vi.mocked(getAllDocChildren)
+      .mockResolvedValueOnce([
+        { id: 'child-1', title: 'Meeting notes' },
+      ] as Awaited<ReturnType<typeof getAllDocChildren>>)
+      .mockResolvedValueOnce([
+        { id: 'child-1', title: 'Meeting notes' },
+        { id: 'child-2', title: 'Added by a colleague' },
+      ] as Awaited<ReturnType<typeof getAllDocChildren>>);
+
+    render(<DocChildrenList isEditable />, { wrapper: AppWrapper });
+    expect(await screen.findByText('Meeting notes')).toBeInTheDocument();
+
+    act(() => {
+      focusManager.setFocused(false);
+    });
+    act(() => {
+      focusManager.setFocused(true);
+    });
+
+    expect(await screen.findByText('Added by a colleague')).toBeInTheDocument();
+    expect(getAllDocChildren).toHaveBeenCalledTimes(2);
+    focusManager.setFocused(undefined);
+  });
+
+  it('keeps the loaded list when a later refetch fails', async () => {
+    vi.mocked(getAllDocChildren)
+      .mockResolvedValueOnce([
+        { id: 'child-1', title: 'Meeting notes' },
+      ] as Awaited<ReturnType<typeof getAllDocChildren>>)
+      .mockRejectedValueOnce(new Error('503'));
+
+    render(<DocChildrenList isEditable />, { wrapper: AppWrapper });
+    expect(await screen.findByText('Meeting notes')).toBeInTheDocument();
+
+    act(() => {
+      focusManager.setFocused(false);
+    });
+    act(() => {
+      focusManager.setFocused(true);
+    });
+
+    await waitFor(() => expect(getAllDocChildren).toHaveBeenCalledTimes(2));
+    expect(screen.getByText('Meeting notes')).toBeInTheDocument();
+    expect(
+      screen.queryByText('The sub-docs could not be loaded.'),
+    ).not.toBeInTheDocument();
+    focusManager.setFocused(undefined);
+  });
+});
