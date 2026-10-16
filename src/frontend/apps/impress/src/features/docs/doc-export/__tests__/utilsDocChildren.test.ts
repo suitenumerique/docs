@@ -105,5 +105,25 @@ describe('expandDocChildrenBlocks', () => {
     expect(queryClient.getQueryData([KEY_DOC, { id: 'child-1' }])).toEqual(
       child,
     );
+    expect(
+      queryClient.getQueryState([KEY_DOC, { id: 'child-1' }])?.dataUpdatedAt,
+    ).toBe(0);
+  });
+
+  it('leaves a sub-doc that is already cached untouched', async () => {
+    vi.mocked(getAllDocChildren).mockResolvedValue([
+      { id: 'child-1', title: 'From the list' },
+    ] as Awaited<ReturnType<typeof getAllDocChildren>>);
+    const queryClient = new QueryClient();
+    const cached = { id: 'child-1', title: 'From the doc page' };
+    queryClient.setQueryData([KEY_DOC, { id: 'child-1' }], cached);
+
+    await expandDocChildrenBlocks(
+      [{ id: 'c1', type: 'docChildren', children: [] }],
+      'parent',
+      queryClient,
+    );
+
+    expect(queryClient.getQueryData([KEY_DOC, { id: 'child-1' }])).toBe(cached);
   });
 });
