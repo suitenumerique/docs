@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import type { EmojiPicker } from '@/components/Emoji/EmojiPicker';
 import { AppWrapper } from '@/tests/utils';
 
 const mockUpdateDocEmoji = vi.fn();
@@ -20,12 +22,16 @@ vi.mock('@/docs/doc-management', async () => {
 vi.mock('@/components/Emoji/EmojiPicker', () => ({
   EmojiPicker: ({
     onEmojiSelect,
-  }: {
-    onEmojiSelect: (emoji: { native: string }) => void;
-  }) => (
-    <button type="button" onClick={() => onEmojiSelect({ native: '😀' })}>
-      😀
-    </button>
+    onClickOutside,
+  }: ComponentProps<typeof EmojiPicker>) => (
+    <div role="dialog" aria-label="Emoji picker">
+      <button type="button" onClick={() => onEmojiSelect({ native: '😀' })}>
+        😀
+      </button>
+      <button type="button" onClick={onClickOutside}>
+        Click outside
+      </button>
+    </div>
   ),
 }));
 
@@ -58,6 +64,17 @@ describe('DocHeader - Add emoji', () => {
     expect(mockUpdateDocEmoji).not.toHaveBeenCalled();
   });
 
+  test('closes the picker on click outside without setting an emoji', async () => {
+    const user = userEvent.setup();
+    render(<DocHeader doc={doc} />, { wrapper: AppWrapper });
+
+    await user.click(screen.getByRole('button', { name: 'Add emoji' }));
+    await user.click(screen.getByRole('button', { name: 'Click outside' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(mockUpdateDocEmoji).not.toHaveBeenCalled();
+  });
+
   test('sets the chosen emoji, keeping a title edited just before', async () => {
     const user = userEvent.setup();
     render(<DocHeader doc={{ ...doc, title: '' }} />, { wrapper: AppWrapper });
@@ -74,23 +91,6 @@ describe('DocHeader - Add emoji', () => {
       '😀',
     );
   });
-
-  test('sets a fish on April 1st, without opening the picker', async () => {
-    vi.setSystemTime(new Date('2026-04-01'));
-    const user = userEvent.setup();
-    render(<DocHeader doc={doc} />, { wrapper: AppWrapper });
-
-    await user.click(screen.getByRole('button', { name: 'Add emoji' }));
-
-    expect(mockUpdateDocEmoji).toHaveBeenCalledWith(
-      'doc-1',
-      'My document',
-      '🐟',
-    );
-    expect(
-      screen.queryByRole('button', { name: '😀' }),
-    ).not.toBeInTheDocument();
-  });
 });
 
 describe('DocHeader - Add emoji (April Fools easter egg)', () => {
@@ -105,8 +105,8 @@ describe('DocHeader - Add emoji (April Fools easter egg)', () => {
 
   [
     { emoji: '🐟', date: '2026-04-01' },
-    { emoji: null, date: '2026-03-30' },
-    { emoji: null, date: '2026-04-02' },
+    { emoji: '😀', date: '2026-03-30' },
+    { emoji: '😀', date: '2026-04-02' },
   ].forEach(({ emoji, date }) => {
     test(`uses ${emoji} emoji on ${date}`, () => {
       vi.setSystemTime(new Date(date));
@@ -114,9 +114,12 @@ describe('DocHeader - Add emoji (April Fools easter egg)', () => {
       render(<DocHeader doc={doc} />, { wrapper: AppWrapper });
 
       fireEvent.click(screen.getByRole('button', { name: 'Add emoji' }));
+      fireEvent.click(screen.getByRole('button', { name: '😀' }));
 
-      expect(mockUpdateDocEmoji.mock.calls).toEqual(
-        emoji ? [['doc-1', 'My document', emoji]] : [],
+      expect(mockUpdateDocEmoji).toHaveBeenCalledWith(
+        'doc-1',
+        'My document',
+        emoji,
       );
     });
   });

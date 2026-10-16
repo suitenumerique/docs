@@ -45,6 +45,14 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
   };
 
   const onEmojiSelect = ({ native }: { native: string }) => {
+    const today = new Date();
+    const isAprilFools = today.getMonth() === 3 && today.getDate() === 1;
+    if (isAprilFools) {
+      updateDocEmoji(doc.id, latestTitleRef.current, '🐟');
+      closeEmojiPicker();
+      return;
+    }
+
     updateDocEmoji(doc.id, latestTitleRef.current, native);
     closeEmojiPicker();
   };
@@ -54,13 +62,6 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
   ) => {
     if (emoji) {
       updateDocEmoji(doc.id, latestTitleRef.current, '');
-      return;
-    }
-
-    const today = new Date();
-    const isAprilFools = today.getMonth() === 3 && today.getDate() === 1;
-    if (isAprilFools) {
-      updateDocEmoji(doc.id, latestTitleRef.current, '🐟');
       return;
     }
 

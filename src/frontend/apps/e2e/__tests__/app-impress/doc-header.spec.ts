@@ -221,8 +221,9 @@ test.describe('Doc Header', () => {
     // Add emoji
     await expect(removeEmoji).toBeHidden();
     await addEmoji.click();
+    await page.getByRole('button', { name: '😍' }).first().click();
     // The 1 April the emoji is a fish
-    await expect(emojiPicker).toHaveText(/📄|🐟/);
+    await expect(emojiPicker).toHaveText(/😍|🐟/);
 
     // Change emoji
     await emojiPicker.click({
