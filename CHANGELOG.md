@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(docspec) handle DocSpec 4xx/5xx import errors distinctly #2552
+- ✨(mcp) add the docs-mcp server #2646
 
 ### Changed
 
