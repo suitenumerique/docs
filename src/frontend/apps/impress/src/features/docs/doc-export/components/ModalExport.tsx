@@ -6,6 +6,7 @@ import {
   Select,
   VariantType,
 } from '@gouvfr-lasuite/ui-components';
+import { useQueryClient } from '@tanstack/react-query';
 import i18next from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -40,6 +41,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { editor } = useEditorStore();
+  const queryClient = useQueryClient();
   const [isExporting, setIsExporting] = useState(false);
   const { untitledDocument } = useTrans();
   const mediaUrl = useMediaUrl();
@@ -124,6 +126,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         const blocks = await expandDocChildrenBlocks(
           structuredClone(editor.document),
           doc.id,
+          queryClient,
         );
 
         const mediaFileCount = await addMediaFilesToMarkdownZip(
@@ -148,7 +151,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       if (!blobExport && format === 'html') {
         // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
         const fullHtml = editor.blocksToFullHTML(
-          await expandDocChildrenBlocks(editor.document, doc.id),
+          await expandDocChildrenBlocks(editor.document, doc.id, queryClient),
         );
 
         // Parse HTML and fetch media so that we can package a fully offline HTML document in a ZIP.

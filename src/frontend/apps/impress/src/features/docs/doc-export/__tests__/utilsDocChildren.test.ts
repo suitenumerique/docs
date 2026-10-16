@@ -1,5 +1,7 @@
+import { QueryClient } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KEY_DOC } from '@/docs/doc-management/api/useDoc';
 import { getAllDocChildren } from '@/docs/doc-tree/api/useDocChildren';
 
 import { expandDocChildrenBlocks } from '../utils_doc_children';
@@ -33,9 +35,9 @@ describe('expandDocChildrenBlocks', () => {
   it('returns the blocks untouched without fetching when there is no docChildren block', async () => {
     const blocks = [{ id: 'p1', type: 'paragraph', children: [] }];
 
-    await expect(expandDocChildrenBlocks(blocks, 'parent')).resolves.toBe(
-      blocks,
-    );
+    await expect(
+      expandDocChildrenBlocks(blocks, 'parent', new QueryClient()),
+    ).resolves.toBe(blocks);
     expect(getAllDocChildren).not.toHaveBeenCalled();
   });
 
@@ -55,7 +57,11 @@ describe('expandDocChildrenBlocks', () => {
       },
     ];
 
-    const result = await expandDocChildrenBlocks(blocks, 'parent');
+    const result = await expandDocChildrenBlocks(
+      blocks,
+      'parent',
+      new QueryClient(),
+    );
 
     expect(getAllDocChildren).toHaveBeenCalledTimes(1);
     expect(getAllDocChildren).toHaveBeenCalledWith('parent');
@@ -78,7 +84,26 @@ describe('expandDocChildrenBlocks', () => {
       expandDocChildrenBlocks(
         [{ id: 'c1', type: 'docChildren', children: [] }],
         'parent',
+        new QueryClient(),
       ),
     ).rejects.toThrow('403');
+  });
+
+  it('puts the sub-docs in the query cache so their links render with a title', async () => {
+    const child = { id: 'child-1', title: 'Meeting notes' };
+    vi.mocked(getAllDocChildren).mockResolvedValue([child] as Awaited<
+      ReturnType<typeof getAllDocChildren>
+    >);
+    const queryClient = new QueryClient();
+
+    await expandDocChildrenBlocks(
+      [{ id: 'c1', type: 'docChildren', children: [] }],
+      'parent',
+      queryClient,
+    );
+
+    expect(queryClient.getQueryData([KEY_DOC, { id: 'child-1' }])).toEqual(
+      child,
+    );
   });
 });

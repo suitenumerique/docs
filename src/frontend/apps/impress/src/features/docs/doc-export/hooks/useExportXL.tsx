@@ -6,6 +6,7 @@ import { DOCXExporter } from '@blocknote/xl-docx-exporter';
 import { ODTExporter } from '@blocknote/xl-odt-exporter';
 import { PDFExporter } from '@blocknote/xl-pdf-exporter';
 import { DocumentProps, pdf } from '@react-pdf/renderer';
+import { useQueryClient } from '@tanstack/react-query';
 import jsonemoji from 'emoji-datasource-apple' with { type: 'json' };
 import i18next from 'i18next';
 import { cloneElement, isValidElement } from 'react';
@@ -23,6 +24,7 @@ import { expandDocChildrenBlocks } from '../utils_doc_children';
 
 export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   const docToBlob = async (format: string, documentTitle: string) => {
     if (!editor) {
@@ -32,6 +34,7 @@ export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
     const exportDocument = await expandDocChildrenBlocks(
       editor.document,
       doc.id,
+      queryClient,
     );
     const interlinkTitles = await resolveInterlinkTitles(exportDocument);
     let blobExport: Blob | undefined = undefined;
