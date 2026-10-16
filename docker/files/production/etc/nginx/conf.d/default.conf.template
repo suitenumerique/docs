@@ -81,6 +81,8 @@ server {
     # Document routes, guarded by the same document authorization as the
     # websocket, and the public keys the collaboration server signs with.
     location ~ ^/collaboration/(ydoc|rollback|prune|changeset|activity|jwks)/ {
+        proxy_http_version 1.1;
+
         proxy_pass http://${YHUB_HOST}:3002;
         proxy_set_header X-Forwarded-Proto https;
         proxy_set_header Origin $http_origin;
