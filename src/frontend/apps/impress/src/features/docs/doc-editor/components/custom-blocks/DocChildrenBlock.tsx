@@ -33,7 +33,9 @@ export const DocChildrenList = ({ isEditable }: { isEditable: boolean }) => {
     queryFn: () => getAllDocChildren(docId as string),
     enabled: !!docId,
     // Sub-docs change from other pages and other users, refetch on every mount
+    // and when the tab regains focus
     staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   // Refetch when the sidebar tree changes the sub-docs of this doc (created,
