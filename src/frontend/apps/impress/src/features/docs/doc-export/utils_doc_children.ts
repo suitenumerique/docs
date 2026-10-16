@@ -1,3 +1,6 @@
+import type { QueryClient } from '@tanstack/react-query';
+
+import { KEY_DOC } from '@/docs/doc-management/api/useDoc';
 import { getAllDocChildren } from '@/docs/doc-tree/api/useDocChildren';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -8,10 +11,15 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * interlink to it, as they are at export time, since an exported file cannot
  * query them. Paragraphs rather than list items, so the file shows no bullets,
  * like the editor.
+ *
+ * The Markdown and HTML exports render each interlink once, synchronously, so
+ * the sub-docs are put in the query cache: an uncached one would come out as a
+ * loader instead of its title.
  */
 export async function expandDocChildrenBlocks<T>(
   blocks: T[],
   docId: string,
+  queryClient: QueryClient,
 ): Promise<T[]> {
   const hasDocChildrenBlock = (items: unknown[]): boolean =>
     items.some(
@@ -29,6 +37,9 @@ export async function expandDocChildrenBlocks<T>(
   // A failed lookup must fail the export: an empty list would silently drop
   // the sub-docs from a file the user thinks is complete.
   const children = await getAllDocChildren(docId);
+  children.forEach((child) =>
+    queryClient.setQueryData([KEY_DOC, { id: child.id }], child),
+  );
   const links = children.map((child) => ({
     id: `doc-children-${child.id}`,
     type: 'paragraph',

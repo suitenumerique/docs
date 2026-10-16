@@ -1,4 +1,5 @@
 import { VariantType } from '@gouvfr-lasuite/ui-components';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
@@ -12,6 +13,7 @@ export const useCopyCurrentEditorToClipboard = () => {
   const { currentDoc } = useDocStore();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   return async (asFormat: 'html' | 'markdown') => {
     if (!editor) {
@@ -25,7 +27,11 @@ export const useCopyCurrentEditorToClipboard = () => {
 
     try {
       const blocks = currentDoc
-        ? await expandDocChildrenBlocks(editor.document, currentDoc.id)
+        ? await expandDocChildrenBlocks(
+            editor.document,
+            currentDoc.id,
+            queryClient,
+          )
         : editor.document;
       const editorContentFormatted =
         asFormat === 'html'
