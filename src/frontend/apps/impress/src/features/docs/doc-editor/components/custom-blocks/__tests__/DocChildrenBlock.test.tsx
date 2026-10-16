@@ -1,5 +1,11 @@
 import { focusManager } from '@tanstack/react-query';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getAllDocChildren } from '@/docs/doc-tree/api/useDocChildren';
@@ -72,6 +78,31 @@ describe('DocChildrenList', () => {
 
     expect(await screen.findByText('Added by a colleague')).toBeInTheDocument();
     expect(getAllDocChildren).toHaveBeenCalledTimes(2);
+    focusManager.setFocused(undefined);
+  });
+
+  it('keeps the loaded list when a later refetch fails', async () => {
+    vi.mocked(getAllDocChildren)
+      .mockResolvedValueOnce([
+        { id: 'child-1', title: 'Meeting notes' },
+      ] as Awaited<ReturnType<typeof getAllDocChildren>>)
+      .mockRejectedValueOnce(new Error('503'));
+
+    render(<DocChildrenList isEditable />, { wrapper: AppWrapper });
+    expect(await screen.findByText('Meeting notes')).toBeInTheDocument();
+
+    act(() => {
+      focusManager.setFocused(false);
+    });
+    act(() => {
+      focusManager.setFocused(true);
+    });
+
+    await waitFor(() => expect(getAllDocChildren).toHaveBeenCalledTimes(2));
+    expect(screen.getByText('Meeting notes')).toBeInTheDocument();
+    expect(
+      screen.queryByText('The sub-docs could not be loaded.'),
+    ).not.toBeInTheDocument();
     focusManager.setFocused(undefined);
   });
 });
