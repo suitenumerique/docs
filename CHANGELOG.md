@@ -20,6 +20,8 @@ and this project adheres to
 
 ### Fixed
 
+- 💄(frontend) restore native task checkboxes and dim completed tasks
+
 - 🔒️(backend) bind comment thread to the path document on creation #2838
 
 ## [v6.0.1] - 2026-10-15
