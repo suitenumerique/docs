@@ -9,6 +9,9 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a dedicated document abilities endpoint #2885
+### Changed
+
+- 💄(frontend) restore native task checkboxes and dim completed tasks #2857
 
 ### Removed
 
