@@ -266,7 +266,7 @@ Internet Content Adaptation Protocol (ICAP), see
 install a local testing environment as follow:
 
 ```text
-$ helm install --repo https://suitenumerique.github.io/helm-dev-backend --version ">=0.0.14" -f documentation/examples/helm/cicap.values.yaml cicap dev-backend
+$ helm install --repo https://suitenumerique.github.io/helm-dev-backend --version ">=0.0.16" -f documentation/examples/helm/cicap.values.yaml cicap dev-backend
 $ kubectl get pods
 NAME                                       READY   STATUS    RESTARTS   AGE
 cicap-dev-backend-cicap-xxxxx-xxxxx        2/2     Running   0          5m
@@ -276,8 +276,10 @@ The pod runs two containers: `cicap` (the c-icap server) and `clamd` (the
 ClamAV daemon). Wait for both to be ready: on the first start the `clamd`
 container downloads the ClamAV virus database, which takes a few minutes and
 requires access to `database.clamav.net`, then loads it in memory (about
-1.5 GiB). Until then the `cicap` container waits for clamd and logs
-`Waiting for clamd on 127.0.0.1:3310`.
+1.5 GiB). Until then the `cicap` container waits for clamd, logs
+`Waiting for clamd on 127.0.0.1:3310` and, every minute,
+`Clamd not responding yet after 60s, check the clamd container logs:
+kubectl logs <pod> -c clamd`.
 
 If the pod does not become ready, check the `clamd` container:
 

@@ -8,12 +8,6 @@ cicap:
   maxObjectSize: 100M
   # StreamMaxLength limits the size of files scanned by clamd
   streamMaxLength: 100M
-  clamd:
-    # clamd keeps the whole ClamAV database in memory (~1.5Gi, about twice as
-    # much while reloading it after an update): make sure your cluster can
-    # schedule it
-    resources:
-      requests:
-        memory: 1536Mi
-      limits:
-        memory: 3Gi
+  # The chart already requests 1536Mi (limit 3Gi) for clamd, which keeps the
+  # whole ClamAV database in memory, and nothing for c-icap: raise
+  # clamd.resources if the pod cannot schedule or is OOM-killed.
