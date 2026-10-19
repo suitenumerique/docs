@@ -276,7 +276,7 @@ The pod runs two containers: `cicap` (the c-icap server) and `clamd` (the
 ClamAV daemon). Wait for both to be ready: on the first start the `clamd`
 container downloads the ClamAV virus database, which takes a few minutes and
 requires access to `database.clamav.net`, then loads it in memory (about
-1 GiB). Until then the `cicap` container waits for clamd and logs
+1.5 GiB). Until then the `cicap` container waits for clamd and logs
 `Waiting for clamd on 127.0.0.1:3310`.
 
 If the pod does not become ready, check the `clamd` container:

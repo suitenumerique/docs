@@ -9,7 +9,7 @@ cicap:
   # StreamMaxLength limits the size of files scanned by clamd
   streamMaxLength: 100M
   clamd:
-    # clamd keeps the whole ClamAV database in memory (~1Gi, about twice as
+    # clamd keeps the whole ClamAV database in memory (~1.5Gi, about twice as
     # much while reloading it after an update): make sure your cluster can
     # schedule it
     resources:
