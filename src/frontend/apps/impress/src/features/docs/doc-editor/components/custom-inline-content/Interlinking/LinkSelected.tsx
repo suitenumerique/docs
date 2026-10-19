@@ -104,6 +104,12 @@ export const LinkSelected = ({
           top: 2px;
           margin-right: 0.2rem;
         }
+        /* An emoji is wider than the page icon, keep the titles aligned */
+        & .--docs--interlinking-link-icon {
+          display: inline-block;
+          width: 1.25rem;
+          text-align: center;
+        }
         &:hover {
           background-color: var(
             --c--contextuals--background--semantic--contextual--primary
