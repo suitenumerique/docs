@@ -131,6 +131,7 @@ export const DocsEditorStyle = createGlobalStyle`
     .bn-block-content[data-content-type='checkListItem'][data-checked='true']
       .bn-inline-content {
       text-decoration: none;
+      color: var(--c--contextuals--content--semantic--neutral--tertiary);
     }
     a {
       color: var(--c--globals--colors--gray-600);
@@ -209,32 +210,7 @@ export const DocsEditorStyle = createGlobalStyle`
     * Checklist items
     */
     .bn-block-content[data-content-type='checkListItem'] > div > input {
-      appearance: none;
-      width: 20px;
-      height: 20px;
-      border: 2px solid
-        var(--c--contextuals--content--semantic--neutral--tertiary);
-      border-radius: 4px;
-      cursor: pointer;
-      position: relative;
-      align-self: center;
-      margin-top: 2px;
-    }
-    .bn-block-content[data-content-type='checkListItem'] > div > input:checked {
-      background-color: var(--c--contextuals--content--semantic--brand--tertiary);
-      border-color: var(--c--contextuals--content--semantic--brand--tertiary);
-    }
-    .bn-block-content[data-content-type='checkListItem']
-      > div
-      > input:checked::after {
-      content: 'check';
-      font-family: 'Material Symbols Outlined Variable', sans-serif;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: var(--c--contextuals--content--semantic--overlay--primary);
-      font-size: 18px;
+      accent-color: var(--c--contextuals--content--semantic--brand--secondary);
     }
 
     /**
