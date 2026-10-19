@@ -23,7 +23,7 @@ files: [
   {
     source: "/frontend/packages/i18n/locales/impress/translations-crowdin.json",
     dest: "/frontend-impress.json",
-    translation: "/frontend/packages/i18n/locales/impress/%two_letters_code%/translations.json",
+    translation: "/frontend/packages/i18n/locales/impress/%locale%/translations.json",
     skip_untranslated_strings: true,
   },
 ]

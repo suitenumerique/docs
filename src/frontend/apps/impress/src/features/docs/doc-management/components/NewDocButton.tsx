@@ -8,7 +8,7 @@ import { useRouter } from 'next/router';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Text } from '@/components';
+import { ButtonLink, Text } from '@/components';
 import { useConfig } from '@/core/config/api/useConfig';
 import { useLeftPanelStore } from '@/features/left-panel/stores/useLeftPanelStore';
 import ArrowDownIcon from '@/icons/arrow-drop-down.svg';
@@ -26,7 +26,6 @@ interface NewDocButtonProps {
 }
 
 export const NewDocButton = ({ onClose }: NewDocButtonProps) => {
-  const router = useRouter();
   const { t } = useTranslation();
   const { currentDoc } = useDocStore();
   const { data: config } = useConfig();
@@ -34,15 +33,11 @@ export const NewDocButton = ({ onClose }: NewDocButtonProps) => {
 
   return (
     <>
-      <Button
+      <ButtonLink
         href="/docs/new"
         data-testid="new-doc-button"
         color="brand"
-        onClick={(e) => {
-          if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
-            e.preventDefault();
-            void router.push('/docs/new');
-          }
+        onClick={() => {
           onClose?.();
         }}
         icon={<PlusIcon aria-hidden="true" width={24} height={24} />}
@@ -53,9 +48,9 @@ export const NewDocButton = ({ onClose }: NewDocButtonProps) => {
         }}
       >
         <Text $withThemeInherited $size="md" $weight="500">
-          {t('New')}
+          {t('New', { description: 'Button to create a new document' })}
         </Text>
-      </Button>
+      </ButtonLink>
       {isDropdownEnabled && <DropdownArrow />}
     </>
   );
@@ -97,7 +92,9 @@ export function DropdownArrow() {
   const options = useMemo<DropdownMenuItem[]>(
     () => [
       {
-        label: t('New sub-doc'),
+        label: t('New sub-doc', {
+          description: 'Action to create a doc nested under the current doc',
+        }),
         icon: <SubDocIcon aria-hidden="true" width="24" height="24" />,
         callback: () => {
           if (currentDoc) {
@@ -109,7 +106,9 @@ export function DropdownArrow() {
         isHidden: !currentDoc,
       },
       {
-        label: t('Import a document'),
+        label: t('Import a document', {
+          description: 'Menu action to create a document from a file',
+        }),
         icon: <UploadIcon aria-hidden="true" width="24" height="24" />,
         callback: openImport,
         isHidden: !isImportEnabled || !!currentDoc,
@@ -126,7 +125,10 @@ export function DropdownArrow() {
         onOpenChange={setIsMenuOpen}
       >
         <Button
-          aria-label={t('Open new document options')}
+          aria-label={t('Open new document options', {
+            description:
+              'Accessible name of the button opening the new document menu',
+          })}
           color="brand"
           variant="primary"
           iconPosition="left"

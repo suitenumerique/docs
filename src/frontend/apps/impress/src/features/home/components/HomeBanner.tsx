@@ -71,7 +71,9 @@ export default function HomeBanner() {
               line-height: ${!isMobile ? '56px' : '45px'};
             `}
           >
-            {t('Collaborative writing, Simplified.')}
+            {t('Collaborative writing, Simplified.', {
+              description: 'Main headline of the home page',
+            })}
           </Text>
           <Text
             $size="lg"
@@ -81,6 +83,7 @@ export default function HomeBanner() {
           >
             {t(
               'Collaborate and write in real time, without layout constraints.',
+              { description: 'Subtitle of the home page headline' },
             )}
           </Text>
           {withProConnect ? (
@@ -90,14 +93,18 @@ export default function HomeBanner() {
               onClick={() => gotoLogin()}
               icon={<Icon iconName="bolt" $color="white" />}
             >
-              {t('Start Writing')}
+              {t('Start Writing', {
+                description: 'Call-to-action button of the home page',
+              })}
             </Button>
           )}
         </Box>
         {!isMobile && (
           <Image
             src={banner}
-            alt={t('Banner image')}
+            alt={t('Banner image', {
+              description: 'Alt text of the home page banner',
+            })}
             priority
             style={{
               width: 'auto',
@@ -121,7 +128,9 @@ export default function HomeBanner() {
               ?.scrollIntoView({ behavior: 'smooth' });
           }}
         >
-          {t('Show more')}
+          {t('Show more', {
+            description: 'Button revealing more of the home page',
+          })}
         </Button>
       </Box>
     </Box>

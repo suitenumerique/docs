@@ -1,8 +1,12 @@
-import { Button } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 
-import { Box, ButtonCloseModal, SeparatedSection } from '@/components';
+import {
+  Box,
+  ButtonCloseModal,
+  ButtonLink,
+  SeparatedSection,
+} from '@/components';
 import { NewDocButton } from '@/docs/doc-management/components/NewDocButton';
 import { DocSearchButtonModal } from '@/docs/doc-search/components/DocSearchButtonModal';
 import { useAuth } from '@/features/auth';
@@ -46,9 +50,7 @@ export const LeftPanelHeaderActions = () => {
   const { t } = useTranslation();
   const { isMobile } = useResponsiveStore();
 
-  const goToHome = () => {
-    void router.push('/');
-
+  const onHomeClick = () => {
     if (isMobile) {
       togglePanel();
     }
@@ -68,10 +70,14 @@ export const LeftPanelHeaderActions = () => {
         )}
         <Box $direction="row" $gap="2px" $margin={{ left: 'auto' }}>
           {router.pathname !== '/' && (
-            <Button
+            <ButtonLink
+              href="/"
               data-testid="home-button"
-              onClick={goToHome}
-              aria-label={t('Back to homepage')}
+              onClick={onHomeClick}
+              aria-label={t('Back to homepage', {
+                description:
+                  'Accessible name of the button going back to the home page',
+              })}
               size="medium"
               color="brand"
               variant="tertiary"

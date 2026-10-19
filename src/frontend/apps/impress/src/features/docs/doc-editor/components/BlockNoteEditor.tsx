@@ -23,18 +23,21 @@ import {
 import {
   FloatingComposerController,
   FloatingThreadController,
+  ReactAudioBlock,
+  ReactFileBlock,
+  ReactImageBlock,
+  ReactVideoBlock,
   ThreadsSidebar,
   useCreateBlockNote,
 } from '@blocknote/react';
-import { HocuspocusProvider } from '@hocuspocus/provider';
 import { FindAndReplace } from '@tiptap/extension-find-and-replace';
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import type { Awareness } from 'y-protocols/awareness';
+import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 
-import { Box, TextErrors } from '@/components';
+import { Box } from '@/components';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import {
@@ -43,7 +46,7 @@ import {
   useComments,
 } from '@/docs/doc-comments';
 import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
-import { Doc } from '@/docs/doc-management';
+import { type Doc } from '@/docs/doc-management/types';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 import { useAnalytics } from '@/libs/Analytics';
@@ -51,7 +54,6 @@ import { useAnalytics } from '@/libs/Analytics';
 import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
 import {
   useHeadings,
-  useSaveDoc,
   useScrollToBlockAnchor,
   useShortcuts,
   useUploadFile,
@@ -59,7 +61,7 @@ import {
 } from '../hook';
 import { useEditorStore } from '../stores';
 import { DocsEditorStyle } from '../styles';
-import { DocsBlockNoteEditor } from '../types';
+import { type DocsBlockNoteEditor } from '../types';
 import { randomColor, sanitizeColor } from '../utils';
 
 import BlockNoteAI from './AI';
@@ -72,7 +74,10 @@ const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
 const localesBNAI = BlockNoteAI?.localesAI || {};
 import { createSafeCodeBlockSpec } from './custom-blocks/CodeBlock';
-import { InterlinkingLinkInlineContent } from './custom-inline-content';
+import {
+  InterlinkingLinkInlineContent,
+  getPastedDocInterlink,
+} from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
 
 const localesBNMultiColumn = XLMultiColumn?.locales;
@@ -82,6 +87,10 @@ const baseBlockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
+      audio: ReactAudioBlock(),
+      file: ReactFileBlock(),
+      image: ReactImageBlock(),
+      video: ReactVideoBlock(),
       callout: CalloutBlock(),
       codeBlock: createSafeCodeBlockSpec(),
       diagram: createReactDiagramBlockSpec(),
@@ -102,7 +111,7 @@ export const blockNoteSchema = (withMultiColumn?.(baseBlockNoteSchema) ||
 
 interface BlockNoteEditorProps {
   doc: Doc;
-  provider: HocuspocusProvider;
+  provider: WebsocketProvider;
 }
 
 export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
@@ -110,7 +119,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { setEditor } = useEditorStore();
   const { themeTokens } = useCunninghamTheme();
   const refEditorContainer = useRef<HTMLDivElement>(null);
-  useSaveDoc(doc.id, provider.document);
 
   const { i18n, t } = useTranslation();
   const langLocalesBN =
@@ -133,7 +141,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       ? DEFAULT_LOCALE
       : i18n.resolvedLanguage;
 
-  const { uploadFile, errorAttachment } = useUploadFile(doc.id);
+  const { uploadFile } = useUploadFile(doc.id);
   const conf = useConfig().data;
   const { isFeatureFlagActivated } = useAnalytics();
   const aiBlockNoteAllowed = !!(
@@ -145,7 +153,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const aiExtension = useAI?.(doc.id, aiBlockNoteAllowed);
 
   const collabName = user?.full_name || user?.email;
-  const cursorName = collabName || t('Anonymous');
+  const cursorName =
+    collabName ||
+    t('Anonymous', {
+      description: 'Display name of a user without a known name',
+    });
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
   // Comments
@@ -172,8 +184,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     withCollaboration({
       collaboration: {
-        provider: provider as { awareness?: Awareness | undefined },
-        fragment: provider.document.getXmlFragment('document-store'),
+        provider,
+        fragment: provider.doc.getXmlFragment('document-store'),
         user: {
           name: cursorName,
           color: randomColor(),
@@ -235,7 +247,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           ai: localesBNAI?.[langLocalesBNAI as keyof typeof localesBNAI],
         }),
       },
-      pasteHandler: ({ event, defaultPasteHandler }) => {
+      pasteHandler: ({ event, editor: pasteEditor, defaultPasteHandler }) => {
         // Get clipboard data
         const blocknoteData = event.clipboardData?.getData('blocknote/html');
 
@@ -251,6 +263,30 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
          */
         if (blocknoteData && blocknoteData.includes('data-bn-thread-id')) {
           void threadStore.refreshThreads();
+        }
+
+        /**
+         * When pasting a bare link to a doc on this same domain, turn it
+         * into an interlink instead of a plain link, so it benefits from
+         * the title-sync and navigation behaviour of the interlinking system.
+         */
+        const pastedInterlink = getPastedDocInterlink(
+          event,
+          pasteEditor as DocsBlockNoteEditor,
+        );
+        if (pastedInterlink?.docId) {
+          editor.insertInlineContent([
+            {
+              type: 'interlinkingLinkInline',
+              props: {
+                docId: pastedInterlink.docId,
+                ...(pastedInterlink.blockId && {
+                  blockId: pastedInterlink.blockId,
+                }),
+              },
+            },
+          ]);
+          return true;
         }
 
         return defaultPasteHandler();
@@ -322,15 +358,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         currentUserAvatarUrl={currentUserAvatarUrl}
       />
       <DocsFindReplaceStyle />
-      {errorAttachment && (
-        <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
-          <TextErrors
-            causes={errorAttachment.cause}
-            canClose
-            $textAlign="left"
-          />
-        </Box>
-      )}
       <BlockNoteView
         className="--docs--main-editor"
         editor={editor}
@@ -339,7 +366,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         sideMenu={false}
         theme="light"
         comments={false}
-        aria-label={t('Document editor')}
+        aria-label={t('Document editor', {
+          description: 'Accessible name of the editor area',
+        })}
         // To not clipped the floating part in the editor area
         portalElements={{ default: null }}
       >
@@ -418,6 +447,8 @@ export const BlockNoteReader = ({
   }, [setEditor, editor, isMainEditor]);
 
   useHeadings(editor);
+
+  useScrollToBlockAnchor();
 
   return (
     <Box>

@@ -21,10 +21,10 @@ const Page: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>{`${t('Offline')} - ${t('Docs')}`}</title>
+        <title>{`${t('Offline', { description: 'Page title when there is no internet connection' })} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}</title>
         <meta
           property="og:title"
-          content={`${t('Offline')} - ${t('Docs')}`}
+          content={`${t('Offline', { description: 'Page title when there is no internet connection' })} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}
           key="title"
         />
       </Head>
@@ -32,17 +32,21 @@ const Page: NextPageWithLayout = () => {
         <Icon404 aria-label="Image 404" role="img" />
 
         <Text $size="h2" $weight="700">
-          {t('Offline ?!')}
+          {t('Offline ?!', { description: 'Heading of the offline page' })}
         </Text>
 
         <Text as="p" $textAlign="center" $maxWidth="400px" $size="m">
-          {t("Can't load this page, please check your internet connection.")}
+          {t("Can't load this page, please check your internet connection.", {
+            description: 'Message of the offline page',
+          })}
         </Text>
 
         <Box $margin={{ top: 'large' }}>
           <StyledLink href="/">
             <StyledButton icon={<Icon iconName="house" $color="white" />}>
-              {t('Home')}
+              {t('Home', {
+                description: 'Button/link label to go back to the home page',
+              })}
             </StyledButton>
           </StyledLink>
         </Box>

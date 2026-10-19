@@ -1,6 +1,8 @@
 minio:
   enabled: true
-  image: minio/minio
+  image: pgsty/silo
+  mc:
+    image: pgsty/mc
   name: minio
   # serviceNameOverride: docs-minio
   ingress:
@@ -15,8 +17,6 @@ minio:
     tls:
       enabled: true
       secretName: docs-tls
-  api:
-    port: 80
   username: dinum
   password: password
   bucket: docs-media-storage

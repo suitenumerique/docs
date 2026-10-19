@@ -10,13 +10,10 @@ import { createGlobalStyle } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useThreadStore } from '@/docs/doc-comments/stores/useThreadStore';
-import { Doc, base64ToYDoc, useProviderStore } from '@/docs/doc-management/';
-import { useDocContentUpdate } from '@/docs/doc-management/api/useDocContentUpdate';
+import { type Doc } from '@/docs/doc-management/';
 
-import { useDocVersion } from '../api';
-import { KEY_LIST_DOC_VERSIONS } from '../api/useDocVersions';
-import { Versions } from '../types';
-import { revertUpdate } from '../utils';
+import { useRestoreDocVersion } from '../api';
+import { type DocVersion } from '../types';
 
 const ModalStyle = createGlobalStyle`
   .c__modal__title {
@@ -28,7 +25,7 @@ interface ModalConfirmationVersionProps {
   docId: Doc['id'];
   onClose: () => void;
   onSuccess: () => void;
-  versionId: Versions['version_id'];
+  versionId: DocVersion['id'];
 }
 
 export const ModalConfirmationVersion = ({
@@ -37,78 +34,62 @@ export const ModalConfirmationVersion = ({
   docId,
   versionId,
 }: ModalConfirmationVersionProps) => {
-  const { data: version } = useDocVersion({
-    docId,
-    versionId,
-  });
   const { t } = useTranslation();
   const { toast } = useToastProvider();
-  const { provider } = useProviderStore();
   const { threadStore } = useThreadStore();
-  const { mutate: updateDocContent } = useDocContentUpdate({
-    listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
+
+  /**
+   * The collaboration server undoes everything after this version and hands the
+   * result to every open editor, this one included — so there is nothing to
+   * apply here and nothing to reload.
+   */
+  const { mutate: restoreVersion, isPending } = useRestoreDocVersion({
     onSuccess: () => {
-      const onDisplaySuccess = () => {
-        toast(t('Version restored successfully'), VariantType.SUCCESS);
-        onSuccess();
-      };
-
-      if (!provider || !version?.content) {
-        onDisplaySuccess();
-        return;
-      }
-
-      revertUpdate(
-        provider.document,
-        provider.document,
-        base64ToYDoc(version.content),
+      toast(
+        t('Version restored successfully', {
+          description: 'Toast shown after restoring an older version',
+        }),
+        VariantType.SUCCESS,
       );
+      onSuccess();
 
       threadStore?.refreshThreads();
-
-      onDisplaySuccess();
     },
   });
-
-  if (!version) {
-    return null;
-  }
 
   return (
     <Modal
       isOpen
       closeOnClickOutside
       onClose={() => onClose()}
-      aria-label={t('Warning')}
+      aria-label={t('Warning', { description: 'Title of a warning dialog' })}
       rightActions={
         <>
           <Button
-            aria-label={`${t('Cancel')} - ${t('Warning')}`}
+            aria-label={`${t('Cancel', { description: 'Button to dismiss a dialog without confirming' })} - ${t('Warning', { description: 'Title of a warning dialog' })}`}
             variant="secondary"
             fullWidth
             autoFocus
             onClick={() => onClose()}
           >
-            {t('Cancel')}
+            {t('Cancel', {
+              description: 'Button to dismiss a dialog without confirming',
+            })}
           </Button>
           <Button
-            aria-label={t('Restore')}
+            aria-label={t('Restore', {
+              description:
+                'Button to restore a deleted document or an older version',
+            })}
             color="error"
             fullWidth
-            onClick={() => {
-              if (!version?.content) {
-                return;
-              }
-
-              updateDocContent({
-                id: docId,
-                content: version.content,
-              });
-
-              onClose();
-            }}
+            disabled={isPending}
+            onClick={() => restoreVersion({ docId, versionId })}
           >
-            {t('Restore')}
+            {t('Restore', {
+              description:
+                'Button to restore a deleted document or an older version',
+            })}
           </Button>
         </>
       }
@@ -121,7 +102,9 @@ export const ModalConfirmationVersion = ({
           $size="h6"
           $align="flex-start"
         >
-          {t('Restoring an older version')}
+          {t('Restoring an older version', {
+            description: 'Title of the dialog confirming restoring a version',
+          })}
         </Text>
       }
     >
@@ -131,6 +114,7 @@ export const ModalConfirmationVersion = ({
           <Text $variation="secondary" as="p" $margin="none">
             {t(
               "The current document will be replaced, but you'll still find it in the version history.",
+              { description: 'Explanation in the restore version dialog' },
             )}
           </Text>
         </Box>

@@ -8,48 +8,35 @@ To make it work, some configuration should be made and another service enabled i
 
 The first configuration to make is related to converting a docs in multiple format. This will be used by the `formatted-content` endpoint (`/api/v1.0/documents/{document_id}/formatted-content/?content_format=(json|html|markdown)`).
 This service is also used by the `create-for-owner` endpoint and in the import of markdown file.
-To configure it, use this environment variables in the Django service:
+To configure it, use this environment variable in the Django service:
 
 ```yaml
 Y_PROVIDER_API_BASE_URL: http://{y-provider-service}:443/api/
-Y_PROVIDER_API_KEY: a-shared-private-key-with-y-provider
 ```
 
 For the `Y_PROVIDER_API_BASE_URL`, it can be the FQDN of your docs instance if you have configured a reverse proxy in front of the y-provider service and created a route to the `/api` for this service. It can also be the internal `y-provider` service url if Django can access it directly. In the case you deploy in a Kubernetes cluster, you can use the `y-provider` service url. We prefer the usage of internal url.
 
-You also have to add an environment variable in your `y-provider` configuration, to share the same `Y_PROVIDER_API_KEY`:
+Requests to the y-provider service are authenticated with a short-lived admin JWT that Django signs itself (see `core.services.jwt_services.JWTService`), instead of a shared secret. The y-provider service verifies the signature against the public key Django publishes on its JWKS endpoint (`/api/v1.0/jwks`), so there is nothing to configure on the Django side beyond `JWT_PRIVATE_KEY` (see the JWT section of [env.md](env.md)).
+
+On the `y-provider` side, point it at the Django backend so it can fetch the JWKS:
 
 ```yaml
-Y_PROVIDER_API_KEY: a-shared-private-key-with-y-provider
+COLLABORATION_BACKEND_BASE_URL: http://{django-service}:8000
 ```
 
-### Splitting conversion service
+The JWKS is fetched from `{COLLABORATION_BACKEND_BASE_URL}/api/v1.0/jwks`, so that url has to be reachable from the y-provider service.
 
-The conversion service is present in the `y-provider` server. The same server used to manage websockets. You can split in one side the websocket server and in an other side the converter service.
-This feature is only available in our helm chart, if you are deploying an other way you can take example of what is made to implement it.
-The idea is to deploy twice the `y-provider` server, one dedicated for websockets and one dedicated to the conversion.
+### One service, not two anymore
 
-In the helm chart, you can use this value that will do the job for you:
+The `y-provider` server used to serve the websockets as well, which is why it could be deployed twice — one release for the collaboration, one for the conversion (`yProvider.converter`). The collaboration is served by [yhub](collaboration.md) now, so the conversion is all that is left: the `y-provider` service **is** the converter, and the `yProvider.converter` values are gone.
 
-```yaml
-yProvider:
-  converter:
-    enabled: true
-```
-
-Every parameter in the `yProvider` key can be overridden in the `yProvider.converter` key.
-
-Once enabled, you have to enable the `Y_PROVIDER_API_BASE_URL` with the url of the newly created service, it is the same as before with `-converter` at the end.
-If before it was
+A deployment coming from a chart older than this one has one thing to change, the url the backend calls, which loses its suffix:
 
 ```yaml
-Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
-```
-
-now it is
-
-```yaml
+# before
 Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider-converter:443/api/
+# now
+Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
 ```
 
 ## Docspec configuration

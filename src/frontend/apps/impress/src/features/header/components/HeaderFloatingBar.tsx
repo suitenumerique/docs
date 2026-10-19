@@ -21,7 +21,12 @@ export const HeaderFloatingBar = (props: PropsWithChildren<BoxType>) => {
   return (
     <FloatingBar $align="center" {...props}>
       {isTablet && (
-        <LeftPanelCollapseButton ariaLabel={t('Toggle left panel')} />
+        <LeftPanelCollapseButton
+          ariaLabel={t('Toggle left panel', {
+            description:
+              'Accessible name of the button showing or hiding the left panel',
+          })}
+        />
       )}
       <FadeComponent isVisible={isVisible}>
         <HeaderIcon />

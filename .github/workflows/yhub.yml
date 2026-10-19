@@ -1,0 +1,75 @@
+name: Collaboration Server Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - "*"
+
+permissions:
+  contents: read
+
+# Its image is built by docker-hub.yml, and the backend integration tests in 
+# impress.yml run against a live instance of it. This workflow runs the package's 
+# own checks.
+defaults:
+  run:
+    working-directory: src/yhub-server
+
+# One run per pull request: a new push cancels the checks of the previous one.
+# Pushes get a group of their own (the commit), so every commit of main keeps
+# its full set of checks.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  lint-yhub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "22.x"
+          cache: yarn
+          cache-dependency-path: src/yhub-server/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      # the image compiles with tsconfig.build.json (rootDir ./src, emits),
+      # which can fail where the typecheck passes: build too so a break shows
+      # up here rather than in the image build
+      - name: Build
+        run: yarn build
+
+  test-yhub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "22.x"
+          cache: yarn
+          cache-dependency-path: src/yhub-server/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # unit suite: @y/hub is mocked, no redis, postgres or S3 needed
+      - name: Test
+        run: yarn test

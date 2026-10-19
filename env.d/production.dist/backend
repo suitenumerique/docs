@@ -13,6 +13,18 @@ LOGGING_LEVEL_LOGGERS_APP=INFO
 # Python
 PYTHONPATH=/app
 
+# JWT
+# Signs the short-lived tokens the backend presents to the collaboration server
+# and to the conversion service, which verify them against the public half
+# published on /api/v1.0/jwks. A PEM does not fit in an environment variable,
+# hence the _FILE variant.
+JWT_PRIVATE_KEY_FILE=/keys/private.pem
+
+# Collaboration server
+# Where the content of the documents lives. Reached in-cluster, the routes the
+# backend calls are not meant to be reachable from the outside.
+YHUB_API_BASE_URL=http://${YHUB_HOST}:3002
+
 # Mail
 DJANGO_EMAIL_HOST=<smtp host> 
 DJANGO_EMAIL_HOST_USER=<smtp user> 

@@ -37,6 +37,7 @@ export const LeftPanelCollapseButton = ({
               $size="sm"
               $weight={700}
               $color="var(--c--globals--colors--gray-1000)"
+              $display="unset"
             >
               {buttonTitle}
             </Text>

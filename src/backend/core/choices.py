@@ -48,6 +48,7 @@ class RoleChoices(PriorityTextChoices):
 
 
 PRIVILEGED_ROLES = [RoleChoices.ADMIN, RoleChoices.OWNER]
+COMMENTING_ROLES = [RoleChoices.COMMENTER, RoleChoices.EDITOR, *PRIVILEGED_ROLES]
 
 
 class LinkReachChoices(PriorityTextChoices):

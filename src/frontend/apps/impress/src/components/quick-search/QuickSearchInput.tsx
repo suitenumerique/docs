@@ -56,7 +56,10 @@ export const QuickSearchInput = ({
           autoFocus={true}
           aria-controls={listId}
           value={inputValue}
-          placeholder={placeholder ?? t('Search')}
+          placeholder={
+            placeholder ??
+            t('Search', { description: 'Placeholder of a search input' })
+          }
           onValueChange={onFilter}
           maxLength={254}
           data-testid="quick-search-input"

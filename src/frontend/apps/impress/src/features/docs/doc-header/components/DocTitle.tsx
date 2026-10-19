@@ -11,7 +11,6 @@ import {
   useDocStore,
   useDocTitleUpdate,
   useDocUtils,
-  useIsCollaborativeEditable,
   useTrans,
 } from '@/docs/doc-management';
 import SimpleFileIcon from '@/features/docs/doc-management/assets/simple-document.svg';
@@ -25,8 +24,7 @@ interface DocTitleProps {
 }
 
 export const DocTitle = ({ doc, onTitleUpdate }: DocTitleProps) => {
-  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
-  const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
+  const readOnly = !doc.abilities.partial_update;
 
   if (readOnly) {
     return <DocTitleText />;
@@ -46,7 +44,12 @@ export const DocTitleText = () => {
 
   return (
     <Box className={CLASS_DOC_TITLE} $direction="row" $align="center">
-      <Text as="h2" $margin="none" $size={isMobile ? 'h4' : 'h2'}>
+      <Text
+        as="h2"
+        $margin="none"
+        $size={isMobile ? 'h4' : 'h2'}
+        $display="unset"
+      >
         {emoji && <span aria-hidden="true">{emoji} </span>}
         {displayTitle}
       </Text>
@@ -95,7 +98,9 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
             width="25px"
             height="25px"
             aria-hidden="true"
-            aria-label={t('Simple document icon')}
+            aria-label={t('Simple document icon', {
+              description: 'Accessible name of the default icon of a document',
+            })}
             color={colorsTokens['brand-500']}
           />
         }
@@ -197,6 +202,11 @@ const DocTitleInput = ({ doc, onTitleUpdate }: DocTitleProps) => {
       $align="center"
       $gap="4px"
       $minHeight="40px"
+      $css={css`
+        &:focus-within {
+          outline: none;
+        }
+      `}
     >
       {!isTopRoot && <DocTitleEmojiPicker doc={doc} />}
       {/**
@@ -236,7 +246,7 @@ const DocTitleInput = ({ doc, onTitleUpdate }: DocTitleProps) => {
           defaultValue={titleDisplay || undefined}
           onKeyDownCapture={handleKeyDown}
           suppressContentEditableWarning={true}
-          aria-label={`${t('Document title')}`}
+          aria-label={`${t('Document title', { description: 'Accessible name of the editable document title' })}`}
           aria-multiline={false}
           onBlurCapture={(event) =>
             handleTitleSubmit(event.target.textContent || '')

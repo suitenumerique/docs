@@ -98,9 +98,7 @@ export interface Doc {
     retrieve: boolean;
     search: boolean;
     update: boolean;
-    versions_destroy: boolean;
     versions_list: boolean;
-    versions_retrieve: boolean;
   };
 }
 

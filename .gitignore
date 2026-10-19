@@ -15,6 +15,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!src/loadtest/k6/lib/
 lib64/
 parts/
 sdist/
@@ -46,6 +47,9 @@ env.d/terraform
 # Docker
 compose.override.yml
 docker/auth/*.local
+
+# yhub server local install
+src/yhub-server/node_modules/
 
 # npm
 node_modules
@@ -82,7 +86,7 @@ db.sqlite3
 
 # AI
 CLAUDE.md
-AGENTS.md
+!AGENTS.md
 .claude/
 .cursor/
 .cursorrules
@@ -90,3 +94,4 @@ AGENTS.md
 .aider*
 .copilot/
 .github/copilot-instructions.md
+.playwright-mcp

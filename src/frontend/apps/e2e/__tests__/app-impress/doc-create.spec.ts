@@ -22,7 +22,7 @@ test.describe('Doc Create', () => {
       timeout: 5000,
     });
 
-    await page.getByRole('button', { name: 'Back to homepage' }).click();
+    await page.getByRole('link', { name: 'Back to homepage' }).click();
 
     const docsGrid = page.getByTestId('docs-grid');
     await expect(docsGrid).toBeVisible();

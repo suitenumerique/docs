@@ -24,10 +24,10 @@ const Page: NextPageWithLayout = () => {
   return (
     <>
       <Head>
-        <title>{`${pageTitle} - ${t('Docs')}`}</title>
+        <title>{`${pageTitle} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}</title>
         <meta
           property="og:title"
-          content={`${pageTitle} - ${t('Docs')}`}
+          content={`${pageTitle} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}
           key="title"
         />
       </Head>

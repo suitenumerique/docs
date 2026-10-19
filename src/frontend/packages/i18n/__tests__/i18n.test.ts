@@ -60,6 +60,36 @@ describe('integration testing on i18n package', () => {
     });
   });
 
+  test('cmd format-deploy keeps the region only when locales collide', () => {
+    // To be sure the tests folder is not here
+    fs.rmSync('./locales/tests', { recursive: true, force: true });
+
+    const locales = {
+      en: 'My test',
+      'fr-FR': 'Mon test',
+      'zh-CN': '简',
+      'zh-TW': '繁',
+    };
+    Object.entries(locales).forEach(([locale, message]) => {
+      fs.mkdirSync(`./locales/tests/${locale}/`, { recursive: true });
+      fs.writeFileSync(
+        `./locales/tests/${locale}/translations.json`,
+        JSON.stringify({ test: { message } }),
+        'utf8',
+      );
+    });
+
+    const output = './locales/tests/translations.json';
+    execSync(`node ./format-deploy.mjs --app=tests --output=${output}`);
+    const json = JSON.parse(fs.readFileSync(output, 'utf8'));
+    expect(json).toEqual({
+      en: { translation: { test: 'My test' } },
+      fr: { translation: { test: 'Mon test' } },
+      'zh-cn': { translation: { test: '简' } },
+      'zh-tw': { translation: { test: '繁' } },
+    });
+  });
+
   test('cmd format-deploy throws an error when translation file is not found', () => {
     // To be sure the tests folder is not here
     fs.rmSync('./locales/tests', { recursive: true, force: true });

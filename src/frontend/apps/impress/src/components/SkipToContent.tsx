@@ -76,7 +76,10 @@ export const SkipToContent = () => {
           whiteSpace: 'nowrap',
         }}
       >
-        {t('Go to content')}
+        {t('Go to content', {
+          description:
+            'Skip link for keyboard users to jump to the main content',
+        })}
       </Button>
     </Box>
   );

@@ -14,10 +14,12 @@ import {
   blockMappingTablePDF,
   blockMappingUploadLoaderPDF,
 } from './blocks-mapping';
-import { inlineContentMappingInterlinkingLinkPDF } from './inline-content-mapping';
+import { createInlineContentMappingInterlinkingLinkPDF } from './inline-content-mapping';
 import { DocsExporterPDF } from './types';
 
-export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
+export const getPdfDocsSchemaMappings = (
+  interlinkTitles: Map<string, string>,
+): DocsExporterPDF['mappings'] => ({
   ...pdfDefaultSchemaMappings,
   blockMapping: {
     ...pdfDefaultSchemaMappings.blockMapping,
@@ -39,7 +41,8 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
   },
   inlineContentMapping: {
     ...pdfDefaultSchemaMappings.inlineContentMapping,
-    interlinkingLinkInline: inlineContentMappingInterlinkingLinkPDF,
+    interlinkingLinkInline:
+      createInlineContentMappingInterlinkingLinkPDF(interlinkTitles),
     // Inline math is rasterized to an image that flows with the text.
     math: inlineMathMapping,
   },
@@ -50,4 +53,4 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     code: (enabled?: boolean) =>
       enabled ? { fontFamily: 'Courier', backgroundColor: '#dcdcdc' } : {},
   },
-};
+});

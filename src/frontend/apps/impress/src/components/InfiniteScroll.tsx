@@ -43,7 +43,10 @@ export const InfiniteScroll = ({
             variant="bordered"
             icon={<Icon iconName="arrow_downward" />}
           >
-            {buttonLabel ?? t('Load more')}
+            {buttonLabel ??
+              t('Load more', {
+                description: 'Button to load the next items of a list',
+              })}
           </Button>
         )}
       </InView>

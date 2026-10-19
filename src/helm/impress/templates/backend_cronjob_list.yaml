@@ -38,9 +38,12 @@ items:
                   imagePullPolicy: {{ ($.Values.backend.image | default dict).pullPolicy | default $.Values.image.pullPolicy }}
                   args:
                     {{- toYaml .command | nindent 22 }}
-                  {{- if $envVars}}
+                  {{- if or $envVars $.Values.jwtKeys.enabled }}
                   env:
                     {{- $envVars | indent 22 }}
+                    {{- if $.Values.jwtKeys.enabled }}
+                    {{- include "impress.jwtKeys.backendEnv" $ | nindent 22 }}
+                    {{- end }}
                   {{- end }}
                   {{- if $.Values.backend.envFrom }}
                   envFrom:
@@ -55,6 +58,9 @@ items:
                     {{- toYaml . | nindent 22 }}
                   {{- end }}
                   volumeMounts:
+                    {{- if $.Values.jwtKeys.enabled }}
+                    {{- include "impress.jwtKeys.volumeMount" $ | nindent 20 }}
+                    {{- end }}
                     {{- range $index, $value := $.Values.mountFiles }}
                     - name: "files-{{ $index }}"
                       mountPath: {{ $value.path }}
@@ -72,6 +78,9 @@ items:
                     {{- end }}
               restartPolicy: {{ .restartPolicy | default "Never" }}
               volumes:
+                {{- if $.Values.jwtKeys.enabled }}
+                {{- include "impress.jwtKeys.volume" $ | nindent 16 }}
+                {{- end }}
                 {{- range $index, $value := $.Values.mountFiles }}
                 - name: "files-{{ $index }}"
                   configMap:

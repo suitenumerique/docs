@@ -44,15 +44,25 @@ export function useDeleteFavoriteDoc({
         });
       });
 
-      syncDocInTree(treeContext, id, { is_favorite: false });
+      syncDocInTree(
+        treeContext,
+        id,
+        { is_favorite: false },
+        { keepFocus: true },
+      );
 
-      const message = t('Document unstarred successfully!');
+      const message = t('Document unstarred successfully!', {
+        description: 'Toast shown after removing a document from favorites',
+      });
       announce(message, 'polite');
 
       onSuccess?.();
     },
     onError: () => {
-      const message = t('Failed to unstar the document.');
+      const message = t('Failed to unstar the document.', {
+        description:
+          'Toast shown when removing a document from favorites failed',
+      });
       announce(message, 'assertive');
     },
   });

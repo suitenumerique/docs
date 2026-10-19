@@ -148,7 +148,9 @@ export const AIMenu = (props: AIMenuProps) => {
       items.unshift({
         key: 'accept',
         icon: <Icon iconName="check_circle" $color="inherit" $size="18px" />,
-        title: t('Accept anyway'),
+        title: t('Accept anyway', {
+          description: 'Button to accept the AI suggestion despite a warning',
+        }),
         onItemClick: () => {
           ai.acceptChanges();
           ai.closeAIMenu();
@@ -192,28 +194,47 @@ export const AIMenu = (props: AIMenuProps) => {
 
   const placeholder = useMemo(() => {
     if (aiResponseStatus === 'thinking') {
-      return t('Thinking...');
+      return t('Thinking...', {
+        description: 'Placeholder shown while the AI prepares an answer',
+      });
     } else if (aiResponseStatus === 'ai-writing') {
-      return t('Writing...');
+      return t('Writing...', {
+        description: 'Placeholder shown while the AI is writing its answer',
+      });
     } else if (aiResponseStatus === 'error') {
-      return t('An error occurred...');
+      return t('An error occurred...', {
+        description: 'Placeholder shown when the AI request failed',
+      });
     }
 
-    return t('Ask anything...');
+    return t('Ask anything...', {
+      description: 'Placeholder of the AI prompt input',
+    });
   }, [aiResponseStatus, t]);
 
   const ariaLiveMessage = useMemo(() => {
     if (aiResponseStatus === 'thinking') {
-      return t('AI is thinking');
+      return t('AI is thinking', {
+        description:
+          'Screen reader announcement while the AI prepares an answer',
+      });
     }
     if (aiResponseStatus === 'ai-writing') {
-      return t('AI is writing');
+      return t('AI is writing', {
+        description:
+          'Screen reader announcement while the AI writes its answer',
+      });
     }
     if (aiResponseStatus === 'user-reviewing') {
-      return t('AI response ready for review');
+      return t('AI response ready for review', {
+        description:
+          'Screen reader announcement when the AI answer can be reviewed',
+      });
     }
     if (aiResponseStatus === 'error') {
-      return t('AI request failed');
+      return t('AI request failed', {
+        description: 'Screen reader announcement when the AI request failed',
+      });
     }
 
     return '';
@@ -257,7 +278,7 @@ export const AIMenu = (props: AIMenuProps) => {
             />
           }
         >
-          {t('Stop')}
+          {t('Stop', { description: 'Button to stop the AI generation' })}
         </Button>
       );
     }

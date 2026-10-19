@@ -16,8 +16,10 @@ def test_user_light_serializer():
         short_name="John",
     )
     serializer = UserLightSerializer(user)
+    assert serializer.data["id"] == str(user.id)
     assert serializer.data["full_name"] == "John Doe"
     assert serializer.data["short_name"] == "John"
+    assert "email" not in serializer.data
 
 
 def test_user_light_serializer_no_full_name():

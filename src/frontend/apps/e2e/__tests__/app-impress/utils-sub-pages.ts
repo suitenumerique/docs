@@ -101,8 +101,12 @@ export const addChild = async ({
       .first();
   }
 
-  await item.hover();
-  await item.getByTestId('doc-tree-item-actions-add-child').click();
+  await expect(async () => {
+    await item.hover();
+    await item
+      .getByTestId('doc-tree-item-actions-add-child')
+      .click({ timeout: 2000 });
+  }).toPass({ timeout: 15000 });
 
   const [name] = randomName(docName, browserName, 1);
   await updateDocTitle(page, name);

@@ -11,6 +11,8 @@ import { Doc } from '../doc-management';
 
 export const CLASS_TREE_ITEM_ACTIONS = 'doc-tree-root-item-actions';
 
+export const ID_TREE_KEYBOARD_INSTRUCTIONS = 'doc-tree-keyboard-instructions';
+
 export const isWithinTreeItemActions = (event: React.SyntheticEvent) =>
   !!(event.target as HTMLElement | null)?.closest(
     `.${CLASS_TREE_ITEM_ACTIONS}`,
@@ -50,6 +52,7 @@ export const syncDocInTree = (
   treeContext: TreeContextType<Doc> | null,
   docId: string,
   data: Partial<Doc>,
+  options?: { keepFocus?: boolean },
 ) => {
   if (!treeContext) {
     return;
@@ -58,15 +61,64 @@ export const syncDocInTree = (
   const { root } = treeContext;
   if (root && root.id === docId) {
     treeContext.setRoot({ ...root, ...data });
+  } else if (options?.keepFocus) {
+    // `updateNode` rebuilds the row and loses the focus inside it.
+    const node = treeContext.treeData.getNode(docId);
+    if (node) {
+      Object.assign(node, data);
+    }
   } else if (treeContext.treeData.getNode(docId)) {
     treeContext.treeData.updateNode(docId, data);
   }
 
-  treeContext.treeApiRef.current?.focus(docId);
+  if (!options?.keepFocus) {
+    treeContext.treeApiRef.current?.focus(docId);
+  }
 };
 
 export const reloadTree = (treeContext: TreeContextType<Doc | null> | null) => {
   treeContext?.setRoot(null);
+};
+
+/**
+ * Inserts a newly created doc into the tree as a sibling of `parentDocId`
+ * (the doc it was created from) and selects it, avoiding a full tree reload.
+ */
+export const addDocToTree = (
+  treeContext: TreeContextType<Doc | null> | null,
+  parentDocId: string,
+  newDoc: Doc,
+) => {
+  if (!treeContext) {
+    return;
+  }
+
+  const parentId = treeContext.treeData.getParentId(parentDocId) as
+    string | null;
+
+  treeContext.treeData.addChild(parentId, {
+    ...newDoc,
+    children: [],
+    childrenCount: newDoc.numchild ?? 0,
+  });
+  treeContext.treeData.setSelectedNode(newDoc);
+};
+
+/**
+ * Removes a doc from the tree once `navigation` resolves, deferred by the
+ * same delay used elsewhere (DocToolBox move/remove) so react-arborist isn't
+ * asked to delete a node that's still selected mid route transition.
+ */
+export const deleteDocFromTreeAfterNavigate = (
+  treeContext: TreeContextType<Doc | null> | null,
+  docId: string,
+  navigation: Promise<unknown>,
+) => {
+  void navigation.then(() => {
+    setTimeout(() => {
+      treeContext?.treeData.deleteNode(docId);
+    }, 100);
+  });
 };
 
 export const findIndexInTree = (

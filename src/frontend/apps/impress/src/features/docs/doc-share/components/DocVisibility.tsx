@@ -1,4 +1,4 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -21,6 +21,7 @@ import {
   getDocLinkRole,
   useDocUtils,
 } from '@/docs/doc-management';
+import { useToast } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 import { useUpdateDocLink } from '../api/useUpdateDocLink';
@@ -42,7 +43,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const { isDesynchronized } = useDocUtils(doc);
   const { linkModeTranslations, linkReachChoices, linkReachTranslations } =
     useTranslatedShareSettings();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
 
   const description =
     docLinkRole === LinkRole.READER
@@ -53,7 +54,9 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
     listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
     onSuccess: () => {
       toast(
-        t('The document visibility has been updated.'),
+        t('The document visibility has been updated.', {
+          description: 'Toast shown after changing the link sharing settings',
+        }),
         VariantType.SUCCESS,
         {
           duration: 2000,
@@ -130,12 +133,16 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   return (
     <Box
       $padding={{ horizontal: 'base' }}
-      aria-label={t('Doc visibility card')}
+      aria-label={t('Doc visibility card', {
+        description: 'Accessible name of the link sharing settings block',
+      })}
       $gap={spacingsTokens['base']}
       className="--docs--doc-visibility"
     >
       <Text as="h2" $weight="700" $size="sm" $margin="none">
-        {t('Link settings')}
+        {t('Link settings', {
+          description: 'Heading of the link sharing settings',
+        })}
       </Text>
       {isDesynchronized && <DocDesynchronized doc={doc} />}
       <Box
@@ -154,7 +161,10 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
         >
           <DropdownMenu
             testId="doc-visibility"
-            label={t('Document visibility')}
+            label={t('Document visibility', {
+              description:
+                'Label of the selector of who can access with the link',
+            })}
             arrowCss={css`
               color: var(
                 --c--contextuals--content--semantic--brand--tertiary
@@ -171,6 +181,10 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
               haveDisabledOptions
                 ? t(
                     'You cannot restrict access to a subpage relative to its parent page.',
+                    {
+                      description:
+                        'Tooltip on a disabled link sharing option of a sub-doc',
+                    },
                   )
                 : undefined
             }
@@ -221,10 +235,17 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
                 haveDisabledLinkRoleOptions
                   ? t(
                       'You cannot restrict access to a subpage relative to its parent page.',
+                      {
+                        description:
+                          'Tooltip on a disabled link sharing option of a sub-doc',
+                      },
                     )
                   : undefined
               }
-              label={t('Document access mode')}
+              label={t('Document access mode', {
+                description:
+                  'Label of the selector of what link users can do: read or edit',
+              })}
             >
               <Text
                 $weight="initial"

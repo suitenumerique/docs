@@ -1,10 +1,11 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { DropdownMenu, DropdownMenuOption, Text } from '@/components';
 import { Access, Doc, Role, useTrans } from '@/docs/doc-management/';
+import { useToast } from '@/hooks';
 
 import { useDeleteDocAccess, useDeleteDocInvitation } from '../api';
 import { Invitation, isInvitation } from '../types';
@@ -34,12 +35,15 @@ export const DocRoleDropdown = ({
 }: DocRoleDropdownProps) => {
   const { t } = useTranslation();
   const { transRole, translatedRoles } = useTrans();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
 
   const { mutate: removeDocInvitation } = useDeleteDocInvitation({
     onError: (error) => {
       toast(
-        error?.data?.role?.[0] ?? t('Error during delete invitation'),
+        error?.data?.role?.[0] ??
+          t('Error during delete invitation', {
+            description: 'Toast shown when deleting an invitation failed',
+          }),
         VariantType.ERROR,
         {
           duration: 4000,
@@ -50,9 +54,15 @@ export const DocRoleDropdown = ({
 
   const { mutate: removeDocAccess } = useDeleteDocAccess({
     onError: () => {
-      toast(t('Error while deleting invitation'), VariantType.ERROR, {
-        duration: 4000,
-      });
+      toast(
+        t('Error while deleting invitation', {
+          description: 'Toast shown when deleting an invitation failed',
+        }),
+        VariantType.ERROR,
+        {
+          duration: 4000,
+        },
+      );
     },
   });
 
@@ -82,7 +92,9 @@ export const DocRoleDropdown = ({
 
     if (rolesAllowed.length < allRoles.length) {
       let result = message ? `${message}\n\n` : '';
-      result += t('This user has access inherited from a parent page.');
+      result += t('This user has access inherited from a parent page.', {
+        description: "Tooltip explaining why a member's role cannot be changed",
+      });
       return result;
     }
 
@@ -108,7 +120,9 @@ export const DocRoleDropdown = ({
     return (
       <Text
         $variation="tertiary"
-        aria-label={t('Document role text')}
+        aria-label={t('Document role text', {
+          description: 'Accessible name of the role of a member',
+        })}
         $weight={500}
         $size="s"
       >
@@ -121,6 +135,7 @@ export const DocRoleDropdown = ({
     <DropdownMenu
       topMessage={topMessage}
       label={t('{{action}}, current role: {{role}}', {
+        description: 'Accessible name of the role dropdown',
         action: ariaLabel,
         role: transRole(currentRole),
       })}
@@ -133,7 +148,9 @@ export const DocRoleDropdown = ({
       options={[
         ...roles,
         {
-          label: t('Remove access'),
+          label: t('Remove access', {
+            description: 'Menu action removing a member from a document',
+          }),
           disabled: !access?.abilities.destroy,
           callback: onRemove,
         },

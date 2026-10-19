@@ -121,7 +121,9 @@ export const DocsGrid = ({
         >
           <FadeComponent isVisible={!!hasDocs}>
             <Box
-              aria-label={t('Documents grid')}
+              aria-label={t('Documents grid', {
+                description: 'Accessible name of the list of documents',
+              })}
               $display="grid"
               $css={css`
                 grid-template-columns: ${
@@ -158,7 +160,9 @@ export const DocsGrid = ({
                 variant="tertiary"
                 className="sr-only"
               >
-                {t('More docs')}
+                {t('More docs', {
+                  description: 'Button loading more documents',
+                })}
               </Button>
             </InView>
           )}
@@ -178,20 +182,30 @@ const DocGridTitleBar = ({
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
 
-  let title = t('Recent');
+  let title = t('Recent', {
+    description: 'Name of the filter listing recently opened docs',
+  });
   let icon = <ClockIcon width={24} height={24} aria-hidden="true" />;
   if (target === DocDefaultFilter.MY_DOCS) {
     icon = <UserIcon width={24} height={24} aria-hidden="true" />;
-    title = t('My docs');
+    title = t('My docs', {
+      description: 'Name of the filter listing docs owned by the user',
+    });
   } else if (target === DocDefaultFilter.SHARED_WITH_ME) {
     icon = <SharedIcon width={24} height={24} aria-hidden="true" />;
-    title = t('Shared with me');
+    title = t('Shared with me', {
+      description: 'Name of the filter listing docs shared with the user',
+    });
   } else if (target === DocDefaultFilter.STARRED) {
     icon = <StarIcon width={24} height={24} aria-hidden="true" />;
-    title = t('Starred');
+    title = t('Starred', {
+      description: "Name of the filter listing the user's favorite docs",
+    });
   } else if (target === DocDefaultFilter.TRASHBIN) {
     icon = <TrashIcon width={24} height={24} aria-hidden="true" />;
-    title = t('Trashbin');
+    title = t('Trashbin', {
+      description: 'Name of the filter listing deleted docs',
+    });
   }
 
   return (
@@ -229,18 +243,24 @@ const DocGridNoDocs = ({ target }: { target: DocDefaultFilter }) => {
         <>
           <DocsIcon width={56} height={56} aria-hidden="true" />
           <Text $size="sm" $weight="700">
-            {t('No doc yet')}
+            {t('No doc yet', {
+              description: 'Empty state heading when the user has no doc',
+            })}
           </Text>
           {[DocDefaultFilter.ALL_DOCS, DocDefaultFilter.MY_DOCS].includes(
             target,
           ) && (
             <Text $size="sm" $weight="400" $variation="secondary">
-              {t('Your docs will appear here.')}
+              {t('Your docs will appear here.', {
+                description: 'Empty state text of the docs list',
+              })}
             </Text>
           )}
           {target === DocDefaultFilter.SHARED_WITH_ME && (
             <Text $size="sm" $weight="400" $variation="secondary">
-              {t('Your shared docs will appear here.')}
+              {t('Your shared docs will appear here.', {
+                description: 'Empty state text of the shared docs list',
+              })}
             </Text>
           )}
         </>
@@ -249,10 +269,14 @@ const DocGridNoDocs = ({ target }: { target: DocDefaultFilter }) => {
         <>
           <BinIcon width={56} height={56} aria-hidden="true" />
           <Text $size="sm" $weight="700">
-            {t('No doc deleted')}
+            {t('No doc deleted', {
+              description: 'Empty state heading of the trashbin',
+            })}
           </Text>
           <Text $size="sm" $weight="400" $variation="secondary">
-            {t('Deleted docs will appear here.')}
+            {t('Deleted docs will appear here.', {
+              description: 'Empty state text of the trashbin',
+            })}
           </Text>
         </>
       )}

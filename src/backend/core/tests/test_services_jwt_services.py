@@ -1,0 +1,352 @@
+"""
+This module contains tests for the JWTService class in the
+core.services.jwt_services module.
+"""
+
+from datetime import datetime, timezone
+from unittest import mock
+
+from django.core.cache import cache
+
+import jwt
+import pytest
+from freezegun import freeze_time
+
+from core.services.jwt_services import (
+    Audiences,
+    ConfigurationError,
+    JWTService,
+    TokenGenerationError,
+)
+from core.tests.utils.jwt_helper import generate_key_pair
+
+# Generating RSA keys is expensive, do it once for the whole module
+PRIVATE_KEY, PUBLIC_KEY = generate_key_pair()
+OTHER_PRIVATE_KEY, OTHER_PUBLIC_KEY = generate_key_pair()
+
+
+@pytest.fixture(name="jwt_settings")
+def jwt_settings_fixture(settings):
+    """Setup valid settings for the JWT service."""
+    settings.JWT_PRIVATE_KEY = PRIVATE_KEY
+    settings.JWT_TOKEN_LIFETIME = 3600
+    return settings
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_token_signs_the_injected_claims_with_rs256():
+    """The generated token is signed with RS256 and carries the given claims."""
+    token = JWTService().get_token({"sub": "user-id", "abilities": ["read"]})
+
+    assert jwt.get_unverified_header(token)["alg"] == "RS256"
+
+    payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+    assert payload["sub"] == "user-id"
+    assert payload["abilities"] == ["read"]
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_token_cannot_be_verified_with_another_key():
+    """The token is signed with the private key defined in the settings."""
+    token = JWTService().get_token({"sub": "user-id"})
+
+    with pytest.raises(jwt.InvalidSignatureError):
+        jwt.decode(token, OTHER_PUBLIC_KEY, algorithms=["RS256"])
+
+
+def test_generate_token_expires_after_the_configured_lifetime(jwt_settings):
+    """The "iat" and "exp" claims are computed from the configured lifetime."""
+    jwt_settings.JWT_TOKEN_LIFETIME = 300
+
+    now = datetime(2026, 8, 4, 10, 0, 0, tzinfo=timezone.utc)
+    with freeze_time(now):
+        token = JWTService().generate_token({"sub": "user-id"})
+        payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+
+    assert payload["iat"] == now.timestamp()
+    assert payload["exp"] == now.timestamp() + 300
+
+
+def test_generate_token_ignores_the_expiry_claims_given_by_the_caller(jwt_settings):
+    """The service owns the token lifetime, the caller cannot extend it."""
+    jwt_settings.JWT_TOKEN_LIFETIME = 60
+
+    now = datetime(2026, 8, 4, 10, 0, 0, tzinfo=timezone.utc)
+    with freeze_time(now):
+        token = JWTService().generate_token(
+            {"sub": "user-id", "iat": 0, "exp": 99999999999}
+        )
+        payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+
+    assert payload["iat"] == now.timestamp()
+    assert payload["exp"] == now.timestamp() + 60
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_token_reuses_the_cached_token():
+    """A token already in cache is returned without signing a new one."""
+    service = JWTService()
+    claims = {"sub": "user-id"}
+
+    token = service.get_token(claims)
+    assert cache.get(service.get_cache_key(claims)) == token
+
+    with mock.patch("core.services.jwt_services.jwt.encode") as mock_encode:
+        assert service.get_token(claims) == token
+
+    mock_encode.assert_not_called()
+
+
+def test_get_token_caches_the_token_for_its_lifetime(jwt_settings):
+    """The cache entry expires along with the token it holds."""
+    jwt_settings.JWT_TOKEN_LIFETIME = 300
+
+    service = JWTService()
+    claims = {"sub": "user-id"}
+
+    with freeze_time("2026-08-04 10:00:00") as frozen_time:
+        token = service.get_token(claims)
+
+        frozen_time.move_to("2026-08-04 10:04:59")
+        assert cache.get(service.get_cache_key(claims)) == token
+
+        frozen_time.move_to("2026-08-04 10:05:01")
+        assert cache.get(service.get_cache_key(claims)) is None
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_token_caches_each_set_of_claims_separately():
+    """Two different sets of claims get two different tokens."""
+    service = JWTService()
+
+    first_token = service.get_token({"sub": "user-id"})
+    second_token = service.get_token({"sub": "other-user-id"})
+
+    assert first_token != second_token
+    assert jwt.decode(first_token, PUBLIC_KEY, algorithms=["RS256"])["sub"] == "user-id"
+    assert (
+        jwt.decode(second_token, PUBLIC_KEY, algorithms=["RS256"])["sub"]
+        == "other-user-id"
+    )
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_admin_token_carries_the_admin_claim():
+    """The admin token is a regular token carrying the "admin" claim."""
+    token = JWTService().get_admin_token(audience=Audiences.YHUB)
+
+    payload = jwt.decode(
+        token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+    )
+    assert payload["admin"] is True
+    assert payload["aud"] == Audiences.YHUB
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_admin_token_embeds_the_extra_claims():
+    """Extra claims are carried alongside the "admin" one."""
+    token = JWTService().get_admin_token(
+        audience=Audiences.YHUB, claims={"sub": "user-id", "scope": "read"}
+    )
+
+    payload = jwt.decode(
+        token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+    )
+    assert payload["admin"] is True
+    assert payload["sub"] == "user-id"
+    assert payload["scope"] == "read"
+    assert payload["aud"] == Audiences.YHUB
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_admin_token_extra_claims_cannot_turn_admin_off():
+    """🔒 A token issued by get_admin_token always grants admin."""
+    token = JWTService().get_admin_token(
+        audience=Audiences.YHUB, claims={"admin": False}
+    )
+
+    payload = jwt.decode(
+        token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+    )
+    assert payload["admin"] is True
+    assert payload["aud"] == Audiences.YHUB
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_admin_token_caches_each_set_of_extra_claims_separately():
+    """Two callers passing different extra claims get their own token."""
+    service = JWTService()
+
+    first_token = service.get_admin_token(
+        audience=Audiences.YHUB, claims={"sub": "user-id"}
+    )
+    second_token = service.get_admin_token(
+        audience=Audiences.YHUB, claims={"sub": "other-user-id"}
+    )
+
+    assert first_token != second_token
+    assert (
+        jwt.decode(
+            first_token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+        )["sub"]
+        == "user-id"
+    )
+    assert (
+        jwt.decode(
+            second_token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+        )["sub"]
+        == "other-user-id"
+    )
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_admin_token_does_not_mutate_the_given_claims():
+    """The caller's dictionary is left untouched."""
+    claims = {"sub": "user-id"}
+
+    JWTService().get_admin_token(audience=Audiences.YHUB, claims=claims)
+
+    assert claims == {"sub": "user-id"}
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_admin_token_reuses_the_cached_token():
+    """The admin token is cached, like any other token."""
+    service = JWTService()
+
+    token = service.get_admin_token(audience=Audiences.YHUB)
+
+    with mock.patch("core.services.jwt_services.jwt.encode") as mock_encode:
+        assert service.get_admin_token(audience=Audiences.YHUB) == token
+
+    mock_encode.assert_not_called()
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_admin_token_is_not_served_to_a_non_admin_caller():
+    """
+    🔒 The admin token has its own cache entry. Asking for any other set of
+    claims must never hand out a token granting admin.
+    """
+    service = JWTService()
+
+    admin_token = service.get_admin_token(audience=Audiences.YHUB)
+    tokens = [
+        service.get_token({"admin": False}),
+        service.get_token({"sub": "user-id"}),
+        service.get_token({}),
+    ]
+
+    assert admin_token not in tokens
+    for token in tokens:
+        assert (
+            jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"]).get("admin") is not True
+        )
+
+
+def test_get_admin_token_expires_like_any_other_token(jwt_settings):
+    """The admin token does not outlive the configured lifetime."""
+    jwt_settings.JWT_TOKEN_LIFETIME = 120
+
+    now = datetime(2026, 8, 4, 10, 0, 0, tzinfo=timezone.utc)
+    with freeze_time(now):
+        token = JWTService().get_admin_token(audience=Audiences.YHUB)
+        payload = jwt.decode(
+            token, PUBLIC_KEY, algorithms=["RS256"], audience=Audiences.YHUB
+        )
+
+    assert payload["exp"] == now.timestamp() + 120
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_jwks_exposes_only_the_public_key():
+    """🔒 The JWKS must never carry the private components of the key."""
+    keys = JWTService().get_jwks()["keys"]
+
+    assert len(keys) == 1
+    assert set(keys[0]) == {"kty", "alg", "use", "kid", "n", "e"}
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_kid_is_stable_and_matches_the_signed_tokens():
+    """The "kid" identifies the key across the JWKS and the tokens."""
+    service = JWTService()
+
+    assert service.kid == JWTService().kid
+    assert (
+        jwt.get_unverified_header(service.get_token({"sub": "user-id"}))["kid"]
+        == service.kid
+    )
+
+
+def test_kid_changes_when_the_key_is_rotated(jwt_settings):
+    """A rotated key is a different key, hence a different "kid"."""
+    kid = JWTService().kid
+
+    jwt_settings.JWT_PRIVATE_KEY = OTHER_PRIVATE_KEY
+
+    assert JWTService().kid != kid
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_get_token_ignores_the_claims_ordering():
+    """Claims given in a different order hit the same cache entry."""
+    service = JWTService()
+
+    assert service.get_cache_key({"a": 1, "b": 2}) == service.get_cache_key(
+        {"b": 2, "a": 1}
+    )
+
+
+def test_get_token_generates_a_new_token_after_a_key_rotation(jwt_settings):
+    """A token signed with a rotated out key is never served from the cache."""
+    service = JWTService()
+    claims = {"sub": "user-id"}
+
+    service.get_token(claims)
+
+    jwt_settings.JWT_PRIVATE_KEY = OTHER_PRIVATE_KEY
+    token = service.get_token(claims)
+
+    assert jwt.decode(token, OTHER_PUBLIC_KEY, algorithms=["RS256"])["sub"] == "user-id"
+
+
+def test_get_token_generates_a_new_token_when_the_lifetime_changes(jwt_settings):
+    """A token cached with the former lifetime is never served."""
+    jwt_settings.JWT_TOKEN_LIFETIME = 300
+
+    service = JWTService()
+    claims = {"sub": "user-id"}
+
+    with freeze_time("2026-08-04 10:00:00"):
+        service.get_token(claims)
+
+        jwt_settings.JWT_TOKEN_LIFETIME = 600
+        token = service.get_token(claims)
+        payload = jwt.decode(token, PUBLIC_KEY, algorithms=["RS256"])
+
+    assert payload["exp"] - payload["iat"] == 600
+
+
+@pytest.mark.parametrize("private_key", [None, ""])
+def test_get_token_without_private_key(jwt_settings, private_key):
+    """The service refuses to issue a token when no private key is configured."""
+    jwt_settings.JWT_PRIVATE_KEY = private_key
+
+    with pytest.raises(ConfigurationError, match="JWT_PRIVATE_KEY"):
+        JWTService().get_token({"sub": "user-id"})
+
+
+def test_generate_token_with_an_invalid_private_key(jwt_settings):
+    """An unusable private key is a configuration problem."""
+    jwt_settings.JWT_PRIVATE_KEY = "not-a-pem-key"
+
+    with pytest.raises(ConfigurationError, match="cannot be imported"):
+        JWTService().generate_token({"sub": "user-id"})
+
+
+@pytest.mark.usefixtures("jwt_settings")
+def test_generate_token_with_claims_that_cannot_be_serialized():
+    """Claims that cannot be encoded are reported as a generation error."""
+    with pytest.raises(TokenGenerationError, match="Unable to sign the JWT token"):
+        JWTService().generate_token({"sub": {"unserializable"}})

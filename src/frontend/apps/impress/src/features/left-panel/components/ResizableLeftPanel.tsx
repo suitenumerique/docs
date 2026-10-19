@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -24,19 +25,27 @@ const getValueLabel = (
   current: number,
   min: number,
   max: number,
-  t: (key: string) => string,
+  t: TFunction<'translation', undefined>,
 ): string => {
   if (max <= min) {
-    return t('Sidebar width: medium');
+    return t('Sidebar width: medium', {
+      description: 'Screen reader description of the resizable panel size',
+    });
   }
   const ratio = (current - min) / (max - min);
   if (ratio < 1 / 3) {
-    return t('Sidebar width: narrow');
+    return t('Sidebar width: narrow', {
+      description: 'Screen reader description of the resizable panel size',
+    });
   }
   if (ratio < 2 / 3) {
-    return t('Sidebar width: medium');
+    return t('Sidebar width: medium', {
+      description: 'Screen reader description of the resizable panel size',
+    });
   }
-  return t('Sidebar width: wide');
+  return t('Sidebar width: wide', {
+    description: 'Screen reader description of the resizable panel size',
+  });
 };
 
 type ResizableLeftPanelProps = {
@@ -175,7 +184,10 @@ export const ResizableLeftPanel = ({
       {isPanelOpen && (
         <PanelResizeHandle
           id={RESIZE_HANDLE_ID}
-          aria-label={t('Resize sidebar')}
+          aria-label={t('Resize sidebar', {
+            description:
+              'Accessible name of the handle resizing the left panel',
+          })}
           aria-orientation="horizontal"
           aria-valuemin={Math.round(minPanelSizePercent)}
           aria-valuemax={Math.round(maxPanelSizePercent)}

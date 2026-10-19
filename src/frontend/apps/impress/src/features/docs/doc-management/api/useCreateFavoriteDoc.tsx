@@ -44,15 +44,24 @@ export function useCreateFavoriteDoc({
         });
       });
 
-      syncDocInTree(treeContext, id, { is_favorite: true });
+      syncDocInTree(
+        treeContext,
+        id,
+        { is_favorite: true },
+        { keepFocus: true },
+      );
 
-      const message = t('Document starred successfully!');
+      const message = t('Document starred successfully!', {
+        description: 'Toast shown after adding a document to favorites',
+      });
       announce(message, 'polite');
 
       onSuccess?.();
     },
     onError: () => {
-      const message = t('Failed to star the document.');
+      const message = t('Failed to star the document.', {
+        description: 'Toast shown when adding a document to favorites failed',
+      });
       announce(message, 'assertive');
     },
   });

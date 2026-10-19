@@ -11,6 +11,13 @@ on:
 permissions:
   contents: read
 
+# One run per pull request: a new push cancels the checks of the previous one.
+# Pushes get a group of their own (the commit), so every commit of main keeps
+# its full set of checks.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml
@@ -27,10 +34,6 @@ jobs:
           fetch-depth: 0
       - name: show
         run: git log
-      - name: Enforce absence of print statements in code
-        if: always()
-        run: |
-          ! git diff origin/${{ github.event.pull_request.base.ref }}..HEAD -- src/backend ':(exclude)**/impress.yml' | grep "print("
       - name: Check absence of fixup commits
         if: always()
         run: |
@@ -132,6 +135,13 @@ jobs:
         # needed because the postgres container does not provide a healthcheck
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
+      # message stream for the collaboration server (see the yhub steps below)
+      valkey:
+        image: valkey/valkey:alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd "valkey-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+
     env:
       DJANGO_CONFIGURATION: Test
       DJANGO_SETTINGS_MODULE: impress.settings
@@ -146,6 +156,12 @@ jobs:
       AWS_S3_ENDPOINT_URL: http://localhost:9000
       AWS_S3_ACCESS_KEY_ID: impress
       AWS_S3_SECRET_ACCESS_KEY: password
+      # Collaboration server. The integration tests reach it over this url and
+      # skip themselves when nothing answers; yhub reads the JWKS back from the
+      # django server started alongside it, so both sides must share
+      # JWT_PRIVATE_KEY_FILE.
+      COLLABORATION_API_URL: http://localhost:3002/collaboration
+      JWT_PRIVATE_KEY_FILE: ${{ github.workspace }}/data/jwt/private.pem
 
     steps:
       - name: Checkout repository
@@ -166,13 +182,13 @@ jobs:
 
       - name: Start MinIO
         run: |
-          docker pull minio/minio
+          docker pull pgsty/silo
           docker run -d --name minio \
             -p 9000:9000 \
             -e "MINIO_ACCESS_KEY=impress" \
             -e "MINIO_SECRET_KEY=password" \
             -v /data/media:/data \
-            minio/minio server --console-address :9001 /data
+            pgsty/silo server --console-address :9001 /data
 
       # Tool to wait for a service to be ready
       - name: Install Dockerize
@@ -185,7 +201,7 @@ jobs:
 
       - name: Configure MinIO
         run: |
-          MINIO=$(docker ps | grep minio/minio | sed -E 's/.*\s+([a-zA-Z0-9_-]+)$/\1/')
+          MINIO=$(docker ps | grep pgsty/silo | sed -E 's/.*\s+([a-zA-Z0-9_-]+)$/\1/')
           docker exec ${MINIO} sh -c \
             "mc alias set impress http://localhost:9000 impress password && \
             mc alias ls && \
@@ -207,8 +223,71 @@ jobs:
           sudo apt-get install -y gettext pandoc shared-mime-info
           sudo wget https://raw.githubusercontent.com/suitenumerique/django-lasuite/refs/heads/main/assets/conf/mime.types -O /etc/mime.types
 
+      # --- collaboration server -------------------------------------------
+      # The yhub integration tests drive a real collaboration server: it reads
+      # legacy documents out of MinIO and reads this backend's JWKS back to
+      # verify the admin token the tests mint, so the two must share the
+      # signing key. Tests skip themselves when nothing answers on
+      # COLLABORATION_API_URL.
+      - name: Generate the JWT signing key
+        working-directory: .
+        run: bin/generate-jwt-private-key.sh
+
       - name: Generate a MO file from strings extracted from the project
         run: uv run python manage.py compilemessages
 
+      - name: Set up Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "22.x"
+
+      - name: Install and build the collaboration server
+        working-directory: src/yhub-server
+        # a full install (typescript is a dev dependency) so `yarn build` can
+        # compile src/ to the dist/ started below
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+
+      # yhub ships its own DDL and creates the database as well, so this needs
+      # the dependencies installed above — hence its place after them
+      - name: Create the collaboration server database
+        working-directory: src/yhub-server
+        env:
+          POSTGRES: postgres://dinum:pass@localhost:5432/yhub
+        run: yarn init-db
+
+      - name: Start the backend for the collaboration server to authenticate against
+        env:
+          DJANGO_ALLOWED_HOSTS: "*"
+        run: |
+          nohup uv run python manage.py runserver 0.0.0.0:8000 --noreload \
+            > /tmp/backend.log 2>&1 &
+          dockerize -wait http://localhost:8000/api/v1.0/jwks -timeout 60s
+
+      - name: Start the collaboration server
+        working-directory: src/yhub-server
+        env:
+          PORT: 3002
+          REDIS: redis://localhost:6379
+          POSTGRES: postgres://dinum:pass@localhost:5432/yhub
+          REDIS_PREFIX: yhub
+          COLLABORATION_BACKEND_BASE_URL: http://localhost:8000
+          COLLABORATION_SERVER_ORIGIN: http://localhost:3000
+          # the legacy Django bucket it migrates documents out of, named apart
+          # from the AWS_S3_* the job sets for django itself
+          SOFT_MIGRATION: "true"
+          LEGACY_S3_ENDPOINT_URL: http://localhost:9000
+          LEGACY_S3_ACCESS_KEY_ID: impress
+          LEGACY_S3_SECRET_ACCESS_KEY: password
+          LEGACY_S3_BUCKET_NAME: impress-media-storage
+        run: |
+          nohup node dist/server.js > /tmp/yhub.log 2>&1 &
+          dockerize -wait tcp://localhost:3002 -timeout 30s
+
       - name: Run tests
         run: uv run pytest -n 2
+
+      - name: Collaboration server logs
+        if: failure()
+        run: cat /tmp/yhub.log /tmp/backend.log

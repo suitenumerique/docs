@@ -64,7 +64,10 @@ export const TextOnlyErrors = ({
 
       {!causes && (
         <Text $theme="error" $textAlign="center" {...textProps}>
-          {defaultMessage || t('Something bad happens, please retry.')}
+          {defaultMessage ||
+            t('Something bad happens, please retry.', {
+              description: 'Generic error message shown when a request fails',
+            })}
         </Text>
       )}
     </Box>

@@ -14,6 +14,7 @@ const renderShortcuts = (
     onToggleFullscreen: vi.fn(),
     onClose: vi.fn(),
     isFullscreen: false,
+    isPopoverOpen: false,
     ...overrides,
   };
   renderHook(() => usePresenterShortcuts(handlers));

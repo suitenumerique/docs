@@ -2,7 +2,6 @@ import {
   ButtonProps,
   DropdownMenuItem,
   VariantType,
-  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 
@@ -14,6 +13,7 @@ import {
   useRestoreDoc,
 } from '@/docs/doc-management';
 import { DocToolBox } from '@/docs/doc-management/components/DocToolBox';
+import { useToast } from '@/hooks';
 import MoreIcon from '@/icons/more_horiz.svg';
 
 import { KEY_LIST_DOC_TRASHBIN } from '../api';
@@ -51,7 +51,7 @@ export const DocsGridTrashbinActions = ({
   doc,
 }: DocsGridTrashbinActionsProps) => {
   const { t } = useTranslation();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { mutate: restoreDoc } = useRestoreDoc({
     listInvalidQueries: [
       KEY_LIST_DOC,
@@ -60,13 +60,20 @@ export const DocsGridTrashbinActions = ({
     ],
     options: {
       onSuccess: (_data) => {
-        toast(t('The document has been restored.'), VariantType.SUCCESS, {
-          duration: 4000,
-        });
+        toast(
+          t('The document has been restored.', {
+            description: 'Toast shown after a deleted document is restored',
+          }),
+          VariantType.SUCCESS,
+          {
+            duration: 4000,
+          },
+        );
       },
       onError: (error) => {
         toast(
           t('An error occurred while restoring the document: {{error}}', {
+            description: 'Toast shown when restoring a deleted document fails',
             error: error?.message,
           }),
           VariantType.ERROR,
@@ -84,7 +91,9 @@ export const DocsGridTrashbinActions = ({
 
   const options: DropdownMenuItem[] = [
     {
-      label: t('Restore'),
+      label: t('Restore', {
+        description: 'Button to restore a deleted document or an older version',
+      }),
       icon: (
         <Icon
           $size="20px"

@@ -1,42 +1,110 @@
 import { Block } from '@blocknote/core';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
+import { announce } from '@react-aria/live-announcer';
 import { captureException } from '@sentry/nextjs';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { backendUrl } from '@/api';
+import { APIError, backendUrl } from '@/api';
+import { useConfig } from '@/core';
+import { useToast } from '@/hooks';
+import { formatFileSize } from '@/utils';
 import { isSafeUrl } from '@/utils/url';
 
 import { useCreateDocAttachment } from '../api';
 import { ANALYZE_URL } from '../conf';
 import { DocsBlockNoteEditor } from '../types';
 
+const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // Default to 10MB
+
+// Upload errors carry a cause the user has to read: keep them longer than the default toast.
+const UPLOAD_ERROR_TOAST_DURATION = 10000;
+
+const TEXT_ALIGNMENTS = ['left', 'center', 'right', 'justify'] as const;
+
+type TextAlignment = (typeof TEXT_ALIGNMENTS)[number];
+
+const fileCaption = (props: object) => {
+  if ('caption' in props && typeof props.caption === 'string') {
+    return props.caption;
+  }
+
+  return '';
+};
+
+const fileTextAlignment = (props: object): TextAlignment => {
+  if (
+    'textAlignment' in props &&
+    typeof props.textAlignment === 'string' &&
+    TEXT_ALIGNMENTS.includes(props.textAlignment as TextAlignment)
+  ) {
+    return props.textAlignment as TextAlignment;
+  }
+
+  return 'left';
+};
+
 export const useUploadFile = (docId: string) => {
-  const {
-    mutateAsync: createDocAttachment,
-    isError: isErrorAttachment,
-    error: errorAttachment,
-  } = useCreateDocAttachment();
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const { data: config } = useConfig();
+  const { mutateAsync: createDocAttachment } = useCreateDocAttachment();
+
+  const maxFileSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? DEFAULT_MAX_FILE_SIZE;
 
   const uploadFile = useCallback(
     async (file: File) => {
+      // The server rejects an oversized file, but the proxy in front of it usually cuts the
+      // request first and answers a bare 413 the editor cannot make sense of. Telling the
+      // user before sending anything saves them the wait and the cryptic message.
+      if (file.size > maxFileSize) {
+        toast(
+          t(
+            'The file "{{fileName}}" is too large. Maximum file size is {{maxFileSize}}.',
+            {
+              description:
+                'Toast shown when an uploaded file exceeds the size limit',
+              fileName: file.name,
+              maxFileSize: formatFileSize(maxFileSize),
+            },
+          ),
+          VariantType.ERROR,
+          { duration: UPLOAD_ERROR_TOAST_DURATION },
+        );
+
+        throw new Error('File is too large');
+      }
+
       const body = new FormData();
       body.append('file', file);
 
-      const ret = await createDocAttachment({
-        docId,
-        body,
-      });
+      try {
+        const ret = await createDocAttachment({
+          docId,
+          body,
+        });
 
-      return `${backendUrl()}${ret.file}`;
+        return `${backendUrl()}${ret.file}`;
+      } catch (error) {
+        const causes = error instanceof APIError ? error.cause : undefined;
+
+        toast(
+          causes?.length
+            ? `${t('A problem occurred while uploading the file, cause:')} ${causes.join(' ')}`
+            : t(
+                'A problem occurred while uploading the file, please try again.',
+              ),
+          VariantType.ERROR,
+          { duration: UPLOAD_ERROR_TOAST_DURATION },
+        );
+
+        throw error;
+      }
     },
-    [createDocAttachment, docId],
+    [createDocAttachment, docId, maxFileSize, t, toast],
   );
 
-  return {
-    uploadFile,
-    isErrorAttachment,
-    errorAttachment,
-  };
+  return { uploadFile };
 };
 
 /**
@@ -54,7 +122,7 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
    * Replace the resource block by a uploadLoader block to show analyzing status
    */
   const replaceBlockWithUploadLoader = useCallback(
-    (block: Block) => {
+    (block: Block, shouldAnnounce = false) => {
       if (
         !block ||
         !('url' in block.props) ||
@@ -69,24 +137,36 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
       const blockUploadName = block.props.name;
       const blockUploadShowPreview =
         ('showPreview' in block.props && block.props.showPreview) || false;
+      const blockUploadCaption = fileCaption(block.props);
+      const blockUploadTextAlignment = fileTextAlignment(block.props);
 
       try {
+        const information = t('Analyzing the file');
+
         editor.replaceBlocks(
           [block.id],
           [
             {
               type: 'uploadLoader',
               props: {
-                information: t('Analyzing file...'),
+                information,
                 type: 'loading',
                 blockUploadName,
                 blockUploadType,
                 blockUploadUrl,
                 blockUploadShowPreview,
+                blockUploadCaption,
+                blockUploadTextAlignment,
               },
             },
           ],
         );
+
+        // Only the user who uploaded the file hears it, not the collaborators
+        // nor a page reload.
+        if (shouldAnnounce) {
+          announce(information, 'polite');
+        }
       } catch (error) {
         captureException(error, {
           extra: { info: 'Error replacing block for upload loader' },
@@ -130,7 +210,7 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
       const innerTimeoutId = setTimeout(() => {
         const block = editor.getBlock({ id: blockId });
 
-        replaceBlockWithUploadLoader(block as Block);
+        replaceBlockWithUploadLoader(block as Block, true);
       }, 300);
 
       return () => {

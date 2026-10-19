@@ -25,18 +25,25 @@ test.describe('Doc Trashbin', () => {
   }) => {
     const [title1] = await createDoc(page, 'my-trash-doc-1', browserName, 1);
     const [title2] = await createDoc(page, 'my-trash-doc-2', browserName, 1);
-    await verifyDocName(page, title2);
+
     await page.getByRole('button', { name: 'Share' }).click();
     await addNewMember(page, 0, 'Editor');
     await page.getByRole('button', { name: 'close' }).click();
 
-    await page.getByRole('button', { name: 'Back to homepage' }).click();
+    await page.getByRole('link', { name: 'Back to homepage' }).click();
 
     // Delete the first document - Is not displayed
+    await page.getByRole('link', { name: 'My docs' }).click();
     const row1 = await getGridRow(page, title1);
     await clickInDocOptionMenu(page, row1, 'Delete');
     await page.getByRole('button', { name: 'Delete document' }).click();
     await expect(row1.getByText(title1)).toBeHidden();
+    await expect(
+      page.getByRole('heading', {
+        name: 'My docs',
+        level: 2,
+      }),
+    ).toBeVisible();
 
     // Star the second document - Is displayed in the starred list
     const row2 = await getGridRow(page, title2);
@@ -101,7 +108,7 @@ test.describe('Doc Trashbin', () => {
     await row2Restored.getByRole('link', { name: /Open document/ }).click();
 
     await verifyDocName(page, title2);
-    await page.getByRole('button', { name: 'Back to homepage' }).click();
+    await page.getByRole('link', { name: 'Back to homepage' }).click();
     await expect(row2.getByText(title2)).toBeVisible();
     await expect(
       row2.getByRole('button', {
@@ -142,7 +149,7 @@ test.describe('Doc Trashbin', () => {
     const docsGrid = page.getByTestId('docs-grid');
 
     await clickInEditorMenu(page, 'Star');
-    await page.getByRole('button', { name: 'Back to homepage' }).click();
+    await page.getByRole('link', { name: 'Back to homepage' }).click();
     await page.getByRole('link', { name: 'Starred', exact: true }).click();
     await expect(docsGrid.getByText(subDocName)).toBeVisible();
     await page.getByText(subDocName).click();
@@ -152,7 +159,7 @@ test.describe('Doc Trashbin', () => {
     await page.getByRole('button', { name: 'Delete document' }).click();
     await verifyDocName(page, topParent);
 
-    await page.getByRole('button', { name: 'Back to homepage' }).click();
+    await page.getByRole('link', { name: 'Back to homepage' }).click();
     await expect(docsGrid.getByText(subDocName)).toBeHidden();
     await page.getByRole('link', { name: 'Trashbin' }).click();
 
@@ -201,7 +208,7 @@ test.describe('Doc Trashbin', () => {
     );
     await expect(page.getByRole('button', { name: 'Share' })).toBeEnabled();
     await expect(docTree.getByText(topParent)).toBeVisible();
-    await page.getByRole('button', { name: 'Back to homepage' }).click();
+    await page.getByRole('link', { name: 'Back to homepage' }).click();
     await page.getByRole('link', { name: 'Starred', exact: true }).click();
     await expect(docsGrid.getByText(subDocName)).toBeVisible();
   });

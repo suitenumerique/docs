@@ -82,6 +82,14 @@ urlpatterns = [
         ),
     ),
     path(f"api/{settings.API_VERSION}/config/", viewsets.ConfigView.as_view()),
+    # Public keys validating the tokens we issue to call external services.
+    # Nested under "api/" because this is the only prefix routed to the backend
+    # by the ingress, a root "/.well-known/" would be served by the frontend.
+    path(
+        f"api/{settings.API_VERSION}/jwks",
+        viewsets.JWKSView.as_view(),
+        name="jwks",
+    ),
 ]
 
 if settings.OIDC_RESOURCE_SERVER_ENABLED:
@@ -120,9 +128,12 @@ if settings.OIDC_RESOURCE_SERVER_ENABLED:
     )
 
     if settings.OIDC_RS_PRIVATE_KEY_STR:
+        # Served under "external_api/" alongside the rest of the resource
+        # server, so that it does not collide with the JWKS of the tokens we
+        # issue, which lives at "api/<version>/jwks".
         urlpatterns.append(
             path(
-                f"api/{settings.API_VERSION}/",
+                f"external_api/{settings.API_VERSION}/",
                 include([*oidc_resource_server_urls]),
             )
         )

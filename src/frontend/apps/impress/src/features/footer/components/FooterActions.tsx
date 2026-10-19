@@ -14,12 +14,18 @@ const FooterActionsGlobalStyle = createGlobalStyle`
   }
 `;
 
-export const FooterActions = () => {
+type FooterActionsProps = {
+  withLogin?: boolean;
+};
+
+export const FooterActions = ({ withLogin }: FooterActionsProps) => {
   const { t } = useTranslation();
   const { user } = useAuth();
 
   const userMenu = user || {
-    full_name: t('Guest'),
+    full_name: t('Guest', {
+      description: 'Name displayed for a user not logged in',
+    }),
     email: '',
   };
 
@@ -42,7 +48,7 @@ export const FooterActions = () => {
             withMobileView={false}
           />
           <Waffle />
-          <ButtonLogin />
+          {withLogin && <ButtonLogin />}
         </Box>
         <HelpMenu />
       </Box>

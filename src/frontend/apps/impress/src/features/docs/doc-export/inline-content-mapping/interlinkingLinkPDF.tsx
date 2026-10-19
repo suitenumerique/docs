@@ -5,17 +5,25 @@ import { getEmojiAndTitle } from '@/docs/doc-management';
 import DocSelectedIcon from '../assets/doc-selected.png';
 import { DocsExporterPDF } from '../types';
 
-export const inlineContentMappingInterlinkingLinkPDF: DocsExporterPDF['mappings']['inlineContentMapping']['interlinkingLinkInline'] =
+export const createInlineContentMappingInterlinkingLinkPDF =
+  (
+    titleMap: Map<string, string>,
+  ): DocsExporterPDF['mappings']['inlineContentMapping']['interlinkingLinkInline'] =>
   (inline) => {
-    if (!inline.props.docId || !inline.props.title || inline.props.disabled) {
+    const title = inline.props.docId && titleMap.get(inline.props.docId);
+
+    if (!inline.props.docId || !title || inline.props.disabled) {
       return <></>;
     }
 
-    const { emoji, titleWithoutEmoji } = getEmojiAndTitle(inline.props.title);
+    const { emoji, titleWithoutEmoji } = getEmojiAndTitle(title);
 
     return (
       <Link
-        src={window.location.origin + `/docs/${inline.props.docId}/`}
+        src={
+          window.location.origin +
+          `/docs/${inline.props.docId}/${inline.props.blockId ? `#${inline.props.blockId}` : ''}`
+        }
         style={{
           textDecoration: 'none',
           color: 'black',

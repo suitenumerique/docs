@@ -4,18 +4,22 @@ import {
   createDoc,
   goToGridDoc,
   mockedDocument,
-  saveContent,
+  overrideConfig,
   verifyDocName,
 } from './utils-common';
 import { openSuggestionMenu, writeInEditor } from './utils-editor';
 
-test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-});
+const COLLABORATION_VERSION_GRANULARITY_MS = 2000;
 
 test.describe('Doc Version', () => {
   test('it displays the doc versions', async ({ page, browserName }) => {
-    const [randomDoc] = await createDoc(page, 'doc-version', browserName, 1);
+    await overrideConfig(page, {
+      COLLABORATION_VERSION_GRANULARITY_MS: `${COLLABORATION_VERSION_GRANULARITY_MS}`,
+    });
+
+    await page.goto('/');
+
+    await createDoc(page, 'doc-version', browserName, 1);
 
     // Initially, there is no version
     await page.getByLabel('Open the document options').click();
@@ -24,16 +28,12 @@ test.describe('Doc Version', () => {
 
     const modal = page.getByRole('dialog', { name: 'Version history' });
     const panel = modal.getByLabel('Version list');
-    await expect(panel).toBeVisible();
-    await expect(modal.getByText('No versions')).toBeVisible();
 
     await modal.getByRole('button', { name: 'close' }).click();
 
     await writeInEditor({ page, text: 'Hello World' });
 
-    await saveContent(page, randomDoc);
-
-    await expect(page.getByText('Hello World')).toBeVisible();
+    await page.waitForTimeout(COLLABORATION_VERSION_GRANULARITY_MS + 10);
 
     // Write more
     await writeInEditor({ page, text: 'It will create a version' });
@@ -47,21 +47,12 @@ test.describe('Doc Version', () => {
 
     await expect(calloutBlock).toBeVisible();
 
-    await saveContent(page, randomDoc);
-
-    await expect(page.getByText('Hello World')).toBeHidden();
-    await expect(page.getByText('It will create a version')).toBeVisible();
-
-    await expect(calloutBlock).toBeVisible();
+    await page.waitForTimeout(COLLABORATION_VERSION_GRANULARITY_MS + 10);
 
     // Write more
     await writeInEditor({ page, text: 'It will create a second version' });
 
-    await saveContent(page, randomDoc);
-
-    await expect(
-      page.getByText('It will create a second version'),
-    ).toBeVisible();
+    await page.waitForTimeout(COLLABORATION_VERSION_GRANULARITY_MS + 10);
 
     await page.getByLabel('Open the document options').click();
     await page.getByRole('menuitem', { name: 'History' }).click();
@@ -70,13 +61,24 @@ test.describe('Doc Version', () => {
     await expect(page.getByText('History', { exact: true })).toBeVisible();
     await expect(page.getByRole('status')).toBeHidden();
     const items = panel.locator('.version-item');
-    await expect(items).toHaveCount(2);
-    await items.nth(1).click();
+    await expect(items).toHaveCount(3);
+    await items.nth(2).click();
 
     await expect(modal.getByText('Hello World')).toBeVisible();
     await expect(modal.getByText('It will create a version')).toBeHidden();
     await expect(
       modal.locator('div[data-content-type="callout"]').first(),
+    ).toBeHidden();
+
+    await items.nth(1).click();
+
+    await expect(modal.getByText('Hello World')).toBeVisible();
+    await expect(modal.getByText('It will create a version')).toBeVisible();
+    await expect(
+      modal.locator('div[data-content-type="callout"]').first(),
+    ).toBeVisible();
+    await expect(
+      modal.getByText('It will create a second version'),
     ).toBeHidden();
 
     await items.nth(0).click();
@@ -88,20 +90,14 @@ test.describe('Doc Version', () => {
     ).toBeVisible();
     await expect(
       modal.getByText('It will create a second version'),
-    ).toBeHidden();
-
-    await items.nth(1).click();
-
-    await expect(modal.getByText('Hello World')).toBeVisible();
-    await expect(modal.getByText('It will create a version')).toBeHidden();
-    await expect(
-      modal.locator('div[data-content-type="callout"]').first(),
-    ).toBeHidden();
+    ).toBeVisible();
   });
 
   test('it does not display the doc versions if not allowed', async ({
     page,
   }) => {
+    await page.goto('/');
+
     await mockedDocument(page, {
       abilities: {
         versions_list: false,
@@ -118,8 +114,13 @@ test.describe('Doc Version', () => {
   });
 
   test('it restores the doc version', async ({ page, browserName }) => {
-    const [randomDoc] = await createDoc(page, 'doc-version', browserName, 1);
-    await verifyDocName(page, randomDoc);
+    await overrideConfig(page, {
+      COLLABORATION_VERSION_GRANULARITY_MS: `${COLLABORATION_VERSION_GRANULARITY_MS}`,
+    });
+
+    await page.goto('/');
+
+    await createDoc(page, 'doc-version', browserName, 1);
 
     const editor = await writeInEditor({ page, text: 'Hello' });
 
@@ -132,16 +133,11 @@ test.describe('Doc Version', () => {
     await thread.locator('[data-test="save"]').click();
     await expect(thread).toBeHidden();
 
-    await saveContent(page, randomDoc);
+    await page.waitForTimeout(COLLABORATION_VERSION_GRANULARITY_MS + 10);
 
-    await expect(editor.getByText('Hello')).toBeVisible();
-    await page.locator('.bn-block-outer').last().click();
-    await page.keyboard.press('Enter');
-    await page.locator('.bn-block-outer').last().fill('World');
+    await writeInEditor({ page, text: 'World' });
 
-    await saveContent(page, randomDoc);
-
-    await expect(page.getByText('World')).toBeVisible();
+    await page.waitForTimeout(COLLABORATION_VERSION_GRANULARITY_MS + 10);
 
     await editor.getByText('Hello').click();
     await thread.getByText('This is a comment').first().hover();
@@ -156,7 +152,9 @@ test.describe('Doc Version', () => {
     await expect(panel).toBeVisible();
 
     await expect(page.getByText('History', { exact: true })).toBeVisible();
-    await panel.locator('.version-item').first().click();
+    const items = panel.locator('.version-item');
+    await expect(items).toHaveCount(3);
+    await items.nth(2).click();
 
     await expect(modal.getByText('World')).toBeHidden();
 

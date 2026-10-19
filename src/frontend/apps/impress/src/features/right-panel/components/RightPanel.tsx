@@ -19,8 +19,7 @@ export const RightPanel = () => {
   const { setIsPanelOpen, isPanelOpen, activePanel } = useRightPanelStore();
   const { isMobile } = useResponsiveStore();
   const { provider, isReady } = useProviderStore();
-  const isProviderReady =
-    isReady && provider && provider?.configuration.name === doc?.id;
+  const isProviderReady = isReady && provider && provider?.roomname === doc?.id;
   const { restoreFocus } = useFocusStore();
 
   /** Side panel must be explicitly opened for each document. */
@@ -64,10 +63,17 @@ export const RightPanel = () => {
 
   const panelLabel =
     renderedPanel === 'comments'
-      ? t('Comments side panel')
+      ? t('Comments side panel', {
+          description: 'Accessible name of the right panel showing comments',
+        })
       : renderedPanel === 'tableContent'
-        ? t('Table of contents side panel')
-        : t('Side panel');
+        ? t('Table of contents side panel', {
+            description:
+              'Accessible name of the right panel showing the table of contents',
+          })
+        : t('Side panel', {
+            description: 'Accessible name of the right panel',
+          });
 
   const handleClose = () => {
     setIsPanelOpen(false);

@@ -440,7 +440,12 @@ export const tokens = {
             tertiary: '#F8F8F9',
           },
           semantic: {
-            overlay: { primary: '#1B1B230D', 'primary-hover': '#1B1B231A' },
+            overlay: {
+              primary: '#1B1B230D',
+              'primary-hover': '#1B1B231A',
+              'on-surface': '#F8F8F9A6',
+              transparent: '#F8F8F900',
+            },
             contextual: { primary: '#1B1B230D', 'primary-hover': '#1B1B231A' },
             brand: {
               primary: '#5E5CD0',
@@ -555,7 +560,7 @@ export const tokens = {
           logo2: '#4844AD',
           semantic: {
             contextual: { primary: '#F8F8F9F2' },
-            overlay: { primary: '#F8F8F9F2' },
+            overlay: { primary: '#F8F8F9F2', secondary: '#F8F8F9CC' },
             brand: {
               primary: '#3E3B98',
               secondary: '#534FC2',
@@ -1341,7 +1346,12 @@ export const tokens = {
           },
           semantic: {
             contextual: { primary: '#F8F8F90D', 'primary-hover': '#F8F8F91A' },
-            overlay: { primary: '#F8F8F90D', 'primary-hover': '#F8F8F91A' },
+            overlay: {
+              primary: '#F8F8F90D',
+              'primary-hover': '#F8F8F91A',
+              'on-surface': '#1B1B23A6',
+              transparent: '#1B1B2300',
+            },
             brand: {
               primary: '#5E5CD0',
               'primary-hover': '#4844AD',
@@ -1455,7 +1465,7 @@ export const tokens = {
           logo2: '#BEC5F0',
           semantic: {
             contextual: { primary: '#1B1B23D9' },
-            overlay: { primary: '#1B1B23D9' },
+            overlay: { primary: '#1B1B23D9', secondary: '#1B1B23B2' },
             brand: {
               primary: '#EEF1FA',
               secondary: '#DDE2F5',
@@ -1963,7 +1973,12 @@ export const tokens = {
             tertiary: '#F8F8F9',
           },
           semantic: {
-            overlay: { primary: '#1B1B230D', 'primary-hover': '#1B1B231A' },
+            overlay: {
+              primary: '#1B1B230D',
+              'primary-hover': '#1B1B231A',
+              'on-surface': '#F8F8F9A6',
+              transparent: '#F8F8F900',
+            },
             contextual: { primary: '#1B1B230D', 'primary-hover': '#1B1B231A' },
             brand: {
               primary: '#5E5CD0',
@@ -2078,7 +2093,7 @@ export const tokens = {
           logo2: '#4844AD',
           semantic: {
             contextual: { primary: '#F8F8F9F2' },
-            overlay: { primary: '#F8F8F9F2' },
+            overlay: { primary: '#F8F8F9F2', secondary: '#F8F8F9CC' },
             brand: {
               primary: '#3E3B98',
               secondary: '#534FC2',

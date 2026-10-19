@@ -27,6 +27,7 @@ interface PresenterFloatingBarProps {
   onNext: () => void;
   onCopyLink: () => void;
   onExportPdf: () => void;
+  onActionsOpenChange?: (isOpen: boolean) => void;
   onToggleFullscreen: () => void;
   onClose: () => void;
   isExportingPdf: boolean;
@@ -49,6 +50,11 @@ const barCss = css`
   border: 1px solid var(--c--contextuals--border--surface--primary);
   background: var(--c--contextuals--background--surface--primary);
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  button[aria-disabled='true'] {
+    opacity: 0.4;
+    cursor: default;
+  }
 `;
 
 const separatorCss = css`
@@ -87,6 +93,7 @@ export const PresenterFloatingBar = ({
   onNext,
   onCopyLink,
   onExportPdf,
+  onActionsOpenChange,
   onToggleFullscreen,
   onClose,
   isExportingPdf,
@@ -105,7 +112,7 @@ export const PresenterFloatingBar = ({
   useEffect(() => {
     const id = requestAnimationFrame(() => {
       barRef.current
-        ?.querySelector<HTMLButtonElement>('button:not([disabled])')
+        ?.querySelector<HTMLButtonElement>('button:not([aria-disabled="true"])')
         ?.focus();
     });
     return () => cancelAnimationFrame(id);
@@ -116,18 +123,31 @@ export const PresenterFloatingBar = ({
   const toggleActions = (event: MouseEvent<HTMLElement>) => {
     event.stopPropagation();
     event.preventDefault();
-    setIsActionsOpen((isOpen) => !isOpen);
+    setIsActionsOpen((prev) => {
+      const next = !prev;
+      onActionsOpenChange?.(next);
+      return next;
+    });
+  };
+
+  const handleActionsOpenChange = (isOpen: boolean) => {
+    setIsActionsOpen(isOpen);
+    onActionsOpenChange?.(isOpen);
   };
 
   const actionOptions = useMemo<DropdownMenuItem[]>(
     () => [
       {
-        label: t('Copy link to slide'),
+        label: t('Copy link to slide', {
+          description: 'Menu action copying a link to the current slide',
+        }),
         icon: <Link aria-hidden="true" width="16" height="16" />,
         callback: onCopyLink,
       },
       {
-        label: t('Download PDF'),
+        label: t('Download PDF', {
+          description: 'Menu action downloading the presentation as PDF',
+        }),
         icon: <Download aria-hidden="true" width="16" height="16" />,
         callback: onExportPdf,
         isDisabled: isExportingPdf,
@@ -145,15 +165,20 @@ export const PresenterFloatingBar = ({
         $align="center"
         $css={barCss}
         role="toolbar"
-        aria-label={t('Presenter controls')}
+        aria-label={t('Presenter controls', {
+          description: 'Accessible name of the presentation toolbar',
+        })}
       >
         <Button
           size="nano"
           color="neutral"
           variant="tertiary"
-          disabled={isFirst}
-          onClick={onPrev}
-          aria-label={t('Previous slide')}
+          aria-disabled={isFirst}
+          onClick={isFirst ? undefined : onPrev}
+          aria-label={t('Previous slide', {
+            description:
+              'Accessible name of the button going to the previous slide',
+          })}
           icon={<ChevronLeft size="small" />}
         />
         <Text as="span" $size="sm" $color="neutral" aria-hidden="true">
@@ -163,16 +188,19 @@ export const PresenterFloatingBar = ({
           size="nano"
           color="neutral"
           variant="tertiary"
-          disabled={isLast}
-          onClick={onNext}
-          aria-label={t('Next slide')}
+          aria-disabled={isLast}
+          onClick={isLast ? undefined : onNext}
+          aria-label={t('Next slide', {
+            description:
+              'Accessible name of the button going to the next slide',
+          })}
           icon={<ChevronRight size="small" />}
         />
         <Box $css={separatorCss} aria-hidden />
         <DropdownMenu
           options={actionOptions}
           isOpen={isActionsOpen}
-          onOpenChange={setIsActionsOpen}
+          onOpenChange={handleActionsOpenChange}
           shouldCloseOnInteractOutside={() => true}
           variant="tiny"
         >
@@ -181,7 +209,10 @@ export const PresenterFloatingBar = ({
             color="neutral"
             variant="tertiary"
             onClick={toggleActions}
-            aria-label={t('More options')}
+            aria-label={t('More options', {
+              description:
+                'Accessible name of the button opening more presentation actions',
+            })}
             aria-expanded={isActionsOpen}
             aria-haspopup="menu"
             icon={<Share size="small" />}
@@ -193,7 +224,15 @@ export const PresenterFloatingBar = ({
           variant="tertiary"
           onClick={onToggleFullscreen}
           aria-label={
-            isFullscreen ? t('Exit fullscreen') : t('Enter fullscreen')
+            isFullscreen
+              ? t('Exit fullscreen', {
+                  description:
+                    'Accessible name of the button leaving fullscreen',
+                })
+              : t('Enter fullscreen', {
+                  description:
+                    'Accessible name of the button entering fullscreen',
+                })
           }
           icon={
             isFullscreen ? <Minimize size="small" /> : <Maximize size="small" />
@@ -204,7 +243,10 @@ export const PresenterFloatingBar = ({
           color="neutral"
           variant="tertiary"
           onClick={onClose}
-          aria-label={t('Close presenter')}
+          aria-label={t('Close presenter', {
+            description:
+              'Accessible name of the button leaving the presentation mode',
+          })}
           icon={<XMark size="small" />}
         />
       </Box>

@@ -276,7 +276,7 @@ def test_external_api_documents_create_with_markdown_file_success(
     settings.CONVERSION_UPLOAD_ENABLED = True
 
     # Mock the conversion
-    converted_yjs = "base64encodedyjscontent"
+    converted_yjs = b"\x01\x02raw yjs update"
     mock_convert.return_value = converted_yjs
 
     # Create a fake Markdown file
@@ -284,7 +284,10 @@ def test_external_api_documents_create_with_markdown_file_success(
     file = BytesIO(file_content)
     file.name = "readme.md"
 
-    with patch("core.api.viewsets.posthog_capture") as mock_capture:
+    with (
+        patch("core.api.viewsets.posthog_capture") as mock_capture,
+        patch("core.api.viewsets.YHubService") as mock_yhub,
+    ):
         response = client.post(
             "/external_api/v1.0/documents/",
             {
@@ -299,8 +302,11 @@ def test_external_api_documents_create_with_markdown_file_success(
     document = models.Document.objects.get(id=data["id"])
 
     assert document.title == "readme.md"
-    assert document.content == converted_yjs
     assert document.accesses.filter(role="owner", user=user_specific_sub).exists()
+
+    # the content is saved by the collaboration server, not by Django
+    mock_yhub.assert_called_once_with(user=user_specific_sub)
+    mock_yhub.return_value.create_ydoc.assert_called_once_with(document, converted_yjs)
 
     # Verify the converter was called correctly
     mock_convert.assert_called_once_with(
@@ -422,9 +428,12 @@ def test_external_api_documents_duplicate_allowed(
         role=models.RoleChoices.OWNER,
     )
 
-    response = client.post(
-        f"/external_api/v1.0/documents/{document.id!s}/duplicate/",
-    )
+    with patch("core.api.viewsets.YHubService") as mock_yhub:
+        # the collaboration server holds no content for this document
+        mock_yhub.return_value.get_ydoc.return_value = None
+        response = client.post(
+            f"/external_api/v1.0/documents/{document.id!s}/duplicate/",
+        )
 
     assert response.status_code == 201
 
@@ -571,11 +580,17 @@ def test_external_api_documents_trashbin_not_allowed(
     assert response.status_code == 403
 
 
-def test_external_api_documents_create_for_owner_not_allowed():
+def test_external_api_documents_create_for_owner_not_allowed(
+    resource_server_backend_conf,
+):
     """
     Authenticated users SHOULD NOT be allowed to call create documents
     on behalf of other users.
     This API endpoint is reserved for server-to-server calls.
+
+    The route only exists when the resource server is enabled, hence the
+    fixture: the endpoint answering 401 is what this asserts, not the
+    `/external_api/` prefix being routed at all.
     """
     user = factories.UserFactory()
 

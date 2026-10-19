@@ -1,0 +1,132 @@
+# A Prometheus and a Grafana for the dev cluster, to see the metrics of the
+# backend and of yhub through the ServiceMonitors the impress chart builds, and
+# the dashboards of the load-test campaign (src/loadtest/dashboards). Trimmed
+# down to the Prometheus Operator, its CRDs, one Prometheus and one Grafana: no
+# Alertmanager, no exporter, and none of the monitors, rules and dashboards of
+# the kubernetes control plane, which a kind cluster has nothing to show for.
+#   Prometheus: https://docs-prometheus.127.0.0.1.nip.io (Status > Targets)
+#   Grafana:    https://docs-grafana.127.0.0.1.nip.io (admin / admin)
+fullnameOverride: prometheus
+
+defaultRules:
+  create: false
+alertmanager:
+  enabled: false
+grafana:
+  enabled: true
+  adminPassword: admin
+  # none of the kubernetes dashboards of the chart: the boards of the campaign
+  # only, loaded from the ConfigMaps below by the sidecar
+  defaultDashboardsEnabled: false
+  sidecar:
+    dashboards:
+      folderAnnotation: grafana_folder
+      provider:
+        foldersFromFilesStructure: true
+  ingress:
+    enabled: true
+    hosts:
+      - docs-grafana.127.0.0.1.nip.io
+    path: /
+    tls:
+      - secretName: docs-tls
+        hosts:
+          - docs-grafana.127.0.0.1.nip.io
+nodeExporter:
+  enabled: false
+kubeStateMetrics:
+  enabled: false
+kubernetesServiceMonitors:
+  enabled: false
+kubeApiServer:
+  enabled: false
+kubelet:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+coreDns:
+  enabled: false
+kubeDns:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+prometheusOperator:
+  # the webhooks validate the monitors and rules: not worth the certificate
+  # patch jobs in a dev cluster
+  admissionWebhooks:
+    enabled: false
+  tls:
+    enabled: false
+  kubeletService:
+    enabled: false
+  serviceMonitor:
+    selfMonitor: false
+
+prometheus:
+  serviceMonitor:
+    selfMonitor: false
+  prometheusSpec:
+    # every ServiceMonitor and PodMonitor of the namespace, whatever its labels
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
+    scrapeInterval: 15s
+    retention: 2d
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+  ingress:
+    enabled: true
+    hosts:
+      - docs-prometheus.127.0.0.1.nip.io
+    paths:
+      - /
+    pathType: Prefix
+    tls:
+      - secretName: docs-tls
+        hosts:
+          - docs-prometheus.127.0.0.1.nip.io
+
+# The bearer token the backend and yhub check on their metrics endpoints, and
+# the Prometheus Operator reads to scrape them with (values.impress: the
+# PROMETHEUS_API_KEY of both, and the monitors). A Secret of the release that
+# needs it first, dev only: a real deployment keeps it with its other secrets.
+extraManifests:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: docs-metrics
+    stringData:
+      PROMETHEUS_API_KEY: ThisIsAnExampleMetricsTokenForDevPurposeOnly
+  # The dashboards of the load-test campaign, one ConfigMap each, which the
+  # sidecar of Grafana loads by their label into the folder of the annotation.
+  # The chart passes every extra manifest through helm's tpl, which would
+  # render the legend templates of a dashboard (a label name between double
+  # braces): each opening delimiter is escaped so that tpl writes it back as is
+  # (the closing one is spelled in two halves so that it does not end this
+  # action). This file is a template too, hence no brace in this comment.
+  {{- $open := "{{" }}
+  {{- $escaped := printf "%s %q %s" $open $open (print "}" "}") }}
+  {{- range $name := list "users" "collaboration" "backend" "django" "valkey" }}
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: dashboard-{{ $name }}
+      labels:
+        grafana_dashboard: "1"
+      annotations:
+        grafana_folder: Docs
+    data:
+      {{ $name }}.json: |
+        {{- readFile (printf "../../../loadtest/dashboards/%s.json" $name) | replace $open $escaped | nindent 8 }}
+  {{- end }}

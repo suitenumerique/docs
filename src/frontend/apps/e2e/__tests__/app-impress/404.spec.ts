@@ -11,17 +11,21 @@ test.beforeEach(async ({ page }) => {
 test.describe('404', () => {
   test('Checks all the elements are visible', async ({ page }) => {
     await expect(
+      page.getByRole('heading', { level: 1, name: 'Error 404' }),
+    ).toBeVisible();
+    await expect(
       page.getByText(
         'It seems that the page you are looking for does not exist or cannot be displayed correctly.',
       ),
     ).toBeVisible();
-    await expect(page.getByText('Home')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
+    await expect(page.getByTestId('header-logo-link')).toBeVisible();
   });
 
   test('checks go back to home page redirects to home page', async ({
     page,
   }) => {
-    await page.getByText('Home').click();
+    await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL('/');
   });
 });

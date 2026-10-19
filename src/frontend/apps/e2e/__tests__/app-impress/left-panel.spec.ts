@@ -33,6 +33,10 @@ test.describe('Left panel desktop', () => {
     await goToGridDoc(page);
 
     await expect(leftPanel.getByTestId('home-button')).toBeVisible();
+    // Must be a real link so it can be opened in a new tab
+    await expect(
+      leftPanel.getByRole('link', { name: 'Back to homepage' }),
+    ).toHaveAttribute('href', '/');
   });
 
   test('checks all the elements are visible with DSFR theme', async ({

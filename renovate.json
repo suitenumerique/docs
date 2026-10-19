@@ -1,8 +1,8 @@
 {
-  "extends": ["github>numerique-gouv/renovate-configuration"],
+  "extends": ["github>suitenumerique/ci//renovate/default"],
   "dependencyDashboard": true,
   "labels": ["dependencies", "noChangeLog", "automated"],
-  "schedule": ["before 7am on monday"],
+  "schedule": ["* 20-23 * * 0"],
   "prCreation": "not-pending",
   "rebaseWhen": "conflicted",
   "updateNotScheduled": false,
@@ -56,12 +56,16 @@
       "allowedVersions": "<7.0.0"
     },
     {
+      "description": "yhub-server pins @y/y while @y/hub depends on it by range: bumped apart, they install two copies of Yjs, which breaks its constructor checks",
+      "groupName": "@y packages",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["@y/*"]
+    },
+    {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
-        "@hocuspocus/provider",
-        "@hocuspocus/server",
         "node",
         "node-fetch",
         "react-resizable-panels",
@@ -69,6 +73,11 @@
         "stylelint-config-standard",
         "workbox-webpack-plugin"
       ]
+    },
+    {
+      "description": "Schedule dependency updates on Sunday evening (UTC). Placed last on purpose: a matching packageRule's schedule replaces the preset's per-group 'before 7am on monday' schedule, and the top-level schedule alone would be ignored for these groups.",
+      "matchManagers": ["github-actions", "npm", "setup-cfg", "pep621"],
+      "schedule": ["* 20-23 * * 0"]
     }
   ]
 }

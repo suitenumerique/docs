@@ -17,18 +17,33 @@ type AppPropsWithLayout = AppProps & {
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
   useSWRegister();
   useOffline();
+
   const getLayout = Component.getLayout ?? ((page) => page);
   const { t } = useTranslation();
 
   return (
     <>
       <Head>
-        <title>{t('Docs')}</title>
-        <meta property="og:title" content={t('Docs')} key="title" />
+        <title>
+          {t('Docs', {
+            description: 'Product name, shown in page titles and the logo',
+          })}
+        </title>
+        <meta
+          property="og:title"
+          content={t('Docs', {
+            description: 'Product name, shown in page titles and the logo',
+          })}
+          key="title"
+        />
         <meta
           name="description"
           content={t(
             'Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.',
+            {
+              description:
+                'Meta description of the website, shown in search engines',
+            },
           )}
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

@@ -103,8 +103,16 @@ export const PresenterSlide = ({
       $css={outerCss}
       style={outerStyle}
       role="group"
-      aria-roledescription={t('slide')}
-      aria-label={ariaLabel ?? t('Presenter slide')}
+      aria-roledescription={t('slide', {
+        description:
+          'Role description of a presentation slide for screen readers',
+      })}
+      aria-label={
+        ariaLabel ??
+        t('Presenter slide', {
+          description: 'Accessible name of a presentation slide',
+        })
+      }
       aria-hidden={!isCurrent}
     >
       <Box $css={stageCss} style={stageStyle}>

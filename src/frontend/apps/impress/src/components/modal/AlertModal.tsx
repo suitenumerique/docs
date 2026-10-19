@@ -56,20 +56,27 @@ export const AlertModal = ({
       rightActions={
         <Box $direction="row" $gap="small">
           <Button
-            aria-label={`${t('Cancel')} - ${title}`}
+            aria-label={`${t('Cancel', { description: 'Button to dismiss a dialog without confirming' })} - ${title}`}
             variant="secondary"
             fullWidth
             autoFocus
             onClick={onClose}
           >
-            {cancelLabel ?? t('Cancel')}
+            {cancelLabel ??
+              t('Cancel', {
+                description: 'Button to dismiss a dialog without confirming',
+              })}
           </Button>
           <Button
-            aria-label={confirmLabel ?? t('Confirm')}
+            aria-label={
+              confirmLabel ??
+              t('Confirm', { description: 'Button to validate a dialog' })
+            }
             color={themeCTA ?? 'error'}
             onClick={onConfirm}
           >
-            {confirmLabel ?? t('Confirm')}
+            {confirmLabel ??
+              t('Confirm', { description: 'Button to validate a dialog' })}
           </Button>
         </Box>
       }

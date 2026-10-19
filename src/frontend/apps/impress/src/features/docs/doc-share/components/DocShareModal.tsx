@@ -98,6 +98,8 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
       t(
         '{{name}} added to invite list. Add more members or press Tab to select role and invite.',
         {
+          description:
+            'Screen reader announcement after adding a person to the invitees',
           name: userName,
         },
       ),
@@ -133,6 +135,8 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
       const userName = row.full_name || row.email;
       announce(
         t('{{name}} removed from invite list', {
+          description:
+            'Screen reader announcement after removing a person from the invitees',
           name: userName,
         }),
         'polite',
@@ -180,7 +184,9 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
         isOpen
         closeOnClickOutside
         data-testid="doc-share-modal"
-        aria-label={t('Share the document')}
+        aria-label={t('Share the document', {
+          description: 'Title and accessible name of the share dialog',
+        })}
         size={isLargeScreen ? ModalSize.LARGE : ModalSize.FULL}
         aria-modal="true"
         onClose={onClose}
@@ -194,10 +200,15 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
               $weight="600"
               $margin="0"
             >
-              {t('Share the document')}
+              {t('Share the document', {
+                description: 'Title and accessible name of the share dialog',
+              })}
             </Text>
             <ButtonCloseModal
-              aria-label={t('Close the share modal')}
+              aria-label={t('Close the share modal', {
+                description:
+                  'Accessible name of the button closing the share dialog',
+              })}
               onClick={onClose}
             />
           </Box>
@@ -258,6 +269,10 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                   >
                     {t(
                       'You can view this document but need additional access to see its members or modify settings.',
+                      {
+                        description:
+                          'Message in the share dialog for users with read-only access',
+                      },
                     )}
                   </Text>
                   <ButtonAccessRequest
@@ -269,7 +284,10 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
               )}
               {canViewAccesses && (
                 <QuickSearch
-                  label={t('Search results')}
+                  label={t('Search results', {
+                    description:
+                      'Accessible name or heading of the list of search results',
+                  })}
                   onFilter={(str) => {
                     setInputValue(str);
                     onFilter(str);
@@ -277,7 +295,10 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                   inputValue={inputValue}
                   showInput={canShare}
                   loading={searchUsersQuery.isLoading}
-                  placeholder={t('Type a name or email')}
+                  placeholder={t('Type a name or email', {
+                    description:
+                      'Placeholder of the field searching users to invite',
+                  })}
                 >
                   {showInheritedShareContent && (
                     <DocInheritedShareContent
@@ -335,17 +356,24 @@ const QuickSearchInviteInputSection = ({
   const hint = useMemo(() => {
     if (userQuery.length < minLength) {
       return t('Type at least {{minLength}} characters to display user names', {
+        description: 'Hint shown before the user search starts',
         minLength,
       });
     }
     if (isValidEmail(userQuery)) {
-      return t('Choose the email');
+      return t('Choose the email', {
+        description: 'Hint to pick the typed email address as invitee',
+      });
     }
     if (!searchUsersRawData?.length) {
-      return t('No results. Type a full email address to invite someone.');
+      return t('No results. Type a full email address to invite someone.', {
+        description: 'Message when the user search has no result',
+      });
     }
 
-    return t('Choose a user');
+    return t('Choose a user', {
+      description: 'Hint to pick a user in the search results',
+    });
   }, [minLength, searchUsersRawData?.length, t, userQuery]);
 
   useEffect(() => {
@@ -385,7 +413,9 @@ const QuickSearchInviteInputSection = ({
 
   return (
     <Box
-      aria-label={t('List search user result card')}
+      aria-label={t('List search user result card', {
+        description: 'Accessible name of the list of user search results',
+      })}
       $padding={{ horizontal: 'base', bottom: '3xs', top: 'base' }}
     >
       <QuickSearchGroup

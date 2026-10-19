@@ -1,13 +1,10 @@
-import {
-  Button,
-  VariantType,
-  useToastProvider,
-} from '@gouvfr-lasuite/ui-components';
+import { Button, VariantType } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Card, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, KEY_DOC, KEY_LIST_DOC } from '@/docs/doc-management';
+import { useToast } from '@/hooks';
 
 import { useUpdateDocLink } from '../api/useUpdateDocLink';
 
@@ -21,14 +18,21 @@ interface DocDesynchronizedProps {
 export const DocDesynchronized = ({ doc }: DocDesynchronizedProps) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
 
   const { mutate: updateDocLink } = useUpdateDocLink({
     listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
     onSuccess: () => {
-      toast(t('The document visibility restored.'), VariantType.SUCCESS, {
-        duration: 2000,
-      });
+      toast(
+        t('The document visibility restored.', {
+          description:
+            "Toast shown after resetting link sharing to the parent's settings",
+        }),
+        VariantType.SUCCESS,
+        {
+          duration: 2000,
+        },
+      );
     },
   });
 
@@ -49,7 +53,10 @@ export const DocDesynchronized = ({ doc }: DocDesynchronizedProps) => {
       >
         <Desync />
         <Text $size="xs" $withThemeInherited $weight="400">
-          {t('The link sharing rules differ from the parent document')}
+          {t('The link sharing rules differ from the parent document', {
+            description:
+              'Banner shown on a sub-doc whose link settings differ from its parent',
+          })}
         </Text>
       </Box>
       {doc.abilities.accesses_manage && (
@@ -66,7 +73,10 @@ export const DocDesynchronized = ({ doc }: DocDesynchronizedProps) => {
           variant="tertiary"
           icon={<Undo />}
         >
-          {t('Restore')}
+          {t('Restore', {
+            description:
+              'Button to restore a deleted document or an older version',
+          })}
         </Button>
       )}
     </Card>

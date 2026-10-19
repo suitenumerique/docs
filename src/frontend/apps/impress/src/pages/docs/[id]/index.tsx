@@ -207,11 +207,14 @@ const DocPage = ({ id }: DocProps) => {
     <>
       <Head>
         <title>
-          {doc.title || untitledDocument} - {t('Docs')}
+          {doc.title || untitledDocument} -{' '}
+          {t('Docs', {
+            description: 'Product name, shown in page titles and the logo',
+          })}
         </title>
         <meta
           property="og:title"
-          content={`${doc.title || untitledDocument} - ${t('Docs')}`}
+          content={`${doc.title || untitledDocument} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}
           key="title"
         />
       </Head>

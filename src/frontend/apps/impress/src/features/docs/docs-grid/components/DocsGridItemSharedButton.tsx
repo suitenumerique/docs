@@ -34,7 +34,11 @@ export const DocsGridItemSharedButton = ({ doc, disabled }: Props) => {
       <Tooltip
         content={
           <Text $textAlign="center">
-            {t('Shared with {{count}} users', { count: sharedCount })}
+            {t('Shared with {{count}} users', {
+              description:
+                'Tooltip: number of people a doc is shared with, plural form',
+              count: sharedCount,
+            })}
           </Text>
         }
         placement="top"
@@ -42,7 +46,10 @@ export const DocsGridItemSharedButton = ({ doc, disabled }: Props) => {
       >
         <Button
           className="--docs--doc-grid-item-shared-button"
-          aria-label={t('Open the sharing settings for the document')}
+          aria-label={t('Open the sharing settings for the document', {
+            description:
+              'Accessible name of the button opening the share dialog',
+          })}
           data-testid={`docs-grid-item-shared-button-${doc.id}`}
           style={{
             padding: `0 var(--c--globals--spacings--xxxs) 0 var(--c--globals--spacings--xxxs)`,

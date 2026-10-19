@@ -32,8 +32,12 @@ export const LinkToBlockItem = () => {
 
     copyToClipboard(
       `${window.location.origin}${window.location.pathname}#${block.id}`,
-      t('Link Copied !'),
-      t('Failed to copy link'),
+      t('Link Copied !', {
+        description: 'Toast confirming a link was copied to the clipboard',
+      }),
+      t('Failed to copy link', {
+        description: 'Toast shown when copying a link failed',
+      }),
     );
 
     if (!isMobile) {
@@ -54,7 +58,10 @@ export const LinkToBlockItem = () => {
     >
       <Box $align="center" $gap="xxs" $direction="row">
         <LinkIcon width="16" height="16" aria-hidden="true" />
-        {t('Copy link to block')}
+        {t('Copy link to block', {
+          description:
+            'Editor side menu action copying a link to the current block',
+        })}
       </Box>
     </Components.Generic.Menu.Item>
   );

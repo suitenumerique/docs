@@ -3,21 +3,29 @@ import {
   ButtonProps,
   DropdownMenu,
   DropdownMenuItem,
+  DropdownMenuOption,
+  MenuItemSeparator,
 } from '@gouvfr-lasuite/ui-components';
 import { Present } from '@gouvfr-lasuite/ui-components/icons';
 import { announce } from '@react-aria/live-announcer';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { ReactNode, memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Box } from '@/components/Box';
 import { Text } from '@/components/Text';
+import { useConfig } from '@/core/config/api';
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { getWordCount } from '@/docs/doc-editor/utils';
 import { printDocumentWithStyles } from '@/docs/doc-export/utils_print';
+import { useDuplicatedDoc } from '@/docs/doc-management/components/ConfirmationDuplicateModal';
 import { usePresenterStore } from '@/docs/doc-presenter/stores';
 import { useDetachDoc } from '@/docs/doc-tree/api/useDetach';
-import { useTreeContextOrNull } from '@/docs/doc-tree/utils';
+import {
+  deleteDocFromTreeAfterNavigate,
+  useTreeContextOrNull,
+} from '@/docs/doc-tree/utils';
 import { useAuth } from '@/features/auth';
 import ContentCopyIcon from '@/icons/copy.svg';
 import DocMoveInIcon from '@/icons/doc-move-in.svg';
@@ -32,7 +40,9 @@ import SharedIcon from '@/icons/shared.svg';
 import StarSlashIcon from '@/icons/star-slash.svg';
 import StarIcon from '@/icons/star.svg';
 import DeleteIcon from '@/icons/trash.svg';
+import { useAnalytics } from '@/libs/Analytics';
 import { useFocusStore, useResponsiveStore } from '@/stores';
+import { isMacOS } from '@/utils/userAgent';
 
 import {
   KEY_DOC,
@@ -40,10 +50,21 @@ import {
   KEY_LIST_FAVORITE_DOC,
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
-  useDuplicateDoc,
 } from '../api';
 import { useCopyDocLink, useTrans } from '../hooks';
 import { Doc, Role } from '../types';
+
+const DUPLICATE_WITH_CHILDREN_FEATURE_FLAG = 'duplicate_with_children';
+
+const ConfirmationDuplicateModal = dynamic(
+  () =>
+    import('@/docs/doc-management/components/ConfirmationDuplicateModal').then(
+      (mod) => ({
+        default: mod.ConfirmationDuplicateModal,
+      }),
+    ),
+  { ssr: false },
+);
 
 const DocMoveModal = dynamic(
   () =>
@@ -95,6 +116,18 @@ const ModalExport = dynamic(
   { ssr: false },
 );
 
+/**
+ * We widen the type of `DropdownMenuOption.label` to accept
+ * `ReactNode` instead of just `string`.
+ * @todo Widen the label type in the ui-kit package itself.
+ * This is a temporary workaround until the ui-kit package is updated.
+ */
+type MenuOptionWithNodeLabel = Omit<DropdownMenuOption, 'label'> & {
+  label: ReactNode;
+};
+type DropdownMenuItemWithNodeLabel =
+  MenuOptionWithNodeLabel | MenuItemSeparator;
+
 interface DocToolBoxProps {
   doc: Doc;
   isCurrentDoc: boolean;
@@ -117,6 +150,7 @@ const DocToolBoxComponent = ({
   const isTopParent = !treeContext || doc.id === treeContext?.root?.id; // it can be a child but not for the current user
   const { authenticated } = useAuth();
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [isModalDuplicateOpen, setIsModalDuplicateOpen] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const [isModalShareOpen, setIsModalShareOpen] = useState(false);
@@ -124,6 +158,13 @@ const DocToolBoxComponent = ({
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
   const [isModalMoveOpen, setIsModalMoveOpen] = useState(false);
   const { onClick: onButtonClick, ...buttonPropsLeft } = buttonProps || {};
+  const { isFeatureFlagActivated } = useAnalytics();
+  const { data: conf } = useConfig();
+  const duplicateWithChildrenAllowed = !!(
+    isFeatureFlagActivated(DUPLICATE_WITH_CHILDREN_FEATURE_FLAG) &&
+    conf?.DUPLICATE_CHILDREN_FEATURE_ENABLED &&
+    doc.numchild
+  );
 
   const editor = useEditorStore((state) => state.editor);
   const wordCountLabel = useMemo(() => {
@@ -148,12 +189,11 @@ const DocToolBoxComponent = ({
   const addLastFocus = useFocusStore((state) => state.addLastFocus);
   const isMobile = useResponsiveStore((state) => state.isMobile);
   const copyDocLink = useCopyDocLink(doc.id);
-
   const openPresenter = usePresenterStore((state) => state.open);
-  const { mutate: duplicateDoc } = useDuplicateDoc({
-    onSuccess: (data) => {
-      void router.push(`/docs/${data.id}`);
-    },
+  const { mutate: duplicateDoc } = useDuplicatedDoc({
+    doc,
+    treeContext,
+    isCurrentDoc,
   });
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
@@ -163,7 +203,7 @@ const DocToolBoxComponent = ({
     listInvalidQueries: [KEY_LIST_DOC, KEY_DOC, KEY_LIST_FAVORITE_DOC],
   });
 
-  const options: DropdownMenuItem[] = [
+  const options: DropdownMenuItemWithNodeLabel[] = [
     {
       label: t('Copy link', {
         description: 'Dropdown menu item to copy the document link',
@@ -186,10 +226,38 @@ const DocToolBoxComponent = ({
       showSeparator: isCurrentDoc,
     },
     {
-      label: t('Present', {
-        description:
-          'Dropdown menu item to open the document in presentation mode',
-      }),
+      label: (
+        <Box $direction="row" $gap="xxs">
+          <Text>
+            {t('Present', {
+              description:
+                'Dropdown menu item to open the document in presentation mode',
+            })}
+          </Text>
+          <Text
+            $variation="tertiary"
+            $size="xs"
+            $css={`
+              opacity: 0;
+              transition: opacity 0.2s;
+              .c__dropdown-menu-item:hover &,
+              .c__dropdown-menu-item[data-focused] & {
+                opacity: 1;
+              }
+            `}
+          >
+            {isMacOS
+              ? t('Cmd+Alt+P', {
+                  description:
+                    'Dropdown menu item to open the document in presentation mode, macOS shortcut',
+                })
+              : t('Ctrl+Alt+P', {
+                  description:
+                    'Dropdown menu item to open the document in presentation mode, Windows/Linux shortcut',
+                })}
+          </Text>
+        </Box>
+      ),
       icon: <Present width={18} height={18} aria-hidden="true" />,
       callback: () => {
         openPresenter(0);
@@ -219,7 +287,13 @@ const DocToolBoxComponent = ({
     },
     { type: 'separator' },
     {
-      label: doc.is_favorite ? t('Unstar') : t('Star'),
+      label: doc.is_favorite
+        ? t('Unstar', {
+            description: 'Menu action to remove a document from favorites',
+          })
+        : t('Star', {
+            description: 'Menu action to add a document to favorites',
+          }),
       icon: doc.is_favorite ? (
         <StarSlashIcon width={18} height={18} aria-hidden="true" />
       ) : (
@@ -244,16 +318,21 @@ const DocToolBoxComponent = ({
       icon: <ContentCopyIcon width={18} height={18} aria-hidden="true" />,
       isDisabled: !doc.abilities.duplicate,
       callback: () => {
-        duplicateDoc({
-          docId: doc.id,
-          with_accesses: false,
-          canSave: doc.abilities.partial_update,
-        });
+        if (duplicateWithChildrenAllowed) {
+          setIsModalDuplicateOpen(true);
+        } else {
+          duplicateDoc({
+            docId: doc.id,
+            canSave: doc.abilities.partial_update,
+          });
+        }
       },
       isHidden: !doc.abilities.duplicate,
     },
     {
-      label: t('Move to my docs'),
+      label: t('Move to my docs', {
+        description: "Menu action to move a document into the user's own docs",
+      }),
       isHidden: isTopParent || doc.user_role !== Role.OWNER,
       icon: <DocMoveOutIcon width={18} height={18} aria-hidden="true" />,
       callback: () => {
@@ -267,11 +346,11 @@ const DocToolBoxComponent = ({
             onSuccess: () => {
               if (treeContext.root) {
                 treeContext.treeData.setSelectedNode(treeContext.root);
-                void router.push(`/docs/${treeContext.root.id}`).then(() => {
-                  setTimeout(() => {
-                    treeContext?.treeData.deleteNode(doc.id);
-                  }, 100);
-                });
+                deleteDocFromTreeAfterNavigate(
+                  treeContext,
+                  doc.id,
+                  router.push(`/docs/${treeContext.root.id}`),
+                );
               }
             },
           },
@@ -279,7 +358,9 @@ const DocToolBoxComponent = ({
       },
     },
     {
-      label: t('Move into a doc'),
+      label: t('Move into a doc', {
+        description: 'Menu action to move a document under another doc',
+      }),
       icon: <DocMoveInIcon width={18} height={18} aria-hidden="true" />,
       callback: () => {
         setIsModalMoveOpen(true);
@@ -331,7 +412,7 @@ const DocToolBoxComponent = ({
   return (
     <>
       <DropdownMenu
-        options={optionsDefault ?? options}
+        options={(optionsDefault ?? options) as DropdownMenuItem[]}
         isOpen={openDropdown}
         shouldCloseOnInteractOutside={() => true}
         onOpenChange={(isOpen) => {
@@ -344,8 +425,13 @@ const DocToolBoxComponent = ({
       >
         <Button
           aria-label={t('Open the document options: {{title}}', {
+            description: 'Accessible name of the document actions menu button',
             title: doc.title || untitledDocument,
           })}
+          // `DropdownMenu` does not use React Aria's MenuTrigger, so nothing
+          // else exposes this button as a menu button.
+          aria-haspopup="menu"
+          aria-expanded={openDropdown}
           size="small"
           icon={<MoreIcon width={24} height={24} aria-hidden="true" />}
           color="neutral"
@@ -386,16 +472,26 @@ const DocToolBoxComponent = ({
               treeContext?.treeData.getParentId(doc.id) ||
               treeContext?.root?.id;
 
-            if (isTopParent) {
+            if (isTopParent && isCurrentDoc) {
               void router.push(`/`);
             } else if (parentId) {
-              void router.push(`/docs/${parentId}`).then(() => {
-                setTimeout(() => {
-                  treeContext?.treeData.deleteNode(doc.id);
-                }, 100);
-              });
+              deleteDocFromTreeAfterNavigate(
+                treeContext,
+                doc.id,
+                router.push(`/docs/${parentId}`),
+              );
             }
           }}
+        />
+      )}
+      {isModalDuplicateOpen && (
+        <ConfirmationDuplicateModal
+          onClose={() => {
+            setIsModalDuplicateOpen(false);
+            restoreFocus();
+          }}
+          doc={doc}
+          treeContext={treeContext}
         />
       )}
       {isModalHistoryOpen && (

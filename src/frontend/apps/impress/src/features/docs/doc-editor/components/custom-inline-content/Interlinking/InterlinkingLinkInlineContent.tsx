@@ -23,12 +23,12 @@ export type InterlinkingLinkInlineContentType = {
     docId?: {
       default: '';
     };
+    blockId?: {
+      default: '';
+    };
     trigger?: {
       default: '/';
       values: readonly ['/', '@'];
-    };
-    title?: {
-      default: '';
     };
   };
   content: 'none';
@@ -44,6 +44,9 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
       docId: {
         default: '',
       },
+      blockId: {
+        default: '',
+      },
       disabled: {
         default: false,
         values: [true, false],
@@ -51,9 +54,6 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
       trigger: {
         default: '/',
         values: ['/', '@'],
-      },
-      title: {
-        default: '',
       },
     },
     content: 'none',
@@ -63,19 +63,19 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
      * Can have 3 render states:
      * 1. Disabled state: when the inline content is disabled, it renders nothing
      * 2. Search state: when the inline content has no docId, it renders the search page
-     * 3. Linked state: when the inline content has a docId and title, it renders the linked doc
+     * 3. Linked state: when the inline content has a docId, it renders the linked doc.
      *
      * Info: We keep everything in the same inline content to easily preserve
      * the element position when switching between states
      */
     render: (props) => {
-      const { disabled, docId, title } = props.inlineContent.props;
+      const { disabled, docId, blockId } = props.inlineContent.props;
 
       if (disabled) {
         return null;
       }
 
-      if (docId && title) {
+      if (docId) {
         /**
          * Should not happen
          */
@@ -98,19 +98,8 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
         return (
           <LinkSelected
             docId={docId}
-            title={title}
+            blockId={blockId}
             isEditable={props.editor.isEditable}
-            onUpdateTitle={(newTitle) =>
-              props.updateInlineContent({
-                type: 'interlinkingLinkInline',
-                props: {
-                  docId: docId,
-                  title: newTitle,
-                  trigger: props.inlineContent.props.trigger,
-                  disabled: false,
-                },
-              })
-            }
           />
         );
       }
@@ -128,7 +117,9 @@ export const getInterlinkinghMenuItems = (
 ) => [
   {
     key: 'link-doc',
-    title: t('Link a doc'),
+    title: t('Link a doc', {
+      description: 'Editor menu entry to insert a link to another doc',
+    }),
     onItemClick: () => {
       editor.insertInlineContent([
         {
@@ -142,16 +133,22 @@ export const getInterlinkinghMenuItems = (
     aliases: ['interlinking', 'link', 'anchor', 'a'],
     group,
     icon: <LinkPageIcon />,
-    subtext: t('Link this doc to another doc'),
+    subtext: t('Link this doc to another doc', {
+      description: 'Description of the "Link a doc" editor menu entry',
+    }),
   },
   {
     key: 'new-sub-doc',
-    title: t('New sub-doc'),
+    title: t('New sub-doc', {
+      description: 'Action to create a doc nested under the current doc',
+    }),
     onItemClick: createPage,
     aliases: ['new sub-doc'],
     group,
     icon: <AddPageIcon />,
-    subtext: t('Create a new sub-doc'),
+    subtext: t('Create a new sub-doc', {
+      description: 'Description of the "New sub-doc" editor menu entry',
+    }),
   },
 ];
 
@@ -162,7 +159,15 @@ export const useGetInterlinkingMenuItems = () => {
   return (
     editor: DocsBlockNoteEditor,
     t: TFunction<'translation', undefined>,
-  ) => getInterlinkinghMenuItems(editor, t, t('Links'), createChildDoc);
+  ) =>
+    getInterlinkinghMenuItems(
+      editor,
+      t,
+      t('Links', {
+        description: 'Group title of the link entries in the editor menu',
+      }),
+      createChildDoc,
+    );
 };
 
 const DisableInvalidInterlink = ({

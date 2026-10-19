@@ -8,30 +8,217 @@ and this project adheres to
 
 ### Added
 
-- 🔧(backend) fine tune redis cache options
+- ✨(docspec) handle DocSpec 4xx/5xx import errors distinctly #2552
+- 🌐(frontend) add Crowdin translator context #2785
 
 ### Changed
 
-- ⬆️(backend) upgrade celery to version 5.6.3
+- ♻️(frontend) replace outdated AGPL mentions of BlockNote XL packages #2775
+- 💄(frontend) update upload loader and error ui #2778
+- ⬆️(yhub) upgrade @y/hub to 0.10.1 #2853
+- ♿️(frontend) allow opening the home button in a new tab #2839
+- 💄(frontend) use 12px for error page home links #2809
 
 ### Fixed
 
-- 🐛(backend) skip session creation for the liveness probe
+- 🐛(frontend) wrap long text in the print export #2813
+- 🔒️(backend) bind comment thread to the path document on creation #2838
+- 🐛(frontend) fix search highlight hidden inside code blocks #2681
+- 🔒️(backend) require present document access for thread and comment 
+  writes #2840
+
+## [v6.0.1] - 2026-10-15
+
+### Added
+
+- ✨(backend) add a setting for the http fallback polling interval #2827
+- ✨(backend) add a setting to turn off awareness on the http fallback #2827
+- ✨(backend) add a setting to send json on the http fallback #2829
+- ⚡️(yhub) cache authz verdicts to cut backend calls on connections #2832
+
+### Changed
+
+- ⚡️(yhub) skip the `users/me` call for callers without a session
+  cookie #2830
+- 🔧(helm) allow to set the period and failure threshold of probes #2828
+- ♿️(frontend) fix the accessibility of the document tree #2769
+
+### Fixed
+
+- 🐛(frontend) stop the http fallback when the collaboration server
+  refuses it #2827
+- 🐛(backend) bypass throttling on access/me action from yhub #2811
+- 🐛(frontend) switch language when the current one is untranslated #2790
+- 🐛(frontend) keep the loading skeleton until an empty doc has synced #2817
+
+### Removed
+
+- 🔥(backend) remove `ForceSessionMiddleware`, an orphan of the removed
+  non-websocket save safeguard #2830
+
+## [v6.0.0] - 2026-10-05
+
+### Added
+
+- 👷(ci) lint, typecheck, build and test the collaboration server (yhub) #2757
+- 👷(ci) check the load-test tooling: swarm, canary, k6 and dashboards #2757
+- 👷(ci) cancel the superseded runs of a pull request #2757
+- ✨(backend) add mention endpoint with cooldown-limited email
+  notification #2447
+- 🚩(setting) add feature flag on Duplicate with Children #2721
+- 💄(frontend) redesign 404 error standalone page #2696
+- 💄(frontend) redesign 403 access denied page #2720
+- ✨(frontend) duplicate with subdocuments #2584
+- ✨(frontend) add markdown download option #2608
+- ✨(frontend) turn pasted doc links into interlinks #2713
+- ✨(helm) allow disallowing search engine indexing per instance #2694
+- ✨(backend) expose the attachment max size in the config endpoint #2577
+- ✨(frontend) warn before uploading an attachment over the size limit #2577
+- ✨(loadtest) add a websocket load generator for the collaboration
+  server #2556
+- ✨(loadtest) add k6 scenarios for the page-open sequence and the heavy
+  endpoints #2556
+- ✨(loadtest) add browser canaries measuring what a user feels under
+  load #2556
+- ✨(loadtest) add the grafana dashboards of the load-test campaign, valkey
+  included #2556
+- 📝(documentation) add the load-testing guide #2556
+- 🔧(helm) run grafana with those dashboards in the dev cluster, in place of
+  the prometheus console #2556
+- ✨(backend) measure the calls to yhub and to the converters, the database
+  pool and the celery queue #2556
+- ✨(backend) add a `LoadTest` configuration and its `loadtest` application,
+  minting sessions for load tests #2556
+- ✨(collaboration) add opt-in prometheus metrics to yhub, server and worker,
+  protected by a bearer token #2556
+- ✨(collaboration) report yhub errors to sentry, configured through
+  `SENTRY_*` #2556
+- ✨(backend) add opt-in prometheus metrics on `/metrics`, protected by a
+  bearer token #2556
+- ✨(helm) add a dedicated ingress for the prometheus metrics of the backend
+  and of yhub #2556
+- ✨(helm) add a ServiceMonitor and a PodMonitor per component whose metrics
+  are enabled, and `backend.metrics.enabled` #2556
+- 🔧(helm) scrape the metrics of the dev cluster with a trimmed
+  kube-prometheus-stack and the ServiceMonitors of the chart #2556
+- 🔧(helm) serve the example console of django-prometheus on the dev
+  Prometheus #2556
+- ✨(backend) add a service generating cached RS256 JWT tokens #2556
+- ✨(backend) publish the JWT public key on a JWKS endpoint #2556
+- 🔧(dev) generate the JWT signing key when bootstrapping the dev stack #2556
+- ✨(collaboration) add an admin reset-connections endpoint on yhub #2556
+- ✨(collaboration) add a create-ydoc endpoint on yhub #2556
+- ✨(collaboration) soft-migrate legacy S3 documents into yhub #2556
+- ✨(collaboration) replay legacy s3 version history into yhub #2556
+- ✨(backend) add a service to call the yhub REST API #2556
+- ✨(backend) call YHubService to seed initial document content #2556
+- ✨(collaboration) add a get-ydoc endpoint on yhub #2556
+- ✨(backend) duplicate a document through the collaboration server #2556
+- ✨(backend) serve `documents/{id}/formatted-content/` from yhub #2556
+- ✨(collaboration) notify the backend when the worker persists new
+  content #2556
+- ✨(collaboration) let a user read the document's editing history #2556
+- ✨(frontend) fall back to http polling when the websocket cannot be
+  opened. #2556
+- 🔧(collaboration) make the version-history granularity configurable through
+  `COLLABORATION_VERSION_GRANULARITY_MS` #2556
+- ✨(frontend) keep a local copy of documents, so they open and stay editable
+  offline #2556
+
+### Changed
+
+- 🛂(backend) let users allowed to comment list each other's accesses #2447
+- ♻️(collaboration) migrate the collaboration server from hocuspocus to
+  yhub #2556
+- 💥(y-provider) y-provider becomes converter-only #2556
+- 💥(backend) move the resource server JWKS from `/api/{version}/jwks` to
+  `/external_api/{version}/jwks` #2556
+- 🔧(collaboration) adapt docker stack for development purpose #2556
+- 🔧(helm) run a valkey for the backend and one for yhub in dev and
+  feature #2556
+- 💄(frontend) redesign 401 error standalone page #2716
+
+### Fixed
+
+- 🐛(frontend) never list two versions ending at the same moment
+- 🐛(documentation) fix minio port and keycloak realm in the k8s guide #2751
+- 🐛(collaboration) bound the calls yhub makes to the backend with a timeout,
+  `YHUB_BACKEND_REQUEST_TIMEOUT_MS`, 5s by default #2753
+- 🐛(frontend) cache hashed `/_next/static/` assets and revalidate HTML #2770
+- 🐛(backend) compensate document duplication failures #2755
+- 🐛(frontend) open search results in a new tab with ctrl/cmd+click #2719
+- 🐛(docker) pull minio images from pgsty #2739
+- 🐛(backend) retry the duplicate of a document on a tree path collision #2726
+- 🐛(frontend) keep caption and alignment when replacing an image #2730
+- 🐛(backend) reset the collaboration connections on every access change #2725
+- ⚡️(backend) coalesce and pace the resets of collaboration connections #2725
+- 🐛(frontend) clear callout background on Backspace #2052
+- 🐛(export) keep image aspect ratio in PDF columns #2670
+- 🐛(frontend) fix redirect after deleting a document #2706
+- 🐛(frontend) keep documents draggable with a mouse when zoomed #2727
+- 📝(docs) fix markdown typo in installation README #2766
+- 🐛(i18n) export locale correctly #2750
+- 🐛(frontend) keep login and logout out of the service worker cache #2771
+- 🐛(frontend) reduce PostHog volume from web vitals and opt_in spam #2701
+- 🐛(frontend) stop reconnecting to the websocket based on the status
+  code #2556
+- 🐛(frontend) stop the service worker from caching the collaboration server's
+  rest api #2556
+
+### Removed
+
+- 🔥(backend) remove the unused `CollaborationService` #2556
+- 💥(backend) remove the `documents/{id}/can-edit/` endpoint #2556
+- 💥(backend) remove the `documents/{id}/content/` endpoint #2556
+- 🔥(backend) remove the document version endpoints. #2556
+- 🔥(backend) remove `Document.content` #2556
+
+### Security
+
+- 🔒️(collaboration) stop read-only users from sharing their cursor #2556
+- 🔒️(backend) fix race conditions between actions updating a docs #2781
+
+## [v5.7.0] - 2026-09-15
+
+### Added
+
+- 🔧(backend) fine tune redis cache options #2658
+- ✨(frontend) make the full last-update date available #1215
+- 💄(frontend) redesign email confirmation standalone page #2601
+
+### Changed
+
+- ⬆️(backend) upgrade celery to version 5.6.3 #2658
+- ⚡️(backend) stop using LEFT(value, LENGTH(path)) in sql queries #2668
+- 🚚(project) switch docspec image to ghcr.io/docspec/api #2553
+- 🚚(global) move favorite documents API endpoint
+  to `/documents/favorites/` #2540
+
+### Fixed
+
+- 🐛(backend) skip session creation for the liveness probe #2654
 - 🐛(frontend) preserve page titles when adding an emoji #2586
+- 🐛(frontend) scroll to the linked block in read-only documents #2663
 - 🐛(frontend) hide the selection highlight on presenter images #2665
+- 🐛(y-provider) prevent process crash on malformed websocket frames #2673
+- 🐛(y-provider) prevent crash on malformed frames from rejected websockets
+- 🐛(frontend) keep commented text sharp when printing to PDF #2674
+- 🐛(docker) pull minio images from quay.io #2675
+- ♿️(frontend) restore presenter focus trapping after share links #2533
+- 🐛(frontend) export any raster image supported by the browser to a PDF #2530
+- 🐛(frontend) fix find & replace crash when editor becomes read-only #2684
 
 ## [v5.6.1] - 2026-09-04
 
 ### Added
 
 - ✨(frontend) export presenter slides as PDF #2487
-- 💄(frontend) redesign email confirmation standalone page #2601
 
 ### Fixed
 
 - 🐛(frontend) hide Leave in the doc menu when not logged in #2626
-- 🐛(backend) allow to configure settings DATA_UPLOAD_MAX_MEMORY_SIZE
-- ➕(backend) add servestatic dependency
+- 🐛(backend) allow to configure settings DATA_UPLOAD_MAX_MEMORY_SIZE #2639
+- ➕(backend) add servestatic dependency #2644
 
 ## [v5.6.0] - 2026-09-03
 
@@ -60,7 +247,6 @@ and this project adheres to
 - 🐛(backend) manage async support for Docs custom middleware #2619
 - 🐛(frontend) save the doc with a keepalive
   request when leaving the page #2619
-- 🐛(frontend) export any raster image supported by the browser to a PDF #2530
 
 ### Removed
 
@@ -1508,8 +1694,11 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.6.1...main
-[v5.6.1]: https://github.com/suitenumerique/docs/releases/v5.6.0
+[unreleased]: https://github.com/suitenumerique/docs/compare/v6.0.1...main
+[v6.0.1]: https://github.com/suitenumerique/docs/releases/v6.0.1
+[v6.0.0]: https://github.com/suitenumerique/docs/releases/v6.0.0
+[v5.7.0]: https://github.com/suitenumerique/docs/releases/v5.7.0
+[v5.6.1]: https://github.com/suitenumerique/docs/releases/v5.6.1
 [v5.6.0]: https://github.com/suitenumerique/docs/releases/v5.6.0
 [v5.5.0]: https://github.com/suitenumerique/docs/releases/v5.5.0
 [v5.4.1]: https://github.com/suitenumerique/docs/releases/v5.4.1

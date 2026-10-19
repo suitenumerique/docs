@@ -30,13 +30,13 @@ export function useComments(
         canComment,
         config?.REACTIONS_MAX_PER_COMMENT ?? 0,
       ),
-      provider?.document,
+      provider?.doc,
     );
   }, [
     docId,
     canComment,
     provider?.awareness,
-    provider?.document,
+    provider?.doc,
     user?.full_name,
     config?.REACTIONS_MAX_PER_COMMENT,
   ]);
@@ -67,7 +67,11 @@ export function useComments(
 
           return {
             id: encodedURIUserId,
-            username: fullName || t('Anonymous'),
+            username:
+              fullName ||
+              t('Anonymous', {
+                description: 'Display name of a user without a known name',
+              }),
             avatarUrl: avatarUrlFromName(
               fullName,
               themeTokens?.font?.families?.base,

@@ -10,6 +10,11 @@ const uploadLoaderPropSchema = {
   blockUploadShowPreview: { default: true as boolean },
   blockUploadType: { default: '' as string },
   blockUploadUrl: { default: '' as string },
+  blockUploadCaption: { default: '' as string },
+  blockUploadTextAlignment: {
+    default: 'left' as const,
+    values: ['left', 'center', 'right', 'justify'] as const,
+  },
 } as const;
 
 const uploadLoaderConfig = {

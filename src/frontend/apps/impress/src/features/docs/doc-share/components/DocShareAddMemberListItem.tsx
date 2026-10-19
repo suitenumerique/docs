@@ -44,6 +44,8 @@ export const DocShareAddMemberListItem = ({ user, onRemoveUser }: Props) => {
       <BoxButton
         onClick={() => onRemoveUser?.(user)}
         aria-label={t('Remove {{name}} from the invite list', {
+          description:
+            'Accessible name of the button removing a person from the pending invitees',
           name: user.full_name || user.email,
         })}
         $withThemeInherited

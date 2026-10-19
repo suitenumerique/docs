@@ -109,13 +109,19 @@ export const OnBoarding = (props: OnBoardingProps) => {
       {props.isOpen ? <OnBoardingStyle /> : null}
       <OnboardingModalFixed
         size={ModalSize.LARGE}
-        appName={t('Discover Docs')}
-        mainTitle={t('Learn the core principles')}
+        appName={t('Discover Docs', {
+          description: 'Title of the product tour dialog',
+        })}
+        mainTitle={t('Learn the core principles', {
+          description: 'Subtitle of the product tour dialog',
+        })}
         steps={steps}
         footerLink={
           learnMoreUrl
             ? {
-                label: t('Learn more docs features'),
+                label: t('Learn more docs features', {
+                  description: 'Link at the end of the product tour',
+                }),
                 href: learnMoreUrl,
               }
             : undefined

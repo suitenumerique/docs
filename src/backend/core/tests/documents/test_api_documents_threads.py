@@ -175,6 +175,7 @@ def test_api_documents_threads_restricted_document_editor(role):
         "created_at": thread.created_at.isoformat().replace("+00:00", "Z"),
         "updated_at": thread.updated_at.isoformat().replace("+00:00", "Z"),
         "creator": {
+            "id": str(user.id),
             "full_name": user.full_name,
             "short_name": user.short_name,
         },
@@ -185,6 +186,7 @@ def test_api_documents_threads_restricted_document_editor(role):
                 "created_at": comment.created_at.isoformat().replace("+00:00", "Z"),
                 "updated_at": comment.updated_at.isoformat().replace("+00:00", "Z"),
                 "user": {
+                    "id": str(user.id),
                     "full_name": user.full_name,
                     "short_name": user.short_name,
                 },
@@ -296,6 +298,7 @@ def test_api_documents_threads_authenticated_document(link_role):
         "created_at": thread.created_at.isoformat().replace("+00:00", "Z"),
         "updated_at": thread.updated_at.isoformat().replace("+00:00", "Z"),
         "creator": {
+            "id": str(user.id),
             "full_name": user.full_name,
             "short_name": user.short_name,
         },
@@ -306,6 +309,7 @@ def test_api_documents_threads_authenticated_document(link_role):
                 "created_at": comment.created_at.isoformat().replace("+00:00", "Z"),
                 "updated_at": comment.updated_at.isoformat().replace("+00:00", "Z"),
                 "user": {
+                    "id": str(user.id),
                     "full_name": user.full_name,
                     "short_name": user.short_name,
                 },
@@ -917,9 +921,9 @@ def test_api_documents_threads_retrieve_number_of_queries(
             )
 
     client = APIClient()
-    # 1 query for the thread and 1 per prefetched relation: comments, reactions
-    # and reaction users.
-    with django_assert_num_queries(4):
+    # 1 query for the document from the permission check, 1 for the thread and
+    # 1 per prefetched relation: comments, reactions and reaction users.
+    with django_assert_num_queries(5):
         response = client.get(
             f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/",
         )
@@ -1035,6 +1039,89 @@ def test_api_documents_threads_destroy_authenticated_document(link_role):
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/",
     )
     assert response.status_code == 403
+
+
+@pytest.mark.parametrize("method", ["patch", "delete"])
+def test_api_documents_threads_write_revoked_collaborator(method):
+    """A collaborator whose access was revoked must not write to their own thread."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach="restricted")
+    factories.UserDocumentAccessFactory(document=document, user=user, role="editor")
+    thread = factories.ThreadFactory(document=document, creator=user)
+    factories.CommentFactory(thread=thread, user=user)
+
+    # Revoke the collaborator's access only, as an owner would
+    document.accesses.filter(user=user).delete()
+
+    client = APIClient()
+    client.force_login(user)
+    response = getattr(client, method)(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/",
+    )
+    assert response.status_code == 403
+
+
+def test_api_documents_threads_destroy_revoked_collaborator_cascade_guard():
+    """
+    A collaborator whose access was revoked must not delete their own thread:
+    deleting it would cascade-destroy every comment in it, including the owner's.
+    """
+    owner = factories.UserFactory()
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(
+        link_reach="restricted", users=[(owner, models.RoleChoices.OWNER)]
+    )
+    factories.UserDocumentAccessFactory(document=document, user=user, role="editor")
+    thread = factories.ThreadFactory(document=document, creator=user)
+    factories.CommentFactory(thread=thread, user=user)
+    factories.CommentFactory(thread=thread, user=owner)
+
+    # Revoke the collaborator's access only, as an owner would
+    document.accesses.filter(user=user).delete()
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.delete(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/",
+    )
+    assert response.status_code == 403
+    assert models.Comment.objects.filter(thread=thread).count() == 2
+
+
+# Note: the sixth route named in the report (DELETE of a child document created by the
+# revoked collaborator) is deliberately NOT covered by this fix. Deleting a non-root
+# document a user created is an intentional product rule (`Document.get_abilities`
+# `can_destroy`, see test_models_documents.py) and the deletion is a soft delete the
+# owner can undo. Tightening it would be a separate product decision, not part of this
+# security fix.
+@pytest.mark.parametrize("action", ["resolve", "unresolve"])
+def test_api_documents_threads_resolve_revoked_collaborator(action):
+    """A collaborator whose access was revoked must not resolve/unresolve their thread."""
+    owner = factories.UserFactory()
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach="restricted")
+    factories.UserDocumentAccessFactory(document=document, user=user, role="editor")
+    thread = factories.ThreadFactory(document=document, creator=user)
+    factories.CommentFactory(thread=thread, user=user)
+    if action == "resolve":
+        # The owner resolved the thread before the collaborator's access was revoked
+        thread.resolved = True
+        thread.resolved_by = owner
+        thread.save(update_fields=["resolved", "resolved_by"])
+
+    # Revoke the collaborator's access only, as an owner would
+    document.accesses.filter(user=user).delete()
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/{action}/",
+    )
+    assert response.status_code == 403
+
+    # The thread state must be unchanged by the denied request
+    thread.refresh_from_db()
+    assert thread.resolved == (action == "resolve")
 
 
 def test_api_documents_threads_destroy_restricted_document_anonymous_user():

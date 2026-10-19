@@ -47,3 +47,19 @@ export function getMatchingLocales(
   }
   return matchingLocales;
 }
+
+/**
+ * Finds the single available locale closest to the given one. Unlike
+ * getMatchingLocales, which returns every region of a language on a soft
+ * match, this is what to use to mark one entry as selected.
+ *
+ * @param {readonly string[]} localesAvailable - The list of available locale strings.
+ * @param {string} locale - The locale to search for.
+ * @returns {string | undefined} The exact match, else the first locale sharing the language.
+ */
+export function getClosestLocale(
+  localesAvailable: readonly string[],
+  locale: string,
+): string | undefined {
+  return getMatchingLocales(localesAvailable, [locale])[0];
+}

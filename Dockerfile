@@ -1,7 +1,7 @@
 # Django impress
 
 # ---- base image to inherit from ----
-FROM python:3.14.6-alpine AS base
+FROM python:3.14.8-alpine AS base
 
 # Upgrade system packages to install security updates
 RUN apk update && apk upgrade --no-cache
@@ -21,7 +21,7 @@ ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_DOWNLOADS=0
 
 # install uv
-COPY --from=ghcr.io/astral-sh/uv:0.11.10 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.12.23 /uv /uvx /bin/
 
 WORKDIR /app
 
@@ -131,7 +131,7 @@ USER root:root
 RUN apk add --no-cache postgresql-client
 
 # Install development dependencies
-RUN --mount=from=ghcr.io/astral-sh/uv:0.11.10,source=/uv,target=/bin/uv \
+RUN --mount=from=ghcr.io/astral-sh/uv:0.12.23,source=/uv,target=/bin/uv \
   uv sync --all-extras --locked
 
 # Restore the un-privileged user running the application
@@ -159,6 +159,9 @@ FROM core AS backend-production
 
 # Remove apk cache, we don't need it anymore
 RUN rm -rf /var/cache/apk/*
+
+# pip is not needed at runtime (the dependencies are installed with uv)
+RUN /usr/local/bin/python -m pip uninstall --yes pip
 
 ARG IMPRESS_STATIC_ROOT=/data/static
 

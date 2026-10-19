@@ -25,7 +25,9 @@ export const Title = ({
       $color="var(--c--contextuals--content--logo1)"
       {...props}
     >
-      {t('Docs')}
+      {t('Docs', {
+        description: 'Product name, shown in page titles and the logo',
+      })}
     </Text>
   );
 };

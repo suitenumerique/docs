@@ -87,8 +87,14 @@ export const DocLeftPanelCollapseButton = () => {
   const docTitle = titleWithoutEmoji || untitledDocument;
   const shouldShowButtonTitle = !isPanelOpen && !isDocTitleVisible;
   const ariaLabel = isPanelOpen
-    ? t('Hide the side panel for {{title}}', { title: docTitle })
-    : t('Show the side panel for {{title}}', { title: docTitle });
+    ? t('Hide the side panel for {{title}}', {
+        description: 'Accessible name of the button collapsing the left panel',
+        title: docTitle,
+      })
+    : t('Show the side panel for {{title}}', {
+        description: 'Accessible name of the button expanding the left panel',
+        title: docTitle,
+      });
 
   return (
     <LeftPanelCollapseButton

@@ -281,3 +281,75 @@ def test_comment_get_abilities_user_admin_or_owner_other_comment(role):
         "reactions": True,
         "retrieve": True,
     }
+
+
+def test_comment_get_abilities_revoked_author():
+    """An author whose document access was revoked loses every ability on their comment."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach=LinkReachChoices.RESTRICTED)
+    factories.UserDocumentAccessFactory(document=document, user=user, role="editor")
+    comment = factories.CommentFactory(thread__document=document, user=user)
+
+    document.accesses.all().delete()
+
+    assert comment.get_abilities(user) == {
+        "destroy": False,
+        "update": False,
+        "partial_update": False,
+        "reactions": False,
+        "retrieve": False,
+    }
+
+
+def test_comment_get_abilities_author_with_present_access():
+    """An author who still holds access keeps their write abilities on their comment."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach=LinkReachChoices.RESTRICTED)
+    factories.UserDocumentAccessFactory(document=document, user=user, role="editor")
+    comment = factories.CommentFactory(thread__document=document, user=user)
+
+    assert comment.get_abilities(user) == {
+        "destroy": True,
+        "update": True,
+        "partial_update": True,
+        "reactions": True,
+        "retrieve": True,
+    }
+
+
+def test_thread_get_abilities_revoked_creator():
+    """A creator whose document access was revoked loses every ability on their thread."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach=LinkReachChoices.RESTRICTED)
+    factories.UserDocumentAccessFactory(document=document, user=user, role="editor")
+    thread = factories.ThreadFactory(document=document, creator=user)
+    factories.CommentFactory(thread=thread, user=user)
+
+    document.accesses.all().delete()
+
+    assert thread.get_abilities(user) == {
+        "destroy": False,
+        "update": False,
+        "partial_update": False,
+        "resolve": False,
+        "unresolve": False,
+        "retrieve": False,
+    }
+
+
+def test_thread_get_abilities_creator_with_present_access():
+    """A creator who still holds access keeps their write abilities on their thread."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(link_reach=LinkReachChoices.RESTRICTED)
+    factories.UserDocumentAccessFactory(document=document, user=user, role="editor")
+    thread = factories.ThreadFactory(document=document, creator=user)
+    factories.CommentFactory(thread=thread, user=user)
+
+    assert thread.get_abilities(user) == {
+        "destroy": True,
+        "update": True,
+        "partial_update": True,
+        "resolve": True,
+        "unresolve": True,
+        "retrieve": True,
+    }

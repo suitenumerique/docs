@@ -1,0 +1,136 @@
+/**
+ * These export modules are GPL licensed and should only
+ * be used when the application is not published as MIT.
+ */
+import { DOCXExporter } from '@blocknote/xl-docx-exporter';
+import { ODTExporter } from '@blocknote/xl-odt-exporter';
+import { PDFExporter } from '@blocknote/xl-pdf-exporter';
+import { DocumentProps, pdf } from '@react-pdf/renderer';
+import jsonemoji from 'emoji-datasource-apple' with { type: 'json' };
+import i18next from 'i18next';
+import { cloneElement, isValidElement } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
+import { Doc } from '@/docs/doc-management/types';
+
+import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
+import { getDocxDocsSchemaMappings } from '../mappingDocx';
+import { getOdtDocsSchemaMappings } from '../mappingODT';
+import { getPdfDocsSchemaMappings } from '../mappingPDF';
+import { resolveInterlinkTitles } from '../utils';
+
+export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
+  const { t } = useTranslation();
+
+  const docToBlob = async (format: string, documentTitle: string) => {
+    if (!editor) {
+      return;
+    }
+
+    const exportDocument = editor.document;
+    const interlinkTitles = await resolveInterlinkTitles(exportDocument);
+    let blobExport: Blob | undefined = undefined;
+    if (format === 'pdf') {
+      const exporter = new PDFExporter(
+        editor.schema,
+        getPdfDocsSchemaMappings(interlinkTitles),
+        {
+          resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
+          emojiSource: {
+            format: 'png',
+            builder(code) {
+              const emojisFound = jsonemoji.filter(
+                (e) =>
+                  e.unified.split('-')[0].toLowerCase() ===
+                  code.split('-')[0].toLowerCase(),
+              );
+
+              const emoji = emojisFound.find((e) =>
+                e.unified.toLocaleLowerCase().includes(code.toLowerCase()),
+              );
+
+              if (emoji) {
+                return `/assets/fonts/emoji/${emoji.image}`;
+              }
+
+              return '/assets/fonts/emoji/fallback.png';
+            },
+          },
+        },
+      );
+      const rawPdfDocument = (await exporter.toReactPDFDocument(
+        exportDocument,
+      )) as React.ReactElement<DocumentProps>;
+
+      // Add language, title and outline properties to improve PDF accessibility and navigation
+      const pdfDocument = isValidElement(rawPdfDocument)
+        ? cloneElement(rawPdfDocument, {
+            language: i18next.language,
+            title: documentTitle,
+            pageMode: 'useOutlines',
+          })
+        : rawPdfDocument;
+
+      blobExport = await pdf(pdfDocument).toBlob();
+    } else if (format === 'docx') {
+      const exporter = new DOCXExporter(
+        editor.schema,
+        getDocxDocsSchemaMappings(interlinkTitles),
+        {
+          resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
+        },
+      );
+
+      blobExport = await exporter.toBlob(exportDocument, {
+        documentOptions: { title: documentTitle },
+        sectionOptions: {},
+      });
+    } else if (format === 'odt') {
+      const exporter = new ODTExporter(
+        editor.schema,
+        getOdtDocsSchemaMappings(interlinkTitles),
+        {
+          resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
+        },
+      );
+
+      blobExport = await exporter.toODTDocument(exportDocument);
+    }
+
+    return blobExport;
+  };
+
+  return {
+    formats: [
+      {
+        label: t('PDF', {
+          description: 'Name of the PDF file format / editor block',
+        }),
+        value: 'pdf',
+        labelDescription: t('.pdf', {
+          description: 'File extension hint of the PDF export',
+        }),
+      },
+      {
+        label: t('Docx', {
+          description: 'Name of the Microsoft Word export format',
+        }),
+        value: 'docx',
+        labelDescription: t('.docx', {
+          description: 'File extension hint of the Word export',
+        }),
+      },
+      {
+        label: t('ODT', {
+          description: 'Name of the OpenDocument text export format',
+        }),
+        value: 'odt',
+        labelDescription: t('.odt', {
+          description: 'File extension hint of the OpenDocument export',
+        }),
+      },
+    ],
+    docToBlob,
+  };
+};

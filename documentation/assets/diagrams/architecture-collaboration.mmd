@@ -1,0 +1,36 @@
+flowchart TB
+
+  EDITORS["<b>Editors</b><br/>one browser per participant"]
+  BACK["<b>Django backend</b><br/>owns documents, users, access rights"]
+
+  subgraph yhubbox["yhub — two halves sharing only the stores"]
+    direction LR
+    SRV["<b>server</b><br/>YHUB_ROLE=server | all<br/>websockets + /collaboration/ routes"]
+    WRK["<b>worker</b><br/>YHUB_ROLE=worker | all<br/>merges updates, persists, trims"]
+  end
+
+  VALKEY[("<b>Valkey / Redis</b><br/>update stream · consumer group")]
+  YPG[("<b>PostgreSQL</b> <i>yhub</i><br/>persisted Yjs state")]
+  YS3[("<b>S3</b> <i>yhub</i><br/>optional blob store")]
+  LEGACY[("<b>S3 media bucket</b><br/>legacy content + versions")]
+
+  EDITORS <==>|"WSS /collaboration/ws/v1/:org/:docid"| SRV
+  SRV -->|"auth + change callbacks"| BACK
+  BACK -->|"document lifecycle API"| SRV
+
+  SRV -->|"XADD"| VALKEY
+  VALKEY -->|"XREADGROUP"| WRK
+  VALKEY -->|"fan-out to the other replicas"| SRV
+  SRV -->|"read on first sync"| YPG
+  WRK -->|"merged state"| YPG
+  WRK -.->|"when enabled"| YS3
+  SRV -.->|"seed a room · replay history"| LEGACY
+  BACK --> LEGACY
+
+  classDef svc fill:#e6f7ed,stroke:#2f9e5f,color:#0f3d24
+  classDef store fill:#fff4e0,stroke:#d99a19,color:#4a3410
+  classDef client fill:#e8f0fe,stroke:#3b6fd4,color:#12244a
+  class SRV,WRK,BACK svc
+  class VALKEY,YPG,YS3,LEGACY store
+  class EDITORS client
+  style yhubbox fill:#f0faf4,stroke:#a9d6bd

@@ -11,18 +11,16 @@ export type DBRequest = {
   key: string;
 };
 
-export interface DocContentCacheEntry {
-  etag: string;
-  lastModified: string;
-  content: string;
-}
-
 interface IDocsDB extends DBSchema {
   'doc-list': {
     key: string;
     value: DocsResponse;
   };
   'doc-item': {
+    key: string;
+    value: Doc;
+  };
+  'doc-tree': {
     key: string;
     value: Doc;
   };
@@ -34,13 +32,9 @@ interface IDocsDB extends DBSchema {
     key: 'version';
     value: number;
   };
-  'doc-content': {
-    key: string;
-    value: DocContentCacheEntry;
-  };
 }
 
-type TableName = 'doc-list' | 'doc-item' | 'doc-mutation' | 'doc-content';
+type TableName = 'doc-list' | 'doc-item' | 'doc-tree' | 'doc-mutation';
 
 /**
  * IndexDB prefers incremental versioning when upgrading the database,
@@ -82,14 +76,24 @@ export class DocsDB {
           if (!db.objectStoreNames.contains('doc-item')) {
             db.createObjectStore('doc-item');
           }
+          if (!db.objectStoreNames.contains('doc-tree')) {
+            db.createObjectStore('doc-tree');
+          }
           if (!db.objectStoreNames.contains('doc-mutation')) {
             db.createObjectStore('doc-mutation');
           }
           if (!db.objectStoreNames.contains('doc-version')) {
             db.createObjectStore('doc-version');
           }
-          if (!db.objectStoreNames.contains('doc-content')) {
-            db.createObjectStore('doc-content');
+          /**
+           * Dropped with the Django `documents/{id}/content/` endpoint it
+           * mirrored: document content is the collaboration server's alone now.
+           * Existing browsers still carry the store, so it is removed here
+           * rather than left orphaned. Cast because it is deliberately absent
+           * from the schema above.
+           */
+          if (db.objectStoreNames.contains('doc-content' as never)) {
+            db.deleteObjectStore('doc-content' as never);
           }
         },
       });
@@ -128,6 +132,7 @@ export class DocsDB {
 
       await DocsDB.deleteAll('doc-item');
       await DocsDB.deleteAll('doc-list');
+      await DocsDB.deleteAll('doc-tree');
       await DocsDB.deleteAll('doc-mutation');
       await db.put('doc-version', currentVersion, 'version');
     }
@@ -140,7 +145,7 @@ export class DocsDB {
    */
   public static async cacheResponse(
     key: string,
-    body: DocsResponse | Doc | DBRequest | DocContentCacheEntry,
+    body: DocsResponse | Doc | DBRequest,
     tableName: TableName,
     isRetry = false,
   ): Promise<void> {

@@ -14,5 +14,11 @@ export const DocsFindReplaceStyle = createGlobalStyle`
     .find-and-replace-result-current {
       background: var(--c--contextuals--background--palette--yellow--tertiary);
     }
+
+    [data-content-type='codeBlock'] {
+      .find-and-replace-result {
+        mix-blend-mode: hard-light;
+      }
+    }
   }
 `;

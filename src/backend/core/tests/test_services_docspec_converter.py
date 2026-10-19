@@ -9,6 +9,8 @@ from core.services import mime_types
 from core.services.converter_services import (
     DocSpecConverter,
     ServiceUnavailableError,
+    UnprocessableContentError,
+    UnsupportedMediaTypeError,
     ValidationError,
 )
 
@@ -65,6 +67,55 @@ def test_docspec_convert_http_error(mock_post):
     converter = DocSpecConverter()
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = requests.HTTPError("HTTP Error")
+    mock_post.return_value = mock_response
+
+    with pytest.raises(
+        ServiceUnavailableError,
+        match="Failed to connect to DocSpec conversion service",
+    ):
+        converter.convert(b"test data", mime_types.DOCX, mime_types.BLOCKNOTE)
+
+
+@patch("requests.post")
+def test_docspec_convert_unsupported_media_type(mock_post):
+    """Should raise UnsupportedMediaTypeError when DocSpec responds with HTTP 415."""
+    converter = DocSpecConverter()
+    mock_response = MagicMock(status_code=415)
+    mock_response.raise_for_status.side_effect = requests.HTTPError(
+        "Unsupported Media Type", response=mock_response
+    )
+    mock_post.return_value = mock_response
+
+    with pytest.raises(
+        UnsupportedMediaTypeError, match="DocSpec rejected the file type"
+    ):
+        converter.convert(b"test data", mime_types.DOCX, mime_types.BLOCKNOTE)
+
+
+@patch("requests.post")
+def test_docspec_convert_unprocessable_content(mock_post):
+    """Should raise UnprocessableContentError when DocSpec responds with HTTP 422."""
+    converter = DocSpecConverter()
+    mock_response = MagicMock(status_code=422)
+    mock_response.raise_for_status.side_effect = requests.HTTPError(
+        "Unprocessable Content", response=mock_response
+    )
+    mock_post.return_value = mock_response
+
+    with pytest.raises(
+        UnprocessableContentError, match="DocSpec could not process the file content"
+    ):
+        converter.convert(b"test data", mime_types.DOCX, mime_types.BLOCKNOTE)
+
+
+@patch("requests.post")
+def test_docspec_convert_server_error(mock_post):
+    """Should raise ServiceUnavailableError when DocSpec responds with HTTP 500."""
+    converter = DocSpecConverter()
+    mock_response = MagicMock(status_code=500)
+    mock_response.raise_for_status.side_effect = requests.HTTPError(
+        "Internal Server Error", response=mock_response
+    )
     mock_post.return_value = mock_response
 
     with pytest.raises(

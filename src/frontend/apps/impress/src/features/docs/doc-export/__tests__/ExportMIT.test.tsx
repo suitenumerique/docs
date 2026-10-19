@@ -1,7 +1,7 @@
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/docs/doc-export/hooks/useExportAGPL', () => ({
-  useExportAGPL: vi.fn(),
+vi.mock('@/docs/doc-export/hooks/useExportXL', () => ({
+  useExportXL: vi.fn(),
 }));
 
 const originalEnv = process.env.NEXT_PUBLIC_PUBLISH_AS_MIT;
@@ -27,6 +27,6 @@ describe('useModuleExport', () => {
     process.env.NEXT_PUBLIC_PUBLISH_AS_MIT = 'false';
     const Export = await import('@/docs/doc-export/hooks');
 
-    expect(Export.default).toHaveProperty('useExportAGPL');
+    expect(Export.default).toHaveProperty('useExportXL');
   });
 });

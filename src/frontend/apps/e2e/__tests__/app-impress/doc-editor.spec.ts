@@ -5,7 +5,7 @@ import cs from 'convert-stream';
 
 import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
 import { getEditor, openSuggestionMenu, writeInEditor } from './utils-editor';
-import { updateShareLink } from './utils-share';
+import { connectOtherUserToDoc, updateShareLink } from './utils-share';
 import {
   createRootSubPage,
   getTreeRow,
@@ -356,20 +356,20 @@ test.describe('Doc Editor', () => {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.html'));
 
-    await expect(editor.getByText('Analyzing file...')).toBeVisible();
+    await expect(editor.getByText('Analyzing the file')).toBeVisible();
 
     // To be sure the retry happens even after a page reload
     await goToGridDoc(page, {
       title: randomDoc,
     });
 
-    await expect(editor.getByText('Analyzing file...')).toBeVisible();
+    await expect(editor.getByText('Analyzing the file')).toBeVisible();
 
     // The retry takes a few seconds
     await expect(editor.getByText('test.html')).toBeVisible({
       timeout: 7000,
     });
-    await expect(editor.getByText('Analyzing file...')).toBeHidden();
+    await expect(editor.getByText('Analyzing the file')).toBeHidden();
   });
 
   test('it checks if callout custom block', async ({ page, browserName }) => {
@@ -513,6 +513,23 @@ test.describe('Doc Editor', () => {
     await page.keyboard.press('Escape');
 
     await expect(editor.getByText('@')).toBeVisible();
+
+    // Copy current url
+    const currentUrl = page.url();
+    await page.evaluate(async (url) => {
+      await navigator.clipboard.writeText(url);
+    }, currentUrl);
+
+    // Create new doc
+    await createDoc(page, 'new-doc', browserName, 1);
+    // Paste event the copied URL into the new doc's editor
+    await editor.focus();
+    await page.keyboard.press('Control+V');
+
+    // The paste url becomes an interlink to the copied doc
+    await expect(interlinkChild).toContainText(docChild2);
+    await interlinkChild.click();
+    await verifyDocName(page, docChild2);
   });
 
   test('it checks multiple big doc scroll to the top', async ({
@@ -744,6 +761,21 @@ test.describe('Doc Editor', () => {
     await page.goto(clipboardContent);
     await expect(editor.getByText('First Block')).not.toBeInViewport();
     await expect(editor.getByText('My Block')).toBeInViewport();
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(page, 'Public', 'Reading');
+
+    // Check link on read-only view for another user
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      browserName,
+      docUrl: clipboardContent,
+      withoutSignIn: true,
+    });
+
+    await expect(otherPage.getByText('First Block')).not.toBeInViewport();
+    await expect(otherPage.getByText('My Block')).toBeInViewport();
+
+    await cleanup();
   });
 
   test('it checks "Equation block" feature', async ({ page, browserName }) => {

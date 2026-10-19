@@ -1,16 +1,20 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
+import { useToast } from '@/hooks';
 
 export const useCopyCurrentEditorToClipboard = () => {
   const { editor } = useEditorStore();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { t } = useTranslation();
 
   return async (asFormat: 'html' | 'markdown') => {
     if (!editor) {
-      const message = t('Editor unavailable');
+      const message = t('Editor unavailable', {
+        description:
+          'Toast shown when copying content while the editor is not ready',
+      });
       toast(message, VariantType.ERROR, { duration: 3000 });
       return;
     }
@@ -23,16 +27,24 @@ export const useCopyCurrentEditorToClipboard = () => {
       await navigator.clipboard.writeText(editorContentFormatted);
       const successMessage =
         asFormat === 'markdown'
-          ? t('Copied as Markdown to clipboard')
-          : t('Copied to clipboard');
+          ? t('Copied as Markdown to clipboard', {
+              description: 'Toast after copying the document as Markdown',
+            })
+          : t('Copied to clipboard', {
+              description: 'Toast after copying something to the clipboard',
+            });
 
       toast(successMessage, VariantType.SUCCESS, { duration: 3000 });
     } catch (error) {
       console.error(error);
       const errorMessage =
         asFormat === 'markdown'
-          ? t('Failed to copy as Markdown to clipboard')
-          : t('Failed to copy to clipboard');
+          ? t('Failed to copy as Markdown to clipboard', {
+              description: 'Toast when copying as Markdown failed',
+            })
+          : t('Failed to copy to clipboard', {
+              description: 'Toast when copying to the clipboard failed',
+            });
 
       toast(errorMessage, VariantType.ERROR, {
         duration: 3000,

@@ -42,9 +42,11 @@ export const SimpleDocItem = ({
   const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title || '');
   const docTitle = titleWithoutEmoji || untitledDocument;
   const docRelativeUpdate = relativeDate(doc.updated_at);
-  const itemAriaLabel = `${t('Open document {{title}}', { title: docTitle })}. ${t(
+  const itemAriaLabel = `${t('Open document {{title}}', { description: 'Accessible name of a document link, an action to open it', title: docTitle })}. ${t(
     'Last update: {{update}}',
     {
+      description:
+        'Screen reader text giving the last modification date of a document',
       update: formatDate(doc.updated_at),
     },
   )}`;

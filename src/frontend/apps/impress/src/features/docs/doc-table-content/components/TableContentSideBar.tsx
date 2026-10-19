@@ -102,10 +102,16 @@ export const TableContentSideBar = ({ onClose }: TableContentSideBarProps) => {
             $size="16px"
             $margin="0"
           >
-            {t('Table of Contents')}
+            {t('Table of Contents', {
+              description:
+                'Title of the side panel listing the document headings',
+            })}
           </Text>
           <ButtonCloseModal
-            aria-label={t('Close the table of contents sidebar')}
+            aria-label={t('Close the table of contents sidebar', {
+              description:
+                'Accessible name of the button closing the table of contents',
+            })}
             onClick={onClose}
           />
         </Box>
@@ -161,8 +167,14 @@ export const TableContentSideBarButton = () => {
 
   const isActive = isPanelOpen && activePanel === 'tableContent';
   const ariaLabel = isActive
-    ? t('Hide the table of contents sidebar')
-    : t('Show the table of contents sidebar');
+    ? t('Hide the table of contents sidebar', {
+        description:
+          'Accessible name of the toggle hiding the table of contents',
+      })
+    : t('Show the table of contents sidebar', {
+        description:
+          'Accessible name of the toggle showing the table of contents',
+      });
 
   return (
     <Button

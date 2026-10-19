@@ -5,6 +5,7 @@ import {
   createDoc,
   overrideConfig,
   waitForLanguageSwitch,
+  waitForTransitionsEnd,
 } from './utils-common';
 import { openSuggestionMenu } from './utils-editor';
 
@@ -72,9 +73,12 @@ test.describe('Language', () => {
     await waitForLanguageSwitch(page, TestLanguage.French);
 
     await page.getByLabel('Menu utilisateur').click();
+    await waitForTransitionsEnd(page);
 
     await page.keyboard.press('Tab');
+    await waitForTransitionsEnd(page);
     await page.keyboard.press('Tab');
+    await waitForTransitionsEnd(page);
     await page.keyboard.press('Enter');
 
     await expect(

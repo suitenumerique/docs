@@ -1,4 +1,11 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import i18next from 'i18next';
 import { DateTime } from 'luxon';
@@ -77,6 +84,33 @@ describe('DocsGridItemDate', () => {
     await act(async () => {
       await i18next.changeLanguage('en');
     });
+  });
+
+  it('should expose the full updated_at date on hover', async () => {
+    const user = userEvent.setup();
+    const updatedAt = DateTime.now().minus({ minutes: 1 });
+
+    render(
+      <DocsGridItemDate
+        doc={{ updated_at: updatedAt.toISO() } as Doc}
+        isInTrashbin={false}
+      />,
+      { wrapper: AppWrapper },
+    );
+
+    const relativeDate = screen.getByText('1 minute ago');
+    fireEvent.pointerMove(relativeDate, { pointerType: 'mouse' });
+    await user.hover(relativeDate);
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      updatedAt.setLocale('en').toLocaleString({
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    );
   });
 
   [

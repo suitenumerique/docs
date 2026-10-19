@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+# One run per branch: a new push cancels the run of the previous one, only the
+# latest commit needs to be synchronized with Crowdin.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml

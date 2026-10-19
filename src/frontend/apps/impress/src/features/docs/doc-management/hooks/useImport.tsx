@@ -1,9 +1,11 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
+import { VariantType } from '@gouvfr-lasuite/ui-components';
 import { t } from 'i18next';
 import { useCallback, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 import { useConfig } from '@/core';
+import { useToast } from '@/hooks';
+import { formatFileSize } from '@/utils';
 
 import { ContentTypes, useImportDoc } from '../api/useImportDoc';
 import { Doc } from '../types';
@@ -18,24 +20,15 @@ interface AcceptedMap {
 }
 
 export const useImport = ({ onDragOver, onImportSuccess }: UseImportProps) => {
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { data: config } = useConfig();
 
   const MAX_FILE_SIZE = useMemo(() => {
     const maxSizeInBytes = config?.CONVERSION_FILE_MAX_SIZE ?? 10 * 1024 * 1024; // Default to 10MB
 
-    const units = ['bytes', 'KB', 'MB', 'GB'];
-    let size = maxSizeInBytes;
-    let unitIndex = 0;
-
-    while (size >= 1024 && unitIndex < units.length - 1) {
-      size /= 1024;
-      unitIndex += 1;
-    }
-
     return {
       bytes: maxSizeInBytes,
-      text: `${Math.round(size * 10) / 10}${units[unitIndex]}`,
+      text: formatFileSize(maxSizeInBytes),
     };
   }, [config?.CONVERSION_FILE_MAX_SIZE]);
 
@@ -64,15 +57,21 @@ export const useImport = ({ onDragOver, onImportSuccess }: UseImportProps) => {
     (fileName: string) => {
       const allowedExtensions = Object.values(ACCEPT).flat().join(', ');
       toast(
-        t(
-          allowedExtensions
-            ? `The document "{{documentName}}" import has failed (only {{allowedExtensions}} files are allowed)`
-            : `The document "{{documentName}}" import has failed`,
-          {
-            documentName: fileName,
-            allowedExtensions,
-          },
-        ),
+        allowedExtensions
+          ? t(
+              `The document "{{documentName}}" import has failed (only {{allowedExtensions}} files are allowed)`,
+              {
+                description:
+                  'Toast shown when a file to import has an unsupported type',
+                documentName: fileName,
+                allowedExtensions,
+              },
+            )
+          : t(`The document "{{documentName}}" import has failed`, {
+              description:
+                'Toast shown when importing a file as a document failed',
+              documentName: fileName,
+            }),
         VariantType.ERROR,
       );
     },
@@ -115,6 +114,8 @@ export const useImport = ({ onDragOver, onImportSuccess }: UseImportProps) => {
             t(
               'The document "{{documentName}}" is too large. Maximum file size is {{maxFileSize}}.',
               {
+                description:
+                  'Toast shown when an imported file exceeds the size limit',
                 documentName: rejection.file.name,
                 maxFileSize: MAX_FILE_SIZE.text,
               },

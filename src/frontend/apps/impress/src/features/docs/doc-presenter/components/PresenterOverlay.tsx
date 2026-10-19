@@ -65,6 +65,10 @@ export const PresenterOverlay = ({
   const editor = useEditorStore((state) => state.editor);
   const copyPresenterLink = useCopyPresenterLink(doc.id);
 
+  // Track the floating bar's actions popover state so keyboard shortcuts
+  // can avoid closing the presenter while the popover is open.
+  const [isActionsOpen, setIsActionsOpen] = useState(false);
+
   // Snapshot the editor's blocks once at mount. Subsequent collaborator
   // edits do not affect the ongoing presentation (by design).
   const snapshotRef = useRef<PresenterBlock[] | null>(null);
@@ -76,7 +80,13 @@ export const PresenterOverlay = ({
   const contentSlides = useSlides(snapshotBlocks);
   const title = useMemo(() => {
     const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title ?? '');
-    return [emoji, titleWithoutEmoji.trim() || t('Untitled document')]
+    return [
+      emoji,
+      titleWithoutEmoji.trim() ||
+        t('Untitled document', {
+          description: 'Name displayed for a document without a title',
+        }),
+    ]
       .filter(Boolean)
       .join(' ');
   }, [doc.title, t]);
@@ -161,6 +171,7 @@ export const PresenterOverlay = ({
     onToggleFullscreen: () => void toggle(),
     onClose,
     isFullscreen,
+    isPopoverOpen: isActionsOpen,
   });
 
   const mountedIndices = useMemo(() => {
@@ -179,11 +190,14 @@ export const PresenterOverlay = ({
         : getSlideTitle(currentSlide?.blocks ?? []);
     const message = slideTitle
       ? t('Slide {{current}} of {{total}}: {{title}}', {
+          description: 'Screen reader announcement of the current slide',
           current: currentIndex + 1,
           total,
           title: slideTitle,
         })
       : t('Slide {{current}} of {{total}}', {
+          description:
+            'Screen reader announcement or accessible name of a slide',
           current: currentIndex + 1,
           total,
         });
@@ -196,12 +210,14 @@ export const PresenterOverlay = ({
   }
 
   return createPortal(
-    <FocusScope autoFocus restoreFocus>
+    <FocusScope contain={!isActionsOpen} autoFocus restoreFocus>
       <Box
         $css={overlayCss}
         role="dialog"
         aria-modal="true"
-        aria-label={t('Presenter mode')}
+        aria-label={t('Presenter mode', {
+          description: 'Accessible name of the presentation mode',
+        })}
       >
         <Box ref={frameRef} $css={slideAreaCss}>
           {mountedIndices.map((i) => (
@@ -211,6 +227,8 @@ export const PresenterOverlay = ({
               isCurrent={i === currentIndex}
               slide={slides[i]}
               ariaLabel={t('Slide {{current}} of {{total}}', {
+                description:
+                  'Screen reader announcement or accessible name of a slide',
                 current: i + 1,
                 total,
               })}
@@ -231,6 +249,7 @@ export const PresenterOverlay = ({
           onCopyLink={() => copyPresenterLink(currentIndex)}
           onExportPdf={() => void exportPdf()}
           isExportingPdf={isExportingPdf}
+          onActionsOpenChange={setIsActionsOpen}
           onToggleFullscreen={() => void toggle()}
           onClose={onClose}
         />

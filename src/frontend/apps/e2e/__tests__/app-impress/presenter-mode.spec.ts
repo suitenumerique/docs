@@ -3,7 +3,7 @@ import path from 'path';
 import { Locator, Page, expect, test } from '@playwright/test';
 import { PDFParse } from 'pdf-parse';
 
-import { createDoc, mockedDocument, saveContent } from './utils-common';
+import { createDoc, mockedDocument } from './utils-common';
 import {
   openSuggestionMenu,
   tryFocusEditorContent,
@@ -12,8 +12,10 @@ import {
 
 const openPresenter = async (page: Page) => {
   await page.getByLabel('Open the document options').first().click();
-  await page.getByRole('menuitem', { name: 'Present' }).click();
-
+  await page
+    .getByRole('menuitem')
+    .getByText(/Present/)
+    .click();
   const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
   await expect(overlay).toBeVisible();
   return overlay;
@@ -286,15 +288,13 @@ test.describe('Presenter Mode', () => {
     await expect(overlay.getByText('Slide two')).toBeVisible();
   });
 
-  test('navigates between slides via keyboard shortcuts', async ({
-    page,
-    browserName,
-  }) => {
+  test('navigates via keyboard shortcuts', async ({ page, browserName }) => {
     await createDoc(page, 'presenter-nav-keyboard', browserName, 1);
     await writeMultiSlideDoc(page);
 
-    const overlay = await openPresenter(page);
+    await page.keyboard.press('Control+Alt+KeyP');
 
+    const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
     await expect(overlay.getByText('1 / 4')).toBeVisible();
 
     await page.keyboard.press('ArrowRight');
@@ -427,18 +427,10 @@ test.describe('Presenter Mode', () => {
     page,
     browserName,
   }) => {
-    const [docTitle] = await createDoc(
-      page,
-      'presenter-deeplink',
-      browserName,
-      1,
-    );
+    await createDoc(page, 'presenter-deeplink', browserName, 1);
     await writeMultiSlideDoc(page);
     const docId = getDocIdFromUrl(page);
 
-    // Ensure the typed content is persisted (awaits the PATCH /content/) before
-    // reloading the page through the deep-link, instead of using a fixed sleep.
-    await saveContent(page, docTitle);
     await page.goto(`/docs/${docId}/?view=present&slide=3`);
 
     const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
@@ -668,9 +660,7 @@ test.describe('Presenter Mode mobile', () => {
       abilities: {
         destroy: true,
         link_configuration: true,
-        versions_destroy: true,
         versions_list: true,
-        versions_retrieve: true,
         accesses_manage: true,
         accesses_view: true,
         update: true,

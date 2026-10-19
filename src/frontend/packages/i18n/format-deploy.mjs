@@ -11,13 +11,31 @@ const folderPath = './locales/' + app;
 const namefile = 'translations.json';
 const jsonI18n = {};
 
-// Fetch the files in the locales folder
-fs.readdirSync(folderPath).map((language) => {
-  const languagePath = path.join(folderPath, path.sep, language);
+// Crowdin outputs one folder per locale (fr-FR, zh-CN, zh-TW, en...)
+const locales = fs.readdirSync(folderPath).filter((entry) => {
   // Crowdin output file in folder, we want to treat only these ones
-  if (!fs.lstatSync(languagePath).isDirectory()) {
-    return;
-  }
+  return fs.lstatSync(path.join(folderPath, entry)).isDirectory();
+});
+
+const getLanguage = (locale) => locale.split(/[-_]/)[0].toLowerCase();
+
+const localesPerLanguage = {};
+locales.forEach((locale) => {
+  const language = getLanguage(locale);
+  localesPerLanguage[language] = (localesPerLanguage[language] ?? 0) + 1;
+});
+
+// The language alone (fr) is enough when only one locale of it is translated,
+// the region is kept (zh-cn, zh-tw) when the locales would otherwise collide.
+const getKey = (locale) =>
+  localesPerLanguage[getLanguage(locale)] > 1
+    ? locale.replace('_', '-').toLowerCase()
+    : getLanguage(locale);
+
+// Fetch the files in the locales folder
+locales.forEach((locale) => {
+  const language = getKey(locale);
+  const languagePath = path.join(folderPath, path.sep, locale);
 
   jsonI18n[language] = {
     translation: {},

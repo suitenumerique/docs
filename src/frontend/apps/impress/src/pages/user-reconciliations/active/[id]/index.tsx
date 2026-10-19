@@ -21,10 +21,10 @@ const Page: NextPageWithLayout = () => {
     <>
       <Head>
         <meta name="robots" content="noindex" />
-        <title>{`${t('User reconciliation')} - ${t('Docs')}`}</title>
+        <title>{`${t('User reconciliation', { description: 'Page title of the account merge pages' })} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}</title>
         <meta
           property="og:title"
-          content={`${t('User reconciliation')} - ${t('Docs')}`}
+          content={`${t('User reconciliation', { description: 'Page title of the account merge pages' })} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}
           key="title"
         />
       </Head>

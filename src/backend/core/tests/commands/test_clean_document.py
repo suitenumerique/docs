@@ -11,8 +11,21 @@ from botocore.exceptions import ClientError
 
 from core import choices, factories, models
 from core.choices import LinkReachChoices, LinkRoleChoices
+from core.services.yhub_services import ServiceUnavailableError
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture(autouse=True, name="mock_yhub")
+def mock_yhub_fixture():
+    """
+    Stand in for the collaboration server, which holds the content the command
+    erases. Autouse: every run of the command reaches it.
+    """
+    with mock.patch(
+        "core.management.commands.clean_document.YHubService"
+    ) as mock_service:
+        yield mock_service.return_value
 
 
 def purged_keys(mock_storage):
@@ -378,3 +391,82 @@ def test_clean_document_with_options(settings):
         child.file_key,
         grandchild.file_key,
     }
+
+
+def test_clean_document_erases_the_collaboration_content(settings, mock_yhub):
+    """
+    The content lives on the collaboration server, so resetting a document
+    means erasing it there too — for the root and for the descendants the
+    command deletes.
+    """
+    settings.DEBUG = True
+
+    root = factories.DocumentFactory(title="Root")
+    child = factories.DocumentFactory(parent=root)
+    grandchild = factories.DocumentFactory(parent=child)
+
+    with mock.patch("core.management.commands.clean_document.default_storage"):
+        call_command("clean_document", str(root.id))
+
+    assert mock_yhub.reset_ydoc.call_args_list == [
+        mock.call(root),
+        mock.call(child),
+        mock.call(grandchild),
+    ]
+
+
+def test_clean_document_reports_the_documents_it_could_not_erase(
+    settings, mock_yhub, capsys
+):
+    """
+    A document the collaboration server would not erase is named, and does not
+    deprive the ones after it of their erasure: its content is still served, so
+    the reset is not done.
+    """
+    settings.DEBUG = True
+
+    root = factories.DocumentFactory(title="Root")
+    child = factories.DocumentFactory(parent=root)
+    mock_yhub.reset_ydoc.side_effect = [ServiceUnavailableError("yhub is down"), None]
+
+    with mock.patch("core.management.commands.clean_document.default_storage"):
+        call_command("clean_document", str(root.id))
+
+    assert mock_yhub.reset_ydoc.call_args_list == [mock.call(root), mock.call(child)]
+
+    captured = capsys.readouterr()
+    assert "Erased collaboration content for 1 document(s)." in captured.out
+    assert str(root.id) in captured.err
+    assert str(child.id) not in captured.err
+
+
+def test_clean_document_resets_connections(
+    settings, mock_reset_service_connections, capture_service_resets
+):
+    """
+    The link definition of the root changes and its accesses but the owners'
+    are deleted: the collaboration server should re-check every connection of
+    the root, once, the resets of the deleted accesses being coalesced into it.
+    """
+    settings.DEBUG = True
+    root = factories.DocumentFactory(
+        link_reach=LinkReachChoices.PUBLIC, link_role=LinkRoleChoices.EDITOR
+    )
+    owner = factories.UserDocumentAccessFactory(
+        document=root, role=choices.RoleChoices.OWNER
+    )
+    readers = factories.UserDocumentAccessFactory.create_batch(
+        2, document=root, role=choices.RoleChoices.READER
+    )
+
+    with (
+        mock.patch("core.management.commands.clean_document.default_storage"),
+        capture_service_resets(),
+    ):
+        call_command("clean_document", str(root.id), "--force")
+
+    assert not models.DocumentAccess.objects.filter(
+        pk__in=[reader.pk for reader in readers]
+    ).exists()
+    assert models.DocumentAccess.objects.filter(pk=owner.pk).exists()
+    mock_reset_service_connections.assert_called_once_with(str(root.id), None)

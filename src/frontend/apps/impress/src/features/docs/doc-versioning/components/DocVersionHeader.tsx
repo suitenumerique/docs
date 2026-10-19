@@ -15,7 +15,9 @@ export const DocVersionHeader = () => {
         $width="100%"
         $padding={{ vertical: 'base' }}
         $gap={spacingsTokens['base']}
-        aria-label={t('It is the document title')}
+        aria-label={t('It is the document title', {
+          description: 'Accessible name of the title in the version history',
+        })}
         className="--docs--doc-version-header"
       >
         <DocTitleText />

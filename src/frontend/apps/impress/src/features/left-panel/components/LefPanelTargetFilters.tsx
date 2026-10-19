@@ -34,7 +34,9 @@ export const LeftPanelTargetFilters = () => {
           $variation="tertiary"
         />
       ),
-      label: t('Recent'),
+      label: t('Recent', {
+        description: 'Name of the filter listing recently opened docs',
+      }),
       targetQuery: DocDefaultFilter.ALL_DOCS,
     },
     {
@@ -45,7 +47,9 @@ export const LeftPanelTargetFilters = () => {
           $variation="tertiary"
         />
       ),
-      label: t('My docs'),
+      label: t('My docs', {
+        description: 'Name of the filter listing docs owned by the user',
+      }),
       targetQuery: DocDefaultFilter.MY_DOCS,
     },
     {
@@ -56,7 +60,9 @@ export const LeftPanelTargetFilters = () => {
           $variation="tertiary"
         />
       ),
-      label: t('Shared with me'),
+      label: t('Shared with me', {
+        description: 'Name of the filter listing docs shared with the user',
+      }),
       targetQuery: DocDefaultFilter.SHARED_WITH_ME,
     },
     {
@@ -67,7 +73,9 @@ export const LeftPanelTargetFilters = () => {
           $variation="tertiary"
         />
       ),
-      label: t('Starred'),
+      label: t('Starred', {
+        description: "Name of the filter listing the user's favorite docs",
+      }),
       targetQuery: DocDefaultFilter.STARRED,
     },
     {
@@ -78,7 +86,9 @@ export const LeftPanelTargetFilters = () => {
           $variation="tertiary"
         />
       ),
-      label: t('Trashbin'),
+      label: t('Trashbin', {
+        description: 'Name of the filter listing deleted docs',
+      }),
       targetQuery: DocDefaultFilter.TRASHBIN,
     },
   ];

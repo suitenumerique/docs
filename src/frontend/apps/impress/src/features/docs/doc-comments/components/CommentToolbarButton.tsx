@@ -56,8 +56,12 @@ export const CommentToolbarButton = () => {
         }}
         aria-haspopup="dialog"
         data-test="comment-toolbar-button"
-        aria-label={t('Add comment')}
-        mainTooltip={t('Add comment')}
+        aria-label={t('Add comment', {
+          description: 'Editor toolbar button to comment the selected text',
+        })}
+        mainTooltip={t('Add comment', {
+          description: 'Editor toolbar button to comment the selected text',
+        })}
       >
         <Icon
           iconName="comment"

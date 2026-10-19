@@ -50,6 +50,8 @@ export const DocTreeItemActions = ({
       className={`${CLASS_TREE_ITEM_ACTIONS} --docs--doc-tree-item-actions actions`}
       role="toolbar"
       aria-label={t('Actions for {{title}}', {
+        description:
+          'Accessible name of the actions toolbar of a doc in the tree',
         title: doc.title || untitledDocument,
       })}
       tabIndex={-1}
@@ -80,7 +82,9 @@ export const DocTreeItemActions = ({
 
             createChildDoc({ parentId: doc.id });
           }}
-          aria-label={t('Add a sub page')}
+          aria-label={t('Add a sub page', {
+            description: 'Accessible name of the button creating a sub-doc',
+          })}
           data-testid="doc-tree-item-actions-add-child"
           tabIndex={-1}
           color="brand"

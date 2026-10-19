@@ -1,13 +1,33 @@
-import { expect, test } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 
 import {
   clickInDocOptionMenu,
   createDoc,
   getOtherBrowserName,
   verifyDocName,
+  waitForTransitionsEnd,
 } from './utils-common';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
-import { addChild, createRootSubPage, getTreeRow } from './utils-sub-pages';
+import {
+  addChild,
+  createRootSubPage,
+  getTreeRow,
+  navigateToTopParentFromTree,
+} from './utils-sub-pages';
+
+/** Whether the doc title, inside the main content, holds the focus. */
+const isDocTitleFocused = (page: Page) =>
+  page.evaluate(() => {
+    const active = document.activeElement;
+    const mainContent = document.getElementById('mainContent');
+
+    return (
+      !!active &&
+      !!mainContent &&
+      mainContent.contains(active) &&
+      active.classList.contains('--docs--doc-title')
+    );
+  });
 
 test.describe('Doc Tree', () => {
   test.beforeEach(async ({ page }) => {
@@ -63,9 +83,7 @@ test.describe('Doc Tree', () => {
             },
             tree: true,
             update: true,
-            versions_destroy: true,
             versions_list: true,
-            versions_retrieve: true,
             search: true,
           },
           ancestors_link_reach: 'restricted',
@@ -207,12 +225,22 @@ test.describe('Doc Tree', () => {
       { steps: 20 },
     );
 
+    const responsePromiseMoveDoc = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/move/`) &&
+        response.status() === 200 &&
+        response.request().method() === 'POST',
+    );
+
     await page.mouse.up();
 
     // Wait for the reorder to be reflected in the tree before reloading —
     // this also ensures the API call has had time to persist the new order.
     await expect(allSubPageItems.nth(0).getByText(docChild2)).toBeVisible();
     await expect(allSubPageItems.nth(1).getByText(docChild1)).toBeVisible();
+
+    const responseMoveDoc = await responsePromiseMoveDoc;
+    expect(responseMoveDoc.ok()).toBeTruthy();
 
     // reload the page
     await page.reload();
@@ -254,7 +282,7 @@ test.describe('Doc Tree', () => {
 
     await verifyDocName(page, docParent);
 
-    await page.getByRole('button', { name: 'Back to homepage' }).click();
+    await page.getByRole('link', { name: 'Back to homepage' }).click();
     await expect(page.getByText(docChild)).toBeVisible();
   });
 
@@ -395,12 +423,16 @@ test.describe('Doc Tree', () => {
     await expect(rootMoreOptionsButton).toBeFocused();
     await page.keyboard.press('F2');
     await expect(rootAddDocButton).toBeFocused();
+    await waitForTransitionsEnd(page);
     await page.keyboard.press('F2');
     await expect(rootMoreOptionsButton).toBeFocused();
+    await waitForTransitionsEnd(page);
     await page.keyboard.press('ArrowRight');
     await expect(rootAddDocButton).toBeFocused();
+    await waitForTransitionsEnd(page);
     await page.keyboard.press('ArrowLeft');
     await expect(rootMoreOptionsButton).toBeFocused();
+    await waitForTransitionsEnd(page);
     await page.keyboard.press('Enter');
     await expect(
       page.getByRole('menuitem', { name: /Copy Link/i }),
@@ -436,6 +468,58 @@ test.describe('Doc Tree', () => {
 
     await page.keyboard.press('Enter');
     await verifyDocName(page, docParent);
+
+    await expect(docTree).toHaveAttribute('role', 'tree');
+    await expect(docTree.locator('[role="tree"]')).toHaveCount(0);
+    await expect(docTree.locator('[role="group"]').first()).toBeAttached();
+    await expect(rootItem).toHaveAttribute('tabindex', '0');
+    await expect(rootItem).toHaveAttribute(
+      'aria-describedby',
+      'doc-tree-keyboard-instructions',
+    );
+
+    await treeRow1.hover();
+    const optionsButton = treeRow1.getByRole('button', {
+      name: /Open the document options/i,
+    });
+    await expect(optionsButton).toHaveAttribute('aria-haspopup', 'menu');
+    await expect(optionsButton).toHaveAttribute('aria-expanded', 'false');
+    await optionsButton.click();
+    await expect(optionsButton).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Escape');
+
+    const starResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/favorite/') &&
+        response.request().method() === 'POST',
+    );
+    await clickInDocOptionMenu(page, treeRow1, 'Star');
+    await expect(optionsButton).toBeFocused();
+    await starResponse;
+    await expect(optionsButton).toBeFocused();
+
+    await rootItem.focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await expect(treeRow2).toBeFocused();
+    await page.keyboard.press('Enter');
+    await verifyDocName(page, docChild2);
+    await expect.poll(() => isDocTitleFocused(page)).toBe(true);
+    await page.waitForTimeout(500);
+    expect(await isDocTitleFocused(page)).toBe(true);
+
+    await rootItem.focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await expect(treeRow2).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect.poll(() => isDocTitleFocused(page)).toBe(true);
+
+    await page.keyboard.press('Tab');
+    await navigateToTopParentFromTree({ page });
+    await verifyDocName(page, docParent);
+    await page.waitForTimeout(500);
+    expect(await isDocTitleFocused(page)).toBe(false);
   });
 
   test('it updates the child icon from the tree', async ({
@@ -451,6 +535,8 @@ test.describe('Doc Tree', () => {
     );
 
     const row = await getTreeRow(page, docChild);
+
+    await page.waitForTimeout(500);
 
     // Update the emoji from the tree
     await row.locator('.--docs--doc-icon').click();

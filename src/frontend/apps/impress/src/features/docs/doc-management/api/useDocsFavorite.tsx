@@ -29,7 +29,7 @@ export const getDocsFavorite = async (
     searchParams.set('ordering', params.ordering);
   }
   const response = await fetchAPI(
-    `documents/favorite_list/?${searchParams.toString()}`,
+    `documents/favorites/?${searchParams.toString()}`,
   );
 
   if (!response.ok) {

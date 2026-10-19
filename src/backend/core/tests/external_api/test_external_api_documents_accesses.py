@@ -9,7 +9,6 @@ because the resource server viewsets inherit from the api viewsets.
 from django.test import override_settings
 
 import pytest
-import responses
 from rest_framework.test import APIClient
 
 from core import factories, models
@@ -504,7 +503,6 @@ def test_external_api_document_accesses_update_can_be_allowed(
     user_token,
     resource_server_backend,
     user_specific_sub,
-    settings,
 ):
     """
     A user who is related to a document SHOULD be allowed to update
@@ -523,19 +521,6 @@ def test_external_api_document_accesses_update_can_be_allowed(
     other_user = factories.UserFactory()
     access = factories.UserDocumentAccessFactory(
         document=document, user=other_user, role=models.RoleChoices.READER
-    )
-
-    # Add the reset-connections endpoint to the existing mock
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}reset-connections/?room={document.id}"
-    )
-    resource_server_backend.add(
-        responses.POST,
-        endpoint_url,
-        json={},
-        status=200,
     )
 
     old_values = serializers.DocumentAccessSerializer(instance=access).data
@@ -573,7 +558,6 @@ def test_external_api_document_accesses_partial_update_can_be_allowed(
     user_token,
     resource_server_backend,
     user_specific_sub,
-    settings,
 ):
     """
     A user who is related to a document SHOULD be allowed to update
@@ -592,19 +576,6 @@ def test_external_api_document_accesses_partial_update_can_be_allowed(
     other_user = factories.UserFactory()
     access = factories.UserDocumentAccessFactory(
         document=document, user=other_user, role=models.RoleChoices.READER
-    )
-
-    # Add the reset-connections endpoint to the existing mock
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}reset-connections/?room={document.id}"
-    )
-    resource_server_backend.add(
-        responses.POST,
-        endpoint_url,
-        json={},
-        status=200,
     )
 
     response = client.patch(
@@ -635,7 +606,7 @@ def test_external_api_document_accesses_partial_update_can_be_allowed(
     }
 )
 def test_external_api_documents_accesses_delete_can_be_allowed(
-    user_token, resource_server_backend, user_specific_sub, settings
+    user_token, resource_server_backend, user_specific_sub
 ):
     """
     Connected users SHOULD be allowed to delete an access for
@@ -659,19 +630,6 @@ def test_external_api_documents_accesses_delete_can_be_allowed(
     other_user = factories.UserFactory()
     other_access = factories.UserDocumentAccessFactory(
         document=document, user=other_user, role=models.RoleChoices.READER
-    )
-
-    # Add the reset-connections endpoint to the existing mock
-    settings.COLLABORATION_API_URL = "http://example.com/"
-    settings.COLLABORATION_SERVER_SECRET = "secret-token"
-    endpoint_url = (
-        f"{settings.COLLABORATION_API_URL}reset-connections/?room={document.id}"
-    )
-    resource_server_backend.add(
-        responses.POST,
-        endpoint_url,
-        json={},
-        status=200,
     )
 
     response = client.delete(
