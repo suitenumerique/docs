@@ -822,7 +822,23 @@ class DocumentViewSet(
 
     def perform_destroy(self, instance):
         """Override to implement a soft delete instead of dumping the record in database."""
-        instance.soft_delete()
+        is_privileged = instance.get_role(self.request.user) in choices.PRIVILEGED_ROLES
+        with transaction.atomic():
+            instance.soft_delete()
+            # A creator may only delete a document without children, but nothing
+            # is locked since the permission check: roll back if a child was
+            # added in between. Query the database, the `numchild == 0` of the
+            # instance makes treebeard return no children without asking it.
+            # Children in the trashbin keep their own `deleted_at` and do not count
+            if (
+                not is_privileged
+                and models.Document.objects.filter(
+                    path__startswith=instance.path,
+                    depth=instance.depth + 1,
+                    deleted_at__isnull=True,
+                ).exists()
+            ):
+                raise drf.exceptions.PermissionDenied()
 
         reset_service_connections_on_commit(instance.pk)
 

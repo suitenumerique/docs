@@ -878,6 +878,36 @@ def test_models_documents_get_abilities_children_destroy(  # noqa: PLR0913, PLR0
     assert abilities["destroy"] is can_destroy
 
 
+@pytest.mark.parametrize(
+    "role,link_role,can_destroy",
+    [
+        ("owner", "reader", True),
+        ("administrator", "reader", True),
+        ("editor", "reader", False),
+        (None, "editor", False),
+    ],
+)
+def test_models_documents_get_abilities_children_destroy_with_children(
+    role, link_role, can_destroy
+):
+    """
+    The creator of a sub document can only destroy it while it has no children,
+    unlike an owner or administrator of the document.
+    """
+    user = factories.UserFactory()
+    parent = factories.DocumentFactory(link_reach="authenticated", link_role=link_role)
+    document = factories.DocumentFactory(
+        link_reach="authenticated", link_role=link_role, parent=parent, creator=user
+    )
+    factories.DocumentFactory(parent=document)
+    if role is not None:
+        factories.UserDocumentAccessFactory(document=parent, user=user, role=role)
+
+    document.refresh_from_db()
+    abilities = document.get_abilities(user)
+    assert abilities["destroy"] is can_destroy
+
+
 @pytest.mark.parametrize("parent_deleted", [False, True])
 def test_models_documents_get_abilities_owner_ancestor_deleted(parent_deleted):
     """Test restore a child should not be enabled when a parent is deleted."""

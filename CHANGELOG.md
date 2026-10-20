@@ -9,6 +9,7 @@ and this project adheres to
 ### Changed
 
 - ⚡️(backend) search users through the trigram indexes instead of a full scan
+- 🔒️(backend) only let creators delete their sub docs without children #2873
 
 ### Fixed
 
@@ -42,7 +43,6 @@ and this project adheres to
 ### Changed
 
 - 💄(frontend) limit heading choices to levels 1–3
-
 - ♻️(frontend) replace outdated AGPL mentions of BlockNote XL packages #2775
 - 💄(frontend) update upload loader and error ui #2778
 - ⬆️(yhub) upgrade @y/hub to 0.10.1 #2853

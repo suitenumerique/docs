@@ -1406,11 +1406,16 @@ class Document(MP_Node, BaseModel):
         can_create_children = can_update and user.is_authenticated
         # A creator keeps the destroy ability only while they can still create
         # children here, not on authorship alone: a removed or downgraded
-        # creator must not delete the branch (and what others wrote under it)
+        # creator must not delete the branch (and what others wrote under it).
+        # They can also only delete a document without children: `numchild`
+        # leaves out the children in the trashbin
         can_destroy = (
             is_owner
             if self.is_root()
-            else (is_owner_or_admin or (can_create_children and self.creator == user))
+            else (
+                is_owner_or_admin
+                or (can_create_children and self.creator == user and self.numchild == 0)
+            )
         ) and not is_deleted
 
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
