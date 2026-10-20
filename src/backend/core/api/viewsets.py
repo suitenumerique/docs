@@ -977,11 +977,30 @@ class DocumentViewSet(
         """
         Move a document to another location within the document tree.
 
-        The user must be an administrator or owner of both the document being moved
-        and the target parent document.
+        The user must have at least the editor role on the document being moved
+        (via a specific access, never a link role) and at least the editor role
+        on the destination: the target document for child positions, its parent
+        for sibling positions (root targets have no parent and need no
+        destination check).
+
+        Only the owner of the moved document may move it in a way that changes
+        its permission scope: into another tree, or to root level. On such a
+        scope change the moved document's direct accesses and invitations are
+        deleted so it inherits the destination's scope, and the mover is
+        granted the owner role on it if it would otherwise be left ownerless.
         """
         user = request.user
         document = self.get_object()  # including permission checks
+
+        # Lock the source row after the permission check to close the
+        # check/mutation race now that a role-granting write can follow.
+        # Annotate the user's roles so `get_role` below reads the annotation
+        # instead of re-querying the accesses.
+        document = (
+            models.Document.objects.annotate_user_roles(user)
+            .select_for_update()
+            .get(pk=document.pk)
+        )
 
         # Validate the input payload
         serializer = serializers.MoveDocumentSerializer(data=request.data)
@@ -990,7 +1009,7 @@ class DocumentViewSet(
 
         target_document_id = validated_data["target_document_id"]
         try:
-            target_document = models.Document.objects.get(
+            target_document = models.Document.objects.select_for_update().get(
                 id=target_document_id, ancestors_deleted_at__isnull=True
             )
         except models.Document.DoesNotExist:
@@ -1001,21 +1020,20 @@ class DocumentViewSet(
 
         position = validated_data["position"]
         message = None
-        owner_accesses = []
-        if position in [
+        child_position = position in [
             enums.MoveNodePositionChoices.FIRST_CHILD,
             enums.MoveNodePositionChoices.LAST_CHILD,
-        ]:
-            if not target_document.get_abilities(user).get("move"):
+        ]
+        if child_position:
+            if not target_document.get_abilities(user).get("move_into"):
                 message = (
                     "You do not have permission to move documents "
                     "as a child to this target document."
                 )
-        elif target_document.is_root():
-            owner_accesses = list(
-                document.get_root().accesses.filter(role=models.RoleChoices.OWNER)
-            )
-        elif not target_document.get_parent().get_abilities(user).get("move"):
+        elif (
+            not target_document.is_root()
+            and not target_document.get_parent().get_abilities(user).get("move_into")
+        ):
             message = (
                 "You do not have permission to move documents "
                 "as a sibling of this target document."
@@ -1027,6 +1045,40 @@ class DocumentViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Capture the mover's role before any mutation: after the accesses are
+        # deleted below, `get_role` would return None.
+        is_owner = document.get_role(user) == models.RoleChoices.OWNER
+
+        # A move changes the document's permission scope in any of these cases:
+        #   - it is currently a root and gains a parent (it carries its own scope),
+        #   - it is moving into a different tree (different current root than target's),
+        #   - it is being promoted to root as a sibling of its own current root.
+        # A root dropped as a sibling of another root stays its own scope: no change.
+        # In scope-change cases, direct accesses and pending invitations must be
+        # wiped so the document inherits the new scope, and only the owner may
+        # trigger them.
+        source_is_root = document.is_root()
+        sibling_position = not child_position
+        target_is_root = target_document.is_root()
+        # A root stays a root only when dropped as sibling of another root;
+        # any other placement nests it under a new parent.
+        root_stays_root = source_is_root and sibling_position and target_is_root
+        scope_changes = not root_stays_root and (
+            source_is_root
+            or (sibling_position and target_is_root)
+            or document.get_root() != target_document.get_root()
+        )
+        if scope_changes and not is_owner:
+            return drf.response.Response(
+                {
+                    "detail": _(
+                        "Only the owner of a document can move it to another tree "
+                        "or to their docs."
+                    )
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         try:
             document.move(target_document, pos=position)
         except InvalidMoveToDescendant:
@@ -1035,41 +1087,21 @@ class DocumentViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # A move changes the document's permission scope in any of these cases:
-        #   - it is currently a root (it carries its own scope),
-        #   - it is moving into a different tree (different current root than target's),
-        #   - it is being promoted to root as a sibling of its own current root.
-        # In all these cases, direct accesses and pending invitations must be wiped so
-        # the document inherits the new scope. Deletions and the move share the same
-        # atomic transaction, so a failure rolls everything back.
-        becomes_sibling_root = (
-            position
-            not in [
-                enums.MoveNodePositionChoices.FIRST_CHILD,
-                enums.MoveNodePositionChoices.LAST_CHILD,
-            ]
-            and target_document.is_root()
-        )
-        scope_changes = (
-            document.is_root()
-            or becomes_sibling_root
-            or document.get_root() != target_document.get_root()
-        )
         if scope_changes:
             document.accesses.all().delete()
             document.invitations.all().delete()
 
-        # Make sure we have at least one owner
-        if (
-            owner_accesses
-            and not document.accesses.filter(role=models.RoleChoices.OWNER).exists()
-        ):
-            for owner_access in owner_accesses:
-                models.DocumentAccess.objects.update_or_create(
+            # Make sure the moved document is not left ownerless: the mover,
+            # who was an owner before the move, becomes its owner again if no
+            # owner access remains.
+            if (
+                is_owner
+                and not document.accesses.filter(role=models.RoleChoices.OWNER).exists()
+            ):
+                models.DocumentAccess.objects.create(
                     document=document,
-                    user=owner_access.user,
-                    team=owner_access.team,
-                    defaults={"role": models.RoleChoices.OWNER},
+                    user=user,
+                    role=models.RoleChoices.OWNER,
                 )
 
         # Invalidate the nb_accesses cache, the value has probably changed after the move.
@@ -1086,6 +1118,7 @@ class DocumentViewSet(
             {
                 "position": position,
                 "targeted_document_id": str(target_document_id),
+                "scope_changed": scope_changes,
             },
             document=document,
         )

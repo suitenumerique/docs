@@ -868,6 +868,10 @@ class MoveDocumentSerializer(serializers.Serializer):
     Notes:
         - The `target_document_id` is mandatory.
         - The `position` defaults to "last-child" if not provided.
+        - Sibling positions place the document next to the target document:
+            as a sibling of the target's parent when the target is a root (which
+            promotes the document to root level), and as a sibling of the target
+            itself otherwise.
     """
 
     target_document_id = serializers.UUIDField(required=True)

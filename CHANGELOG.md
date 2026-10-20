@@ -11,6 +11,8 @@ and this project adheres to
 - ✨(docspec) handle DocSpec 4xx/5xx import errors distinctly #2552
 - 🌐(frontend) add Crowdin translator context #2785
 - ✨(frontend) open the emoji picker when adding a document emoji #2777
+- ✨(backend) relax move permissions: editors move within a tree, owners
+  across trees
 
 ### Changed
 

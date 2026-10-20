@@ -778,9 +778,9 @@ def test_external_api_documents_move_can_be_allowed(
     parent = factories.DocumentFactory(
         users=[(user_specific_sub, "owner")], teams=[("lasuite", "owner")]
     )
-    # A document with no owner
+    # A document with an owner access: moving it across trees is owner-only
     document = factories.DocumentFactory(
-        parent=parent, users=[(user_specific_sub, "reader")]
+        parent=parent, users=[(user_specific_sub, "owner")]
     )
     target = factories.DocumentFactory()
 
