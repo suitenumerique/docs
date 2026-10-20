@@ -5,6 +5,7 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
+import { Base64 } from '@/docs/doc-management/types';
 import { toBase64 } from '@/utils/string';
 
 interface EncryptDocProps {
@@ -13,6 +14,7 @@ interface EncryptDocProps {
   encryptedSymmetricKeyPerUser: Record<string, string | null>;
   encryptionPublicKeyVersionPerUser: Record<string, number | null>;
   attachmentKeyMapping?: Record<string, string>;
+  maintenanceKey?: Base64 | null;
 }
 
 export const encryptDoc = async ({
@@ -27,6 +29,7 @@ export const encryptDoc = async ({
       encryptionPublicKeyVersionPerUser:
         params.encryptionPublicKeyVersionPerUser,
       attachmentKeyMapping: params.attachmentKeyMapping || {},
+      maintenanceKey: params.maintenanceKey ?? null,
     }),
   });
 

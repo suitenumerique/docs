@@ -111,6 +111,7 @@ def test_api_documents_trashbin_format():
                     "move": False,  # Can't move a deleted document
                     "partial_update": False,
                     "remove_encryption": False,
+                    "maintenance_key": False,
                     "restore": True,
                     "retrieve": True,
                     "search": False,
@@ -186,6 +187,7 @@ def test_api_documents_trashbin_format():
                     "move": False,  # Can't move a deleted document
                     "partial_update": False,
                     "remove_encryption": False,
+                    "maintenance_key": False,
                     "restore": True,
                     "retrieve": True,
                     "search": False,

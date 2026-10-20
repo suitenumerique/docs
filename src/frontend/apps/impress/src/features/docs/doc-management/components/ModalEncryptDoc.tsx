@@ -285,11 +285,14 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
         }
       }
 
-      const { encryptedContent: encryptedContentBuffer, encryptedKeys } =
-        await vaultClient.encryptWithoutKey(
-          ongoingDocState.buffer as ArrayBuffer,
-          recipients,
-        );
+      const {
+        encryptedContent: encryptedContentBuffer,
+        encryptedKeys,
+        maintenanceKey,
+      } = await vaultClient.encryptWithoutKey(
+        ongoingDocState.buffer as ArrayBuffer,
+        recipients,
+      );
 
       // Contract with /encrypt/: every user on the access list must
       // appear in the payload exactly once. Validated users get their
@@ -349,6 +352,11 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
         encryptedSymmetricKeyPerUser,
         encryptionPublicKeyVersionPerUser,
         attachmentKeyMapping,
+        // Made for the caller's organization: the backend keeps it only from
+        // the creator, and the backfill makes the creator's otherwise.
+        maintenanceKey: maintenanceKey
+          ? toBase64(new Uint8Array(maintenanceKey))
+          : null,
       });
 
       toast(t('The document has been encrypted.'), VariantType.SUCCESS, {

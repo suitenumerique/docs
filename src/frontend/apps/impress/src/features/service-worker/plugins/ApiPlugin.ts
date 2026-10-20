@@ -280,6 +280,7 @@ export class ApiPlugin implements WorkboxPlugin {
         invite_owner: true,
         link_configuration: true,
         leave: true,
+        maintenance_key: false,
         media_auth: true,
         move: true,
         partial_update: true,

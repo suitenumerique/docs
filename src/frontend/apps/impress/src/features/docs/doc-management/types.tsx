@@ -76,6 +76,10 @@ export interface Doc {
   encrypted_document_symmetric_key_for_user?: string;
   accesses_user_ids?: string[];
   accesses_versions_per_user?: Record<string, number>;
+  // Detail view only, on encrypted documents: the creator owns the document, so
+  // their sub decides which maintenance key escrows it.
+  creator_sub?: string | null;
+  has_maintenance_key?: boolean;
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;
@@ -97,6 +101,7 @@ export interface Doc {
     leave: boolean;
     link_configuration: boolean;
     link_select_options: LinkSelectOption;
+    maintenance_key: boolean;
     media_auth: boolean;
     move: boolean;
     partial_update: boolean;

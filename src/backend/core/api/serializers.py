@@ -126,9 +126,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
     encrypted_document_symmetric_key_for_user = serializers.SerializerMethodField(
         read_only=True
     )
-    is_pending_encryption_for_user = serializers.SerializerMethodField(
-        read_only=True
-    )
+    is_pending_encryption_for_user = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Document
@@ -294,6 +292,8 @@ class DocumentSerializer(ListDocumentSerializer):
     """Serialize documents with all fields for display in detail views."""
 
     websocket = serializers.BooleanField(required=False, write_only=True)
+    creator_sub = serializers.SerializerMethodField(read_only=True)
+    has_maintenance_key = serializers.SerializerMethodField(read_only=True)
     file = serializers.FileField(
         required=False, write_only=True, allow_null=True, max_length=255
     )
@@ -312,11 +312,13 @@ class DocumentSerializer(ListDocumentSerializer):
             "computed_link_role",
             "created_at",
             "creator",
+            "creator_sub",
             "deleted_at",
             "depth",
             "excerpt",
             "encrypted_document_symmetric_key_for_user",
             "file",
+            "has_maintenance_key",
             "is_favorite",
             "is_encrypted",
             "is_pending_encryption_for_user",
@@ -340,9 +342,11 @@ class DocumentSerializer(ListDocumentSerializer):
             "computed_link_role",
             "created_at",
             "creator",
+            "creator_sub",
             "deleted_at",
             "depth",
             "encrypted_document_symmetric_key_for_user",
+            "has_maintenance_key",
             "is_favorite",
             "is_encrypted",
             "is_pending_encryption_for_user",
@@ -371,6 +375,18 @@ class DocumentSerializer(ListDocumentSerializer):
             fields.pop("encrypted_document_symmetric_key_for_user", None)
 
         return fields
+
+    def get_creator_sub(self, instance):
+        """The creator's OIDC sub, on encrypted documents: the vault escrows the
+        document for the maintenance key covering its owner, whom the client names."""
+        if not instance.is_encrypted or instance.creator is None:
+            return None
+        return str(instance.creator.sub)
+
+    def get_has_maintenance_key(self, instance):
+        """Whether the document has its maintenance copy, so a holder can backfill
+        it. The copy itself is never served."""
+        return bool(instance.maintenance_wrapped_document_key)
 
     def validate_id(self, value):
         """Ensure the provided ID is a valid UUID and not already taken."""
@@ -840,13 +856,9 @@ class FileUploadSerializer(serializers.Serializer):
         # For encrypted files, the content is ciphertext so MIME detection
         # is not possible. Trust the original filename extension.
         if self.initial_data.get("is_encrypted") in ("true", "True", True):
-            extension = (
-                file.name.rpartition(".")[-1] if "." in file.name else None
-            )
+            extension = file.name.rpartition(".")[-1] if "." in file.name else None
             if extension is None or len(extension) > 5:
-                raise serializers.ValidationError(
-                    "Could not determine file extension."
-                )
+                raise serializers.ValidationError("Could not determine file extension.")
             self.context["expected_extension"] = extension
             self.context["content_type"] = "application/octet-stream"
             self.context["is_unsafe"] = False
@@ -1149,6 +1161,53 @@ class EncryptDocumentSerializer(serializers.Serializer):
         "During encryption, existing attachments are uploaded encrypted under new keys. "
         "This mapping tells the backend to copy each new key over the original and clean up.",
     )
+    maintenanceKey = serializers.CharField(
+        required=False,
+        allow_null=True,
+        default=None,
+        help_text=(
+            "The document key wrapped for the maintenance escrow (base64), when the "
+            "encryption service returned one."
+        ),
+    )
+
+    def validate_maintenanceKey(self, value):  # pylint: disable=invalid-name
+        """Refuse what cannot be a maintenance copy."""
+        return validate_maintenance_key(value)
+
+
+# A maintenance copy is [version 0x01][key id: 16 bytes][wrap]: anything shorter, or of
+# another version, would only fail the day the content has to be recovered.
+MAINTENANCE_KEY_VERSION = 1
+MAINTENANCE_KEY_HEADER_BYTES = 17
+
+
+def validate_maintenance_key(value):
+    """Check a base64 maintenance copy has the shape the escrow produces."""
+    if value is None:
+        return None
+    try:
+        decoded = b64decode(value, validate=True)
+    except (binascii.Error, ValueError) as error:
+        raise serializers.ValidationError("Must be base64.") from error
+    if (
+        len(decoded) <= MAINTENANCE_KEY_HEADER_BYTES
+        or decoded[0] != MAINTENANCE_KEY_VERSION
+    ):
+        raise serializers.ValidationError("Not a maintenance copy.")
+    return value
+
+
+# pylint: disable=abstract-method
+class MaintenanceKeySerializer(serializers.Serializer):
+    """Payload for PATCH /documents/{id}/maintenance-key/: a maintenance copy of
+    the document key, for a document that has none or for a new maintenance key."""
+
+    maintenanceKey = serializers.CharField(required=True, allow_blank=False)
+
+    def validate_maintenanceKey(self, value):  # pylint: disable=invalid-name
+        """Refuse what cannot be a maintenance copy."""
+        return validate_maintenance_key(value)
 
 
 # pylint: disable=abstract-method

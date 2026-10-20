@@ -19,6 +19,7 @@ from core.utils.yjs import (
     base64_yjs_to_text,
     base64_yjs_to_xml,
     extract_attachments,
+    replace_attachment_keys,
 )
 
 pytestmark = pytest.mark.django_db
@@ -91,6 +92,74 @@ def test_utils_extract_attachments():
     base64_string = base64.b64encode(update).decode("utf-8")
     # image_key2 is missing the "/media/" part and shouldn't get extracted
     assert extract_attachments(base64_string) == [image_key1, image_key3]
+
+
+def test_utils_replace_attachment_keys():
+    """
+    Every `url` naming an old key names its new one, nested or not, in the media
+    form as in the media-check form; the rest of the document is unchanged.
+    """
+    document_id = uuid.uuid4()
+    old_key = f"{document_id!s}/attachments/{uuid.uuid4()!s}.png"
+    new_key = f"{document_id!s}/attachments/{uuid.uuid4()!s}-unsafe.pdf"
+    other_key = f"{document_id!s}/attachments/{uuid.uuid4()!s}.png"
+    media = "http://localhost:8083/media/"
+    check = (
+        f"http://localhost:8071/api/v1.0/documents/{document_id!s}/media-check/?key="
+    )
+
+    ydoc = pycrdt.Doc()
+    ydoc["document-store"] = pycrdt.XmlFragment(
+        [
+            pycrdt.XmlElement(
+                "blockGroup",
+                {},
+                [
+                    pycrdt.XmlElement(
+                        "blockContainer",
+                        {"id": "1"},
+                        [
+                            pycrdt.XmlElement(
+                                "image",
+                                {"url": f"{media}{old_key}", "caption": old_key},
+                            ),
+                            pycrdt.XmlElement(
+                                "blockGroup",
+                                {},
+                                [
+                                    pycrdt.XmlElement(
+                                        "file",
+                                        {
+                                            "url": f"{check}{old_key.replace('/', '%2F')}"
+                                        },
+                                    )
+                                ],
+                            ),
+                        ],
+                    ),
+                    pycrdt.XmlElement(
+                        "image", {"url": f"{media}{other_key}", "previewWidth": 512}
+                    ),
+                    pycrdt.XmlElement("paragraph", {}, [pycrdt.XmlText("Hello")]),
+                ],
+            )
+        ]
+    )
+
+    rewritten = pycrdt.Doc()
+    rewritten.apply_update(
+        replace_attachment_keys(ydoc.get_update(), {old_key: new_key})
+    )
+    xml = str(rewritten.get("document-store", type=pycrdt.XmlFragment))
+
+    assert f'url="{media}{new_key}"' in xml
+    assert f'url="{check}{new_key.replace("/", "%2F")}"' in xml
+    assert f'url="{media}{other_key}"' in xml
+    # Only `url` is rewritten, as the frontend does.
+    assert f'caption="{old_key}"' in xml
+    assert f"{media}{old_key}" not in xml
+    assert 'previewWidth="512"' in xml
+    assert ">Hello</paragraph>" in xml
 
 
 def test_utils_get_ancestor_to_descendants_map_single_path():

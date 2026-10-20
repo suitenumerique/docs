@@ -2,17 +2,20 @@
 
 import datetime as dt
 import time
+import uuid
 from abc import ABC, abstractmethod
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.utils.decorators import method_decorator
+from django.utils.http import content_disposition_header
 
 import botocore
 from lasuite.oidc_login.decorators import refresh_oidc_access_token
 from rest_framework.throttling import BaseThrottle
 
+from core import enums
 from core.utils.s3 import get_s3_client, get_unsigned_s3_client
 
 
@@ -197,6 +200,51 @@ class AIUserRateThrottle(AIBaseRateThrottle):
             if x_forwarded_for
             else request.META.get("REMOTE_ADDR")
         )
+
+
+def attachment_upload_target(document, validated_data, owner):
+    """
+    Where an attachment validated by `FileUploadSerializer` goes and how it is
+    served: a fresh key under the document's attachments, and the storage arguments
+    (metadata, content type, disposition). A plaintext file starts in `processing`
+    until the malware scan the caller sends it to; ciphertext cannot be scanned.
+    """
+    is_encrypted = validated_data.get("is_encrypted", False)
+    extra_args = {
+        "Metadata": {
+            "owner": str(owner),
+            "status": (
+                enums.DocumentAttachmentStatus.READY.value
+                if is_encrypted
+                else enums.DocumentAttachmentStatus.PROCESSING.value
+            ),
+        },
+        "ContentType": validated_data["content_type"],
+    }
+
+    if is_encrypted:
+        extra_args["Metadata"]["is_encrypted"] = "true"
+
+    file_unsafe = ""
+    if validated_data["is_unsafe"]:
+        extra_args["Metadata"]["is_unsafe"] = "true"
+        file_unsafe = "-unsafe"
+
+    key = (
+        f"{document.key_base}/{enums.ATTACHMENTS_FOLDER:s}/"
+        f"{uuid.uuid4()!s}{file_unsafe}.{validated_data['expected_extension']:s}"
+    )
+
+    # Only a safe image is shown inline; anything else is downloaded.
+    extra_args["ContentDisposition"] = content_disposition_header(
+        as_attachment=(
+            not validated_data["content_type"].startswith("image/")
+            or validated_data["is_unsafe"]
+        ),
+        filename=validated_data["file_name"],
+    )
+
+    return key, extra_args
 
 
 def get_content_metadata_cache_key(document_id):
