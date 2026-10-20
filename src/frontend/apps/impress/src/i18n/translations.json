@@ -820,10 +820,14 @@
   },
   "en": {
     "translation": {
+      "By moving this document to <strong>{{targetDocumentTitle}}</strong>, the sharing and permissions of that document will apply to it and its sub-documents. Existing direct shares may be replaced. <strong>This access change cannot be undone.</strong>": "By moving this document to <strong>{{targetDocumentTitle}}</strong>, the sharing and permissions of that document will apply to it and its sub-documents. Existing direct shares may be replaced. <strong>This access change cannot be undone.</strong>",
       "Share with {{count}} users_one": "Share with {{count}} user",
       "Shared with {{count}} users_many": "Shared with {{count}} users",
       "Shared with {{count}} users_one": "Shared with {{count}} user",
       "Shared with {{count}} users_other": "Shared with {{count}} users",
+      "You do not have permission to move this document": "You do not have permission to move this document",
+      "You must be at least an editor of the target document": "You must be at least an editor of the target document",
+      "You must own this document to move it to another tree or to your docs.": "You must own this document to move it to another tree or to your docs.",
       "days_many": "days",
       "days_one": "day",
       "days_other": "days"

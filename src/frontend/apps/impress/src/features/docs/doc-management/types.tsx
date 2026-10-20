@@ -93,6 +93,7 @@ export interface Doc {
     link_select_options: LinkSelectOption;
     media_auth: boolean;
     move: boolean;
+    move_into: boolean;
     partial_update: boolean;
     restore: boolean;
     retrieve: boolean;

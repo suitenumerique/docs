@@ -124,7 +124,7 @@ test.describe('Doc grid move', () => {
 
     await expect(dragOverlay).toBeVisible();
     await expect(dragOverlay).toHaveText(
-      'You must be at least the administrator of the target document',
+      'You must be at least an editor of the target document',
     );
 
     await page.mouse.up();
@@ -174,7 +174,7 @@ test.describe('Doc grid move', () => {
 
     await expect(dragOverlay).toBeVisible();
     await expect(dragOverlay).toHaveText(
-      'You must be the owner to move the document',
+      'You do not have permission to move this document',
     );
 
     await page.mouse.up();
@@ -496,6 +496,7 @@ const data = [
       link_configuration: true,
       invite_owner: true,
       move: true,
+      move_into: true,
       partial_update: true,
       restore: true,
       retrieve: true,
@@ -543,6 +544,7 @@ const data = [
       link_configuration: true,
       invite_owner: true,
       move: true,
+      move_into: true,
       partial_update: true,
       restore: true,
       retrieve: true,
@@ -589,6 +591,7 @@ const data = [
       link_configuration: false,
       invite_owner: false,
       move: false,
+      move_into: false,
       partial_update: false,
       restore: false,
       retrieve: true,

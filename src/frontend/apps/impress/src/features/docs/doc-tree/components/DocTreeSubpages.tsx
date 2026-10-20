@@ -99,7 +99,7 @@ export const DocTreeSubpages = memo(function DocTreeSubpages({
       if (!parentValue || !isDocNode(parentValue)) {
         return canMoveInto && !hasCoarsePointer;
       }
-      return parentValue.abilities.move && !hasCoarsePointer;
+      return parentValue.abilities.move_into && !hasCoarsePointer;
     },
     [canMoveInto, hasCoarsePointer],
   );

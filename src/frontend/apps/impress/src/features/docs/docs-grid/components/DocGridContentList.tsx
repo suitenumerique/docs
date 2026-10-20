@@ -190,15 +190,14 @@ export const DraggableDocGridContentList = ({
 
   const overlayText = useMemo(() => {
     if (!canDrag) {
-      return t('You must be the owner to move the document', {
+      return t('You do not have permission to move this document', {
         description: 'Tooltip on a doc that cannot be dragged',
       });
     }
     if (!canDrop) {
-      return t(
-        'You must be at least the administrator of the target document',
-        { description: 'Tooltip on a drop target the user cannot move into' },
-      );
+      return t('You must be at least an editor of the target document', {
+        description: 'Tooltip on a drop target the user cannot move into',
+      });
     }
 
     return selectedDoc?.title || untitledDocument;
@@ -296,7 +295,7 @@ export const DraggableDocGridItem = ({
   canDrag,
   updateCanDrop,
 }: DraggableDocGridItemProps) => {
-  const docCanDrop = doc.abilities.move;
+  const docCanDrop = doc.abilities.move_into;
   const enableDrop = canDrag && docCanDrop;
 
   const { isOver, setNodeRef: setDropRef } = useDroppable({

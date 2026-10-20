@@ -8,6 +8,23 @@ import { AppWrapper } from '@/tests/utils';
 
 import { DocGridContentList } from '../DocGridContentList';
 
+const updateCanDropMock = vi.hoisted(() => vi.fn());
+
+vi.mock('../../hooks/useDragAndDrop', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../hooks/useDragAndDrop')>();
+
+  return {
+    ...actual,
+    useDragAndDrop: (
+      ...args: Parameters<typeof actual.useDragAndDrop>
+    ): ReturnType<typeof actual.useDragAndDrop> => ({
+      ...actual.useDragAndDrop(...args),
+      updateCanDrop: updateCanDropMock,
+    }),
+  };
+});
+
 vi.mock('../DocsGridItem', () => ({
   DocsGridItem: ({
     doc,
@@ -50,7 +67,7 @@ const mockPointer = (isCoarse: boolean) => {
 const doc = {
   id: 'doc-1',
   title: 'My doc',
-  abilities: { move: true },
+  abilities: { move: true, move_into: true },
 } as Doc;
 
 describe('DocGridContentList', () => {
@@ -59,6 +76,7 @@ describe('DocGridContentList', () => {
   afterEach(() => {
     cleanup?.();
     vi.restoreAllMocks();
+    updateCanDropMock.mockClear();
   });
 
   it('lets a mouse drag a document whatever the viewport width', () => {
@@ -80,5 +98,30 @@ describe('DocGridContentList', () => {
     expect(screen.getByText('My doc')).not.toHaveAttribute(
       'aria-roledescription',
     );
+  });
+
+  it('renders documents without the move_into ability', () => {
+    cleanup = mockPointer(false);
+
+    render(
+      <DocGridContentList
+        docs={[{ ...doc, abilities: { move: true } } as Doc]}
+      />,
+      { wrapper: AppWrapper },
+    );
+
+    expect(screen.getByText('My doc')).toHaveAttribute(
+      'aria-roledescription',
+      'draggable',
+    );
+    expect(updateCanDropMock).toHaveBeenCalledWith(false, false);
+  });
+
+  it('reports the move_into ability of documents on mount', () => {
+    cleanup = mockPointer(false);
+
+    render(<DocGridContentList docs={[doc]} />, { wrapper: AppWrapper });
+
+    expect(updateCanDropMock).toHaveBeenCalledWith(true, false);
   });
 });

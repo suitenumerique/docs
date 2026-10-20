@@ -30,7 +30,7 @@ export const ModalConfirmationMoveDoc = ({
       description={
         <Text $display="inline">
           <Trans
-            i18nKey="By moving this document to <strong>{{targetDocumentTitle}}</strong>, it will lose its current access rights and inherit the permissions of that document. <strong>This access change cannot be undone.</strong>"
+            i18nKey="By moving this document to <strong>{{targetDocumentTitle}}</strong>, the sharing and permissions of that document will apply to it and its sub-documents. Existing direct shares may be replaced. <strong>This access change cannot be undone.</strong>"
             values={{
               targetDocumentTitle,
             }}

@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
 
+import { APIError } from '@/api';
 import { Box, ButtonCloseModal, Text } from '@/components';
 import { QuickSearch } from '@/components/quick-search';
 import { Doc, useMoveDoc, useTrans } from '@/docs/doc-management';
@@ -127,7 +128,20 @@ export const DocMoveModal = ({
         onClose();
         onAfterMove?.();
       })
-      .catch(() => {
+      .catch((error) => {
+        if (error instanceof APIError && error.status === 403) {
+          toast(
+            t(
+              'You must own this document to move it to another tree or to your docs.',
+              {
+                description:
+                  'Toast shown when moving a document is refused because the user does not own it',
+              },
+            ),
+            VariantType.ERROR,
+          );
+          return;
+        }
         toast(
           t(`An error occurred while moving the document.`, {
             description: 'Toast shown when moving a document failed',
@@ -163,7 +177,7 @@ export const DocMoveModal = ({
               variant="primary"
               fullWidth
               onClick={() => {
-                if (!docSelected?.abilities.move) {
+                if (!docSelected?.abilities.move_into) {
                   modalRequest.open();
                   return;
                 }

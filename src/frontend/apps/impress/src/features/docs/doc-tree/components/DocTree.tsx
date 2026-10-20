@@ -236,7 +236,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         treeContext.treeData.nodes.length > 0 &&
         treeRoot && (
           <DocTreeSubpages
-            canMoveInto={currentDoc.abilities.move}
+            canMoveInto={currentDoc.abilities.move_into}
             isDeleted={currentDoc.deleted_at != null}
             treeRoot={treeRoot}
             initialOpenState={initialOpenState}

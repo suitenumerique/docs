@@ -13,6 +13,7 @@ and this project adheres to
 - ✨(frontend) open the emoji picker when adding a document emoji #2777
 - ✨(backend) relax move permissions: editors move within a tree, owners
   across trees
+- ✨(frontend) gate drag & drop on the new `move`/`move_into` abilities
 
 ### Changed
 
