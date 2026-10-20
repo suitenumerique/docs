@@ -1404,10 +1404,13 @@ class Document(MP_Node, BaseModel):
         ) and not is_deleted
         can_comment = (can_update or role == RoleChoices.COMMENTER) and not is_deleted
         can_create_children = can_update and user.is_authenticated
+        # A creator keeps the destroy ability only while they can still create
+        # children here, not on authorship alone: a removed or downgraded
+        # creator must not delete the branch (and what others wrote under it)
         can_destroy = (
             is_owner
             if self.is_root()
-            else (is_owner_or_admin or (user.is_authenticated and self.creator == user))
+            else (is_owner_or_admin or (can_create_children and self.creator == user))
         ) and not is_deleted
 
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM

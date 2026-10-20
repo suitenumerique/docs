@@ -836,6 +836,20 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         (False, False, None, "authenticated", "reader", False),
         (False, False, None, "public", "editor", False),
         (False, False, None, "public", "reader", False),
+        (True, True, None, "restricted", "editor", False),
+        (True, True, None, "restricted", "reader", False),
+        (True, True, None, "authenticated", "editor", True),
+        (True, True, None, "authenticated", "reader", False),
+        (True, True, None, "public", "editor", True),
+        (True, True, None, "public", "reader", False),
+        (True, True, "reader", "restricted", "editor", False),
+        (True, True, "reader", "restricted", "reader", False),
+        (True, True, "reader", "authenticated", "reader", False),
+        (True, True, "reader", "public", "reader", False),
+        (True, True, "commenter", "restricted", "editor", False),
+        (True, True, "commenter", "restricted", "reader", False),
+        (True, True, "commenter", "authenticated", "editor", True),
+        (True, True, "commenter", "public", "reader", False),
     ],
 )
 # pylint: disable=too-many-arguments, too-many-positional-arguments
@@ -856,7 +870,8 @@ def test_models_documents_get_abilities_children_destroy(  # noqa: PLR0913, PLR0
         parent=parent,
         creator=user if is_creator else None,
     )
-    if is_authenticated:
+    # A null role means the user holds no access at all, e.g. it was removed
+    if is_authenticated and role is not None:
         factories.UserDocumentAccessFactory(document=parent, user=user, role=role)
 
     abilities = document.get_abilities(user)

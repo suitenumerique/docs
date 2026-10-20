@@ -10,6 +10,10 @@ and this project adheres to
 
 - ⚡️(backend) search users through the trigram indexes instead of a full scan
 
+### Fixed
+
+- 🔒️(backend) require edit rights for creators to delete their sub docs #2873
+
 ## [v6.0.3] - 2026-10-23
 
 ### Added

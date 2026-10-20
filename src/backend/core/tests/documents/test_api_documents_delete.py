@@ -80,6 +80,110 @@ def test_api_documents_delete_authenticated_not_owner(via, role, mock_user_teams
     assert models.Document.objects.count() == 2
 
 
+def _create_restricted_tree_with_creator_subpage(owner, creator):
+    """
+    Create a restricted document owned by `owner`, a subpage created by
+    `creator` under it and a page written by someone else under that subpage.
+    """
+    document = factories.DocumentFactory(
+        link_reach=models.LinkReachChoices.RESTRICTED,
+        users=[(owner, "owner")],
+    )
+    subpage = factories.DocumentFactory(
+        parent=document,
+        creator=creator,
+        link_reach=models.LinkReachChoices.RESTRICTED,
+    )
+    grandchild = factories.DocumentFactory(
+        parent=subpage,
+        creator=owner,
+        link_reach=models.LinkReachChoices.RESTRICTED,
+    )
+    return document, subpage, grandchild
+
+
+def test_api_documents_delete_removed_creator():
+    """
+    A user whose access to the document was removed must no longer be able to
+    destroy the subpage they created under it, nor the pages beneath it.
+    Regression test for the improper access control reported on the bug
+    bounty program.
+    """
+    owner = factories.UserFactory()
+    creator = factories.UserFactory()
+    _document, subpage, grandchild = _create_restricted_tree_with_creator_subpage(
+        owner, creator
+    )
+
+    client = APIClient()
+    client.force_login(creator)
+
+    response = client.delete(f"/api/v1.0/documents/{subpage.id!s}/")
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "You do not have permission to perform this action."
+    }
+    subpage.refresh_from_db()
+    grandchild.refresh_from_db()
+    assert subpage.deleted_at is None
+    assert grandchild.ancestors_deleted_at is None
+
+
+@pytest.mark.parametrize("role", ["reader", "commenter"])
+def test_api_documents_delete_downgraded_creator(role):
+    """
+    A creator whose access was downgraded to a role that can not create
+    subpages must no longer be able to destroy the subpage they created,
+    nor the pages beneath it.
+    """
+    owner = factories.UserFactory()
+    creator = factories.UserFactory()
+    document, subpage, grandchild = _create_restricted_tree_with_creator_subpage(
+        owner, creator
+    )
+    factories.UserDocumentAccessFactory(document=document, user=creator, role=role)
+
+    client = APIClient()
+    client.force_login(creator)
+
+    response = client.delete(f"/api/v1.0/documents/{subpage.id!s}/")
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "You do not have permission to perform this action."
+    }
+    subpage.refresh_from_db()
+    grandchild.refresh_from_db()
+    assert subpage.deleted_at is None
+    assert grandchild.ancestors_deleted_at is None
+
+
+def test_api_documents_delete_creator_with_access_is_kept():
+    """
+    The creator of a subpage who still holds access (e.g. editor) must keep
+    the ability to destroy it: this is the behavior PR #1297 introduced and
+    the fix must not regress it.
+    """
+    owner = factories.UserFactory()
+    creator = factories.UserFactory()
+    document, subpage, grandchild = _create_restricted_tree_with_creator_subpage(
+        owner, creator
+    )
+    factories.UserDocumentAccessFactory(document=document, user=creator, role="editor")
+
+    client = APIClient()
+    client.force_login(creator)
+
+    response = client.delete(f"/api/v1.0/documents/{subpage.id!s}/")
+
+    assert response.status_code == 204
+    subpage.refresh_from_db()
+    grandchild.refresh_from_db()
+    assert subpage.deleted_at is not None
+    assert grandchild.ancestors_deleted_at == subpage.deleted_at
+
+
 @pytest.mark.parametrize("depth", [1, 2, 3])
 def test_api_documents_delete_authenticated_owner_of_ancestor(depth):
     """
