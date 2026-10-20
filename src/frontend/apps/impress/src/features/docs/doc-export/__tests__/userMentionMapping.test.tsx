@@ -1,5 +1,5 @@
 import { Image } from '@react-pdf/renderer';
-import { Bookmark, TextRun } from 'docx';
+import { Bookmark, ImageRun, TextRun } from 'docx';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -71,13 +71,11 @@ describe('user mention export mappings', () => {
         mention,
         exporter,
       ) as React.ReactElement<{ children: React.ReactNode[] }>;
-      const [space, frame, name] = element.props.children as [
-        string,
+      const [frame, name] = element.props.children as [
         React.ReactElement<{ 'text:anchor-type': string }>,
         string,
       ];
 
-      expect(space).toBe(' ');
       expect(frame.type).toBe('draw:frame');
       expect(frame.props['text:anchor-type']).toBe('as-char');
       expect(JSON.stringify(frame)).toContain(AVATAR_BASE64);
@@ -106,9 +104,8 @@ describe('user mention export mappings', () => {
       const run = inlineContentMappingUserMentionDocx(mention, exporter);
 
       expect(run).toBeInstanceOf(Bookmark);
-      // The space before the avatar, as in the editor
-      expect(JSON.stringify(run)).toContain(' ');
-      expect(JSON.stringify(run)).toContain('Dupont Thomas');
+      expect((run as Bookmark).children[0]).toBeInstanceOf(ImageRun);
+      expect(JSON.stringify(run)).toContain(' Dupont Thomas');
     });
 
     it('exports the name as a bold text run without canvas', () => {

@@ -36,9 +36,8 @@ export const createInlineContentMappingInterlinkingLinkPDF =
           color: 'black',
         }}
       >
-        {' '}
         {emoji || <Image src={DocSelectedIcon.src} />}{' '}
-        <Text style={titleStyle}>{titleWithoutEmoji}</Text>{' '}
+        <Text style={titleStyle}>{titleWithoutEmoji}</Text>
       </Link>
     );
   };

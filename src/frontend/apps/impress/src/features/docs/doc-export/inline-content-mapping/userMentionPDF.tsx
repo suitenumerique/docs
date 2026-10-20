@@ -15,7 +15,6 @@ export const inlineContentMappingUserMentionPDF: DocsExporterPDF['mappings']['in
 
     return (
       <Text style={{ fontWeight: 'bold' }}>
-        {' '}
         {avatar && (
           <>
             <Image

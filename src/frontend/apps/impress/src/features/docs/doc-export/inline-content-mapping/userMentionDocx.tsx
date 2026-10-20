@@ -24,8 +24,6 @@ export const inlineContentMappingUserMentionDocx: DocsExporterDocx['mappings']['
     return new Bookmark({
       id: `user-mention-${++mentionCount}`,
       children: [
-        // The same non-breaking space as the one before the avatar of the editor
-        new TextRun(' '),
         new ImageRun({
           type: 'png',
           data: dataUrlToBytes(avatar),

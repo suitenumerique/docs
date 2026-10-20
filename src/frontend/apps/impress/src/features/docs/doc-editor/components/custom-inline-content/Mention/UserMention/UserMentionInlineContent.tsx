@@ -74,7 +74,7 @@ export const UserMention = ({ fullName }: { fullName: string }) => {
       className="--docs--user-mention-inline-content"
       draggable="false"
       spellCheck="false"
-      $display="inline-flex"
+      $display="inline"
       $direction="row"
       $cursor="default"
       $css={css`

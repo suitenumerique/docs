@@ -23,9 +23,6 @@ export const inlineContentMappingUserMentionODT: DocsExporterODT['mappings']['in
     return React.createElement(
       React.Fragment,
       null,
-      // The same non-breaking space as the one before the avatar of the editor,
-      // a plain space could be collapsed with the previous one.
-      ' ',
       React.createElement(
         'draw:frame',
         {

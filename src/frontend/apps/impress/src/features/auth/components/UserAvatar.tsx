@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { tokens } from '@/cunningham';
@@ -32,21 +33,22 @@ export const getInitialFromName = (name: string) => {
 type UserAvatarProps = {
   fullName?: string;
   background?: string;
-} & Partial<AvatarSvgProps>;
+} & Partial<Omit<AvatarSvgProps, 'initials' | 'background'>>;
 
 export const UserAvatar = ({
   fullName,
   background,
+  className,
   ...props
 }: UserAvatarProps) => {
   const name = fullName?.trim() || '?';
 
   return (
     <AvatarSvg
-      className="--docs--user-avatar"
+      {...props}
+      className={clsx('--docs--user-avatar', className)}
       initials={getInitialFromName(name).toUpperCase()}
       background={background || getColorFromName(name)}
-      {...props}
     />
   );
 };
