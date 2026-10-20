@@ -124,6 +124,16 @@ export const DocsEditorStyle = createGlobalStyle`
     .bn-block-outer {
       border-radius: var(--c--globals--spacings--3xs);
     }
+    .bn-block-outer.--docs--block-highlighted {
+      animation: docs-block-highlight 1.5s ease-out;
+    }
+    @keyframes docs-block-highlight {
+      from {
+        background-color: var(
+          --c--contextuals--background--semantic--contextual--primary
+        );
+      }
+    }
     .bn-block > .bn-block-content[data-background-color] {
       padding: var(--c--globals--spacings--3xs) var(--c--globals--spacings--3xs);
       border-radius: var(--c--globals--spacings--3xs);
