@@ -38,22 +38,21 @@ export const useSearchUserMention = ({
   const { t } = useTranslation();
   const { toast } = useToastProvider();
   const { currentDoc } = useDocStore();
-  const { mutate: mentionUser } = useMentionUser({
-    onError: () => {
-      toast(
-        t('The person could not be notified of the mention.'),
-        VariantType.ERROR,
-      );
-    },
-  });
+  const notifyError = () => {
+    toast(
+      t('The person could not be notified of the mention.'),
+      VariantType.ERROR,
+    );
+  };
+  const { mutate: mentionUser } = useMentionUser({ onError: notifyError });
 
   /**
-   * Users can only be mentioned by users allowed to comment.
+   * Users can only be mentioned by the members of the doc allowed to comment.
    */
   const { users } = useMentionableUsers({
     docId: currentDoc?.id,
     search,
-    enabled: enabled && !!currentDoc?.abilities?.comment,
+    enabled: enabled && !!currentDoc?.abilities?.mention,
   });
 
   const selectUser = (user: MentionableUser) => {
@@ -76,6 +75,9 @@ export const useSearchUserMention = ({
         anchorId,
         mentionedUserId: user.id,
       });
+    } else {
+      // The mention is kept, but without an anchor the backend cannot notify
+      notifyError();
     }
   };
 

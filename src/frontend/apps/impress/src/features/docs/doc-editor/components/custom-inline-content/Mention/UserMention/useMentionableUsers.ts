@@ -7,6 +7,9 @@ import { User } from '@/features/auth';
 export type MentionableUser = Pick<User, 'id'> &
   Partial<Pick<User, 'email' | 'short_name'>> & { full_name: string };
 
+/** The number of users proposed at most in the dropdown. */
+export const MAX_MENTIONABLE_USERS = 4;
+
 export const getMentionableUserName = (user: MentionableUser) =>
   user.full_name || user.short_name || user.email || '';
 
@@ -55,7 +58,10 @@ export const useMentionableUsers = ({
   });
 
   const users = useMemo(
-    () => (enabled ? getMentionableUsers(accesses, search) : []),
+    () =>
+      enabled
+        ? getMentionableUsers(accesses, search).slice(0, MAX_MENTIONABLE_USERS)
+        : [],
     [accesses, enabled, search],
   );
 

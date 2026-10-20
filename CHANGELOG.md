@@ -11,6 +11,7 @@ and this project adheres to
 - ✨(docspec) handle DocSpec 4xx/5xx import errors distinctly #2552
 - 🌐(frontend) add Crowdin translator context #2785
 - ✨(frontend) open the emoji picker when adding a document emoji #2777
+- ✨(frontend) mention users in the editor from the "@" dropdown #2806
 
 ### Changed
 
@@ -78,7 +79,6 @@ and this project adheres to
 - 👷(ci) cancel the superseded runs of a pull request #2757
 - ✨(backend) add mention endpoint with cooldown-limited email
   notification #2447
-- ✨(frontend) mention users in the editor from the "@" dropdown
 - 🚩(setting) add feature flag on Duplicate with Children #2721
 - 💄(frontend) redesign 404 error standalone page #2696
 - 💄(frontend) redesign 403 access denied page #2720

@@ -48,11 +48,11 @@ describe('UserMentionSearchGroup', () => {
     vi.unstubAllGlobals();
   });
 
-  it('lists the users under a heading', () => {
+  it('lists the users in a group named after its heading', () => {
     renderGroup();
 
     expect(
-      screen.getByRole('heading', { name: 'Mention a person' }),
+      screen.getByRole('group', { name: 'Mention a person' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Dupont Thomas')).toBeInTheDocument();
     expect(screen.getByText('Dupont Julie')).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe('UserMentionSearchGroup', () => {
   it('renders nothing when there is no user', () => {
     renderGroup([]);
 
-    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mention a person')).not.toBeInTheDocument();
   });
 
   it('gives the picked user to the callback', () => {

@@ -1,8 +1,11 @@
 import { StyleSchema } from '@blocknote/core';
 import { ReactCustomInlineContentRenderProps } from '@blocknote/react';
+import type { SizeOptions } from '@floating-ui/react';
 import { Popover } from '@mantine/core';
+import { announce } from '@react-aria/live-announcer';
+import { useCommandState } from 'cmdk';
 import type { KeyboardEvent } from 'react';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -28,6 +31,23 @@ const inputStyle = css`
   font-family: 'Inter';
 `;
 
+const DROPDOWN_MAX_HEIGHT = 500;
+
+/**
+ * The results scroll after 500px, or before when the viewport is too small:
+ * the room left is given to the results through a CSS variable.
+ */
+const dropdownSizeMiddleware: SizeOptions = {
+  // Keeps the margins of the results and a gap with the edge of the viewport
+  padding: 24,
+  apply: ({ availableHeight, elements }) => {
+    elements.floating.style.setProperty(
+      '--docs--mention-search-max-height',
+      `${Math.max(0, Math.min(DROPDOWN_MAX_HEIGHT, availableHeight))}px`,
+    );
+  },
+};
+
 type ReactMentionSearch = ReactCustomInlineContentRenderProps<
   MentionSearchInlineContentType,
   StyleSchema
@@ -39,6 +59,21 @@ type ReactMentionSearch = ReactCustomInlineContentRenderProps<
  * one of the search.
  */
 type ReplaceByMentioned = (inlineContent: MentionedInlineContent) => void;
+
+/**
+ * The search input lives outside of cmdk: it is told when the highlighted
+ * option changes, to point at it with `aria-activedescendant`. The
+ * `selectedItemId` of cmdk is not used, it misses the first highlight.
+ */
+const HighlightListener = ({ onHighlight }: { onHighlight: () => void }) => {
+  const highlighted = useCommandState((state) => state.value);
+
+  useEffect(() => {
+    onHighlight();
+  }, [highlighted, onHighlight]);
+
+  return null;
+};
 
 export const Search = ({
   contentRef,
@@ -54,8 +89,9 @@ export const Search = ({
   const [search, setSearch] = useState('');
   const { isDesktop } = useResponsiveStore();
   const isEditable = editor.isEditable;
-  const modalRef = useRef<HTMLDivElement>(null);
-  const dropdownId = useId();
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const [listboxId, setListboxId] = useState<string>();
+  const [highlightedOptionId, setHighlightedOptionId] = useState<string>();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const { setFilter } = useDocSearchFilterStore();
   const [docsCount, setDocsCount] = useState(0);
@@ -64,6 +100,20 @@ export const Search = ({
     (results: DocSearch[]) => setDocsCount(results.length),
     [],
   );
+
+  /**
+   * cmdk gives its own id to the listbox, the input needs it to control it.
+   */
+  const setModalRef = useCallback((node: HTMLDivElement | null) => {
+    modalRef.current = node;
+    setListboxId(node?.querySelector('[cmdk-list]')?.id);
+  }, []);
+
+  const onHighlight = useCallback(() => {
+    setHighlightedOptionId(
+      modalRef.current?.querySelector('[cmdk-item][aria-selected="true"]')?.id,
+    );
+  }, []);
 
   /**
    * When the search is opened, we set the search
@@ -147,7 +197,55 @@ export const Search = ({
     onPick: pick,
   });
 
-  const nothingFound = !docsLoading && docsCount === 0 && users.length === 0;
+  const hasUsers = users.length > 0;
+  const nothingFound = !docsLoading && docsCount === 0 && !hasUsers;
+  const wasNothingFound = useRef(false);
+  const hadUsers = useRef(false);
+
+  /**
+   * cmdk highlights the first option only when the list mounts. The first
+   * option is highlighted again when the users arrive above the docs, and
+   * when the highlighted option went away, without remounting the list that
+   * the screen readers would announce again.
+   */
+  useEffect(() => {
+    const list = modalRef.current?.querySelector('[cmdk-list]');
+    const usersArrived = hasUsers && !hadUsers.current;
+    hadUsers.current = hasUsers;
+    // The highlighted option may have gone away with nothing to replace it
+    onHighlight();
+
+    if (
+      !list ||
+      (!usersArrived && list.querySelector('[cmdk-item][aria-selected="true"]'))
+    ) {
+      return;
+    }
+
+    list.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Home',
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+  }, [hasUsers, users, docsCount, onHighlight]);
+
+  /**
+   * With "@" the search of the docs is silent, the users and the docs are
+   * announced together, once, when nothing matches the typed text any more.
+   */
+  useEffect(() => {
+    if (!isMentionTrigger || docsLoading) {
+      return;
+    }
+
+    if (nothingFound && !wasNothingFound.current) {
+      announce(t('No results found...'), 'polite');
+    }
+
+    wasNothingFound.current = nothingFound;
+  }, [isMentionTrigger, docsLoading, nothingFound, t]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
@@ -187,6 +285,8 @@ export const Search = ({
         opened={popoverOpened}
         withinPortal={true}
         hideDetached={false}
+        withRoles={false}
+        middlewares={{ size: dropdownSizeMiddleware }}
       >
         <Popover.Target>
           <Box
@@ -222,7 +322,10 @@ export const Search = ({
               aria-expanded={popoverOpened}
               aria-haspopup="listbox"
               aria-autocomplete="list"
-              aria-controls={dropdownId}
+              aria-controls={listboxId}
+              aria-activedescendant={
+                popoverOpened ? highlightedOptionId : undefined
+              }
               $padding={{ left: '3px' }}
               placeholder={
                 isMentionTrigger
@@ -249,13 +352,7 @@ export const Search = ({
         </Popover.Target>
         <Popover.Dropdown>
           <Box
-            ref={modalRef}
-            id={dropdownId}
-            role="listbox"
-            aria-label={t('Search results', {
-              description:
-                'Accessible name or heading of the list of search results',
-            })}
+            ref={setModalRef}
             $minWidth={isDesktop ? '330px' : '220px'}
             $width="fit-content"
             $zIndex="10"
@@ -275,14 +372,15 @@ export const Search = ({
               }
             `}
           >
-            {/* The highlighted item is picked when the list mounts. The key
-                remounts it when the users appear or disappear, so the first
-                item is always highlighted and never one that went away. */}
             <QuickSearch
-              key={users.length > 0 ? 'with-users' : 'without-users'}
               showInput={false}
               isSelectByDefault
+              listLabel={t('Search results', {
+                description:
+                  'Accessible name or heading of the list of search results',
+              })}
             >
+              <HighlightListener onHighlight={onHighlight} />
               <Card
                 $css={css`
                   box-shadow: 0 0 6px 0 rgba(0, 0, 145, 0.1);
@@ -291,16 +389,18 @@ export const Search = ({
                   background: var(
                     --c--contextuals--background--surface--primary
                   );
+                  max-height: var(
+                    --docs--mention-search-max-height,
+                    ${DROPDOWN_MAX_HEIGHT}px
+                  );
+                  overflow-y: auto;
                   .quick-search-container & [cmdk-group] {
                     margin-top: 0 !important;
-                  }
-                  & h2 {
-                    padding: var(--c--globals--spacings--sm);
                   }
                   & > div {
                     margin-top: var(--c--globals--spacings--0);
                     & [cmdk-group-heading] {
-                      padding: 0.4rem;
+                      padding: 0;
                       margin: 0;
                     }
 
@@ -320,9 +420,7 @@ export const Search = ({
                     }
 
                     & .--docs--quick-search-group-title {
-                      font-size: 12px;
-                      margin: var(--c--globals--spacings--sm);
-                      margin-bottom: var(--c--globals--spacings--xxs);
+                      padding: var(--c--globals--spacings--sm);
                     }
 
                     & .--docs--quick-search-group-empty {
@@ -337,7 +435,8 @@ export const Search = ({
                 <InterlinkingSearchGroup
                   search={search}
                   onPick={pick}
-                  withSeparator={users.length > 0 && docsCount > 0}
+                  withSeparator={hasUsers && docsCount > 0}
+                  silent={isMentionTrigger}
                   onResults={onDocsResults}
                   onLoadingChange={setDocsLoading}
                 />
@@ -345,11 +444,10 @@ export const Search = ({
                   <Text
                     className="--docs--quick-search-group-empty"
                     $size="sm"
-                    role="status"
                     $padding="sm"
                   >
                     {isMentionTrigger
-                      ? t('No results found..')
+                      ? t('No results found...')
                       : t('No documents found...')}
                   </Text>
                 )}

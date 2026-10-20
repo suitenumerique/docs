@@ -17,11 +17,15 @@ type DocSearchContentProps = {
   search: string;
   filterResults?: (doc: DocSearch) => boolean;
   isSearchNotMandatory?: boolean;
+  /** Keep only the first results, the next pages are then not loaded. */
+  limit?: number;
   onResults?: (results: DocSearch[]) => void;
   onSelect: (doc: DocSearch) => void;
   onLoadingChange?: (loading: boolean) => void;
   parentDocId?: string;
   renderSearchElement?: (doc: DocSearch) => React.ReactNode;
+  /** Let the parent announce the results to the screen readers. */
+  silent?: boolean;
 };
 
 export const DocSearchContent = ({
@@ -35,6 +39,8 @@ export const DocSearchContent = ({
   renderSearchElement,
   parentDocId,
   isSearchNotMandatory,
+  limit,
+  silent,
 }: DocSearchContentProps) => {
   const { filter } = useDocSearchFilterStore();
   const {
@@ -70,7 +76,7 @@ export const DocSearchContent = ({
 
   useEffect(() => {
     if (loading) {
-      if (search || isSearchNotMandatory) {
+      if (!silent && (search || isSearchNotMandatory)) {
         announce(
           t('Loading documents...', {
             description:
@@ -88,6 +94,10 @@ export const DocSearchContent = ({
       docs = docs.filter(filterResults);
     }
 
+    if (limit !== undefined) {
+      docs = docs.slice(0, limit);
+    }
+
     const elements = search || isSearchNotMandatory ? docs : [];
 
     onResults?.(elements);
@@ -97,20 +107,21 @@ export const DocSearchContent = ({
         hideGroupNameWhenEmpty && elements.length === 0 ? '' : groupName,
       groupKey: 'docs',
       elements,
-      endActions: hasNextPage
-        ? [
-            {
-              content: (
-                <Box $minHeight="1px">
-                  <InView onChange={() => void fetchNextPage()} />
-                </Box>
-              ),
-            },
-          ]
-        : [],
+      endActions:
+        hasNextPage && limit === undefined
+          ? [
+              {
+                content: (
+                  <Box $minHeight="1px">
+                    <InView onChange={() => void fetchNextPage()} />
+                  </Box>
+                ),
+              },
+            ]
+          : [],
     });
 
-    if (search && !loading) {
+    if (!silent && search && !loading) {
       announce(
         elements.length === 0
           ? t('No documents found', {
@@ -131,10 +142,12 @@ export const DocSearchContent = ({
     groupName,
     hideGroupNameWhenEmpty,
     isSearchNotMandatory,
+    limit,
     loading,
     hasNextPage,
     fetchNextPage,
     onResults,
+    silent,
   ]);
 
   useEffect(() => {

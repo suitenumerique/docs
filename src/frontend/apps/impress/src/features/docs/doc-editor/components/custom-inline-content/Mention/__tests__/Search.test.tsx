@@ -1,4 +1,5 @@
 import { MantineProvider } from '@mantine/core';
+import { announce } from '@react-aria/live-announcer';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { PropsWithChildren } from 'react';
@@ -15,26 +16,46 @@ const Wrapper = ({ children }: PropsWithChildren) => (
   </AppWrapper>
 );
 
-const { capturedProps } = vi.hoisted(() => ({
+const { capturedProps, mockToast } = vi.hoisted(() => ({
   capturedProps: [] as unknown[],
+  mockToast: vi.fn(),
 }));
+
+vi.mock('@gouvfr-lasuite/ui-components', async () => {
+  const actual = await vi.importActual<any>('@gouvfr-lasuite/ui-components');
+  return {
+    ...actual,
+    useToastProvider: () => ({ toast: mockToast }),
+  };
+});
 
 const FAKE_DOCS = [
   { id: 'doc-1', title: 'First result' },
   { id: 'doc-2', title: 'Second result' },
 ];
+let fakeDocs = FAKE_DOCS;
+
+vi.mock('@react-aria/live-announcer', () => ({ announce: vi.fn() }));
 
 vi.mock('@/docs/doc-search', async () => {
   const { QuickSearchGroup } = await vi.importActual<
     typeof import('@/components/quick-search')
   >('@/components/quick-search');
+  const { useEffect } = await vi.importActual<typeof import('react')>('react');
 
   return {
     DocSearchContent: (props: any) => {
       capturedProps.push(props);
+      const { onLoadingChange, onResults } = props;
+
+      useEffect(() => {
+        onLoadingChange?.(false);
+        onResults?.(fakeDocs);
+      }, [onLoadingChange, onResults]);
+
       return (
         <QuickSearchGroup
-          group={{ groupName: props.groupName, elements: FAKE_DOCS }}
+          group={{ groupName: props.groupName, elements: fakeDocs }}
           onSelect={props.onSelect}
           renderElement={(doc: (typeof FAKE_DOCS)[number]) => doc.title}
         />
@@ -280,11 +301,14 @@ describe('Search with the "@" trigger', () => {
 
   beforeEach(() => {
     capturedProps.length = 0;
+    fakeDocs = FAKE_DOCS;
+    vi.mocked(announce).mockClear();
+    mockToast.mockClear();
     useDocSearchFilterStore.setState({ filter: 'all' });
     useDocStore.setState({
       currentDoc: {
         id: DOC_ID,
-        abilities: { comment: true },
+        abilities: { mention: true },
       } as unknown as Doc,
     });
     fetchMock.hardReset();
@@ -306,16 +330,104 @@ describe('Search with the "@" trigger', () => {
   it('proposes the users and the docs in two sections', async () => {
     await renderSearch({ trigger: '@' });
 
-    expect(
-      await screen.findByRole('heading', { name: 'Mention a person' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Mehdi Daoudi')).toBeInTheDocument();
-    expect(screen.getByText('Mehdi Benali')).toBeInTheDocument();
+    const users = await screen.findByRole('group', {
+      name: 'Mention a person',
+    });
+    expect(users).toHaveTextContent('Mehdi Daoudi');
+    expect(users).toHaveTextContent('Mehdi Benali');
     expect(screen.queryByText('Sarah Reader')).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Link a doc' })).toHaveTextContent(
+      'First result',
+    );
+  });
+
+  it('proposes no user when the user cannot mention', async () => {
+    useDocStore.setState({
+      currentDoc: {
+        id: DOC_ID,
+        abilities: { comment: true, mention: false },
+      } as unknown as Doc,
+    });
+
+    await renderSearch({ trigger: '@' });
+    await screen.findByText('First result');
+
     expect(
-      screen.getByRole('heading', { name: 'Link a doc' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('First result')).toBeInTheDocument();
+      screen.queryByRole('group', { name: 'Mention a person' }),
+    ).not.toBeInTheDocument();
+    expect(fetchMock.callHistory.calls(ACCESSES_URL)).toHaveLength(0);
+  });
+
+  it('exposes a single listbox controlled by the input', async () => {
+    await renderSearch({ trigger: '@' });
+
+    const option = (await screen.findByText('Mehdi Daoudi')).closest(
+      '[cmdk-item]',
+    );
+    const input = screen.getByRole('combobox');
+    const listbox = screen.getByRole('listbox', { name: 'Search results' });
+
+    expect(screen.getAllByRole('listbox')).toHaveLength(1);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-controls', listbox.id);
+    await waitFor(() =>
+      expect(input).toHaveAttribute('aria-activedescendant', option?.id),
+    );
+
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+    await waitFor(() =>
+      expect(input).toHaveAttribute(
+        'aria-activedescendant',
+        screen.getByText('Mehdi Benali').closest('[cmdk-item]')?.id,
+      ),
+    );
+  });
+
+  it('highlights the first user when the users arrive after the docs, without remounting the list', async () => {
+    fetchMock.removeRoutes().clearHistory();
+    fetchMock.get(
+      ACCESSES_URL,
+      [createAccess('user-1', 'Mehdi Daoudi', 'owner')],
+      { delay: 300 },
+    );
+
+    await renderSearch({ trigger: '@' });
+
+    const listbox = await screen.findByRole('listbox');
+    await waitFor(() =>
+      expect(
+        screen.getByText('First result').closest('[cmdk-item]'),
+      ).toHaveAttribute('data-selected', 'true'),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('Mehdi Daoudi').closest('[cmdk-item]'),
+      ).toHaveAttribute('data-selected', 'true'),
+    );
+    expect(screen.getByRole('listbox')).toBe(listbox);
+  });
+
+  it('announces once that nothing matches the users and the docs', async () => {
+    fakeDocs = [];
+    await renderSearch({ trigger: '@' });
+    await screen.findByText('Mehdi Daoudi');
+
+    expect(capturedProps.at(-1)).toMatchObject({ silent: true });
+    expect(announce).not.toHaveBeenCalled();
+
+    fireEvent.input(screen.getByRole('combobox'), {
+      target: { value: 'zzz' },
+    });
+    expect(await screen.findByText('No results found...')).toBeInTheDocument();
+
+    fireEvent.input(screen.getByRole('combobox'), {
+      target: { value: 'zzzz' },
+    });
+
+    expect(announce).toHaveBeenCalledTimes(1);
+    expect(announce).toHaveBeenCalledWith('No results found...', 'polite');
   });
 
   it('proposes only the docs when opened from the slash menu', async () => {
@@ -324,9 +436,10 @@ describe('Search with the "@" trigger', () => {
     await screen.findByText('First result');
 
     expect(
-      screen.queryByRole('heading', { name: 'Mention a person' }),
+      screen.queryByRole('group', { name: 'Mention a person' }),
     ).not.toBeInTheDocument();
     expect(fetchMock.callHistory.calls(ACCESSES_URL)).toHaveLength(0);
+    expect(capturedProps.at(-1)).toMatchObject({ silent: false });
   });
 
   it('filters the users with the typed text', async () => {
@@ -393,7 +506,7 @@ describe('Search with the "@" trigger', () => {
     ).toEqual({ anchor_id: BLOCK_ID, mentioned_user_id: 'user-2' });
   });
 
-  it('keeps the mention but does not notify when the block id is not a uuid', async () => {
+  it('keeps the mention but warns it cannot notify when the block id is not a uuid', async () => {
     const { updateInlineContent } = await renderSearch({
       trigger: '@',
       blockId: 'not-a-uuid',
@@ -403,6 +516,10 @@ describe('Search with the "@" trigger', () => {
 
     expect(updateInlineContent).toHaveBeenCalled();
     expect(fetchMock.callHistory.calls(MENTION_URL)).toHaveLength(0);
+    expect(mockToast).toHaveBeenCalledWith(
+      'The person could not be notified of the mention.',
+      'error',
+    );
   });
 
   it('ignores the selection of a user when the editor is not editable', async () => {
