@@ -90,6 +90,35 @@ const encryptRemoteAttachments = async (
 };
 
 /**
+ * How many files of a document the antivirus is still analyzing: each one is an
+ * `uploadLoader` block (`loading` by default, `warning` once the scan failed)
+ * until the scan ends and an editor turns it into the file's block. Encrypting
+ * meanwhile would miss them, as they are named by `blockUploadUrl` rather than
+ * `url`, and encrypting them anyway would skip their scan: encrypted uploads are
+ * never scanned.
+ */
+export const countAnalyzingUploads = (yDoc: Y.Doc) => {
+  let count = 0;
+  const walk = (node: Y.XmlElement | Y.XmlFragment) => {
+    for (const child of node.toArray()) {
+      if (child instanceof Y.XmlElement) {
+        if (
+          child.nodeName === 'uploadLoader' &&
+          child.getAttribute('type') !== 'warning'
+        ) {
+          count += 1;
+        }
+        walk(child);
+      }
+    }
+  };
+
+  walk(yDoc.getXmlFragment('document-store'));
+
+  return count;
+};
+
+/**
  * A document's content and attachments encrypted under one new key, wrapped for
  * `recipients`. The attachments are encrypted with the caller's wrap of that key,
  * so with no wrap for `currentUserSub` they stay as they are.

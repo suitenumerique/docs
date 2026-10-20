@@ -33,7 +33,7 @@ import { useDocInvitations } from '@/features/docs/doc-share/api/useDocInvitatio
 import { useKeyboardAction } from '@/hooks';
 import { toBase64 } from '@/utils/string';
 
-import { encryptDocContent } from '../encryptDocContent';
+import { countAnalyzingUploads, encryptDocContent } from '../encryptDocContent';
 
 import { EncryptionModalContent } from './EncryptionLayout';
 
@@ -145,7 +145,29 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
           (a) => a.user?.suite_user_id && !!publicKeysMap[a.user.suite_user_id],
         );
 
-  const canEncrypt = hasEncryptionKeys && isRestricted && hasAnyPublicKey;
+  // Followed live: a scan that ends while the modal is open unblocks it.
+  const [analyzingUploads, setAnalyzingUploads] = useState(0);
+  useEffect(() => {
+    const yDoc = provider?.document;
+
+    if (!yDoc) {
+      return;
+    }
+
+    const update = () => setAnalyzingUploads(countAnalyzingUploads(yDoc));
+    update();
+    yDoc.on('update', update);
+
+    return () => {
+      yDoc.off('update', update);
+    };
+  }, [provider]);
+
+  const canEncrypt =
+    hasEncryptionKeys &&
+    isRestricted &&
+    hasAnyPublicKey &&
+    analyzingUploads === 0;
 
   const handleClose = () => {
     if (isPending) {
@@ -283,6 +305,13 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
   const blockers: string[] = [];
   if (!hasEncryptionKeys) {
     blockers.push(t('You must enable encryption from your account menu first'));
+  }
+  if (analyzingUploads > 0) {
+    blockers.push(
+      t(
+        'Some files are still being analyzed by the antivirus: wait for the analysis to finish',
+      ),
+    );
   }
   if (!isRestricted) {
     blockers.push(
