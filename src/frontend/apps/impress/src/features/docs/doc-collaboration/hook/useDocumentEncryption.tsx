@@ -86,6 +86,14 @@ export function useDocumentEncryption(
   }, [encryptedSymmetricKey, keyVersion]);
 
   useEffect(() => {
+    // A plain document needs nothing from the vault: never wait for it.
+    if (isDocumentEncrypted === false) {
+      setLoading(false);
+      setError(null);
+
+      return;
+    }
+
     if (!encryptionLoading && !encryptionSettings) {
       setLoading(false);
 
@@ -94,13 +102,6 @@ export function useDocumentEncryption(
 
     if (encryptionLoading || isDocumentEncrypted === undefined) {
       setLoading(true);
-      setError(null);
-
-      return;
-    }
-
-    if (isDocumentEncrypted === false) {
-      setLoading(false);
       setError(null);
 
       return;
