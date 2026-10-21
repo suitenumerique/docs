@@ -31,6 +31,8 @@ export type QuickSearchProps = {
   showInput?: boolean;
   loading?: boolean;
   label?: string;
+  /** Accessible name of the list of results, cmdk names it "Suggestions" */
+  listLabel?: string;
   placeholder?: string;
   groupKey?: string;
   beforeList?: ReactNode;
@@ -43,6 +45,7 @@ export const QuickSearch = ({
   inputValue,
   showInput = true,
   label,
+  listLabel,
   loading,
   placeholder,
   beforeList,
@@ -75,7 +78,7 @@ export const QuickSearch = ({
             </QuickSearchInput>
           )}
           {beforeList}
-          <Command.List id={listId} aria-busy={loading}>
+          <Command.List id={listId} aria-busy={loading} label={listLabel}>
             <Box>{children}</Box>
           </Command.List>
         </Command>

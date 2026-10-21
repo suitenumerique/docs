@@ -11,7 +11,11 @@ import {
   blockMappingQuoteDocx,
   blockMappingUploadLoaderDocx,
 } from './blocks-mapping';
-import { createInlineContentMappingInterlinkingLinkDocx } from './inline-content-mapping';
+import {
+  createInlineContentMappingInterlinkingLinkDocx,
+  inlineContentMappingMentionSearchDocx,
+  inlineContentMappingUserMentionDocx,
+} from './inline-content-mapping';
 import { DocsExporterDocx } from './types';
 
 export const getDocxDocsSchemaMappings = (
@@ -60,6 +64,8 @@ export const getDocxDocsSchemaMappings = (
     ...docxDefaultSchemaMappings.inlineContentMapping,
     interlinkingLinkInline:
       createInlineContentMappingInterlinkingLinkDocx(interlinkTitles),
+    mentionSearchInline: inlineContentMappingMentionSearchDocx,
+    userMentionInline: inlineContentMappingUserMentionDocx,
     // Renders inline math as a native (editable) Word equation.
     math: inlineMathMapping,
   },

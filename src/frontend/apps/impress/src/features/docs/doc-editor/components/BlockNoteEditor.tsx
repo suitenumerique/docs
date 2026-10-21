@@ -76,6 +76,8 @@ const localesBNAI = BlockNoteAI?.localesAI || {};
 import { createSafeCodeBlockSpec } from './custom-blocks/CodeBlock';
 import {
   InterlinkingLinkInlineContent,
+  MentionSearchInlineContent,
+  UserMentionInlineContent,
   getPastedDocInterlink,
 } from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
@@ -101,6 +103,8 @@ const baseBlockNoteSchema = withPageBreak(
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
       interlinkingLinkInline: InterlinkingLinkInlineContent,
+      mentionSearchInline: MentionSearchInlineContent,
+      userMentionInline: UserMentionInlineContent,
       math: createReactInlineMathSpec(),
     },
   }),
