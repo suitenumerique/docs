@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v6.0.2] - 2026-10-21
+
 ### Added
 
 - ✨(docspec) handle DocSpec 4xx/5xx import errors distinctly #2552
@@ -1707,7 +1709,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v6.0.1...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v6.0.2...main
+[v6.0.2]: https://github.com/suitenumerique/docs/releases/v6.0.2
 [v6.0.1]: https://github.com/suitenumerique/docs/releases/v6.0.1
 [v6.0.0]: https://github.com/suitenumerique/docs/releases/v6.0.0
 [v5.7.0]: https://github.com/suitenumerique/docs/releases/v5.7.0
