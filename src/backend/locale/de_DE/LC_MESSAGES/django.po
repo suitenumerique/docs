@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-15 10:24+0000\n"
-"PO-Revision-Date: 2026-10-15 10:43\n"
+"POT-Creation-Date: 2026-10-20 16:11+0000\n"
+"PO-Revision-Date: 2026-10-21 13:23\n"
 "Last-Translator: \n"
 "Language-Team: German\n"
 "Language: de_DE\n"
@@ -78,12 +78,16 @@ msgstr "Dies ist ein Pflichtfeld."
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr "Der Zugriff auf den Link '%(link_reach)s' ist aufgrund der Konfiguration übergeordneter Dokumente nicht erlaubt."
 
-#: core/api/viewsets.py:1435
+#: core/api/viewsets.py:1420 core/api/viewsets.py:1428
 #, python-brace-format
-msgid "copy of {title}"
-msgstr "Kopie von {title}"
+msgid "{title} (copy)"
+msgstr ""
 
-#: core/api/viewsets.py:3327
+#: core/api/viewsets.py:1479
+msgid "Untitled document (copy)"
+msgstr ""
+
+#: core/api/viewsets.py:3380
 #, python-format
 msgid "A comment can have a maximum of %(max)d distinct reactions."
 msgstr ""
@@ -164,7 +168,7 @@ msgstr "Erstellt am"
 msgid "date and time at which a record was created"
 msgstr "Datum und Uhrzeit, an dem ein Datensatz erstellt wurde"
 
-#: core/models.py:95 core/models.py:2347
+#: core/models.py:95 core/models.py:2350
 msgid "updated on"
 msgstr "Aktualisiert"
 
@@ -372,7 +376,7 @@ msgstr "Dokument"
 msgid "Documents"
 msgstr "Dokumente"
 
-#: core/models.py:1063 core/models.py:1442 core/models.py:2178
+#: core/models.py:1063 core/models.py:1442 core/models.py:2181
 msgid "Untitled Document"
 msgstr "Unbenanntes Dokument"
 
@@ -474,147 +478,147 @@ msgstr "Thread"
 msgid "Threads"
 msgstr "Threads"
 
-#: core/models.py:1937 core/models.py:1990
+#: core/models.py:1937 core/models.py:1989
 msgid "Anonymous"
 msgstr "Gast"
 
-#: core/models.py:1985
+#: core/models.py:1984
 msgid "Comment"
 msgstr "Kommentar"
 
-#: core/models.py:1986
+#: core/models.py:1985
 msgid "Comments"
 msgstr "Kommentare"
 
-#: core/models.py:2036
+#: core/models.py:2034
 msgid "This emoji has already been reacted to this comment."
 msgstr ""
 
-#: core/models.py:2040
+#: core/models.py:2038
 msgid "Reaction"
 msgstr "Reaktion"
 
-#: core/models.py:2041
+#: core/models.py:2039
 msgid "Reactions"
 msgstr "Reaktionen"
 
-#: core/models.py:2092
+#: core/models.py:2090
 msgid "Mention"
 msgstr ""
 
-#: core/models.py:2093
+#: core/models.py:2091
 msgid "Mentions"
 msgstr ""
 
-#: core/models.py:2106
+#: core/models.py:2104
 msgid "a deleted user"
 msgstr ""
 
-#: core/models.py:2116
+#: core/models.py:2114
 msgid "The thread does not belong to this document."
 msgstr ""
 
-#: core/models.py:2180
+#: core/models.py:2183
 #, python-brace-format
 msgid "{name} mentioned you in a comment in \"{title}\""
 msgstr ""
 
-#: core/models.py:2184
+#: core/models.py:2187
 #, python-brace-format
 msgid "{name} mentioned you in a comment in the following document:"
 msgstr ""
 
-#: core/models.py:2187
+#: core/models.py:2190
 #, python-brace-format
 msgid "{name} mentioned you in \"{title}\""
 msgstr ""
 
-#: core/models.py:2190
+#: core/models.py:2193
 #, python-brace-format
 msgid "{name} mentioned you in the following document:"
 msgstr ""
 
-#: core/models.py:2216
+#: core/models.py:2219
 msgid "email address"
 msgstr "E-Mail-Adresse"
 
-#: core/models.py:2235
+#: core/models.py:2238
 msgid "Document invitation"
 msgstr "Einladung zum Dokument"
 
-#: core/models.py:2236
+#: core/models.py:2239
 msgid "Document invitations"
 msgstr "Dokumenteinladungen"
 
-#: core/models.py:2256
+#: core/models.py:2259
 msgid "This email is already associated to a registered user."
 msgstr "Diese E-Mail ist bereits einem registrierten Benutzer zugeordnet."
 
-#: core/models.py:2299
+#: core/models.py:2302
 msgid "Migrated"
 msgstr ""
 
-#: core/models.py:2300
+#: core/models.py:2303
 msgid "Already migrated"
 msgstr ""
 
-#: core/models.py:2301
+#: core/models.py:2304
 msgid "Nothing in the object storage"
 msgstr ""
 
-#: core/models.py:2302
+#: core/models.py:2305
 msgid "No readable version"
 msgstr ""
 
-#: core/models.py:2303
+#: core/models.py:2306
 msgid "Failed"
 msgstr ""
 
-#: core/models.py:2327
+#: core/models.py:2330
 msgid "status"
 msgstr ""
 
-#: core/models.py:2329
+#: core/models.py:2332
 msgid "versions"
 msgstr ""
 
-#: core/models.py:2332
+#: core/models.py:2335
 msgid "applied"
 msgstr ""
 
-#: core/models.py:2333
+#: core/models.py:2336
 msgid "versions that added content, one activity entry each"
 msgstr ""
 
-#: core/models.py:2337
+#: core/models.py:2340
 msgid "skipped"
 msgstr ""
 
-#: core/models.py:2338
+#: core/models.py:2341
 msgid "versions that could not be read"
 msgstr ""
 
-#: core/models.py:2342
+#: core/models.py:2345
 msgid "dropped"
 msgstr ""
 
-#: core/models.py:2343
+#: core/models.py:2346
 msgid "versions older than the ones the server replays"
 msgstr ""
 
-#: core/models.py:2345
+#: core/models.py:2348
 msgid "duration"
 msgstr ""
 
-#: core/models.py:2346
+#: core/models.py:2349
 msgid "error"
 msgstr ""
 
-#: core/models.py:2351
+#: core/models.py:2354
 msgid "Document migration"
 msgstr ""
 
-#: core/models.py:2352
+#: core/models.py:2355
 msgid "Document migrations"
 msgstr ""
 
@@ -634,7 +638,7 @@ msgstr " Docs, Ihr neues unentbehrliches Werkzeug für die Organisation, den Aus
 msgid " Brought to you by %(brandname)s "
 msgstr " Erstellt von %(brandname)s "
 
-#: impress/settings.py:997
+#: impress/settings.py:1002
 msgid "Docs AI"
 msgstr "Docs AI"
 

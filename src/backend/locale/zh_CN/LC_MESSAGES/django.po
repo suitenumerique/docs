@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-15 10:24+0000\n"
-"PO-Revision-Date: 2026-10-15 10:43\n"
+"POT-Creation-Date: 2026-10-20 16:11+0000\n"
+"PO-Revision-Date: 2026-10-21 13:23\n"
 "Last-Translator: \n"
 "Language-Team: Chinese Simplified\n"
 "Language: zh_CN\n"
@@ -78,12 +78,16 @@ msgstr "此字段为必填。"
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr "根据父文档设置，不允许链接范围“%(link_reach)s”。"
 
-#: core/api/viewsets.py:1435
+#: core/api/viewsets.py:1420 core/api/viewsets.py:1428
 #, python-brace-format
-msgid "copy of {title}"
-msgstr "{title} 的副本"
+msgid "{title} (copy)"
+msgstr ""
 
-#: core/api/viewsets.py:3327
+#: core/api/viewsets.py:1479
+msgid "Untitled document (copy)"
+msgstr ""
+
+#: core/api/viewsets.py:3380
 #, python-format
 msgid "A comment can have a maximum of %(max)d distinct reactions."
 msgstr "一条评论最多可有 %(max)d 种不同的表情回应。"
@@ -164,7 +168,7 @@ msgstr "创建于"
 msgid "date and time at which a record was created"
 msgstr "记录的创建日期与时间"
 
-#: core/models.py:95 core/models.py:2347
+#: core/models.py:95 core/models.py:2350
 msgid "updated on"
 msgstr "更新于"
 
@@ -379,7 +383,7 @@ msgstr "文档"
 msgid "Documents"
 msgstr "文档"
 
-#: core/models.py:1063 core/models.py:1442 core/models.py:2178
+#: core/models.py:1063 core/models.py:1442 core/models.py:2181
 msgid "Untitled Document"
 msgstr "未命名文档"
 
@@ -481,147 +485,147 @@ msgstr "讨论串"
 msgid "Threads"
 msgstr "讨论串"
 
-#: core/models.py:1937 core/models.py:1990
+#: core/models.py:1937 core/models.py:1989
 msgid "Anonymous"
 msgstr "匿名"
 
-#: core/models.py:1985
+#: core/models.py:1984
 msgid "Comment"
 msgstr "评论"
 
-#: core/models.py:1986
+#: core/models.py:1985
 msgid "Comments"
 msgstr "评论"
 
-#: core/models.py:2036
+#: core/models.py:2034
 msgid "This emoji has already been reacted to this comment."
 msgstr "此评论已添加过该表情回应。"
 
-#: core/models.py:2040
+#: core/models.py:2038
 msgid "Reaction"
 msgstr "回应"
 
-#: core/models.py:2041
+#: core/models.py:2039
 msgid "Reactions"
 msgstr "回应"
 
-#: core/models.py:2092
+#: core/models.py:2090
 msgid "Mention"
 msgstr "提及"
 
-#: core/models.py:2093
+#: core/models.py:2091
 msgid "Mentions"
 msgstr "提及"
 
-#: core/models.py:2106
+#: core/models.py:2104
 msgid "a deleted user"
 msgstr "已删除的用户"
 
-#: core/models.py:2116
+#: core/models.py:2114
 msgid "The thread does not belong to this document."
 msgstr "该评论串不属于此文档。"
 
-#: core/models.py:2180
+#: core/models.py:2183
 #, python-brace-format
 msgid "{name} mentioned you in a comment in \"{title}\""
 msgstr "{name} 在“{title}”的评论中提到了你"
 
-#: core/models.py:2184
+#: core/models.py:2187
 #, python-brace-format
 msgid "{name} mentioned you in a comment in the following document:"
 msgstr "{name} 在以下文档的评论中提到了你:"
 
-#: core/models.py:2187
+#: core/models.py:2190
 #, python-brace-format
 msgid "{name} mentioned you in \"{title}\""
 msgstr "{name} 在“{title}”中提到了你"
 
-#: core/models.py:2190
+#: core/models.py:2193
 #, python-brace-format
 msgid "{name} mentioned you in the following document:"
 msgstr "{name} 在以下文档中提到了你:"
 
-#: core/models.py:2216
+#: core/models.py:2219
 msgid "email address"
 msgstr "邮箱地址"
 
-#: core/models.py:2235
+#: core/models.py:2238
 msgid "Document invitation"
 msgstr "文档邀请"
 
-#: core/models.py:2236
+#: core/models.py:2239
 msgid "Document invitations"
 msgstr "文档邀请"
 
-#: core/models.py:2256
+#: core/models.py:2259
 msgid "This email is already associated to a registered user."
 msgstr "该邮箱已被注册。"
 
-#: core/models.py:2299
+#: core/models.py:2302
 msgid "Migrated"
 msgstr "已迁移"
 
-#: core/models.py:2300
+#: core/models.py:2303
 msgid "Already migrated"
 msgstr "已迁移过"
 
-#: core/models.py:2301
+#: core/models.py:2304
 msgid "Nothing in the object storage"
 msgstr "对象存储中无内容"
 
-#: core/models.py:2302
+#: core/models.py:2305
 msgid "No readable version"
 msgstr "无可读版本"
 
-#: core/models.py:2303
+#: core/models.py:2306
 msgid "Failed"
 msgstr "失败"
 
-#: core/models.py:2327
+#: core/models.py:2330
 msgid "status"
 msgstr "状态"
 
-#: core/models.py:2329
+#: core/models.py:2332
 msgid "versions"
 msgstr "版本"
 
-#: core/models.py:2332
+#: core/models.py:2335
 msgid "applied"
 msgstr "已应用"
 
-#: core/models.py:2333
+#: core/models.py:2336
 msgid "versions that added content, one activity entry each"
 msgstr "添加了内容的版本,每个版本对应一条活动记录"
 
-#: core/models.py:2337
+#: core/models.py:2340
 msgid "skipped"
 msgstr "已跳过"
 
-#: core/models.py:2338
+#: core/models.py:2341
 msgid "versions that could not be read"
 msgstr "无法读取的版本"
 
-#: core/models.py:2342
+#: core/models.py:2345
 msgid "dropped"
 msgstr "已丢弃"
 
-#: core/models.py:2343
+#: core/models.py:2346
 msgid "versions older than the ones the server replays"
 msgstr "早于服务器重放范围的旧版本"
 
-#: core/models.py:2345
+#: core/models.py:2348
 msgid "duration"
 msgstr "耗时"
 
-#: core/models.py:2346
+#: core/models.py:2349
 msgid "error"
 msgstr "错误"
 
-#: core/models.py:2351
+#: core/models.py:2354
 msgid "Document migration"
 msgstr "文档迁移"
 
-#: core/models.py:2352
+#: core/models.py:2355
 msgid "Document migrations"
 msgstr "文档迁移"
 
@@ -641,7 +645,7 @@ msgstr " Docs，与团队协作、整理和分享文档的全新必备工具。 
 msgid " Brought to you by %(brandname)s "
 msgstr " 由 %(brandname)s 提供 "
 
-#: impress/settings.py:997
+#: impress/settings.py:1002
 msgid "Docs AI"
 msgstr "Docs AI"
 
