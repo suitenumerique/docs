@@ -257,6 +257,52 @@ redis-dev-backend-redis-68c9f66786-4dgxj   1/1     Running   0          4m21s
 
 ```
 
+### Find ICAP server connection values
+
+Docs can scan every uploaded file with an antivirus engine exposed through the
+Internet Content Adaptation Protocol (ICAP), see
+[malware detection](../malware_detection.md). For development, an ICAP server
+(c-icap with ClamAV) is provided by the dev dependencies chart, so you can
+install a local testing environment as follow:
+
+```text
+$ helm install --repo https://suitenumerique.github.io/helm-dev-backend --version ">=0.0.16" -f documentation/examples/helm/cicap.values.yaml cicap dev-backend
+$ kubectl get pods
+NAME                                       READY   STATUS    RESTARTS   AGE
+cicap-dev-backend-cicap-xxxxx-xxxxx        2/2     Running   0          5m
+```
+
+The pod runs two containers: `cicap` (the c-icap server) and `clamd` (the
+ClamAV daemon). Wait for both to be ready: on the first start the `clamd`
+container downloads the ClamAV virus database, which takes a few minutes and
+requires access to `database.clamav.net`, then loads it in memory (about
+1.5 GiB). Until then the `cicap` container waits for clamd, logs
+`Waiting for clamd on 127.0.0.1:3310` and, every minute,
+`Clamd not responding yet after 60s, check the clamd container logs:
+kubectl logs <pod> -c clamd`.
+
+If the pod does not become ready, check the `clamd` container:
+
+```text
+$ kubectl logs <pod> -c clamd        # database download, "socket found, clamd started."
+$ kubectl describe pod <pod>         # restarts, OOMKilled
+```
+
+The usual causes are a blocked or rate-limited access to `database.clamav.net`
+(set a mirror with `FRESHCLAM_CONF_PrivateMirror` in `cicap.clamd.env`) or not
+enough memory for clamd.
+
+From here the important information you will need are:
+
+```yaml
+MALWARE_DETECTION_BACKEND: lasuite.malware_detection.backends.icap.ICAPBackend
+MALWARE_DETECTION_PARAMETERS: '{"server_address":"cicap-dev-backend-cicap","server_port":1344,"service":"avscan","callback_path":"core.malware_detection.malware_detection_callback"}'
+```
+
+`server_address` is the name of the service created by the chart and
+`server_port` the `cicap.port` value of
+**documentation/examples/helm/cicap.values.yaml**.
+
 ### Signing keys of the services
 
 The backend and the collaboration server call each other, and sign those calls:
