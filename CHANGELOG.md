@@ -24,6 +24,8 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) restore mobile empty-paragraph placeholder sizing
+
 - 🐛(frontend) wrap long unbroken document titles #2852
 - 🐛(frontend) wrap long text in the print export #2813
 - 🔒️(backend) bind comment thread to the path document on creation #2838
