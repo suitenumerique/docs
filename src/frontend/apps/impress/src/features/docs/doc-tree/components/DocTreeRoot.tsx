@@ -62,6 +62,12 @@ export const DocTreeRoot = ({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLElement>) => {
+      // The modals opened from the actions menu are portals: React bubbles
+      // their keys up to here although this item doesn't contain them.
+      if (!event.currentTarget.contains(event.target as Node)) {
+        return;
+      }
+
       // F2 / ArrowLeft / ArrowRight / Escape rove within the actions group.
       if (handleActionsKeyDown(event)) {
         return;
