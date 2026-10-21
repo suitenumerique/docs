@@ -10,6 +10,10 @@ import { MentionedInlineContent } from '../types';
 
 import { getBlockIdAtPos } from './getBlockIdAtPos';
 import {
+  INITIAL_BLOCK_ID,
+  replaceInitialBlockId,
+} from './replaceInitialBlockId';
+import {
   MentionableUser,
   getMentionableUserName,
   useMentionableUsers,
@@ -61,13 +65,19 @@ export const useSearchUserMention = ({
     }
 
     const pos = getPos();
-    const anchorId =
-      pos === undefined ? undefined : getBlockIdAtPos(editor, pos);
+    let anchorId = pos === undefined ? undefined : getBlockIdAtPos(editor, pos);
 
     onPick({
       type: 'userMentionInline',
       props: { userId: user.id, fullName: getMentionableUserName(user) },
     });
+
+    // After the pick, so that the search is not re-rendered while it is used.
+    // TODO: remove when BlockNote stops giving "initialBlockId" to the first
+    // block, see https://github.com/suitenumerique/docs/issues/2887
+    if (anchorId === INITIAL_BLOCK_ID) {
+      anchorId = replaceInitialBlockId(editor);
+    }
 
     if (currentDoc && anchorId && uuidValidate(anchorId)) {
       mentionUser({
