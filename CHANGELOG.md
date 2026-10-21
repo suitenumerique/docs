@@ -18,6 +18,7 @@ and this project adheres to
 
 - ♻️(frontend) replace outdated AGPL mentions of BlockNote XL packages #2775
 - 💄(frontend) update upload loader and error ui #2778
+- 💄(frontend) use true italic Inter in the editor #2861
 - ⬆️(yhub) upgrade @y/hub to 0.10.1 #2853
 - ♿️(frontend) allow opening the home button in a new tab #2839
 - 💄(frontend) use 12px for error page home links #2809

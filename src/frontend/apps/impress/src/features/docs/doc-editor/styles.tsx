@@ -23,6 +23,15 @@ export const DocsEditorStyle = createGlobalStyle`
   .bn-root {
     .bn-editor {
       height: 100%;
+      font-family:
+        'Inter Variable',
+        'SF Pro Display',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Open Sans',
+        'Segoe UI',
+        'Roboto',
+        sans-serif;
     }
 
     &.bn-mantine .bn-suggestion-menu-item-small {
