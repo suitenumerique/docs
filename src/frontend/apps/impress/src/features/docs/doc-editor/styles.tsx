@@ -331,8 +331,7 @@ export const DocsEditorStyle = createGlobalStyle`
       & .bn-editor h1 {
         font-size: 1.6rem;
       }
-      .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
-        .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
+      .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']:has(.ProseMirror-trailingBreak:only-child)::after {
         font-size: 14px;
       }
     }
