@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-15 10:24+0000\n"
-"PO-Revision-Date: 2026-10-15 10:43\n"
+"POT-Creation-Date: 2026-10-20 16:11+0000\n"
+"PO-Revision-Date: 2026-10-21 13:23\n"
 "Last-Translator: \n"
 "Language-Team: Dutch\n"
 "Language: nl_NL\n"
@@ -78,12 +78,16 @@ msgstr "Dit veld is verplicht."
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr "Link bereik '%(link_reach)s' is niet toegestaan op basis van bovenliggende documentconfiguratie."
 
-#: core/api/viewsets.py:1435
+#: core/api/viewsets.py:1420 core/api/viewsets.py:1428
 #, python-brace-format
-msgid "copy of {title}"
-msgstr "kopie van {title}"
+msgid "{title} (copy)"
+msgstr "{title} (kopie)"
 
-#: core/api/viewsets.py:3327
+#: core/api/viewsets.py:1479
+msgid "Untitled document (copy)"
+msgstr "Naamloos document (kopie)"
+
+#: core/api/viewsets.py:3380
 #, python-format
 msgid "A comment can have a maximum of %(max)d distinct reactions."
 msgstr "Een opmerking kan maximaal %(max)d verschillende reacties hebben."
@@ -164,7 +168,7 @@ msgstr "gecreëerd op"
 msgid "date and time at which a record was created"
 msgstr "datum en tijd waarop dossier is gecreeërd"
 
-#: core/models.py:95 core/models.py:2347
+#: core/models.py:95 core/models.py:2350
 msgid "updated on"
 msgstr "Laatst gewijzigd op"
 
@@ -379,7 +383,7 @@ msgstr "Document"
 msgid "Documents"
 msgstr "Documenten"
 
-#: core/models.py:1063 core/models.py:1442 core/models.py:2178
+#: core/models.py:1063 core/models.py:1442 core/models.py:2181
 msgid "Untitled Document"
 msgstr "Naamloos Document"
 
@@ -481,147 +485,147 @@ msgstr "Kanaal"
 msgid "Threads"
 msgstr "Kanalen"
 
-#: core/models.py:1937 core/models.py:1990
+#: core/models.py:1937 core/models.py:1989
 msgid "Anonymous"
 msgstr "Anoniem"
 
-#: core/models.py:1985
+#: core/models.py:1984
 msgid "Comment"
 msgstr "Reactie"
 
-#: core/models.py:1986
+#: core/models.py:1985
 msgid "Comments"
 msgstr "Reacties"
 
-#: core/models.py:2036
+#: core/models.py:2034
 msgid "This emoji has already been reacted to this comment."
 msgstr "Deze emoji is al op deze opmerking gereageerd."
 
-#: core/models.py:2040
+#: core/models.py:2038
 msgid "Reaction"
 msgstr "Reactie"
 
-#: core/models.py:2041
+#: core/models.py:2039
 msgid "Reactions"
 msgstr "Reacties"
 
-#: core/models.py:2092
+#: core/models.py:2090
 msgid "Mention"
 msgstr "Vermelding"
 
-#: core/models.py:2093
+#: core/models.py:2091
 msgid "Mentions"
 msgstr "Vermeldingen"
 
-#: core/models.py:2106
+#: core/models.py:2104
 msgid "a deleted user"
 msgstr "een verwijderde gebruiker"
 
-#: core/models.py:2116
+#: core/models.py:2114
 msgid "The thread does not belong to this document."
 msgstr "De discussie hoort niet bij dit document."
 
-#: core/models.py:2180
+#: core/models.py:2183
 #, python-brace-format
 msgid "{name} mentioned you in a comment in \"{title}\""
 msgstr "{name} noemde u in een opmerking in \"{title}\""
 
-#: core/models.py:2184
+#: core/models.py:2187
 #, python-brace-format
 msgid "{name} mentioned you in a comment in the following document:"
 msgstr "{name} noemde u in een opmerking in het volgende document:"
 
-#: core/models.py:2187
+#: core/models.py:2190
 #, python-brace-format
 msgid "{name} mentioned you in \"{title}\""
 msgstr "{name} noemde u in \"{title}\""
 
-#: core/models.py:2190
+#: core/models.py:2193
 #, python-brace-format
 msgid "{name} mentioned you in the following document:"
 msgstr "{name} noemde u in het volgende document:"
 
-#: core/models.py:2216
+#: core/models.py:2219
 msgid "email address"
 msgstr "e-mailadres"
 
-#: core/models.py:2235
+#: core/models.py:2238
 msgid "Document invitation"
 msgstr "Document uitnodiging"
 
-#: core/models.py:2236
+#: core/models.py:2239
 msgid "Document invitations"
 msgstr "Document uitnodigingen"
 
-#: core/models.py:2256
+#: core/models.py:2259
 msgid "This email is already associated to a registered user."
 msgstr "Deze email is al geassocieerd met een geregistreerde gebruiker."
 
-#: core/models.py:2299
+#: core/models.py:2302
 msgid "Migrated"
 msgstr "Gemigreerd"
 
-#: core/models.py:2300
+#: core/models.py:2303
 msgid "Already migrated"
 msgstr "Al gemigreerd"
 
-#: core/models.py:2301
+#: core/models.py:2304
 msgid "Nothing in the object storage"
 msgstr "Niets in de objectopslag"
 
-#: core/models.py:2302
+#: core/models.py:2305
 msgid "No readable version"
 msgstr "Geen leesbare versie"
 
-#: core/models.py:2303
+#: core/models.py:2306
 msgid "Failed"
 msgstr "Mislukt"
 
-#: core/models.py:2327
+#: core/models.py:2330
 msgid "status"
 msgstr "status"
 
-#: core/models.py:2329
+#: core/models.py:2332
 msgid "versions"
 msgstr "versies"
 
-#: core/models.py:2332
+#: core/models.py:2335
 msgid "applied"
 msgstr "toegepast"
 
-#: core/models.py:2333
+#: core/models.py:2336
 msgid "versions that added content, one activity entry each"
 msgstr "versies die inhoud hebben toegevoegd, met elk één activiteitvermelding"
 
-#: core/models.py:2337
+#: core/models.py:2340
 msgid "skipped"
 msgstr "overgeslagen"
 
-#: core/models.py:2338
+#: core/models.py:2341
 msgid "versions that could not be read"
 msgstr "versies die niet konden worden gelezen"
 
-#: core/models.py:2342
+#: core/models.py:2345
 msgid "dropped"
 msgstr "laten vallen"
 
-#: core/models.py:2343
+#: core/models.py:2346
 msgid "versions older than the ones the server replays"
 msgstr "versies ouder dan degene die de server opnieuw afspeelt"
 
-#: core/models.py:2345
+#: core/models.py:2348
 msgid "duration"
 msgstr "duur"
 
-#: core/models.py:2346
+#: core/models.py:2349
 msgid "error"
 msgstr "fout"
 
-#: core/models.py:2351
+#: core/models.py:2354
 msgid "Document migration"
 msgstr "Document migratie"
 
-#: core/models.py:2352
+#: core/models.py:2355
 msgid "Document migrations"
 msgstr "Document migraties"
 
@@ -641,7 +645,7 @@ msgstr " Docs, jouw nieuwe essentiële tool voor het organiseren, delen en colla
 msgid " Brought to you by %(brandname)s "
 msgstr " Geleverd door %(brandname)s "
 
-#: impress/settings.py:997
+#: impress/settings.py:1002
 msgid "Docs AI"
 msgstr "Docs AI"
 
