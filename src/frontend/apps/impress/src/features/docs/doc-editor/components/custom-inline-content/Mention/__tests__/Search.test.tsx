@@ -109,6 +109,11 @@ const renderSearch = async ({
   const contentRef = vi.fn();
   const insertInlineContent = vi.fn();
   const focus = vi.fn();
+  const setNodeMarkup = vi.fn();
+  const block = {
+    type: { isInGroup: () => true },
+    attrs: { id: blockId },
+  };
 
   const editor = {
     isEditable,
@@ -121,12 +126,12 @@ const renderSearch = async ({
           nodeAt: () => null,
           resolve: () => ({
             depth: 0,
-            node: () => ({
-              type: { isInGroup: () => true },
-              attrs: { id: blockId },
-            }),
+            node: () => block,
           }),
+          descendants: (visit: (node: unknown, pos: number) => unknown) =>
+            visit(block, 1),
         },
+        setNodeMarkup,
       }),
   } as unknown as DocsBlockNoteEditor;
 
@@ -151,7 +156,13 @@ const renderSearch = async ({
   // Search focuses the input and opens the popover after a 100ms timeout.
   await waitFor(() => expect(screen.getByRole('combobox')).toHaveFocus());
 
-  return { updateInlineContent, contentRef, insertInlineContent, focus };
+  return {
+    updateInlineContent,
+    contentRef,
+    insertInlineContent,
+    focus,
+    setNodeMarkup,
+  };
 };
 
 describe('Search', () => {
@@ -504,6 +515,29 @@ describe('Search with the "@" trigger', () => {
         fetchMock.callHistory.lastCall(MENTION_URL)?.options.body as string,
       ),
     ).toEqual({ anchor_id: BLOCK_ID, mentioned_user_id: 'user-2' });
+  });
+
+  it('gives a uuid to the first block of a new doc to notify the user', async () => {
+    const { setNodeMarkup } = await renderSearch({
+      trigger: '@',
+      blockId: 'initialBlockId',
+    });
+
+    fireEvent.click(await screen.findByText('Mehdi Benali'));
+
+    await waitFor(() =>
+      expect(fetchMock.callHistory.calls(MENTION_URL)).toHaveLength(1),
+    );
+    const { anchor_id } = JSON.parse(
+      fetchMock.callHistory.lastCall(MENTION_URL)?.options.body as string,
+    );
+    expect(anchor_id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+    expect(setNodeMarkup).toHaveBeenCalledWith(1, undefined, {
+      id: anchor_id,
+    });
+    expect(mockToast).not.toHaveBeenCalled();
   });
 
   it('keeps the mention but warns it cannot notify when the block id is not a uuid', async () => {
