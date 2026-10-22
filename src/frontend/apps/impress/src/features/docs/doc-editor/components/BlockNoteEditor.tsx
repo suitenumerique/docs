@@ -42,6 +42,7 @@ import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   DocsCommentsStyle,
+  InlineNodeCommentsExtension,
   useCommentSidebarStore,
   useComments,
   useOpenCommentAnchor,
@@ -312,6 +313,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           resolveUsers,
           schema: commentEditorSchema,
         }),
+        InlineNodeCommentsExtension(),
         ...(aiExtension ? [aiExtension] : []),
       ],
       _tiptapOptions: {
@@ -444,6 +446,7 @@ export const BlockNoteReader = ({
             return Promise.resolve([]);
           },
         }),
+        InlineNodeCommentsExtension(),
       ],
     }),
     [initialContent, threadStore],

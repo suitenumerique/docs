@@ -5,6 +5,7 @@ import { TFunction } from 'i18next';
 import { useEffect } from 'react';
 import { validate as uuidValidate } from 'uuid';
 
+import { inlineNodeCommentsPropSchema } from '@/docs/doc-comments/extensions/InlineNodeCommentsExtension';
 import LinkPageIcon from '@/docs/doc-editor/assets/doc-link.svg';
 import AddPageIcon from '@/docs/doc-editor/assets/doc-plus.svg';
 import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
@@ -36,6 +37,9 @@ export type InterlinkingLinkInlineContentType = {
       default: '/';
       values: readonly ['/', '@'];
     };
+    commentMarks?: {
+      default: '';
+    };
   };
   content: 'none';
 };
@@ -61,6 +65,7 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
         default: '/',
         values: ['/', '@'],
       },
+      ...inlineNodeCommentsPropSchema,
     },
     content: 'none',
   },
