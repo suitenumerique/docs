@@ -111,6 +111,50 @@ describe('the history a user may read', () => {
   });
 });
 
+describe('named versions', () => {
+  it('allows the sidebar to include version metadata in activity reads', () => {
+    for (const who of [reader, editor]) {
+      expect(
+        grants(who, { history: { from: ACCESS_SINCE, version: '-r--' } }),
+      ).toBe(true);
+      expect(grants(who, { endpoint: { version: '-r--' } })).toBe(true);
+    }
+  });
+
+  it('lets only editors create, rename or remove version metadata', () => {
+    for (const version of ['c---', '--u-', '---d'] as const) {
+      expect(
+        grants(editor, { history: { from: ACCESS_SINCE, version } }),
+      ).toBe(true);
+      expect(grants(editor, { endpoint: { version } })).toBe(true);
+      expect(
+        grants(reader, { history: { from: ACCESS_SINCE, version } }),
+      ).toBe(false);
+      expect(grants(reader, { endpoint: { version } })).toBe(false);
+    }
+  });
+
+  it('never widens history access or allows publishing', () => {
+    for (const who of [reader, editor]) {
+      expect(
+        grants(who, { history: { from: ACCESS_SINCE - 1, version: '-r--' } }),
+      ).toBe(false);
+      expect(
+        grants(who, { history: { from: ACCESS_SINCE, publish: true } }),
+      ).toBe(false);
+    }
+    expect(
+      grants(editor, { history: { from: ACCESS_SINCE - 1, version: 'crud' } }),
+    ).toBe(false);
+    for (const who of [linkReader, linkEditor]) {
+      expect(
+        grants(who, { history: { from: ACCESS_SINCE, version: '-r--' } }),
+      ).toBe(false);
+      expect(grants(who, { endpoint: { version: 'crud' } })).toBe(false);
+    }
+  });
+});
+
 describe('rollback', () => {
   it('lets an editor undo a window inside its own ray', () => {
     expect(
@@ -173,9 +217,7 @@ describe('everything the browser must not reach', () => {
     'reset-connections',
     'restore-ydoc',
     'reset-ydoc',
-    // the built-ins yhub 0.9.1 and 0.10.1 added: named versions, and the
-    // listing of the documents an org changed
-    'version',
+    // The organization-wide listing added in yhub 0.10.1 stays private.
     'updated',
     'some-endpoint-added-later',
   ])('refuses %s to an editor — there is no "*" fallback', (name) => {
@@ -183,30 +225,21 @@ describe('everything the browser must not reach', () => {
     expect(grants(editor, { endpoint: { [name]: 'c---' } })).toBe(false);
   });
 
-  // yhub 0.9.1 added `version` (crud over named versions) and `publish` to the
-  // history facet. Docs builds its version panel from the activity alone, so
-  // neither is granted: a named version would outlive the access that wrote it.
-  it('grants no named versions to anyone, an editor included', () => {
+  it('grants no publishing rights, an editor included', () => {
     for (const who of [reader, editor]) {
-      expect(
-        grants(who, { history: { from: ACCESS_SINCE, version: '-r--' } }),
-      ).toBe(false);
-      expect(
-        grants(who, { history: { from: ACCESS_SINCE, version: 'c---' } }),
-      ).toBe(false);
       expect(
         grants(who, { history: { from: ACCESS_SINCE, publish: true } }),
       ).toBe(false);
     }
   });
 
-  it('normalizes the two new history keys to nothing granted', () => {
+  it('grants bounded named versions but neither pruning nor publishing', () => {
     // what yhub hands a handler as `req.permissions.history` since 0.9.1
     expect(editor.history).toEqual({
       from: ACCESS_SINCE,
       rollback: true,
       prune: false,
-      version: '----',
+      version: 'crud',
       publish: false,
     });
   });

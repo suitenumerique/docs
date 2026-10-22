@@ -5,14 +5,12 @@
 import { DOCXExporter } from '@blocknote/xl-docx-exporter';
 import { ODTExporter } from '@blocknote/xl-odt-exporter';
 import { PDFExporter } from '@blocknote/xl-pdf-exporter';
-import { DocumentProps, pdf } from '@react-pdf/renderer';
-import jsonemoji from 'emoji-datasource-apple' with { type: 'json' };
 import i18next from 'i18next';
-import { cloneElement, isValidElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { Doc } from '@/docs/doc-management/types';
+import { fallbackLng } from '@/i18n/config';
 
 import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
 import { getDocxDocsSchemaMappings } from '../mappingDocx';
@@ -37,42 +35,17 @@ export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
         getPdfDocsSchemaMappings(interlinkTitles),
         {
           resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
-          emojiSource: {
-            format: 'png',
-            builder(code) {
-              const emojisFound = jsonemoji.filter(
-                (e) =>
-                  e.unified.split('-')[0].toLowerCase() ===
-                  code.split('-')[0].toLowerCase(),
-              );
-
-              const emoji = emojisFound.find((e) =>
-                e.unified.toLocaleLowerCase().includes(code.toLowerCase()),
-              );
-
-              if (emoji) {
-                return `/assets/fonts/emoji/${emoji.image}`;
-              }
-
-              return '/assets/fonts/emoji/fallback.png';
-            },
-          },
         },
       );
-      const rawPdfDocument = (await exporter.toReactPDFDocument(
-        exportDocument,
-      )) as React.ReactElement<DocumentProps>;
-
-      // Add language, title and outline properties to improve PDF accessibility and navigation
-      const pdfDocument = isValidElement(rawPdfDocument)
-        ? cloneElement(rawPdfDocument, {
-            language: i18next.language,
-            title: documentTitle,
-            pageMode: 'useOutlines',
-          })
-        : rawPdfDocument;
-
-      blobExport = await pdf(pdfDocument).toBlob();
+      const result = await exporter.toPDF(exportDocument, {
+        title: documentTitle,
+        lang: (i18next.language || fallbackLng).split(/[-_]/)[0],
+      });
+      if (result.error) {
+        console.error('PDF export failed', result.compileErrors);
+        return;
+      }
+      blobExport = result.blob;
     } else if (format === 'docx') {
       const exporter = new DOCXExporter(
         editor.schema,

@@ -24,6 +24,16 @@ export type DocsExporterPDF = Exporter<
   React.ReactElement<Text>
 >;
 
+export type DocsExporterTypst = Exporter<
+  NoInfer<DocsBlockSchema>,
+  NoInfer<DocsInlineContentSchema>,
+  NoInfer<DocsStyleSchema>,
+  string,
+  string,
+  (inner: string) => string,
+  string
+>;
+
 export type DocsExporterDocx = Exporter<
   DocsBlockSchema,
   DocsInlineContentSchema,

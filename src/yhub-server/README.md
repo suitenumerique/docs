@@ -95,8 +95,10 @@ It is not a fork of yhub — it is a thin wrapper, written in TypeScript under
 
 Public exposure: the browser needs the websocket `/collaboration/ws/`,
 `/collaboration/ydoc/` for the http fallback, `/collaboration/activity/` and
-`/collaboration/changeset/` for the editing history, `/collaboration/rollback/`
-for restoring a document to a point in it, plus `/collaboration/jwks/v1`, which
+`/collaboration/changeset/` for the editing history, `/collaboration/version/`
+for named-version metadata, `/collaboration/rollback/` for restoring the
+editor fragment with bounded rollback, plus
+`/collaboration/jwks/v1`, which
 carries public keys and nothing else. Every other route this server serves —
 `prune`, `reset-connections`, `migrate`, `create-ydoc`, `restore-ydoc`,
 `reset-ydoc` — is refused to a browser by the permission tables themselves (see
@@ -123,11 +125,13 @@ Masks are positional `crud` strings where `-` denies, so `'-r--'` is read-only.
 | `ydoc` | `-r--` | `-ru-` | as reader/editor | `cru-` |
 | `awareness` | `-r--` | `-ru-` | as reader/editor | `-ru-` |
 | `history` | `from: <access date>` | `from: <access date>`, `rollback` | — | `from: 0` |
+| `history.version` | `-r--` | `crud` | — | — |
 | `delete` | — | — | — | `['soft']` |
 | `endpoint.ws` | `-r--` | `-ru-` | as reader/editor | `crud` (`'*'`) |
 | `endpoint.ydoc` | `-r--` | `-ru-` | as reader/editor | `crud` (`'*'`) |
 | `endpoint.activity` | `-r--` | `-r--` | — | `crud` (`'*'`) |
 | `endpoint.changeset` | `-r--` | `-r--` | — | `crud` (`'*'`) |
+| `endpoint.version` | `-r--` | `crud` | — | `crud` (`'*'`) |
 | `endpoint.rollback` | — | `c---` | — | `crud` (`'*'`) |
 | every other endpoint | — | — | — | `crud` (`'*'`) |
 
@@ -137,7 +141,23 @@ All three browser columns are the same document permission,
 there is a history to read. `abilities.retrieve` decided whether there is any
 access at all before either.
 
-Six of those cells are decisions rather than transcriptions:
+The sidebar requests `GET /collaboration/changeset/v1/{org}/{docid}` with
+`from=<version timestamp + 1>&ydoc=true` and no finite `to`. The server clamps
+the history window to the user's access date and garbage-collects older deleted
+content. The browser receives current content and retained deleted content in
+that bounded window, then collects only `document-store` IDs, including deleted
+descendants. It sends these IDs and the same inclusive `from` to native
+`POST /collaboration/rollback/v1/{org}/{docid}` using lib0-any encoding.
+Other shared roots stay intact; `GET /ydoc?gc=false` remains forbidden to bounded
+browser users. The client pins the old head before restoring and refreshes the
+live document from current GC state afterwards.
+
+Restore is additive, not an atomic replacement or an editing lock. Remote edits
+can race with the changeset/rollback requests: IDs created after the bounded
+snapshot can survive, and later changes to already selected IDs may be undone.
+The local editor stays locked during restore, but collaborators are not locked.
+
+The following cells are decisions rather than transcriptions:
 
 - **`awareness: '-r--'` for a reader.** A reader receives presence and never
   publishes it — [suitenumerique/docs#2544](https://github.com/suitenumerique/docs/pull/2544),
@@ -191,6 +211,12 @@ Six of those cells are decisions rather than transcriptions:
   - Nothing is destroyed. A rollback appends an update that undoes another; what
     it undid stays in the history and can be restored again from the same panel.
   - `prune`, which does erase, stays withheld from everyone.
+- **`history.version` for named versions.** BlockNote includes native version
+  metadata when listing activity (`versions=true`), which requires this facet
+  even if no version has been named yet. Readers with history access may read
+  it; editors may create, rename and remove labels inside the same access-date
+  boundary. These operations change metadata, not document content. Publishing
+  stays withheld, as do all version operations for link-only visitors.
 - **`delete: ['soft']` and not `'hard'` for the admin.** yhub 0.8 made
   `DELETE /ydoc?hard=true` reachable over REST for the first time. Docs keeps
   irreversible erasure programmatic, behind `reset-ydoc` (see "Deletion").
@@ -271,6 +297,7 @@ were configurable:
 | Variable | Default | What it changes |
 | -------- | ------- | --------------- |
 | `YHUB_TASK_CONCURRENCY` | `5` | Tasks one worker process claims at once |
+| `YHUB_COMPUTE_POOL_SIZE` | CPU count minus one, minimum `1` | Maximum compute threads, created on demand |
 | `YHUB_TASK_DEBOUNCE_MS` | `10000` | How long an update waits on the stream before a worker persists it |
 | `YHUB_MIN_MESSAGE_LIFETIME_MS` | `60000` | How long persisted updates stay replayable from redis |
 | `YHUB_BACKEND_REQUEST_TIMEOUT_MS` | `5000` | How long a call to the Docs backend may take before it is given up on |
@@ -344,6 +371,12 @@ redis hands each task to exactly one of them: the two are interchangeable up to
 the point where a pod runs out of memory, each task holding the document it
 merges.
 
+For a small temporary development instance, set `YHUB_TASK_CONCURRENCY=1`
+and `YHUB_COMPUTE_POOL_SIZE=1`. This caps both concurrent compactions and the
+compute threads used for merges and history queries; excess work queues
+instead of spawning more threads. It trades throughput for lower peak CPU
+and memory use without disabling persistence.
+
 **The debounce** is the delay between an edit and its row in postgres, and the
 window over which the edits of a busy document are merged into a single task.
 Lowering it persists sooner and compacts more often; raising it does the
@@ -366,7 +399,7 @@ connection fails while the backend is merely slow, far above it a hanging
 backend holds the websocket upgrades open again. An upgrade chains up to three
 of these calls, so it may take three times this value before it fails.
 
-All four are refused at startup, like an unknown role, when they are not whole
+All five are refused at startup, like an unknown role, when they are not whole
 numbers in range (`YHUB_TASK_CONCURRENCY must be an integer >= 1 (got "abc")`):
 `Number()` would otherwise read a typo as `NaN` and hand it to yhub, which
 takes it — a worker that claims nothing, or a stream that is never trimmed,

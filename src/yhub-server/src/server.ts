@@ -25,6 +25,7 @@ import {
   API_PREFIX,
   AUTH_TIMEOUT_MS,
   BACKEND_REQUEST_TIMEOUT_MS,
+  COMPUTE_POOL_SIZE,
   MIN_MESSAGE_LIFETIME_MS,
   ORG,
   PORT,
@@ -449,6 +450,7 @@ const yhub: YHub = (await createYHub({
     minMessageLifetime: MIN_MESSAGE_LIFETIME_MS,
   },
   postgres: POSTGRES as string,
+  computePoolSize: COMPUTE_POOL_SIZE,
   // where the blobs live: nothing here keeps them in yhub's postgres
   persistence: persistencePlugins(),
   // Both halves are declared, and YHUB_ROLE decides which are built: a null
@@ -494,6 +496,7 @@ logger.info(
     server: RUNS_SERVER,
     worker: RUNS_WORKER,
     taskConcurrency: RUNS_WORKER ? TASK_CONCURRENCY : null,
+    computePoolSize: COMPUTE_POOL_SIZE,
     // the bucket the plugin is attached to, null when there is no plugin at
     // all, and whether the compaction blobs are written to it or to yhub's own
     // postgres — a bucket with `s3Writes` false is one that is only read

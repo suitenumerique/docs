@@ -1,7 +1,7 @@
 import { Loader } from '@gouvfr-lasuite/ui-components';
+import * as Y from '@y/y';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import * as Y from 'yjs';
 
 import { Box, Text, TextErrors } from '@/components';
 import { BlockNoteReader } from '@/docs/doc-editor/components/BlockNoteEditor';
@@ -33,7 +33,7 @@ export const DocVersionEditor = ({
   });
 
   const { replace } = useRouter();
-  const [initialContent, setInitialContent] = useState<Y.XmlFragment>();
+  const [initialContent, setInitialContent] = useState<Y.Node>();
 
   // Reset initialContent when versionId changes to avoid conflicts between versions
   useEffect(() => {

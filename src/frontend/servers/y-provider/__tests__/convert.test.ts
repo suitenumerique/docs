@@ -2,8 +2,10 @@ import {
   CommentsExtension,
   DefaultThreadStoreAuth,
 } from '@blocknote/core/comments';
+import { blocksToYDoc } from '@blocknote/core/y';
 import { YjsThreadStore } from '@blocknote/core/yjs';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
+import * as YCurrent from '@y/y';
 import { Fragment, Node as PMNode } from 'prosemirror-model';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -325,6 +327,36 @@ describe('Conversion Testing', () => {
     expect(response.text).toBe(expectedHTML);
   });
 
+  test.each(['text/html', 'text/markdown', 'application/json'])(
+    'POST /api/convert current Yjs document to %s',
+    async (accept) => {
+      const app = initApp();
+      const editor = ServerBlockNoteEditor.create();
+      const blocks = await editor.tryParseMarkdownToBlocks(expectedMarkdown);
+      const ydoc = blocksToYDoc(editor.editor, blocks, 'document-store');
+      try {
+        const response = await request(app)
+          .post('/api/convert')
+          .set('origin', origin)
+          .set('authorization', `Bearer ${apiKey}`)
+          .set('content-type', 'application/vnd.yjs.doc')
+          .set('accept', accept)
+          .send(Buffer.from(YCurrent.encodeStateAsUpdate(ydoc)));
+
+        expect(response.status).toBe(200);
+        if (accept === 'application/json') {
+          expect(response.body).toStrictEqual(expectedBlocks);
+        } else {
+          expect(response.text.trim()).toBe(
+            accept === 'text/html' ? expectedHTML : expectedMarkdown,
+          );
+        }
+      } finally {
+        ydoc.destroy();
+      }
+    },
+  );
+
   test('POST /api/convert Yjs to Markdown', async () => {
     const app = initApp();
     const editor = ServerBlockNoteEditor.create();
@@ -348,7 +380,7 @@ describe('Conversion Testing', () => {
   });
 
   test('POST /api/convert Yjs to JSON', async () => {
-    const destroySpy = vi.spyOn(Y.Doc.prototype, 'destroy');
+    const destroySpy = vi.spyOn(YCurrent.Doc.prototype, 'destroy');
     const app = initApp();
     const editor = ServerBlockNoteEditor.create();
     const blocks = await editor.tryParseMarkdownToBlocks(expectedMarkdown);
@@ -704,7 +736,7 @@ describe('Conversion Testing', () => {
   });
 
   test('POST /api/convert with invalid Yjs content returns 400', async () => {
-    const destroySpy = vi.spyOn(Y.Doc.prototype, 'destroy');
+    const destroySpy = vi.spyOn(YCurrent.Doc.prototype, 'destroy');
     const app = initApp();
     const response = await request(app)
       .post('/api/convert')

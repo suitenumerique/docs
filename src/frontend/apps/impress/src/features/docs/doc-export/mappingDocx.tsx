@@ -32,28 +32,41 @@ export const getDocxDocsSchemaMappings = (
     quote: blockMappingQuoteDocx,
     image: blockMappingImageDocx,
     uploadLoader: blockMappingUploadLoaderDocx,
-    table: (block, exporter, nestedLevel, numberedListIndex, children) => {
-      /**
-       * Nan values are not supported, so we need to replace them with undefined
-       * to avoid issues during the export.
-       */
-      const { columnWidths } = block.content;
-      const hasNaN = columnWidths.some(
-        (width) => typeof width === 'number' && Number.isNaN(width),
-      );
-      if (hasNaN) {
-        block.content.columnWidths = columnWidths.map((width) =>
-          typeof width === 'number' && Number.isNaN(width) ? undefined : width,
-        );
-      }
-
-      return docxDefaultSchemaMappings.blockMapping.table(
+    table: {
+      withChildren: (
         block,
         exporter,
         nestedLevel,
         numberedListIndex,
         children,
-      );
+      ) => {
+        /**
+         * Nan values are not supported, so we need to replace them with undefined
+         * to avoid issues during the export.
+         */
+        const { columnWidths } = block.content;
+        const hasNaN = columnWidths.some(
+          (width) => typeof width === 'number' && Number.isNaN(width),
+        );
+        if (hasNaN) {
+          block.content.columnWidths = columnWidths.map((width) =>
+            typeof width === 'number' && Number.isNaN(width)
+              ? undefined
+              : width,
+          );
+        }
+
+        const mapping = docxDefaultSchemaMappings.blockMapping.table;
+        return typeof mapping === 'function'
+          ? mapping(block, exporter, nestedLevel, numberedListIndex)
+          : mapping.withChildren(
+              block,
+              exporter,
+              nestedLevel,
+              numberedListIndex,
+              children,
+            );
+      },
     },
   },
   inlineContentMapping: {

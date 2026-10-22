@@ -1,28 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { tokens } from '@/cunningham';
+import { userColorForeground, userColorsForId } from '../userColors';
 
 import { AvatarSvg } from './AvatarSvg';
-
-const colors = tokens.themes.default.globals.colors;
-
-const avatarsColors = [
-  colors['blue-1-500'],
-  colors['brown-500'],
-  colors['green-500'],
-  colors['orange-500'],
-  colors['pink-500'],
-  colors['purple-500'],
-  colors['yellow-500'],
-];
-
-const getColorFromName = (name: string) => {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return avatarsColors[Math.abs(hash) % avatarsColors.length];
-};
 
 const getInitialFromName = (name: string) => {
   const splitName = name?.split(' ');
@@ -30,18 +10,25 @@ const getInitialFromName = (name: string) => {
 };
 
 type UserAvatarProps = {
+  userId?: string;
   fullName?: string;
   background?: string;
 };
 
-export const UserAvatar = ({ fullName, background }: UserAvatarProps) => {
+export const UserAvatar = ({
+  userId,
+  fullName,
+  background,
+}: UserAvatarProps) => {
   const name = fullName?.trim() || '?';
+  const color = background || userColorsForId(userId ?? name).color;
 
   return (
     <AvatarSvg
       className="--docs--user-avatar"
       initials={getInitialFromName(name).toUpperCase()}
-      background={background || getColorFromName(name)}
+      background={color}
+      foreground={userColorForeground(color)}
     />
   );
 };
@@ -49,16 +36,18 @@ export const UserAvatar = ({ fullName, background }: UserAvatarProps) => {
 export const avatarUrlFromName = (
   fullName?: string,
   fontFamily?: string,
+  userId?: string,
 ): string => {
   const name = fullName?.trim() || '?';
   const initials = getInitialFromName(name).toUpperCase();
-  const background = getColorFromName(name);
+  const background = userColorsForId(userId ?? name).color;
 
   const svgMarkup = renderToStaticMarkup(
     <AvatarSvg
       className="--docs--user-avatar"
       initials={initials}
       background={background}
+      foreground={userColorForeground(background)}
       fontFamily={fontFamily}
     />,
   );

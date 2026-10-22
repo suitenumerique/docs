@@ -5,12 +5,23 @@ import { createGlobalStyle } from 'styled-components';
 import { Box } from '@/components';
 import { Waffle } from '@/components/Waffle';
 import { ButtonLogin, gotoLogout, useAuth } from '@/features/auth';
+import {
+  userColorForeground,
+  userColorsForId,
+} from '@/features/auth/userColors';
 import { HelpMenu } from '@/features/help';
 import { LanguagePicker } from '@/features/language/components/LanguagePicker';
 
-const FooterActionsGlobalStyle = createGlobalStyle`
+const FooterActionsGlobalStyle = createGlobalStyle<{ $userColor: string }>`
   .user-menu__actions .c__language-picker{
     width: auto;
+  }
+
+  /* UserMenu does not expose avatar props. Include its portalled account menu. */
+  .--docs--footer-actions .c__avatar,
+  .user-menu__popover .user-menu__content__body__user-info > .c__avatar {
+    background: ${({ $userColor }) => $userColor};
+    color: ${({ $userColor }) => userColorForeground($userColor)};
   }
 `;
 
@@ -31,7 +42,9 @@ export const FooterActions = ({ withLogin }: FooterActionsProps) => {
 
   return (
     <>
-      <FooterActionsGlobalStyle />
+      <FooterActionsGlobalStyle
+        $userColor={userColorsForId(user?.id ?? 'anonymous').color}
+      />
       <Box
         $padding={{ horizontal: 'sm' }}
         $direction="row"

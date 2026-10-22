@@ -158,7 +158,7 @@ export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
   if (readOnly) {
     return (
       <BlockNoteReader
-        initialContent={provider.doc.getXmlFragment('document-store')}
+        initialContent={provider.doc.get('document-store')}
         docId={doc.id}
       />
     );

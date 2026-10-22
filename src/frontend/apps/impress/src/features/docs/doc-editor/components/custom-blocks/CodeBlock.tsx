@@ -52,7 +52,11 @@ export const createSafeCodeBlockSpec = (): ReturnType<
   typeof createCodeBlockSpec
 > => {
   const spec = createCodeBlockSpec(codeBlockOptions);
-  const baseRender = spec.implementation.render;
+  const render = spec.implementation.render;
+  if (!render) {
+    return spec;
+  }
+  const baseRender = render;
 
   return {
     ...spec,
