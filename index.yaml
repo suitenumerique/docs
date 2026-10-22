@@ -3,6 +3,15 @@ entries:
   docs:
   - apiVersion: v2
     appVersion: latest
+    created: "2026-10-22T19:03:54.050769545Z"
+    digest: 0d76c93768471c795dd8a83fa33ca973e2947c1f36cc21ab692598113160945c
+    name: docs
+    type: application
+    urls:
+    - https://suitenumerique.github.io/docs/docs-6.0.3.tgz
+    version: 6.0.3
+  - apiVersion: v2
+    appVersion: latest
     created: "2026-10-21T13:23:51.240894657Z"
     digest: 6dbaad8b42ec4218e0df9200ba777ee9dcc3e22c5b7ab0b2deb8801c50e40a76
     name: docs
@@ -703,4 +712,4 @@ entries:
     urls:
     - https://suitenumerique.github.io/docs/docs-0.0.1.tgz
     version: 0.0.1
-generated: "2026-10-21T13:23:51.236668787Z"
+generated: "2026-10-22T19:03:54.04728054Z"
