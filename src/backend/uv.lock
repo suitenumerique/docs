@@ -546,7 +546,7 @@ wheels = [
 
 [[package]]
 name = "django-lasuite"
-version = "0.0.31"
+version = "0.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
@@ -557,14 +557,15 @@ dependencies = [
     { name = "requests" },
     { name = "requests-toolbelt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5f/41/d681e3930dd690035f1531bb31a54d618d6ff331e59379dfc8c03d76a708/django_lasuite-0.0.31.tar.gz", hash = "sha256:7eb9b499f4d51fcf207019d11fef357a8a123fa8d25eeb0229c0cb7121cf2962", size = 38528, upload-time = "2026-10-16T10:07:55.311Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/ec/dd2d8a2d4f1c8f866f51877b2fff6edc5912930b4285086b3ffcbc0562a3/django_lasuite-0.1.0.tar.gz", hash = "sha256:057366ff1ff9536910b99219edd0de1e63e8a8a892f4af4bc5d816096747c03c", size = 44751, upload-time = "2026-10-21T16:48:24.748Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e4/da/19a24d4a3201a5cc025f5050c79fa36288569aaedccccfa21ddb9e4b6c42/django_lasuite-0.0.31-py3-none-any.whl", hash = "sha256:54f88bfda69fc4c72252c266954faf248bce7a6608dbe9f74f84904a76e28b01", size = 59747, upload-time = "2026-10-16T10:07:54.097Z" },
+    { url = "https://files.pythonhosted.org/packages/e8/99/7489298fd05f65fdea0b61ea40d2e800ce813a843ca2497413da4eb0e659/django_lasuite-0.1.0-py3-none-any.whl", hash = "sha256:1992156a2aff92853f3092940fb4ef9c4f41f572df471bfbea85985ee63fa0a9", size = 68130, upload-time = "2026-10-21T16:48:23.26Z" },
 ]
 
 [package.optional-dependencies]
 all = [
     { name = "celery" },
+    { name = "cryptography" },
     { name = "django-configurations" },
     { name = "python-icap" },
 ]
@@ -1054,7 +1055,7 @@ requires-dist = [
     { name = "django-csp", specifier = "==4.0" },
     { name = "django-extensions", marker = "extra == 'dev'", specifier = "==4.1" },
     { name = "django-filter", specifier = "==26.1" },
-    { name = "django-lasuite", extras = ["all"], specifier = "==0.0.31" },
+    { name = "django-lasuite", extras = ["all"], specifier = "==0.1.0" },
     { name = "django-parler", specifier = "==2.4" },
     { name = "django-prometheus", specifier = "==2.5.0" },
     { name = "django-redis", specifier = "==7.0.0" },
