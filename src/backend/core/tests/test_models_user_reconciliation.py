@@ -761,3 +761,41 @@ def test_process_reconciliation_refreshes_caches_and_index(
     )
 
 
+def test_process_reconciliation_updates_creators_and_issuers(
+    user_reconciliation_users_and_docs,
+):
+    """
+    The documents created and the invitations issued by the inactive user, soft
+    deleted documents included, should be transferred to the active user.
+    """
+    user_1, user_2, _userdocs_u1, _userdocs_u2 = user_reconciliation_users_and_docs
+    created = factories.DocumentFactory(creator=user_2)
+    deleted = factories.DocumentFactory(creator=user_2)
+    deleted.soft_delete()
+    other = factories.DocumentFactory()
+    issued = factories.InvitationFactory(issuer=user_2)
+    other_invitation = factories.InvitationFactory()
+
+    rec = models.UserReconciliation.objects.create(
+        active_email=user_1.email,
+        inactive_email=user_2.email,
+        active_user=user_1,
+        inactive_user=user_2,
+        active_email_checked=True,
+        inactive_email_checked=True,
+        status="ready",
+    )
+    process_reconciliation(
+        None, None, models.UserReconciliation.objects.filter(id=rec.id)
+    )
+
+    for obj in (created, deleted, other, issued, other_invitation):
+        obj.refresh_from_db()
+    assert created.creator == user_1
+    assert deleted.creator == user_1
+    assert other.creator not in (user_1, user_2)
+    assert issued.issuer == user_1
+    assert other_invitation.issuer not in (user_1, user_2)
+    rec.refresh_from_db()
+    assert "Transferred 2 created Document items" in rec.logs
+    assert "and 1 issued Invitation items" in rec.logs

@@ -12,6 +12,7 @@ and this project adheres to
 - ✨(backend) filter users sharing an email in the admin #2882
 - ✨(backend) show the release in the admin header #2882
 - ✨(backend) deactivate the least recently used duplicates in the admin #2882
+- ✨(backend) transfer created docs and invitations in reconciliations #2882
 
 ### Fixed
 

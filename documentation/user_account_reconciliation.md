@@ -20,6 +20,18 @@ Once the CSV file is processed, this will create entries in "Core" > "User recon
 
 In "Core" > "User reconciliations", an admin can then select all rows they wish to process and check the action "Process selected user reconciliations". Only rows that have the status `ready` and for which both emails have been validated will be processed.
 
+## What is transferred
+
+Processing a reconciliation moves to the active user:
+
+- the document accesses of the inactive user, keeping the highest role when both users had one on the same document,
+- the documents created by the inactive user, soft deleted ones included,
+- the invitations issued by the inactive user,
+- their favorites and link traces,
+- their threads, comments and reactions.
+
+The active user is then notified by email, and the inactive user is deactivated.
+
 ## Settings
 
 If there is a problem with the reconciliation attempt (e.g., one of the addresses given by the user does not match an existing account), the email signaling the error can give back the link to the reconciliation form. This is configured through the following environment variable:

@@ -562,6 +562,8 @@ class UserReconciliation(BaseModel):
         - Transfer link traces from inactive to active user.
         - Transfer comment-related content from inactive to active user
           (threads, comments and reactions)
+        - Transfer the documents created and the invitations issued by the inactive user
+          to the active user.
         - Activate the active user and deactivate the inactive user.
         - Update the reconciliation entry itself.
         """
@@ -638,11 +640,21 @@ class UserReconciliation(BaseModel):
                 reaction_id__in=ids_to_delete, user_id=self.inactive_user.pk
             ).delete()
 
+        # Soft deleted documents included, a restored document stays with the active user
+        updated_documents = Document.objects.filter(creator=self.inactive_user).update(
+            creator=self.active_user
+        )
+        updated_invitations = Invitation.objects.filter(
+            issuer=self.inactive_user
+        ).update(issuer=self.active_user)
+
         User.objects.bulk_update([self.active_user, self.inactive_user], ["is_active"])
 
         # Wrap up the reconciliation entry
         self.logs += f"""Requested update for {len(updated_accesses)} DocumentAccess items
             and deletion for {len(removed_accesses)} DocumentAccess items.\n"""
+        self.logs += f"""Transferred {updated_documents} created Document items
+            and {updated_invitations} issued Invitation items.\n"""
         self.status = "done"
         self.save()
 
