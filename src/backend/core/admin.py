@@ -2,18 +2,22 @@
 
 from functools import partial
 
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth import admin as auth_admin
 from django.db import transaction
 from django.db.models import Exists, OuterRef
 from django.db.models.functions import Lower
 from django.shortcuts import redirect
+from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 
 from treebeard.admin import TreeAdmin
 
 from core import models
 from core.tasks.user_reconciliation import user_reconciliation_csv_import_job
+
+admin.site.site_header = format_lazy("{} {}", admin.site.site_header, settings.RELEASE)
 
 
 class DuplicateEmailFilter(admin.SimpleListFilter):
