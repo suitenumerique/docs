@@ -50,7 +50,7 @@
     "@react-aria/live-announcer": "3.5.1",
     "@react-pdf/math": "2.0.1",
     "@react-pdf/renderer": "4.9.0",
-    "@sentry/nextjs": "10.75.0",
+    "@sentry/nextjs": "10.75.2",
     "@tanstack/react-query": "5.104.1",
     "@tiptap/extension-find-and-replace": "3.31.4",
     "@tiptap/extensions": "*",
