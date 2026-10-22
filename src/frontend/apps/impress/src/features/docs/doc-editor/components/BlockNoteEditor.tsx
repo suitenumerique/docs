@@ -42,6 +42,7 @@ import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   DocsCommentsStyle,
+  InlineNodeCommentsExtension,
   useCommentSidebarStore,
   useComments,
 } from '@/docs/doc-comments';
@@ -296,6 +297,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         // blocks' editable LaTeX / Mermaid popups.
         syntaxHighlighter,
         CommentsExtension({ threadStore, resolveUsers }),
+        InlineNodeCommentsExtension(),
         ...(aiExtension ? [aiExtension] : []),
       ],
       _tiptapOptions: {
@@ -426,6 +428,7 @@ export const BlockNoteReader = ({
             return Promise.resolve([]);
           },
         }),
+        InlineNodeCommentsExtension(),
       ],
     }),
     [initialContent, threadStore],
