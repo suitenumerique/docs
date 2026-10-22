@@ -6,6 +6,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { useMentionNotifyError } from '@/docs/doc-editor/components/custom-inline-content/Mention/UserMention/useMentionNotifyError';
 import { User, avatarUrlFromName } from '@/features/auth';
 import { Doc, useProviderStore } from '@/features/docs/doc-management';
+import { useDocAccesses } from '@/features/docs/doc-share/api/useDocAccesses';
 
 import { DocsThreadStore } from '../api/DocsThreadStore';
 import { DocsThreadStoreAuth } from '../api/DocsThreadStoreAuth';
@@ -22,6 +23,7 @@ export function useComments(
   const { setThreadStore } = useThreadStore();
   const { data: config } = useConfig();
   const notifyMentionError = useMentionNotifyError();
+  const { data: accesses } = useDocAccesses({ docId });
 
   const threadStore = useMemo(() => {
     return new DocsThreadStore(
@@ -67,9 +69,24 @@ export function useComments(
 
   const resolveUsers = useCallback(
     async (userIds: string[]) => {
+      // Legacy comments identify authors by name, not by user id. Only
+      // resolve an unambiguous name; unknown authors keep a stable fallback.
+      const knownUsers = new Map<string, User>();
+      if (user) {
+        knownUsers.set(user.id, user);
+      }
+      accesses?.forEach(({ user: author }) => {
+        if (author) {
+          knownUsers.set(author.id, author);
+        }
+      });
       return Promise.resolve(
         userIds.map((encodedURIUserId) => {
           const fullName = decodeURIComponent(encodedURIUserId);
+          const matches = Array.from(knownUsers.values()).filter(
+            (author) => author.full_name === fullName,
+          );
+          const authorId = matches.length === 1 ? matches[0].id : undefined;
 
           return {
             id: encodedURIUserId,
@@ -81,12 +98,13 @@ export function useComments(
             avatarUrl: avatarUrlFromName(
               fullName,
               themeTokens?.font?.families?.base,
+              authorId,
             ),
           };
         }),
       );
     },
-    [t, themeTokens?.font?.families?.base],
+    [t, themeTokens?.font?.families?.base, user, accesses],
   );
 
   return { threadStore, resolveUsers };

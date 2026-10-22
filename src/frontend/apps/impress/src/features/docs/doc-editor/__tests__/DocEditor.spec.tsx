@@ -29,7 +29,7 @@ vi.mock('../../doc-management', async () => {
       provider: {
         roomname: 'test-doc-id',
         doc: {
-          getXmlFragment: () => null,
+          get: () => null,
         },
       },
       isReady: true,

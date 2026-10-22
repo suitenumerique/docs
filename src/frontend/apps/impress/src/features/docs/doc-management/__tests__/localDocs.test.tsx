@@ -12,8 +12,10 @@ const sweep = (days: number = RETENTION_DAYS) => sweepLocalDocs(days);
  * one store.
  */
 const store = new Map<string, unknown>();
+const mockedClearDocument = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('idb', () => ({
+  deleteDB: (name: string) => mockedClearDocument(name),
   openDB: vi.fn(() =>
     Promise.resolve({
       get: (_s: string, key: string) => Promise.resolve(store.get(key)),
@@ -30,12 +32,6 @@ vi.mock('idb', () => ({
       close: () => undefined,
     }),
   ),
-}));
-
-const mockedClearDocument = vi.fn().mockResolvedValue(undefined);
-
-vi.mock('y-indexeddb', () => ({
-  clearDocument: (name: string) => mockedClearDocument(name),
 }));
 
 const uuid = (n: number) =>
