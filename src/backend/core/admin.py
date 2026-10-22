@@ -7,7 +7,7 @@ from django.contrib import admin, messages
 from django.contrib.auth import admin as auth_admin
 from django.db import transaction
 from django.db.models import Exists, OuterRef
-from django.db.models.functions import Lower
+from django.db.models.functions import Coalesce, Lower
 from django.shortcuts import redirect
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
@@ -135,7 +135,7 @@ class UserAdmin(auth_admin.UserAdmin):
         "last_login",
     )
     search_fields = ("id", "sub", "admin_email", "email", "full_name")
-    actions = ["permanently_delete_users"]
+    actions = ["permanently_delete_users", "deactivate_duplicates"]
 
     def __init__(self, model, admin_site):
         """
@@ -165,6 +165,22 @@ class UserAdmin(auth_admin.UserAdmin):
         self.log_deletions(request, queryset)
         for user in queryset:
             user.delete()
+
+    @admin.action(description=_("Deactivate the least recently used duplicates"))
+    def deactivate_duplicates(self, request, queryset):
+        """Keep the most recently used user of each shared email, deactivate the others."""
+        kept = {}
+        deactivated = []
+        # An active user first: keeping an inactive one would leave nobody to log in
+        for user in queryset.order_by(
+            "-is_active", Coalesce("last_login", "created_at").desc()
+        ):
+            if not user.email:
+                continue
+            if kept.setdefault(user.email.lower(), user) is not user:
+                deactivated.append(user.pk)
+        models.User.objects.filter(pk__in=deactivated).update(is_active=False)
+        self.message_user(request, f"{len(deactivated)} users deactivated.")
 
 
 @admin.register(models.UserReconciliationCsvImport)
