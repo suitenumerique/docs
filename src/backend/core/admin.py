@@ -1,6 +1,7 @@
 """Admin classes and registrations for core app."""
 
-from functools import partial
+import operator
+from functools import partial, reduce
 
 from django import forms
 from django.conf import settings
@@ -8,8 +9,9 @@ from django.contrib import admin, messages
 from django.contrib.admin import helpers
 from django.contrib.admin.widgets import AutocompleteSelect
 from django.contrib.auth import admin as auth_admin
+from django.core.cache import cache
 from django.db import transaction
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Q
 from django.db.models.functions import Coalesce, Lower
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
@@ -19,7 +21,10 @@ from django.utils.translation import gettext_lazy as _
 from treebeard.admin import TreeAdmin
 
 from core import models
+from core.tasks.access import reset_service_connections_on_commit
+from core.tasks.search import trigger_subtree_document_indexer
 from core.tasks.user_reconciliation import user_reconciliation_csv_import_job
+from core.utils.users import get_users_sharing_documents_with_cache_key
 
 admin.site.site_header = format_lazy("{} {}", admin.site.site_header, settings.RELEASE)
 
@@ -288,6 +293,39 @@ class DocumentAccessInline(admin.TabularInline):
     extra = 0
 
 
+class TransferDocumentsForm(forms.Form):
+    """Form choosing the users the selected documents are transferred between."""
+
+    source = forms.ModelChoiceField(
+        label=_("from"),
+        queryset=models.User.objects.all(),
+        widget=AutocompleteSelect(
+            models.Document._meta.get_field("creator"),  # noqa: SLF001
+            admin.site,
+        ),
+    )
+    target = forms.ModelChoiceField(
+        label=_("to"),
+        queryset=models.User.objects.all(),
+        widget=AutocompleteSelect(
+            models.Document._meta.get_field("creator"),  # noqa: SLF001
+            admin.site,
+        ),
+    )
+    keep_source_accesses = forms.BooleanField(
+        label=_("keep the accesses of the source user"), required=False
+    )
+
+    def clean(self):
+        """Refuse a transfer from a user to the same user."""
+        cleaned_data = super().clean()
+        if cleaned_data.get("source") and cleaned_data.get(
+            "source"
+        ) == cleaned_data.get("target"):
+            raise forms.ValidationError(_("The source and target users must differ."))
+        return cleaned_data
+
+
 @admin.register(models.Document)
 class DocumentAdmin(TreeAdmin):
     """Document admin interface declaration."""
@@ -344,6 +382,121 @@ class DocumentAdmin(TreeAdmin):
         "path",
     )
     search_fields = ("id", "title")
+    actions = ["transfer_documents"]
+
+    @staticmethod
+    def _transfer_access(access, target, target_access, keep_source_access):
+        """Give the role of a source access to the target, moving or copying it."""
+        if target_access:
+            role = models.RoleChoices.max(access.role, target_access.role)
+            if role != target_access.role:
+                target_access.role = role
+                target_access.save()
+            if not keep_source_access:
+                access.delete()
+        elif keep_source_access:
+            models.DocumentAccess.objects.create(
+                document=access.document, user=target, role=access.role
+            )
+        else:
+            source = access.user_id
+            access.user = target
+            access.save()
+            # The signal only sees the target, the source lost this access too
+            reset_service_connections_on_commit(access.document_id, source)
+
+    @admin.action(description=_("Transfer to another user"))
+    def transfer_documents(self, request, queryset):
+        """Transfer the selected documents and their descendants from a user to another."""
+        form = TransferDocumentsForm(request.POST if "apply" in request.POST else None)
+        if not form.is_valid():
+            return TemplateResponse(
+                request,
+                "core/admin/transfer_documents.html",
+                {
+                    **self.admin_site.each_context(request),
+                    "title": _("Transfer documents"),
+                    "form": form,
+                    "documents": queryset,
+                    "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
+                },
+            )
+
+        # The selected documents may have been deleted since the form was shown
+        if not queryset.exists():
+            self.message_user(
+                request, _("No document left to transfer."), messages.WARNING
+            )
+            return None
+
+        source = form.cleaned_data["source"]
+        target = form.cleaned_data["target"]
+        # Soft deleted documents included, a restored document stays with the target
+        subtree = models.Document.objects.filter(
+            reduce(
+                operator.or_,
+                (Q(path__startswith=document.path) for document in queryset),
+            )
+        )
+        # Only the accesses of the user, the accesses of their teams stay as they are
+        accesses = list(
+            models.DocumentAccess.objects.filter(
+                user=source, document__in=subtree
+            ).select_related("document")
+        )
+        target_accesses = {
+            access.document_id: access
+            for access in models.DocumentAccess.objects.filter(
+                user=target, document__in=subtree
+            )
+        }
+        # The source reaches the selected documents it has no direct access to
+        # through their ancestors, which it keeps: the target gets the same role
+        # on them.
+        direct = {access.document_id for access in accesses}
+        inherited = [
+            models.DocumentAccess(document=document, user=source, role=role)
+            for document in queryset
+            if document.pk not in direct and (role := document.get_role(source))
+        ]
+        with transaction.atomic():
+            documents = subtree.filter(creator=source).update(creator=target)
+            for access in accesses:
+                self._transfer_access(
+                    access,
+                    target,
+                    target_accesses.get(access.document_id),
+                    form.cleaned_data["keep_source_accesses"],
+                )
+            for access in inherited:
+                self._transfer_access(
+                    access, target, target_accesses.get(access.document_id), True
+                )
+            # The signals of the accesses clear the sharing cache of their own user
+            # only, and before the commit: both users are cleared once committed,
+            # not to be cached again meanwhile from the accesses still committed
+            if accesses or inherited:
+                transaction.on_commit(
+                    partial(
+                        cache.delete_many,
+                        [
+                            get_users_sharing_documents_with_cache_key(user.pk)
+                            for user in (source, target)
+                        ],
+                    )
+                )
+            # The users having access to a document are part of its search index
+            # and of the index of its descendants, which the signals of the
+            # accesses do not all update
+            trigger_subtree_document_indexer(
+                {access.document_id for access in accesses + inherited}
+            )
+        self.message_user(
+            request,
+            f"{documents} documents and {len(accesses) + len(inherited)} accesses "
+            f"transferred from {source} to {target}.",
+        )
+        return None
 
 
 @admin.register(models.Invitation)
