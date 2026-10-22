@@ -36,6 +36,7 @@ export const SearchUserRow = ({
           className="--docs--search-user-row"
         >
           <UserAvatar
+            userId={user.id}
             fullName={user.full_name || user.email}
             background={isInvitation ? colorsTokens['gray-400'] : undefined}
           />

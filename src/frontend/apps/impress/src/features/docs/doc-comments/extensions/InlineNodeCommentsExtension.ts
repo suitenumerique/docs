@@ -2,7 +2,6 @@ import { createExtension } from '@blocknote/core';
 import { Extension } from '@tiptap/core';
 import { Mark, MarkType, Node } from '@tiptap/pm/model';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
-import { ySyncPluginKey } from 'y-prosemirror';
 
 /**
  * A comment on an inline node without content (doc link, user mention) is a
@@ -12,7 +11,8 @@ import { ySyncPluginKey } from 'y-prosemirror';
  * reload and never reached the collaborators.
  *
  * These nodes get a hidden attribute holding a copy of their comment marks,
- * which Yjs does store.
+ * which Yjs does store. @y/prosemirror stores the marks of these nodes too,
+ * the attribute still restores the comments of the documents written before.
  *
  * TODO: drop this extension once BlockNote keeps the comments of inline
  * nodes itself (https://github.com/TypeCellOS/BlockNote/issues/3358, see
@@ -40,8 +40,6 @@ const InlineNodeCommentsAttribute = Extension.create({
       {
         types: COMMENTABLE_INLINE_NODES,
         attributes: {
-          // `null` is never written to Yjs, so the nodes without comment cost
-          // nothing.
           [COMMENT_MARKS_PROP]: {
             default: null,
             rendered: false,
@@ -56,6 +54,11 @@ const InlineNodeCommentsAttribute = Extension.create({
 const COMMENT_MARK = 'comment';
 
 const PLUGIN_KEY = new PluginKey('docs-inline-node-comments');
+
+// Meta that @y/prosemirror sets on the transactions it applies from Yjs.
+const Y_SYNC_TRANSACTION_META = 'y-sync-transaction';
+// Meta that @y/prosemirror's undo plugin takes as a change from Yjs.
+const Y_SYNC_APPEND_META = 'y-sync-append';
 
 const hasCommentMarksProp = (node: Node) =>
   !!node.type.spec.attrs && COMMENT_MARKS_PROP in node.type.spec.attrs;
@@ -127,10 +130,11 @@ export const parseCommentMarks = (
 /**
  * Keeps the comment marks of the inline nodes and their `commentMarks` prop
  * in sync:
- * - a local change writes the marks into the prop, which y-prosemirror sends
- *   to Yjs;
- * - a change coming from Yjs (load, collaborator, undo) rebuilds the nodes
- *   without marks, so the marks are restored from the prop.
+ * - a local change writes the marks into the prop, which @y/prosemirror
+ *   sends to Yjs;
+ * - a change coming from Yjs (load, collaborator, undo) can bring a node
+ *   without its marks (documents written before), so the marks are restored
+ *   from the prop.
  */
 export const InlineNodeCommentsExtension = createExtension(() => ({
   key: 'inlineNodeComments',
@@ -157,11 +161,7 @@ export const InlineNodeCommentsExtension = createExtension(() => ({
         );
 
         const isFromYjs = transactions.some(
-          (tr) =>
-            (
-              tr.getMeta(ySyncPluginKey) as
-                { isChangeOrigin?: boolean } | undefined
-            )?.isChangeOrigin,
+          (tr) => tr.getMeta(Y_SYNC_TRANSACTION_META) != null,
         );
 
         const tr = newState.tr;
@@ -199,15 +199,16 @@ export const InlineNodeCommentsExtension = createExtension(() => ({
         }
 
         if (isFromYjs) {
-          // The marks come from Yjs: y-prosemirror and the other plugins
-          // must not take them as a local change.
-          tr.setMeta(ySyncPluginKey, { isChangeOrigin: true });
+          // The marks come from Yjs: the undo history must not take them as a
+          // local change.
+          tr.setMeta(Y_SYNC_APPEND_META, true);
+          tr.setMeta('addToHistory', false);
         } else if (
           transactions[transactions.length - 1].getMeta('addToHistory') ===
           false
         ) {
-          // y-prosemirror reads `addToHistory` from the last transaction only,
-          // this one must not change what the user's change asked for.
+          // This transaction must not change what the user's change asked for
+          // the undo history.
           tr.setMeta('addToHistory', false);
         }
 
