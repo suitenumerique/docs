@@ -70,7 +70,7 @@
     "luxon": "3.7.2",
     "mathjax-full": "3.2.2",
     "mathml2omml": "0.5.0",
-    "next": "16.3.8",
+    "next": "16.4.1",
     "posthog-js": "1.436.1",
     "react": "*",
     "react-aria-components": "1.21.1",
