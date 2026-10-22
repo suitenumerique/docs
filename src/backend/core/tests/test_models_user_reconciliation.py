@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest import mock
 
 from django.core import mail
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 
 import pytest
@@ -14,6 +15,7 @@ import pytest
 from core import factories, models
 from core.admin import process_reconciliation
 from core.tasks.user_reconciliation import user_reconciliation_csv_import_job
+from core.utils.users import get_users_sharing_documents_with_cache_key
 
 pytestmark = pytest.mark.django_db
 
@@ -705,3 +707,57 @@ def test_process_reconciliation_resets_connections(
     for access in userdocs_u1[0:3] + userdocs_u2[3:6]:
         assert mock.call(str(access.document_id), None) not in calls
         assert mock.call(str(access.document_id), str(user_2.id)) in calls
+
+
+def test_process_reconciliation_refreshes_caches_and_index(
+    user_reconciliation_users_and_docs, django_capture_on_commit_callbacks
+):
+    """
+    The accesses are updated and deleted in bulk, without DocumentAccess.save and
+    delete nor the post_save signal: the caches of both users and of the documents
+    losing an access should be cleared, and every document whose accesses changed
+    should be indexed again.
+    """
+    user_1, user_2, userdocs_u1, userdocs_u2 = user_reconciliation_users_and_docs
+    rec = models.UserReconciliation.objects.create(
+        active_email=user_1.email,
+        inactive_email=user_2.email,
+        active_user=user_1,
+        inactive_user=user_2,
+        active_email_checked=True,
+        inactive_email_checked=True,
+        status="ready",
+    )
+    for user in (user_1, user_2):
+        cache.set(get_users_sharing_documents_with_cache_key(user.pk), {})
+    # the inactive user loses its access on the documents the active user also has
+    shared_document = userdocs_u1[0].document
+    assert shared_document.get_nb_accesses() == (2, 2)
+
+    with (
+        mock.patch("core.signals.trigger_subtree_document_indexer") as mock_indexer,
+        django_capture_on_commit_callbacks() as callbacks,
+    ):
+        process_reconciliation(
+            None, None, models.UserReconciliation.objects.filter(id=rec.id)
+        )
+
+    # a request reading the accesses still committed caches them again before
+    # the commit: the caches should be cleared once committed
+    for user in (user_1, user_2):
+        cache.set(get_users_sharing_documents_with_cache_key(user.pk), {})
+    cache.set(shared_document.get_nb_accesses_cache_key(), (2, 2))
+
+    for callback in callbacks:
+        callback()
+
+    for user in (user_1, user_2):
+        assert cache.get(get_users_sharing_documents_with_cache_key(user.pk)) is None
+    assert shared_document.get_nb_accesses() == (1, 1)
+    # moved, raised or removed: all the documents of the inactive user, with their
+    # descendants, whatever their last update
+    mock_indexer.assert_called_once_with(
+        {access.document_id for access in userdocs_u2 + userdocs_u1[0:6]}
+    )
+
+

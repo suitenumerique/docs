@@ -22,6 +22,7 @@ from django.core.mail import send_mail
 from django.db import models, transaction
 from django.db.models import Count
 from django.db.models.functions import Left, Length
+from django.dispatch import Signal
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -44,6 +45,10 @@ from core.utils.treebeard import create_tree_node_with_retry
 from core.validators import sub_validator
 
 logger = getLogger(__name__)
+
+# Sent once accesses were updated or deleted in bulk, without the signals and the
+# methods of DocumentAccess: core.signals refreshes what they keep up to date.
+document_accesses_bulk_changed = Signal()
 
 
 def get_trashbin_cutoff():
@@ -593,6 +598,13 @@ class UserReconciliation(BaseModel):
 
         for document_id in {access.document_id for access in updated_accesses}:
             reset_service_connections_on_commit(document_id)
+
+        document_accesses_bulk_changed.send(
+            sender=DocumentAccess,
+            users=[self.active_user, self.inactive_user],
+            updated_accesses=updated_accesses,
+            removed_accesses=removed_accesses,
+        )
 
         DocumentFavorite.objects.bulk_update(update_favorites, ["user"])
         if removed_favorites:
