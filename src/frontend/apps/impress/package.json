@@ -45,6 +45,7 @@
     "@react-aria/live-announcer": "3.5.1",
     "@sentry/nextjs": "10.76.2",
     "@tanstack/react-query": "5.104.1",
+    "@tiptap/core": "3.32.0",
     "@tiptap/extension-find-and-replace": "3.32.0",
     "@tiptap/extensions": "*",
     "@y/yhub-http-fallback": "0.1.1",

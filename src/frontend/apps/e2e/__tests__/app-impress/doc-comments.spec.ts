@@ -48,10 +48,30 @@ test.describe('Doc Comments', () => {
 
     // We add a comment with the first user
     const editor = await writeInEditor({ page, text: 'Hello World' });
-    await editor.getByText('Hello').selectText();
+
+    // We comment a sentence ending with a doc link, its comment is only kept
+    // in Yjs by InlineNodeCommentsExtension
+    await writeInEditor({ page, text: 'Link to ' });
+    await page.keyboard.press('@');
+    await page
+      .locator("span[data-inline-content-type='mentionSearchInline'] input")
+      .fill(docTitle);
+    await page.locator('.quick-search-container').getByText(docTitle).click();
+    await expect(
+      editor.locator('.--docs--interlinking-link-inline-content'),
+    ).toContainText(docTitle);
+    await page.keyboard.press('End');
+    await page.keyboard.press('Shift+Home');
     await page.getByRole('button', { name: 'Add comment' }).click();
 
     const thread = page.locator('.bn-thread');
+    await thread.getByRole('paragraph').first().fill('Doc link comment');
+    await thread.locator('[data-test="save"]').click();
+    await expect(thread.getByText('Doc link comment').first()).toBeHidden();
+
+    await editor.getByText('Hello').selectText();
+    await page.getByRole('button', { name: 'Add comment' }).click();
+
     await thread.getByRole('paragraph').first().fill('This is a comment');
     await thread.locator('[data-test="save"]').click();
     await expect(thread.getByText('This is a comment').first()).toBeHidden();
@@ -85,6 +105,17 @@ test.describe('Doc Comments', () => {
     });
 
     const otherEditor = otherPage.locator('.ProseMirror');
+
+    // The second user loads the doc from Yjs, the doc link keeps its comment.
+    // The threads are loaded after the document.
+    await expect(
+      otherEditor.locator('.bn-thread-mark').filter({
+        has: otherPage.locator('.--docs--interlinking-link-inline-content'),
+      }),
+    ).toHaveCSS('background-color', /color\(srgb\s+[\d\s.]+\s+\/\s+0\.4\)/, {
+      timeout: 10000,
+    });
+
     await otherEditor.getByText('Hello').click();
     const otherThread = otherPage.locator('.bn-thread');
 
