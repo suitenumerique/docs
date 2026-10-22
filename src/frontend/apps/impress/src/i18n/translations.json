@@ -188,7 +188,8 @@
       "Your {{format}} was downloaded succesfully": "Pellgarget eo bet ho {{format}} gant berzh",
       "home-content-open-source-part1": "Docs a zo savet gant <2>Django Rest Framework</2> ha <6>Next.js</6>. Implijet e vez <9>Yjs</9> ivez ha <13>BlockNote.js</13>, daou raktres omp fier droch da sponsorizañ.",
       "home-content-open-source-part2": "Posupl eo deoc'h herberc'hiañ Docs (kit da sellet ouzh hon <2>teuliadur</2> staliañ).<br/>Docs a ra gant ul <7>lisañs</7> (MIT) azasaet ouzh an nevezadenn koulz ouzh an embregerezhioù.<br/>Ar c'hendaoladoù a zo ouzhpenn degemeret mat (kit da lenn hon follenn-stur <13>amañ</13>).",
-      "home-content-open-source-part3": "Docs zo frouezh ur striv a-gevret kaset gant ar gouarnamantoù gall 🇫🇷🥖 <1>(DINUM)</1> hag alaman 🇩🇪🥨 <5>(ZenDiS)</5>."
+      "home-content-open-source-part3": "Docs zo frouezh ur striv a-gevret kaset gant ar gouarnamantoù gall 🇫🇷🥖 <1>(DINUM)</1> hag alaman 🇩🇪🥨 <5>(ZenDiS)</5>.",
+      "Version history side panel": "Banell gostez istor ar stummoù"
     }
   },
   "de": {
@@ -480,7 +481,8 @@
       "pdf": "pdf",
       "{{action}}, current role: {{role}}": "{{action}}, aktuelle Rolle: {{role}}",
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "{{name}} wurde zur Einladungsliste hinzugefügt. Füge mehr Mitglieder hinzu oder drücke Tab, um Rollen auszuwählen und einzuladen.",
-      "{{name}} removed from invite list": "{{name}} aus der Einladungsliste entfernt"
+      "{{name}} removed from invite list": "{{name}} aus der Einladungsliste entfernt",
+      "Version history side panel": "Seitenleiste des Versionsverlaufs"
     }
   },
   "el": {
@@ -812,7 +814,8 @@
       "src_img_onboarding_step_4": "src_img_onboarding_step_4",
       "{{action}}, current role: {{role}}": "{{action}}, τρέχων ρόλος: {{role}}",
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "Ο χρήστης {{name}} προστέθηκε στη λίστα προσκλήσεων. Προσθέστε περισσότερα μέλη ή πατήστε Tab για να επιλέξετε ρόλο.",
-      "{{name}} removed from invite list": "Ο χρήστης {{name}} αφαιρέθηκε από τη λίστα προσκλήσεων"
+      "{{name}} removed from invite list": "Ο χρήστης {{name}} αφαιρέθηκε από τη λίστα προσκλήσεων",
+      "Version history side panel": "Πλαϊνό πάνελ ιστορικού εκδόσεων"
     }
   },
   "en": {
@@ -823,7 +826,8 @@
       "Shared with {{count}} users_other": "Shared with {{count}} users",
       "days_many": "days",
       "days_one": "day",
-      "days_other": "days"
+      "days_other": "days",
+      "Version history side panel": "Version history side panel"
     }
   },
   "es": {
@@ -1305,6 +1309,7 @@
       "{{current}} of {{total}}": "{{current}} de {{total}}",
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "{{name}} añadido a la lista de invitaciones. Añade más miembros o pulsa Tab para seleccionar el rol e invitar.",
       "{{name}} removed from invite list": "{{name}} eliminado de la lista de invitaciones",
+      "Version history side panel": "Panel lateral del historial de versiones",
       "{{title}} (deleted)": "{{title}} (eliminado)",
       "{{title}}, updated {{date}}": "{{title}}, actualizado el {{date}}"
     }
@@ -1789,7 +1794,8 @@
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "{{name}} a été ajouté à la liste d'invitation. Ajoutez plus de membres ou appuyez sur Tab pour sélectionner le rôle et inviter.",
       "{{name}} removed from invite list": "{{name}} a été retiré de la liste d'invitation",
       "{{title}} (deleted)": "{{title}} (supprimé)",
-      "{{title}}, updated {{date}}": "{{title}}, mise à jour {{date}}"
+      "{{title}}, updated {{date}}": "{{title}}, mise à jour {{date}}",
+      "Version history side panel": "Panneau latéral de l'historique des versions"
     }
   },
   "it": {
@@ -1908,7 +1914,8 @@
       "Warning": "Attenzione",
       "Write": "Scrivi",
       "You are the sole owner of this group, make another member the group owner before you can change your own role or be removed from your document.": "Sei l'unico proprietario di questo gruppo, devi nominare proprietario un altro membro del gruppo prima di poter cambiare il proprio ruolo o di essere rimosso dal documento.",
-      "Your {{format}} was downloaded succesfully": "Il tuo {{format}} è stato scaricato con successo"
+      "Your {{format}} was downloaded succesfully": "Il tuo {{format}} è stato scaricato con successo",
+      "Version history side panel": "Pannello laterale della cronologia delle versioni"
     }
   },
   "nl": {
@@ -2387,7 +2394,8 @@
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "{{name}} toegevoegd aan de uitnodigingslijst. Voeg meer deelnemers toe of druk op Tab om de rol en uitnodiging te selecteren.",
       "{{name}} removed from invite list": "{{name}} verwijderd uit de uitnodigingslijst",
       "{{title}} (deleted)": "{{title}} (verwijderd)",
-      "{{title}}, updated {{date}}": "{{title}}, bijgewerkt {{date}}"
+      "{{title}}, updated {{date}}": "{{title}}, bijgewerkt {{date}}",
+      "Version history side panel": "Zijpaneel van de versiegeschiedenis"
     }
   },
   "pl": {
@@ -2782,7 +2790,8 @@
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "Dodano {{name}} do listy zaproszeń. Dodaj kolejnych członków lub naciśnij klawisz Tab, aby wybrać rolę i wysłać zaproszenie.",
       "{{name}} removed from invite list": "{{name}} usunięty z listy zaproszeń",
       "{{title}} (deleted)": "{{title}} (usunięty)",
-      "{{title}}, updated {{date}}": "{{title}}, zaktualizowano {{date}}"
+      "{{title}}, updated {{date}}": "{{title}}, zaktualizowano {{date}}",
+      "Version history side panel": "Panel boczny historii wersji"
     }
   },
   "pt": {
@@ -2799,7 +2808,8 @@
       "days_one": "dias",
       "days_other": "dias",
       "file": "ficheiro",
-      "pdf": "pdf"
+      "pdf": "pdf",
+      "Version history side panel": "Painel lateral do histórico de versões"
     }
   },
   "ru": {
@@ -3282,13 +3292,15 @@
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "{{name}} добавлен(а) в список приглашённых. Добавьте других участников или нажмите Tab, чтобы выбрать роль и пригласить.",
       "{{name}} removed from invite list": "{{name}} удален(а) из списка приглашений",
       "{{title}} (deleted)": "{{title}} (удалён)",
-      "{{title}}, updated {{date}}": "{{title}}, обновлено {{date}}"
+      "{{title}}, updated {{date}}": "{{title}}, обновлено {{date}}",
+      "Version history side panel": "Боковая панель истории версий"
     }
   },
   "sl": {
     "translation": {
       "Load more": "Naloži več",
-      "Untitled document": "Dokument brez naslova"
+      "Untitled document": "Dokument brez naslova",
+      "Version history side panel": "Stranska plošča zgodovine različic"
     }
   },
   "sv": {
@@ -3315,7 +3327,8 @@
       "This file is flagged as unsafe.": "Denna fil är flaggad som osäker.",
       "Too many requests. Please wait 60 seconds.": "För många förfrågningar. Vänligen vänta 60 sekunder.",
       "Use as prompt": "Använd som prompt",
-      "Warning": "Varning"
+      "Warning": "Varning",
+      "Version history side panel": "Sidopanel för versionshistorik"
     }
   },
   "tr": {
@@ -3370,7 +3383,8 @@
       "Version history": "Sürüm geçmişi",
       "Warning": "Uyarı",
       "Write": "Yaz",
-      "Your {{format}} was downloaded succesfully": "{{format}} indirildi"
+      "Your {{format}} was downloaded succesfully": "{{format}} indirildi",
+      "Version history side panel": "Sürüm geçmişi yan paneli"
     }
   },
   "uk": {
@@ -3853,7 +3867,8 @@
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "{{name}} додано до списку запрошень. Додайте більше учасників або натисніть Tab, щоб вибрати роль та надіслати запрошення.",
       "{{name}} removed from invite list": "{{name}} видалено зі списку запрошень",
       "{{title}} (deleted)": "{{title}} (видалений)",
-      "{{title}}, updated {{date}}": "{{title}}, оновлено {{date}}"
+      "{{title}}, updated {{date}}": "{{title}}, оновлено {{date}}",
+      "Version history side panel": "Бічна панель історії версій"
     }
   },
   "zh-cn": {
@@ -4313,6 +4328,7 @@
       "new window": "新窗口",
       "or": "或",
       "pdf": "pdf",
+      "Version history side panel": "版本历史侧边栏",
       "slide": "幻灯片",
       "src_img_onboarding_step_1": "/assets/on-boarding/step_1_EN.webm",
       "src_img_onboarding_step_2": "/assets/on-boarding/step_2_EN.webm",

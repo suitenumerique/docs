@@ -3,6 +3,7 @@ import {
   ComponentProps,
   useBlockNoteEditor,
   useComponentsContext,
+  usePortalElement,
   useSelectedBlocks,
 } from '@blocknote/react';
 import { Loader, VariantType } from '@gouvfr-lasuite/ui-components';
@@ -55,6 +56,7 @@ const sortByPopularLanguages = (
 
 export function AIGroupButton() {
   const editor = useBlockNoteEditor();
+  const portalElement = usePortalElement();
   const Components = useComponentsContext();
   const selectedBlocks = useSelectedBlocks(editor);
   const { t } = useTranslation();
@@ -98,7 +100,7 @@ export function AIGroupButton() {
   }
 
   return (
-    <Components.Generic.Menu.Root>
+    <Components.Generic.Menu.Root portalElement={portalElement}>
       <Components.Generic.Menu.Trigger>
         <Components.FormattingToolbar.Button
           className="bn-button bn-menu-item --docs--ai-actions-menu-trigger"
@@ -179,7 +181,11 @@ export function AIGroupButton() {
           </>
         )}
         {canAITranslate && (
-          <Components.Generic.Menu.Root position="right" sub={true}>
+          <Components.Generic.Menu.Root
+            position="right"
+            sub={true}
+            portalElement={portalElement}
+          >
             <Components.Generic.Menu.Trigger sub={false}>
               <Components.Generic.Menu.Item
                 className="bn-menu-item --docs--ai-translate-menu-trigger"

@@ -1,5 +1,5 @@
-import { WebsocketProvider } from 'y-websocket';
-import * as Y from 'yjs';
+import { WebsocketProvider } from '@y/websocket';
+import * as Y from '@y/y';
 import { create } from 'zustand';
 
 interface BroadcastState {
@@ -10,19 +10,12 @@ interface BroadcastState {
   handleProviderSync: (isSynced: boolean) => void;
   provider?: WebsocketProvider;
   setBroadcastProvider: (provider: WebsocketProvider) => void;
-  setTask: (
-    taskLabel: string,
-    task: Y.Array<string>,
-    action: () => void,
-  ) => void;
+  setTask: (taskLabel: string, task: Y.Node, action: () => void) => void;
   tasks: {
     [taskLabel: string]: {
       action: () => void;
-      observer: (
-        event: Y.YArrayEvent<string>,
-        transaction: Y.Transaction,
-      ) => void;
-      task: Y.Array<string>;
+      observer: (event: Y.YEvent<Y.Node>, transaction: Y.Transaction) => void;
+      task: Y.Node;
     };
   };
 }
@@ -66,10 +59,10 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
       return;
     }
 
-    const task = provider.doc.getArray<string>(taskLabel);
+    const task = provider.doc.get(taskLabel);
     get().setTask(taskLabel, task, action);
   },
-  setTask: (taskLabel: string, task: Y.Array<string>, action: () => void) => {
+  setTask: (taskLabel: string, task: Y.Node, action: () => void) => {
     // Unobserve the previous observer to avoid leaking one per re-registration
     const previousTask = get().tasks[taskLabel];
     if (previousTask) {
@@ -77,10 +70,7 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
     }
 
     let isInitializing = true;
-    const observer = (
-      _event: Y.YArrayEvent<string>,
-      transaction: Y.Transaction,
-    ) => {
+    const observer = (_event: Y.YEvent<Y.Node>, transaction: Y.Transaction) => {
       if (!isInitializing && !transaction.local) {
         action();
       }
@@ -107,7 +97,7 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
     // Broadcast via Y.js provider (for users on the same document)
     const obTask = get().tasks?.[taskLabel];
     if (obTask?.task) {
-      obTask.task.push([`broadcast: ${taskLabel}`]);
+      obTask.task.insert(obTask.task.length, [`broadcast: ${taskLabel}`]);
     }
   },
   cleanupBroadcast: () => {

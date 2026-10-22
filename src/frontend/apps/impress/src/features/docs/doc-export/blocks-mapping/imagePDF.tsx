@@ -25,50 +25,52 @@ const imageBoxStyle = {
  * @returns A react-pdf View element, or an empty View when the blob is not an
  * image or the conversion fails.
  */
-export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['image'] =
-  async (block, exporter) => {
-    const blob = await exporter.resolveFile(block.props.url);
-    let result: { png: string; width: number; height: number } | undefined;
-    const previewWidth = block.props.previewWidth
-      ? Math.min(block.props.previewWidth, MAX_WIDTH)
-      : undefined;
+export const blockMappingImagePDF: Exclude<
+  DocsExporterPDF['mappings']['blockMapping']['image'],
+  { withChildren: unknown }
+> = async (block, exporter) => {
+  const blob = await exporter.resolveFile(block.props.url);
+  let result: { png: string; width: number; height: number } | undefined;
+  const previewWidth = block.props.previewWidth
+    ? Math.min(block.props.previewWidth, MAX_WIDTH)
+    : undefined;
 
-    if (!blob.type.includes('image')) {
-      return <View wrap={false} />;
+  if (!blob.type.includes('image')) {
+    return <View wrap={false} />;
+  }
+
+  try {
+    if (blob.type.includes('svg')) {
+      const svgText = await blob.text();
+      result = await convertSvgToPng(svgText, previewWidth);
+    } else {
+      result = await convertBlobToPng(blob, previewWidth);
     }
+  } catch {
+    return <View wrap={false} />;
+  }
 
-    try {
-      if (blob.type.includes('svg')) {
-        const svgText = await blob.text();
-        result = await convertSvgToPng(svgText, previewWidth);
-      } else {
-        result = await convertBlobToPng(blob, previewWidth);
-      }
-    } catch {
-      return <View wrap={false} />;
-    }
+  if (!result || !result.png) {
+    return <View wrap={false} />;
+  }
 
-    if (!result || !result.png) {
-      return <View wrap={false} />;
-    }
+  // Ensure the final width never exceeds MAX_WIDTH to prevent images
+  // from overflowing the page width in the exported document
+  const finalWidth = Math.min(previewWidth || result.width, MAX_WIDTH);
 
-    // Ensure the final width never exceeds MAX_WIDTH to prevent images
-    // from overflowing the page width in the exported document
-    const finalWidth = Math.min(previewWidth || result.width, MAX_WIDTH);
-
-    return (
-      <View wrap={false} style={imageBoxStyle}>
-        <Image
-          src={result.png}
-          style={{
-            width: finalWidth * PIXELS_PER_POINT,
-            maxWidth: '100%',
-          }}
-        />
-        {caption(block.props)}
-      </View>
-    );
-  };
+  return (
+    <View wrap={false} style={imageBoxStyle}>
+      <Image
+        src={result.png}
+        style={{
+          width: finalWidth * PIXELS_PER_POINT,
+          maxWidth: '100%',
+        }}
+      />
+      {caption(block.props)}
+    </View>
+  );
+};
 
 /**
  * Renders an optional caption below an image in the PDF.

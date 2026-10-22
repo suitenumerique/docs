@@ -7,6 +7,8 @@
  * `backend.ts`, `api.ts` and `server.ts` import their settings from here; the
  * `*_FILE` secret indirection is `env.ts`.
  */
+import { cpus } from 'node:os';
+
 import { secret } from './env.js';
 
 // A numeric setting, read from the environment and refused rather than guessed
@@ -99,6 +101,12 @@ export const RUNS_WORKER = ROLE !== 'server';
 // point where a pod runs out of memory, each task holding the document it
 // merges.
 export const TASK_CONCURRENCY = intEnv('YHUB_TASK_CONCURRENCY', 5, 1);
+// The compute threads are created on demand. Keep yhub's default when unset,
+// but let small deployments cap the CPU and document-memory peaks explicitly.
+export const COMPUTE_POOL_SIZE = intEnv(
+  'YHUB_COMPUTE_POOL_SIZE',
+  Math.max(1, cpus().length - 1),
+);
 // Where the blobs of a compaction go — the garbage-collected document, the one
 // that keeps its history, the content map and the content ids. yhub writes the
 // four of them into its own postgres; a persistence plugin takes them out of

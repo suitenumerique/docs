@@ -6,12 +6,14 @@ type AvatarSvgProps = BoxProps &
   Omit<ComponentPropsWithRef<'svg'>, keyof BoxProps> & {
     initials: string;
     background: string;
+    foreground?: string;
     fontFamily?: string;
   };
 
 export const AvatarSvg: React.FC<AvatarSvgProps> = ({
   initials,
   background,
+  foreground = 'rgba(255,255,255,0.9)',
   fontFamily,
   ...props
 }) => (
@@ -42,7 +44,7 @@ export const AvatarSvg: React.FC<AvatarSvgProps> = ({
       textAnchor="middle"
       fontSize="10"
       fontWeight="600"
-      fill="rgba(255,255,255,0.9)"
+      fill={foreground}
       fontFamily={fontFamily || 'Arial'}
     >
       {initials}

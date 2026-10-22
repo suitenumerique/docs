@@ -6,6 +6,30 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) add local history grouping controls and test checkpoints
+- ✨(frontend) export PDF with Typst, including math and diagrams
+- ✨(frontend) show yhub version history in the BlockNote sidebar
+- 💄(frontend) share readable author colors across cursors and avatars
+
+### Changed
+
+- 🔧(frontend) disable named-version actions in version history
+- ⬆️(dependencies) update all BlockNote packages to 0.56.0
+- 🔧(collaboration) allow capping yhub compute workers on small instances
+- ♻️(frontend) restore bounded editor history through native yhub rollback
+- ♻️(frontend) use standalone YHub version storage and history extension
+- ♻️(frontend) migrate the history panel to RenderInPortalElement
+
+### Fixed
+
+- 🐛(frontend) fetch named versions fresh after deleting one
+- 🐛(frontend) adapt toolbar, code blocks and exports to BlockNote 0.56
+- 🐛(export) read current and legacy Yjs documents in the converter
+- 🐛(collaboration) restore editor versions without exposing full history
+- 🐛(collaboration) grant bounded named-version access for the history sidebar
+
 ## [v6.0.2] - 2026-10-21
 
 ### Added
@@ -32,9 +56,9 @@ and this project adheres to
 - 🐛(frontend) wrap long text in the print export #2813
 - 🔒️(backend) bind comment thread to the path document on creation #2838
 - 🐛(frontend) fix search highlight hidden inside code blocks #2681
-- 🔒️(backend) require present document access for thread and comment 
+- 🔒️(backend) require present document access for thread and comment
   writes #2840
-- 🐛(backend) enforce resource server action restrictions on the external 
+- 🐛(backend) enforce resource server action restrictions on the external
   API #2745
 - 🐛(backend) mark only the top duplicate as a copy, after its title #2855
 - 🐛(yhub) measure migration durations with a monotonic clock #2814

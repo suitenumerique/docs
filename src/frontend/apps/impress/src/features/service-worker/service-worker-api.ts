@@ -44,7 +44,8 @@ const isAuthUrl = (url: URL) =>
 
 /**
  * The collaboration server's rest api: document content (`ydoc`), the editing
- * history (`activity`, `changeset`) and the restore it feeds (`rollback`).
+ * history (`activity`, `changeset`), named-version metadata (`version`),
+ * and the restore it feeds (`rollback`).
  *
  * `NetworkOnly`, and not by default: the server is on the app's own origin
  * unless an instance moves it, so without a route here these fall into the
@@ -59,6 +60,7 @@ const isAuthUrl = (url: URL) =>
   { endpoint: 'ydoc', methods: ['GET', 'PATCH'] as const },
   { endpoint: 'activity', methods: ['GET'] as const },
   { endpoint: 'changeset', methods: ['GET'] as const },
+  { endpoint: 'version', methods: ['GET'] as const },
   { endpoint: 'rollback', methods: ['POST'] as const },
 ].forEach(({ endpoint, methods }) => {
   methods.forEach((method) => {

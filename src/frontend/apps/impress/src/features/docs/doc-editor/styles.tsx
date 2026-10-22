@@ -82,7 +82,6 @@ export const DocsEditorStyle = createGlobalStyle`
       left: -1px;
     }
     .collaboration-cursor-custom__label {
-      color: #0d0d0d;
       font-size: 12px;
       font-weight: 600;
       -webkit-user-select: none;
