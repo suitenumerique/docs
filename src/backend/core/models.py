@@ -658,7 +658,9 @@ class UserReconciliation(BaseModel):
         self.status = "done"
         self.save()
 
-        self.send_reconciliation_done_email()
+        # Once committed: a reconciliation processed with others in one transaction,
+        # from the admin, may still be rolled back with them
+        transaction.on_commit(self.send_reconciliation_done_email)
 
     def prepare_documentaccess_reconciliation(self):
         """

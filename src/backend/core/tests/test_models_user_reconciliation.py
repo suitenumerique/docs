@@ -393,7 +393,7 @@ def test_user_reconciliation_only_starts_if_checks_are_made(
 
 
 def test_process_reconciliation_updates_accesses(
-    user_reconciliation_users_and_docs,
+    user_reconciliation_users_and_docs, django_capture_on_commit_callbacks
 ):
     """Test that accesses are consolidated on the active user."""
     user_1, user_2, userdocs_u1, userdocs_u2 = user_reconciliation_users_and_docs
@@ -414,7 +414,8 @@ def test_process_reconciliation_updates_accesses(
     )
 
     qs = models.UserReconciliation.objects.filter(id=rec.id)
-    process_reconciliation(None, None, qs)
+    with django_capture_on_commit_callbacks(execute=True):
+        process_reconciliation(None, None, qs)
 
     rec.refresh_from_db()
     user_1.refresh_from_db()

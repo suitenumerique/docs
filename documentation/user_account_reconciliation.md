@@ -20,6 +20,15 @@ Once the CSV file is processed, this will create entries in "Core" > "User recon
 
 In "Core" > "User reconciliations", an admin can then select all rows they wish to process and check the action "Process selected user reconciliations". Only rows that have the status `ready` and for which both emails have been validated will be processed.
 
+## Merging users from the admin
+
+Duplicate accounts can also be merged without a request: in "Core" > "Users", select the users to merge
+(selecting the user to keep as well is harmless) and run the action "Merge into another user". After choosing
+the user to keep, which must be active, a reconciliation is created and processed right away for each other selected
+user, without any confirmation email. Users without an email cannot be merged.
+
+The filter "duplicate email" lists the users sharing their email with another one, case ignored.
+
 ## What is transferred
 
 Processing a reconciliation moves to the active user:
