@@ -119,11 +119,14 @@ class UserManager(auth_models.UserManager):
                 return None
 
             if settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION:
-                try:
-                    return self.get(email__iexact=email)
-                except self.model.DoesNotExist:
-                    pass
-            elif (
+                # Active users first, an inactive one is returned so the login is refused
+                users = self.filter(email__iexact=email).order_by("-is_active")[:2]
+                if len(users) == 2 and users[1].is_active:
+                    raise DuplicateEmailError(
+                        _("Several active users are associated with this email.")
+                    ) from err
+                return users[0] if users else None
+            if (
                 self.filter(email__iexact=email).exists()
                 and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
             ):

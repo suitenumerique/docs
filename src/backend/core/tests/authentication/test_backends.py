@@ -93,6 +93,52 @@ def test_authentication_getter_existing_user_via_email_case_insensitive(
     assert user == db_user
 
 
+def test_authentication_getter_existing_user_via_email_skips_inactive(monkeypatch):
+    """
+    If an active and an inactive user share the email, the active user should be returned.
+    """
+
+    klass = OIDCAuthenticationBackend()
+    UserFactory(email="john.doe@example.com", is_active=False)
+    db_user = UserFactory(email="JOHN.DOE@example.com")
+
+    def get_userinfo_mocked(*args):
+        return {"sub": "123", "email": "john.doe@example.com"}
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+
+    user = klass.get_or_create_user(
+        access_token="test-token", id_token=None, payload=None
+    )
+
+    assert user == db_user
+    db_user.refresh_from_db()
+    assert db_user.sub == "123"
+
+
+def test_authentication_getter_existing_user_via_email_several_active(monkeypatch):
+    """
+    If several active users share the email, the login should be refused.
+    """
+
+    klass = OIDCAuthenticationBackend()
+    UserFactory(email="john.doe@example.com")
+    UserFactory(email="JOHN.DOE@example.com")
+
+    def get_userinfo_mocked(*args):
+        return {"sub": "123", "email": "john.doe@example.com"}
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+
+    with pytest.raises(
+        SuspiciousOperation,
+        match="Several active users are associated with this email.",
+    ):
+        klass.get_or_create_user(access_token="test-token", id_token=None, payload=None)
+
+    assert models.User.objects.count() == 2
+
+
 def test_authentication_getter_email_none(monkeypatch):
     """
     If no user is found with the sub and no email is provided, a new user should be created.
