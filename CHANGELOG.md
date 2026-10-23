@@ -20,6 +20,7 @@ and this project adheres to
 
 - 🐛(backend) log in the active user when several users share an email #2882
 - 🐛(backend) refresh caches and search index after a user reconciliation #2882
+- 🐛(frontend) keep comments on inline nodes after a reload #2898
 
 ## [v6.0.2] - 2026-10-21
 
