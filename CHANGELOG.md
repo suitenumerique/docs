@@ -14,6 +14,7 @@ and this project adheres to
 ### Fixed
 
 - 🔒️(backend) require edit rights for creators to delete their sub docs #2873
+- ♻️(frontend) change base image to nginx/nginx-unprivileged #2907
 
 ## [v6.0.3] - 2026-10-23
 
