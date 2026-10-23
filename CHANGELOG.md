@@ -21,6 +21,7 @@ and this project adheres to
 - ⬆️(yhub) upgrade @y/hub to 0.10.1 #2853
 - ♿️(frontend) allow opening the home button in a new tab #2839
 - 💄(frontend) use 12px for error page home links #2809
+- ⚡️(backend) load less to compute the abilities of a document #2885
 
 ### Fixed
 
