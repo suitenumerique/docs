@@ -26,7 +26,6 @@ requires-python = "~=3.14.0"
 dependencies = [
     "beautifulsoup4==4.15.0",
     "boto3==1.43.111",
-    "Brotli==1.2.0",
     "celery[redis]==5.6.3",
     "dj-database-url==3.1.2",
     "django-configurations==2.5.1",
@@ -70,7 +69,7 @@ dependencies = [
     "redis<6.0.0",
     "requests==2.34.2",
     "sentry-sdk==2.71.0",
-    "servestatic==4.4.0",
+    "servestatic[brotli,minify]==4.4.0",
     "uvicorn==0.54.0",
 ]
 
