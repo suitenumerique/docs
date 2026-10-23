@@ -1272,6 +1272,7 @@ class Document(MP_Node, BaseModel):
             (self.get_ancestors() | self._meta.model.objects.filter(pk=self.pk))
             .filter(ancestors_deleted_at__isnull=True)
             .order_by("path")
+            .only("path", "link_reach", "link_role")
         )
         ancestors_links = []
         paths_links_mapping = {}
@@ -1414,7 +1415,11 @@ class Document(MP_Node, BaseModel):
             if self.is_root()
             else (
                 is_owner_or_admin
-                or (can_create_children and self.creator == user and self.numchild == 0)
+                or (
+                    can_create_children
+                    and self.creator_id == user.pk
+                    and self.numchild == 0
+                )
             )
         ) and not is_deleted
 

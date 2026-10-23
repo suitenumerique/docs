@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) add a dedicated document abilities endpoint #2885
+
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
@@ -47,6 +51,7 @@ and this project adheres to
 - ✨(docspec) handle DocSpec 4xx/5xx import errors distinctly #2552
 - 🌐(frontend) add Crowdin translator context #2785
 - ✨(frontend) open the emoji picker when adding a document emoji #2777
+
 
 ### Changed
 
