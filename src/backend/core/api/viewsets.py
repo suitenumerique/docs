@@ -533,6 +533,9 @@ class DocumentViewSet(
           occurs. Omit for mentions in the document body.
         Returns: 201 with the created mention.
 
+    17. **Abilities**: Get only the abilities of the current user on a document.
+        Example: GET /documents/{id}/abilities/
+
     ### Ordering: created_at, updated_at, is_favorite, title
 
         Example:
@@ -570,6 +573,7 @@ class DocumentViewSet(
     throttle_scope = "document"
     queryset = models.Document.objects.select_related("creator").all()
     serializer_class = serializers.DocumentSerializer
+    abilities_serializer_class = serializers.DocumentAbilitiesSerializer
     ai_translate_serializer_class = serializers.AITranslateSerializer
     all_serializer_class = serializers.ListDocumentSerializer
     children_serializer_class = serializers.ListDocumentSerializer
@@ -621,6 +625,26 @@ class DocumentViewSet(
         """Override to apply annotations to generic views."""
         queryset = super().filter_queryset(queryset)
         user = self.request.user
+
+        if self.action == "abilities":
+            # Computing the abilities reads a few fields, the roles of the user and
+            # their link trace: load nothing else, the favorite status and the creator
+            # included (its id is enough)
+            return (
+                queryset.select_related(None)
+                .only(
+                    "path",
+                    "depth",
+                    "link_reach",
+                    "link_role",
+                    "deleted_at",
+                    "ancestors_deleted_at",
+                    "creator_id",
+                )
+                .annotate_user_roles(user)
+                .annotate_user_has_link_trace(user)
+            )
+
         queryset = queryset.annotate_is_favorite(user)
         queryset = queryset.annotate_user_roles(user)
         queryset = queryset.annotate_user_has_link_trace(user)
@@ -706,6 +730,19 @@ class DocumentViewSet(
         instance.user_has_link_trace = user.is_authenticated
 
         serializer = self.get_serializer(instance)
+        return drf.response.Response(serializer.data)
+
+    @drf.decorators.action(detail=True, methods=["get"], url_path="abilities")
+    def abilities(self, request, *args, **kwargs):
+        """
+        Return only the abilities of the current user on the document, for clients
+        like the collaboration server that need nothing else from `retrieve`.
+
+        Contrary to `retrieve`, no link trace is created: the `leave` ability
+        reflects the link traces as they are.
+        """
+        document = self.get_object()
+        serializer = self.get_serializer(document)
         return drf.response.Response(serializer.data)
 
     def _apply_uploaded_file_conversion(self, serializer):

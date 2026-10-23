@@ -582,6 +582,31 @@ def test_external_api_documents_restore_not_allowed(
     assert response.status_code == 403
 
 
+def test_external_api_documents_abilities_not_allowed(
+    user_token, resource_server_backend, user_specific_sub
+):
+    """
+    Connected users SHOULD NOT be allowed to get their abilities on a document
+    from a resource server.
+    """
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {user_token}")
+
+    document = factories.DocumentFactory(
+        link_reach=models.LinkReachChoices.RESTRICTED,
+        creator=user_specific_sub,
+    )
+    factories.UserDocumentAccessFactory(
+        document=document,
+        user=user_specific_sub,
+        role=models.RoleChoices.OWNER,
+    )
+
+    response = client.get(f"/external_api/v1.0/documents/{document.id!s}/abilities/")
+
+    assert response.status_code == 403
+
+
 @pytest.mark.parametrize("role", models.LinkRoleChoices.values)
 @pytest.mark.parametrize("reach", models.LinkReachChoices.values)
 def test_external_api_documents_trashbin_not_allowed(

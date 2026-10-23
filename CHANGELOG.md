@@ -30,6 +30,7 @@ and this project adheres to
 - ✨(docspec) handle DocSpec 4xx/5xx import errors distinctly #2552
 - 🌐(frontend) add Crowdin translator context #2785
 - ✨(frontend) open the emoji picker when adding a document emoji #2777
+- ✨(backend) add a dedicated document abilities endpoint #2885
 
 ### Changed
 
@@ -40,6 +41,7 @@ and this project adheres to
 - ⬆️(yhub) upgrade @y/hub to 0.10.1 #2853
 - ♿️(frontend) allow opening the home button in a new tab #2839
 - 💄(frontend) use 12px for error page home links #2809
+- ⚡️(backend) load less to compute the abilities of a document #2885
 
 ### Fixed
 

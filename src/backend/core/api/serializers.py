@@ -177,6 +177,25 @@ class DocumentLightSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "path", "depth"]
 
 
+class DocumentAbilitiesSerializer(serializers.ModelSerializer):
+    """Serialize only the abilities of the current user on a document."""
+
+    abilities = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.Document
+        fields = ["abilities"]
+        read_only_fields = ["abilities"]
+
+    def get_abilities(self, instance) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if not request:
+            return {}
+
+        return instance.get_abilities(request.user)
+
+
 class DocumentSerializer(ListDocumentSerializer):
     """Serialize documents with all fields for display in detail views."""
 

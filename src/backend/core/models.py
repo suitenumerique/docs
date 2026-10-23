@@ -1272,6 +1272,7 @@ class Document(MP_Node, BaseModel):
             (self.get_ancestors() | self._meta.model.objects.filter(pk=self.pk))
             .filter(ancestors_deleted_at__isnull=True)
             .order_by("path")
+            .only("path", "link_reach", "link_role")
         )
         ancestors_links = []
         paths_links_mapping = {}
@@ -1407,7 +1408,10 @@ class Document(MP_Node, BaseModel):
         can_destroy = (
             is_owner
             if self.is_root()
-            else (is_owner_or_admin or (user.is_authenticated and self.creator == user))
+            else (
+                is_owner_or_admin
+                or (user.is_authenticated and self.creator_id == user.pk)
+            )
         ) and not is_deleted
 
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
