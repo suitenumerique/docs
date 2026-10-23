@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ⚡️(backend) search users through the trigram indexes instead of a full scan
+
 ## [v6.0.3] - 2026-10-23
 
 ### Added
