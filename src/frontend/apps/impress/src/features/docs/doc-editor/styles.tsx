@@ -69,8 +69,9 @@ export const DocsEditorStyle = createGlobalStyle`
     }
 
     /**
-     * Read-only and presentation mode: the source popup of math and diagram blocks must not open
-     * (BlockNote opens it from the selection even when the editor is not editable, so we need to prevent it here).
+     * Read-only and presentation mode: visually hide the source popup of math
+     * and diagram blocks. (BlockNote opens it from the selection even when
+     *  the editor is not editable, so this only hides it and does not prevent it).
      */
     .bn-editor:not([contenteditable='true']) .bn-source-block-popup {
       display: none;
