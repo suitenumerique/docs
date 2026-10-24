@@ -53,6 +53,7 @@ import { useAnalytics } from '@/libs/Analytics';
 
 import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
 import {
+  followDocLink,
   useHeadings,
   useScrollToBlockAnchor,
   useShortcuts,
@@ -316,6 +317,19 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         cellTextColor: true,
         headers: true,
       },
+      links: {
+        onClick: (event) => {
+          if (followDocLink(event)) {
+            return true;
+          }
+
+          const anchor = (event.target as Element | null)?.closest('a[href]');
+          if (anchor instanceof HTMLAnchorElement) {
+            window.open(anchor.href, anchor.target || '_blank');
+          }
+          return true;
+        },
+      },
       setIdAttribute: true,
       uploadFile,
       schema: blockNoteSchema,
@@ -451,7 +465,7 @@ export const BlockNoteReader = ({
   useScrollToBlockAnchor();
 
   return (
-    <Box>
+    <Box onClickCapture={(event) => followDocLink(event.nativeEvent)}>
       <DocsEditorStyle />
       <DocsCommentsStyle canSeeComment={false} />
       <BlockNoteView
