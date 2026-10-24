@@ -5,6 +5,7 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- 🐛(frontend) hide source popup in read-only mode #2908
 
 ### Changed
 
