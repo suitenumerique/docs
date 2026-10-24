@@ -69,6 +69,14 @@ export const DocsEditorStyle = createGlobalStyle`
     }
 
     /**
+     * Read-only and presentation mode: the source popup of math and diagram blocks must not open
+     * (BlockNote opens it from the selection even when the editor is not editable, so we need to prevent it here).
+     */
+    .bn-editor:not([contenteditable='true']) .bn-source-block-popup {
+      display: none;
+    }
+
+    /**
     * Collaboration cursor styles
     */
     .collaboration-cursor-custom__base {
