@@ -27,15 +27,15 @@ and this project adheres to
 - 🐛(frontend) no offline banner when a third-party POST fails #2939
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
 - 🐛(frontend) reload on a version mismatch only when frontend behind #2940
+- 🐛(frontend) hide source popup in read-only mode #2908
+- 🐛(frontend) duplicate the sub-docs created without reloading the page #2915
+- 🐛(frontend) show the doc tree actions of the item under the pointer
 
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
 
-### Fixed
 
-- 🐛(frontend) duplicate the sub-docs created without reloading the page #2915
-- 🐛(frontend) show the doc tree actions of the item under the pointer
 
 ## [v6.0.4] - 2026-10-26
 
