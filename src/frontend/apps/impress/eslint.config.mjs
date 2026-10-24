@@ -3,7 +3,12 @@ import docsPlugin from 'eslint-plugin-docs';
 
 const eslintConfig = defineConfig([
   {
-    ignores: ['.next/**', 'out/**', 'public/service-worker.js'],
+    ignores: [
+      '.next/**',
+      'out/**',
+      'next-env.d.ts',
+      'public/service-worker.js',
+    ],
   },
   {
     plugins: {
