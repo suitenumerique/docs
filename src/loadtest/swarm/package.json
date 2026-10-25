@@ -20,17 +20,17 @@
     "ws": "8.22.0",
     "y-protocols": "1.0.7",
     "y-websocket": "3.1.0",
-    "yjs": "13.6.32"
+    "yjs": "13.6.33"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "@types/node": "24.13.6",
-    "@types/ws": "8.18.1",
-    "eslint": "10.11.0",
+    "@types/node": "24.19.2",
+    "@types/ws": "8.18.2",
+    "eslint": "10.13.0",
     "eslint-config-prettier": "10.1.8",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.70.0",
+    "typescript-eslint": "8.71.2",
     "vite": "8.3.1",
-    "vitest": "5.0.1"
+    "vitest": "5.0.5"
   }
 }
