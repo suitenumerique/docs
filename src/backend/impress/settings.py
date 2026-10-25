@@ -399,7 +399,6 @@ class Base(Configuration):
         "rest_framework",
         "parler",
         "treebeard",
-        "easy_thumbnails",
         "waffle",
         # Django
         "django.contrib.admin",
@@ -703,12 +702,6 @@ class Base(Configuration):
     POSTHOG_HOST = values.Value(
         "https://eu.i.posthog.com", environ_name="POSTHOG_HOST", environ_prefix=None
     )
-
-    # Easy thumbnails
-    THUMBNAIL_EXTENSION = "webp"
-    THUMBNAIL_TRANSPARENCY_EXTENSION = "webp"
-    THUMBNAIL_DEFAULT_STORAGE_ALIAS = "default"
-    THUMBNAIL_ALIASES = {}
 
     # Celery
     CELERY_BROKER_URL = values.Value("redis://redis:6379/0")
