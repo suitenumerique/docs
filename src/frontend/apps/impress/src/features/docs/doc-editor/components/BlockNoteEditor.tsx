@@ -55,6 +55,7 @@ import { userColorForeground } from '@/features/auth/userColors';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 import { useAnalytics } from '@/libs/Analytics';
 
+import { authorOnlyAttribution } from '../authorOnlyAttribution';
 import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
 import { createDocsVersionStorage } from '../createDocsVersionStorage';
 import {
@@ -75,6 +76,7 @@ import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { DocsSideMenu } from './DocsSideMenu/DocsSideMenu';
 import { type HistoryDebugSettings } from './VersionHistoryDebug';
+import { VersioningComponentsProvider } from './VersioningComponentsProvider';
 import { VersioningSidebarPanel } from './VersioningSidebarPanel';
 import { CalloutBlock, PdfBlock, UploadLoaderBlock } from './custom-blocks';
 const AIMenu = BlockNoteAI?.AIMenu;
@@ -302,6 +304,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
       dictionary: {
         ...localesBN[langLocalesBN as keyof typeof localesBN],
+        suggestion_changes: authorOnlyAttribution(
+          localesBN[langLocalesBN as keyof typeof localesBN].suggestion_changes,
+        ),
         math: mathLocales[langLocalesBNMathDiagram as keyof typeof mathLocales],
         diagram:
           diagramLocales[
@@ -464,39 +469,43 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
             threadsSidebarTarget,
           )}
         {isVersioningSidebarOpen && (
-          <VersioningSidebarPanel
-            onClose={() => setIsVersioningSidebarOpen(false)}
-            debug={{
-              defaults: historyDefaults,
-              initialSettings: historyDebugSettings.current ?? historyDefaults,
-              canCreate: !!doc.abilities.partial_update,
-              onApply: async (settings) => {
-                historyDebugSettings.current = settings;
-                const mode =
-                  editor.getExtension<VersioningController>('versioning');
-                return mode ? mode.list() : { status: 'unavailable' };
-              },
-              onCreate: async () => {
-                const mode =
-                  editor.getExtension<VersioningController>('versioning');
-                if (!mode || !doc.abilities.partial_update) {
-                  return { status: 'unavailable' };
-                }
-                const latest = mode.store.state;
-                if (
-                  latest.mode === 'versions' &&
-                  latest.history.data?.[0]?.name
-                ) {
-                  return { status: 'error', error: { type: 'conflict' } };
-                }
-                return mode.create(
-                  t('Test version · {{time}}', {
-                    time: new Date().toLocaleTimeString(),
-                  }),
-                );
-              },
-            }}
-          />
+          <VersioningComponentsProvider>
+            <VersioningSidebarPanel
+              key={doc.id}
+              onClose={() => setIsVersioningSidebarOpen(false)}
+              debug={{
+                defaults: historyDefaults,
+                initialSettings:
+                  historyDebugSettings.current ?? historyDefaults,
+                canCreate: !!doc.abilities.partial_update,
+                onApply: async (settings) => {
+                  historyDebugSettings.current = settings;
+                  const mode =
+                    editor.getExtension<VersioningController>('versioning');
+                  return mode ? mode.list() : { status: 'unavailable' };
+                },
+                onCreate: async () => {
+                  const mode =
+                    editor.getExtension<VersioningController>('versioning');
+                  if (!mode || !doc.abilities.partial_update) {
+                    return { status: 'unavailable' };
+                  }
+                  const latest = mode.store.state;
+                  if (
+                    latest.mode === 'versions' &&
+                    latest.history.data?.[0]?.name
+                  ) {
+                    return { status: 'error', error: { type: 'conflict' } };
+                  }
+                  return mode.create(
+                    t('Test version · {{time}}', {
+                      time: new Date().toLocaleTimeString(),
+                    }),
+                  );
+                },
+              }}
+            />
+          </VersioningComponentsProvider>
         )}
       </BlockNoteView>
     </Box>

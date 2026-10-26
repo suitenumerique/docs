@@ -1,12 +1,7 @@
 import { Exporter } from '@blocknote/core';
+import { DOCXBlockResult } from '@blocknote/xl-docx-exporter';
 import { Link, Text, TextProps } from '@react-pdf/renderer';
-import {
-  IRunPropertiesOptions,
-  Paragraph,
-  ParagraphChild,
-  Table,
-  TextRun,
-} from 'docx';
+import { IRunPropertiesOptions, ParagraphChild, TextRun } from 'docx';
 
 import {
   DocsBlockSchema,
@@ -38,7 +33,7 @@ export type DocsExporterDocx = Exporter<
   DocsBlockSchema,
   DocsInlineContentSchema,
   DocsStyleSchema,
-  Promise<Paragraph[] | Paragraph | Table> | Paragraph[] | Paragraph | Table,
+  DOCXBlockResult,
   ParagraphChild,
   IRunPropertiesOptions,
   TextRun

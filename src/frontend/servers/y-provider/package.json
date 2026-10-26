@@ -16,11 +16,13 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@blocknote/core": "0.56.0",
-    "@blocknote/server-util": "0.56.0",
+    "@blocknote/core": "https://pkg.pr.new/@blocknote/core@a2bce36",
+    "@blocknote/server-util": "https://pkg.pr.new/@blocknote/server-util@a2bce36",
     "@sentry/node": "10.75.0",
     "@sentry/profiling-node": "10.75.0",
     "@tiptap/extensions": "*",
+    "@y/prosemirror": "^2.0.0-15",
+    "@y/protocols": "^1.0.6-rc.1",
     "@y/y": "^14.0.0-rc.26",
     "cors": "2.8.6",
     "express": "5.2.1",
