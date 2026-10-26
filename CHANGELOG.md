@@ -40,6 +40,7 @@ and this project adheres to
 - 🐛(frontend) keep the focus on the emoji button of a tree item #2964
 - 🐛(backend) keep the case of titles and names in email subjects #2792
 - 📝(docs) recreate the containers when upgrading a compose install
+- 🐛(frontend) show right-to-left text from the right in the editor #732
 
 ### Removed
 

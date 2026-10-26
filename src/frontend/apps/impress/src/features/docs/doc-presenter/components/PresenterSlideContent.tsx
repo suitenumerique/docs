@@ -4,7 +4,10 @@ import { CSSProperties, Ref, useEffect, useRef } from 'react';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
-import { blockNoteSchema } from '@/docs/doc-editor/components/BlockNoteEditor';
+import {
+  blockNoteDomAttributes,
+  blockNoteSchema,
+} from '@/docs/doc-editor/components/BlockNoteEditor';
 
 import type { PresenterBlock } from '../types';
 
@@ -75,6 +78,7 @@ export const PresenterSlideContent = ({
           >['initialContent'])
         : undefined,
     schema: blockNoteSchema,
+    domAttributes: blockNoteDomAttributes,
   });
 
   // Even with `editable={false}`, BlockNote/ProseMirror currently still renders
