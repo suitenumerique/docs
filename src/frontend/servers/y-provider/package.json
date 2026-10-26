@@ -21,6 +21,8 @@
     "@sentry/node": "11.11.0",
     "@sentry/profiling-node": "11.11.0",
     "@tiptap/extensions": "*",
+    "@y/prosemirror": "^2.0.0-15",
+    "@y/protocols": "^1.0.6-rc.1",
     "@y/y": "^14.0.0-rc.26",
     "cors": "2.8.6",
     "express": "5.3.0",
