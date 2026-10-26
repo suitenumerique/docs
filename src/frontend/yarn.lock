@@ -7189,7 +7189,7 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@y/prosemirror@^2.0.0-14":
+"@y/prosemirror@^2.0.0-14", "@y/prosemirror@^2.0.0-15":
   version "2.0.0-15"
   resolved "https://registry.yarnpkg.com/@y/prosemirror/-/prosemirror-2.0.0-15.tgz#d4ffc9daa0d87f76574b267f9bf6370ee2d7fee5"
   integrity sha512-711VRqaOtu4Mc7aIcxiJsjCEdDm2GnVRiOA/hQotk3DmIFIcettqhzPpjDBsF6UyKfD02jFJFbbvUZYibJuqIg==
