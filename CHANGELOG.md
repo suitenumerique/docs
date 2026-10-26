@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) show right-to-left text from the right in the editor #732
+
 ## [v6.0.4] - 2026-10-26
 
 ### Changed
