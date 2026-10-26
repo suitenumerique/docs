@@ -122,6 +122,14 @@ const baseBlockNoteSchema = withPageBreak(
 export const blockNoteSchema = (withMultiColumn?.(baseBlockNoteSchema) ||
   baseBlockNoteSchema) as typeof baseBlockNoteSchema;
 
+/**
+ * Let each block pick its direction from its own text, so Hebrew or Arabic
+ * paragraphs read and align right-to-left next to left-to-right ones.
+ */
+export const blockNoteDomAttributes = {
+  blockContent: { dir: 'auto' },
+};
+
 interface BlockNoteEditorProps {
   doc: Doc;
   provider: WebsocketProvider;
@@ -226,6 +234,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
           labelElement.classList.add('collaboration-cursor-custom__label');
           labelElement.setAttribute('spellcheck', `false`);
+          // Keep the name out of the dir="auto" detection of the block
+          labelElement.setAttribute('dir', 'auto');
           labelElement.setAttribute(
             'style',
             `background-color: ${safeColor};border: 1px solid ${safeColor};`,
@@ -337,6 +347,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       setIdAttribute: true,
       uploadFile,
       schema: blockNoteSchema,
+      domAttributes: blockNoteDomAttributes,
     }),
     [
       aiExtension,
@@ -439,6 +450,7 @@ export const BlockNoteReader = ({
       },
       setIdAttribute: true,
       schema: blockNoteSchema,
+      domAttributes: blockNoteDomAttributes,
       extensions: [
         CommentsExtension({
           threadStore,

@@ -178,6 +178,43 @@ export const DocsEditorStyle = createGlobalStyle`
     }
 
     /**
+    * Right-to-left blocks
+    * Blocks get dir="auto". BlockNote uses physical sides (quote bar,
+    * nesting margin) and justify-content for alignment: mirror them in
+    * right-to-left blocks. File blocks stay left-to-right (below), which
+    * :dir() ignores, hence their exclusion.
+    */
+    .bn-block-content:dir(rtl)[data-content-type='quote'] blockquote {
+      border-left: none;
+      border-right: 4px solid var(--c--globals--colors--gray-300);
+      padding-left: 0;
+      padding-right: 1em;
+    }
+    .bn-block-content:dir(rtl):not([data-file-block])[data-text-alignment='right'] {
+      justify-content: flex-start !important;
+    }
+    .bn-block-content:dir(rtl) ~ .bn-block-group {
+      margin-left: 0;
+      margin-right: 24px;
+    }
+
+    /**
+    * dir="auto" also reads the caption of images and files: keep their
+    * layout left-to-right so a Hebrew caption does not move the image, and
+    * let the caption take its own direction, unless it is explicitly aligned.
+    */
+    .bn-block-content[data-file-block] {
+      direction: ltr;
+    }
+    .bn-block-content[data-file-block] .bn-file-caption {
+      unicode-bidi: plaintext;
+    }
+    .bn-block-content[data-file-block]:not([data-text-alignment])
+      .bn-file-caption {
+      text-align: start;
+    }
+
+    /**
     * AI
     */
     ins,
