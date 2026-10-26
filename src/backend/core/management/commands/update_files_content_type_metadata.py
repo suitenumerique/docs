@@ -69,7 +69,12 @@ class Command(BaseCommand):
                         # Detect MIME type
                         magic_mime_type = mime_detector.from_buffer(partial_data)
 
-                        # Update ContentType
+                        # Update ContentType. REPLACE drops every header not
+                        # passed again, and losing Content-Disposition would
+                        # serve unsafe attachments (SVG, HTML...) inline.
+                        copy_kwargs = {}
+                        if content_disposition := head_resp.get("ContentDisposition"):
+                            copy_kwargs["ContentDisposition"] = content_disposition
                         s3_client.copy_object(
                             Bucket=bucket_name,
                             CopySource={"Bucket": bucket_name, "Key": key},
@@ -77,6 +82,7 @@ class Command(BaseCommand):
                             ContentType=magic_mime_type,
                             Metadata=lowercase_keys(head_resp.get("Metadata", {})),
                             MetadataDirective="REPLACE",
+                            **copy_kwargs,
                         )
                         total_updated += 1
 
