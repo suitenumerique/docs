@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v6.0.4] - 2026-10-26
+
 ### Changed
 
 - ⚡️(backend) search users through the trigram indexes instead of a full scan
@@ -15,6 +17,7 @@ and this project adheres to
 
 - 🔒️(backend) require edit rights for creators to delete their sub docs #2873
 - ♻️(frontend) change base image to nginx/nginx-unprivileged #2907
+- ⬆️(backend) upgrade brotli to version 1.2.1
 
 ## [v6.0.3] - 2026-10-23
 
@@ -1735,7 +1738,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v6.0.3...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v6.0.4...main
+[v6.0.4]: https://github.com/suitenumerique/docs/releases/v6.0.4
 [v6.0.3]: https://github.com/suitenumerique/docs/releases/v6.0.3
 [v6.0.2]: https://github.com/suitenumerique/docs/releases/v6.0.2
 [v6.0.1]: https://github.com/suitenumerique/docs/releases/v6.0.1
