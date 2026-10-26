@@ -1,6 +1,6 @@
 {
   "name": "app-impress",
-  "version": "6.0.3",
+  "version": "6.0.4",
   "repository": "https://github.com/suitenumerique/docs",
   "author": "DINUM",
   "license": "MIT",
@@ -50,7 +50,7 @@
     "@react-aria/live-announcer": "3.5.1",
     "@react-pdf/math": "2.0.1",
     "@react-pdf/renderer": "4.9.0",
-    "@sentry/nextjs": "10.75.0",
+    "@sentry/nextjs": "10.76.2",
     "@tanstack/react-query": "5.104.1",
     "@tiptap/extension-find-and-replace": "3.31.4",
     "@tiptap/extensions": "*",
@@ -70,7 +70,7 @@
     "luxon": "3.7.2",
     "mathjax-full": "3.2.2",
     "mathml2omml": "0.5.0",
-    "next": "16.3.8",
+    "next": "16.4.3",
     "posthog-js": "1.436.1",
     "react": "*",
     "react-aria-components": "1.21.1",
@@ -88,7 +88,7 @@
     "y-protocols": "1.0.7",
     "y-websocket": "3.1.0",
     "yjs": "*",
-    "zod": "4.6.5",
+    "zod": "4.6.7",
     "zustand": "5.0.15"
   },
   "devDependencies": {
@@ -116,7 +116,7 @@
     "stylelint-config-standard": "39.0.1",
     "stylelint-prettier": "5.0.3",
     "typescript": "*",
-    "vite": "8.3.2",
+    "vite": "8.3.5",
     "vitest": "5.0.3",
     "webpack": "5.111.1",
     "workbox-webpack-plugin": "7.1.0"

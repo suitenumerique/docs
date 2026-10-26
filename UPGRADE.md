@@ -16,6 +16,8 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+## [v6.0.2] - 2026-10-21
+
 - ⚠️ **The collaboration server moves to `@y/hub` 0.10.1: run its schema
   script again before starting it.** It adds the `yhub_ydoc_versions_v1`
   table, without which every hard deletion of a document fails, and two

@@ -74,7 +74,7 @@ Production deployments differ significantly from development environments. The t
 | Docker Engine / Desktop | 24.0    |
 | Docker Compose          | v2      |
 | Git                     | 2.40    |
-| **Node.js**             | 22+     |
+| **Node.js**             | 22.12+  |
 | **Python**              | 3.13+   |
 | GNU Make                | 4.4     |
 | Kind                    | 0.22    |
