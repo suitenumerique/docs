@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-22 16:37+0000\n"
-"PO-Revision-Date: 2026-10-23 08:58\n"
+"POT-Creation-Date: 2026-10-24 08:08+0000\n"
+"PO-Revision-Date: 2026-10-26 12:59\n"
 "Last-Translator: \n"
 "Language-Team: Turkish\n"
 "Language: tr_TR\n"
@@ -134,16 +134,16 @@ msgstr ""
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr ""
 
-#: core/api/viewsets.py:1420 core/api/viewsets.py:1428
+#: core/api/viewsets.py:1446 core/api/viewsets.py:1454
 #, python-brace-format
 msgid "{title} (copy)"
 msgstr ""
 
-#: core/api/viewsets.py:1479
+#: core/api/viewsets.py:1505
 msgid "Untitled document (copy)"
 msgstr ""
 
-#: core/api/viewsets.py:3380
+#: core/api/viewsets.py:3406
 #, python-format
 msgid "A comment can have a maximum of %(max)d distinct reactions."
 msgstr ""
@@ -224,7 +224,7 @@ msgstr ""
 msgid "date and time at which a record was created"
 msgstr ""
 
-#: core/models.py:100 core/models.py:2379
+#: core/models.py:100 core/models.py:2387
 msgid "updated on"
 msgstr ""
 
@@ -436,249 +436,249 @@ msgstr ""
 msgid "Documents"
 msgstr ""
 
-#: core/models.py:1092 core/models.py:1471 core/models.py:2210
+#: core/models.py:1092 core/models.py:1479 core/models.py:2218
 msgid "Untitled Document"
 msgstr ""
 
-#: core/models.py:1472
+#: core/models.py:1480
 msgid "Open"
 msgstr ""
 
-#: core/models.py:1507
+#: core/models.py:1515
 #, python-brace-format
 msgid "{name} shared a document with you!"
 msgstr ""
 
-#: core/models.py:1511
+#: core/models.py:1519
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
 msgstr ""
 
-#: core/models.py:1517
+#: core/models.py:1525
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
 msgstr ""
 
-#: core/models.py:1617
+#: core/models.py:1625
 msgid "Document/user link trace"
 msgstr ""
 
-#: core/models.py:1618
+#: core/models.py:1626
 msgid "Document/user link traces"
 msgstr ""
 
-#: core/models.py:1624
+#: core/models.py:1632
 msgid "A link trace already exists for this document/user."
 msgstr ""
 
-#: core/models.py:1647
+#: core/models.py:1655
 msgid "Document favorite"
 msgstr ""
 
-#: core/models.py:1648
+#: core/models.py:1656
 msgid "Document favorites"
 msgstr ""
 
-#: core/models.py:1654
+#: core/models.py:1662
 msgid "This document is already targeted by a favorite relation instance for the same user."
 msgstr ""
 
-#: core/models.py:1676
+#: core/models.py:1684
 msgid "Document/user relation"
 msgstr ""
 
-#: core/models.py:1677
+#: core/models.py:1685
 msgid "Document/user relations"
 msgstr ""
 
-#: core/models.py:1683
+#: core/models.py:1691
 msgid "This user is already in this document."
 msgstr ""
 
-#: core/models.py:1689
+#: core/models.py:1697
 msgid "This team is already in this document."
 msgstr ""
 
-#: core/models.py:1695
+#: core/models.py:1703
 msgid "Either user or team must be set, not both."
 msgstr ""
 
-#: core/models.py:1846
+#: core/models.py:1854
 msgid "Document ask for access"
 msgstr ""
 
-#: core/models.py:1847
+#: core/models.py:1855
 msgid "Document ask for accesses"
 msgstr ""
 
-#: core/models.py:1853
+#: core/models.py:1861
 msgid "This user has already asked for access to this document."
 msgstr ""
 
-#: core/models.py:1910
+#: core/models.py:1918
 #, python-brace-format
 msgid "{name} would like access to a document!"
 msgstr ""
 
-#: core/models.py:1914
+#: core/models.py:1922
 #, python-brace-format
 msgid "{name} would like access to the following document:"
 msgstr ""
 
-#: core/models.py:1920
+#: core/models.py:1928
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
 msgstr ""
 
-#: core/models.py:1962
+#: core/models.py:1970
 msgid "Thread"
 msgstr ""
 
-#: core/models.py:1963
+#: core/models.py:1971
 msgid "Threads"
 msgstr ""
 
-#: core/models.py:1966 core/models.py:2018
+#: core/models.py:1974 core/models.py:2026
 msgid "Anonymous"
 msgstr ""
 
-#: core/models.py:2013
+#: core/models.py:2021
 msgid "Comment"
 msgstr ""
 
-#: core/models.py:2014
+#: core/models.py:2022
 msgid "Comments"
 msgstr ""
 
-#: core/models.py:2063
+#: core/models.py:2071
 msgid "This emoji has already been reacted to this comment."
 msgstr ""
 
-#: core/models.py:2067
+#: core/models.py:2075
 msgid "Reaction"
 msgstr ""
 
-#: core/models.py:2068
+#: core/models.py:2076
 msgid "Reactions"
 msgstr ""
 
-#: core/models.py:2119
+#: core/models.py:2127
 msgid "Mention"
 msgstr ""
 
-#: core/models.py:2120
+#: core/models.py:2128
 msgid "Mentions"
 msgstr ""
 
-#: core/models.py:2133
+#: core/models.py:2141
 msgid "a deleted user"
 msgstr ""
 
-#: core/models.py:2143
+#: core/models.py:2151
 msgid "The thread does not belong to this document."
 msgstr ""
 
-#: core/models.py:2212
+#: core/models.py:2220
 #, python-brace-format
 msgid "{name} mentioned you in a comment in \"{title}\""
 msgstr ""
 
-#: core/models.py:2216
+#: core/models.py:2224
 #, python-brace-format
 msgid "{name} mentioned you in a comment in the following document:"
 msgstr ""
 
-#: core/models.py:2219
+#: core/models.py:2227
 #, python-brace-format
 msgid "{name} mentioned you in \"{title}\""
 msgstr ""
 
-#: core/models.py:2222
+#: core/models.py:2230
 #, python-brace-format
 msgid "{name} mentioned you in the following document:"
 msgstr ""
 
-#: core/models.py:2248
+#: core/models.py:2256
 msgid "email address"
 msgstr ""
 
-#: core/models.py:2267
+#: core/models.py:2275
 msgid "Document invitation"
 msgstr ""
 
-#: core/models.py:2268
+#: core/models.py:2276
 msgid "Document invitations"
 msgstr ""
 
-#: core/models.py:2288
+#: core/models.py:2296
 msgid "This email is already associated to a registered user."
 msgstr ""
 
-#: core/models.py:2331
+#: core/models.py:2339
 msgid "Migrated"
 msgstr ""
 
-#: core/models.py:2332
+#: core/models.py:2340
 msgid "Already migrated"
 msgstr ""
 
-#: core/models.py:2333
+#: core/models.py:2341
 msgid "Nothing in the object storage"
 msgstr ""
 
-#: core/models.py:2334
+#: core/models.py:2342
 msgid "No readable version"
 msgstr ""
 
-#: core/models.py:2335
+#: core/models.py:2343
 msgid "Failed"
 msgstr ""
 
-#: core/models.py:2359
+#: core/models.py:2367
 msgid "status"
 msgstr ""
 
-#: core/models.py:2361
+#: core/models.py:2369
 msgid "versions"
 msgstr ""
 
-#: core/models.py:2364
+#: core/models.py:2372
 msgid "applied"
 msgstr ""
 
-#: core/models.py:2365
+#: core/models.py:2373
 msgid "versions that added content, one activity entry each"
 msgstr ""
 
-#: core/models.py:2369
+#: core/models.py:2377
 msgid "skipped"
 msgstr ""
 
-#: core/models.py:2370
+#: core/models.py:2378
 msgid "versions that could not be read"
 msgstr ""
 
-#: core/models.py:2374
+#: core/models.py:2382
 msgid "dropped"
 msgstr ""
 
-#: core/models.py:2375
+#: core/models.py:2383
 msgid "versions older than the ones the server replays"
 msgstr ""
 
-#: core/models.py:2377
+#: core/models.py:2385
 msgid "duration"
 msgstr ""
 
-#: core/models.py:2378
+#: core/models.py:2386
 msgid "error"
 msgstr ""
 
-#: core/models.py:2383
+#: core/models.py:2391
 msgid "Document migration"
 msgstr ""
 
-#: core/models.py:2384
+#: core/models.py:2392
 msgid "Document migrations"
 msgstr ""
 
