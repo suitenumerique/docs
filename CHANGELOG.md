@@ -26,6 +26,7 @@ and this project adheres to
 - 🐛(frontend) no offline banner when a third-party POST fails #2939
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
 - 🐛(frontend) reload on a version mismatch only when frontend behind #2940
+- 🐛(frontend) show right-to-left text from the right in the editor #732
 
 ### Removed
 
