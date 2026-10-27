@@ -138,6 +138,23 @@ export const DocShareModal = ({
   const [inputValue, setInputValue] = useState('');
 
   const [listHeight, setListHeight] = useState<string>('400px');
+  // The pending encryption section sits above the list and changes height as
+  // it learns who enabled encryption, so the list leaves its room live.
+  const [pendingHeight, setPendingHeight] = useState(0);
+  const pendingSectionRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) {
+      return;
+    }
+    const observer = new ResizeObserver(() =>
+      setPendingHeight(node.offsetHeight),
+    );
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      setPendingHeight(0);
+    };
+  }, []);
+  const membersListHeight = `calc(${listHeight} - ${pendingHeight}px)`;
   const canShare = doc.abilities.accesses_manage && isRootDoc;
   const canViewAccesses = doc.abilities.accesses_view;
   const showMemberSection = inputValue === '' && selectedUsers.length === 0;
@@ -288,7 +305,7 @@ export const DocShareModal = ({
               $css={css`
                 [cmdk-list] {
                   overflow-y: auto;
-                  height: ${listHeight};
+                  height: ${membersListHeight};
                 }
               `}
             >
@@ -317,12 +334,14 @@ export const DocShareModal = ({
               </Box>
 
               {doc.is_encrypted && canViewAccesses && membersQuery && (
-                <PendingEncryptionSection
-                  doc={doc}
-                  accesses={membersQuery}
-                  documentEncryptionSettings={effectiveEncryptionSettings}
-                  canAccept={canShare}
-                />
+                <Box ref={pendingSectionRef}>
+                  <PendingEncryptionSection
+                    doc={doc}
+                    accesses={membersQuery}
+                    documentEncryptionSettings={effectiveEncryptionSettings}
+                    canAccept={canShare}
+                  />
+                </Box>
               )}
 
               <Box data-testid="doc-share-quick-search">
