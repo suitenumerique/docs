@@ -1627,6 +1627,7 @@
       "Simple document icon": "Emoticône simple de document",
       "Slide {{current}} of {{total}}": "Diapositive {{current}} de {{total}}",
       "Slide {{current}} of {{total}}: {{title}}": "Diapositive {{current}} de {{total}} : {{title}}",
+      "Some files are still being analyzed by the antivirus: wait for the analysis to finish": "Des fichiers sont encore en cours d'analyse par l'antivirus : attendez la fin de l'analyse",
       "Something bad happens, please retry.": "Une erreur inattendue s'est produite, veuillez réessayer.",
       "Something went wrong while decrypting this document. Try again.": "Une erreur est survenue lors du déchiffrement de ce document. Réessayez.",
       "Sort documents by {{label}}": "Tri des documents par {{label}}",

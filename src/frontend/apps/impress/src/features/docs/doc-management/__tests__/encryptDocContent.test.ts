@@ -3,7 +3,7 @@ import * as Y from 'yjs';
 
 import { createDocAttachment } from '@/docs/doc-editor/api';
 
-import { encryptDocContent } from '../encryptDocContent';
+import { countAnalyzingUploads, encryptDocContent } from '../encryptDocContent';
 
 vi.mock('@/docs/doc-editor/api', () => ({
   createDocAttachment: vi.fn(),
@@ -127,5 +127,40 @@ describe('encryptDocContent', () => {
     expect(imageUrl(result.encryptedContent)).toBe(
       `http://localhost:8083/media/${OLD_KEY}`,
     );
+  });
+});
+
+describe('countAnalyzingUploads', () => {
+  const loader = (type?: string) => {
+    const element = new Y.XmlElement('uploadLoader');
+    element.setAttribute(
+      'blockUploadUrl',
+      `http://localhost:8071/api/v1.0/documents/${DOC_ID}/media-check/?key=${encodeURIComponent(OLD_KEY)}`,
+    );
+    if (type) {
+      element.setAttribute('type', type);
+    }
+    // As BlockNote nests a block in its container.
+    const container = new Y.XmlElement('blockContainer');
+    container.insert(0, [element]);
+
+    return container;
+  };
+
+  test('counts the files still being analyzed, not the ones the scan refused', () => {
+    const yDoc = docWithImage(`http://localhost:8083/media/${OLD_KEY}`);
+    yDoc
+      .getXmlFragment('document-store')
+      .insert(1, [loader('loading'), loader(), loader('warning')]);
+
+    expect(countAnalyzingUploads(yDoc)).toBe(2);
+  });
+
+  test('a document without loaders has none', () => {
+    expect(
+      countAnalyzingUploads(
+        docWithImage(`http://localhost:8083/media/${OLD_KEY}`),
+      ),
+    ).toBe(0);
   });
 });
