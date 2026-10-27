@@ -1,4 +1,8 @@
+import { validate as uuidValidate } from 'uuid';
+
 import { DocsBlockNoteEditor } from './types';
+
+export const DOC_PATH_REGEX = /^\/docs\/([^/]+)\/?$/;
 
 const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
 
@@ -38,3 +42,31 @@ function hslToHex(h: number, s: number, l: number) {
   };
   return `#${f(0)}${f(8)}${f(4)}`;
 }
+
+/**
+ * Returns the doc id and block id of a link pointing to a document
+ * on this same origin, or null for any other link (external, attachments...).
+ */
+export const getDocLink = (
+  href: string,
+): { docId: string; blockId?: string } | null => {
+  let url: URL;
+  try {
+    url = new URL(href, window.location.href);
+  } catch {
+    return null;
+  }
+
+  if (url.origin !== window.location.origin) {
+    return null;
+  }
+
+  const docId = DOC_PATH_REGEX.exec(url.pathname)?.[1];
+  if (!docId || !uuidValidate(docId)) {
+    return null;
+  }
+
+  const blockId = url.hash.slice(1) || undefined;
+
+  return blockId ? { docId, blockId } : { docId };
+};
