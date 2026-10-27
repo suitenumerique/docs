@@ -57,8 +57,8 @@ docker_build(
 k8s_resource('impress-docs-backend-migrate', resource_deps=['dev-backend-postgres'])
 k8s_resource('impress-docs-backend-createsuperuser', resource_deps=['impress-docs-backend-migrate'])
 k8s_resource('impress-docs-yhub-init-db', resource_deps=['dev-backend-postgres', 'valkey-yhub'])
-k8s_resource('dev-backend-keycloak', resource_deps=['dev-backend-keycloak-pg'])
-k8s_resource('impress-docs-backend', resource_deps=['impress-docs-backend-migrate', 'valkey-docs', 'dev-backend-keycloak', 'dev-backend-postgres', 'dev-backend-minio:statefulset'])
+# Keycloak is disabled here; docs uses the shared conversations Keycloak.
+k8s_resource('impress-docs-backend', resource_deps=['impress-docs-backend-migrate', 'valkey-docs', 'dev-backend-postgres', 'dev-backend-minio:statefulset'])
 k8s_resource('impress-docs-celery-worker', resource_deps=['valkey-docs'])
 k8s_resource('impress-docs-yhub', resource_deps=['valkey-yhub'])
 k8s_resource('impress-docs-yhub-worker', resource_deps=['valkey-yhub'])
