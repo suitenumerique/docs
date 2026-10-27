@@ -176,6 +176,7 @@ Enabling it implies:
 - **A deployed instance of the encryption service.** Users' browsers must reach it at `ENCRYPTION_VAULT_URL` (its `data.` host, which serves the SDK and the vault iframe) and `ENCRYPTION_INTERFACE_URL` (its interface host). Both must be set, otherwise the feature stays off.
 - **That instance must be configured for this frontend**: its `ALLOWED_FRAME_ANCESTORS` must list this application's origin, it must use the same OIDC provider (users are matched on the `sub` claim), and it must share the same registrable domain as the other products for the browser to share keys between them (for example `docs.example.com`, `drive.example.com`, `encryption.example.com` and `data.encryption.example.com` all sit under `example.com`; an encryption service hosted on `encryption.other-domain.com` would keep a separate key store per product).
 - **Use with caution.** Encrypted content can only be read by users holding the keys: the server cannot recover it, and a user who loses both their device keys and their backup loses access to their encrypted documents. Do not enable it in production without a validated deployment of the encryption service and a tested recovery process.
+- **Batch recovery.** When the encryption service runs its maintenance escrow, the `maintenance_export`, `maintenance_import` and `maintenance_purge_versions` commands recover encrypted documents in batch with its maintenance tool: see [Batch recovery of encrypted documents](encryption-batch-recovery.md).
 
 ## impress-frontend image
 

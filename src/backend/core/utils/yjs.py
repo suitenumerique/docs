@@ -2,6 +2,7 @@
 
 import base64
 import re
+from urllib.parse import quote
 
 import pycrdt
 from bs4 import BeautifulSoup
@@ -34,3 +35,46 @@ def extract_attachments(content):
 
     xml_content = base64_yjs_to_xml(content)
     return re.findall(enums.MEDIA_STORAGE_URL_EXTRACT, xml_content)
+
+
+def _xml_elements(node):
+    """Every element under a fragment or an element, depth first."""
+    for child in node.children:
+        if isinstance(child, pycrdt.XmlElement):
+            yield child
+            yield from _xml_elements(child)
+
+
+def replace_attachment_keys(update, mapping):
+    """
+    The raw Yjs update of a document whose attachments moved to new keys: each
+    element's `url` naming an old key names its new one, in the `/media/<key>` form
+    as in the `media-check/?key=` form (the key URL-encoded there). The same rewrite
+    the frontend makes when it removes a document's encryption, returned as the full
+    state of the document.
+    """
+    doc = pycrdt.Doc()
+    doc.apply_update(update)
+    fragment = doc.get("document-store", type=pycrdt.XmlFragment)
+    replacements = [
+        pair
+        for old, new in mapping.items()
+        for pair in ((old, new), (quote(old, safe=""), quote(new, safe="")))
+    ]
+
+    with doc.transaction():
+        for element in _xml_elements(fragment):
+            url = element.attributes.get("url")
+
+            if not isinstance(url, str):
+                continue
+
+            rewritten = url
+
+            for old, new in replacements:
+                rewritten = rewritten.replace(old, new)
+
+            if rewritten != url:
+                element.attributes["url"] = rewritten
+
+    return doc.get_update()

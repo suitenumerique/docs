@@ -77,6 +77,8 @@ def test_api_document_favorite_list_authenticated_with_favorite():
                 "accesses_versions_per_user": None,
                 "encrypted_document_symmetric_key_for_user": None,
                 "is_pending_encryption_for_user": False,
+                "creator_sub": None,
+                "has_maintenance_key": False,
                 "id": str(document.id),
                 "is_favorite": True,
                 "is_encrypted": document.is_encrypted,

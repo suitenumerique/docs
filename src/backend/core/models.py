@@ -956,6 +956,17 @@ class Document(MP_Node, BaseModel):
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
     excerpt = models.TextField(_("excerpt"), max_length=300, null=True, blank=True)
     is_encrypted = models.BooleanField(default=False)
+    maintenance_wrapped_document_key = models.TextField(
+        _("maintenance wrapped document key"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "The document key wrapped by the encryption vault for the maintenance key "
+            "covering the owner's organization (base64). Only that organization's "
+            "custodians can open it, offline, to recover the content in batch; it is "
+            "never a recipient."
+        ),
+    )
     link_reach = models.CharField(
         max_length=20,
         choices=LinkReachChoices.choices,
@@ -1506,6 +1517,7 @@ class Document(MP_Node, BaseModel):
             "link_configuration": is_owner_or_admin,
             "invite_owner": is_owner and not is_deleted,
             "leave": can_leave,
+            "maintenance_key": can_update and self.is_encrypted,
             "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
             "remove_encryption": is_owner_or_admin,
@@ -2228,3 +2240,25 @@ class Invitation(BaseModel):
             "partial_update": is_admin_or_owner,
             "retrieve": is_admin_or_owner,
         }
+
+
+class MaintenanceImportUpload(models.Model):
+    """
+    A plaintext attachment object `maintenance_import` is about to upload for a
+    document: recorded, and committed, before the upload, and deleted by the
+    transaction that switches the document. A row that outlives its run names an
+    object a killed run left behind, which the next run, or
+    `maintenance_purge_versions`, deletes.
+    """
+
+    key = models.CharField(_("object key"), max_length=255, primary_key=True)
+    document_id = models.UUIDField(_("document id"))
+    created_at = models.DateTimeField(_("created on"), auto_now_add=True)
+
+    class Meta:
+        db_table = "impress_maintenance_import_upload"
+        verbose_name = _("Maintenance import upload")
+        verbose_name_plural = _("Maintenance import uploads")
+
+    def __str__(self):
+        return self.key

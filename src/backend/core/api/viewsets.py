@@ -28,7 +28,6 @@ from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.http import content_disposition_header
 from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
 
@@ -72,6 +71,7 @@ from core.tasks.access import reset_service_connections_in_cascade
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.dicts import lowercase_keys
+from core.utils.maintenance_escrow import maintenance_key_id
 from core.utils.paths import filter_descendants
 from core.utils.s3 import get_s3_client
 from core.utils.s3_response_stream import content_stream
@@ -1923,57 +1923,9 @@ class DocumentViewSet(
         # attachments before the switch, we cannot enforce this rule
         is_file_encrypted = serializer.validated_data.get("is_encrypted", False)
 
-        # For encrypted files, set status to READY immediately since the server
-        # cannot inspect ciphertext for malware scanning.
-        initial_status = (
-            enums.DocumentAttachmentStatus.READY.value
-            if is_file_encrypted
-            else enums.DocumentAttachmentStatus.PROCESSING.value
+        key, extra_args = utils.attachment_upload_target(
+            document, serializer.validated_data, request.user.id
         )
-
-        # Prepare metadata for storage
-        extra_args = {
-            "Metadata": {
-                "owner": str(request.user.id),
-                "status": initial_status,
-            },
-            "ContentType": serializer.validated_data["content_type"],
-        }
-
-        if is_file_encrypted:
-            extra_args["Metadata"]["is_encrypted"] = "true"
-
-        # Generate a generic yet unique filename to store the image in object storage
-        file_id = uuid.uuid4()
-        ext = serializer.validated_data["expected_extension"]
-
-        file_unsafe = ""
-        if serializer.validated_data["is_unsafe"]:
-            extra_args["Metadata"]["is_unsafe"] = "true"
-            file_unsafe = "-unsafe"
-
-        key = f"{document.key_base}/{enums.ATTACHMENTS_FOLDER:s}/{file_id!s}{file_unsafe}.{ext:s}"
-
-        file_name = serializer.validated_data["file_name"]
-        if (
-            not serializer.validated_data["content_type"].startswith("image/")
-            or serializer.validated_data["is_unsafe"]
-        ):
-            extra_args.update(
-                {
-                    "ContentDisposition": content_disposition_header(
-                        as_attachment=True, filename=file_name
-                    )
-                }
-            )
-        else:
-            extra_args.update(
-                {
-                    "ContentDisposition": content_disposition_header(
-                        as_attachment=False, filename=file_name
-                    )
-                }
-            )
 
         file = serializer.validated_data["file"]
         default_storage.connection.meta.client.upload_fileobj(
@@ -2726,6 +2678,7 @@ class DocumentViewSet(
         with expected data:
         - content: str (encrypted content)
         - encryptedSymmetricKeyPerUser: dict (user_id -> encrypted_key)
+        - maintenanceKey: str, optional (the maintenance escrow copy)
         Updates the document's content and marks it as encrypted.
         """
         document = self.get_object()
@@ -2836,6 +2789,15 @@ class DocumentViewSet(
         # Update the document content and encryption status
         document.content = content  # This will be cached and saved to object storage
         document.is_encrypted = True
+        # The vault escrows for the caller's organization, which is the owner's
+        # only when the caller created the document. Anyone else (an owner or an
+        # administrator who did not create it) leaves it empty, for the backfill
+        # to make the copy for the creator's organization.
+        document.maintenance_wrapped_document_key = (
+            serializer.validated_data["maintenanceKey"]
+            if document.creator_id == request.user.id
+            else None
+        )
         document.save()
         cache.delete(utils.get_content_metadata_cache_key(document.id))
 
@@ -2910,6 +2872,7 @@ class DocumentViewSet(
         # Update the document content and encryption status
         document.content = content  # This will be cached and saved to object storage
         document.is_encrypted = False
+        document.maintenance_wrapped_document_key = None
         document.save()
         cache.delete(utils.get_content_metadata_cache_key(document.id))
 
@@ -2935,6 +2898,92 @@ class DocumentViewSet(
         # Return the updated document
         serializer = self.get_serializer(document)
         return drf.response.Response(serializer.data, status=drf.status.HTTP_200_OK)
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["patch"],
+        name="Store the maintenance copy of an encrypted document's key",
+        url_path="maintenance-key",
+    )
+    def maintenance_key(self, request, *args, **kwargs):
+        """
+        PATCH /api/v1.0/documents/<resource_id>/maintenance-key/
+        with expected data:
+        - maintenanceKey: str (base64)
+        Stores the copy only when it brings something:
+        - the document has none (encrypted before the escrow covered its owner, or
+          by someone other than its creator): any editor may fill it, the backfill;
+        - the stored copy is for another maintenance key (the owner's organization
+          moved to a new one): only an owner or an administrator may replace it,
+          since the copy decides which organization's custodians can read the
+          document.
+        A copy for the key the stored one is already for is refused with a 409: it
+        would differ only by the randomness of the wrap.
+
+        The backend cannot check which key is the right one (the list of maintenance
+        keys lives on the encryption service), so a copy with a forged header passes.
+        It only corrupts the document for someone who can already edit it, and so
+        corrupt it anyway, outside the maintenance process.
+        """
+        document = self.get_object()
+
+        serializer = serializers.MaintenanceKeySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        copy = serializer.validated_data["maintenanceKey"]
+        documents = models.Document.objects.filter(pk=document.pk)
+
+        # Each write is a queryset update: not an edit of the document, so its
+        # updated_at (list order, and what a batch recovery compares before
+        # writing back) stays as it is. Each is also conditional on the value it
+        # replaces, in the same statement: a copy stored since the document was
+        # read is never overwritten unseen.
+        if documents.filter(
+            db.Q(maintenance_wrapped_document_key__isnull=True)
+            | db.Q(maintenance_wrapped_document_key="")
+        ).update(maintenance_wrapped_document_key=copy):
+            return drf.response.Response(status=drf.status.HTTP_204_NO_CONTENT)
+
+        previous = documents.values_list(
+            "maintenance_wrapped_document_key", flat=True
+        ).first()
+
+        if maintenance_key_id(previous) == maintenance_key_id(copy):
+            return drf.response.Response(
+                {
+                    "detail": (
+                        "The document already has a maintenance copy for this "
+                        "maintenance key."
+                    ),
+                    "code": "maintenance_key_already_stored",
+                },
+                status=drf.status.HTTP_409_CONFLICT,
+            )
+
+        if not document.get_abilities(request.user)["accesses_manage"]:
+            raise drf.exceptions.PermissionDenied(
+                "Only an owner or an administrator can replace the maintenance copy."
+            )
+
+        if not documents.filter(maintenance_wrapped_document_key=previous).update(
+            maintenance_wrapped_document_key=copy
+        ):
+            return drf.response.Response(
+                {
+                    "detail": "The maintenance copy changed meanwhile, try again.",
+                    "code": "maintenance_key_changed",
+                },
+                status=drf.status.HTTP_409_CONFLICT,
+            )
+
+        logger.warning(
+            "Maintenance copy of document %s replaced by user %s: key %s, now %s",
+            document.pk,
+            request.user.pk,
+            maintenance_key_id(previous),
+            maintenance_key_id(copy),
+        )
+
+        return drf.response.Response(status=drf.status.HTTP_204_NO_CONTENT)
 
     @drf.decorators.action(
         detail=True,

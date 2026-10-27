@@ -12,3 +12,4 @@ export * from './useMoveDoc';
 export * from './useRemoveDocEncryption';
 export * from './useRestoreDoc';
 export * from './useUpdateDoc';
+export * from './useUpdateMaintenanceKey';

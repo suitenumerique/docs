@@ -31,6 +31,7 @@ import {
   useDocumentEncryption,
   useUserEncryption,
 } from '@/features/docs/doc-collaboration';
+import { useMaintenanceKeyBackfill } from '@/features/docs/doc-collaboration/hook/useMaintenanceKeyBackfill';
 import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
 import { DecryptionFailurePanel } from '@/features/docs/doc-management/components/DecryptionFailurePanel';
 import { EncryptionEmptyState } from '@/features/docs/doc-management/components/EncryptionLayout';
@@ -161,6 +162,7 @@ const DocPage = ({ id }: DocProps) => {
     doc,
     provider ? documentEncryptionSettings : null,
   );
+  useMaintenanceKeyBackfill(doc, provider ? documentEncryptionSettings : null);
   // Held by the page rather than the editor, so the provider state survives
   // the transition and decryption failure screens that replace the editor
   useCollaboration(doc?.id, doc?.is_encrypted, documentEncryptionSettings);
