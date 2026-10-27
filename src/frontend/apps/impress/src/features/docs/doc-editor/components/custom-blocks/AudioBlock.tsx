@@ -53,7 +53,7 @@ const AudioBlockComponent = ({
     <FileBlockWrapper
       {...wrapperProps}
       buttonIcon={
-        <Icon iconName="audiotrack" $size="24px" $css="line-height: normal;" />
+        <Icon iconName="audiotrack" $size="h3" $css="line-height: normal;" />
       }
     >
       {showPlaceholder && (

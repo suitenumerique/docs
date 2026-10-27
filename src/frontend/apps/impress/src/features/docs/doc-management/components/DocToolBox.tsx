@@ -347,7 +347,7 @@ const DocToolBoxComponent = ({
     },
     {
       label: t('Encrypt document'),
-      icon: <Icon iconName="add_moderator" $size="18px" aria-hidden="true" />,
+      icon: <Icon iconName="add_moderator" $size="lg" aria-hidden="true" />,
       isDisabled: !doc.abilities.accesses_manage,
       callback: () => {
         setIsModalEncryptOpen(true);
@@ -366,9 +366,7 @@ const DocToolBoxComponent = ({
     },
     {
       label: t('Remove encryption'),
-      icon: (
-        <Icon iconName="remove_moderator" $size="18px" aria-hidden="true" />
-      ),
+      icon: <Icon iconName="remove_moderator" $size="lg" aria-hidden="true" />,
       isDisabled: !doc.abilities.accesses_manage,
       callback: () => {
         setIsModalRemoveEncryptionOpen(true);

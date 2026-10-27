@@ -56,7 +56,7 @@ const VideoBlockComponent = ({
     <ResizableFileBlockWrapper
       {...wrapperProps}
       buttonIcon={
-        <Icon iconName="videocam" $size="24px" $css="line-height: normal;" />
+        <Icon iconName="videocam" $size="h3" $css="line-height: normal;" />
       }
     >
       {showPlaceholder && (

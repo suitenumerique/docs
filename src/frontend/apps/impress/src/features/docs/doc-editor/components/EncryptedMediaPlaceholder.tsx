@@ -24,11 +24,11 @@ export const EncryptedMediaPlaceholder = ({
       <Box
         $align="center"
         $justify="center"
-        $color="#666"
-        $background="#f5f5f5"
-        $border="1px solid #ddd"
+        $color="var(--c--contextuals--content--semantic--neutral--secondary)"
+        $background="var(--c--contextuals--background--surface--tertiary)"
+        $border="1px solid var(--c--contextuals--border--surface--primary)"
         $minHeight={minHeight}
-        $padding="20px"
+        $padding="base"
         $css={css`
           text-align: center;
         `}
@@ -43,11 +43,11 @@ export const EncryptedMediaPlaceholder = ({
     <Box
       $align="center"
       $justify="center"
-      $color="#666"
-      $background="#f5f5f5"
-      $border="1px solid #ddd"
+      $color="var(--c--contextuals--content--semantic--neutral--secondary)"
+      $background="var(--c--contextuals--background--surface--tertiary)"
+      $border="1px solid var(--c--contextuals--border--surface--primary)"
       $minHeight={minHeight}
-      $padding="20px"
+      $padding="base"
       $css={css`
         text-align: center;
         cursor: ${isLoading ? 'wait' : 'pointer'};
@@ -56,8 +56,8 @@ export const EncryptedMediaPlaceholder = ({
       contentEditable={false}
       onClick={() => !isLoading && onDecrypt()}
     >
-      <Icon iconName="lock" $size="24px" />
-      <Box $margin={{ top: '2px' }}>{label}</Box>
+      <Icon iconName="lock" $size="h3" />
+      <Box $margin={{ top: '4xs' }}>{label}</Box>
       {isLoading && (
         <Box
           $align="center"
@@ -65,7 +65,11 @@ export const EncryptedMediaPlaceholder = ({
           $css={css`
             position: absolute;
             inset: 0;
-            background: rgba(245, 245, 245, 0.8);
+            background: color-mix(
+              in srgb,
+              var(--c--contextuals--background--surface--tertiary) 80%,
+              transparent
+            );
           `}
         >
           <Loading />

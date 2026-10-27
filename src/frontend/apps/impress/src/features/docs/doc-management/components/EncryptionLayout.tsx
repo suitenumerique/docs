@@ -65,7 +65,7 @@ export const EncryptionModalContent = ({
       <Text
         as="h2"
         id={titleId}
-        $size="18px"
+        $size="lg"
         $weight="700"
         $margin="0"
         $css="line-height: 24px; overflow-wrap: anywhere;"

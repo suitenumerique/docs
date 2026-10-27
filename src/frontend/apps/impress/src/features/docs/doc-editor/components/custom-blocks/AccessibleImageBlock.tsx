@@ -227,7 +227,7 @@ const ImageBlockComponent = ({
     <ResizableFileBlockWrapper
       {...wrapperProps}
       buttonIcon={
-        <Icon iconName="image" $size="24px" $css="line-height: normal;" />
+        <Icon iconName="image" $size="h3" $css="line-height: normal;" />
       }
     >
       {isEncrypted && isLoading && !resolvedUrl && !showClickPlaceholder && (

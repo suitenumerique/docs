@@ -372,7 +372,12 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
             {blockers.length === 1 ? (
               blockers[0]
             ) : (
-              <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+              <ul
+                style={{
+                  margin: 0,
+                  paddingLeft: 'var(--c--globals--spacings--base)',
+                }}
+              >
                 {blockers.map((blocker) => (
                   <li key={blocker}>{blocker}</li>
                 ))}

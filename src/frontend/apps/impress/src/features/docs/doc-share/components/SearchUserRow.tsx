@@ -100,7 +100,7 @@ export const SearchUserRow = ({
                   >
                     <Icon
                       iconName={suffix.icon ?? 'gpp_bad'}
-                      $size="14px"
+                      $size="sm"
                       $theme="neutral"
                       $variation="tertiary"
                     />
