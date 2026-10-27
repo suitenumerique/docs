@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/compat/router';
 import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppWrapper } from '@/tests/utils';
@@ -12,7 +12,7 @@ let mockDocQuery: { data?: { title?: string }; isLoading: boolean } = {
 };
 let mockCurrentDoc: { deleted_at?: string | null } | undefined;
 
-vi.mock('next/router', () => ({
+vi.mock('next/compat/router', () => ({
   useRouter: vi.fn(),
 }));
 

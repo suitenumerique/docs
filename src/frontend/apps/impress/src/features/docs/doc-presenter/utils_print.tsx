@@ -1,9 +1,11 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Root, createRoot } from 'react-dom/client';
 
 import {
   wrapInterlinksWithAnchor,
   wrapMediaWithLink,
 } from '@/docs/doc-export/utils_print';
+import { KEY_DOC } from '@/docs/doc-management';
 
 import {
   PRESENTER_PRINT_CSS,
@@ -15,6 +17,16 @@ import { PresenterSlideData } from './types';
 
 const PRINT_CLEANUP_DELAY_MS = 10000;
 const PRINT_IMAGE_WAIT_TIMEOUT_MS = 2000;
+const PRINT_DOC_QUERY_WAIT_TIMEOUT_MS = 3000;
+
+/**
+ * The print root is mounted with its own `createRoot`, outside the app tree, so
+ * it does not inherit the app providers. Slide content needs some of them, e.g.
+ * interlinks resolve the linked doc title with React Query.
+ */
+export interface PresenterPrintProviders {
+  queryClient: QueryClient;
+}
 
 interface PresenterPrintMount {
   cleanup: () => void;
@@ -77,6 +89,7 @@ const waitForImages = async (container: HTMLElement) => {
 
 export const mountPresenterPrintSlides = (
   slides: PresenterSlideData[],
+  { queryClient }: PresenterPrintProviders,
 ): PresenterPrintMount => {
   removeExistingPrintArtifacts();
 
@@ -88,7 +101,11 @@ export const mountPresenterPrintSlides = (
   document.body.appendChild(container);
 
   const root = createRoot(container);
-  root.render(<PresenterPrintDocument slides={slides} />);
+  root.render(
+    <QueryClientProvider client={queryClient}>
+      <PresenterPrintDocument slides={slides} />
+    </QueryClientProvider>,
+  );
 
   return {
     container,
@@ -114,12 +131,28 @@ export const waitForPresenterPrintReady = async (container: HTMLElement) => {
   await nextFrame();
 };
 
-export const printPresenterSlides = async (slides: PresenterSlideData[]) => {
+// Interlinks whose title is not cached yet (or failed to load before) render a
+// loader until their query settles, so wait for it to print the title or the
+// fallback label instead.
+const waitForDocQueries = async (queryClient: QueryClient) => {
+  const deadline = Date.now() + PRINT_DOC_QUERY_WAIT_TIMEOUT_MS;
+  while (
+    queryClient.isFetching({ queryKey: [KEY_DOC] }) > 0 &&
+    Date.now() < deadline
+  ) {
+    await nextFrame();
+  }
+};
+
+export const printPresenterSlides = async (
+  slides: PresenterSlideData[],
+  providers: PresenterPrintProviders,
+) => {
   if (typeof window === 'undefined') {
     return;
   }
 
-  const { cleanup, container } = mountPresenterPrintSlides(slides);
+  const { cleanup, container } = mountPresenterPrintSlides(slides, providers);
   const scopedCleanups: Array<() => void> = [];
   let cleaned = false;
   let fallbackTimer: number | undefined;
@@ -137,6 +170,7 @@ export const printPresenterSlides = async (slides: PresenterSlideData[]) => {
   try {
     window.addEventListener('afterprint', cleanupOnce, { once: true });
     await waitForPresenterPrintReady(container);
+    await waitForDocQueries(providers.queryClient);
     scopedCleanups.push(wrapInterlinksWithAnchor(container));
     scopedCleanups.push(wrapMediaWithLink(container));
     await nextFrame();

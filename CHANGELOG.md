@@ -26,6 +26,7 @@ and this project adheres to
 
 - 🐛(frontend) no offline banner when a third-party POST fails #2939
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
+- 🐛(frontend) fix the slides pdf export of docs with interlinks #2928
 - 🐛(frontend) reload on a version mismatch only when frontend behind #2940
 - 🐛(frontend) hide source popup in read-only mode #2908
 - 🐛(frontend) duplicate the sub-docs created without reloading the page #2915

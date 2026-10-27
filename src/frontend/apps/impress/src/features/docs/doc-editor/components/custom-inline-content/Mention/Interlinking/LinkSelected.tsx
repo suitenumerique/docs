@@ -1,5 +1,5 @@
 import { Loader } from '@gouvfr-lasuite/ui-components';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/compat/router';
 import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
@@ -42,6 +42,8 @@ export const LinkSelected = ({
   const { emoji, titleWithoutEmoji } = getEmojiAndTitle(label);
   const { currentDoc } = useDocStore();
   const isDeletedDoc = !!currentDoc?.deleted_at;
+  // The compat router is null outside of the Next.js router context, e.g. in
+  // the slides print root, where nothing can be clicked.
   const router = useRouter();
 
   const handleClick = (e: React.MouseEvent<HTMLSpanElement>) => {
@@ -56,7 +58,7 @@ export const LinkSelected = ({
       window.open(href, '_blank');
       return;
     }
-    void router.push(href);
+    void router?.push(href);
   };
 
   // This triggers on middle-mouse click
@@ -78,7 +80,7 @@ export const LinkSelected = ({
       return;
     }
     e.preventDefault();
-    void router.push(href);
+    void router?.push(href);
   };
 
   return (
