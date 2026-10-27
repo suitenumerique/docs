@@ -69,6 +69,29 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
           </Text>
         </>
       )}
+      {doc.is_encrypted && (
+        <>
+          <Text as="dt" className="sr-only">
+            {t('Encryption')}
+          </Text>
+          <Box
+            as="dd"
+            $direction="row"
+            $align="center"
+            $gap="4xs"
+            $margin="0"
+            data-testid="doc-header-encrypted"
+          >
+            <Icon iconName="verified_user" $size="sm" $theme="brand" />
+            <Text $size="xs" $weight="500" $theme="brand">
+              {t('Encrypted')}
+            </Text>
+            <Text $variation="tertiary" $size="s">
+              &nbsp;·
+            </Text>
+          </Box>
+        </>
+      )}
       <Text as="dt" className="sr-only">
         {t('Role')}
       </Text>

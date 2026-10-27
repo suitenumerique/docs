@@ -72,9 +72,12 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
         provider.document.guid === variables.docId;
 
       if (canSave) {
+        // A plain save: the server refuses it for an encrypted document
+        // rather than storing its content in clear
         await updateDocContent({
           id: variables.docId,
           content: toBase64(Y.encodeStateAsUpdate(provider.document)),
+          contentEncrypted: false,
         });
       }
 

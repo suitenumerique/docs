@@ -7,6 +7,8 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 import { Auth, KEY_AUTH, setAuthUrl } from '@/features/auth';
+import { UserEncryptionProvider } from '@/features/docs/doc-collaboration';
+import { VaultClientProvider } from '@/features/docs/doc-collaboration/vault';
 import { useRouteChangeCompleteFocus } from '@/hooks/useRouteChangeCompleteFocus';
 import { useResponsiveStore } from '@/stores/';
 
@@ -74,7 +76,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ConfigProvider>
-          <Auth>{children}</Auth>
+          <Auth>
+            <VaultClientProvider>
+              <UserEncryptionProvider>{children}</UserEncryptionProvider>
+            </VaultClientProvider>
+          </Auth>
         </ConfigProvider>
       </ThemeProvider>
     </QueryClientProvider>

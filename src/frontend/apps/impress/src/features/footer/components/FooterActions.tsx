@@ -4,7 +4,12 @@ import { createGlobalStyle } from 'styled-components';
 
 import { Box } from '@/components';
 import { Waffle } from '@/components/Waffle';
-import { ButtonLogin, gotoLogout, useAuth } from '@/features/auth';
+import {
+  ButtonLogin,
+  EncryptionMenuButton,
+  gotoLogout,
+  useAuth,
+} from '@/features/auth';
 import { HelpMenu } from '@/features/help';
 import { LanguagePicker } from '@/features/language/components/LanguagePicker';
 
@@ -42,6 +47,7 @@ export const FooterActions = () => {
             withMobileView={false}
           />
           <Waffle />
+          <EncryptionMenuButton />
           <ButtonLogin />
         </Box>
         <HelpMenu />

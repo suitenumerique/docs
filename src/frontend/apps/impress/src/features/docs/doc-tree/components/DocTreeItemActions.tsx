@@ -78,7 +78,7 @@ export const DocTreeItemActions = ({
             e.stopPropagation();
             e.preventDefault();
 
-            createChildDoc({ parentId: doc.id });
+            createChildDoc({ parentId: doc.id, isEncrypted: false });
           }}
           aria-label={t('Add a sub page')}
           data-testid="doc-tree-item-actions-add-child"

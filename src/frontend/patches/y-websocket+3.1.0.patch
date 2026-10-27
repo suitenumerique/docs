@@ -1,0 +1,70 @@
+diff --git a/node_modules/y-websocket/dist/y-websocket.cjs b/node_modules/y-websocket/dist/y-websocket.cjs
+index 1307531..e7e5b0d 100644
+--- a/node_modules/y-websocket/dist/y-websocket.cjs
++++ b/node_modules/y-websocket/dist/y-websocket.cjs
+@@ -253,14 +253,15 @@ const setupWS = (provider) => {
+     provider.wsconnected = false;
+     provider.synced = false;
+ 
+-    websocket.onmessage = (event) => {
++    // Cannot directly use `onmessage` as we need to wrap the listener with custom logic for encryption
++    websocket.addEventListener('message', (event) => {
+       if (provider.ws !== websocket) return
+       provider.wsLastMessageReceived = time__namespace.getUnixTime();
+       const encoder = readMessage(provider, new Uint8Array(event.data), true);
+       if (encoding__namespace.length(encoder) > 1) {
+         websocket.send(encoding__namespace.toUint8Array(encoder));
+       }
+-    };
++    });
+     websocket.onerror = (event) => {
+       if (provider.ws !== websocket) return
+       provider.emit('connection-error', [event, provider]);
+@@ -484,9 +485,9 @@ class WebsocketProvider extends observable.ObservableV2 {
+   }
+ 
+   get url () {
+-    const encodedParams = url__namespace.encodeQueryParams(this.params);
+-    return this.serverUrl + '/' + this.roomname +
+-      (encodedParams.length === 0 ? '' : '?' + encodedParams)
++    // Patched: use the serverUrl as-is (like HocuspocusProvider) instead of
++    // appending roomname to the path. The room is already in the query string.
++    return this.serverUrl
+   }
+ 
+   /**
+diff --git a/node_modules/y-websocket/src/y-websocket.js b/node_modules/y-websocket/src/y-websocket.js
+index 60edac5..f9cc991 100644
+--- a/node_modules/y-websocket/src/y-websocket.js
++++ b/node_modules/y-websocket/src/y-websocket.js
+@@ -224,14 +224,15 @@ const setupWS = (provider) => {
+     provider.wsconnected = false
+     provider.synced = false
+ 
+-    websocket.onmessage = (event) => {
++    // Cannot directly use `onmessage` as we need to wrap the listener with custom logic for encryption
++    websocket.addEventListener('message', (event) => {
+       if (provider.ws !== websocket) return
+       provider.wsLastMessageReceived = time.getUnixTime()
+       const encoder = readMessage(provider, new Uint8Array(event.data), true)
+       if (encoding.length(encoder) > 1) {
+         websocket.send(encoding.toUint8Array(encoder))
+       }
+-    }
++    })
+     websocket.onerror = (event) => {
+       if (provider.ws !== websocket) return
+       provider.emit('connection-error', [event, provider])
+@@ -455,9 +456,9 @@ export class WebsocketProvider extends ObservableV2 {
+   }
+ 
+   get url () {
+-    const encodedParams = url.encodeQueryParams(this.params)
+-    return this.serverUrl + '/' + this.roomname +
+-      (encodedParams.length === 0 ? '' : '?' + encodedParams)
++    // Patched: use the serverUrl as-is (like HocuspocusProvider) instead of
++    // appending roomname to the path. The room is already in the query string.
++    return this.serverUrl
+   }
+ 
+   /**

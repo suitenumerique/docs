@@ -8,6 +8,7 @@ import SubdocsIcon from '@/icons/Subdocs.svg';
 import ArrowIcon from '@/icons/arrow-corner-down-right.svg';
 import { useResponsiveStore } from '@/stores';
 
+import EncryptedDocumentIcon from '../assets/encrypted-document.svg';
 import { useDocUtils, useTrans } from '../hooks';
 import { Doc } from '../types';
 import { getEmojiAndTitle } from '../utils';
@@ -26,12 +27,14 @@ const ItemTextCss = css`
 type SimpleDocItemProps = {
   doc: Doc;
   breadcrumb?: string;
+  isEncrypted?: boolean;
   showDate?: boolean;
 };
 
 export const SimpleDocItem = ({
   doc,
   showDate = false,
+  isEncrypted = doc.is_encrypted ?? false,
   breadcrumb,
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
@@ -58,7 +61,19 @@ export const SimpleDocItem = ({
       className="--docs--simple-doc-item"
       aria-label={itemAriaLabel}
     >
-      {isChild ? (
+      {isEncrypted ? (
+        <Icon
+          icon={
+            <EncryptedDocumentIcon
+              width={isSmallMobile ? '35px' : '40px'}
+              height={isSmallMobile ? '35px' : '40px'}
+              aria-hidden="true"
+              data-testid="doc-encryption-icon"
+            />
+          }
+          $shrink="0"
+        />
+      ) : isChild ? (
         <Icon
           icon={
             <SubdocsIcon

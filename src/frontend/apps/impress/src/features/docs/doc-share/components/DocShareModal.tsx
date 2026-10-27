@@ -1,20 +1,36 @@
 import { Modal, ModalSize } from '@gouvfr-lasuite/ui-components';
 import { announce } from '@react-aria/live-announcer';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { Box, ButtonCloseModal, HorizontalSeparator, Text } from '@/components';
+import {
+  Box,
+  ButtonCloseModal,
+  HorizontalSeparator,
+  Loading,
+  Text,
+} from '@/components';
 import {
   QuickSearch,
   QuickSearchData,
   QuickSearchGroup,
 } from '@/components/quick-search/';
 import { useConfig } from '@/core';
-import { Doc } from '@/docs/doc-management';
-import { User } from '@/features/auth';
+import {
+  useDocumentEncryption,
+  useUserEncryption,
+} from '@/docs/doc-collaboration';
+import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
+import {
+  fetchRegisteredKeys,
+  useVaultClient,
+} from '@/docs/doc-collaboration/vault';
+import { Doc, useEncryptionAccessCopy } from '@/docs/doc-management';
+import { User, useAuth } from '@/features/auth';
+import { EncryptionEmptyState } from '@/features/docs/doc-management/components/EncryptionLayout';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 
@@ -39,6 +55,8 @@ import {
 } from './DocShareInvitation';
 import { QuickSearchGroupMember } from './DocShareMember';
 import { DocShareModalFooter } from './DocShareModalFooter';
+import { PendingEncryptionSection } from './PendingEncryptionSection';
+import { UserRowStatus } from './SearchUserRow';
 
 const ShareModalStyle = createGlobalStyle`
   .--docs--doc-share-modal [cmdk-item] {
@@ -51,11 +69,17 @@ const ShareModalStyle = createGlobalStyle`
 
 type Props = {
   doc: Doc;
+  documentEncryptionSettings?: DocumentEncryptionSettings | null;
   isRootDoc?: boolean;
   onClose: () => void;
 };
 
-export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
+export const DocShareModal = ({
+  doc,
+  documentEncryptionSettings,
+  onClose,
+  isRootDoc = true,
+}: Props) => {
   const { t } = useTranslation();
   const selectedUsersRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -64,6 +88,37 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
     config?.API_USERS_SEARCH_QUERY_MIN_LENGTH || 5;
 
   const { isLargeScreen } = useResponsiveStore();
+  const { user } = useAuth();
+
+  // When document encryption settings exist they should be passed as prop, on it will use this fallback
+  // that's because in some cases we want them to only be computed at this step (to avoid computing just when listed in a list)
+  const needsDerivation = !documentEncryptionSettings;
+  const { encryptionLoading, encryptionError } = useUserEncryption();
+  const {
+    documentEncryptionLoading,
+    documentEncryptionSettings: derivedEncryptionSettings,
+    documentEncryptionError,
+  } = useDocumentEncryption(
+    needsDerivation ? doc.is_encrypted : undefined,
+    needsDerivation ? doc.encrypted_document_symmetric_key_for_user : undefined,
+    needsDerivation && user?.suite_user_id
+      ? doc.accesses_versions_per_user?.[user.suite_user_id]
+      : undefined,
+    needsDerivation ? doc.is_pending_encryption_for_user : undefined,
+  );
+  const accessCopy = useEncryptionAccessCopy(
+    doc,
+    encryptionError === 'missing_private_key' ||
+      encryptionError === 'missing_public_key',
+  );
+  const effectiveEncryptionSettings =
+    documentEncryptionSettings ?? derivedEncryptionSettings ?? null;
+  const isEncryptionDeriving =
+    needsDerivation && (encryptionLoading || documentEncryptionLoading);
+  const derivedEncryptionError =
+    needsDerivation && doc.is_encrypted
+      ? encryptionError || documentEncryptionError
+      : null;
 
   /**
    * The modal content height is calculated based on the viewport height.
@@ -205,114 +260,138 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
         hideCloseButton
       >
         <ShareModalStyle />
-        <Box
-          $height="auto"
-          $maxHeight={canViewAccesses ? modalContentHeight : 'none'}
-          $overflow="hidden"
-          className="--docs--doc-share-modal noPadding "
-          $justify="space-between"
-        >
+        {isEncryptionDeriving && <Loading />}
+        {!isEncryptionDeriving && derivedEncryptionError && (
+          <EncryptionEmptyState
+            title={accessCopy.title}
+            description={accessCopy.description}
+          />
+        )}
+        {!isEncryptionDeriving && !derivedEncryptionError && (
           <Box
-            $flex={1}
-            $css={css`
-              [cmdk-list] {
-                overflow-y: auto;
-                height: ${listHeight};
-              }
-            `}
+            $height="auto"
+            $maxHeight={canViewAccesses ? modalContentHeight : 'none'}
+            $overflow="hidden"
+            className="--docs--doc-share-modal noPadding "
+            $justify="space-between"
           >
-            <Box ref={selectedUsersRef}>
-              {canShare && selectedUsers.length > 0 && (
-                <Box $padding={{ horizontal: 'base' }} $margin={{ top: '12x' }}>
-                  <DocShareAddMemberList
-                    doc={doc}
-                    selectedUsers={selectedUsers}
-                    onRemoveUser={onRemoveUser}
-                    afterInvite={() => {
-                      setUserQuery('');
-                      setInputValue('');
-                      setSelectedUsers([]);
-                    }}
-                  />
-                </Box>
-              )}
-              {!canViewAccesses && (
-                <HorizontalSeparator $margin={{ vertical: 'sm' }} />
-              )}
-            </Box>
-
-            <Box data-testid="doc-share-quick-search">
-              {!canViewAccesses && (
-                <Box
-                  $height={listHeight}
-                  $align="center"
-                  $justify="center"
-                  $gap="1rem"
-                >
-                  <Text
-                    $maxWidth="320px"
-                    $textAlign="center"
-                    $variation="secondary"
-                    $size="sm"
-                    as="p"
+            <Box
+              $flex={1}
+              $css={css`
+                [cmdk-list] {
+                  overflow-y: auto;
+                  height: ${listHeight};
+                }
+              `}
+            >
+              <Box ref={selectedUsersRef}>
+                {canShare && selectedUsers.length > 0 && (
+                  <Box
+                    $padding={{ horizontal: 'base' }}
+                    $margin={{ top: '12x' }}
                   >
-                    {t(
-                      'You can view this document but need additional access to see its members or modify settings.',
-                    )}
-                  </Text>
-                  <ButtonAccessRequest
-                    docId={doc.id}
-                    variant="secondary"
-                    size="small"
-                  />
-                </Box>
-              )}
-              {canViewAccesses && (
-                <QuickSearch
-                  label={t('Search results')}
-                  onFilter={(str) => {
-                    setInputValue(str);
-                    onFilter(str);
-                  }}
-                  inputValue={inputValue}
-                  showInput={canShare}
-                  loading={searchUsersQuery.isLoading}
-                  placeholder={t('Type a name or email')}
-                >
-                  {showInheritedShareContent && (
-                    <DocInheritedShareContent
-                      rawAccesses={
-                        membersQuery?.filter(
-                          (access) => access.document.id !== doc.id,
-                        ) ?? []
-                      }
+                    <DocShareAddMemberList
+                      doc={doc}
+                      documentEncryptionSettings={effectiveEncryptionSettings}
+                      selectedUsers={selectedUsers}
+                      onRemoveUser={onRemoveUser}
+                      afterInvite={() => {
+                        setUserQuery('');
+                        setInputValue('');
+                        setSelectedUsers([]);
+                      }}
                     />
-                  )}
-                  {showMemberSection && isRootDoc && (
-                    <Box $padding={{ top: 'base' }}>
-                      <QuickSearchGroupAccessRequest doc={doc} />
-                      <QuickSearchGroupInvitation doc={doc} />
-                      <QuickSearchGroupMember doc={doc} />
-                    </Box>
-                  )}
+                  </Box>
+                )}
+                {!canViewAccesses && (
+                  <HorizontalSeparator $margin={{ vertical: 'sm' }} />
+                )}
+              </Box>
 
-                  {!showMemberSection && canShare && (
-                    <QuickSearchInviteInputSection
-                      searchUsersRawData={searchUsersQuery.data}
-                      onSelect={onSelect}
-                      userQuery={userQuery}
-                      minLength={API_USERS_SEARCH_QUERY_MIN_LENGTH}
+              {doc.is_encrypted && canShare && membersQuery && (
+                <PendingEncryptionSection
+                  doc={doc}
+                  accesses={membersQuery}
+                  documentEncryptionSettings={effectiveEncryptionSettings}
+                />
+              )}
+
+              <Box data-testid="doc-share-quick-search">
+                {!canViewAccesses && (
+                  <Box
+                    $height={listHeight}
+                    $align="center"
+                    $justify="center"
+                    $gap="1rem"
+                  >
+                    <Text
+                      $maxWidth="320px"
+                      $textAlign="center"
+                      $variation="secondary"
+                      $size="sm"
+                      as="p"
+                    >
+                      {t(
+                        'You can view this document but need additional access to see its members or modify settings.',
+                      )}
+                    </Text>
+                    <ButtonAccessRequest
+                      docId={doc.id}
+                      variant="secondary"
+                      size="small"
                     />
-                  )}
-                </QuickSearch>
+                  </Box>
+                )}
+                {canViewAccesses && (
+                  <QuickSearch
+                    label={t('Search results')}
+                    onFilter={(str) => {
+                      setInputValue(str);
+                      onFilter(str);
+                    }}
+                    inputValue={inputValue}
+                    showInput={canShare}
+                    loading={searchUsersQuery.isLoading}
+                    placeholder={t('Type a name or email')}
+                  >
+                    {showInheritedShareContent && (
+                      <DocInheritedShareContent
+                        rawAccesses={
+                          membersQuery?.filter(
+                            (access) => access.document.id !== doc.id,
+                          ) ?? []
+                        }
+                      />
+                    )}
+                    {showMemberSection && isRootDoc && (
+                      <Box $padding={{ top: 'base' }}>
+                        <QuickSearchGroupAccessRequest doc={doc} />
+                        <QuickSearchGroupInvitation doc={doc} />
+                        <QuickSearchGroupMember doc={doc} />
+                      </Box>
+                    )}
+
+                    {!showMemberSection && canShare && (
+                      <QuickSearchInviteInputSection
+                        searchUsersRawData={searchUsersQuery.data}
+                        onSelect={onSelect}
+                        userQuery={userQuery}
+                        minLength={API_USERS_SEARCH_QUERY_MIN_LENGTH}
+                        isEncrypted={doc.is_encrypted}
+                      />
+                    )}
+                  </QuickSearch>
+                )}
+              </Box>
+            </Box>
+
+            <Box ref={handleRef}>
+              {showFooter && (
+                <DocShareModalFooter doc={doc} onClose={onClose} />
               )}
             </Box>
           </Box>
-
-          <Box ref={handleRef}>
-            {showFooter && <DocShareModalFooter doc={doc} onClose={onClose} />}
-          </Box>
-        </Box>
+        )}
       </Modal>
     </>
   );
@@ -323,6 +402,7 @@ interface QuickSearchInviteInputSectionProps {
   searchUsersRawData: User[] | undefined;
   userQuery: string;
   minLength: number;
+  isEncrypted: boolean;
 }
 
 const QuickSearchInviteInputSection = ({
@@ -330,8 +410,68 @@ const QuickSearchInviteInputSection = ({
   searchUsersRawData,
   userQuery,
   minLength,
+  isEncrypted,
 }: QuickSearchInviteInputSectionProps) => {
   const { t } = useTranslation();
+  const { client: vaultClient } = useVaultClient();
+  // Subs of the search results that hold a registered encryption key, from
+  // the directory; null until known (or when the lookup failed), in which
+  // case nobody is marked.
+  const [registeredSubs, setRegisteredSubs] = useState<Set<string> | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!isEncrypted || !vaultClient) {
+      setRegisteredSubs(null);
+      return;
+    }
+
+    const subs = (searchUsersRawData ?? [])
+      .map((user) => user.suite_user_id)
+      .filter((sub): sub is string => !!sub);
+
+    if (subs.length === 0) {
+      setRegisteredSubs(new Set());
+      return;
+    }
+
+    let cancelled = false;
+    setRegisteredSubs(null);
+    fetchRegisteredKeys(vaultClient, subs)
+      .then(({ publicKeys }) => {
+        if (!cancelled) {
+          setRegisteredSubs(new Set(Object.keys(publicKeys)));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRegisteredSubs(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEncrypted, vaultClient, searchUsersRawData]);
+
+  const hasNoKey = useCallback(
+    (user: User) =>
+      isEncrypted &&
+      (!user.suite_user_id ||
+        (registeredSubs !== null && !registeredSubs.has(user.suite_user_id))),
+    [isEncrypted, registeredSubs],
+  );
+
+  const showEncryptedInviteHint = useMemo(() => {
+    const users = searchUsersRawData || [];
+    const isEmail = isValidEmail(userQuery);
+    const hasEmailInUsers = users.some(
+      (user) => user.email.toLowerCase() === userQuery.toLowerCase(),
+    );
+    return isEncrypted && isEmail && !hasEmailInUsers;
+  }, [searchUsersRawData, userQuery, isEncrypted]);
+
   const hint = useMemo(() => {
     if (userQuery.length < minLength) {
       return t('Type at least {{minLength}} characters to display user names', {
@@ -357,6 +497,7 @@ const QuickSearchInviteInputSection = ({
     const isEmail = isValidEmail(userQuery);
     const newUser: User = {
       id: userQuery,
+      suite_user_id: null,
       full_name: '',
       email: userQuery,
       short_name: '',
@@ -383,6 +524,35 @@ const QuickSearchInviteInputSection = ({
     };
   }, [searchUsersRawData, userQuery, hint, onSelect]);
 
+  // On an encrypted document, a person's avatar opens their encryption
+  // identity (fingerprint, trust decision), registered or not.
+  const identityOf = (user: User): (() => void) | undefined => {
+    const sub = user.suite_user_id;
+    if (!isEncrypted || !vaultClient || !sub) {
+      return undefined;
+    }
+    return () =>
+      vaultClient.openRecipientProfile(sub, {
+        email: user.email,
+        name: user.full_name || undefined,
+      });
+  };
+
+  const getUserSuffix = useCallback(
+    (user: User): UserRowStatus | undefined => {
+      if (hasNoKey(user)) {
+        return {
+          label: t('No encryption'),
+          hint: t(
+            'This person has not enabled encryption yet. They will be added as pending and get access once they enable it, the next time the document owner opens the document.',
+          ),
+        };
+      }
+      return undefined;
+    },
+    [hasNoKey, t],
+  );
+
   return (
     <Box
       aria-label={t('List search user result card')}
@@ -391,8 +561,25 @@ const QuickSearchInviteInputSection = ({
       <QuickSearchGroup
         group={searchUserData}
         onSelect={onSelect}
-        renderElement={(user) => <DocShareModalInviteUserRow user={user} />}
+        renderElement={(user) => (
+          <DocShareModalInviteUserRow
+            user={user}
+            suffix={getUserSuffix(user)}
+            onAvatarClick={identityOf(user)}
+          />
+        )}
       />
+      {showEncryptedInviteHint && (
+        <Text
+          $variation="secondary"
+          $size="sm"
+          $padding={{ horizontal: 'xs', top: '3xs' }}
+        >
+          {t(
+            'Invited people get access once they have signed up and enabled encryption, the next time the document owner opens the document.',
+          )}
+        </Text>
+      )}
     </Box>
   );
 };

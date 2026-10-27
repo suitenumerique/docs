@@ -26,7 +26,6 @@ import {
   ThreadsSidebar,
   useCreateBlockNote,
 } from '@blocknote/react';
-import { HocuspocusProvider } from '@hocuspocus/provider';
 import { FindAndReplace } from '@tiptap/extension-find-and-replace';
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -37,13 +36,14 @@ import * as Y from 'yjs';
 import { Box, TextErrors } from '@/components';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
+import { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import {
   DocsCommentsStyle,
   useCommentSidebarStore,
   useComments,
 } from '@/docs/doc-comments';
 import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
-import { Doc } from '@/docs/doc-management';
+import { Doc, SwitchableProvider } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 import { useAnalytics } from '@/libs/Analytics';
@@ -66,7 +66,16 @@ import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { DocsSideMenu } from './DocsSideMenu/DocsSideMenu';
-import { CalloutBlock, PdfBlock, UploadLoaderBlock } from './custom-blocks';
+import { EncryptedDocBanner } from './EncryptedDocBanner';
+import { EncryptionProvider } from './EncryptionProvider';
+import {
+  AccessibleImageBlock,
+  AudioBlock,
+  CalloutBlock,
+  PdfBlock,
+  UploadLoaderBlock,
+  VideoBlock,
+} from './custom-blocks';
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
@@ -82,12 +91,15 @@ const baseBlockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
+      audio: AudioBlock(),
       callout: CalloutBlock(),
       codeBlock: createSafeCodeBlockSpec(),
       diagram: createReactDiagramBlockSpec(),
+      image: AccessibleImageBlock(),
       mathBlock: createReactMathBlockSpec(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
+      video: VideoBlock(),
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
@@ -102,15 +114,25 @@ export const blockNoteSchema = (withMultiColumn?.(baseBlockNoteSchema) ||
 
 interface BlockNoteEditorProps {
   doc: Doc;
-  provider: HocuspocusProvider;
+  provider: SwitchableProvider;
+  documentEncryptionSettings: DocumentEncryptionSettings | null;
 }
 
-export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
+export const BlockNoteEditor = ({
+  doc,
+  provider,
+  documentEncryptionSettings,
+}: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { themeTokens } = useCunninghamTheme();
   const refEditorContainer = useRef<HTMLDivElement>(null);
-  useSaveDoc(doc.id, provider.document);
+  useSaveDoc(
+    doc.id,
+    provider.document,
+    doc.is_encrypted,
+    documentEncryptionSettings,
+  );
 
   const { i18n, t } = useTranslation();
   const langLocalesBN =
@@ -133,10 +155,18 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       ? DEFAULT_LOCALE
       : i18n.resolvedLanguage;
 
-  const { uploadFile, errorAttachment } = useUploadFile(doc.id);
+  const encryptedSymmetricKey =
+    documentEncryptionSettings?.encryptedSymmetricKey;
+  const { uploadFile, errorAttachment } = useUploadFile(
+    doc.id,
+    encryptedSymmetricKey,
+  );
   const conf = useConfig().data;
   const { isFeatureFlagActivated } = useAnalytics();
+  // The AI proxy sends the content to the server in clear, which an encrypted
+  // document must never do.
   const aiBlockNoteAllowed = !!(
+    !doc.is_encrypted &&
     conf?.AI_FEATURE_ENABLED &&
     conf?.AI_FEATURE_BLOCKNOTE_ENABLED &&
     isFeatureFlagActivated(AI_FEATURE_FLAG) &&
@@ -293,6 +323,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       langLocalesBNMathDiagram,
       provider,
       uploadFile,
+      encryptedSymmetricKey,
       threadStore,
       resolveUsers,
     ],
@@ -315,52 +346,60 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }, [setEditor, editor]);
 
   return (
-    <Box ref={refEditorContainer} $height="100%">
-      <DocsEditorStyle />
-      <DocsCommentsStyle
-        canSeeComment={canSeeComment}
-        currentUserAvatarUrl={currentUserAvatarUrl}
-      />
-      <DocsFindReplaceStyle />
-      {errorAttachment && (
-        <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
-          <TextErrors
-            causes={errorAttachment.cause}
-            canClose
-            $textAlign="left"
-          />
-        </Box>
-      )}
-      <BlockNoteView
-        className="--docs--main-editor"
-        editor={editor}
-        formattingToolbar={false}
-        slashMenu={false}
-        sideMenu={false}
-        theme="light"
-        comments={false}
-        aria-label={t('Document editor')}
-        // To not clipped the floating part in the editor area
-        portalElements={{ default: null }}
-      >
-        {aiBlockNoteAllowed && AIMenuController && AIMenu && (
-          <AIMenuController aiMenu={AIMenu} />
+    <EncryptionProvider
+      encryptedSymmetricKey={encryptedSymmetricKey}
+      keyVersion={documentEncryptionSettings?.keyVersion}
+    >
+      <EncryptedDocBanner />
+      <Box ref={refEditorContainer} $height="100%">
+        <DocsEditorStyle />
+        <DocsCommentsStyle
+          canSeeComment={canSeeComment}
+          currentUserAvatarUrl={currentUserAvatarUrl}
+        />
+        <DocsFindReplaceStyle />
+        {errorAttachment && (
+          <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
+            <TextErrors
+              causes={errorAttachment.cause}
+              canClose
+              $textAlign="left"
+            />
+          </Box>
         )}
-        <BlockNoteSuggestionMenu aiAllowed={aiBlockNoteAllowed} />
-        <BlockNoteToolbar aiAllowed={aiBlockNoteAllowed} />
-        <DocsSideMenu />
-        {showComments && <FloatingComposerController />}
-        {showComments && !isCommentSideBarOpen && <FloatingThreadController />}
-        {threadsSidebarTarget &&
-          createPortal(
-            <ThreadsSidebar
-              filter={threadsSidebarFilter}
-              sort="recent-activity"
-            />,
-            threadsSidebarTarget,
+        <BlockNoteView
+          className="--docs--main-editor"
+          editor={editor}
+          formattingToolbar={false}
+          slashMenu={false}
+          sideMenu={false}
+          theme="light"
+          comments={false}
+          aria-label={t('Document editor')}
+          // To not clipped the floating part in the editor area
+          portalElements={{ default: null }}
+        >
+          {aiBlockNoteAllowed && AIMenuController && AIMenu && (
+            <AIMenuController aiMenu={AIMenu} />
           )}
-      </BlockNoteView>
-    </Box>
+          <BlockNoteSuggestionMenu aiAllowed={aiBlockNoteAllowed} />
+          <BlockNoteToolbar aiAllowed={aiBlockNoteAllowed} />
+          <DocsSideMenu />
+          {showComments && <FloatingComposerController />}
+          {showComments && !isCommentSideBarOpen && (
+            <FloatingThreadController />
+          )}
+          {threadsSidebarTarget &&
+            createPortal(
+              <ThreadsSidebar
+                filter={threadsSidebarFilter}
+                sort="recent-activity"
+              />,
+              threadsSidebarTarget,
+            )}
+        </BlockNoteView>
+      </Box>
+    </EncryptionProvider>
   );
 };
 

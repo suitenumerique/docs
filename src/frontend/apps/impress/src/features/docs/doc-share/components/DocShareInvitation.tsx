@@ -20,7 +20,7 @@ import { useDocInvitationsInfinite, useUpdateDocInvitation } from '../api';
 import { Invitation } from '../types';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
-import { SearchUserRow } from './SearchUserRow';
+import { SearchUserRow, UserRowStatus } from './SearchUserRow';
 
 type DocShareInvitationItemProps = {
   doc: Doc;
@@ -35,6 +35,7 @@ export const DocShareInvitationItem = ({
   const { spacingsTokens } = useCunninghamTheme();
   const invitedUser: User = {
     id: invitation.email,
+    suite_user_id: null,
     full_name: invitation.email,
     email: invitation.email,
     short_name: invitation.email,
@@ -96,9 +97,13 @@ export const DocShareInvitationItem = ({
 
 type DocShareModalInviteUserRowProps = {
   user: User;
+  suffix?: UserRowStatus;
+  onAvatarClick?: () => void;
 };
 export const DocShareModalInviteUserRow = ({
   user,
+  suffix,
+  onAvatarClick,
 }: DocShareModalInviteUserRowProps) => {
   const { t } = useTranslation();
   return (
@@ -109,6 +114,8 @@ export const DocShareModalInviteUserRow = ({
     >
       <SearchUserRow
         user={user}
+        suffix={suffix}
+        onAvatarClick={onAvatarClick}
         right={
           <BoxButton
             className="right-hover"

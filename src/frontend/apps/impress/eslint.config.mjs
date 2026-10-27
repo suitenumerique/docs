@@ -3,7 +3,14 @@ import docsPlugin from 'eslint-plugin-docs';
 
 const eslintConfig = defineConfig([
   {
-    ignores: ['.next/**', 'out/**', 'public/service-worker.js'],
+    ignores: [
+      '.next/**',
+      'out/**',
+      'public/service-worker.js',
+      // Verbatim vendored copy of the encryption service's generated SDK
+      // declaration, never hand-edited, so never linted.
+      'src/features/docs/doc-collaboration/vault/client-sdk.d.ts',
+    ],
   },
   {
     plugins: {

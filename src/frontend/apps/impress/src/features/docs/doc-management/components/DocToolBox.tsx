@@ -11,7 +11,10 @@ import { useRouter } from 'next/router';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Icon } from '@/components/Icon';
 import { Text } from '@/components/Text';
+import { useDocumentEncryption } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
+import { useVaultClient } from '@/docs/doc-collaboration/vault';
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { getWordCount } from '@/docs/doc-editor/utils';
 import { printDocumentWithStyles } from '@/docs/doc-export/utils_print';
@@ -61,6 +64,24 @@ const ModalRemoveDoc = dynamic(
   { ssr: false },
 );
 
+const ModalEncryptDoc = dynamic(
+  () =>
+    import('@/docs/doc-management/components/ModalEncryptDoc').then((mod) => ({
+      default: mod.ModalEncryptDoc,
+    })),
+  { ssr: false },
+);
+
+const ModalRemoveDocEncryption = dynamic(
+  () =>
+    import('@/docs/doc-management/components/ModalRemoveDocEncryption').then(
+      (mod) => ({
+        default: mod.ModalRemoveDocEncryption,
+      }),
+    ),
+  { ssr: false },
+);
+
 const ModalSelectVersion = dynamic(
   () =>
     import('@/docs/doc-versioning/components/ModalSelectVersion').then(
@@ -95,6 +116,40 @@ const ModalExport = dynamic(
   { ssr: false },
 );
 
+/**
+ * The key is only derived once the modal is requested, so documents listed in
+ * the grid or the tree do not each run the encryption hooks.
+ */
+const ModalRemoveDocEncryptionWithKey = ({
+  doc,
+  onClose,
+}: {
+  doc: Doc;
+  onClose: () => void;
+}) => {
+  const { user } = useAuth();
+  const { documentEncryptionSettings } = useDocumentEncryption(
+    doc.is_encrypted,
+    doc.encrypted_document_symmetric_key_for_user,
+    user?.suite_user_id
+      ? doc.accesses_versions_per_user?.[user.suite_user_id]
+      : undefined,
+    doc.is_pending_encryption_for_user,
+  );
+
+  if (!documentEncryptionSettings) {
+    return null;
+  }
+
+  return (
+    <ModalRemoveDocEncryption
+      doc={doc}
+      encryptedSymmetricKey={documentEncryptionSettings.encryptedSymmetricKey}
+      onClose={onClose}
+    />
+  );
+};
+
 interface DocToolBoxProps {
   doc: Doc;
   isCurrentDoc: boolean;
@@ -123,6 +178,10 @@ const DocToolBoxComponent = ({
   const [isModalHistoryOpen, setIsModalHistoryOpen] = useState(false);
   const [isModalLeaveOpen, setIsModalLeaveOpen] = useState(false);
   const [isModalMoveOpen, setIsModalMoveOpen] = useState(false);
+  const [isModalEncryptOpen, setIsModalEncryptOpen] = useState(false);
+  const [isModalRemoveEncryptionOpen, setIsModalRemoveEncryptionOpen] =
+    useState(false);
+  const { isEnabled: isEncryptionEnabled } = useVaultClient();
   const { onClick: onButtonClick, ...buttonPropsLeft } = buttonProps || {};
 
   const editor = useEditorStore((state) => state.editor);
@@ -286,6 +345,34 @@ const DocToolBoxComponent = ({
       },
       isHidden: !doc.abilities.move,
     },
+    {
+      label: t('Encrypt document'),
+      icon: <Icon iconName="add_moderator" $size="18px" aria-hidden="true" />,
+      isDisabled: !doc.abilities.accesses_manage,
+      callback: () => {
+        setIsModalEncryptOpen(true);
+      },
+      // Encryption transitions go through the live collaboration provider,
+      // which only exists for the document open in the editor.
+      isHidden:
+        !isCurrentDoc ||
+        !isEncryptionEnabled ||
+        !!doc.is_encrypted ||
+        !doc.abilities.update,
+      testId: `docs-actions-encrypt-${doc.id}`,
+    },
+    {
+      label: t('Remove encryption'),
+      icon: (
+        <Icon iconName="remove_moderator" $size="18px" aria-hidden="true" />
+      ),
+      isDisabled: !doc.abilities.accesses_manage,
+      callback: () => {
+        setIsModalRemoveEncryptionOpen(true);
+      },
+      isHidden: !isCurrentDoc || !doc.is_encrypted || !doc.abilities.update,
+      testId: `docs-actions-remove-encryption-${doc.id}`,
+    },
     { type: 'separator' },
     {
       label: t('History', {
@@ -424,6 +511,24 @@ const DocToolBoxComponent = ({
             restoreFocus();
           }}
           doc={doc}
+        />
+      )}
+      {isModalEncryptOpen && (
+        <ModalEncryptDoc
+          doc={doc}
+          onClose={() => {
+            setIsModalEncryptOpen(false);
+            restoreFocus();
+          }}
+        />
+      )}
+      {isModalRemoveEncryptionOpen && (
+        <ModalRemoveDocEncryptionWithKey
+          doc={doc}
+          onClose={() => {
+            setIsModalRemoveEncryptionOpen(false);
+            restoreFocus();
+          }}
         />
       )}
       {isModalMoveOpen && (

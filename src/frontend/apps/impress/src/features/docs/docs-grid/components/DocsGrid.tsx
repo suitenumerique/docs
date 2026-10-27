@@ -6,6 +6,7 @@ import { css } from 'styled-components';
 
 import { Box, Card, Loading, Text } from '@/components';
 import { FadeComponent } from '@/components/Effect';
+import { useUserEncryption } from '@/docs/doc-collaboration';
 import { useImport } from '@/docs/doc-management/hooks/useImport';
 import { DocDefaultFilter, DocsOrdering } from '@/docs/doc-management/types';
 import DocsIcon from '@/icons/Docs.svg';
@@ -69,7 +70,9 @@ export const DocsGrid = ({
     });
   }, [data?.pages]);
 
-  const loading = isFetching || isLoading;
+  const { encryptionLoading } = useUserEncryption();
+
+  const loading = isFetching || isLoading || encryptionLoading;
   const hasDocs = data?.pages.some((page) => page.results.length > 0);
   const loadMore = (inView: boolean) => {
     if (!inView || loading) {

@@ -6,23 +6,29 @@ import { Box } from '@/components';
 import { QuickSearchData } from '@/components/quick-search';
 import { QuickSearchGroup } from '@/components/quick-search/QuickSearchGroup';
 import { useCunninghamTheme } from '@/cunningham';
+import { useVaultClient } from '@/docs/doc-collaboration/vault';
 import { Access, Doc, Role } from '@/docs/doc-management/';
+import { useAuth } from '@/features/auth';
 
 import { useDocAccesses, useUpdateDocAccess } from '../api';
 import { useWhoAmI } from '../hooks/';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
-import { SearchUserRow } from './SearchUserRow';
+import { SearchUserRow, UserRowStatus } from './SearchUserRow';
 
 type Props = {
   doc?: Doc;
   access: Access;
   isInherited?: boolean;
+  suffix?: UserRowStatus;
+  onAvatarClick?: () => void;
 };
 export const DocShareMemberItem = ({
   doc,
   access,
   isInherited = false,
+  suffix,
+  onAvatarClick,
 }: Props) => {
   const { t } = useTranslation();
   const { isLastOwner } = useWhoAmI(access);
@@ -65,6 +71,8 @@ export const DocShareMemberItem = ({
       <SearchUserRow
         alwaysShowRight={true}
         user={access.user}
+        suffix={suffix}
+        onAvatarClick={onAvatarClick}
         right={
           <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
             <DocRoleDropdown
@@ -95,6 +103,8 @@ export const QuickSearchGroupMember = ({
   doc,
 }: QuickSearchGroupMemberProps) => {
   const { t } = useTranslation();
+  const { user: me } = useAuth();
+  const { client: vaultClient } = useVaultClient();
   const membersQuery = useDocAccesses({
     docId: doc.id,
   });
@@ -123,9 +133,39 @@ export const QuickSearchGroupMember = ({
     >
       <QuickSearchGroup
         group={membersData}
-        renderElement={(access) => (
-          <DocShareMemberItem doc={doc} access={access} />
-        )}
+        renderElement={(access) => {
+          const uid = access.user.suite_user_id;
+
+          // On an encrypted document, a member's avatar opens their
+          // encryption identity (fingerprint, trust decision); not one's own.
+          const identityOf =
+            doc.is_encrypted && vaultClient && uid && uid !== me?.suite_user_id
+              ? () =>
+                  vaultClient.openRecipientProfile(uid, {
+                    email: access.user.email,
+                    name: access.user.full_name || undefined,
+                  })
+              : undefined;
+
+          return (
+            <DocShareMemberItem
+              doc={doc}
+              access={access}
+              suffix={
+                doc.is_encrypted && access.is_pending_encryption
+                  ? {
+                      label: t('Waiting for encryption'),
+                      hint: t(
+                        'Added before they enabled encryption. They get access once they have, the next time the document owner opens it.',
+                      ),
+                      icon: 'schedule',
+                    }
+                  : undefined
+              }
+              onAvatarClick={identityOf}
+            />
+          );
+        }}
       />
     </Box>
   );

@@ -12,6 +12,12 @@ vi.mock('next/router', () => ({
   useRouter: vi.fn(),
 }));
 
+const encryptWithKey = vi.fn();
+
+vi.mock('@/docs/doc-collaboration/vault', () => ({
+  useVaultClient: () => ({ client: { encryptWithKey } }),
+}));
+
 vi.mock('@/docs/doc-versioning', () => ({
   KEY_LIST_DOC_VERSIONS: 'test-key-list-doc-versions',
 }));
@@ -48,7 +54,7 @@ describe('useSaveDoc', () => {
 
     const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
 
-    renderHook(() => useSaveDoc(docId, yDoc), {
+    renderHook(() => useSaveDoc(docId, yDoc, false, null), {
       wrapper: AppWrapper,
     });
 
@@ -79,7 +85,7 @@ describe('useSaveDoc', () => {
       }),
     });
 
-    renderHook(() => useSaveDoc(docId, yDoc), {
+    renderHook(() => useSaveDoc(docId, yDoc, false, null), {
       wrapper: AppWrapper,
     });
 
@@ -101,6 +107,12 @@ describe('useSaveDoc', () => {
         `http://test.jest/api/v1.0/documents/${docId}/content/`,
       );
     });
+
+    // A plain document states it, so the server refuses the save if the
+    // document was encrypted in the meantime
+    expect(
+      JSON.parse(fetchMock.callHistory.lastCall()?.options.body as string),
+    ).toMatchObject({ contentEncrypted: false });
   });
 
   it('should not save when there are no local changes', () => {
@@ -118,7 +130,7 @@ describe('useSaveDoc', () => {
       },
     );
 
-    renderHook(() => useSaveDoc(docId, yDoc), {
+    renderHook(() => useSaveDoc(docId, yDoc, false, null), {
       wrapper: AppWrapper,
     });
 
@@ -138,7 +150,7 @@ describe('useSaveDoc', () => {
       body: JSON.stringify({ id: docId, content: 'test-content' }),
     });
 
-    renderHook(() => useSaveDoc(docId, yDoc), {
+    renderHook(() => useSaveDoc(docId, yDoc, false, null), {
       wrapper: AppWrapper,
     });
 
@@ -210,7 +222,7 @@ describe('useSaveDoc', () => {
       body: JSON.stringify({ id: docId, content: 'test-content' }),
     });
 
-    renderHook(() => useSaveDoc(docId, yDoc), {
+    renderHook(() => useSaveDoc(docId, yDoc, false, null), {
       wrapper: AppWrapper,
     });
 
@@ -232,12 +244,51 @@ describe('useSaveDoc', () => {
     expect(event.defaultPrevented).toBe(true);
   });
 
+  it('should hold the unload back while an encrypted save is pending, then save it encrypted', async () => {
+    const yDoc = new Y.Doc();
+    const docId = self.crypto.randomUUID();
+    encryptWithKey.mockResolvedValue({
+      encryptedData: new Uint8Array([1, 2, 3]).buffer,
+    });
+
+    fetchMock.patch(`http://test.jest/api/v1.0/documents/${docId}/content/`, {
+      body: JSON.stringify({ id: docId, content: 'AQID' }),
+    });
+
+    renderHook(
+      () =>
+        useSaveDoc(docId, yDoc, true, {
+          encryptedSymmetricKey: new ArrayBuffer(8),
+          keyVersion: 1,
+        }),
+      { wrapper: AppWrapper },
+    );
+
+    act(() => {
+      yDoc.getMap('test').set('key', 'value');
+    });
+
+    const event = dispatchBeforeUnload();
+
+    // The vault encrypts asynchronously: the prompt keeps the page alive
+    expect(event.defaultPrevented).toBe(true);
+
+    await waitFor(() => {
+      expect(fetchMock.callHistory.lastCall()?.url).toBe(
+        `http://test.jest/api/v1.0/documents/${docId}/content/`,
+      );
+    });
+    expect(
+      JSON.parse(fetchMock.callHistory.lastCall()?.options.body as string),
+    ).toMatchObject({ content: 'AQID', contentEncrypted: true });
+  });
+
   it('should cleanup event listeners on unmount', () => {
     const yDoc = new Y.Doc();
     const docId = 'test-doc-id';
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 
-    const { unmount } = renderHook(() => useSaveDoc(docId, yDoc), {
+    const { unmount } = renderHook(() => useSaveDoc(docId, yDoc, false, null), {
       wrapper: AppWrapper,
     });
 

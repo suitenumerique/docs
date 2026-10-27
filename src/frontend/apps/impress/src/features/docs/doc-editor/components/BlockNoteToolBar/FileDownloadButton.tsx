@@ -25,6 +25,7 @@ import {
   DocsInlineContentSchema,
   DocsStyleSchema,
 } from '../../types';
+import { useEncryption } from '../EncryptionProvider';
 
 export const FileDownloadButton = ({
   open,
@@ -33,6 +34,7 @@ export const FileDownloadButton = ({
 }) => {
   const dict = useDictionary();
   const Components = useComponentsContext();
+  const { isEncrypted, decryptFileUrl } = useEncryption();
 
   const editor = useBlockNoteEditor<
     DocsBlockSchema,
@@ -76,30 +78,34 @@ export const FileDownloadButton = ({
       /**
        * If not hosted on our domain, means not a file uploaded by the user,
        * we do what Blocknote was doing initially.
+       *
+       * For this case, no need of adding decryption logic
        */
       if (!url.includes(window.location.hostname) && !url.includes('base64')) {
-        if (!editor.resolveFileUrl) {
-          if (!isSafeUrl(url)) {
-            return;
-          }
-
-          window.open(url, '_blank', 'noopener,noreferrer');
-        } else {
-          void editor
-            .resolveFileUrl(url)
-            .then((downloadUrl) => window.open(downloadUrl));
+        if (!isSafeUrl(url)) {
+          return;
         }
+
+        window.open(url, '_blank', 'noopener,noreferrer');
 
         return;
       }
 
+      const fetchAndDownload = async (fileName: string) => {
+        if (isEncrypted) {
+          const blobUrl = await decryptFileUrl(url);
+          const blob = await fetch(blobUrl).then((r) => r.blob());
+          downloadFile(blob, fileName);
+        } else {
+          const blob = (await exportResolveFileUrl(url)) as Blob;
+          downloadFile(blob, fileName);
+        }
+      };
+
       if (!url.includes('-unsafe')) {
-        const blob = (await exportResolveFileUrl(url)) as Blob;
-        downloadFile(blob, name || url.split('/').pop() || 'file');
+        await fetchAndDownload(name || url.split('/').pop() || 'file');
       } else {
         const onConfirm = async () => {
-          const blob = (await exportResolveFileUrl(url)) as Blob;
-
           const baseName = name || url.split('/').pop() || 'file';
 
           const regFindLastDot = /(\.[^/.]+)$/;
@@ -107,13 +113,13 @@ export const FileDownloadButton = ({
             ? baseName.replace(regFindLastDot, '-unsafe$1')
             : baseName + '-unsafe';
 
-          downloadFile(blob, unsafeName);
+          await fetchAndDownload(unsafeName);
         };
 
         open(onConfirm);
       }
     }
-  }, [editor, fileBlock, open]);
+  }, [editor, fileBlock, open, isEncrypted, decryptFileUrl]);
 
   if (!fileBlock || fileBlock.props.url === '' || !Components) {
     return null;

@@ -103,6 +103,7 @@ export function DropdownArrow() {
           if (currentDoc) {
             createChildDoc({
               parentId: currentDoc.id,
+              isEncrypted: false,
             });
           }
         },

@@ -91,6 +91,7 @@ export function useImportDoc(props?: UseImportDocOptions) {
                 is_creator_me: isCreatorMe,
                 title: undefined,
                 is_favorite: undefined,
+                is_encrypted: undefined,
               },
             ],
           },

@@ -13,7 +13,7 @@ import {
   createReactBlockSpec,
 } from '@blocknote/react';
 import { TFunction } from 'i18next';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
@@ -23,6 +23,8 @@ import { isSafeUrl } from '@/utils/url';
 import Warning from '../../assets/warning.svg';
 import { ANALYZE_URL } from '../../conf';
 import { DocsBlockNoteEditor } from '../../types';
+import { EncryptedMediaPlaceholder } from '../EncryptedMediaPlaceholder';
+import { useEncryption } from '../EncryptionProvider';
 
 const PDFBlockStyle = createGlobalStyle`
   .bn-block-content[data-content-type="pdf"] .bn-file-block-content-wrapper {
@@ -67,9 +69,11 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
   const pdfUrl = block.props.url;
   const { i18n, t } = useTranslation();
   const lang = i18n.resolvedLanguage;
+  const { isEncrypted, decryptFileUrl } = useEncryption();
   const [isPDFContent, setIsPDFContent] = useState<boolean | null>(null);
   const [isPDFContentLoading, setIsPDFContentLoading] =
     useState<boolean>(false);
+  const [resolvedPdfUrl, setResolvedPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (lang && locales[lang as keyof typeof locales]) {
@@ -86,8 +90,14 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
     }
   }, [lang, t]);
 
+  // For non-encrypted docs, validate PDF content on mount
   useEffect(() => {
-    if (!pdfUrl || pdfUrl.includes(ANALYZE_URL) || !isSafeUrl(pdfUrl)) {
+    if (
+      isEncrypted ||
+      !pdfUrl ||
+      pdfUrl.includes(ANALYZE_URL) ||
+      !isSafeUrl(pdfUrl)
+    ) {
       return;
     }
 
@@ -101,6 +111,7 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
 
         if (response.ok && contentType?.includes('application/pdf')) {
           setIsPDFContent(true);
+          setResolvedPdfUrl(pdfUrl);
         } else {
           setIsPDFContent(false);
         }
@@ -112,7 +123,30 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
     };
 
     void validatePDFContent();
-  }, [pdfUrl]);
+  }, [pdfUrl, isEncrypted]);
+
+  const handleDecryptPdf = useCallback(async () => {
+    if (!pdfUrl) {
+      return;
+    }
+
+    setIsPDFContentLoading(true);
+    try {
+      const blobUrl = await decryptFileUrl(pdfUrl);
+      setResolvedPdfUrl(blobUrl);
+      setIsPDFContent(true);
+    } catch {
+      setIsPDFContent(false);
+    } finally {
+      setIsPDFContentLoading(false);
+    }
+  }, [pdfUrl, decryptFileUrl]);
+
+  const showEncryptedPlaceholder =
+    isEncrypted &&
+    isPDFContent === null &&
+    !!pdfUrl &&
+    !pdfUrl.includes(ANALYZE_URL);
 
   const isInvalidPDF =
     (!isPDFContentLoading && isPDFContent !== null && !isPDFContent) ||
@@ -137,7 +171,17 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
   return (
     <>
       <PDFBlockStyle />
-      {isPDFContentLoading && <Loading />}
+      {!isEncrypted && isPDFContentLoading && <Loading />}
+      {showEncryptedPlaceholder && (
+        <EncryptedMediaPlaceholder
+          label={t('Click to decrypt and view PDF')}
+          errorLabel={t('Invalid or missing PDF file.')}
+          minHeight="300px"
+          isLoading={isPDFContentLoading}
+          hasError={false}
+          onDecrypt={() => void handleDecryptPdf()}
+        />
+      )}
       <ResizableFileBlockWrapper
         buttonIcon={
           <Icon iconName="upload" $size="24px" $css="line-height: normal;" />
@@ -145,14 +189,14 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
         block={block as unknown as FileBlockBlock}
         editor={editor as unknown as FileBlockEditor}
       >
-        {!isPDFContentLoading && isPDFContent && (
+        {!isPDFContentLoading && isPDFContent && resolvedPdfUrl && (
           <Box
             as="iframe"
             className="bn-visual-media"
             role="presentation"
             $width="100%"
             $height="450px"
-            src={pdfUrl}
+            src={resolvedPdfUrl}
             aria-label={block.props.name || t('PDF document')}
             contentEditable={false}
             draggable={false}

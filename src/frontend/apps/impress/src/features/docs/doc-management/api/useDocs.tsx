@@ -16,6 +16,7 @@ export type DocsParams = {
   ordering?: DocsOrdering;
   is_creator_me?: boolean;
   is_favorite?: boolean;
+  is_encrypted?: boolean;
 };
 
 export const constructParams = (params: DocsParams): URLSearchParams => {
@@ -32,6 +33,9 @@ export const constructParams = (params: DocsParams): URLSearchParams => {
   }
   if (params.is_favorite !== undefined) {
     searchParams.set('is_favorite', params.is_favorite.toString());
+  }
+  if (params.is_encrypted !== undefined) {
+    searchParams.set('is_encrypted', params.is_encrypted.toString());
   }
 
   return searchParams;

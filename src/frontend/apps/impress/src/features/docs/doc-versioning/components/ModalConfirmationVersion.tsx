@@ -103,6 +103,7 @@ export const ModalConfirmationVersion = ({
               updateDocContent({
                 id: docId,
                 content: version.content,
+                contentEncrypted: false,
               });
 
               onClose();

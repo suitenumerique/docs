@@ -2,20 +2,36 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 import { useCollaborationUrl, useConfig } from '@/core/config';
+import { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
+import { useVaultClient } from '@/docs/doc-collaboration/vault';
 import { KEY_DOC } from '@/docs/doc-management/api/useDoc';
 import {
   KEY_DOC_CONTENT,
   useDocContent,
 } from '@/docs/doc-management/api/useDocContent';
-import { useProviderStore } from '@/docs/doc-management/stores/useProviderStore';
+import {
+  decryptionFailureOf,
+  useProviderStore,
+} from '@/docs/doc-management/stores/useProviderStore';
+import { useAuth } from '@/features/auth';
 import { useIsOffline } from '@/features/service-worker/hooks/useOffline';
 import { useBroadcastStore } from '@/stores/useBroadcastStore';
 
-export const useCollaboration = (room: string) => {
+/**
+ * `room` stays undefined until the document is loaded, and `isEncrypted`
+ * until its encryption state is known: nothing is fetched before.
+ */
+export const useCollaboration = (
+  room: string | undefined,
+  isEncrypted: boolean | undefined,
+  documentEncryptionSettings: DocumentEncryptionSettings | null,
+) => {
   const collaborationUrl = useCollaborationUrl(room);
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();
   const { data: config } = useConfig();
+  const { user } = useAuth();
+  const { client: vaultClient } = useVaultClient();
   const {
     setBroadcastProvider,
     cleanupBroadcast,
@@ -31,13 +47,18 @@ export const useCollaboration = (room: string) => {
     resetLostConnection,
     pauseForInactivity,
     resumeFromInactivity,
+    encryptionTransition,
+    setDecryptionFailure,
   } = useProviderStore();
   const isOffline = useIsOffline((state) => state.isOffline);
   const { data: docContent } = useDocContent(
-    { id: room },
+    { id: room ?? '' },
     {
       staleTime: 30000, // 30 seconds - We keep the data fresh as it is a highly collaborative page
       queryKey: [KEY_DOC_CONTENT, { id: room }],
+      // During an encryption transition the stored content switches between
+      // clear and encrypted: it is fetched again once the transition is over
+      enabled: !!room && isEncrypted !== undefined && !encryptionTransition,
     },
   );
 
@@ -83,15 +104,85 @@ export const useCollaboration = (room: string) => {
   }, [addTask, room, queryClient, broadcastProvider?.document?.guid]);
 
   /**
-   * Set the provider when the collaboration URL and the document content are available.
+   * Set the provider when the collaboration URL and the document content are available,
+   * after decrypting the content for an encrypted document.
    */
   useEffect(() => {
-    if (!room || !collaborationUrl || provider || docContent === undefined) {
+    if (
+      !room ||
+      !collaborationUrl ||
+      provider ||
+      encryptionTransition ||
+      docContent === undefined ||
+      isEncrypted === undefined ||
+      (isEncrypted && (!user || !documentEncryptionSettings || !vaultClient))
+    ) {
       return;
     }
 
-    const newProvider = createProvider(collaborationUrl, room, docContent);
-    setBroadcastProvider(newProvider);
+    const initialDocState = docContent
+      ? Buffer.from(docContent, 'base64')
+      : undefined;
+
+    if (!isEncrypted || !documentEncryptionSettings || !vaultClient) {
+      const newProvider = createProvider(
+        collaborationUrl,
+        room,
+        initialDocState,
+      );
+      setBroadcastProvider(newProvider);
+      return;
+    }
+
+    // The effect can run again while the vault decrypts: only the latest run
+    // creates the provider
+    let isCancelled = false;
+
+    (async () => {
+      let decryptedState: Uint8Array | undefined;
+
+      if (initialDocState) {
+        const { data: decryptedBuffer } = await vaultClient.decryptWithKey(
+          initialDocState.buffer.slice(
+            initialDocState.byteOffset,
+            initialDocState.byteOffset + initialDocState.byteLength,
+          ),
+          documentEncryptionSettings.encryptedSymmetricKey,
+          documentEncryptionSettings.keyVersion,
+        );
+
+        decryptedState = new Uint8Array(decryptedBuffer);
+      }
+
+      if (isCancelled) {
+        return;
+      }
+
+      const newProvider = createProvider(
+        collaborationUrl,
+        room,
+        decryptedState,
+        {
+          vaultClient,
+          encryptedSymmetricKey:
+            documentEncryptionSettings.encryptedSymmetricKey,
+          keyVersion: documentEncryptionSettings.keyVersion,
+        },
+      );
+
+      setBroadcastProvider(newProvider);
+    })().catch((err) => {
+      if (isCancelled) {
+        return;
+      }
+
+      console.error('Failed to decrypt document content:', err);
+      setDecryptionFailure(decryptionFailureOf(err));
+    });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [
     provider,
     collaborationUrl,
@@ -99,6 +190,12 @@ export const useCollaboration = (room: string) => {
     docContent,
     room,
     setBroadcastProvider,
+    user,
+    isEncrypted,
+    documentEncryptionSettings,
+    vaultClient,
+    encryptionTransition,
+    setDecryptionFailure,
   ]);
 
   /**

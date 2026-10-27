@@ -15,6 +15,12 @@ import { KEY_DOC_CONTENT } from './useDocContent';
 export interface UpdateDocContentParams {
   id: Doc['id'];
   content: string; // Base64 encoded content
+  /**
+   * Whether `content` is ciphertext. The server rejects a mismatch with the
+   * document's encryption state, so a save racing an encryption change
+   * cannot overwrite the new content.
+   */
+  contentEncrypted?: boolean;
   websocket?: boolean;
   /**
    * Hand the request over to the browser process so it survives the page
@@ -32,21 +38,30 @@ const KEEPALIVE_MAX_BODY_SIZE = 64 * 1024;
 
 const buildContentBody = ({
   content,
+  contentEncrypted,
   websocket,
-}: Pick<UpdateDocContentParams, 'content' | 'websocket'>) =>
+}: Pick<
+  UpdateDocContentParams,
+  'content' | 'contentEncrypted' | 'websocket'
+>) =>
   JSON.stringify({
     content,
+    contentEncrypted,
     websocket,
   });
 
 /** Whether the doc is small enough to be saved with a keepalive request. */
 export const canKeepaliveContent = (
-  params: Pick<UpdateDocContentParams, 'content' | 'websocket'>,
+  params: Pick<
+    UpdateDocContentParams,
+    'content' | 'contentEncrypted' | 'websocket'
+  >,
 ) => buildContentBody(params).length <= KEEPALIVE_MAX_BODY_SIZE;
 
 export const updateDocContent = async ({
   id,
   content,
+  contentEncrypted,
   websocket,
   keepalive,
 }: UpdateDocContentParams): Promise<void> => {
@@ -54,7 +69,7 @@ export const updateDocContent = async ({
     throw new Error(`Invalid doc id in updateDocContent: ${id}`);
   }
 
-  const body = buildContentBody({ content, websocket });
+  const body = buildContentBody({ content, contentEncrypted, websocket });
 
   const response = await fetchAPI(`documents/${id}/content/`, {
     method: 'PATCH',

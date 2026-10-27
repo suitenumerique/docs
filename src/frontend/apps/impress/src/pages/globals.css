@@ -30,6 +30,13 @@ body > #__next > .c__app > div:has(> .c__loader) {
   border-radius: var(--c--globals--spacings--2xs);
 }
 
+/* Docs' own encryption cards (encrypt a document, remove encryption, key
+   mismatch) use the design system's small modal widened to 350px, the width the
+   encryption service's own screens use. */
+.c__modal--small:has(.--docs--encryption-modal) {
+  width: 350px;
+}
+
 main ::-webkit-scrollbar,
 .ReactModalPortal ::-webkit-scrollbar {
   width: 20px;

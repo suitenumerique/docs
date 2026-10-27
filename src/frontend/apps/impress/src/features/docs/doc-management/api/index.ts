@@ -7,6 +7,8 @@ export * from './useDocOptions';
 export * from './useDocs';
 export * from './useDocsFavorite';
 export * from './useDuplicateDoc';
+export * from './useEncryptDoc';
 export * from './useMoveDoc';
+export * from './useRemoveDocEncryption';
 export * from './useRestoreDoc';
 export * from './useUpdateDoc';

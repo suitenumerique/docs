@@ -9,9 +9,15 @@ import { useTranslation } from 'react-i18next';
 import { APIError } from '@/api';
 import { Box, Card } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import type { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import { Doc, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
+import {
+  fetchRegisteredKeys,
+  useVaultClient,
+} from '@/features/docs/doc-collaboration/vault';
 import { useResponsiveStore } from '@/stores';
+import { toBase64 } from '@/utils/string';
 
 import { useCreateDocAccess, useCreateDocInvitation } from '../api';
 import { OptionType } from '../types';
@@ -26,6 +32,7 @@ type APIErrorUser = APIError<{
 
 type Props = {
   doc: Doc;
+  documentEncryptionSettings: DocumentEncryptionSettings | null;
   selectedUsers: User[];
   onRemoveUser?: (user: User) => void;
   onSubmit?: (selectedUsers: User[], role: Role) => void;
@@ -33,12 +40,14 @@ type Props = {
 };
 export const DocShareAddMemberList = ({
   doc,
+  documentEncryptionSettings,
   selectedUsers,
   onRemoveUser,
   afterInvite,
 }: Props) => {
   const { t } = useTranslation();
   const { toast } = useToastProvider();
+  const { client: vaultClient } = useVaultClient();
   const { isSmallMobile } = useResponsiveStore();
   const [isLoading, setIsLoading] = useState(false);
   const { spacingsTokens } = useCunninghamTheme();
@@ -73,6 +82,10 @@ export const DocShareAddMemberList = ({
       });
     }
 
+    if (dataError.cause?.[0] && dataError.message === dataError.cause[0]) {
+      messageError = dataError.cause[0];
+    }
+
     toast(messageError, VariantType.ERROR, {
       duration: 4000,
     });
@@ -80,7 +93,28 @@ export const DocShareAddMemberList = ({
 
   const onInvite = async () => {
     setIsLoading(true);
-    const promises = selectedUsers.map((user) => {
+
+    // Fetch all public keys in a single request before processing users
+    let publicKeysMap: Record<string, ArrayBuffer> = {};
+    let keyVersionsMap: Record<string, number> = {};
+
+    if (doc.is_encrypted && documentEncryptionSettings && vaultClient) {
+      const memberUserIds = selectedUsers
+        .filter((user) => user.id !== user.email && user.suite_user_id)
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        .map((user) => user.suite_user_id!);
+
+      if (memberUserIds.length > 0) {
+        const { publicKeys, versions } = await fetchRegisteredKeys(
+          vaultClient,
+          memberUserIds,
+        );
+        publicKeysMap = publicKeys;
+        keyVersionsMap = versions;
+      }
+    }
+
+    const promises = selectedUsers.map(async (user) => {
       const isInvitationMode = user.id === user.email;
 
       const payload = {
@@ -88,15 +122,54 @@ export const DocShareAddMemberList = ({
         docId: doc.id,
       };
 
-      return isInvitationMode
-        ? createInvitation({
-            ...payload,
-            email: user.email.toLowerCase(),
-          })
-        : createDocAccess({
-            ...payload,
-            memberId: user.id,
-          });
+      if (isInvitationMode) {
+        // On an encrypted document the invitee becomes a pending member when
+        // they sign up, like anyone added without encryption.
+        return createInvitation({
+          ...payload,
+          email: user.email.toLowerCase(),
+        });
+      }
+
+      // For encrypted docs, re-wrap the symmetric key for the new member via
+      // vault; a member without encryption is created pending (no key).
+      let memberEncryptedSymmetricKey: string | null = null;
+      let encryptionPublicKeyVersion: number | null = null;
+
+      if (doc.is_encrypted && documentEncryptionSettings && vaultClient) {
+        const userPublicKey = user.suite_user_id
+          ? publicKeysMap[user.suite_user_id]
+          : undefined;
+
+        if (userPublicKey && user.suite_user_id) {
+          // Pass a labeled recipient map (sub → {email, name}): the vault
+          // resolves + trust-checks the key itself (binding + TOFU); the label
+          // is display-only, shown if the trust modal needs a decision.
+          const { encryptedKeys } = await vaultClient.shareKeys(
+            documentEncryptionSettings.encryptedSymmetricKey,
+            {
+              [user.suite_user_id]: { email: user.email, name: user.full_name },
+            },
+          );
+
+          const wrappedKey = encryptedKeys[user.suite_user_id];
+          if (wrappedKey) {
+            memberEncryptedSymmetricKey = toBase64(new Uint8Array(wrappedKey));
+          }
+
+          // Store the recipient's public key version at share time so a
+          // later version bump signals the access needs re-encryption
+          encryptionPublicKeyVersion =
+            keyVersionsMap[user.suite_user_id] ?? null;
+        }
+      }
+
+      return createDocAccess({
+        ...payload,
+        memberId: user.id,
+        memberEncryptedSymmetricKey,
+        encryptionPublicKeyVersion,
+      });
     });
 
     const settledPromises = await Promise.allSettled(promises);

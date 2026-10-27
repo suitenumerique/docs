@@ -30,6 +30,7 @@ export const useCreateChildDocTree = (parentId?: string) => {
 
     createChildDoc({
       parentId,
+      isEncrypted: false,
     });
   };
 };

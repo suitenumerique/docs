@@ -3,6 +3,7 @@ import { PropsWithChildren, useEffect, useState } from 'react';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
+import { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
 import { DocHeader } from '@/docs/doc-header/';
 import {
   Doc,
@@ -17,9 +18,8 @@ import { useSkeletonFadeOut } from '@/features/skeletons/hooks/useFadeOut';
 import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
 
-import { useCollaboration } from '../hook/useCollaboration';
-
 import { BlockNoteEditor, BlockNoteReader } from './BlockNoteEditor';
+import { EncryptionProvider } from './EncryptionProvider';
 
 const DOCS_EDITOR_CLASS = '--docs--doc-editor';
 
@@ -81,10 +81,18 @@ export const DocEditorContainer = ({
 
 interface DocEditorProps {
   doc: Doc;
+  documentEncryptionSettings: DocumentEncryptionSettings | null;
 }
 
-export const DocEditor = ({ doc }: DocEditorProps) => {
-  useCollaboration(doc.id);
+/**
+ * The collaboration provider is created by the document page (`useCollaboration`)
+ * rather than here: the page swaps this editor for the encryption transition
+ * and decryption failure screens without losing the provider state.
+ */
+export const DocEditor = ({
+  doc,
+  documentEncryptionSettings,
+}: DocEditorProps) => {
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
   const isDeletedDoc = !!doc.deleted_at;
   const readOnly =
@@ -129,7 +137,11 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
       isDeletedDoc={isDeletedDoc}
       readOnly={readOnly}
     >
-      <DocCoreEditor doc={doc} readOnly={readOnly} />
+      <DocCoreEditor
+        doc={doc}
+        readOnly={readOnly}
+        documentEncryptionSettings={documentEncryptionSettings}
+      />
     </DocEditorContainer>
   );
 };
@@ -137,9 +149,14 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
 interface DocCoreEditorProps {
   doc: Doc;
   readOnly: boolean;
+  documentEncryptionSettings: DocumentEncryptionSettings | null;
 }
 
-export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
+export const DocCoreEditor = ({
+  doc,
+  readOnly,
+  documentEncryptionSettings,
+}: DocCoreEditorProps) => {
   const { provider, isReady } = useProviderStore();
   const isProviderReady = isReady && provider;
   const showContent = !!(
@@ -163,13 +180,27 @@ export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
   }
 
   if (readOnly) {
+    // Readers of an encrypted document decrypt its media too
     return (
-      <BlockNoteReader
-        initialContent={provider.document.getXmlFragment('document-store')}
-        docId={doc.id}
-      />
+      <EncryptionProvider
+        encryptedSymmetricKey={
+          documentEncryptionSettings?.encryptedSymmetricKey
+        }
+        keyVersion={documentEncryptionSettings?.keyVersion}
+      >
+        <BlockNoteReader
+          initialContent={provider.document.getXmlFragment('document-store')}
+          docId={doc.id}
+        />
+      </EncryptionProvider>
     );
   }
 
-  return <BlockNoteEditor doc={doc} provider={provider} />;
+  return (
+    <BlockNoteEditor
+      doc={doc}
+      provider={provider}
+      documentEncryptionSettings={documentEncryptionSettings}
+    />
+  );
 };

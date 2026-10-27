@@ -27,8 +27,12 @@ export const DocShareModalFooter = ({
     >
       <HorizontalSeparator $margin={{ vertical: 'sm' }} />
 
-      <DocVisibility doc={doc} />
-      <HorizontalSeparator $margin={{ vertical: 'sm' }} />
+      {!doc.is_encrypted && (
+        <>
+          <DocVisibility doc={doc} />
+          <HorizontalSeparator $margin={{ vertical: 'sm' }} />
+        </>
+      )}
 
       <Box
         $direction="row"

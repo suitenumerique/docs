@@ -2,6 +2,9 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
 
+import { DocumentEncryptionSettings } from '@/docs/doc-collaboration/hook/useDocumentEncryption';
+import { RelayProvider } from '@/docs/doc-collaboration/relayProvider';
+import { useVaultClient } from '@/docs/doc-collaboration/vault';
 import {
   canKeepaliveContent,
   useDocContentUpdate,
@@ -15,13 +18,20 @@ import { isFirefox } from '@/utils/userAgent';
 
 const SAVE_INTERVAL = 60000;
 
-export const useSaveDoc = (docId: string, yDoc: Y.Doc) => {
+export const useSaveDoc = (
+  docId: string,
+  yDoc: Y.Doc,
+  isEncrypted: boolean,
+  documentEncryptionSettings: DocumentEncryptionSettings | null,
+) => {
   /**
    * isSynced is more reliable than isConnected in this cases
    * because it indicates that the content is fully synchronised
    * with the yjs server
    */
-  const { isSynced: isConnectedToCollabServer } = useProviderStore();
+  const { isSynced: isConnectedToCollabServer, encryptionTransition } =
+    useProviderStore();
+  const { client: vaultClient } = useVaultClient();
 
   const { isOffline } = useIsOffline();
   const isSavingRef = useRef(false);
@@ -67,7 +77,9 @@ export const useSaveDoc = (docId: string, yDoc: Y.Doc) => {
       const PROVIDER_ORIGIN_CONSTRUCTOR = 'HocuspocusProvider';
 
       const isAIChange =
-        !transaction.local && transactionOrigin !== PROVIDER_ORIGIN_CONSTRUCTOR;
+        !transaction.local &&
+        transactionOrigin !== PROVIDER_ORIGIN_CONSTRUCTOR &&
+        !(transaction.origin instanceof RelayProvider);
 
       /**
        * notifySubscribers generate a transaction that can be
@@ -96,26 +108,81 @@ export const useSaveDoc = (docId: string, yDoc: Y.Doc) => {
    */
   const saveDoc = useCallback(
     ({ isUnloading = false }: { isUnloading?: boolean } = {}) => {
-      if (!isLocalChange || isSavingRef.current) {
+      if (
+        !isLocalChange ||
+        isSavingRef.current ||
+        // The content is being re-encrypted or decrypted server side
+        encryptionTransition ||
+        (isEncrypted && (!documentEncryptionSettings || !vaultClient))
+      ) {
         return { isSaving: false, isKeptAlive: false };
       }
 
       isSavingRef.current = true;
-      const content = toBase64(Y.encodeStateAsUpdate(yDoc));
+      const state = Y.encodeStateAsUpdate(yDoc);
       const websocket = isConnectedToCollabServer;
+
+      if (isEncrypted && documentEncryptionSettings && vaultClient) {
+        // Encryption is asynchronous, so the request cannot be handed to the
+        // browser before an unload tears the page down: never kept alive.
+        vaultClient
+          .encryptWithKey(
+            state.buffer as ArrayBuffer,
+            documentEncryptionSettings.encryptedSymmetricKey,
+          )
+          .then(({ encryptedData }) => {
+            const content = toBase64(new Uint8Array(encryptedData));
+            updateDocContent({
+              id: docId,
+              content,
+              contentEncrypted: true,
+              websocket,
+              // A keepalive request over the browser's size cap is refused
+              // outright: a larger one goes as a regular request instead.
+              keepalive:
+                isUnloading &&
+                canKeepaliveContent({
+                  content,
+                  contentEncrypted: true,
+                  websocket,
+                }),
+            });
+          })
+          .catch((err) => {
+            isSavingRef.current = false;
+            console.error('Failed to encrypt document for save:', err);
+          });
+
+        return { isSaving: true, isKeptAlive: false };
+      }
+
+      const content = toBase64(state);
       updateDocContent({
         id: docId,
         content,
+        contentEncrypted: false,
         websocket,
         keepalive: isUnloading,
       });
 
       return {
         isSaving: true,
-        isKeptAlive: isUnloading && canKeepaliveContent({ content, websocket }),
+        isKeptAlive:
+          isUnloading &&
+          canKeepaliveContent({ content, contentEncrypted: false, websocket }),
       };
     },
-    [isLocalChange, updateDocContent, docId, yDoc, isConnectedToCollabServer],
+    [
+      isLocalChange,
+      encryptionTransition,
+      isEncrypted,
+      documentEncryptionSettings,
+      vaultClient,
+      updateDocContent,
+      docId,
+      yDoc,
+      isConnectedToCollabServer,
+    ],
   );
 
   const router = useRouter();
@@ -123,7 +190,22 @@ export const useSaveDoc = (docId: string, yDoc: Y.Doc) => {
   useEffect(() => {
     const onSave = (e?: Event) => {
       const isUnloading = typeof e !== 'undefined' && e.type === 'beforeunload';
+      // Read before saving: starting the save below flips the in-flight flag.
+      const hasUnsavedEncryptedChanges =
+        isEncrypted && (isLocalChange || isSavingRef.current);
       const { isSaving, isKeptAlive } = saveDoc({ isUnloading });
+
+      /**
+       * An encrypted save goes through the vault first, which is asynchronous,
+       * so the page would be gone before the request is sent. Asking the user
+       * to confirm keeps the page alive meanwhile: the save completes behind
+       * the prompt, and leaving right away is still possible.
+       */
+      if (isUnloading && hasUnsavedEncryptedChanges && e.preventDefault) {
+        e.preventDefault();
+
+        return;
+      }
 
       /**
        * Firefox does not trigger the request every time the user leaves the page.
@@ -160,5 +242,5 @@ export const useSaveDoc = (docId: string, yDoc: Y.Doc) => {
       removeEventListener('beforeunload', onSave);
       router.events.off('routeChangeStart', onSave);
     };
-  }, [router.events, saveDoc]);
+  }, [router.events, saveDoc, isEncrypted, isLocalChange]);
 };

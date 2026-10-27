@@ -20,21 +20,23 @@ export const Skeleton = ({ children }: PropsWithChildren) => {
   const { isSkeletonVisible } = useSkeletonStore();
   const { colorsTokens } = useCunninghamTheme();
   const [isVisible, setIsVisible] = useState(isSkeletonVisible);
-  const [isFadingOut, setIsFadingOut] = useState(true);
+  const [isFadingOut] = useState(true);
   const timeoutVisibleRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (isSkeletonVisible) {
-      setIsVisible(true);
-      setIsFadingOut(false);
-    } else {
-      setIsFadingOut(true);
-      if (!timeoutVisibleRef.current) {
-        timeoutVisibleRef.current = setTimeout(() => {
-          setIsVisible(false);
-        }, FADE_DURATION_MS * 2);
-      }
-    }
+    setIsVisible(false);
+
+    // if (isSkeletonVisible) {
+    //   setIsVisible(true);
+    //   setIsFadingOut(false);
+    // } else {
+    //   setIsFadingOut(true);
+    //   if (!timeoutVisibleRef.current) {
+    //     timeoutVisibleRef.current = setTimeout(() => {
+    //       setIsVisible(false);
+    //     }, FADE_DURATION_MS * 2);
+    //   }
+    // }
 
     return () => {
       if (timeoutVisibleRef.current) {

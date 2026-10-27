@@ -20,18 +20,26 @@ interface CreateDocAccessParams {
   role: Role;
   docId: Doc['id'];
   memberId: User['id'];
+  memberEncryptedSymmetricKey: string | null;
+  encryptionPublicKeyVersion?: number | null;
 }
 
 export const createDocAccess = async ({
   memberId,
   role,
   docId,
+  memberEncryptedSymmetricKey,
+  encryptionPublicKeyVersion,
 }: CreateDocAccessParams): Promise<Access> => {
   const response = await fetchAPI(`documents/${docId}/accesses/`, {
     method: 'POST',
     body: JSON.stringify({
       user_id: memberId,
       role,
+      encrypted_document_symmetric_key_for_user: memberEncryptedSymmetricKey,
+      ...(encryptionPublicKeyVersion != null && {
+        encryption_public_key_version: encryptionPublicKeyVersion,
+      }),
     }),
   });
 
@@ -62,6 +70,11 @@ export function useCreateDocAccess() {
       });
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC_ACCESSES],
+      });
+      // The document carries the per-member key versions the share dialog
+      // reads, so it has to come back with the new member in it.
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_DOC],
       });
 
       // Broadcast to every user connected to the document
