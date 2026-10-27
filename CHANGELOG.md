@@ -10,6 +10,10 @@ and this project adheres to
 
 - ✨(backend) add a dedicated document abilities endpoint #2885
 
+### Changed
+
+- ✨(frontend) omit title slide from presentation pdf export #2896
+
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
