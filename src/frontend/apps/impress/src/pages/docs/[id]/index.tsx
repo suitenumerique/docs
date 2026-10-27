@@ -294,7 +294,14 @@ const DocPage = ({ id }: DocProps) => {
     return <Loading />;
   }
 
-  if (!doc || encryptionLoading || documentEncryptionLoading) {
+  // Only an encrypted document waits for the vault, which gives up after the
+  // SDK's timeout and then shows the unavailable state below; a plain one
+  // opens at once, the encryption actions appearing when the vault is ready.
+  if (
+    !doc ||
+    (doc.is_encrypted && encryptionLoading) ||
+    documentEncryptionLoading
+  ) {
     return <Loading />;
   }
 
