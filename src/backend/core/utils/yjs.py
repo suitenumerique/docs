@@ -51,7 +51,9 @@ def replace_attachment_keys(update, mapping):
     element's `url` naming an old key names its new one, in the `/media/<key>` form
     as in the `media-check/?key=` form (the key URL-encoded there). The same rewrite
     the frontend makes when it removes a document's encryption, returned as the full
-    state of the document.
+    state of the document. The `blockUploadUrl` of an upload loader too (a file whose
+    scan had not ended when its uploader left): it becomes the file's block once
+    the scan of its new key answers, while its old key would answer nothing.
     """
     doc = pycrdt.Doc()
     doc.apply_update(update)
@@ -64,17 +66,18 @@ def replace_attachment_keys(update, mapping):
 
     with doc.transaction():
         for element in _xml_elements(fragment):
-            url = element.attributes.get("url")
+            for name in ("url", "blockUploadUrl"):
+                url = element.attributes.get(name)
 
-            if not isinstance(url, str):
-                continue
+                if not isinstance(url, str):
+                    continue
 
-            rewritten = url
+                rewritten = url
 
-            for old, new in replacements:
-                rewritten = rewritten.replace(old, new)
+                for old, new in replacements:
+                    rewritten = rewritten.replace(old, new)
 
-            if rewritten != url:
-                element.attributes["url"] = rewritten
+                if rewritten != url:
+                    element.attributes[name] = rewritten
 
     return doc.get_update()

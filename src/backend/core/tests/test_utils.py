@@ -97,7 +97,8 @@ def test_utils_extract_attachments():
 def test_utils_replace_attachment_keys():
     """
     Every `url` naming an old key names its new one, nested or not, in the media
-    form as in the media-check form; the rest of the document is unchanged.
+    form as in the media-check form, and an upload loader's `blockUploadUrl`; the
+    rest of the document is unchanged.
     """
     document_id = uuid.uuid4()
     old_key = f"{document_id!s}/attachments/{uuid.uuid4()!s}.png"
@@ -141,6 +142,13 @@ def test_utils_replace_attachment_keys():
                         "image", {"url": f"{media}{other_key}", "previewWidth": 512}
                     ),
                     pycrdt.XmlElement("paragraph", {}, [pycrdt.XmlText("Hello")]),
+                    pycrdt.XmlElement(
+                        "uploadLoader",
+                        {
+                            "type": "loading",
+                            "blockUploadUrl": f"{check}{old_key.replace('/', '%2F')}",
+                        },
+                    ),
                 ],
             )
         ]
@@ -154,8 +162,9 @@ def test_utils_replace_attachment_keys():
 
     assert f'url="{media}{new_key}"' in xml
     assert f'url="{check}{new_key.replace("/", "%2F")}"' in xml
+    assert f'blockUploadUrl="{check}{new_key.replace("/", "%2F")}"' in xml
     assert f'url="{media}{other_key}"' in xml
-    # Only `url` is rewritten, as the frontend does.
+    # Only the links are rewritten.
     assert f'caption="{old_key}"' in xml
     assert f"{media}{old_key}" not in xml
     assert 'previewWidth="512"' in xml
