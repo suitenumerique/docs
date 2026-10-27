@@ -53,3 +53,7 @@ keycloak:
     username: docs
     password: docs
     email: docs@example.com
+  annotations:
+    # Keycloak's logout response headers exceed nginx's default proxy buffer
+    # ("upstream sent too big header"), so logging out fails without this.
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
