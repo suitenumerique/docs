@@ -19,7 +19,9 @@ auth:
 # costs nothing. The ServiceMonitor is only built with the operator's CRDs, i.e.
 # with the prometheus release (`monitoring` in the helmfile environment).
 metrics:
-  enabled: true
+  # the exporter reads a default-password key that the aclConfig auth above
+  # never creates, so its container cannot start
+  enabled: false
   exporter:
     extraEnvs:
       REDIS_EXPORTER_CHECK_STREAMS: "yhub:*"

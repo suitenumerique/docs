@@ -91,6 +91,7 @@ k8s_resource('prometheus-prometheus', objects=[
 # (src/loadtest/dashboards) as ConfigMaps its sidecar loads
 k8s_resource('prometheus-grafana', objects=[
     'prometheus-grafana:ingress',
+    'prometheus-grafana:servicemonitor',
     'dashboard-users:configmap',
     'dashboard-collaboration:configmap',
     'dashboard-backend:configmap',
@@ -103,8 +104,6 @@ k8s_resource(new_name='impress-docs-monitors', objects=[
     'impress-docs-backend:servicemonitor',
     'impress-docs-yhub:servicemonitor',
     'impress-docs-yhub-worker:servicemonitor',
-    'valkey-docs:servicemonitor',
-    'valkey-yhub:servicemonitor',
 ], resource_deps=['prometheus-operator'])
 
 # the valkey chart leaves its objects without a namespace, and the CRDs of the

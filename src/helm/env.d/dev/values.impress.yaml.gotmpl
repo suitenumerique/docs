@@ -279,7 +279,9 @@ yhub:
           path: cacert.pem
 
 docSpec:
-  enabled: true
+  # ghcr.io/docspec/api only ships an amd64 image: it cannot run on an arm64
+  # kind node. Only needed to import .docx files.
+  enabled: false
   replicas: 1
 
   image:
