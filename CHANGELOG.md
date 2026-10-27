@@ -14,6 +14,10 @@ and this project adheres to
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
 
+### Fixed
+
+- 🐛(frontend) fix the slides pdf export of docs with interlinks
+
 ## [v6.0.4] - 2026-10-26
 
 ### Changed
