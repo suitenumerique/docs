@@ -316,11 +316,12 @@ export const DocShareModal = ({
                 )}
               </Box>
 
-              {doc.is_encrypted && canShare && membersQuery && (
+              {doc.is_encrypted && canViewAccesses && membersQuery && (
                 <PendingEncryptionSection
                   doc={doc}
                   accesses={membersQuery}
                   documentEncryptionSettings={effectiveEncryptionSettings}
+                  canAccept={canShare}
                 />
               )}
 

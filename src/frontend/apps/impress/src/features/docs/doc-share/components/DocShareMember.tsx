@@ -151,17 +151,6 @@ export const QuickSearchGroupMember = ({
             <DocShareMemberItem
               doc={doc}
               access={access}
-              suffix={
-                doc.is_encrypted && access.is_pending_encryption
-                  ? {
-                      label: t('Waiting for encryption'),
-                      hint: t(
-                        'Added before they enabled encryption. They get access once they have, the next time the document owner opens it.',
-                      ),
-                      icon: 'schedule',
-                    }
-                  : undefined
-              }
               onAvatarClick={identityOf}
             />
           );

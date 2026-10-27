@@ -17,16 +17,19 @@ interface Props {
   doc: Doc;
   accesses: Access[];
   documentEncryptionSettings: DocumentEncryptionSettings | null;
+  canAccept: boolean;
 }
 
 /**
  * Lists users who were added to an encrypted doc before completing
- * their encryption onboarding (`is_pending_encryption`).
+ * their encryption onboarding (`is_pending_encryption`). The member list
+ * itself says nothing about them: this section is where they show.
  *
  * Two sub-states per row, driven by an upfront public-key probe:
- *  - invitee HAS a public key → Accept button actionable. One click
- *    re-wraps the document key against their key and PATCHes the row.
- *  - invitee has NO public key yet → no button, a "Waiting for encryption"
+ *  - invitee HAS a public key: a member manager gets an Accept button, which
+ *    re-wraps the document key against their key and PATCHes the row; anyone
+ *    else sees an "Encryption enabled" status instead.
+ *  - invitee has NO public key yet: no button, a "Waiting for encryption"
  *    chip; one line under the heading explains it for every such row. This
  *    prevents the "click Accept, get a cryptic error" loop.
  */
@@ -34,6 +37,7 @@ export const PendingEncryptionSection = ({
   doc,
   accesses,
   documentEncryptionSettings,
+  canAccept: mayAccept,
 }: Props) => {
   const { t } = useTranslation();
   const { client: vaultClient } = useVaultClient();
@@ -91,7 +95,7 @@ export const PendingEncryptionSection = ({
         setHasPublicKeyBySub(next);
       })
       .catch(() => {
-        /* leave empty — fall back to "waiting for their onboarding" */
+        /* leave empty: fall back to "waiting for their onboarding" */
       })
       .finally(() => {
         if (!cancelled) {
@@ -150,17 +154,18 @@ export const PendingEncryptionSection = ({
     }
   };
 
-  const canAcceptAccess = (access: Access) => {
+  const hasPublicKey = (access: Access) => {
     const sub = access.user?.suite_user_id;
-    return (
-      !!sub &&
-      !!documentEncryptionSettings &&
-      hasPublicKeyBySub[sub] === true &&
-      !probing
-    );
+    return !!sub && hasPublicKeyBySub[sub] === true && !probing;
   };
+  const canAcceptAccess = (access: Access) =>
+    mayAccept && !!documentEncryptionSettings && hasPublicKey(access);
   const someoneWaiting =
-    !probing && pending.some((access) => !canAcceptAccess(access));
+    !probing && pending.some((access) => !hasPublicKey(access));
+  // "Action needed" only for a viewer who can accept someone; the others,
+  // and a manager whose invitees are all still setting up, see who is
+  // waiting for access with nothing to do.
+  const needsAction = pending.some(canAcceptAccess);
 
   return (
     <Box
@@ -170,7 +175,7 @@ export const PendingEncryptionSection = ({
     >
       <Box $gap="4xs">
         <Text $size="xs" $weight="700" $variation="secondary">
-          {t('Action needed')}
+          {needsAction ? t('Action needed') : t('Waiting for access')}
         </Text>
         {someoneWaiting && (
           <Text $size="xs" $variation="tertiary">
@@ -185,6 +190,7 @@ export const PendingEncryptionSection = ({
           const isBusy = inFlight.has(access.id);
           const error = errorByAccessId[access.id];
           const canAccept = canAcceptAccess(access);
+          const isEnabled = hasPublicKey(access);
           const name = access.user?.full_name || access.user?.email || '';
 
           return (
@@ -212,6 +218,25 @@ export const PendingEncryptionSection = ({
                       {access.user.email}
                     </Text>
                   )}
+                  {/* The Accept button already says it; a viewer who cannot
+                      accept gets the status instead. */}
+                  {isEnabled && !canAccept && (
+                    <Box
+                      $direction="row"
+                      $align="center"
+                      $gap="4xs"
+                      className="--docs--pending-encryption-enabled"
+                    >
+                      <Icon
+                        iconName="verified_user"
+                        $size="sm"
+                        $variation="secondary"
+                      />
+                      <Text $size="xs" $variation="secondary">
+                        {t('Encryption enabled')}
+                      </Text>
+                    </Box>
+                  )}
                   {error && (
                     <Text $size="xs" $theme="error">
                       {error}
@@ -219,7 +244,7 @@ export const PendingEncryptionSection = ({
                   )}
                 </Box>
               </Box>
-              {canAccept ? (
+              {canAccept && (
                 <Button
                   size="small"
                   variant="bordered"
@@ -228,7 +253,8 @@ export const PendingEncryptionSection = ({
                 >
                   {isBusy ? t('Accepting…') : t('Accept')}
                 </Button>
-              ) : (
+              )}
+              {!isEnabled && (
                 <Box
                   $direction="row"
                   $align="center"
