@@ -4,6 +4,7 @@ import { createGlobalStyle } from 'styled-components';
 
 import { Box } from '@/components';
 import { Waffle } from '@/components/Waffle';
+import { useConfig } from '@/core/config';
 import {
   ButtonLogin,
   EncryptionMenuButton,
@@ -22,6 +23,7 @@ const FooterActionsGlobalStyle = createGlobalStyle`
 export const FooterActions = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { data: config } = useConfig();
 
   const userMenu = user || {
     full_name: t('Guest'),
@@ -43,6 +45,7 @@ export const FooterActions = () => {
           <UserMenu
             user={userMenu}
             logout={user ? gotoLogout : undefined}
+            settingsCTA={(user && config?.ACCOUNT_SETTINGS_URL) || undefined}
             actions={<LanguagePicker />}
             withMobileView={false}
           />

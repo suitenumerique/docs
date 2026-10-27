@@ -70,6 +70,10 @@ OIDC_STORE_ACCESS_TOKEN=True
 # ENCRYPTION_FEATURE_ENABLED=True
 # ENCRYPTION_VAULT_URL=http://data.encryption.localhost:7200
 # ENCRYPTION_INTERFACE_URL=http://encryption.localhost:7200
+# Optional: the user's account settings (e.g. LaSuite Accounts), linked as
+# "Manage account" in the user menu, where encryption is managed too. Unset,
+# the product offers the encryption settings itself.
+# ACCOUNT_SETTINGS_URL=https://accounts.example.com/
 
 # Must be a valid Fernet key (32 url-safe base64-encoded bytes)
 # To create one, use the bin/fernetkey command.

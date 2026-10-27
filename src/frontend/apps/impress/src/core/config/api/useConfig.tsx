@@ -43,6 +43,7 @@ interface ThemeCustomization {
 }
 
 export interface ConfigResponse {
+  ACCOUNT_SETTINGS_URL?: string | null;
   AI_BOT: { name: string; color: string };
   AI_FEATURE_ENABLED?: boolean;
   AI_FEATURE_BLOCKNOTE_ENABLED?: boolean;

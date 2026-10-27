@@ -3,34 +3,32 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Icon } from '@/components';
+import { useConfig } from '@/core/config';
 import { useVaultClient } from '@/features/docs/doc-collaboration/vault';
 
 import { useAuth } from '../hooks';
 
-import { ModalEncryptionOnboarding } from './ModalEncryptionOnboarding';
 import { ModalEncryptionSettings } from './ModalEncryptionSettings';
 
 /**
- * Account-level encryption entry, next to the user menu: the design system's
- * UserMenu takes no custom items, so this lives beside it. Opens the encryption
- * service's onboarding when this device holds no keys, its settings otherwise.
+ * Encryption entry next to the user menu, for a deployment without account
+ * settings: the design system's UserMenu takes no custom items. With
+ * ACCOUNT_SETTINGS_URL set, users manage their encryption there (the menu's
+ * "Manage account") and Docs shows no encryption entry of its own.
  */
 export const EncryptionMenuButton = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { hasKeys, isEnabled: isEncryptionEnabled } = useVaultClient();
+  const { data: config } = useConfig();
+  const { isEnabled: isEncryptionEnabled } = useVaultClient();
 
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  if (!user || !isEncryptionEnabled) {
+  if (!user || !isEncryptionEnabled || config?.ACCOUNT_SETTINGS_URL) {
     return null;
   }
 
-  const hasEncryptionSetup = hasKeys === true;
-  const label = hasEncryptionSetup
-    ? t('Encryption settings')
-    : t('Enable encryption');
+  const label = t('Encryption settings');
 
   return (
     <>
@@ -39,34 +37,14 @@ export const EncryptionMenuButton = () => {
         title={label}
         color="neutral"
         variant="tertiary"
-        icon={
-          <Icon
-            iconName={hasEncryptionSetup ? 'verified_user' : 'add_moderator'}
-            $color="inherit"
-          />
-        }
-        onClick={() =>
-          hasEncryptionSetup
-            ? setIsSettingsOpen(true)
-            : setIsOnboardingOpen(true)
-        }
+        icon={<Icon iconName="verified_user" $color="inherit" />}
+        onClick={() => setIsSettingsOpen(true)}
         className="--docs--encryption-menu-button"
       />
-      {isOnboardingOpen && (
-        <ModalEncryptionOnboarding
-          isOpen
-          onClose={() => setIsOnboardingOpen(false)}
-          onSuccess={() => setIsOnboardingOpen(false)}
-        />
-      )}
       {isSettingsOpen && (
         <ModalEncryptionSettings
           isOpen
           onClose={() => setIsSettingsOpen(false)}
-          onRequestReOnboard={() => {
-            setIsSettingsOpen(false);
-            setIsOnboardingOpen(true);
-          }}
         />
       )}
     </>

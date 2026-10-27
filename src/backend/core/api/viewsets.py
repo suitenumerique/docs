@@ -3624,6 +3624,7 @@ class ConfigView(drf.views.APIView):
             Return a dictionary of public settings.
         """
         array_settings = [
+            "ACCOUNT_SETTINGS_URL",
             "AI_BOT",
             "AI_FEATURE_ENABLED",
             "AI_FEATURE_BLOCKNOTE_ENABLED",

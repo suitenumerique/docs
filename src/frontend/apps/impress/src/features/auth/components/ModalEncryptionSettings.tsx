@@ -1,9 +1,9 @@
 /**
- * Encryption settings — delegates to the centralized encryption service.
+ * Encryption settings, delegated to the centralized encryption service.
  *
- * The service's settings interface (fingerprint, key deletion, device transfer,
- * emergency access) draws its own modal over the page; Docs only shows a loader
- * until it is on screen.
+ * Opens the interface's own encryption home (status, set up for a user with no
+ * keys, fingerprint, devices, recovery phrase, trusted contacts), which draws
+ * its own modal over the page; Docs only shows a loader until it is on screen.
  */
 import { Modal, ModalSize } from '@gouvfr-lasuite/ui-components';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -17,7 +17,6 @@ import { EncryptionHostBody } from './EncryptionHostBody';
 interface ModalEncryptionSettingsProps {
   isOpen: boolean;
   onClose: () => void;
-  onRequestReOnboard: () => void;
 }
 
 export const ModalEncryptionSettings = ({
@@ -53,18 +52,22 @@ export const ModalEncryptionSettings = ({
       onClose();
     };
 
-    const handleKeysDestroyed = () => {
+    // Keys created (set up from the home) or destroyed: the document page and
+    // the encryption actions follow at once, without waiting for the close.
+    const handleKeysChanged = () => {
       void refreshKeyState().then(() => refreshEncryption());
     };
 
     vaultClient.on('interface:ready', handleReady);
     vaultClient.on('interface:closed', handleClosed);
-    vaultClient.on('keys-destroyed', handleKeysDestroyed);
+    vaultClient.on('onboarding:complete', handleKeysChanged);
+    vaultClient.on('keys-destroyed', handleKeysChanged);
 
     return () => {
       vaultClient.off('interface:ready', handleReady);
       vaultClient.off('interface:closed', handleClosed);
-      vaultClient.off('keys-destroyed', handleKeysDestroyed);
+      vaultClient.off('onboarding:complete', handleKeysChanged);
+      vaultClient.off('keys-destroyed', handleKeysChanged);
     };
   }, [vaultClient, refreshKeyState, refreshEncryption, onClose]);
 
