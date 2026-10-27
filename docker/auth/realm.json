@@ -834,6 +834,32 @@
         "offline_access",
         "microprofile-jwt"
       ]
+    },
+    {
+      "clientId": "encryption",
+      "name": "Encryption",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://encryption.localhost:7200/auth/callback"
+      ],
+      "webOrigins": [
+        "http://encryption.localhost:7200"
+      ],
+      "frontchannelLogout": true,
+      "attributes": {},
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": []
     }
   ],
   "clientScopes": [
