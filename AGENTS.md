@@ -142,7 +142,7 @@ make start-tilt             # Start Tilt for hot-reload
 
 Clients connect via WebSocket to the collaboration server (`src/yhub-server`, built on `@y/hub`), authenticated by their Django session cookie.
 
-- On every connection (and permission recheck, REST call, fallback poll) yhub asks the backend who the caller is and what they may do: `GET /users/me/`, `GET /documents/{id}/`, and `GET /documents/{id}/accesses/me/` for the history. The backend stays the source of truth for access rights
+- On every connection (and permission recheck, REST call, fallback poll) yhub asks the backend who the caller is and what they may do: `GET /users/me/`, `GET /documents/{id}/abilities/`, and `GET /documents/{id}/accesses/me/` for the history. The backend stays the source of truth for access rights
 - Updates travel between replicas through Redis/Valkey streams, so yhub replicas are stateless and need no sticky sessions. A worker (`YHUB_ROLE=all|server|worker`) compacts the stream into yhub's own PostgreSQL database (optionally S3 for the blobs)
 - After a compaction that found new content, yhub calls `POST /documents/{id}/content-updated/` so that the backend updates `updated_at` and the search index
 - The backend reads and writes content through the REST routes of yhub with an admin JWT (see `YHubService`)

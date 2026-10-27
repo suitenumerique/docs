@@ -4,8 +4,9 @@
  *
  *   `backendFetch` — a GET carrying the caller's session
  *   `resolveUserid`, `resolveAbilities`, `resolveAccess` — the three questions
- *     the auth plugin asks about a caller (`/users/me/`, `/documents/{id}/`,
- *     `/documents/{id}/accesses/me/`), answered through the authz cache
+ *     the auth plugin asks about a caller (`/users/me/`,
+ *     `/documents/{id}/abilities/`, `/documents/{id}/accesses/me/`), answered
+ *     through the authz cache
  *   `touchDocument` — the `content-updated` notification a compaction fires
  *   `JWKS` — Django's public keys, for verifying the admin tokens it signs to
  *     call us (consumed by `server.ts`)
@@ -49,7 +50,8 @@ import type { AppAuthInfo, YHub } from './yhub.js';
 export interface BackendUser {
   id: string | number;
 }
-// `GET /api/v1.0/documents/{id}/` — only the abilities the policy reads.
+// `GET /api/v1.0/documents/{id}/abilities/` — only the abilities the policy
+// reads.
 export interface BackendDocument {
   abilities?: DocumentAbilities;
 }
@@ -238,7 +240,7 @@ export const resolveAbilities = (
     async () => {
       try {
         return await backendFetch<BackendDocument>(
-          `/api/v1.0/documents/${docid}/`,
+          `/api/v1.0/documents/${docid}/abilities/`,
           user ?? {},
         );
       } catch (err) {

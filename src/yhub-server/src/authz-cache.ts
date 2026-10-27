@@ -7,10 +7,11 @@
  * see the "Access control" section of README.md:
  *
  *   identity   session-cookie hash → userid. Fails closed downstream (a dead
- *              session still loses the `documents/{id}` fetch), so a short
- *              in-process TTL with no invalidation is enough. Per replica: no
- *              cross-replica coordination would ever buy anything, since
- *              nothing on the backend side can name this key to invalidate it.
+ *              session still loses the `documents/{id}/abilities` fetch), so
+ *              a short in-process TTL with no invalidation is enough. Per
+ *              replica: no cross-replica coordination would ever buy anything,
+ *              since nothing on the backend side can name this key to
+ *              invalidate it.
  *   abilities  the backend's verdict on a (user, document) pair. The one
  *              payload a stale entry would over-grant, so it lives in this
  *              server's own redis — the one already carrying the document
@@ -55,7 +56,7 @@ const authzLog = logger.child({ module: 'authz-cache' });
 export const hashCookie = (cookie: string): string =>
   createHash('sha256').update(cookie).digest('hex');
 
-// The `documents/{id}` abilities for a caller with no session at all depend
+// The `documents/{id}/abilities` for a caller with no session at all depend
 // only on the document's link configuration — every anonymous visitor holds
 // the same verdict — so they share one redis key per document instead of one
 // per cookie hash. (The 401-fallback anonymous caller — a dead session —
@@ -222,9 +223,9 @@ const getOrFetch = async <T>(
 
 /**
  * The abilities lookup for one (caller, document) pair. `fetch` is called only
- * on a miss and must resolve the caller's `documents/{id}` payload — its
- * `abilities` object is what gets cached (the rest of the payload is not part
- * of the verdict); on a backend error the lookup rethrows.
+ * on a miss and must resolve the caller's `documents/{id}/abilities` payload —
+ * its `abilities` object is what gets cached (the rest of the payload is not
+ * part of the verdict); on a backend error the lookup rethrows.
  */
 export const cachedAbilities = async (
   yhub: YHub,

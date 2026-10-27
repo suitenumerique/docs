@@ -203,7 +203,7 @@ documents what each of them changes.
 | YHUB_TASK_CONCURRENCY         | Tasks one worker process claims at once                                                                                                                 | 5                      |
 | YHUB_TASK_DEBOUNCE_MS         | How long an update waits on the redis stream before a worker persists it                                                                                 | 10000                  |
 | YHUB_MIN_MESSAGE_LIFETIME_MS  | How long persisted updates stay replayable from redis rather than read back from postgres                                                                | 60000                  |
-| YHUB_BACKEND_REQUEST_TIMEOUT_MS | How long a call to the backend (`users/me`, `documents/{id}`, `accesses/me`) may take before it is given up on and the caller told to retry, in ms   | 5000                   |
+| YHUB_BACKEND_REQUEST_TIMEOUT_MS | How long a call to the backend (`users/me`, `documents/{id}/abilities`, `accesses/me`) may take before it is given up on and the caller told to retry, in ms | 5000                   |
 | YHUB_AUTH_TIMEOUT_MS            | How long yhub waits for the whole authentication of a connection (backend calls, legacy seed) before the caller is told to retry, in ms              | 30000                  |
 | YHUB_IDENTITY_CACHE_TTL_MS     | How long a resolved identity is reused for the same session cookie, in ms. 0 disables this layer (default)                                                | 0                      |
 | YHUB_ABILITIES_CACHE_TTL_MS    | How long a document abilities verdict is served from cache, in ms, before it is re-read; deleted cluster-wide by the reset-connections kick. 0 disables it | 0                      |

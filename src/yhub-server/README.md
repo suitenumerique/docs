@@ -30,9 +30,9 @@ It is not a fork of yhub — it is a thin wrapper, written in TypeScript under
   below),
 - plugs in an auth plugin that resolves users and per-document access rights
   by calling the Docs Django backend (`/api/v1.0/users/me/` and
-  `/api/v1.0/documents/{id}/`; the user call is skipped for any caller whose
-  `Cookie` header does not carry the backend's `docs_sessionid` cookie —
-  they can only be anonymous),
+  `/api/v1.0/documents/{id}/abilities/`; the user call is skipped for any
+  caller whose `Cookie` header does not carry the backend's `docs_sessionid`
+  cookie — they can only be anonymous),
 - serves every route under the `/collaboration/` prefix
   (`server.apiPrefix`), including the websocket sync route
   `/collaboration/ws/v1/{org}/{docid}`,
@@ -276,7 +276,7 @@ were configurable:
 | `YHUB_BACKEND_REQUEST_TIMEOUT_MS` | `5000` | How long a call to the Docs backend may take before it is given up on |
 | `YHUB_AUTH_TIMEOUT_MS` | `30000` | How long yhub waits for `authenticate` or `authorize` as a whole (backend calls, legacy seed) before it answers 503; raise it with `YHUB_BACKEND_REQUEST_TIMEOUT_MS` |
 | `YHUB_IDENTITY_CACHE_TTL_MS` | `0` | How long a resolved `users/me` identity is reused for the same Cookie header (authz cache, off by default) |
-| `YHUB_ABILITIES_CACHE_TTL_MS` | `0` | How long a `documents/{id}` verdict is served from cache before it is re-read (deleted by `reset-connections`, see the authz-cache section) |
+| `YHUB_ABILITIES_CACHE_TTL_MS` | `0` | How long a `documents/{id}/abilities` verdict is served from cache before it is re-read (deleted by `reset-connections`, see the authz-cache section) |
 | `YHUB_ACCESS_CACHE_TTL_MS` | `0` | How long an `accesses/me` date is served from cache before it is re-read |
 
 ### The authz cache
@@ -293,9 +293,9 @@ it holds go stale differently, so each has its own layer:
   staleness: a caller editing a *public* document keeps their userid for up
   to one TTL after a server-side logout, so those edits stay attributed to
   the logged-out user instead of `anonymous` — access is unaffected.
-- **abilities** (`documents/{id}` → the verdict): the one payload a stale
-  entry would over-grant, so it lives in yhub's own redis — the one already
-  carrying the document streams, shared between the replicas and never
+- **abilities** (`documents/{id}/abilities` → the verdict): the one payload a
+  stale entry would over-grant, so it lives in yhub's own redis — the one
+  already carrying the document streams, shared between the replicas and never
   touched by the backend — under
   `{prefix}:authz:abilities:{{org}:{docid}}:{sha256(cookie)}`, and the
   shortest TTL bounds what any lost invalidation can leave behind. Anonymous
@@ -336,7 +336,7 @@ anonymous visitors on a cold public document costs one request.
 
 Watch `yhub_authz_cache_lookups_total{layer,result}` alongside
 `yhub_backend_request_duration_seconds{route}`: the hit rate tells you what
-the cache is saving, and the remaining `users_me` / `document` /
+the cache is saving, and the remaining `users_me` / `abilities` /
 `accesses_me` rates tell you what is left.
 
 **Concurrency** multiplies with the number of processes running a worker, since
@@ -357,7 +357,7 @@ instead of reading the document back out of postgres, and it is paid for in
 redis memory.
 
 **The backend timeout** bounds the calls made to the Docs backend on the
-connection path (`users/me`, `documents/{id}`, `accesses/me`; the
+connection path (`users/me`, `documents/{id}/abilities`, `accesses/me`; the
 `content-updated` notification has its own fixed 5s). A call cut by it answers
 the caller with a retryable 503, never with a permission decision, and books
 as `timeout` in `yhub_backend_request_duration_seconds`. The right value is
@@ -504,7 +504,7 @@ the process, and **never** with a document or a user:
 | ------ | ------ | ------------- |
 | `yhub_ws_connections`, `yhub_rooms` | | Websockets, and documents with at least one, on this replica |
 | `yhub_auth_duration_seconds` | `phase` (`authenticate`, `authorize`), `endpoint`, `result` (`ok`, `denied`, `unavailable`, `error`) | What admitting a caller costs — backend calls and legacy seed included. It runs on every websocket upgrade, recheck, REST call and fallback poll |
-| `yhub_backend_request_duration_seconds` | `route` (`users_me`, `document`, `accesses_me`, `content_updated`), `status` (http status, `timeout`, `error`) | The calls made to the Docs backend |
+| `yhub_backend_request_duration_seconds` | `route` (`users_me`, `abilities`, `accesses_me`, `content_updated`), `status` (http status, `timeout`, `error`) | The calls made to the Docs backend |
 | `yhub_backend_requests_inflight` | `route` | Backend calls not answered yet: what piles up when the backend slows down |
 | `yhub_worker_pending_tasks` | | Compactions waiting on the redis queue. One queue for the whole deployment: read it with `max`, never `sum` |
 | `yhub_worker_task_duration_seconds` | `result` (`ok`, `error`) | Duration of the compactions |
