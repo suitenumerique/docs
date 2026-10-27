@@ -13,7 +13,6 @@ import * as Y from 'yjs';
 
 import { TextErrors } from '@/components';
 import { useUserEncryption } from '@/docs/doc-collaboration';
-import { createDocAttachment } from '@/docs/doc-editor/api';
 import { useAuth } from '@/features/auth';
 import {
   fetchRegisteredKeys,
@@ -25,7 +24,6 @@ import {
   KEY_DOC,
   KEY_LIST_DOC,
   LinkReach,
-  extractAttachmentKeysAndMetadata,
   getDocLinkReach,
   useEncryptDoc,
   useProviderStore,
@@ -35,92 +33,9 @@ import { useDocInvitations } from '@/features/docs/doc-share/api/useDocInvitatio
 import { useKeyboardAction } from '@/hooks';
 import { toBase64 } from '@/utils/string';
 
+import { encryptDocContent } from '../encryptDocContent';
+
 import { EncryptionModalContent } from './EncryptionLayout';
-
-/**
- * encrypt existing unencrypted attachments and return:
- * - a modified Yjs state with URLs pointing to new encrypted files
- * - a mapping of old S3 keys to new ones (for backend cleanup)
- *
- * originals are never modified so if the process fails midway the document
- * still works with its original unencrypted attachments.
- */
-const encryptRemoteAttachments = async (
-  yDoc: Y.Doc,
-  docId: string,
-  vaultClient: VaultClient,
-  encryptedSymmetricKey: ArrayBuffer,
-): Promise<Record<string, string>> => {
-  const attachmentKeysAndMetadata = extractAttachmentKeysAndMetadata(yDoc);
-
-  // if no attachment it's straightforward
-  if (attachmentKeysAndMetadata.size === 0) {
-    return {};
-  }
-
-  // otherwise upload encrypted copies as new attachments and collect the mapping
-  const attachmentKeyMapping: Record<string, string> = {};
-
-  for (const [oldAttachmentKey, oldAttachmentMetadata] of Array.from(
-    attachmentKeysAndMetadata.entries(),
-  )) {
-    const response = await fetch(oldAttachmentMetadata.mediaUrl, {
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      throw new Error('attachment cannot be fetch');
-    }
-
-    // Encrypt file via vault — pure ArrayBuffer, no base64 conversion
-    const fileBuffer = await response.arrayBuffer();
-    const { encryptedData: encryptedBuffer } = await vaultClient.encryptWithKey(
-      fileBuffer,
-      encryptedSymmetricKey,
-    );
-    const encryptedBytes = new Uint8Array(encryptedBuffer);
-
-    const fileName = oldAttachmentMetadata.name ?? 'file'; // since encrypted we could not reuse the file name that can be stored as clear text
-    const encryptedFile = new File([encryptedBytes], fileName, {
-      type: 'application/octet-stream',
-    });
-
-    const body = new FormData();
-    body.append('file', encryptedFile);
-    body.append('is_encrypted', 'true');
-
-    const result = await createDocAttachment({ docId, body });
-
-    // result.file is like "/api/v1.0/documents/{id}/media-check/?key={newKey}"
-    const newKey = new URL(
-      result.file,
-      window.location.origin,
-    ).searchParams.get('key');
-
-    if (!newKey) {
-      throw new Error('file key must be provided once uploaded');
-    }
-
-    attachmentKeyMapping[oldAttachmentKey] = newKey;
-  }
-
-  // once uploaded, we can update all nodes referencing attachments with their new key
-  yDoc.transact(() => {
-    for (const [oldAttachmentKey, oldAttachmentMetadata] of Array.from(
-      attachmentKeysAndMetadata.entries(),
-    )) {
-      const newMediaUrl = oldAttachmentMetadata.mediaUrl.replace(
-        oldAttachmentKey,
-        attachmentKeyMapping[oldAttachmentKey],
-      );
-
-      for (const node of oldAttachmentMetadata.nodes) {
-        node.setAttribute('url', newMediaUrl);
-      }
-    }
-  });
-
-  return attachmentKeyMapping;
-};
 
 interface ModalEncryptDocProps {
   doc: Doc;
@@ -266,14 +181,11 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
       const ongoingDoc = new Y.Doc();
       Y.applyUpdate(ongoingDoc, Y.encodeStateAsUpdate(provider.document));
 
-      const ongoingDocState = Y.encodeStateAsUpdate(ongoingDoc);
-
-      // Encrypt document content via vault — pure ArrayBuffer. Pass a labeled
-      // recipient map (sub → {email, name}) for every member that has a
-      // published key: the vault resolves + trust-checks each key itself
-      // (binding + TOFU) before wrapping, and the labels are display-only,
-      // surfaced if the trust modal needs a decision. Emails are joined back
-      // from `accesses` (publicKeysMap only carries sub → key).
+      // Pass a labeled recipient map (sub → {email, name}) for every member
+      // that has a published key: the vault resolves + trust-checks each key
+      // itself (binding + TOFU) before wrapping, and the labels are
+      // display-only, surfaced if the trust modal needs a decision. Emails are
+      // joined back from `accesses` (publicKeysMap only carries sub → key).
       const recipients: Record<string, { email: string; name?: string }> = {};
       for (const access of accesses ?? []) {
         const sub = access.user?.suite_user_id;
@@ -286,13 +198,18 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
       }
 
       const {
-        encryptedContent: encryptedContentBuffer,
+        encryptedContent,
         encryptedKeys,
         maintenanceKey,
-      } = await vaultClient.encryptWithoutKey(
-        ongoingDocState.buffer as ArrayBuffer,
+        attachmentKeyMapping,
+      } = await encryptDocContent({
+        yDoc: ongoingDoc,
+        docId: doc.id,
+        vaultClient,
         recipients,
-      );
+        currentUserSub: user.suite_user_id,
+      });
+      ongoingDoc.destroy();
 
       // Contract with /encrypt/: every user on the access list must
       // appear in the payload exactly once. Validated users get their
@@ -324,27 +241,6 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
           encryptionPublicKeyVersionPerUser[sub] = null;
         }
       }
-
-      // Get the current user's encrypted key for attachment encryption
-      const currentUserEncryptedKey = user.suite_user_id
-        ? encryptedKeys[user.suite_user_id]
-        : undefined;
-
-      // Encrypt existing attachments using the same symmetric key via vault
-      let attachmentKeyMapping: Record<string, string> = {};
-
-      if (currentUserEncryptedKey) {
-        attachmentKeyMapping = await encryptRemoteAttachments(
-          ongoingDoc,
-          doc.id,
-          vaultClient,
-          currentUserEncryptedKey,
-        );
-      }
-
-      ongoingDoc.destroy();
-
-      const encryptedContent = new Uint8Array(encryptedContentBuffer);
 
       await encryptDoc({
         docId: doc.id,
