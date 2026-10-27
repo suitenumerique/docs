@@ -14,6 +14,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.tests.utils.encryption import direct_user_subs
 
 pytestmark = pytest.mark.django_db
 
@@ -350,7 +351,12 @@ def test_api_documents_all_format():
         "deleted_at": None,
         "depth": 1,
         "excerpt": document.excerpt,
+        "accesses_user_ids": direct_user_subs(document),
+        "accesses_versions_per_user": None,
+        "encrypted_document_symmetric_key_for_user": None,
+        "is_pending_encryption_for_user": False,
         "is_favorite": False,
+        "is_encrypted": document.is_encrypted,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
         "nb_accesses_ancestors": 1,

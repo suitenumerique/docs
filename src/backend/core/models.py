@@ -839,6 +839,24 @@ class BaseAccess(BaseModel):
     role = models.CharField(
         max_length=20, choices=RoleChoices.choices, default=RoleChoices.READER
     )
+    encrypted_document_symmetric_key_for_user = models.TextField(
+        _("encrypted document symmetric key"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Encrypted symmetric key for this document, specific to this user."
+        ),
+    )
+    encryption_public_key_version = models.PositiveIntegerField(
+        _("encryption public key version"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Version of the user's encryption public key at the time of sharing. "
+            "Used to detect key changes: if the user's current public key version "
+            "differs from this value, the access needs re-encryption."
+        ),
+    )
 
     class Meta:
         abstract = True
@@ -937,6 +955,7 @@ class Document(MP_Node, BaseModel):
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
     excerpt = models.TextField(_("excerpt"), max_length=300, null=True, blank=True)
+    is_encrypted = models.BooleanField(default=False)
     link_reach = models.CharField(
         max_length=20,
         choices=LinkReachChoices.choices,
@@ -1324,6 +1343,65 @@ class Document(MP_Node, BaseModel):
         """Actual link role on the document."""
         return self.computed_link_definition["link_role"]
 
+    @staticmethod
+    def get_encryption_accesses_mapping(document_ids, user):
+        """
+        Collect, in one query, the per-user encryption data of the direct user
+        accesses of several documents, as seen by `user`:
+
+        - `user_subs`: subs of the users with a direct access (the frontend
+          fetches their public keys from the encryption service),
+        - `versions`: public key version each user was shared with, by sub,
+        - `has_own_access` / `own_key`: whether `user` has a direct access and
+          the symmetric key wrapped for them (None while pending).
+
+        Only the wrapped key of `user` is selected, never the other users' keys.
+        Returns a dict keyed by document id with an entry for every given id.
+        """
+        mapping = {
+            document_id: {
+                "user_subs": [],
+                "versions": {},
+                "has_own_access": False,
+                "own_key": None,
+            }
+            for document_id in document_ids
+        }
+        if not mapping:
+            return mapping
+
+        user_id = user.id if user.is_authenticated else None
+        rows = (
+            DocumentAccess.objects.filter(document_id__in=mapping, user__isnull=False)
+            .annotate(
+                own_key=models.Case(
+                    models.When(
+                        user_id=user_id,
+                        then=models.F("encrypted_document_symmetric_key_for_user"),
+                    ),
+                    default=models.Value(None),
+                    output_field=models.TextField(),
+                )
+            )
+            .order_by()
+            .values_list(
+                "document_id",
+                "user_id",
+                "user__sub",
+                "encryption_public_key_version",
+                "own_key",
+            )
+        )
+        for document_id, access_user_id, sub, version, own_key in rows:
+            data = mapping[document_id]
+            data["user_subs"].append(sub)
+            if version is not None:
+                data["versions"][str(sub)] = version
+            if user_id is not None and access_user_id == user_id:
+                data["has_own_access"] = True
+                data["own_key"] = own_key
+        return mapping
+
     def get_abilities(self, user):  # pylint: disable=too-many-locals
         """
         Compute and return abilities for a given user on the document.
@@ -1387,7 +1465,10 @@ class Document(MP_Node, BaseModel):
         ) and not is_deleted
 
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
-        ai_access = any(
+        # Server-side features that need the plaintext (AI, conversion, copying
+        # the content) would either leak it or work on ciphertext, so they are
+        # off for encrypted documents.
+        ai_access = not self.is_encrypted and any(
             [
                 ai_allow_reach_from == LinkReachChoices.PUBLIC and can_update,
                 ai_allow_reach_from == LinkReachChoices.AUTHENTICATED
@@ -1410,20 +1491,24 @@ class Document(MP_Node, BaseModel):
             "children_list": can_get,
             "children_create": can_create_children,
             "collaboration_auth": can_get,
-            "comment": can_comment,
-            "formatted_content": can_get,
+            # Comments are stored server-side in clear: off on encrypted documents
+            # until they can be encrypted too.
+            "comment": can_comment and not self.is_encrypted,
+            "formatted_content": can_get and not self.is_encrypted,
             "content_patch": can_update,
             "content_retrieve": retrieve,
             "cors_proxy": can_get,
             "descendants": can_get,
             "destroy": can_destroy,
-            "duplicate": can_get and user.is_authenticated,
+            "duplicate": (can_get and user.is_authenticated and not self.is_encrypted),
+            "encrypt": is_owner_or_admin,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
             "invite_owner": is_owner and not is_deleted,
             "leave": can_leave,
             "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
+            "remove_encryption": is_owner_or_admin,
             "restore": is_owner and bool(self.deleted_at),
             "retrieve": retrieve,
             "media_auth": can_get,
@@ -1797,12 +1882,21 @@ class DocumentAccess(BaseAccess):
         if len(set_role_to) == 1:
             set_role_to = []
 
+        # "encryption_key" gates the PATCH
+        # /accesses/{id}/encryption-key/ Accept endpoint. The viewset
+        # additionally enforces that the caller holds a wrapped key on
+        # the document (otherwise they have nothing to re-wrap), so at
+        # this layer the rule just mirrors "can manage accesses on
+        # this document" — same privileged-role check as update, minus
+        # the role-change prerequisites which aren't relevant when
+        # re-wrapping a key.
         return {
             "destroy": can_delete,
             "update": bool(set_role_to) and is_owner_or_admin,
             "partial_update": bool(set_role_to) and is_owner_or_admin,
             "retrieve": (self.user and self.user.id == user.id) or is_owner_or_admin,
             "set_role_to": set_role_to,
+            "encryption_key": is_owner_or_admin,
         }
 
 

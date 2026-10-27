@@ -15,6 +15,7 @@ from core import factories
 from core.enums import FeatureFlag, SearchType
 from core.models import LinkReachChoices
 from core.services.search_indexers import get_document_indexer
+from core.tests.utils.encryption import direct_user_subs
 
 fake = Faker()
 pytestmark = pytest.mark.django_db
@@ -127,13 +128,13 @@ def test_api_documents_search_fall_back_on_simple_search(
     client.force_login(user)
 
     q = "alpha"
-    with django_assert_num_queries(13):
+    with django_assert_num_queries(14):
         response = client.get("/api/v1.0/documents/search/", data={"q": q})
 
     assert response.status_code == 200
 
     # all `nb_access_*` should be in cache
-    with django_assert_num_queries(6):
+    with django_assert_num_queries(7):
         response = client.get("/api/v1.0/documents/search/", data={"q": q})
 
     assert response.status_code == 200
@@ -154,6 +155,11 @@ def test_api_documents_search_fall_back_on_simple_search(
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": child.excerpt,
+                "is_encrypted": False,
+                "accesses_user_ids": direct_user_subs(child),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child.id),
                 "is_favorite": False,
                 "link_reach": child.link_reach,
@@ -176,6 +182,11 @@ def test_api_documents_search_fall_back_on_simple_search(
                     "deleted_at": None,
                     "depth": 1,
                     "excerpt": parent.excerpt,
+                    "is_encrypted": False,
+                    "accesses_user_ids": direct_user_subs(parent),
+                    "accesses_versions_per_user": None,
+                    "encrypted_document_symmetric_key_for_user": None,
+                    "is_pending_encryption_for_user": False,
                     "id": str(parent.id),
                     "is_favorite": False,
                     "link_reach": parent.link_reach,
@@ -200,6 +211,11 @@ def test_api_documents_search_fall_back_on_simple_search(
                 "deleted_at": None,
                 "depth": 1,
                 "excerpt": document.excerpt,
+                "is_encrypted": False,
+                "accesses_user_ids": direct_user_subs(document),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(document.id),
                 "is_favorite": False,
                 "link_reach": document.link_reach,
@@ -271,6 +287,11 @@ def test_api_documents_search_simple_search_only_match_in_depth(settings):
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": child.excerpt,
+                "is_encrypted": False,
+                "accesses_user_ids": direct_user_subs(child),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child.id),
                 "is_favorite": False,
                 "link_reach": child.link_reach,
@@ -293,6 +314,11 @@ def test_api_documents_search_simple_search_only_match_in_depth(settings):
                     "deleted_at": None,
                     "depth": 1,
                     "excerpt": parent.excerpt,
+                    "is_encrypted": False,
+                    "accesses_user_ids": direct_user_subs(parent),
+                    "accesses_versions_per_user": None,
+                    "encrypted_document_symmetric_key_for_user": None,
+                    "is_pending_encryption_for_user": False,
                     "id": str(parent.id),
                     "is_favorite": False,
                     "link_reach": parent.link_reach,
@@ -317,6 +343,11 @@ def test_api_documents_search_simple_search_only_match_in_depth(settings):
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": subdocument.excerpt,
+                "is_encrypted": False,
+                "accesses_user_ids": direct_user_subs(subdocument),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(subdocument.id),
                 "is_favorite": False,
                 "link_reach": subdocument.link_reach,
@@ -341,6 +372,11 @@ def test_api_documents_search_simple_search_only_match_in_depth(settings):
                     "deleted_at": None,
                     "depth": 1,
                     "excerpt": document.excerpt,
+                    "is_encrypted": False,
+                    "accesses_user_ids": direct_user_subs(document),
+                    "accesses_versions_per_user": None,
+                    "encrypted_document_symmetric_key_for_user": None,
+                    "is_pending_encryption_for_user": False,
                     "id": str(document.id),
                     "is_favorite": False,
                     "link_reach": document.link_reach,
@@ -423,6 +459,11 @@ def test_api_documents_search_with_title_also_matching_link_traces(settings):
                 "deleted_at": None,
                 "depth": 1,
                 "excerpt": document_link_trace.excerpt,
+                "is_encrypted": False,
+                "accesses_user_ids": direct_user_subs(document_link_trace),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(document_link_trace.id),
                 "is_favorite": False,
                 "link_reach": document_link_trace.link_reach,
@@ -449,6 +490,11 @@ def test_api_documents_search_with_title_also_matching_link_traces(settings):
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": child.excerpt,
+                "is_encrypted": False,
+                "accesses_user_ids": direct_user_subs(child),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child.id),
                 "is_favorite": False,
                 "link_reach": child.link_reach,
@@ -471,6 +517,11 @@ def test_api_documents_search_with_title_also_matching_link_traces(settings):
                     "deleted_at": None,
                     "depth": 1,
                     "excerpt": parent.excerpt,
+                    "is_encrypted": False,
+                    "accesses_user_ids": direct_user_subs(parent),
+                    "accesses_versions_per_user": None,
+                    "encrypted_document_symmetric_key_for_user": None,
+                    "is_pending_encryption_for_user": False,
                     "id": str(parent.id),
                     "is_favorite": False,
                     "link_reach": parent.link_reach,
@@ -495,6 +546,11 @@ def test_api_documents_search_with_title_also_matching_link_traces(settings):
                 "deleted_at": None,
                 "depth": 1,
                 "excerpt": document.excerpt,
+                "is_encrypted": False,
+                "accesses_user_ids": direct_user_subs(document),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(document.id),
                 "is_favorite": False,
                 "link_reach": document.link_reach,

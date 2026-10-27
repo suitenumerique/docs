@@ -67,10 +67,13 @@ class ListDocumentFilter(DocumentFilter):
     is_favorite = django_filters.BooleanFilter(
         method="filter_is_favorite", label=_("Favorite")
     )
+    is_encrypted = django_filters.BooleanFilter(
+        method="filter_is_encrypted", label=_("Encrypted")
+    )
 
     class Meta:
         model = models.Document
-        fields = ["is_creator_me", "is_favorite", "title", "q"]
+        fields = ["is_creator_me", "is_favorite", "is_encrypted", "title", "q"]
 
     # pylint: disable=unused-argument
     def filter_is_creator_me(self, queryset, name, value):
@@ -110,6 +113,24 @@ class ListDocumentFilter(DocumentFilter):
             return queryset
 
         return queryset.filter(is_favorite=bool(value))
+
+    # pylint: disable=unused-argument
+    def filter_is_encrypted(self, queryset, name, value):
+        """
+        Filter documents based on whether they are encrypted.
+
+        Example:
+            - /api/v1.0/documents/?is_encrypted=true
+                → Filters documents encrypted
+            - /api/v1.0/documents/?is_encrypted=false
+                → Filters documents not encrypted
+        """
+        user = self.request.user
+
+        if not user.is_authenticated:
+            return queryset
+
+        return queryset.filter(is_encrypted=bool(value))
 
 
 class UserSearchFilter(django_filters.FilterSet):

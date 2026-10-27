@@ -520,6 +520,19 @@ class DocumentViewSet(
     15. **AI Proxy**: Proxy an AI request to an external AI service.
         Example: POST /api/v1.0/documents/<resource_id>/ai-proxy
 
+    16. **Encrypt**: Encrypt a document.
+        Example: PATCH /documents/{id}/encrypt/
+        Expected data:
+        - content (str): The encrypted content.
+        - encryptedSymmetricKeyPerUser (dict): Mapping of user IDs to encrypted symmetric keys.
+        Returns: JSON response with the updated document.
+
+    17. **Remove Encryption**: Remove encryption from a document.
+        Example: PATCH /documents/{id}/remove-encryption/
+        Expected data:
+        - content (str): The decrypted content.
+        Returns: JSON response with the updated document.
+
     ### Ordering: created_at, updated_at, is_favorite, title
 
         Example:
@@ -531,11 +544,18 @@ class DocumentViewSet(
         - `is_creator_me=false`: Returns documents created by other users.
         - `is_favorite=true`: Returns documents marked as favorite by the current user
         - `is_favorite=false`: Returns documents not marked as favorite by the current user
+        - `is_encrypted=true`: Returns documents encrypted
+        - `is_encrypted=false`: Returns documents not encrypted
         - `title=hello`: Returns documents which title contains the "hello" string
 
         Example:
         - GET /api/v1.0/documents/?is_creator_me=true&is_favorite=true
-        - GET /api/v1.0/documents/?is_creator_me=false&title=hello
+        - GET /api/v1.0/documents/?is_creator_me=false&title=hello&is_encrypted=false
+
+    ### Encryption Management:
+        The encryption status of documents can be managed using the dedicated endpoints:
+        - PATCH /documents/{id}/encrypt/ - Set is_encrypted to true
+        - PATCH /documents/{id}/remove-encryption/ - Set is_encrypted to false
 
     ### Annotations:
     1. **is_favorite**: Indicates whether the document is marked as favorite by the current user.
@@ -643,7 +663,7 @@ class DocumentViewSet(
         filter_data = filterset.form.cleaned_data
 
         # Filter as early as possible on fields that are available on the model
-        for field in ["is_creator_me", "title", "q"]:
+        for field in ["is_creator_me", "is_encrypted", "title", "q"]:
             queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
         queryset = queryset.annotate_user_roles(user).annotate_user_has_link_trace(user)
@@ -1193,7 +1213,7 @@ class DocumentViewSet(
         filter_data = filterset.form.cleaned_data
 
         # Filter as early as possible on fields that are available on the model
-        for field in ["is_creator_me", "title", "q"]:
+        for field in ["is_creator_me", "is_encrypted", "title", "q"]:
             queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
         queryset = queryset.annotate_user_roles(user).annotate_user_has_link_trace(user)
@@ -1484,8 +1504,11 @@ class DocumentViewSet(
                 models.DocumentAccess.objects.bulk_create(accesses_to_create)
 
         if with_descendants:
+            # Encrypted sub-documents are left out (with their own subtree): the
+            # server cannot re-encrypt a copy, and a ciphertext copy would be
+            # unreadable.
             for child in document_to_duplicate.get_children().filter(
-                ancestors_deleted_at__isnull=True
+                ancestors_deleted_at__isnull=True, is_encrypted=False
             ):
                 # When duplicating descendants, attach duplicates under the duplicated_document
                 self._duplicate_document(
@@ -1828,6 +1851,14 @@ class DocumentViewSet(
         # Check permissions first
         document = self.get_object()
 
+        if document.is_encrypted:
+            raise drf.exceptions.ValidationError(
+                {
+                    "detail": "Visibility cannot be changed for encrypted documents. "
+                    "Encrypted documents must remain restricted.",
+                }
+            )
+
         # Deserialize and validate the data
         serializer = serializers.LinkDocumentSerializer(
             document, data=request.data, partial=True
@@ -1887,18 +1918,35 @@ class DocumentViewSet(
         serializer = serializers.FileUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Generate a generic yet unique filename to store the image in object storage
-        file_id = uuid.uuid4()
-        ext = serializer.validated_data["expected_extension"]
+        # Normally encrypted attachments would be only allowed on encrypted documents
+        # and vice-versa, but since during encryption/decryption we upload all
+        # attachments before the switch, we cannot enforce this rule
+        is_file_encrypted = serializer.validated_data.get("is_encrypted", False)
+
+        # For encrypted files, set status to READY immediately since the server
+        # cannot inspect ciphertext for malware scanning.
+        initial_status = (
+            enums.DocumentAttachmentStatus.READY.value
+            if is_file_encrypted
+            else enums.DocumentAttachmentStatus.PROCESSING.value
+        )
 
         # Prepare metadata for storage
         extra_args = {
             "Metadata": {
                 "owner": str(request.user.id),
-                "status": enums.DocumentAttachmentStatus.PROCESSING.value,
+                "status": initial_status,
             },
             "ContentType": serializer.validated_data["content_type"],
         }
+
+        if is_file_encrypted:
+            extra_args["Metadata"]["is_encrypted"] = "true"
+
+        # Generate a generic yet unique filename to store the image in object storage
+        file_id = uuid.uuid4()
+        ext = serializer.validated_data["expected_extension"]
+
         file_unsafe = ""
         if serializer.validated_data["is_unsafe"]:
             extra_args["Metadata"]["is_unsafe"] = "true"
@@ -1936,7 +1984,9 @@ class DocumentViewSet(
         document.attachments.append(key)
         document.save()
 
-        malware_detection.analyse_file(key, document_id=document.id)
+        # Only run malware scan for unencrypted files
+        if not is_file_encrypted:
+            malware_detection.analyse_file(key, document_id=document.id)
 
         url = reverse(
             "documents-media-check",
@@ -2095,9 +2145,30 @@ class DocumentViewSet(
                 "You are not allowed to edit this document."
             )
 
+        content_encrypted = serializer.validated_data.get("contentEncrypted")
+        if content_encrypted is not None and content_encrypted != document.is_encrypted:
+            raise drf.exceptions.ValidationError(
+                {
+                    "contentEncrypted": (
+                        "Content encryption status does not match the document's "
+                        "current state. Please refresh and try again."
+                    )
+                }
+            )
+        # Without the flag, a plaintext save could overwrite the ciphertext of
+        # an encrypted document, and the ciphertext cannot be parsed below.
+        if content_encrypted is None and document.is_encrypted:
+            raise drf.exceptions.ValidationError(
+                {"contentEncrypted": "Required when the document is encrypted."}
+            )
+
         content = serializer.validated_data["content"]
+        # Encrypted content cannot be parsed as a Yjs update: its attachments
+        # are registered at upload time and by the encrypt endpoint instead.
         try:
-            extracted_attachments = set(extract_attachments(content))
+            extracted_attachments = (
+                set() if document.is_encrypted else set(extract_attachments(content))
+            )
         except ValueError:
             return drf_response.Response(
                 "invalid yjs document", status=status.HTTP_400_BAD_REQUEST
@@ -2642,6 +2713,229 @@ class DocumentViewSet(
             }
         )
 
+    @transaction.atomic
+    @drf.decorators.action(
+        detail=True,
+        methods=["patch"],
+        name="Encrypt a document",
+        url_path="encrypt",
+    )
+    def encrypt(self, request, *args, **kwargs):  # pylint: disable=too-many-locals
+        """
+        PATCH /api/v1.0/documents/<resource_id>/encrypt/
+        with expected data:
+        - content: str (encrypted content)
+        - encryptedSymmetricKeyPerUser: dict (user_id -> encrypted_key)
+        Updates the document's content and marks it as encrypted.
+        """
+        document = self.get_object()
+
+        serializer = serializers.EncryptDocumentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        content = serializer.validated_data["content"]
+        encrypted_key_per_user = serializer.validated_data[
+            "encryptedSymmetricKeyPerUser"
+        ]
+        attachment_key_mapping = serializer.validated_data.get(
+            "attachmentKeyMapping", {}
+        )
+
+        # Prevent encryption if the document is not restricted (private)
+        if document.computed_link_reach != models.LinkReachChoices.RESTRICTED:
+            raise drf.exceptions.ValidationError(
+                {
+                    "non_field_errors": "Cannot encrypt a document that is not private. "
+                    'Please set the document access to "Restricted" before encrypting.'
+                }
+            )
+
+        # Validate that we have encrypted symmetric keys for all users with access.
+        # Keys in encrypted_key_per_user are keyed by the user's OIDC sub (suite_user_id).
+        # Values may be a wrapped key (validated) or explicit null (pending —
+        # user hasn't completed their encryption onboarding yet).
+        document_accesses = models.DocumentAccess.objects.filter(
+            document=document, user__isnull=False
+        ).select_related("user")
+
+        users_with_access = {str(access.user.sub) for access in document_accesses}
+
+        # Check that encrypted_key_per_user contains all required users
+        provided_user_ids = set(encrypted_key_per_user.keys())
+        missing_users = users_with_access - provided_user_ids
+
+        if missing_users:
+            raise drf.exceptions.ValidationError(
+                {
+                    "encryptedSymmetricKeyPerUser": (
+                        "Missing encrypted keys for users with document access: "
+                        f"{missing_users}. All users must have an entry (either a "
+                        "wrapped key or null) when encrypting."
+                    )
+                }
+            )
+
+        # Check for extra users that don't have access
+        extra_users = provided_user_ids - users_with_access
+        if extra_users:
+            raise drf.exceptions.ValidationError(
+                {
+                    "encryptedSymmetricKeyPerUser": (
+                        "Encrypted keys provided for users without document access: "
+                        f"{extra_users}. Only users with access should have encrypted "
+                        "symmetric keys."
+                    )
+                }
+            )
+
+        # The caller is the one performing the encryption — they must
+        # hold the key. Explicit null for themselves is never legitimate.
+        caller_sub = str(request.user.sub)
+        if (
+            caller_sub in encrypted_key_per_user
+            and encrypted_key_per_user[caller_sub] is None
+        ):
+            raise drf.exceptions.ValidationError(
+                {
+                    "encryptedSymmetricKeyPerUser": (
+                        "You cannot mark yourself as pending encryption onboarding: "
+                        "provide a wrapped key for your own user."
+                    )
+                }
+            )
+
+        # Per-user version map — required, keyed on the same user
+        # subs as the wrapped-key map. Stored verbatim on the access
+        # row so clients can later detect when a user's key has rotated
+        # (current version != stored version ⇒ needs re-encryption).
+        version_per_user = serializer.validated_data[
+            "encryptionPublicKeyVersionPerUser"
+        ]
+        version_subs = set(version_per_user.keys())
+        if version_subs != provided_user_ids:
+            raise drf.exceptions.ValidationError(
+                {
+                    "encryptionPublicKeyVersionPerUser": (
+                        "Must cover the same set of users as "
+                        "encryptedSymmetricKeyPerUser. "
+                        f"Missing: {provided_user_ids - version_subs}. "
+                        f"Extra: {version_subs - provided_user_ids}."
+                    )
+                }
+            )
+
+        # Remove old unencrypted attachment keys from the allowed list.
+        # The frontend uploaded encrypted copies under new keys and updated the
+        # Yjs content to reference them.
+        if attachment_key_mapping:
+            old_keys = set(attachment_key_mapping.keys())
+            document.attachments = [
+                k for k in (document.attachments or []) if k not in old_keys
+            ]
+
+        # Update the document content and encryption status
+        document.content = content  # This will be cached and saved to object storage
+        document.is_encrypted = True
+        document.save()
+        cache.delete(utils.get_content_metadata_cache_key(document.id))
+
+        # Clean up old S3 objects only after the DB transaction has committed,
+        # so a deletion failure can never affect the encrypt operation.
+        if attachment_key_mapping:
+
+            def _cleanup_old_attachments():
+                s3_client = default_storage.connection.meta.client
+                bucket_name = default_storage.bucket_name
+                for old_key in attachment_key_mapping:
+                    try:
+                        s3_client.delete_object(Bucket=bucket_name, Key=old_key)
+                    except ClientError:
+                        logger.warning("Failed to delete old attachment %s", old_key)
+
+            transaction.on_commit(_cleanup_old_attachments)
+
+        # Store the encrypted symmetric keys + versions in
+        # DocumentAccess for each user. Keys are keyed by the user's
+        # OIDC `sub`, so look up by user__sub.
+        for sub, encrypted_key in encrypted_key_per_user.items():
+            try:
+                access = models.DocumentAccess.objects.get(
+                    document=document,
+                    user__sub=sub,
+                )
+                access.encrypted_document_symmetric_key_for_user = encrypted_key
+                access.encryption_public_key_version = version_per_user.get(sub)
+                access.save()
+            except models.DocumentAccess.DoesNotExist:
+                # This should not happen due to our validation above, but keep as safety
+                pass
+
+        # Return the updated document
+        serializer = self.get_serializer(document)
+        return drf.response.Response(serializer.data, status=drf.status.HTTP_200_OK)
+
+    @transaction.atomic
+    @drf.decorators.action(
+        detail=True,
+        methods=["patch"],
+        name="Remove encryption from a document",
+        url_path="remove-encryption",
+    )
+    def remove_encryption(self, request, *args, **kwargs):
+        """
+        PATCH /api/v1.0/documents/<resource_id>/remove-encryption/
+        with expected data:
+        - content: str (decrypted content)
+        Updates the document's content and marks it as not encrypted.
+        """
+        document = self.get_object()
+
+        serializer = serializers.RemoveEncryptionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        content = serializer.validated_data["content"]
+        attachment_key_mapping = serializer.validated_data.get(
+            "attachmentKeyMapping", {}
+        )
+
+        # Remove old encrypted attachment keys from the allowed list.
+        # The frontend uploaded decrypted copies under new keys and updated
+        # the Yjs content to reference them.
+        if attachment_key_mapping:
+            old_keys = set(attachment_key_mapping.keys())
+            document.attachments = [
+                k for k in (document.attachments or []) if k not in old_keys
+            ]
+
+        # Update the document content and encryption status
+        document.content = content  # This will be cached and saved to object storage
+        document.is_encrypted = False
+        document.save()
+        cache.delete(utils.get_content_metadata_cache_key(document.id))
+
+        # Clean up any stored encrypted keys
+        models.DocumentAccess.objects.filter(document=document).update(
+            encrypted_document_symmetric_key_for_user=None
+        )
+
+        # Clean up old S3 objects only after the DB transaction has committed
+        if attachment_key_mapping:
+
+            def _cleanup_old_attachments():
+                s3_client = default_storage.connection.meta.client
+                bucket_name = default_storage.bucket_name
+                for old_key in attachment_key_mapping:
+                    try:
+                        s3_client.delete_object(Bucket=bucket_name, Key=old_key)
+                    except ClientError:
+                        logger.warning("Failed to delete old attachment %s", old_key)
+
+            transaction.on_commit(_cleanup_old_attachments)
+
+        # Return the updated document
+        serializer = self.get_serializer(document)
+        return drf.response.Response(serializer.data, status=drf.status.HTTP_200_OK)
+
     @drf.decorators.action(
         detail=True,
         methods=["post"],
@@ -2653,6 +2947,13 @@ class DocumentViewSet(
         """
         # Check for permissions.
         document = self.get_object()
+
+        for access in models.DocumentAccess.objects.filter(
+            document__path__startswith=document.path,
+            document__is_encrypted=True,
+            user=request.user,
+        ).select_related("document"):
+            raise_if_would_strand_pending_users(access)
 
         try:
             with transaction.atomic():
@@ -2673,6 +2974,49 @@ class DocumentViewSet(
         posthog_capture(PosthogEventName.DOC_LEFT, request.user, {}, document=document)
 
         return drf.response.Response(status=drf.status.HTTP_204_NO_CONTENT)
+
+
+def raise_if_would_strand_pending_users(access):
+    """
+    Reject removing an access when it would leave the pending users of an
+    encrypted document with nobody able to accept them: removing the last row
+    that holds a wrapped key while other rows are pending
+    (`encrypted_document_symmetric_key_for_user IS NULL`) would make the
+    document undecryptable by anyone.
+    """
+    document = access.document
+    if not getattr(document, "is_encrypted", False):
+        return
+    # Removing a row that's itself pending never strands anyone.
+    if not access.encrypted_document_symmetric_key_for_user:
+        return
+
+    other_accesses = models.DocumentAccess.objects.filter(document=document).exclude(
+        pk=access.pk
+    )
+    remaining_validated = (
+        other_accesses.filter(
+            encrypted_document_symmetric_key_for_user__isnull=False,
+        )
+        .exclude(encrypted_document_symmetric_key_for_user="")
+        .exists()
+    )
+    has_pending = other_accesses.filter(
+        encrypted_document_symmetric_key_for_user__isnull=True,
+    ).exists()
+
+    if has_pending and not remaining_validated:
+        raise drf.exceptions.ValidationError(
+            {
+                "detail": (
+                    "Removing this user would leave pending collaborators "
+                    "unable to decrypt the document. Either wait for them "
+                    "to finish their encryption onboarding, or remove "
+                    "encryption from the document first."
+                ),
+                "code": "would_strand_pending_users",
+            }
+        )
 
 
 class DocumentAccessViewSet(
@@ -2714,15 +3058,19 @@ class DocumentAccessViewSet(
         "created_at",
         "role",
         "team",
+        "encrypted_document_symmetric_key_for_user",
+        "encryption_public_key_version",
         "user__id",
         "user__short_name",
         "user__full_name",
         "user__email",
         "user__language",
         "user__is_first_connection",
+        "user__sub",
         "document__id",
         "document__path",
         "document__depth",
+        "document__is_encrypted",
     )
     resource_field_name = "document"
     throttle_scope = "document_access"
@@ -2836,6 +3184,35 @@ class DocumentAccessViewSet(
                 "Only owners of a document can assign other users as owners."
             )
 
+        # Handle encrypted_document_symmetric_key_for_user during
+        # creation. For encrypted documents the key is OPTIONAL: if the
+        # invitee has no public key yet (pending onboarding) the caller
+        # legitimately has nothing to wrap. The access row is then
+        # created pending (key column NULL) and can be "accepted" later
+        # via PATCH /accesses/{id}/encryption-key/. Whether the invitee
+        # actually has a public key is a client-side concern — the
+        # backend only enforces "key provided ⇒ document must be encrypted".
+        if "encrypted_document_symmetric_key_for_user" in serializer.validated_data:
+            key_value = serializer.validated_data[
+                "encrypted_document_symmetric_key_for_user"
+            ]
+            if key_value and not self.document.is_encrypted:
+                raise drf.exceptions.ValidationError(
+                    {
+                        "encrypted_document_symmetric_key_for_user": (
+                            "This field can only be provided when the document "
+                            "is encrypted."
+                        )
+                    }
+                )
+            # Normalise "" → None so the DB row uses NULL consistently
+            # and `is_pending_encryption` (which tests IS NULL) is
+            # reliable downstream.
+            if not key_value:
+                serializer.validated_data[
+                    "encrypted_document_symmetric_key_for_user"
+                ] = None
+
         access = serializer.save(document_id=self.kwargs["resource_id"])
 
         posthog_capture(
@@ -2863,6 +3240,17 @@ class DocumentAccessViewSet(
 
     def perform_update(self, serializer):
         """Update an access to the document and notify the collaboration server."""
+        # Prevent direct modification of encrypted_document_symmetric_key_for_user
+        # This field should only be managed at access creation or when rotating the document key
+        if "encrypted_document_symmetric_key_for_user" in serializer.validated_data:
+            raise drf.exceptions.ValidationError(
+                {
+                    "encrypted_document_symmetric_key_for_user": (
+                        "This field cannot be modified directly."
+                    )
+                }
+            )
+
         access = serializer.save()
 
         access_user_id = None
@@ -2876,6 +3264,8 @@ class DocumentAccessViewSet(
 
     def perform_destroy(self, instance):
         """Delete an access to the document and notify the collaboration server."""
+        raise_if_would_strand_pending_users(instance)
+
         # Snapshot the identifiers before deletion as Django resets the primary key
         # on the instance once it is deleted.
         access_id = str(instance.id)
@@ -2892,6 +3282,84 @@ class DocumentAccessViewSet(
 
         # Notify collaboration server about the access removed
         reset_service_connections_in_cascade.delay(document_id, user_id)
+
+    @drf.decorators.action(detail=True, methods=["patch"], url_path="encryption-key")
+    def encryption_key(self, request, *args, **kwargs):
+        """Accept a pending collaborator by re-wrapping the document's
+        symmetric key against their public key.
+
+        Strictly pending → validated. To revoke a user, delete the access
+        row instead. The viewset-level permission already enforces that
+        the caller is a privileged user on the document (admin/owner);
+        here we additionally require the caller to currently hold a
+        wrapped key themselves: without that they have no plaintext
+        subtree key to re-wrap from.
+        """
+        access = self.get_object()
+        document = access.document
+
+        if not getattr(document, "is_encrypted", False):
+            return drf.response.Response(
+                {"detail": "Document is not encrypted."},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        if access.encrypted_document_symmetric_key_for_user:
+            return drf.response.Response(
+                {
+                    "detail": (
+                        "This access is not pending encryption onboarding. "
+                        "Delete the access row instead if you want to "
+                        "revoke it."
+                    ),
+                    "code": "access_not_pending",
+                },
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        caller_has_key = (
+            models.DocumentAccess.objects.filter(
+                document=document,
+                user=request.user,
+                encrypted_document_symmetric_key_for_user__isnull=False,
+            )
+            .exclude(encrypted_document_symmetric_key_for_user="")
+            .exists()
+        )
+        if not caller_has_key:
+            return drf.response.Response(
+                {
+                    "detail": (
+                        "You do not currently hold a decryption key for "
+                        "this document, so you cannot accept another "
+                        "user on it."
+                    ),
+                },
+                status=drf.status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = serializers.AcceptEncryptionAccessSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        access.encrypted_document_symmetric_key_for_user = serializer.validated_data[
+            "encrypted_document_symmetric_key_for_user"
+        ]
+        access.encryption_public_key_version = serializer.validated_data[
+            "encryption_public_key_version"
+        ]
+        access.save(
+            update_fields=[
+                "encrypted_document_symmetric_key_for_user",
+                "encryption_public_key_version",
+            ]
+        )
+
+        reset_service_connections_in_cascade.delay(
+            str(document.id), str(access.user.id) if access.user else None
+        )
+
+        output = self.get_serializer(access)
+        return drf.response.Response(output.data)
 
 
 class InvitationViewset(
@@ -2982,6 +3450,9 @@ class InvitationViewset(
 
     def perform_create(self, serializer):
         """Save invitation to a document then send an email to the invited user."""
+        # On an encrypted document the invitee signs up without a key: their
+        # invitation becomes a pending access, accepted once they have enabled
+        # encryption.
         invitation = serializer.save()
 
         invitation.document.send_invitation_email(
@@ -3115,6 +3586,9 @@ class ConfigView(drf.views.APIView):
             "CONVERSION_FILE_EXTENSIONS_ALLOWED",
             "CONVERSION_FILE_MAX_SIZE",
             "CONVERSION_UPLOAD_ENABLED",
+            "ENCRYPTION_FEATURE_ENABLED",
+            "ENCRYPTION_INTERFACE_URL",
+            "ENCRYPTION_VAULT_URL",
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",

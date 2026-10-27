@@ -13,6 +13,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import choices, factories, models
+from core.tests.utils.encryption import direct_user_subs
 
 pytestmark = pytest.mark.django_db
 
@@ -28,6 +29,8 @@ def test_api_documents_retrieve_anonymous_public_standalone():
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "encrypt": False,
+            "remove_encryption": False,
             "accesses_view": False,
             "ai_proxy": False,
             "ai_transform": False,
@@ -77,7 +80,10 @@ def test_api_documents_retrieve_anonymous_public_standalone():
         "deleted_at": None,
         "depth": 1,
         "excerpt": document.excerpt,
+        "accesses_versions_per_user": None,
+        "is_pending_encryption_for_user": False,
         "is_favorite": False,
+        "is_encrypted": document.is_encrypted,
         "link_reach": "public",
         "link_role": document.link_role,
         "nb_accesses_ancestors": 0,
@@ -109,6 +115,8 @@ def test_api_documents_retrieve_anonymous_public_parent():
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "encrypt": False,
+            "remove_encryption": False,
             "accesses_view": False,
             "ai_proxy": False,
             "ai_transform": False,
@@ -156,7 +164,10 @@ def test_api_documents_retrieve_anonymous_public_parent():
         "deleted_at": None,
         "depth": 3,
         "excerpt": document.excerpt,
+        "accesses_versions_per_user": None,
+        "is_pending_encryption_for_user": False,
         "is_favorite": False,
+        "is_encrypted": document.is_encrypted,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
         "nb_accesses_ancestors": 0,
@@ -220,6 +231,8 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "encrypt": False,
+            "remove_encryption": False,
             "accesses_view": False,
             "ai_proxy": document.link_role == "editor",
             "ai_transform": document.link_role == "editor",
@@ -268,7 +281,12 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
         "depth": 1,
         "deleted_at": None,
         "excerpt": document.excerpt,
+        "accesses_user_ids": direct_user_subs(document),
+        "accesses_versions_per_user": None,
+        "encrypted_document_symmetric_key_for_user": None,
+        "is_pending_encryption_for_user": False,
         "is_favorite": False,
+        "is_encrypted": document.is_encrypted,
         "link_reach": reach,
         "link_role": document.link_role,
         "nb_accesses_ancestors": 0,
@@ -308,6 +326,8 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "encrypt": False,
+            "remove_encryption": False,
             "accesses_view": False,
             "ai_proxy": grand_parent.link_role == "editor",
             "ai_transform": grand_parent.link_role == "editor",
@@ -354,7 +374,12 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
         "depth": 3,
         "deleted_at": None,
         "excerpt": document.excerpt,
+        "accesses_user_ids": direct_user_subs(document),
+        "accesses_versions_per_user": None,
+        "encrypted_document_symmetric_key_for_user": None,
+        "is_pending_encryption_for_user": False,
         "is_favorite": False,
+        "is_encrypted": document.is_encrypted,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
         "nb_accesses_ancestors": 0,
@@ -468,7 +493,12 @@ def test_api_documents_retrieve_authenticated_related_direct():
         "deleted_at": None,
         "depth": 1,
         "excerpt": document.excerpt,
+        "accesses_user_ids": direct_user_subs(document),
+        "accesses_versions_per_user": None,
+        "encrypted_document_symmetric_key_for_user": None,
+        "is_pending_encryption_for_user": False,
         "is_favorite": False,
+        "is_encrypted": document.is_encrypted,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
         "nb_accesses_ancestors": 2,
@@ -508,6 +538,8 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "id": str(document.id),
         "abilities": {
             "accesses_manage": access.role in ["administrator", "owner"],
+            "encrypt": access.role in ["administrator", "owner"],
+            "remove_encryption": access.role in ["administrator", "owner"],
             "accesses_view": True,
             "ai_proxy": access.role not in ["reader", "commenter"],
             "ai_transform": access.role not in ["reader", "commenter"],
@@ -554,7 +586,12 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "depth": 3,
         "deleted_at": None,
         "excerpt": document.excerpt,
+        "accesses_user_ids": direct_user_subs(document),
+        "accesses_versions_per_user": None,
+        "encrypted_document_symmetric_key_for_user": None,
+        "is_pending_encryption_for_user": False,
         "is_favorite": False,
+        "is_encrypted": document.is_encrypted,
         "link_reach": "restricted",
         "link_role": document.link_role,
         "nb_accesses_ancestors": 2,
@@ -710,7 +747,12 @@ def test_api_documents_retrieve_authenticated_related_team_members(
         "deleted_at": None,
         "depth": 1,
         "excerpt": document.excerpt,
+        "accesses_user_ids": direct_user_subs(document),
+        "accesses_versions_per_user": None,
+        "encrypted_document_symmetric_key_for_user": None,
+        "is_pending_encryption_for_user": False,
         "is_favorite": False,
+        "is_encrypted": document.is_encrypted,
         "link_reach": "restricted",
         "link_role": document.link_role,
         "nb_accesses_ancestors": 5,
@@ -776,7 +818,12 @@ def test_api_documents_retrieve_authenticated_related_team_administrators(
         "deleted_at": None,
         "depth": 1,
         "excerpt": document.excerpt,
+        "accesses_user_ids": direct_user_subs(document),
+        "accesses_versions_per_user": None,
+        "encrypted_document_symmetric_key_for_user": None,
+        "is_pending_encryption_for_user": False,
         "is_favorite": False,
+        "is_encrypted": document.is_encrypted,
         "link_reach": "restricted",
         "link_role": document.link_role,
         "nb_accesses_ancestors": 5,
@@ -842,7 +889,12 @@ def test_api_documents_retrieve_authenticated_related_team_owners(
         "deleted_at": None,
         "depth": 1,
         "excerpt": document.excerpt,
+        "accesses_user_ids": direct_user_subs(document),
+        "accesses_versions_per_user": None,
+        "encrypted_document_symmetric_key_for_user": None,
+        "is_pending_encryption_for_user": False,
         "is_favorite": False,
+        "is_encrypted": document.is_encrypted,
         "link_reach": "restricted",
         "link_role": document.link_role,
         "nb_accesses_ancestors": 5,
@@ -896,10 +948,10 @@ def test_api_documents_retrieve_numqueries_with_link_trace(django_assert_num_que
 
     document = factories.DocumentFactory(users=[user], link_traces=[user])
 
-    with django_assert_num_queries(5):
+    with django_assert_num_queries(6):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
-    with django_assert_num_queries(3):
+    with django_assert_num_queries(4):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200

@@ -585,3 +585,118 @@ def test_api_documents_content_upadte_invalid_yjs_doc():
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+# Encryption state of the content
+
+
+def _editor_client(is_encrypted):
+    """Return a client logged in as an editor of a new document, and the document."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(
+        link_reach="restricted", is_encrypted=is_encrypted
+    )
+    factories.UserDocumentAccessFactory(document=document, user=user, role="editor")
+    client = APIClient()
+    client.force_login(user)
+    return client, document
+
+
+def test_api_documents_content_update_plain_content_encrypted_false():
+    """A plain document accepts content flagged as not encrypted."""
+    client, document = _editor_client(is_encrypted=False)
+
+    response = client.patch(
+        f"/api/v1.0/documents/{document.id!s}/content/",
+        {"content": get_sample_ydoc(), "contentEncrypted": False, "websocket": True},
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert get_s3_content(document) == get_sample_ydoc()
+
+
+def test_api_documents_content_update_plain_content_encrypted_true():
+    """
+    Encrypted content is refused on a plain document (e.g. decrypted meanwhile by
+    someone else), and the stored content is left untouched.
+    """
+    client, document = _editor_client(is_encrypted=False)
+    ciphertext = base64.b64encode(b"ciphertext").decode("utf-8")
+
+    response = client.patch(
+        f"/api/v1.0/documents/{document.id!s}/content/",
+        {"content": ciphertext, "contentEncrypted": True, "websocket": True},
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "contentEncrypted": (
+            "Content encryption status does not match the document's current state. "
+            "Please refresh and try again."
+        )
+    }
+    assert get_s3_content(document) == factories.YDOC_HELLO_WORLD_BASE64
+
+
+def test_api_documents_content_update_encrypted_content_encrypted_true():
+    """
+    An encrypted document accepts ciphertext flagged as encrypted. It is stored as
+    is, without being parsed as a Yjs update, and its attachments are kept.
+    """
+    client, document = _editor_client(is_encrypted=True)
+    document.attachments = [f"{document.id!s}/attachments/encrypted.enc"]
+    document.save()
+    ciphertext = base64.b64encode(b"not a yjs update").decode("utf-8")
+
+    response = client.patch(
+        f"/api/v1.0/documents/{document.id!s}/content/",
+        {"content": ciphertext, "contentEncrypted": True, "websocket": True},
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert get_s3_content(document) == ciphertext
+    document.refresh_from_db()
+    assert document.attachments == [f"{document.id!s}/attachments/encrypted.enc"]
+
+
+def test_api_documents_content_update_encrypted_content_encrypted_false():
+    """
+    Plain content is refused on an encrypted document (e.g. encrypted meanwhile by
+    someone else), so it never overwrites the ciphertext.
+    """
+    client, document = _editor_client(is_encrypted=True)
+
+    response = client.patch(
+        f"/api/v1.0/documents/{document.id!s}/content/",
+        {"content": get_sample_ydoc(), "contentEncrypted": False, "websocket": True},
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "contentEncrypted": (
+            "Content encryption status does not match the document's current state. "
+            "Please refresh and try again."
+        )
+    }
+    assert get_s3_content(document) == factories.YDOC_HELLO_WORLD_BASE64
+
+
+def test_api_documents_content_update_encrypted_content_encrypted_missing():
+    """The encryption flag is required to save the content of an encrypted document."""
+    client, document = _editor_client(is_encrypted=True)
+
+    response = client.patch(
+        f"/api/v1.0/documents/{document.id!s}/content/",
+        {"content": get_sample_ydoc(), "websocket": True},
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {
+        "contentEncrypted": "Required when the document is encrypted."
+    }
+    assert get_s3_content(document) == factories.YDOC_HELLO_WORLD_BASE64

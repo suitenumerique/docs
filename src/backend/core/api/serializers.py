@@ -8,6 +8,7 @@ from os.path import splitext
 
 from django.conf import settings
 from django.db.models import Q
+from django.db.models.manager import BaseManager
 from django.utils.functional import lazy
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -32,6 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     full_name = serializers.SerializerMethodField(read_only=True)
     short_name = serializers.SerializerMethodField(read_only=True)
+    suite_user_id = serializers.CharField(source="sub", read_only=True)
 
     class Meta:
         model = models.User
@@ -42,6 +44,7 @@ class UserSerializer(serializers.ModelSerializer):
             "short_name",
             "language",
             "is_first_connection",
+            "suite_user_id",
         ]
         read_only_fields = [
             "id",
@@ -49,6 +52,7 @@ class UserSerializer(serializers.ModelSerializer):
             "full_name",
             "short_name",
             "is_first_connection",
+            "suite_user_id",
         ]
 
     def get_full_name(self, instance):
@@ -77,21 +81,61 @@ class UserLightSerializer(UserSerializer):
         read_only_fields = ["full_name", "short_name"]
 
 
+ENCRYPTION_ACCESSES_ATTRIBUTE = "_encryption_accesses"
+
+
+class DocumentListSerializer(serializers.ListSerializer):  # pylint: disable=abstract-method
+    """
+    Precompute, in one query for the whole list, the encryption data that the
+    document serializers would otherwise query once per document.
+    """
+
+    def to_representation(self, data):
+        documents = list(data.all() if isinstance(data, BaseManager) else data)
+        request = self.context.get("request")
+        if request and request.user.is_authenticated and documents:
+            # Search results nest their top parent, serialized with the same context
+            parents = [
+                parent
+                for parent in (
+                    document.__dict__.get("parent") for document in documents
+                )
+                if isinstance(parent, models.Document)
+            ]
+            targets = documents + parents
+            mapping = models.Document.get_encryption_accesses_mapping(
+                {document.id for document in targets}, request.user
+            )
+            for document in targets:
+                setattr(document, ENCRYPTION_ACCESSES_ATTRIBUTE, mapping[document.id])
+        return super().to_representation(documents)
+
+
 class ListDocumentSerializer(serializers.ModelSerializer):
     """Serialize documents with limited fields for display in lists."""
 
     is_favorite = serializers.BooleanField(read_only=True)
+    is_encrypted = serializers.BooleanField(read_only=True)
     nb_accesses_ancestors = serializers.IntegerField(read_only=True)
     nb_accesses_direct = serializers.IntegerField(read_only=True)
     user_role = serializers.SerializerMethodField(read_only=True)
     abilities = serializers.SerializerMethodField(read_only=True)
     deleted_at = serializers.SerializerMethodField(read_only=True)
+    accesses_user_ids = serializers.SerializerMethodField(read_only=True)
+    accesses_versions_per_user = serializers.SerializerMethodField(read_only=True)
+    encrypted_document_symmetric_key_for_user = serializers.SerializerMethodField(
+        read_only=True
+    )
+    is_pending_encryption_for_user = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Document
+        list_serializer_class = DocumentListSerializer
         fields = [
             "id",
             "abilities",
+            "accesses_versions_per_user",
+            "accesses_user_ids",
             "ancestors_link_reach",
             "ancestors_link_role",
             "computed_link_reach",
@@ -100,8 +144,11 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "creator",
             "deleted_at",
             "depth",
+            "encrypted_document_symmetric_key_for_user",
             "excerpt",
             "is_favorite",
+            "is_encrypted",
+            "is_pending_encryption_for_user",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -115,6 +162,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "abilities",
+            "accesses_user_ids",
             "ancestors_link_reach",
             "ancestors_link_role",
             "computed_link_reach",
@@ -123,8 +171,11 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "creator",
             "deleted_at",
             "depth",
+            "encrypted_document_symmetric_key_for_user",
             "excerpt",
             "is_favorite",
+            "is_encrypted",
+            "is_pending_encryption_for_user",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -167,6 +218,66 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         """Return the deleted_at of the current document."""
         return instance.ancestors_deleted_at
 
+    def _get_encryption_accesses(self, instance):
+        """
+        Return the encryption data of the direct user accesses of the document
+        for the current user, or None for anonymous users. List serializers
+        compute it in bulk for the whole page; a single document computes it
+        once, in one query shared by all the encryption fields.
+        """
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        data = getattr(instance, ENCRYPTION_ACCESSES_ATTRIBUTE, None)
+        if data is None:
+            data = models.Document.get_encryption_accesses_mapping(
+                [instance.id], request.user
+            )[instance.id]
+            setattr(instance, ENCRYPTION_ACCESSES_ATTRIBUTE, data)
+        return data
+
+    def get_accesses_user_ids(self, instance):
+        """Return the suite user ids (subs) of the members with a direct access.
+        The frontend uses these to fetch public keys from the encryption service."""
+        data = self._get_encryption_accesses(instance)
+        if data is None:
+            return None
+        return sorted(str(sub) for sub in data["user_subs"])
+
+    def get_accesses_versions_per_user(self, instance):
+        """Return versions of users' public keys at share time."""
+        if not instance.is_encrypted:
+            return None
+        data = self._get_encryption_accesses(instance)
+        if data is None:
+            return None
+        return data["versions"]
+
+    def get_encrypted_document_symmetric_key_for_user(self, instance):
+        """Return the encrypted symmetric key for the current user."""
+        if not instance.is_encrypted:
+            return None
+        data = self._get_encryption_accesses(instance)
+        if data is None:
+            return None
+        return data["own_key"]
+
+    def get_is_pending_encryption_for_user(self, instance):
+        """True when the current user has a DocumentAccess row on this
+        encrypted document with no wrapped key: they were added to the
+        access list but haven't completed their encryption onboarding yet.
+
+        Clients use this to avoid attempting to decrypt (which would
+        fail with a meaningless key error) and render a "waiting for
+        acceptance" panel directly instead.
+        """
+        if not instance.is_encrypted:
+            return False
+        data = self._get_encryption_accesses(instance)
+        if data is None:
+            return False
+        return data["has_own_access"] and data["own_key"] is None
+
 
 class DocumentLightSerializer(serializers.ModelSerializer):
     """Minial document serializer for nesting in document accesses."""
@@ -187,9 +298,12 @@ class DocumentSerializer(ListDocumentSerializer):
 
     class Meta:
         model = models.Document
+        list_serializer_class = DocumentListSerializer
         fields = [
             "id",
             "abilities",
+            "accesses_versions_per_user",
+            "accesses_user_ids",
             "ancestors_link_reach",
             "ancestors_link_role",
             "computed_link_reach",
@@ -199,8 +313,11 @@ class DocumentSerializer(ListDocumentSerializer):
             "deleted_at",
             "depth",
             "excerpt",
+            "encrypted_document_symmetric_key_for_user",
             "file",
             "is_favorite",
+            "is_encrypted",
+            "is_pending_encryption_for_user",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -223,7 +340,10 @@ class DocumentSerializer(ListDocumentSerializer):
             "creator",
             "deleted_at",
             "depth",
+            "encrypted_document_symmetric_key_for_user",
             "is_favorite",
+            "is_encrypted",
+            "is_pending_encryption_for_user",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -242,6 +362,12 @@ class DocumentSerializer(ListDocumentSerializer):
         if request:
             if request.method == "POST":
                 fields["id"].read_only = False
+
+        # if user is not authenticated remove public keys information since they can
+        # still retrieve the document
+        if request and not request.user.is_authenticated:
+            fields.pop("accesses_user_ids", None)
+            fields.pop("encrypted_document_symmetric_key_for_user", None)
 
         return fields
 
@@ -304,6 +430,7 @@ class SearchDocumentSerializer(ListDocumentSerializer):
 
     class Meta:
         model = models.Document
+        list_serializer_class = DocumentListSerializer
         fields = ListDocumentSerializer.Meta.fields + ["parent"]
         read_only_fields = ListDocumentSerializer.Meta.read_only_fields + ["parent"]
 
@@ -312,6 +439,10 @@ class DocumentContentSerializer(serializers.Serializer):
     """Serializer for updating only the raw content of a document stored in S3."""
 
     content = serializers.CharField(required=True)
+    # Encryption state the client produced the content for. When it no longer
+    # matches the document (encrypted or decrypted meanwhile by someone else),
+    # the save is refused instead of overwriting with the wrong kind of content.
+    contentEncrypted = serializers.BooleanField(required=False)
     websocket = serializers.BooleanField(required=False)
 
     def validate_content(self, value):
@@ -352,6 +483,14 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
     abilities = serializers.SerializerMethodField(read_only=True)
     max_ancestors_role = serializers.SerializerMethodField(read_only=True)
     max_role = serializers.SerializerMethodField(read_only=True)
+    encrypted_document_symmetric_key_for_user = serializers.CharField(
+        required=False, allow_blank=True, write_only=True
+    )
+    # TODO: REQUIRED!!!
+    encryption_public_key_version = serializers.IntegerField(
+        required=False, allow_null=True, min_value=1
+    )
+    is_pending_encryption = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.DocumentAccess
@@ -366,6 +505,9 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "abilities",
             "max_ancestors_role",
             "max_role",
+            "encrypted_document_symmetric_key_for_user",
+            "encryption_public_key_version",
+            "is_pending_encryption",
         ]
         read_only_fields = [
             "id",
@@ -373,7 +515,45 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "abilities",
             "max_ancestors_role",
             "max_role",
+            "is_pending_encryption",
         ]
+
+    def get_is_pending_encryption(self, instance):
+        """True when the parent document is encrypted but this access has
+        no wrapped key — the user was added before completing their
+        encryption onboarding. A validated collaborator must "accept"
+        them (re-wrap the key) before they can decrypt.
+        """
+        document = instance.document
+        return bool(
+            getattr(document, "is_encrypted", False)
+            and instance.encrypted_document_symmetric_key_for_user is None
+        )
+
+    def get_fields(self):
+        """Dynamically adjust encryption fields based on document state.
+
+        For encrypted documents the key is OPTIONAL at serializer level:
+        the viewset decides whether omitting it is legitimate (invitee
+        has no public key yet → access created pending) or a 400 (field
+        provided against a non-encrypted document). For non-encrypted
+        documents the field is hidden entirely.
+        """
+        fields = super().get_fields()
+
+        # Get the document from context (if available)
+        document = None
+        if "view" in self.context and hasattr(self.context["view"], "document"):
+            document = self.context["view"].document
+
+        if (
+            document
+            and not getattr(document, "is_encrypted", False)
+            and "encrypted_document_symmetric_key_for_user" in fields
+        ):
+            fields.pop("encrypted_document_symmetric_key_for_user", None)
+
+        return fields
 
     def get_abilities(self, instance) -> dict:
         """Return abilities of the logged-in user on the instance."""
@@ -645,6 +825,7 @@ class FileUploadSerializer(serializers.Serializer):
     """Receive file upload requests."""
 
     file = serializers.FileField()
+    is_encrypted = serializers.BooleanField(default=False, required=False)
 
     def validate_file(self, file):
         """Add file size and type constraints as defined in settings."""
@@ -654,6 +835,18 @@ class FileUploadSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 f"File size exceeds the maximum limit of {max_size:d} MB."
             )
+
+        # For encrypted files, the content is ciphertext so MIME detection
+        # is not possible. Trust the original filename extension.
+        if self.initial_data.get("is_encrypted") in ("true", "True", True):
+            extension = file.name.rpartition(".")[-1] if "." in file.name else None
+            if extension is None or len(extension) > 5:
+                raise serializers.ValidationError("Could not determine file extension.")
+            self.context["expected_extension"] = extension
+            self.context["content_type"] = "application/octet-stream"
+            self.context["is_unsafe"] = False
+            self.context["file_name"] = file.name
+            return file
 
         extension = file.name.rpartition(".")[-1] if "." in file.name else None
 
@@ -882,6 +1075,125 @@ class MoveDocumentSerializer(serializers.Serializer):
     position = serializers.ChoiceField(
         choices=enums.MoveNodePositionChoices.choices,
         default=enums.MoveNodePositionChoices.LAST_CHILD,
+    )
+
+
+class EncryptDocumentSerializer(serializers.Serializer):
+    """
+    Serializer for encrypting a document.
+
+    Fields:
+        - content (CharField): The encrypted content of the document.
+          This field is required.
+        - encryptedSymmetricKeyPerUser (DictField): Mapping of user IDs to their
+          encrypted symmetric keys.
+          This field is required.
+
+    Example:
+        Input payload for encrypting a document:
+        {
+            "content": "<encrypted_content>",
+            "encryptedSymmetricKeyPerUser": {
+                "user1_id": "encrypted_key_1",
+                "user2_id": "encrypted_key_2"
+            }
+        }
+    """
+
+    content = serializers.CharField(required=True)
+    # Value is either a base64 wrapped key (validated user) or explicit
+    # null (user is on the access list but has no public key yet — access
+    # row is created pending, to be "accepted" later by another validated
+    # collaborator via PATCH /accesses/{id}/encryption-key/).
+    encryptedSymmetricKeyPerUser = serializers.DictField(
+        child=serializers.CharField(allow_null=True),
+        required=True,
+        help_text=(
+            "Mapping of user OIDC sub → wrapped symmetric key (base64), "
+            "or null to mark the user as pending their encryption "
+            "onboarding. The caller's own sub must always be a wrapped "
+            "key, never null."
+        ),
+    )
+    # Required: matched to the wrapped-key map. Every user sub present
+    # in `encryptedSymmetricKeyPerUser` must also appear here with the
+    # version of the public key used to wrap their copy (or null
+    # for pending users with no public key yet). Stored on the access
+    # row verbatim so clients can later detect when a user's key has
+    # rotated: if the current public key version differs from this
+    # stored value, the access needs re-encryption.
+    #
+    # Not security-sensitive in the crypto sense — the actual wrap is
+    # the wrapped key itself. The version is a staleness marker; a
+    # malicious client could send wrong values but the worst it
+    # achieves is confusing the user whose client was lying.
+    encryptionPublicKeyVersionPerUser = serializers.DictField(
+        child=serializers.IntegerField(allow_null=True, min_value=1),
+        required=True,
+        help_text=(
+            "Mapping of user OIDC sub → version of their public key "
+            "at encryption time. Must cover the same set of users as "
+            "`encryptedSymmetricKeyPerUser`; null is valid for pending "
+            "users."
+        ),
+    )
+    attachmentKeyMapping = serializers.DictField(
+        child=serializers.CharField(),
+        required=False,
+        default=dict,
+        help_text="Mapping of original attachment key to new encrypted attachment key. "
+        "During encryption, existing attachments are uploaded encrypted under new keys. "
+        "This mapping tells the backend to copy each new key over the original and clean up.",
+    )
+
+
+# pylint: disable=abstract-method
+class AcceptEncryptionAccessSerializer(serializers.Serializer):
+    """Payload for PATCH /accesses/{id}/encryption-key/ — "accept" a
+    pending collaborator by re-wrapping the document's symmetric key
+    against their (now-available) public key.
+    """
+
+    encrypted_document_symmetric_key_for_user = serializers.CharField(
+        required=True,
+        allow_null=False,
+        allow_blank=False,
+        help_text=(
+            "Wrapped symmetric key for the pending user, base64-encoded. "
+            "Null / empty is not allowed: this endpoint only flips "
+            "pending → validated. To revert, delete the access row."
+        ),
+    )
+    encryption_public_key_version = serializers.IntegerField(
+        required=True,
+        allow_null=False,
+        min_value=1,
+    )
+
+
+class RemoveEncryptionSerializer(serializers.Serializer):
+    """
+    Serializer for removing encryption from a document.
+
+    Fields:
+        - content (CharField): The decrypted content of the document.
+          This field is required.
+
+    Example:
+        Input payload for removing encryption from a document:
+        {
+            "content": "<decrypted_content>"
+        }
+    """
+
+    content = serializers.CharField(required=True)
+    attachmentKeyMapping = serializers.DictField(
+        child=serializers.CharField(),
+        required=False,
+        default=dict,
+        help_text="Mapping of old encrypted attachment key to new decrypted attachment key. "
+        "During decryption, encrypted attachments are re-uploaded decrypted under new keys. "
+        "This mapping tells the backend to remove the old keys and clean up.",
     )
 
 

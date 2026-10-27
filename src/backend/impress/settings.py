@@ -579,6 +579,18 @@ class Base(Configuration):
     FRONTEND_SILENT_LOGIN_ENABLED = values.BooleanValue(
         default=False, environ_name="FRONTEND_SILENT_LOGIN_ENABLED", environ_prefix=None
     )
+
+    ENCRYPTION_FEATURE_ENABLED = values.BooleanValue(
+        default=False,
+        environ_name="ENCRYPTION_FEATURE_ENABLED",
+        environ_prefix=None,
+    )
+    ENCRYPTION_VAULT_URL = values.Value(
+        None, environ_name="ENCRYPTION_VAULT_URL", environ_prefix=None
+    )
+    ENCRYPTION_INTERFACE_URL = values.Value(
+        None, environ_name="ENCRYPTION_INTERFACE_URL", environ_prefix=None
+    )
     THEME_CUSTOMIZATION_FILE_PATH = values.Value(
         os.path.join(BASE_DIR, "impress/configuration/theme/default.json"),
         environ_name="THEME_CUSTOMIZATION_FILE_PATH",
@@ -1408,6 +1420,10 @@ class Test(Base):
     STATIC_ROOT = None
 
     CELERY_TASK_ALWAYS_EAGER = values.BooleanValue(True)
+
+    # The development environment stores the OIDC access token for the encryption
+    # service; tests start from the default and enable it where they need it.
+    OIDC_STORE_ACCESS_TOKEN = False
 
     STORAGES = {
         "default": {

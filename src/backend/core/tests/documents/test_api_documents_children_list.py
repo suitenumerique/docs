@@ -10,6 +10,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import factories
+from core.tests.utils.encryption import direct_user_subs
 
 pytestmark = pytest.mark.django_db
 
@@ -44,8 +45,13 @@ def test_api_documents_children_list_anonymous_public_standalone(
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": child1.excerpt,
+                "accesses_user_ids": None,
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child1.id),
                 "is_favorite": False,
+                "is_encrypted": child1.is_encrypted,
                 "link_reach": child1.link_reach,
                 "link_role": child1.link_role,
                 "numchild": 0,
@@ -67,8 +73,13 @@ def test_api_documents_children_list_anonymous_public_standalone(
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": child2.excerpt,
+                "accesses_user_ids": None,
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child2.id),
                 "is_favorite": False,
+                "is_encrypted": child2.is_encrypted,
                 "link_reach": child2.link_reach,
                 "link_role": child2.link_role,
                 "numchild": 0,
@@ -120,8 +131,13 @@ def test_api_documents_children_list_anonymous_public_parent(django_assert_num_q
                 "deleted_at": None,
                 "depth": 4,
                 "excerpt": child1.excerpt,
+                "accesses_user_ids": None,
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child1.id),
                 "is_favorite": False,
+                "is_encrypted": child1.is_encrypted,
                 "link_reach": child1.link_reach,
                 "link_role": child1.link_role,
                 "numchild": 0,
@@ -143,8 +159,13 @@ def test_api_documents_children_list_anonymous_public_parent(django_assert_num_q
                 "deleted_at": None,
                 "depth": 4,
                 "excerpt": child2.excerpt,
+                "accesses_user_ids": None,
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child2.id),
                 "is_favorite": False,
+                "is_encrypted": child2.is_encrypted,
                 "link_reach": child2.link_reach,
                 "link_role": child2.link_role,
                 "numchild": 0,
@@ -191,9 +212,9 @@ def test_api_documents_children_list_authenticated_unrelated_public_or_authentic
     child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
     factories.UserDocumentAccessFactory(document=child1)
 
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(10):
         client.get(f"/api/v1.0/documents/{document.id!s}/children/")
-    with django_assert_num_queries(5):
+    with django_assert_num_queries(6):
         response = client.get(
             f"/api/v1.0/documents/{document.id!s}/children/",
         )
@@ -215,8 +236,13 @@ def test_api_documents_children_list_authenticated_unrelated_public_or_authentic
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": child1.excerpt,
+                "accesses_user_ids": direct_user_subs(child1),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child1.id),
                 "is_favorite": False,
+                "is_encrypted": child1.is_encrypted,
                 "link_reach": child1.link_reach,
                 "link_role": child1.link_role,
                 "numchild": 0,
@@ -238,8 +264,13 @@ def test_api_documents_children_list_authenticated_unrelated_public_or_authentic
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": child2.excerpt,
+                "accesses_user_ids": direct_user_subs(child2),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child2.id),
                 "is_favorite": False,
+                "is_encrypted": child2.is_encrypted,
                 "link_reach": child2.link_reach,
                 "link_role": child2.link_role,
                 "numchild": 0,
@@ -273,10 +304,10 @@ def test_api_documents_children_list_authenticated_public_or_authenticated_paren
     child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
     factories.UserDocumentAccessFactory(document=child1)
 
-    with django_assert_num_queries(10):
+    with django_assert_num_queries(11):
         client.get(f"/api/v1.0/documents/{document.id!s}/children/")
 
-    with django_assert_num_queries(6):
+    with django_assert_num_queries(7):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/children/")
 
     assert response.status_code == 200
@@ -296,8 +327,13 @@ def test_api_documents_children_list_authenticated_public_or_authenticated_paren
                 "deleted_at": None,
                 "depth": 4,
                 "excerpt": child1.excerpt,
+                "accesses_user_ids": direct_user_subs(child1),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child1.id),
                 "is_favorite": False,
+                "is_encrypted": child1.is_encrypted,
                 "link_reach": child1.link_reach,
                 "link_role": child1.link_role,
                 "numchild": 0,
@@ -319,8 +355,13 @@ def test_api_documents_children_list_authenticated_public_or_authenticated_paren
                 "deleted_at": None,
                 "depth": 4,
                 "excerpt": child2.excerpt,
+                "accesses_user_ids": direct_user_subs(child2),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child2.id),
                 "is_favorite": False,
+                "is_encrypted": child2.is_encrypted,
                 "link_reach": child2.link_reach,
                 "link_role": child2.link_role,
                 "numchild": 0,
@@ -381,7 +422,7 @@ def test_api_documents_children_list_authenticated_related_direct(
     child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
     factories.UserDocumentAccessFactory(document=child1)
 
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(10):
         response = client.get(
             f"/api/v1.0/documents/{document.id!s}/children/",
         )
@@ -404,8 +445,13 @@ def test_api_documents_children_list_authenticated_related_direct(
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": child1.excerpt,
+                "accesses_user_ids": direct_user_subs(child1),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child1.id),
                 "is_favorite": False,
+                "is_encrypted": child1.is_encrypted,
                 "link_reach": child1.link_reach,
                 "link_role": child1.link_role,
                 "numchild": 0,
@@ -427,8 +473,13 @@ def test_api_documents_children_list_authenticated_related_direct(
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": child2.excerpt,
+                "accesses_user_ids": direct_user_subs(child2),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child2.id),
                 "is_favorite": False,
+                "is_encrypted": child2.is_encrypted,
                 "link_reach": child2.link_reach,
                 "link_role": child2.link_role,
                 "numchild": 0,
@@ -466,7 +517,7 @@ def test_api_documents_children_list_authenticated_related_parent(
         document=grand_parent, user=user
     )
 
-    with django_assert_num_queries(10):
+    with django_assert_num_queries(11):
         response = client.get(
             f"/api/v1.0/documents/{document.id!s}/children/",
         )
@@ -488,8 +539,13 @@ def test_api_documents_children_list_authenticated_related_parent(
                 "deleted_at": None,
                 "depth": 4,
                 "excerpt": child1.excerpt,
+                "accesses_user_ids": direct_user_subs(child1),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child1.id),
                 "is_favorite": False,
+                "is_encrypted": child1.is_encrypted,
                 "link_reach": child1.link_reach,
                 "link_role": child1.link_role,
                 "numchild": 0,
@@ -511,8 +567,13 @@ def test_api_documents_children_list_authenticated_related_parent(
                 "deleted_at": None,
                 "depth": 4,
                 "excerpt": child2.excerpt,
+                "accesses_user_ids": direct_user_subs(child2),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child2.id),
                 "is_favorite": False,
+                "is_encrypted": child2.is_encrypted,
                 "link_reach": child2.link_reach,
                 "link_role": child2.link_role,
                 "numchild": 0,
@@ -603,7 +664,7 @@ def test_api_documents_children_list_authenticated_related_team_members(
 
     access = factories.TeamDocumentAccessFactory(document=document, team="myteam")
 
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(10):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/children/")
 
     # pylint: disable=R0801
@@ -624,8 +685,13 @@ def test_api_documents_children_list_authenticated_related_team_members(
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": child1.excerpt,
+                "accesses_user_ids": direct_user_subs(child1),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child1.id),
                 "is_favorite": False,
+                "is_encrypted": child1.is_encrypted,
                 "link_reach": child1.link_reach,
                 "link_role": child1.link_role,
                 "numchild": 0,
@@ -647,8 +713,13 @@ def test_api_documents_children_list_authenticated_related_team_members(
                 "deleted_at": None,
                 "depth": 2,
                 "excerpt": child2.excerpt,
+                "accesses_user_ids": direct_user_subs(child2),
+                "accesses_versions_per_user": None,
+                "encrypted_document_symmetric_key_for_user": None,
+                "is_pending_encryption_for_user": False,
                 "id": str(child2.id),
                 "is_favorite": False,
+                "is_encrypted": child2.is_encrypted,
                 "link_reach": child2.link_reach,
                 "link_role": child2.link_role,
                 "numchild": 0,
