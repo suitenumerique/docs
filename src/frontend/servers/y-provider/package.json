@@ -22,6 +22,7 @@
     "@sentry/node": "10.70.0",
     "@sentry/profiling-node": "10.70.0",
     "@tiptap/extensions": "*",
+    "async-mutex": "0.5.0",
     "axios": "1.19.0",
     "cors": "2.8.6",
     "express": "5.2.1",

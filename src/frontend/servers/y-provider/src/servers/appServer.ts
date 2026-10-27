@@ -47,6 +47,9 @@ export const initApp = () => {
    *  - If a user ID is provided, close connections for the user in the room
    */
   app.post(
+    //
+    // TODO: logic should work on connections for hopuspocus and standard one
+    //
     routes.COLLABORATION_RESET_CONNECTIONS,
     httpSecurity,
     express.json(),
@@ -54,6 +57,9 @@ export const initApp = () => {
   );
 
   app.get(
+    //
+    // TODO: logic should work on connections for hopuspocus and standard one
+    //
     routes.COLLABORATION_GET_CONNECTIONS,
     httpSecurity,
     getDocumentConnectionInfoHandler,
@@ -63,6 +69,12 @@ export const initApp = () => {
    * Route to convert Markdown or BlockNote blocks and Yjs content
    */
   app.post(
+    //
+    // TODO: maybe since could be done on the frontend to avoid data going over the server?
+    // TODO: logic should work on connections for hopuspocus and standard one
+    //
+    // TODO: ... but this endpoint seems not used, to delete?
+    //
     routes.CONVERT,
     httpSecurity,
     express.raw({
@@ -72,6 +84,9 @@ export const initApp = () => {
     convertHandler,
   );
 
+  //
+  // TODO: make sure Sentry is not saving sensitive info for e2ee
+  //
   Sentry.setupExpressErrorHandler(app);
 
   app.get('/ping', (req, res) => {
