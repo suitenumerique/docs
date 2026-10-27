@@ -503,7 +503,11 @@ build-k8s-cluster: ## build the kubernetes cluster using kind
 
 start-tilt: ## start the kubernetes cluster using kind
 	tilt up -f ./bin/Tiltfile
-.PHONY: build-k8s-cluster
+.PHONY: start-tilt
+
+stop-tilt: ## stop the kubernetes cluster using kind
+	tilt down -f ./bin/Tiltfile
+.PHONY: stop-tilt
 
 bump-packages-version: VERSION_TYPE ?= minor
 bump-packages-version: ## bump the version of the project - VERSION_TYPE can be "major", "minor", "patch"
