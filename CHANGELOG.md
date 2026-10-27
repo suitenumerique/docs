@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Removed
+
+- 🔥(backend) remove easy-thumbnails and Pillow #2909
+
 ## [v6.0.4] - 2026-10-26
 
 ### Changed

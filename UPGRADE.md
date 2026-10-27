@@ -16,6 +16,20 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+- The backend no longer depends on `easy-thumbnails`, nor on Pillow, which
+  came with it: nothing used them anymore. No migration drops the tables of
+  `easy-thumbnails`, they stay in the database and the backend reads none of
+  them: `easy_thumbnails_source`, `easy_thumbnails_thumbnail` and
+  `easy_thumbnails_thumbnaildimensions`. They are empty: nothing ever
+  created a thumbnail. Keep them or drop them; to drop them, along with
+  their entries in `django_migrations`:
+
+  ```sql
+  DROP TABLE easy_thumbnails_thumbnaildimensions, easy_thumbnails_thumbnail,
+    easy_thumbnails_source;
+  DELETE FROM django_migrations WHERE app = 'easy_thumbnails';
+  ```
+
 ## [v6.0.2] - 2026-10-21
 
 - ⚠️ **The collaboration server moves to `@y/hub` 0.10.1: run its schema

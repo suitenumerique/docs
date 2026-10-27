@@ -46,7 +46,6 @@ dependencies = [
     "django-waffle==5.0.0",
     "drf_spectacular==0.30.0",
     "dockerflow==2026.3.4",
-    "easy_thumbnails==2.10.1",
     "emoji==2.16.0",
     "factory_boy==3.3.3",
     "gunicorn==26.2.0",
