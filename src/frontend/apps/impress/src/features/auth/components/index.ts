@@ -1,4 +1,5 @@
 export * from './Auth';
+export * from './ButtonEnableEncryption';
 export * from './ButtonLogin';
 export * from './EncryptionMenuButton';
 export * from './ModalEncryptionOnboarding';

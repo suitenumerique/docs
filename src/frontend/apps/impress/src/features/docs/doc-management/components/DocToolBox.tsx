@@ -181,7 +181,7 @@ const DocToolBoxComponent = ({
   const [isModalEncryptOpen, setIsModalEncryptOpen] = useState(false);
   const [isModalRemoveEncryptionOpen, setIsModalRemoveEncryptionOpen] =
     useState(false);
-  const { isEnabled: isEncryptionEnabled } = useVaultClient();
+  const { isEnabled: isEncryptionEnabled, hasKeys } = useVaultClient();
   const { onClick: onButtonClick, ...buttonPropsLeft } = buttonProps || {};
 
   const editor = useEditorStore((state) => state.editor);
@@ -353,10 +353,13 @@ const DocToolBoxComponent = ({
         setIsModalEncryptOpen(true);
       },
       // Encryption transitions go through the live collaboration provider,
-      // which only exists for the document open in the editor.
+      // which only exists for the document open in the editor. A user without
+      // keys in this browser is not offered it: encryption is turned on from
+      // the account settings, or from an encrypted document shared with them.
       isHidden:
         !isCurrentDoc ||
         !isEncryptionEnabled ||
+        hasKeys !== true ||
         !!doc.is_encrypted ||
         !doc.abilities.update,
       testId: `docs-actions-encrypt-${doc.id}`,

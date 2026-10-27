@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { AppWrapper } from '@/tests/utils';
 
+import { ButtonEnableEncryption } from '../components/ButtonEnableEncryption';
 import { EncryptionMenuButton } from '../components/EncryptionMenuButton';
 
 type Listener = (payload?: unknown) => void;
@@ -97,5 +98,60 @@ describe('EncryptionMenuButton', () => {
 
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+});
+
+describe('ButtonEnableEncryption', () => {
+  let vaultClient: ReturnType<typeof createVaultClient>;
+
+  beforeEach(() => {
+    vaultClient = createVaultClient();
+    mocks.refreshEncryption.mockReset();
+    mocks.refreshKeyState.mockReset().mockResolvedValue(undefined);
+    mocks.vault = {
+      isEnabled: true,
+      client: vaultClient,
+      hasKeys: false,
+      error: null,
+      refreshKeyState: mocks.refreshKeyState,
+    };
+  });
+
+  test('opens the onboarding behind a loader and refreshes the state once it completes', async () => {
+    const onEnabled = vi.fn();
+
+    render(<ButtonEnableEncryption onEnabled={onEnabled} />, {
+      wrapper: AppWrapper,
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Enable encryption' }),
+    );
+
+    expect(vaultClient.openOnboarding).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    // The interface is on screen: the loader goes away.
+    act(() => vaultClient.emit('interface:ready'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await act(async () => {
+      vaultClient.emit('onboarding:complete', { publicKey: 'key' });
+      await Promise.resolve();
+    });
+
+    expect(mocks.refreshKeyState).toHaveBeenCalled();
+    expect(mocks.refreshEncryption).toHaveBeenCalled();
+    expect(onEnabled).toHaveBeenCalledTimes(1);
+  });
+
+  test('is hidden when the encryption feature is off', () => {
+    mocks.vault = { ...mocks.vault, isEnabled: false };
+
+    render(<ButtonEnableEncryption />, { wrapper: AppWrapper });
+
+    expect(
+      screen.queryByRole('button', { name: 'Enable encryption' }),
+    ).not.toBeInTheDocument();
   });
 });

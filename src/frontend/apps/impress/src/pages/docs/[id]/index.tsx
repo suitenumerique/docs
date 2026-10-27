@@ -22,8 +22,8 @@ import {
 } from '@/docs/doc-management/';
 import { KEY_DOC_CONTENT } from '@/docs/doc-management/api/useDocContent';
 import {
+  ButtonEnableEncryption,
   KEY_AUTH,
-  ModalEncryptionOnboarding,
   setAuthUrl,
   useAuth,
 } from '@/features/auth';
@@ -137,9 +137,7 @@ const DocPage = ({ id }: DocProps) => {
   const { t } = useTranslation();
   const { authenticated, user } = useAuth();
   const { untitledDocument } = useTrans();
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
-  const { isEnabled: isEncryptionEnabled, error: vaultClientError } =
-    useVaultClient();
+  const { error: vaultClientError } = useVaultClient();
   const { encryptionLoading, encryptionError } = useUserEncryption();
   const {
     documentEncryptionLoading,
@@ -340,43 +338,30 @@ const DocPage = ({ id }: DocProps) => {
 
   if (doc.is_encrypted && (encryptionError || documentEncryptionError)) {
     return (
-      <>
-        <EncryptionEmptyState
-          title={accessCopy.title}
-          description={accessCopy.description}
-          actions={
-            <>
-              <StyledLink href="/">
-                <Button
-                  size="small"
-                  color="neutral"
-                  variant="tertiary"
-                  icon={<Icon iconName="home" $withThemeInherited />}
-                >
-                  {t('Home')}
-                </Button>
-              </StyledLink>
-              {needsSetup && isEncryptionEnabled && (
-                <Button
-                  size="small"
-                  variant="tertiary"
-                  onClick={() => setIsOnboardingOpen(true)}
-                  icon={<Icon iconName="verified_user" $withThemeInherited />}
-                >
-                  {t('Enable encryption')}
-                </Button>
-              )}
-            </>
-          }
-        />
-        {isOnboardingOpen && (
-          <ModalEncryptionOnboarding
-            isOpen
-            onClose={() => setIsOnboardingOpen(false)}
-            onSuccess={() => setIsOnboardingOpen(false)}
-          />
-        )}
-      </>
+      <EncryptionEmptyState
+        title={accessCopy.title}
+        description={accessCopy.description}
+        actions={
+          <>
+            <StyledLink href="/">
+              <Button
+                size="small"
+                color="neutral"
+                variant="tertiary"
+                icon={<Icon iconName="home" $withThemeInherited />}
+              >
+                {t('Home')}
+              </Button>
+            </StyledLink>
+            {needsSetup && (
+              <ButtonEnableEncryption
+                size="small"
+                icon={<Icon iconName="verified_user" $color="inherit" />}
+              />
+            )}
+          </>
+        }
+      />
     );
   }
 

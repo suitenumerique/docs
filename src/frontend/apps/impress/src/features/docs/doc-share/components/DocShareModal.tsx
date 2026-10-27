@@ -10,6 +10,7 @@ import {
   Box,
   ButtonCloseModal,
   HorizontalSeparator,
+  Icon,
   Loading,
   Text,
 } from '@/components';
@@ -29,7 +30,7 @@ import {
   useVaultClient,
 } from '@/docs/doc-collaboration/vault';
 import { Doc, useEncryptionAccessCopy } from '@/docs/doc-management';
-import { User, useAuth } from '@/features/auth';
+import { ButtonEnableEncryption, User, useAuth } from '@/features/auth';
 import { EncryptionEmptyState } from '@/features/docs/doc-management/components/EncryptionLayout';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
@@ -106,11 +107,10 @@ export const DocShareModal = ({
       : undefined,
     needsDerivation ? doc.is_pending_encryption_for_user : undefined,
   );
-  const accessCopy = useEncryptionAccessCopy(
-    doc,
+  const needsEncryptionSetup =
     encryptionError === 'missing_private_key' ||
-      encryptionError === 'missing_public_key',
-  );
+    encryptionError === 'missing_public_key';
+  const accessCopy = useEncryptionAccessCopy(doc, needsEncryptionSetup);
   const effectiveEncryptionSettings =
     documentEncryptionSettings ?? derivedEncryptionSettings ?? null;
   const isEncryptionDeriving =
@@ -265,6 +265,14 @@ export const DocShareModal = ({
           <EncryptionEmptyState
             title={accessCopy.title}
             description={accessCopy.description}
+            actions={
+              needsEncryptionSetup ? (
+                <ButtonEnableEncryption
+                  size="small"
+                  icon={<Icon iconName="verified_user" $color="inherit" />}
+                />
+              ) : undefined
+            }
           />
         )}
         {!isEncryptionDeriving && !derivedEncryptionError && (

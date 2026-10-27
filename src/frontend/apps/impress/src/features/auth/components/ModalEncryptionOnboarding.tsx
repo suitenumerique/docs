@@ -1,10 +1,10 @@
 /**
- * Encryption onboarding — delegates to the centralized encryption service.
+ * Encryption onboarding, delegated to the centralized encryption service.
  *
  * The service's interface handles everything (key generation, backup, restore,
  * device transfer, server registration) and draws its own modal over the page;
  * Docs only shows a loader until it is on screen. The product doesn't manage
- * public keys — it only stores fingerprints on document accesses for UI purposes.
+ * public keys: it only stores fingerprints on document accesses for UI purposes.
  */
 import { Modal, ModalSize } from '@gouvfr-lasuite/ui-components';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -51,7 +51,7 @@ export const ModalEncryptionOnboarding = ({
 
     const handleComplete = async () => {
       // The encryption service registered the public key on its central server.
-      // Docs doesn't need to store it — just refresh the vault key state.
+      // Docs doesn't need to store it, it only refreshes the vault key state.
       await refreshKeyState();
       refreshEncryption();
       onSuccess?.();
