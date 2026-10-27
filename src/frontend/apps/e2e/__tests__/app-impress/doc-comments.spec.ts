@@ -415,6 +415,66 @@ test.describe('Doc Comments', () => {
     await editor2.getByText('Document One').click();
     await expect(page.locator('.bn-thread')).toBeHidden();
   });
+
+  test('it keeps the comment of a doc link after a reload', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'comment-interlink',
+      browserName,
+      1,
+    );
+
+    const { name: childTitle } = await createRootSubPage(
+      page,
+      browserName,
+      'comment-interlink-child',
+    );
+    await verifyDocName(page, childTitle);
+
+    // We write a sentence ending with a link to the parent doc
+    const editor = await writeInEditor({ page, text: 'Link to ' });
+    await page.keyboard.press('@');
+    await page
+      .locator("span[data-inline-content-type='interlinkingLinkInline'] input")
+      .fill(docTitle);
+    await page.locator('.quick-search-container').getByText(docTitle).click();
+
+    const interlink = editor.locator(
+      '.--docs--interlinking-link-inline-content',
+    );
+    await expect(interlink).toContainText(docTitle);
+
+    // We comment the whole sentence, doc link included
+    await page.keyboard.press('End');
+    await page.keyboard.press('Shift+Home');
+    await page.getByRole('button', { name: 'Add comment' }).click();
+
+    const thread = page.locator('.bn-thread');
+    await thread.getByRole('paragraph').first().fill('This is a comment');
+    await thread.locator('[data-test="save"]').click();
+    await expect(thread.getByText('This is a comment').first()).toBeHidden();
+
+    const commentedInterlink = editor.locator('.bn-thread-mark').filter({
+      has: page.locator('.--docs--interlinking-link-inline-content'),
+    });
+    await expect(commentedInterlink).toHaveCSS(
+      'background-color',
+      /color\(srgb\s+[\d\s.]+\s+\/\s+0\.4\)/,
+    );
+
+    await page.reload();
+    await verifyDocName(page, childTitle);
+
+    // The threads are loaded after the document
+    await expect(commentedInterlink).toHaveCSS(
+      'background-color',
+      /color\(srgb\s+[\d\s.]+\s+\/\s+0\.4\)/,
+      { timeout: 10000 },
+    );
+  });
 });
 
 test.describe('Doc Comments mobile', () => {
