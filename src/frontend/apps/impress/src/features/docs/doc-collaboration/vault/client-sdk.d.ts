@@ -10,6 +10,12 @@ export declare interface AuthContext {
     suiteUserId: string;
 }
 
+/** This browser held the user's vault and forgot it after VAULT_DEVICE_INACTIVITY_DAYS without use. */
+export declare interface DeEnrollment {
+    deEnrolledAt: number;
+    inactivityDays: number;
+}
+
 export declare interface EncryptionClientEventMap {
     /** Fired when the hidden vault iframe is ready for encrypt/decrypt operations */
     [MSG_VAULT_READY]: void;
@@ -43,13 +49,34 @@ export declare interface EncryptionClientOptions {
     /** Timeout in ms for vault operations (default: 30000) */
     timeout?: number;
     /**
-     * Cunningham theme name for the interface iframe.
-     * Standard names: "default", "dark", "dsfr", "dsfr-dark", "anct", "anct-dark".
+     * Design system theme for the interface iframe.
+     * Standard names: "default", "dark", "dsfr" (or "dsfr-light"), "dsfr-dark", "anct" (or "anct-light"), "anct-dark".
      * Default: "default"
      */
     theme?: string;
     /** Language code for the interface iframe: "fr", "en", etc. (default: browser language) */
     lang?: string;
+}
+
+/**
+ * Where encryption stands for the signed-in user on this device, for a product's
+ * own account page:
+ * - `active`: this device holds the user's keys and they are the ones registered for the account;
+ * - `disabled-for-account`: this device holds keys, but encryption was turned off for the account;
+ * - `needs-attention`: this device holds keys of another identity than the one registered (replaced elsewhere),
+ *   or the registered record fails its binding check;
+ * - `not-set-up`: this device holds no keys. `registered` then tells whether the account set
+ *   encryption up on another device (the onboarding offers to restore it rather than start over).
+ */
+export declare interface EncryptionStatus {
+    state: 'active' | 'disabled-for-account' | 'needs-attention' | 'not-set-up';
+    registered: boolean;
+}
+
+export declare interface HasKeysResult {
+    hasKeys: boolean;
+    /** Set while this browser holds no vault because it forgot it for inactivity, until it is enrolled again. */
+    deEnrolled?: DeEnrollment;
 }
 
 export declare const isVaultError: (err: unknown) => err is VaultError;
@@ -87,6 +114,8 @@ export declare type RegisteredUser = {
     createdAtMillis: number;
     encryptionPublicKey: null;
 };
+
+export declare type SettingsSection = 'manage' | 'add-device' | 'verification-code' | 'recovery-phrase' | 'trusted-contacts';
 
 export declare class VaultClient {
     private vaultIframe;
@@ -144,14 +173,23 @@ export declare class VaultClient {
      * Clean up all iframes and event listeners.
      */
     destroy(): void;
-    /** Check if the user has encryption keys on this device. */
-    hasKeys(): Promise<{
-        hasKeys: boolean;
-    }>;
+    /**
+     * Check if the user has encryption keys on this device. `deEnrolled` is set when
+     * this browser forgot them after a long inactivity: the onboarding explains it.
+     */
+    hasKeys(): Promise<HasKeysResult>;
     /** Get the user's public key as ArrayBuffer. */
     getPublicKey(): Promise<{
         publicKey: ArrayBuffer;
     }>;
+    /**
+     * Where encryption stands for the signed-in user on this device (see
+     * {@link EncryptionStatus}), from the vault (the keys on this device) and the
+     * public directory (the identity registered for the account). Needs no sign-in
+     * to the encryption interface: an account page can show it before any modal is
+     * opened, and each of its actions opens the interface, which signs in if needed.
+     */
+    getEncryptionStatus(): Promise<EncryptionStatus>;
     /**
      * Create a new ROOT encrypted resource. Mints a fresh symmetric key,
      * encrypts `data` with it, and wraps the new key once per recipient.
@@ -364,14 +402,13 @@ export declare class VaultClient {
         }>;
     }>;
     /**
-     * Compute a 128-bit DECIMAL fingerprint of a public key: the first 16 bytes of
-     * its SHA-256, read big-endian as a fixed-width 40-digit decimal. Matches the
-     * device-pairing fingerprint so every surface shows the same value.
-     * This is a pure client-side operation — no vault iframe needed.
+     * Compute the 40-digit identity fingerprint of a user, the value people compare
+     * out of band: the same computation as the vault and the interface, so every
+     * surface shows the same value. Pure client-side, no vault iframe needed.
      *
-     * @param publicKey - The public key as ArrayBuffer (from fetchPublicKeys or getPublicKey)
+     * @param signaturePublicKey - The identity (signature) public key wire blob, as returned by fetchPublicKeys or getPublicKey
      */
-    computeKeyFingerprint(publicKey: ArrayBuffer): Promise<string>;
+    computeKeyFingerprint(signaturePublicKey: ArrayBuffer): Promise<string>;
     /**
      * Format a raw decimal fingerprint for display, grouped in blocks of five.
      */
@@ -395,9 +432,18 @@ export declare class VaultClient {
      */
     openRestore(): void;
     /**
-     * Open the encryption settings (view fingerprint, delete keys).
+     * Open the encryption settings. Without a section, the interface's own
+     * encryption home (status and every flow below), for a product with no account
+     * page of its own. With a section, that single flow, which closes the interface
+     * when it ends, for a product listing the flows on its own page:
+     * - `manage`: turn encryption off (this device or the account), or review a
+     *   device out of step with the account (turned off, replaced elsewhere);
+     * - `add-device`: give another device access, from this one;
+     * - `verification-code`: the code others compare to verify this user;
+     * - `recovery-phrase`: change the recovery phrase;
+     * - `trusted-contacts`: the trusted contacts, and the people this user can help.
      */
-    openSettings(): void;
+    openSettings(section?: SettingsSection): void;
     /**
      * Open device approval: enroll this device from another, or approve a new one.
      */
@@ -565,7 +611,7 @@ export declare const VaultErrorCode: {
      * AEAD verification failed. Either the ciphertext is for a different
      * recipient (their wrapped symmetric key was encrypted against another
      * pubkey) or the underlying KEM secret didn't match. Bubbles up from
-     * libsodium's "wrong secret key for the given ciphertext".
+     * libsodium's "ciphertext cannot be decrypted using that key".
      */
     readonly WRONG_SECRET_KEY: "WRONG_SECRET_KEY";
     /**
@@ -604,12 +650,18 @@ export declare const VaultErrorCode: {
     readonly CIPHERTEXT_TOO_SHORT: "CIPHERTEXT_TOO_SHORT";
     /** Ciphertext structure is inconsistent (e.g. a wrong length field): corrupt, not merely truncated. */
     readonly MALFORMED_CIPHERTEXT: "MALFORMED_CIPHERTEXT";
+    /** A value that should be base64 is not (corrupt or tampered input). */
+    readonly MALFORMED_BASE64: "MALFORMED_BASE64";
     /** A field cannot be represented in the canonical signed-payload encoding (length or number out of range). */
     readonly INVALID_CANONICAL_PAYLOAD: "INVALID_CANONICAL_PAYLOAD";
     /** Blob's leading version byte doesn't match a format this build can decode. */
     readonly UNSUPPORTED_CRYPTO_VERSION: "UNSUPPORTED_CRYPTO_VERSION";
     /** A signature public key didn't have the expected Ed25519 length. */
     readonly INVALID_SIGNATURE_KEY: "INVALID_SIGNATURE_KEY";
+    /** A configured maintenance public key, or a maintenance seed, is not a well-formed X-Wing key. */
+    readonly INVALID_MAINTENANCE_KEY: "INVALID_MAINTENANCE_KEY";
+    /** A maintenance copy names another maintenance key than the one trying to open it (another organization's). */
+    readonly OTHER_MAINTENANCE_KEY: "OTHER_MAINTENANCE_KEY";
     /**
      * A registry entry's binding signature did not verify against its claimed
      * identity (signature) key — the directory record is forged, tampered, or
