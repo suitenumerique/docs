@@ -1,7 +1,7 @@
 # Django impress
 
 # ---- base image to inherit from ----
-FROM python:3.14.6-alpine AS base
+FROM python:3.14.8-alpine AS base
 
 # Upgrade system packages to install security updates
 RUN apk update && apk upgrade --no-cache
@@ -159,6 +159,9 @@ FROM core AS backend-production
 
 # Remove apk cache, we don't need it anymore
 RUN rm -rf /var/cache/apk/*
+
+# pip is not needed at runtime (the dependencies are installed with uv)
+RUN /usr/local/bin/python -m pip uninstall --yes pip
 
 ARG IMPRESS_STATIC_ROOT=/data/static
 
