@@ -13,6 +13,11 @@ and this project adheres to
 
 - 💄(frontend) restore native task checkboxes and dim completed tasks #2857
 
+### Changed
+
+- ⬆️(frontend) upgrade BlockNote to 0.56.0
+- ♻️(frontend) export PDFs with the Typst engine
+
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909

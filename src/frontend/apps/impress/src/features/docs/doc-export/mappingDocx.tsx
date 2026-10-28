@@ -17,6 +17,7 @@ import {
   inlineContentMappingUserMentionDocx,
 } from './inline-content-mapping';
 import { DocsExporterDocx } from './types';
+import { getBlockMappingFunction } from './utils';
 
 export const getDocxDocsSchemaMappings = (
   interlinkTitles: Map<string, string>,
@@ -36,7 +37,7 @@ export const getDocxDocsSchemaMappings = (
     quote: blockMappingQuoteDocx,
     image: blockMappingImageDocx,
     uploadLoader: blockMappingUploadLoaderDocx,
-    table: (block, exporter, nestedLevel, numberedListIndex, children) => {
+    table: (block, exporter, nestedLevel, numberedListIndex) => {
       /**
        * Nan values are not supported, so we need to replace them with undefined
        * to avoid issues during the export.
@@ -51,13 +52,9 @@ export const getDocxDocsSchemaMappings = (
         );
       }
 
-      return docxDefaultSchemaMappings.blockMapping.table(
-        block,
-        exporter,
-        nestedLevel,
-        numberedListIndex,
-        children,
-      );
+      return getBlockMappingFunction(
+        docxDefaultSchemaMappings.blockMapping.table,
+      )(block, exporter, nestedLevel, numberedListIndex);
     },
   },
   inlineContentMapping: {

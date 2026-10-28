@@ -43,25 +43,31 @@ export const resolveCodeBlockLanguage = (language: unknown): string => {
   );
 };
 
+type CodeBlockSpec = ReturnType<typeof createCodeBlockSpec>;
+type CodeBlockRender = NonNullable<CodeBlockSpec['implementation']['render']>;
+
 /**
  * Builds the code block spec, wrapping its `render` so an unsupported
  * `language` prop is normalized before BlockNote renders the language picker.
  * This prevents a single legacy code block from crashing the whole editor.
  */
-export const createSafeCodeBlockSpec = (): ReturnType<
-  typeof createCodeBlockSpec
-> => {
+export const createSafeCodeBlockSpec = (): CodeBlockSpec => {
   const spec = createCodeBlockSpec(codeBlockOptions);
-  const baseRender = spec.implementation.render;
+  const baseRender: CodeBlockRender | undefined = spec.implementation.render;
+
+  // Only layout blocks have no render, the code block always has one.
+  if (!baseRender) {
+    return spec;
+  }
 
   return {
     ...spec,
     implementation: {
       ...spec.implementation,
       render(
-        this: ThisParameterType<typeof baseRender>,
-        ...args: Parameters<typeof baseRender>
-      ): ReturnType<typeof baseRender> {
+        this: ThisParameterType<CodeBlockRender>,
+        ...args: Parameters<CodeBlockRender>
+      ): ReturnType<CodeBlockRender> {
         const [block, editor] = args;
         const language = resolveCodeBlockLanguage(block.props.language);
 

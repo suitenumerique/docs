@@ -374,7 +374,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           description: 'Accessible name of the editor area',
         })}
         // To not clipped the floating part in the editor area
-        portalElements={{ default: null }}
+        portalElements={{ default: 'body' }}
       >
         {aiBlockNoteAllowed && AIMenuController && AIMenu && (
           <AIMenuController aiMenu={AIMenu} />

@@ -36,7 +36,3 @@ yarn-error.log*
 *.tsbuildinfo
 
 service-worker.js
-
-# Font embedding
-public/assets/fonts/emoji/*
-!public/assets/fonts/emoji/fallback.png

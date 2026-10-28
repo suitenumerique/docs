@@ -33,11 +33,8 @@ describe('mention search export mappings', () => {
   });
 
   it('exports nothing in PDF', () => {
-    const element = inlineContentMappingMentionSearchPDF(
-      search as never,
-      exporter,
-    ) as unknown as React.ReactElement<{ children?: unknown }>;
-
-    expect(element.props.children).toBeUndefined();
+    expect(
+      inlineContentMappingMentionSearchPDF(search as never, exporter),
+    ).toBe('');
   });
 });

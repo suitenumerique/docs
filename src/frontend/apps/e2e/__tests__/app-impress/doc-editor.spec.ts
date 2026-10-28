@@ -72,22 +72,23 @@ test.describe('Doc Editor', () => {
       toolbar.locator('button[data-test="convertMarkdown"]'),
     ).toBeVisible();
 
-    // Only heading levels 1 to 3 are offered in the block type select
+    // Only heading levels 1 to 3 are offered in the block type select, whose
+    // menu is portaled out of the toolbar
     await toolbar.getByRole('button', { name: 'Paragraph' }).click();
     for (const level of [1, 2, 3]) {
       await expect(
-        toolbar.getByRole('menuitem', {
+        page.getByRole('menuitem', {
           name: `Heading ${level}`,
           exact: true,
         }),
       ).toBeVisible();
       await expect(
-        toolbar.getByRole('menuitem', { name: `Toggle Heading ${level}` }),
+        page.getByRole('menuitem', { name: `Toggle Heading ${level}` }),
       ).toBeVisible();
     }
     for (const level of [4, 5, 6]) {
       await expect(
-        toolbar.getByRole('menuitem', { name: `Heading ${level}` }),
+        page.getByRole('menuitem', { name: `Heading ${level}` }),
       ).toBeHidden();
     }
     await page.keyboard.press('Escape');

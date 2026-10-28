@@ -1,4 +1,3 @@
-import { Image } from '@react-pdf/renderer';
 import { Bookmark, ImageRun, TextRun } from 'docx';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -43,19 +42,11 @@ const mockCanvas = (available: boolean) => {
   );
 };
 
-const findImage = (node: React.ReactNode): React.ReactElement | undefined => {
-  let found: React.ReactElement | undefined;
+// The PDF export registers the bytes of the images on its Typst exporter.
+const makePdfExporter = () => {
+  const registerImageBytes = vi.fn().mockReturnValue('/assets/asset-0');
 
-  React.Children.forEach(node, (child) => {
-    if (!React.isValidElement<{ children?: React.ReactNode }>(child)) {
-      return;
-    }
-
-    found =
-      found ?? (child.type === Image ? child : findImage(child.props.children));
-  });
-
-  return found;
+  return { exporter: { registerImageBytes } as never, registerImageBytes };
 };
 
 describe('user mention export mappings', () => {
@@ -126,43 +117,38 @@ describe('user mention export mappings', () => {
   });
 
   describe('PDF', () => {
-    it('exports the avatar as an image and the name in bold', () => {
+    it('exports the avatar as an artifact and the name in bold', () => {
       mockCanvas(true);
+      const { exporter: pdfExporter, registerImageBytes } = makePdfExporter();
 
-      const element = inlineContentMappingUserMentionPDF(
-        mention,
-        exporter,
-      ) as unknown as React.ReactElement<{
-        style: unknown;
-        children: React.ReactNode;
-      }>;
+      const typst = inlineContentMappingUserMentionPDF(mention, pdfExporter);
 
-      expect(element.props.style).toEqual({ fontWeight: 'bold' });
-      expect(element.props.children).toContain('Dupont Thomas');
-      expect(findImage(element.props.children)?.props).toMatchObject({
-        src: `data:image/png;base64,${AVATAR_BASE64}`,
-      });
+      expect(typst).toBe(
+        '#pdf.artifact(box(baseline: 15%, image("/assets/asset-0", width: 9pt)))#h(0.25em)#strong("Dupont Thomas")',
+      );
+      expect(registerImageBytes).toHaveBeenCalledWith(
+        'user-mention|Dupont Thomas',
+        expect.any(Uint8Array),
+      );
     });
 
     it('exports the name only without canvas', () => {
       mockCanvas(false);
+      const { exporter: pdfExporter, registerImageBytes } = makePdfExporter();
 
-      const element = inlineContentMappingUserMentionPDF(
-        mention,
-        exporter,
-      ) as unknown as React.ReactElement<{ children: React.ReactNode }>;
-
-      expect(element.props.children).toContain('Dupont Thomas');
-      expect(findImage(element.props.children)).toBeUndefined();
+      expect(inlineContentMappingUserMentionPDF(mention, pdfExporter)).toBe(
+        '#strong("Dupont Thomas")',
+      );
+      expect(registerImageBytes).not.toHaveBeenCalled();
     });
 
     it('exports nothing when the user is missing', () => {
-      const element = inlineContentMappingUserMentionPDF(
-        emptyMention,
-        exporter,
-      ) as unknown as React.ReactElement<{ children?: unknown }>;
-
-      expect(element.props.children).toBeUndefined();
+      expect(
+        inlineContentMappingUserMentionPDF(
+          emptyMention,
+          makePdfExporter().exporter,
+        ),
+      ).toBe('');
     });
   });
 });
