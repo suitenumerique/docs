@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a dedicated document abilities endpoint #2885
+- ✨(frontend) scroll smoothly to a block linked from the same doc #2932
 
 ### Changed
 
