@@ -5,6 +5,7 @@ import { css } from 'styled-components';
 import { Box, Text } from '@/components';
 import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
 import {
+  Doc,
   KEY_DOC,
   getEmojiAndTitle,
   useDoc,
@@ -16,15 +17,23 @@ interface LinkSelectedProps {
   docId: string;
   blockId?: string;
   isEditable: boolean;
+  /** Skips fetching the doc when the caller already has it */
+  doc?: Doc;
 }
-export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
-  const { data: doc, isLoading } = useDoc(
+export const LinkSelected = ({
+  docId,
+  blockId,
+  doc: preloadedDoc,
+}: LinkSelectedProps) => {
+  const { data: fetchedDoc, isLoading } = useDoc(
     { id: docId },
     {
       queryKey: [KEY_DOC, { id: docId }],
       refetchOnWindowFocus: (query) => query.state.error?.status !== 403,
+      enabled: !preloadedDoc,
     },
   );
+  const doc = preloadedDoc ?? fetchedDoc;
   const { untitledDocument } = useTrans();
   const href = `/docs/${docId}/${blockId ? `#${blockId}` : ''}`;
   const visualHref = `/${docId}/`;
@@ -95,6 +104,12 @@ export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
           top: 2px;
           margin-right: 0.2rem;
         }
+        /* An emoji is wider than the page icon, keep the titles aligned */
+        & .--docs--interlinking-link-icon {
+          display: inline-block;
+          width: 1.25rem;
+          text-align: center;
+        }
         &:hover {
           background-color: var(
             --c--contextuals--background--semantic--contextual--primary
@@ -108,14 +123,16 @@ export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
         }
       `}
     >
-      {emoji ? (
-        <Text $size="16px">{emoji}</Text>
-      ) : (
-        <SelectedPageIcon
-          width={11.5}
-          color="var(--c--contextuals--content--semantic--brand--tertiary)"
-        />
-      )}
+      <span className="--docs--interlinking-link-icon">
+        {emoji ? (
+          <Text $size="16px">{emoji}</Text>
+        ) : (
+          <SelectedPageIcon
+            width={11.5}
+            color="var(--c--contextuals--content--semantic--brand--tertiary)"
+          />
+        )}
+      </span>
       <Text
         $weight="500"
         spellCheck="false"
