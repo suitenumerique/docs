@@ -17,13 +17,15 @@ export const useEncryptionAccessCopy = (
 
   if (doc?.is_pending_encryption_for_user) {
     return {
-      title: t('Waiting for access'),
+      // Without encryption the next step is the user's own, as for any
+      // encrypted document: only once they enabled it are they waiting.
+      title: needsSetup ? t('Encrypted document') : t('Waiting for access'),
       description: needsSetup
         ? t(
-            'This document was encrypted before you enabled encryption, so its key could not be shared with you. Enable encryption on your account: you will get access the next time the document owner opens it.',
+            'This document is encrypted and you have not enabled encryption yet, so its key could not be given to you. Enable encryption: you will get access the next time the document owner opens it.',
           )
         : t(
-            'This document was encrypted before you enabled encryption, so its key could not be shared with you then. You will get access the next time the document owner opens it.',
+            'This document was shared with you before you enabled encryption, so its key could not be given to you then. You will get access the next time the document owner opens it.',
           ),
     };
   }
