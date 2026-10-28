@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { DocumentEncryptionSettings } from '@/features/docs/doc-collaboration/hook/useDocumentEncryption';
@@ -9,6 +9,7 @@ import { PendingEncryptionSection } from '../components/PendingEncryptionSection
 
 const mocks = vi.hoisted(() => ({
   fetchRegisteredKeys: vi.fn(),
+  acceptPendingMembers: vi.fn(),
 }));
 
 vi.mock('@/features/docs/doc-collaboration/vault', () => ({
@@ -17,7 +18,7 @@ vi.mock('@/features/docs/doc-collaboration/vault', () => ({
 }));
 
 vi.mock('../api/useAcceptEncryptionAccess', () => ({
-  useAcceptPendingMembers: () => vi.fn(),
+  useAcceptPendingMembers: () => mocks.acceptPendingMembers,
 }));
 
 const doc = { id: 'doc-1' } as Doc;
@@ -111,5 +112,35 @@ describe('PendingEncryptionSection', () => {
     );
     expect(screen.getByText('Waiting for access')).toBeInTheDocument();
     expect(screen.queryByText('Action needed')).not.toBeInTheDocument();
+  });
+
+  test('explains a refused Accept when the own key of the caller cannot open the document', async () => {
+    mocks.acceptPendingMembers.mockRejectedValue(
+      Object.assign(
+        new Error('ciphertext cannot be decrypted using that key'),
+        { code: 'WRONG_SECRET_KEY' },
+      ),
+    );
+
+    render(
+      <PendingEncryptionSection
+        doc={doc}
+        accesses={accesses}
+        documentEncryptionSettings={settings}
+        canAccept
+      />,
+      { wrapper: AppWrapper },
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Accept' }));
+
+    expect(
+      await screen.findByText(
+        /Your encryption key can no longer open this document/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('ciphertext cannot be decrypted using that key'),
+    ).not.toBeInTheDocument();
   });
 });

@@ -1735,6 +1735,7 @@
       "Your access request for this document is pending.": "Votre demande d'accès à ce document est en attente.",
       "Your current encryption key cannot open it. Ask the document owner to remove you from its members and add you again.": "Votre clé de chiffrement actuelle ne permet pas de l'ouvrir. Demandez au propriétaire du document de vous retirer de ses membres puis de vous ajouter à nouveau.",
       "Your docs will appear here.": "Vos docs apparaîtront ici.",
+      "Your encryption key can no longer open this document, most likely because you reset your encryption. Another member who has access must accept this person.": "Votre clé de chiffrement ne permet plus d'ouvrir ce document, très probablement parce que vous avez réinitialisé votre chiffrement. Un autre membre qui y a accès doit accepter cette personne.",
       "Your key is correct, but the stored content is damaged or was altered, so it cannot be trusted. Contact the owner of this document or your support.": "Votre clé est la bonne, mais le contenu enregistré est endommagé ou a été modifié : il n'est pas fiable. Contactez le propriétaire de ce document ou votre support.",
       "Your shared docs will appear here.": "Vos docs partagés apparaîtront ici.",
       "Your {{format}} was downloaded succesfully": "Votre {{format}} a été téléchargé avec succès",

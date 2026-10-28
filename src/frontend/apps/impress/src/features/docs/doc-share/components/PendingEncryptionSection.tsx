@@ -113,6 +113,21 @@ export const PendingEncryptionSection = ({
     return null;
   }
 
+  // Accepting re-wraps the document key from the caller's own copy: when their
+  // current key cannot open it (their encryption was reset since), the vault's
+  // code says so, its message is only libsodium's.
+  const acceptErrorMessage = (err: unknown): string => {
+    switch ((err as VaultError | null | undefined)?.code) {
+      case 'KEY_VERSION_UNAVAILABLE':
+      case 'WRONG_SECRET_KEY':
+        return t(
+          'Your encryption key can no longer open this document, most likely because you reset your encryption. Another member who has access must accept this person.',
+        );
+      default:
+        return err instanceof Error ? err.message : String(err);
+    }
+  };
+
   const handleAccept = async (access: Access) => {
     const sub = access.user?.suite_user_id;
     if (!sub || !vaultClient || !documentEncryptionSettings) {
@@ -143,7 +158,7 @@ export const PendingEncryptionSection = ({
     } catch (err) {
       setErrorByAccessId((prev) => ({
         ...prev,
-        [access.id]: err instanceof Error ? err.message : String(err),
+        [access.id]: acceptErrorMessage(err),
       }));
     } finally {
       setInFlight((prev) => {
@@ -208,7 +223,10 @@ export const PendingEncryptionSection = ({
                 $flex={1}
                 $minWidth="0"
               >
-                <UserAvatar fullName={name} />
+                {/* The avatar keeps its size when the text beside it wraps (an error). */}
+                <Box $css="flex-shrink: 0;">
+                  <UserAvatar fullName={name} />
+                </Box>
                 <Box $minWidth="0">
                   <Text $size="sm" $weight="500" $ellipsis>
                     {name}
@@ -250,6 +268,7 @@ export const PendingEncryptionSection = ({
                   variant="bordered"
                   onClick={() => void handleAccept(access)}
                   disabled={isBusy}
+                  style={{ flexShrink: 0 }}
                 >
                   {isBusy ? t('Accepting…') : t('Accept')}
                 </Button>
@@ -263,6 +282,7 @@ export const PendingEncryptionSection = ({
                   $radius="var(--c--globals--spacings--3xs)"
                   $height="24px"
                   $background="var(--c--contextuals--background--surface--tertiary)"
+                  $css="flex-shrink: 0;"
                   title={t('Waiting for them to enable encryption')}
                 >
                   <Icon iconName="schedule" $size="sm" $variation="tertiary" />
