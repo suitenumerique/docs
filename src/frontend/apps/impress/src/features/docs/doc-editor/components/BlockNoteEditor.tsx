@@ -356,7 +356,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   useUploadStatus(editor);
 
-  useScrollToBlockAnchor();
+  useScrollToBlockAnchor(editor);
 
   useOpenCommentAnchor(editor, threadStore, showComments);
 
@@ -466,7 +466,7 @@ export const BlockNoteReader = ({
 
   useHeadings(editor);
 
-  useScrollToBlockAnchor();
+  useScrollToBlockAnchor(editor);
 
   return (
     <Box>
