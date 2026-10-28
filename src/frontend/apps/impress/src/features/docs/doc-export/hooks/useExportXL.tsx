@@ -28,11 +28,15 @@ export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
 
     const exportDocument = editor.document;
     const interlinkTitles = await resolveInterlinkTitles(exportDocument);
+    const imageUnavailableText = t('This image could not be exported.', {
+      description:
+        'Shown in an exported document in place of an image that could not be fetched',
+    });
     let blobExport: Blob | undefined = undefined;
     if (format === 'pdf') {
       const exporter = new DocsPDFExporter(
         editor.schema,
-        getPdfDocsSchemaMappings(interlinkTitles),
+        getPdfDocsSchemaMappings(interlinkTitles, imageUnavailableText),
         {
           resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
         },
@@ -61,7 +65,7 @@ export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
     } else if (format === 'docx') {
       const exporter = new DOCXExporter(
         editor.schema,
-        getDocxDocsSchemaMappings(interlinkTitles),
+        getDocxDocsSchemaMappings(interlinkTitles, imageUnavailableText),
         {
           resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
         },
@@ -74,7 +78,7 @@ export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
     } else if (format === 'odt') {
       const exporter = new ODTExporter(
         editor.schema,
-        getOdtDocsSchemaMappings(interlinkTitles),
+        getOdtDocsSchemaMappings(interlinkTitles, imageUnavailableText),
         {
           resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
         },

@@ -12,7 +12,10 @@ const toTypst = (
   blocks: Record<string, unknown>[],
   titles = new Map<string, string>(),
 ) =>
-  new PDFExporter(blockNoteSchema, getPdfDocsSchemaMappings(titles)).toTypst(
+  new PDFExporter(
+    blockNoteSchema,
+    getPdfDocsSchemaMappings(titles, 'Image unavailable'),
+  ).toTypst(
     blocks.map((block, index) => ({
       id: `block-${index}`,
       props: {},

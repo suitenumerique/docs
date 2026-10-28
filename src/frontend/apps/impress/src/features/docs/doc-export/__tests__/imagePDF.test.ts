@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../utils', () => ({
+vi.mock('../utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../utils')>()),
   convertBlobToPng: vi.fn(),
   convertSvgToPng: vi.fn(),
 }));
 
-import { blockMappingImagePDF } from '../blocks-mapping/imagePDF';
+import { createBlockMappingImagePDF } from '../blocks-mapping/imagePDF';
 import { DocsExporterPDF } from '../types';
 import { convertBlobToPng, convertSvgToPng } from '../utils';
 
@@ -60,6 +61,10 @@ const decode = (bytes: Uint8Array) => String.fromCharCode(...bytes);
 
 const pngBlob = () => new Blob(['fake-png'], { type: 'image/png' });
 
+const blockMappingImagePDF = createBlockMappingImagePDF('Image unavailable');
+const UNAVAILABLE =
+  '#text(fill: luma(110), style: "italic")[#"⚠️ Image unavailable"]';
+
 describe('blockMappingImagePDF', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -77,24 +82,43 @@ describe('blockMappingImagePDF', () => {
     expect(resolveFile).not.toHaveBeenCalled();
   });
 
-  it('renders nothing when the blob is not an image', async () => {
+  it('renders a message when the blob is not an image', async () => {
     const { exporter, registerImageBytes } = makeExporter(
       new Blob(['data'], { type: 'video/mp4' }),
     );
     const result = await blockMappingImagePDF(makeBlock(), exporter, 0);
 
-    expect(result).toBe('');
+    expect(result).toBe(UNAVAILABLE);
     expect(registerImageBytes).not.toHaveBeenCalled();
   });
 
-  it('renders nothing instead of failing the export when the file cannot be resolved', async () => {
+  it('renders a message instead of failing the export when the file cannot be resolved', async () => {
     const result = await blockMappingImagePDF(
       makeBlock(),
       makeExporter(new Error('network error')).exporter,
       0,
     );
 
-    expect(result).toBe('');
+    expect(result).toBe(UNAVAILABLE);
+  });
+
+  it('names the missing image by its caption, else its name, in the message', async () => {
+    const { exporter } = makeExporter(new Error('network error'));
+
+    expect(
+      await blockMappingImagePDF(
+        makeBlock({ caption: 'Sunset', name: 'photo.png' }),
+        exporter,
+        0,
+      ),
+    ).toBe(
+      '#text(fill: luma(110), style: "italic")[#"⚠️ Image unavailable (Sunset)"]',
+    );
+    expect(
+      await blockMappingImagePDF(makeBlock({ name: 'photo.png' }), exporter, 0),
+    ).toBe(
+      '#text(fill: luma(110), style: "italic")[#"⚠️ Image unavailable (photo.png)"]',
+    );
   });
 
   it('registers the canvas-derived PNG bytes and references them in a figure', async () => {
@@ -173,7 +197,7 @@ describe('blockMappingImagePDF', () => {
     expect(result).toContain('width: 300.0pt');
   });
 
-  it('renders nothing when convertBlobToPng returns undefined', async () => {
+  it('renders a message when convertBlobToPng returns undefined', async () => {
     vi.mocked(convertBlobToPng).mockResolvedValue(undefined);
 
     const result = await blockMappingImagePDF(
@@ -182,10 +206,10 @@ describe('blockMappingImagePDF', () => {
       0,
     );
 
-    expect(result).toBe('');
+    expect(result).toBe(UNAVAILABLE);
   });
 
-  it('renders nothing when the conversion throws', async () => {
+  it('renders a message when the conversion throws', async () => {
     vi.mocked(convertSvgToPng).mockRejectedValue(new Error('canvas error'));
 
     const result = await blockMappingImagePDF(
@@ -194,7 +218,43 @@ describe('blockMappingImagePDF', () => {
       0,
     );
 
-    expect(result).toBe('');
+    expect(result).toBe(UNAVAILABLE);
+  });
+
+  it('marks an image without a name nor a caption as decorative', async () => {
+    vi.mocked(convertBlobToPng).mockResolvedValue({
+      png: CANVAS_PNG_URL,
+      width: 300,
+      height: 150,
+    });
+
+    const result = await blockMappingImagePDF(
+      makeBlock({ textAlignment: 'right' }),
+      makeExporter(pngBlob()).exporter,
+      0,
+    );
+
+    expect(result).toBe(
+      '#align(right, pdf.artifact(image("/assets/asset-0", width: 225.0pt)))',
+    );
+  });
+
+  it('prefers the name to the caption as alternative text', async () => {
+    vi.mocked(convertBlobToPng).mockResolvedValue({
+      png: CANVAS_PNG_URL,
+      width: 300,
+      height: 150,
+    });
+
+    const result = await blockMappingImagePDF(
+      makeBlock({ caption: 'Sunset', name: 'photo.png' }),
+      makeExporter(pngBlob()).exporter,
+      0,
+    );
+
+    expect(result).toBe(
+      '#[#show figure: set align(left); #figure(image("/assets/asset-0", width: 225.0pt), caption: [#"Sunset"], alt: "photo.png")]',
+    );
   });
 
   it('uses the caption as caption and alternative text, escaped', async () => {

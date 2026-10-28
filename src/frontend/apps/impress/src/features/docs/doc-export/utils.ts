@@ -33,6 +33,19 @@ export const getBlockMappingFunction = <M>(
 };
 
 /**
+ * Text replacing an image that cannot be exported, followed by its caption,
+ * else its name, so that the reader knows which image is missing.
+ */
+export const getImageUnavailableText = (
+  unavailableText: string,
+  { caption, name }: { caption?: string; name?: string },
+): string => {
+  const label = caption || name;
+
+  return `⚠️ ${unavailableText}${label ? ` (${label})` : ''}`;
+};
+
+/**
  * Recursively collects the distinct doc ids referenced by
  * `interlinkingLinkInline` inline content nodes across a block tree,
  * including nested blocks (lists, callouts) and table cells.

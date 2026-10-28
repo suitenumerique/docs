@@ -43,7 +43,7 @@ describe('DocsPDFExporter', () => {
   it('places the Docs rules once, between the preamble and the content', async () => {
     const typst = await new DocsPDFExporter(
       blockNoteSchema,
-      getPdfDocsSchemaMappings(new Map()),
+      getPdfDocsSchemaMappings(new Map(), 'Image unavailable'),
     ).toTypst([
       paragraph('parent', 'Parent', [paragraph('child', 'Child')]),
     ] as unknown as DocsDocument);

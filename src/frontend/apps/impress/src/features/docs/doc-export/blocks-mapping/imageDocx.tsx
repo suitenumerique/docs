@@ -12,35 +12,63 @@ import {
 } from 'docx';
 
 import { DocsExporterDocx } from '../types';
-import { convertSvgToPng } from '../utils';
+import { convertSvgToPng, getImageUnavailableText } from '../utils';
 
 const MAX_WIDTH = 600;
 
-export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']['image'] =
+/**
+ * An image that cannot be resolved or decoded is replaced by
+ * `unavailableText` instead of failing the whole export.
+ */
+export const createBlockMappingImageDocx =
+  (
+    unavailableText: string,
+  ): DocsExporterDocx['mappings']['blockMapping']['image'] =>
   async (block, exporter) => {
-    const blob = await exporter.resolveFile(block.props.url);
+    if (!block.props.url) {
+      return [];
+    }
+
+    const unavailable = new Paragraph({
+      ...blockPropsToStyles(block.props, exporter.options.colors),
+      children: [
+        new TextRun({
+          text: getImageUnavailableText(unavailableText, block.props),
+          italics: true,
+          color: '6E6E6E',
+        }),
+      ],
+    });
+
+    let blob: Blob;
     let pngConverted: string | undefined;
     let dimensions: { width: number; height: number } | undefined;
     let previewWidth = block.props.previewWidth || undefined;
 
-    if (!blob.type.includes('image')) {
-      return [];
-    }
+    try {
+      blob = await exporter.resolveFile(block.props.url);
 
-    if (blob.type.includes('svg')) {
-      const svgText = await blob.text();
-      const FALLBACK_SIZE = 536;
-      previewWidth = previewWidth || blob.size || FALLBACK_SIZE;
+      if (!blob.type.includes('image')) {
+        return unavailable;
+      }
 
-      const result = await convertSvgToPng(svgText, previewWidth);
-      pngConverted = result.png;
-      dimensions = { width: result.width, height: result.height };
-    } else {
-      dimensions = await getImageDimensions(blob);
+      if (blob.type.includes('svg')) {
+        const svgText = await blob.text();
+        const FALLBACK_SIZE = 536;
+        previewWidth = previewWidth || blob.size || FALLBACK_SIZE;
+
+        const result = await convertSvgToPng(svgText, previewWidth);
+        pngConverted = result.png;
+        dimensions = { width: result.width, height: result.height };
+      } else {
+        dimensions = await getImageDimensions(blob);
+      }
+    } catch {
+      return unavailable;
     }
 
     if (!dimensions) {
-      return [];
+      return unavailable;
     }
 
     const { width, height } = dimensions;

@@ -7,8 +7,8 @@ import { typstDefaultSchemaMappings } from '@blocknote/xl-pdf-exporter';
 
 import {
   blockMappingCalloutPDF,
-  blockMappingImagePDF,
   blockMappingUploadLoaderPDF,
+  createBlockMappingImagePDF,
 } from './blocks-mapping';
 import {
   createInlineContentMappingInterlinkingLinkPDF,
@@ -60,12 +60,13 @@ export const fitColumnWidths = (
 
 export const getPdfDocsSchemaMappings = (
   interlinkTitles: Map<string, string>,
+  imageUnavailableText: string,
 ): DocsExporterPDF['mappings'] => ({
   ...typstDefaultSchemaMappings,
   blockMapping: {
     ...typstDefaultSchemaMappings.blockMapping,
     callout: blockMappingCalloutPDF,
-    image: blockMappingImagePDF,
+    image: createBlockMappingImagePDF(imageUnavailableText),
     // We're using the file block mapping for PDF blocks
     // The types don't match exactly but the implementation is compatible
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

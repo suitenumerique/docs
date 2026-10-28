@@ -7,8 +7,8 @@ import { odtDefaultSchemaMappings } from '@blocknote/xl-odt-exporter';
 
 import {
   blockMappingCalloutODT,
-  blockMappingImageODT,
   blockMappingUploadLoaderODT,
+  createBlockMappingImageODT,
 } from './blocks-mapping';
 import {
   createInlineContentMappingInterlinkingLinkODT,
@@ -23,12 +23,13 @@ const baseInlineMappings =
 
 export const getOdtDocsSchemaMappings = (
   interlinkTitles: Map<string, string>,
+  imageUnavailableText: string,
 ): DocsExporterODT['mappings'] => ({
   ...odtDefaultSchemaMappings,
   blockMapping: {
     ...odtDefaultSchemaMappings.blockMapping,
     callout: blockMappingCalloutODT,
-    image: blockMappingImageODT,
+    image: createBlockMappingImageODT(imageUnavailableText),
     // We're reusing the file block mapping for PDF blocks
     // The types don't match exactly but the implementation is compatible
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

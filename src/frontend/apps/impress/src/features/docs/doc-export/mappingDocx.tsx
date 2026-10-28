@@ -7,9 +7,9 @@ import { docxDefaultSchemaMappings } from '@blocknote/xl-docx-exporter';
 
 import {
   blockMappingCalloutDocx,
-  blockMappingImageDocx,
   blockMappingQuoteDocx,
   blockMappingUploadLoaderDocx,
+  createBlockMappingImageDocx,
 } from './blocks-mapping';
 import {
   createInlineContentMappingInterlinkingLinkDocx,
@@ -21,6 +21,7 @@ import { getBlockMappingFunction } from './utils';
 
 export const getDocxDocsSchemaMappings = (
   interlinkTitles: Map<string, string>,
+  imageUnavailableText: string,
 ): DocsExporterDocx['mappings'] => ({
   ...docxDefaultSchemaMappings,
   blockMapping: {
@@ -35,7 +36,7 @@ export const getDocxDocsSchemaMappings = (
     // Renders the Mermaid source to a PNG in the browser (async mapping).
     diagram: diagramBlockMapping,
     quote: blockMappingQuoteDocx,
-    image: blockMappingImageDocx,
+    image: createBlockMappingImageDocx(imageUnavailableText),
     uploadLoader: blockMappingUploadLoaderDocx,
     table: (block, exporter, nestedLevel, numberedListIndex) => {
       /**

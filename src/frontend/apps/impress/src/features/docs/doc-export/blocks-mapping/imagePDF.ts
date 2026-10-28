@@ -1,7 +1,11 @@
 import { TypstExporter, strLit } from '@blocknote/xl-pdf-exporter';
 
 import { DocsBlockMappingPDF } from '../types';
-import { convertBlobToPng, convertSvgToPng } from '../utils';
+import {
+  convertBlobToPng,
+  convertSvgToPng,
+  getImageUnavailableText,
+} from '../utils';
 
 const PIXELS_PER_POINT = 0.75;
 const MAX_WIDTH = 600;
@@ -20,59 +24,70 @@ function dataUrlToBytes(dataUrl: string): Uint8Array {
  * The image is transcoded to PNG via canvas, so any format the browser can
  * decode is exported, and resized to its preview width (clamped to MAX_WIDTH).
  * Unlike the default BlockNote mapping, an image that cannot be resolved or
- * decoded is skipped instead of failing the whole export.
+ * decoded is replaced by `unavailableText` instead of failing the whole export.
  *
- * PDF/UA requires an alternative text on every figure: the caption is used,
- * then the file name, then the URL.
+ * The alternative text is the file name, as in the editor, else the caption.
  */
-export const blockMappingImagePDF: DocsBlockMappingPDF<'image'> = async (
-  block,
-  exporter,
-) => {
-  const { url, caption, name, textAlignment } = block.props;
-  if (!url) {
-    return '';
-  }
-
-  const previewWidth = block.props.previewWidth
-    ? Math.min(block.props.previewWidth, MAX_WIDTH)
-    : undefined;
-
-  let result: { png: string; width: number } | undefined;
-  try {
-    const blob = await exporter.resolveFile(url);
-    if (!blob.type.includes('image')) {
+export const createBlockMappingImagePDF =
+  (unavailableText: string): DocsBlockMappingPDF<'image'> =>
+  async (block, exporter) => {
+    const { url, caption, name, textAlignment } = block.props;
+    if (!url) {
       return '';
     }
 
-    result = blob.type.includes('svg')
-      ? await convertSvgToPng(await blob.text(), previewWidth)
-      : await convertBlobToPng(blob, previewWidth);
-  } catch {
-    return '';
-  }
+    const unavailable = `#text(fill: luma(110), style: "italic")[#${strLit(
+      getImageUnavailableText(unavailableText, block.props),
+    )}]`;
 
-  if (!result?.png) {
-    return '';
-  }
+    const previewWidth = block.props.previewWidth
+      ? Math.min(block.props.previewWidth, MAX_WIDTH)
+      : undefined;
 
-  // Ensure the final width never exceeds MAX_WIDTH to prevent images
-  // from overflowing the page width in the exported document
-  const finalWidth = Math.min(previewWidth || result.width, MAX_WIDTH);
+    let result: { png: string; width: number } | undefined;
+    try {
+      const blob = await exporter.resolveFile(url);
+      if (!blob.type.includes('image')) {
+        return unavailable;
+      }
 
-  const path = (
-    exporter as unknown as TypstExporter<never, never, never>
-  ).registerImageBytes(`${url}|${finalWidth}`, dataUrlToBytes(result.png));
+      result = blob.type.includes('svg')
+        ? await convertSvgToPng(await blob.text(), previewWidth)
+        : await convertBlobToPng(blob, previewWidth);
+    } catch {
+      return unavailable;
+    }
 
-  const alt = caption || name || url;
-  const captionArg = caption ? `, caption: [#${strLit(caption)}]` : '';
-  // Typst figures ignore an outer `align`, the figure itself must be aligned
-  const align =
-    textAlignment === 'center' || textAlignment === 'right'
-      ? textAlignment
-      : 'left';
+    if (!result?.png) {
+      return unavailable;
+    }
 
-  return `#[#show figure: set align(${align}); #figure(image(${strLit(
-    path,
-  )}, width: ${(finalWidth * PIXELS_PER_POINT).toFixed(1)}pt)${captionArg}, alt: ${strLit(alt)})]`;
-};
+    // Ensure the final width never exceeds MAX_WIDTH to prevent images
+    // from overflowing the page width in the exported document
+    const finalWidth = Math.min(previewWidth || result.width, MAX_WIDTH);
+
+    const path = (
+      exporter as unknown as TypstExporter<never, never, never>
+    ).registerImageBytes(`${url}|${finalWidth}`, dataUrlToBytes(result.png));
+
+    const image = `image(${strLit(path)}, width: ${(
+      finalWidth * PIXELS_PER_POINT
+    ).toFixed(1)}pt)`;
+    // Typst figures ignore an outer `align`, the figure itself must be aligned
+    const align =
+      textAlignment === 'center' || textAlignment === 'right'
+        ? textAlignment
+        : 'left';
+
+    // As in the editor (`alt=""`), an image without a name nor a caption is
+    // decorative: it is marked as an artifact, PDF/UA requiring an
+    // alternative text on every figure.
+    const alt = name || caption;
+    if (!alt) {
+      return `#align(${align}, pdf.artifact(${image}))`;
+    }
+
+    const captionArg = caption ? `, caption: [#${strLit(caption)}]` : '';
+
+    return `#[#show figure: set align(${align}); #figure(${image}${captionArg}, alt: ${strLit(alt)})]`;
+  };

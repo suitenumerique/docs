@@ -18,6 +18,10 @@ and this project adheres to
 - ⬆️(frontend) upgrade BlockNote to 0.56.0
 - ♻️(frontend) export PDFs with the Typst engine
 
+### Fixed
+
+- 🐛(frontend) replace an image that cannot be exported by a message
+
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
