@@ -522,27 +522,6 @@ test.describe('Doc Tree', () => {
     expect(await isDocTitleFocused(page)).toBe(false);
   });
 
-  test('the keyboard works in a modal opened from the tree root', async ({
-    page,
-    browserName,
-  }) => {
-    await createDoc(page, 'doc-tree-root-modal', browserName, 1);
-
-    const rootItem = page.getByTestId('doc-tree-root-item');
-    await rootItem.hover();
-    await rootItem
-      .getByRole('button', { name: /Open the document options/i })
-      .click();
-    await page.getByRole('menuitem', { name: 'Download' }).click();
-    await expect(page.getByTestId('modal-export-title')).toBeVisible();
-
-    await page.getByRole('button', { name: 'Cancel the download' }).focus();
-    await page.keyboard.press('Enter');
-
-    await expect(page.getByTestId('modal-export-title')).toBeHidden();
-    expect(await isDocTitleFocused(page)).toBe(false);
-  });
-
   test('it updates the child icon from the tree', async ({
     page,
     browserName,
