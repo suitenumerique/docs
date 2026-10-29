@@ -15,6 +15,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(backend) name users without an email instead of returning a 500 #2943
+- 🐛(frontend) show an error page when the current user cannot be loaded #2943
 
 ## [v6.1.0] - 2026-11-12
 

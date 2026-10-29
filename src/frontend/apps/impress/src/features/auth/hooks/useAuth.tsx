@@ -8,7 +8,14 @@ import { useAuthQuery } from '../api';
 const regexpUrlsAuth = [/\/docs\/$/g, /\/docs$/g, /^\/$/g];
 
 export const useAuth = () => {
-  const { data: user, isFetched, isLoading, isSuccess } = useAuthQuery();
+  const {
+    data: user,
+    error,
+    isError,
+    isFetched,
+    isLoading,
+    isSuccess,
+  } = useAuthQuery();
   const { pathname } = useRouter();
   const { trackEvent } = useAnalytics();
   const [hasTracked, setHasTracked] = useState(isFetched);
@@ -39,9 +46,13 @@ export const useAuth = () => {
 
   return {
     user,
-    authenticated: !!user && isSuccess,
+    // A failed refetch keeps the cached user: the query is in error, but the
+    // user is still logged in. A logout answers a 401, and getMe returns null.
+    authenticated: !!user,
     pathAllowed,
     hasInitiallyLoaded: hasInitiallyLoaded.current,
     isAuthLoading,
+    // Likewise, only a user that could not be loaded at all is an error.
+    authError: isError && !user ? error : undefined,
   };
 };
