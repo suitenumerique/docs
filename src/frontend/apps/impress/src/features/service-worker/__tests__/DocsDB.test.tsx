@@ -14,6 +14,7 @@ describe('DocsDB', () => {
     { version: '2.105.3', expected: 2105003 },
     { version: '3.0.0', expected: 3000000 },
     { version: '10.20.30', expected: 10020030 },
+    { version: '10.20.31-rc.1', expected: 10020031 },
   ].forEach(({ version, expected }) => {
     it(`correctly computes version for ${version}`, async () => {
       vi.doMock('@/../package.json', () => ({

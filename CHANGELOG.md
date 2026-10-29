@@ -21,6 +21,7 @@ and this project adheres to
 
 - 🐛(frontend) no offline banner when a third-party POST fails #2939
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
+- 🐛(frontend) reload on a version mismatch only when frontend behind #2940
 
 ### Removed
 
