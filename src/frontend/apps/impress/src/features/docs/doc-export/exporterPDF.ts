@@ -4,9 +4,60 @@ import {
   InlineContentSchema,
   StyleSchema,
 } from '@blocknote/core';
-import { PDFExporter, strLit } from '@blocknote/xl-pdf-exporter';
+import {
+  PDFExporter,
+  loadDefaultBodyFonts,
+  strLit,
+} from '@blocknote/xl-pdf-exporter';
 
 import { tokens } from '@/cunningham';
+
+/**
+ * Faces of the first fonts of `loadDefaultBodyFonts`: the body font of the
+ * export, in regular, italic, bold and bold italic.
+ */
+const BODY_FONT_FACES: FontFaceDescriptors[] = [
+  { style: 'normal', weight: '400' },
+  { style: 'italic', weight: '400' },
+  { style: 'normal', weight: '700' },
+  { style: 'italic', weight: '700' },
+];
+
+let bodyFontsInBrowser: Promise<void> | undefined;
+
+/**
+ * Mermaid lays the diagrams out in the browser, measuring their labels with
+ * the body font of the export, which Typst then draws them with. Unknown to
+ * the browser, this font would fall back to the sans-serif font of the OS:
+ * the labels would not fit their boxes, and the export would depend on the
+ * OS. It is registered in the browser with the very bytes Typst embeds.
+ */
+export const registerBodyFontsInBrowser = (fontFamily: string) => {
+  if (typeof FontFace === 'undefined') {
+    return Promise.resolve();
+  }
+
+  bodyFontsInBrowser ??= loadDefaultBodyFonts()
+    .then(async (fonts) => {
+      const faces = BODY_FONT_FACES.map(
+        (descriptors, index) =>
+          new FontFace(
+            fontFamily,
+            fonts[index] as Uint8Array<ArrayBuffer>,
+            descriptors,
+          ),
+      );
+      await Promise.all(faces.map((face) => face.load()));
+      faces.forEach((face) => document.fonts.add(face));
+    })
+    .catch((error: unknown) => {
+      // The diagrams are still exported, with the font of the OS
+      console.warn('Failed to register the PDF fonts in the browser', error);
+      bodyFontsInBrowser = undefined;
+    });
+
+  return bodyFontsInBrowser;
+};
 
 /**
  * Font sizes of the headings in the editor (see `DocsEditorStyle`), in rem,
@@ -55,5 +106,13 @@ export class DocsPDFExporter<
     }
 
     return [getPdfDocsStyleRules(this.options.fontSize), ...markups];
+  }
+
+  public override async toPDF(
+    ...args: Parameters<PDFExporter<B, S, I>['toPDF']>
+  ) {
+    await registerBodyFontsInBrowser(this.fontFamilies[0]);
+
+    return super.toPDF(...args);
   }
 }

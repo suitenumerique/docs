@@ -1,4 +1,3 @@
-import { diagramBlockMapping } from '@blocknote/diagram-block/typst-exporter';
 import {
   inlineMathMapping,
   mathBlockMapping,
@@ -7,6 +6,7 @@ import { typstDefaultSchemaMappings } from '@blocknote/xl-pdf-exporter';
 
 import {
   blockMappingCalloutPDF,
+  blockMappingDiagramPDF,
   blockMappingUploadLoaderPDF,
   createBlockMappingImagePDF,
 } from './blocks-mapping';
@@ -86,7 +86,7 @@ export const getPdfDocsSchemaMappings = (
     // Renders the LaTeX as a native Typst equation.
     mathBlock: mathBlockMapping,
     // Renders the Mermaid source to an embedded vector SVG.
-    diagram: diagramBlockMapping,
+    diagram: blockMappingDiagramPDF,
   },
   inlineContentMapping: {
     ...typstDefaultSchemaMappings.inlineContentMapping,

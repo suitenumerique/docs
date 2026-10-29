@@ -1,6 +1,7 @@
 export * from './calloutDocx';
 export * from './calloutODT';
 export * from './calloutPDF';
+export * from './diagramPDF';
 export * from './imageDocx';
 export * from './imageODT';
 export * from './imagePDF';
