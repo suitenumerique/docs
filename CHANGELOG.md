@@ -9,18 +9,17 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a dedicated document abilities endpoint #2885
+
 ### Changed
 
 - 💄(frontend) restore native task checkboxes and dim completed tasks #2857
-
-### Changed
-
-- ⬆️(frontend) upgrade BlockNote to 0.56.0
-- ♻️(frontend) export PDFs with the Typst engine
+- ⬆️(frontend) upgrade BlockNote to 0.56.0 #2936
+- ♻️(frontend) export PDFs with the Typst engine #2936
 
 ### Fixed
 
-- 🐛(frontend) replace an image that cannot be exported by a message
+- 🐛(frontend) no offline banner when a third-party POST fails #2939
+- 🐛(frontend) replace an image that cannot be exported by a message #2936
 
 ### Removed
 

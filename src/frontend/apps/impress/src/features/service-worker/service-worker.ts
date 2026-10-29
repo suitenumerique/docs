@@ -228,20 +228,6 @@ registerRoute(
 );
 
 /**
- * External urls post cache strategy
- * It is interesting to intercept the request
- * to have a fine grain control about if the user is
- * online or offline
- */
-registerRoute(
-  ({ url }) => !url.href.includes(self.location.origin) && !isApiUrl(url.href),
-  new NetworkOnly({
-    plugins: [new OfflinePlugin()],
-  }),
-  'POST',
-);
-
-/**
  * Cache all other files
  */
 setDefaultHandler(
