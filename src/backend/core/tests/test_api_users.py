@@ -1,6 +1,7 @@
 """
 Test users API endpoints in the impress core app.
 """
+# pylint: disable=too-many-lines
 
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
@@ -601,6 +602,66 @@ def test_api_users_retrieve_me_authenticated_empty_name():
         "full_name": "test_foo",
         "language": user.language,
         "short_name": "test_foo",
+        "is_first_connection": True,
+    }
+
+
+def test_api_users_retrieve_me_authenticated_admin_without_email():
+    """
+    Users created with "createsuperuser" sign in to the admin with their admin email
+    and have no identity email. When they have no name either, the full name and short
+    name should be the admin email without the domain.
+    """
+    user = factories.UserFactory(
+        sub=None,
+        email=None,
+        admin_email="admin_foo@test.com",
+        full_name=None,
+        short_name=None,
+        is_staff=True,
+        is_superuser=True,
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.get("/api/v1.0/users/me/")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": str(user.id),
+        "email": None,
+        "full_name": "admin_foo",
+        "language": user.language,
+        "short_name": "admin_foo",
+        "is_first_connection": True,
+    }
+
+
+def test_api_users_retrieve_me_authenticated_without_any_email():
+    """
+    When a user has no name and no email at all, the full name and short name
+    should fall back to the id of the user.
+    """
+    user = factories.UserFactory(
+        email=None,
+        admin_email=None,
+        full_name=None,
+        short_name=None,
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.get("/api/v1.0/users/me/")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": str(user.id),
+        "email": None,
+        "full_name": str(user.id),
+        "language": user.language,
+        "short_name": str(user.id),
         "is_first_connection": True,
     }
 

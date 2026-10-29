@@ -21,6 +21,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) replace an image that cannot be exported by a message
+- 🐛(backend) name users without an email instead of returning a 500
 
 ### Removed
 
