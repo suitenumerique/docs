@@ -16,7 +16,7 @@ and this project adheres to
 
 ### Fixed
 
-- 🐛(frontend) fix the slides pdf export of docs with interlinks
+- 🐛(frontend) fix the slides pdf export of docs with interlinks #2928
 
 ## [v6.0.4] - 2026-10-26
 
