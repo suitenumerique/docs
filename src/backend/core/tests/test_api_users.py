@@ -605,6 +605,44 @@ def test_api_users_retrieve_me_authenticated_empty_name():
     }
 
 
+@pytest.mark.parametrize(
+    "admin_email,is_staff",
+    [
+        ("admin_foo@test.com", True),
+        (None, False),
+    ],
+)
+def test_api_users_retrieve_me_authenticated_without_email(admin_email, is_staff):
+    """
+    Users created with "createsuperuser" sign in to the admin with their admin email
+    and have no identity email. When a user has no name and no identity email, the
+    full name and short name should be the id of the user, never the admin email.
+    """
+    user = factories.UserFactory(
+        email=None,
+        admin_email=admin_email,
+        full_name=None,
+        short_name=None,
+        is_staff=is_staff,
+        is_superuser=is_staff,
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.get("/api/v1.0/users/me/")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": str(user.id),
+        "email": None,
+        "full_name": str(user.id),
+        "language": user.language,
+        "short_name": str(user.id),
+        "is_first_connection": True,
+    }
+
+
 def test_api_users_retrieve_me_onboarding():
     """
     On first connection of a new user, the "is_first_connection" flag should be True.

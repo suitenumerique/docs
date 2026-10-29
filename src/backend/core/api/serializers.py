@@ -51,21 +51,22 @@ class UserSerializer(serializers.ModelSerializer):
             "is_first_connection",
         ]
 
+    @staticmethod
+    def _get_name_fallback(instance):
+        """
+        Build a name from the email or the id of the user. The admin email is
+        left out: it is a login, and other users see this name.
+        """
+        email = instance.email or str(instance.id)
+        return slugify(email.split("@")[0])
+
     def get_full_name(self, instance):
         """Return the full name of the user."""
-        if not instance.full_name:
-            email = instance.email.split("@")[0]
-            return slugify(email)
-
-        return instance.full_name
+        return instance.full_name or self._get_name_fallback(instance)
 
     def get_short_name(self, instance):
         """Return the short name of the user."""
-        if not instance.short_name:
-            email = instance.email.split("@")[0]
-            return slugify(email)
-
-        return instance.short_name
+        return instance.short_name or self._get_name_fallback(instance)
 
 
 class UserLightSerializer(UserSerializer):
