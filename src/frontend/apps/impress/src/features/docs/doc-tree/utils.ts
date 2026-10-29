@@ -109,12 +109,12 @@ export const addToNumchildInTree = (
     return;
   }
 
+  const numchild = Math.max(0, node.numchild + delta);
+  node.numchild = numchild;
   syncDocInTree(
     treeContext as TreeContextType<Doc>,
     docId,
-    {
-      numchild: Math.max(0, node.numchild + delta),
-    },
+    { numchild },
     options,
   );
 };
