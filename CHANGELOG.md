@@ -25,6 +25,10 @@ and this project adheres to
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
 
+### Fixed
+
+- 📝(documentation) document the API throttle rate env vars #2864
+
 ## [v6.0.4] - 2026-10-26
 
 ### Changed
