@@ -50,6 +50,10 @@ and this project adheres to
 - 🐛(frontend) add the copy of a sub doc to the tree only if it lands 
   there #2979
 
+### Fixed
+
+- 🐛(backend) name users without an email instead of returning a 500 #2943
+
 ## [v6.1.0] - 2026-11-12
 
 ### Added
