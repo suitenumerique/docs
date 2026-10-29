@@ -1,6 +1,7 @@
 import { DBSchema, IDBPDatabase, deleteDB, openDB } from 'idb';
 
 import { Doc, DocsResponse } from '@/docs/doc-management';
+import { parseVersion } from '@/utils/version';
 
 import { RequestData, RequestSerializer } from './RequestSerializer';
 
@@ -50,7 +51,8 @@ type TableName = 'doc-list' | 'doc-item' | 'doc-tree' | 'doc-mutation';
  * @returns number
  */
 export const getCurrentVersion = () => {
-  const [major, minor, patch] = pkg.version.split('.').map(Number);
+  // IndexedDB refuses a version of 0, hence 0.0.1 if it cannot be parsed
+  const [major, minor, patch] = parseVersion(pkg.version) ?? [0, 0, 1];
   return major * 1000000 + minor * 1000 + patch;
 };
 
