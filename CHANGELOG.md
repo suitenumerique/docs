@@ -12,6 +12,10 @@ and this project adheres to
 - ⚡️(backend) probe the celery worker with heartbeat files, 
   not inspect ping #2956
 
+### Fixed
+
+- 🐛(backend) name users without an email instead of returning a 500 #2943
+
 ## [v6.1.0] - 2026-11-12
 
 ### Added
