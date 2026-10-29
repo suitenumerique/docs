@@ -15,6 +15,7 @@ and this project adheres to
 ### Fixed
 
 - ✅(frontend) fix act warnings in the tests and fail on them #2983
+- 🐛(frontend) exit fullscreen before printing presenter slides #2897
 
 ## [v6.1.0] - 2026-11-12
 
