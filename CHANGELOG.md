@@ -22,6 +22,7 @@ and this project adheres to
 
 - 🐛(frontend) replace an image that cannot be exported by a message
 - 🐛(backend) name users without an email instead of returning a 500 #2943
+- 🐛(frontend) show an error page when the current user cannot be loaded #2943
 
 ### Removed
 
