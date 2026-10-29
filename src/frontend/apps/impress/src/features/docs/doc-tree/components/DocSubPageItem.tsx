@@ -134,6 +134,7 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
    */
   const {
     areActionsVisible,
+    areActionsTransparent,
     onMenuOpenChange,
     handleActionsKeyDown,
     itemProps,
@@ -297,6 +298,7 @@ const DocSubPageItemContent = (props: TreeViewNodeProps<Doc>) => {
         {areActionsVisible && (
           <DocTreeItemActions
             doc={doc}
+            isTransparent={areActionsTransparent}
             onOpenChange={onMenuOpenChange}
             onCreateSuccess={afterCreate}
           />

@@ -52,6 +52,7 @@ export const DocTreeRoot = ({
 
   const {
     areActionsVisible,
+    areActionsTransparent,
     isMenuOpen,
     onMenuOpenChange,
     handleActionsKeyDown,
@@ -192,6 +193,7 @@ export const DocTreeRoot = ({
           {areActionsVisible && (
             <DocTreeItemActions
               doc={root}
+              isTransparent={areActionsTransparent}
               onOpenChange={onMenuOpenChange}
               onCreateSuccess={(createdDoc) => {
                 const newDoc = {

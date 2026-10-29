@@ -22,12 +22,15 @@ const TOOLBOX_BUTTON_PROPS: ButtonProps = {
 
 type DocTreeItemActionsProps = {
   doc: Doc;
+  /** Kept rendered, and focusable, but not shown. */
+  isTransparent?: boolean;
   onCreateSuccess?: (newDoc: Doc) => void;
   onOpenChange?: (isOpen: boolean) => void;
 };
 
 export const DocTreeItemActions = ({
   doc,
+  isTransparent = false,
   onCreateSuccess,
   onOpenChange,
 }: DocTreeItemActionsProps) => {
@@ -56,6 +59,7 @@ export const DocTreeItemActions = ({
       })}
       tabIndex={-1}
       $css={css`
+        ${isTransparent && 'opacity: 0;'}
         & button {
           height: 24px;
           width: 24px;
