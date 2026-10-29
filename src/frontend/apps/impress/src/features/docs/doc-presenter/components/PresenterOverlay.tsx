@@ -62,6 +62,8 @@ export const PresenterOverlay = ({
   onIndexChange,
 }: PresenterOverlayProps) => {
   const { t } = useTranslation();
+  const { isFullscreen, enter, exit, exitIfOwned, toggle } =
+    useBrowserFullscreen();
   const editor = useEditorStore((state) => state.editor);
   const copyPresenterLink = useCopyPresenterLink(doc.id);
 
@@ -148,13 +150,12 @@ export const PresenterOverlay = ({
 
     setIsExportingPdf(true);
     try {
+      await exit();
       await printPresenterSlides(slides);
     } finally {
       setIsExportingPdf(false);
     }
-  }, [isExportingPdf, slides]);
-
-  const { isFullscreen, enter, exitIfOwned, toggle } = useBrowserFullscreen();
+  }, [exit, isExportingPdf, slides]);
 
   useEffect(() => {
     void enter();
