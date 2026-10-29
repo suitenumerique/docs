@@ -23,26 +23,33 @@ export const Auth = ({ children }: PropsWithChildren) => {
     authenticated,
     hasInitiallyLoaded,
     user,
+    authError,
   } = useAuth();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const { data: config } = useConfig();
   const shouldTrySilentLogin = useMemo(
     () =>
       !authenticated &&
+      !authError &&
       !hasTrySilent() &&
       !isAuthLoading &&
       !isRedirecting &&
       config?.FRONTEND_SILENT_LOGIN_ENABLED,
     [
       authenticated,
+      authError,
       isAuthLoading,
       isRedirecting,
       config?.FRONTEND_SILENT_LOGIN_ENABLED,
     ],
   );
   const shouldTryLogin =
-    !authenticated && !isAuthLoading && !isRedirecting && !pathAllowed;
-  const { replace, pathname } = useRouter();
+    !authenticated &&
+    !authError &&
+    !isAuthLoading &&
+    !isRedirecting &&
+    !pathAllowed;
+  const { replace, pathname, asPath } = useRouter();
 
   /**
    * If the user is authenticated and initially wanted to access a specific page, redirect him to that page now.
@@ -100,6 +107,24 @@ export const Auth = ({ children }: PropsWithChildren) => {
     shouldTryLogin,
     shouldTrySilentLogin,
   ]);
+
+  /**
+   * If the user could not be loaded, show an error page instead of
+   * sending them to the login page, which would bring them back here
+   */
+  useEffect(() => {
+    if (!authError || pathAllowed || isRedirecting) {
+      return;
+    }
+
+    setIsRedirecting(true);
+    // No status: the request itself failed (offline, network error)
+    const errorUrl =
+      authError.status === 502 || !authError.status
+        ? '/offline'
+        : `/500?from=${encodeURIComponent(asPath)}`;
+    void replace(errorUrl).finally(() => setIsRedirecting(false));
+  }, [authError, pathAllowed, isRedirecting, asPath, replace]);
 
   const shouldShowLoader =
     !hasInitiallyLoaded ||

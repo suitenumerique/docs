@@ -49,10 +49,8 @@ and this project adheres to
 - 🔒️(backend) duplicate a sub doc in its parent only with rights on it #2979
 - 🐛(frontend) add the copy of a sub doc to the tree only if it lands 
   there #2979
-
-### Fixed
-
 - 🐛(backend) name users without an email instead of returning a 500 #2943
+- 🐛(frontend) show an error page when the current user cannot be loaded #2943
 
 ## [v6.1.0] - 2026-11-12
 
