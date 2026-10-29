@@ -22,6 +22,10 @@ and this project adheres to
 
 - 🐛(frontend) replace an image that cannot be exported by a message
 
+### Changed
+
+- ✨(frontend) omit title slide from presentation pdf export #2896
+
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909

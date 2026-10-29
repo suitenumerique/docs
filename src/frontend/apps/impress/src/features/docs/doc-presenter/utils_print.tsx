@@ -119,7 +119,8 @@ export const printPresenterSlides = async (slides: PresenterSlideData[]) => {
     return;
   }
 
-  const { cleanup, container } = mountPresenterPrintSlides(slides);
+  const printableSlides = slides.filter((slide) => slide.kind !== 'title');
+  const { cleanup, container } = mountPresenterPrintSlides(printableSlides);
   const scopedCleanups: Array<() => void> = [];
   let cleaned = false;
   let fallbackTimer: number | undefined;
