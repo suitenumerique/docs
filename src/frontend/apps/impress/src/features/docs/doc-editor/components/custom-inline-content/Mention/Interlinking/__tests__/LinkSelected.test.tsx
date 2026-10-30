@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { useRouter } from 'next/compat/router';
 import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { AppWrapper } from '@/tests/utils';
 
 const DOC_ID = 'a1b2c3d4-e5f6-4789-a123-1234567890ab';
@@ -10,7 +11,7 @@ let mockDocQuery: { data?: { title?: string }; isLoading: boolean } = {
   data: undefined,
   isLoading: true,
 };
-let mockCurrentDoc: { deleted_at?: string | null } | undefined;
+let mockCurrentDoc: { id?: string; deleted_at?: string | null } | undefined;
 
 vi.mock('next/compat/router', () => ({
   useRouter: vi.fn(),
@@ -191,5 +192,89 @@ describe('LinkSelected', () => {
       }),
     );
     expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  describe('link to a block of the current doc', () => {
+    const renderWithBlock = (block?: { content: unknown }) => {
+      mockCurrentDoc = { id: DOC_ID };
+      mockDocQuery = { data: { title: 'My document' }, isLoading: false };
+      const editor = {
+        getBlock: () => block,
+        onChange: () => () => {},
+      } as unknown as DocsBlockNoteEditor;
+
+      render(
+        <LinkSelected
+          docId={DOC_ID}
+          blockId="block-1"
+          isEditable={true}
+          editor={editor}
+        />,
+        { wrapper: AppWrapper },
+      );
+    };
+
+    it('shows the text of the block', () => {
+      renderWithBlock({
+        content: [{ type: 'text', text: 'Hello block', styles: {} }],
+      });
+
+      expect(screen.getByText('Hello block')).toBeInTheDocument();
+      expect(screen.getByText('Hello block')).not.toHaveStyle(
+        'font-style: italic',
+      );
+    });
+
+    it('tells when the block was removed or is not found', () => {
+      renderWithBlock(undefined);
+
+      expect(screen.getByText('Removed or not found')).toBeInTheDocument();
+      expect(screen.getByText('Removed or not found')).toHaveStyle(
+        'font-style: italic',
+      );
+      expect(screen.queryByText('My document')).not.toBeInTheDocument();
+    });
+
+    it('names an empty block, not the doc', () => {
+      renderWithBlock({ content: [] });
+
+      expect(screen.getByText('Empty block')).toBeInTheDocument();
+      expect(screen.getByText('Empty block')).toHaveStyle('font-style: italic');
+      expect(screen.queryByText('My document')).not.toBeInTheDocument();
+    });
+
+    it('shows the text of the new block when the link target changes', () => {
+      mockCurrentDoc = { id: DOC_ID };
+      mockDocQuery = { data: { title: 'My document' }, isLoading: false };
+      const blocks: Record<string, { content: unknown }> = {
+        'block-1': { content: [{ type: 'text', text: 'First', styles: {} }] },
+        'block-2': { content: [{ type: 'text', text: 'Second', styles: {} }] },
+      };
+      const editor = {
+        getBlock: (id: string) => blocks[id],
+        onChange: () => () => {},
+      } as unknown as DocsBlockNoteEditor;
+      const link = (blockId: string) => (
+        <LinkSelected
+          docId={DOC_ID}
+          blockId={blockId}
+          isEditable={true}
+          editor={editor}
+        />
+      );
+
+      const { rerender } = render(link('block-1'), { wrapper: AppWrapper });
+      expect(screen.getByText('First')).toBeInTheDocument();
+
+      rerender(link('block-2'));
+      expect(screen.getByText('Second')).toBeInTheDocument();
+      expect(screen.queryByText('First')).not.toBeInTheDocument();
+    });
+
+    it('falls back to the title of the doc for a block without inline content', () => {
+      renderWithBlock({ content: undefined });
+
+      expect(screen.getByText('My document')).toBeInTheDocument();
+    });
   });
 });

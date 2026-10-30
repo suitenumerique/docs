@@ -71,6 +71,7 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
         blockId={props.inlineContent.props.blockId}
         disabled={props.inlineContent.props.disabled}
         isEditable={props.editor.isEditable}
+        editor={props.editor as unknown as DocsBlockNoteEditor}
         onDisable={() => {
           props.updateInlineContent({
             type: 'interlinkingLinkInline',
@@ -89,6 +90,7 @@ interface InterlinkingLinkProps {
   blockId?: string;
   disabled?: boolean;
   isEditable: boolean;
+  editor?: DocsBlockNoteEditor;
   onDisable: () => void;
 }
 
@@ -104,6 +106,7 @@ export const InterlinkingLink = ({
   blockId,
   disabled,
   isEditable,
+  editor,
   onDisable,
 }: InterlinkingLinkProps) => {
   if (disabled || !docId) {
@@ -118,7 +121,12 @@ export const InterlinkingLink = ({
   }
 
   return (
-    <LinkSelected docId={docId} blockId={blockId} isEditable={isEditable} />
+    <LinkSelected
+      docId={docId}
+      blockId={blockId}
+      isEditable={isEditable}
+      editor={editor}
+    />
   );
 };
 

@@ -13,6 +13,7 @@ and this project adheres to
 - ✨(frontend) add a /children block listing the sub-docs #2799
 - ✨(frontend) mention users in the comments #2326
 - 🤖(agents) add AI skills #2746
+- ✨(frontend) better interlink anchor on same document #2932
 
 ### Changed
 
