@@ -12,6 +12,7 @@ import { DocTreeRoot } from '../components/DocTreeRoot';
 
 const mocks = vi.hoisted(() => ({
   focusMainContentStart: vi.fn(),
+  onPortalButtonClick: vi.fn(),
 }));
 
 vi.mock('next/router', () => ({
@@ -29,7 +30,11 @@ vi.mock('../components/DocTreeItemActions', async () => {
   return {
     DocTreeItemActions: () =>
       createPortal(
-        createElement('button', { type: 'button' }, 'Cancel the download'),
+        createElement(
+          'button',
+          { type: 'button', onClick: mocks.onPortalButtonClick },
+          'Cancel the download',
+        ),
         document.body,
       ),
   };
@@ -44,7 +49,7 @@ const treeContext = {
 } as unknown as TreeContextType<Doc | null>;
 
 describe('DocTreeRoot', () => {
-  it('ignores Enter bubbled from a portal outside the item', async () => {
+  it('ignores Enter and Space bubbled from a portal outside the item', async () => {
     const user = userEvent.setup();
     // Actions stay mounted without a hover, so the portaled button is there.
     useResponsiveStore.setState({ isMobile: true });
@@ -61,7 +66,13 @@ describe('DocTreeRoot', () => {
     await user.click(
       screen.getByRole('button', { name: 'Cancel the download' }),
     );
+    mocks.onPortalButtonClick.mockClear();
+
     await user.keyboard('{Enter}');
+    expect(mocks.onPortalButtonClick).toHaveBeenCalledTimes(1);
+
+    await user.keyboard(' ');
+    expect(mocks.onPortalButtonClick).toHaveBeenCalledTimes(2);
 
     expect(mocks.focusMainContentStart).not.toHaveBeenCalled();
   });
