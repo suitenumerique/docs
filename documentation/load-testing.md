@@ -22,8 +22,8 @@ that decide how it scales, and that the scenarios below target:
 
 - Every websocket connection, reconnection and http-fallback poll makes the
   collaboration server ask the backend two or three questions (`users/me/`,
-  `documents/{id}/`, `documents/{id}/accesses/me/`). A reconnection storm is
-  therefore a backend storm.
+  `documents/{id}/abilities/`, `documents/{id}/accesses/me/`). A reconnection
+  storm is therefore a backend storm.
 - The collaboration server's replicas share nothing: updates travel through
   Valkey streams, and a worker compacts them into PostgreSQL. Its throughput is
   `YHUB_TASK_CONCURRENCY` times the number of workers.

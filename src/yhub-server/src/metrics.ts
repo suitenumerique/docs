@@ -150,7 +150,7 @@ export const backendRouteLabel = (path: string): string => {
   if (path.endsWith('/users/me/')) return 'users_me';
   if (path.endsWith('/accesses/me/')) return 'accesses_me';
   if (path.endsWith('/content-updated/')) return 'content_updated';
-  if (/\/documents\/[^/]+\/$/.test(path)) return 'document';
+  if (path.endsWith('/abilities/')) return 'abilities';
   return 'other';
 };
 

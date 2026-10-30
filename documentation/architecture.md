@@ -233,12 +233,12 @@ ingress and any number of replicas can serve the same document.
 
 yhub decides nothing about access. On every websocket upgrade it asks the
 backend twice — `GET /api/v1.0/users/me/` for the identity behind the cookie,
-then `GET /api/v1.0/documents/{id}/` for what that identity may do with this
-document — and a backend that does not answer produces a retryable 503 rather
-than a permission decision. When the persisted content changes, it calls
-`POST /api/v1.0/documents/{id}/content-updated/` back, so that lists ordered by
-`updated_at` follow the edits. That call is best effort: one the backend refuses
-or never receives is logged and dropped.
+then `GET /api/v1.0/documents/{id}/abilities/` for what that identity may do
+with this document — and a backend that does not answer produces a retryable
+503 rather than a permission decision. When the persisted content changes, it
+calls `POST /api/v1.0/documents/{id}/content-updated/` back, so that lists
+ordered by `updated_at` follow the edits. That call is best effort: one the
+backend refuses or never receives is logged and dropped.
 
 Documents created before the migration still have their content in the S3 media
 bucket. The first access to a room yhub does not know seeds it from there;
@@ -269,7 +269,7 @@ sequenceDiagram
   N->>Y: upgrade, forwards cookie and origin
   Y->>D: GET /api/v1.0/users/me/
   D-->>Y: user id (or 401, then anonymous)
-  Y->>D: GET /api/v1.0/documents/:id/
+  Y->>D: GET /api/v1.0/documents/:id/abilities/
   D-->>Y: abilities, so read-only or read-write
   Note over Y: unknown room, seed it once<br/>from the legacy S3 content
   Y->>P: read the persisted state

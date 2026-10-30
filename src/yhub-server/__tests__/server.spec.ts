@@ -347,7 +347,7 @@ describe('the authorize authz-cache wiring', () => {
     ).resolves.toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][0]).toBe(
-      `http://app-dev:8000/api/v1.0/documents/${docid}/`,
+      `http://app-dev:8000/api/v1.0/documents/${docid}/abilities/`,
     );
 
     // the second connection costs no backend call: the refusal was cached

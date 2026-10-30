@@ -164,8 +164,8 @@ export const MAX_CREATE_BYTES = 10 * 1024 * 1024;
 
 export const BACKEND_NOTIFY_TIMEOUT_MS = 5000;
 // The calls `backendFetch` makes on the connection path (`users/me`,
-// `documents/{id}`, `accesses/me`) get the same bound by default: a backend
-// that hangs must read as "unavailable" (a retryable 503), never as a
+// `documents/{id}/abilities`, `accesses/me`) get the same bound by default: a
+// backend that hangs must read as "unavailable" (a retryable 503), never as a
 // websocket upgrade stuck waiting on it. Configurable because the right value
 // is relative to the backend's own latency under load: below its p99 every
 // new connection fails while it is merely slow, far above it the upgrades
