@@ -1,9 +1,11 @@
+import Router from 'next/router';
 import { useEffect } from 'react';
 
 import { getMainContentElement } from '@/layouts/utils';
 
 const SCROLL_MARGIN_TOP = 50;
 const OBSERVER_TIMEOUT = 5000;
+const HIGHLIGHT_DURATION = 1500;
 
 /**
  * Hook that scrolls to a block element based on the URL hash.
@@ -21,7 +23,7 @@ export const useScrollToBlockAnchor = () => {
 
     const existingBlockEl = document.getElementById(blockId);
     if (existingBlockEl) {
-      scrollBlockIntoView(existingBlockEl);
+      scrollToBlock(existingBlockEl);
       return;
     }
 
@@ -38,7 +40,7 @@ export const useScrollToBlockAnchor = () => {
       if (blockEl) {
         clearTimeout(timeoutId);
         observer.disconnect();
-        scrollBlockIntoView(blockEl);
+        scrollToBlock(blockEl);
       }
     });
 
@@ -54,6 +56,62 @@ export const useScrollToBlockAnchor = () => {
       observer.disconnect();
     };
   }, []);
+
+  /**
+   * A link to a block of the current doc, and the back / forward buttons
+   * between such links, only change the hash: the page is not reloaded.
+   * Without hash (e.g. back to the doc URL), the page goes back to the top.
+   */
+  useEffect(() => {
+    const onHashChangeStart = () => {
+      getMainContentElement()?.style.setProperty('scroll-behavior', 'smooth');
+    };
+
+    const onHashChangeComplete = (url: string) => {
+      const container = getMainContentElement();
+      const blockId = new URL(url, window.location.origin).hash.slice(1);
+
+      if (blockId) {
+        const blockEl = document.getElementById(blockId);
+        if (blockEl) {
+          highlightBlock(blockEl);
+        }
+      } else {
+        container?.scrollTo({ top: 0 });
+      }
+
+      // Next.js scrolls to the block in a timeout, once the page re-rendered
+      setTimeout(() => container?.style.removeProperty('scroll-behavior'), 0);
+    };
+
+    Router.events.on('hashChangeStart', onHashChangeStart);
+    Router.events.on('hashChangeComplete', onHashChangeComplete);
+
+    return () => {
+      Router.events.off('hashChangeStart', onHashChangeStart);
+      Router.events.off('hashChangeComplete', onHashChangeComplete);
+      // Unmounted during a hash change, its completion is not listened to
+      getMainContentElement()?.style.removeProperty('scroll-behavior');
+    };
+  }, []);
+};
+
+const scrollToBlock = (blockEl: HTMLElement) => {
+  scrollBlockIntoView(blockEl);
+  highlightBlock(blockEl);
+};
+
+const highlightBlock = (blockEl: HTMLElement) => {
+  // Briefly highlight the block so the reader spots it.
+  blockEl.animate(
+    {
+      backgroundColor: [
+        'var(--c--contextuals--background--semantic--info--tertiary)',
+        'transparent',
+      ],
+    },
+    { duration: HIGHLIGHT_DURATION, easing: 'ease-out' },
+  );
 };
 
 // Try to scroll the main content container instead of the block itself

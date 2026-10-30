@@ -123,6 +123,8 @@ export const DocsEditorStyle = createGlobalStyle`
     }
     .bn-block-outer {
       border-radius: var(--c--globals--spacings--3xs);
+      /* Ensure there is space at the top when scrolling to this block */
+      scroll-margin-top: 50px;
     }
     .bn-block > .bn-block-content[data-background-color] {
       padding: var(--c--globals--spacings--3xs) var(--c--globals--spacings--3xs);

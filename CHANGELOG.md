@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a dedicated document abilities endpoint #2885
+- ✨(frontend) better interlink anchor on same document #2932
 
 ### Changed
 
