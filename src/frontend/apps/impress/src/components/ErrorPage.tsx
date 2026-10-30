@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import { useRouter } from 'next/router';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -64,7 +63,6 @@ export const ErrorPage = ({
   refreshTarget,
 }: ErrorPageProps) => {
   const { t } = useTranslation();
-  const router = useRouter();
   const pageTitle = `${title} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`;
 
   const handleRefresh = () => {
@@ -73,7 +71,7 @@ export const ErrorPage = ({
       window.location.reload();
       return;
     }
-    void router.replace(safeTarget);
+    window.location.assign(safeTarget);
   };
 
   return (
