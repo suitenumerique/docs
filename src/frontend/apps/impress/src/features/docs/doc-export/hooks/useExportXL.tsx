@@ -20,12 +20,19 @@ import { getPdfDocsSchemaMappings } from '../mappingPDF';
 import { resolveInterlinkTitles } from '../utils';
 import { expandDocChildrenBlocks } from '../utils_doc_children';
 
+/**
+ * The formats built by this hook, the others are built by the export modal
+ */
+const XL_EXPORT_FORMATS = ['pdf', 'docx', 'odt'];
+
 export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const docToBlob = async (format: string, documentTitle: string) => {
-    if (!editor) {
+    // The export modal asks every format first: return before fetching the
+    // sub-docs and the titles of the interlinks for a format built elsewhere.
+    if (!editor || !XL_EXPORT_FORMATS.includes(format)) {
       return;
     }
 
@@ -34,7 +41,10 @@ export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
       doc.id,
       queryClient,
     );
-    const interlinkTitles = await resolveInterlinkTitles(exportDocument);
+    const interlinkTitles = await resolveInterlinkTitles(
+      exportDocument,
+      queryClient,
+    );
     const imageUnavailableText = t('This image could not be exported.', {
       description:
         'Shown in an exported document in place of an image that could not be fetched',
