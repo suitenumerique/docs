@@ -52,7 +52,11 @@ const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
   const { query, push } = useRouter();
   const from = Array.isArray(query.from) ? query.from[0] : query.from;
-  const pageTitle = `${t('Error 502')} - ${t('Docs')}`;
+  const pageTitle = `${t('Offline', {
+    description: 'Page title when there is no internet connection',
+  })} - ${t('Docs', {
+    description: 'Product name, shown in page titles and the logo',
+  })}`;
 
   const handleRefresh = () => {
     const refreshTarget = getSafeRefreshUrl(from);
@@ -86,7 +90,7 @@ const Page: NextPageWithLayout = () => {
             $theme="neutral"
             $variation="primary"
           >
-            {t('Error 502')}
+            {t('Offline ?!', { description: 'Heading of the offline page' })}
           </Text>
           <Text
             as="p"
@@ -97,9 +101,9 @@ const Page: NextPageWithLayout = () => {
             $margin="0"
             $size="xs"
           >
-            {t(
-              'The server encountered a temporary error and could not complete your request',
-            )}
+            {t("Can't load this page, please check your internet connection.", {
+              description: 'Message of the offline page',
+            })}
           </Text>
         </Box>
         <Box as="button" type="button" $css={actionCss} onClick={handleRefresh}>

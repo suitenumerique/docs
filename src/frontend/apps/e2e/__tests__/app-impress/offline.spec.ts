@@ -7,18 +7,18 @@ test.describe('Offline', () => {
     await expect(
       page.getByRole('heading', {
         level: 1,
-        name: 'Error 502',
+        name: 'Offline ?!',
       }),
     ).toBeVisible();
     await expect(
       page.getByText(
-        'The server encountered a temporary error and could not complete your request',
+        "Can't load this page, please check your internet connection.",
       ),
     ).toBeVisible();
     await expect(page.getByTestId('header-logo-link')).toBeVisible();
     await expect(
       page.getByRole('button', { name: 'Refresh page' }),
     ).toBeVisible();
-    await expect(page).toHaveTitle(/Error 502 - Docs/);
+    await expect(page).toHaveTitle(/Offline - Docs/);
   });
 });
