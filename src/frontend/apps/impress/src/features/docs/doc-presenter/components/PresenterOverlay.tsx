@@ -1,4 +1,6 @@
 import { announce, clearAnnouncer } from '@react-aria/live-announcer';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FocusScope } from 'react-aria';
 import { createPortal } from 'react-dom';
@@ -64,6 +66,8 @@ export const PresenterOverlay = ({
   const { t } = useTranslation();
   const editor = useEditorStore((state) => state.editor);
   const copyPresenterLink = useCopyPresenterLink(doc.id);
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
   // Track the floating bar's actions popover state so keyboard shortcuts
   // can avoid closing the presenter while the popover is open.
@@ -148,11 +152,11 @@ export const PresenterOverlay = ({
 
     setIsExportingPdf(true);
     try {
-      await printPresenterSlides(slides);
+      await printPresenterSlides(slides, { queryClient, router });
     } finally {
       setIsExportingPdf(false);
     }
-  }, [isExportingPdf, slides]);
+  }, [isExportingPdf, queryClient, router, slides]);
 
   const { isFullscreen, enter, exitIfOwned, toggle } = useBrowserFullscreen();
 
