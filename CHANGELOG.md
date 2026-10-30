@@ -190,9 +190,6 @@ and this project adheres to
   `COLLABORATION_VERSION_GRANULARITY_MS` #2556
 - ✨(frontend) keep a local copy of documents, so they open and stay editable
   offline #2556
-  offline
-- 🐛(frontend) stop the service worker from caching the collaboration server's
-  rest api
 
 ### Changed
 
