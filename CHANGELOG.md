@@ -91,6 +91,7 @@ and this project adheres to
 - 🐛(backend) send the mention email when the cache is unreachable #2803
 - 🐛(backend) give media-auth its own throttle scope
 - 💄(frontend) remove the vertical line next to nested blocks #2825
+- 🐛(frontend) fix Enter and Space in modals opened from the doc tree #2879
 
 ## [v6.0.1] - 2026-10-15
 
