@@ -11,14 +11,16 @@ Repository: https://github.com/suitenumerique/docs
 ## Monorepo Structure
 
 - `src/backend/` - Django REST API (Python 3.14+)
-- `src/frontend/apps/impress/` - Main Next.js 15 application (TypeScript)
+- `src/frontend/apps/impress/` - Main Next.js application (TypeScript, pages router, static export)
 - `src/frontend/apps/e2e/` - Playwright E2E tests
 - `src/frontend/packages/i18n/` - Shared i18n utilities
 - `src/frontend/packages/eslint-plugin-docs/` - Custom ESLint plugin
 - `src/frontend/servers/y-provider/` - Conversion service only (Express, `POST /api/convert/`). It no longer serves any websocket
 - `src/yhub-server/` - Collaboration server: a thin TypeScript wrapper around `@y/hub` (websockets, REST routes, worker). It holds the content of the documents
 - `src/mail/` - Email templates (MJML)
-- `src/helm/` - Kubernetes/Helm deployment
+- `src/helm/` - Helmfile and Helm chart: see `src/helm/README.md` (local Kind cluster, services, guidelines)
+- `src/loadtest/` - Load generators (k6, swarm, canary): see `documentation/load-testing.md`, never against production
+- `documentation/` - Documentation for operators and contributors
 
 ## Development Commands
 
@@ -91,12 +93,11 @@ make mails-install      # Install dependencies
 make mails-build        # Convert MJML to HTML + plaintext
 ```
 
-### Helm/Kubernetes Deployment
+### i18n
 
 ```bash
-make build-k8s-cluster       # Create local Kind cluster
-make start-tilt             # Start Tilt for hot-reload
-# From src/helm/: helmfile -n impress -e dev apply/destroy/diff
+make i18n-generate      # Extract translation strings (backend + frontend)
+make i18n-compile       # Compile translations for all apps
 ```
 
 ### Dev Service URLs
@@ -125,16 +126,16 @@ make start-tilt             # Start Tilt for hot-reload
 - **Removed endpoints**: `documents/{id}/content/` (GET and PATCH), `documents/{id}/versions/`, `documents/{id}/can-edit/`. New ones: `documents/{id}/content-updated/` (called by yhub) and `documents/{id}/accesses/me/`. `documents/{id}/formatted-content/` now reads the content from yhub
 - **Legacy documents**: `python manage.py migrate_documents` hands the S3 content of existing documents to yhub (resumable, idempotent); `SOFT_MIGRATION=true` on yhub seeds a document on first open. See `UPGRADE.md`
 - **Search**: Full-text indexing via `manage.py index`
-- **Load-test tooling**: `src/backend/loadtest/` is a separate Django application that mints sessions for existing users (`create_load_test_sessions`, `revoke_load_test_sessions`). It is only installed by the `LoadTest` configuration (`DJANGO_CONFIGURATION=LoadTest`, a subclass of `Production`); `LOAD_TEST_TOOLS_ENABLED` is `False` everywhere else, pinned in `Production`, and never read from the environment. Anything added for load tests goes there, not in `core`, and must stay off in `Production`
+- **Load-test tooling**: `src/backend/loadtest/` is a separate Django application, only installed by the `LoadTest` configuration (a subclass of `Production`); `LOAD_TEST_TOOLS_ENABLED` is pinned to `False` in `Production` and never read from the environment. Anything added for load tests goes there, not in `core`, and must stay off in `Production`
 
 ### Frontend
 
-- **Editor**: BlockNote.js 0.54.x (Tiptap-based block editor)
+- **Editor**: BlockNote.js (Tiptap-based block editor; check the version pinned in `package.json`, its API changes between minor versions)
 - **Real-time**: Yjs with the plain `y-websocket` `WebsocketProvider` (`features/docs/doc-management/stores/useProviderStore.tsx`), and an HTTP polling fallback (`@y/yhub-http-fallback`) used while the websocket cannot be opened. Hocuspocus is gone
 - **Offline**: documents are kept locally (`y-indexeddb`) and a service worker (`features/service-worker/`) caches pages and API answers and replays queued mutations when back online
 - **Version history**: built from the activity API of yhub, not from the backend
 - **State**: Zustand (broadcast store for cross-tab sync), TanStack React Query for server state
-- **UI**: Mantine 8 + Cunningham design system
+- **UI**: `@gouvfr-lasuite/ui-components` + Cunningham design system, Mantine for BlockNote
 - **Export**: BlockNote XL packages (PDF, DOCX, ODT)
 - **i18n**: i18next with Crowdin for community translations
 
@@ -149,15 +150,9 @@ Clients connect via WebSocket to the collaboration server (`src/yhub-server`, bu
 
 ## Observability
 
-- **Metrics** (opt-in, `PROMETHEUS_METRICS_ENABLED` + a required `PROMETHEUS_API_KEY` bearer token, both services refuse to start without the key):
-  - backend: django-prometheus on `/metrics`, deliberately outside `/api/`, protected by `core.middleware.PrometheusAuthMiddleware`. Multiprocess mode is set up automatically for the uvicorn workers. See `documentation/metrics.md`
-  - yhub: `src/yhub-server/src/metrics.ts`, served on its own port (`9464`) in every role, the worker included. See the "Metrics" section of `src/yhub-server/README.md`
-  - chart: `ingressMetrics` publishes `/metrics`, `/metrics/yhub` and `/metrics/yhub-worker` on a dedicated host
-  - never put a document id, a user id or a path in a metric label
-- **Sentry**: backend (`SENTRY_DSN`), y-provider, and yhub (`src/yhub-server/src/sentry.ts`, preloaded, `SENTRY_*` settings; `error`/`fatal` log lines of the shared pino logger are reported)
+- **Metrics**: opt-in Prometheus endpoints on the backend and yhub, guarded by a required `PROMETHEUS_API_KEY` (`documentation/metrics.md`, "Metrics" in `src/yhub-server/README.md`). Never put a document id, a user id or a path in a metric label
+- **Sentry**: backend (`SENTRY_DSN`), y-provider and yhub (`src/yhub-server/src/sentry.ts`)
 - **Profiling**: django-silk, opt-in with `SILK_ENABLED` (`documentation/profiling.md`)
-- `documentation/load-testing.md` is the load-testing guide: tooling, setup of an instance, scenarios. Never against production
-- **Load generators**: `src/loadtest/k6/` (plain k6 scripts: the page-open HTTP sequence and the heavy endpoints; every request tagged with a `name` free of identifiers, CSRF by double-submit with the frontend's `Origin`) and `src/loadtest/swarm/` (standalone TypeScript package, like `src/yhub-server`) opens many Yjs clients on yhub with the frontend's client stack, reading the manifest of `create_load_test_sessions`. Tests run against an in-process y-websocket server (`__tests__/_server.ts`); `src/loadtest/canary/` (same shape, Playwright library) drives a few real Chromium pairs through the frontend to measure page open, editor ready and keystroke propagation, with the manifest's cookies (session + `csrftoken`) set on the context
 
 ## Code Style Guidelines
 
@@ -186,27 +181,8 @@ Clients connect via WebSocket to the collaboration server (`src/yhub-server`, bu
 - Prettier style with single quotes; tests are Vitest and mock `@y/hub`
 - `@y/y` must stay the very copy `@y/hub` resolves (`__tests__/dependencies.spec.ts`)
 
-## Helm/Kubernetes Deployment
-
-### Structure
-- `helmfile.yaml.gotmpl` - Helmfile defining releases and environments
-- `impress/` - Helm chart with templates and default values
-- `env.d/{env}/` - Environment-specific values (dev=local, feature=CI)
-
-### Services
-- Backend (Django + Celery), Frontend (Next.js), yhub (collaboration server, plus an optional separate worker with `yhub.worker.enabled`), yProvider (conversion only)
-- Two standalone Valkey instances from the official `valkey/valkey` chart: `valkey-docs` (backend cache, sessions, Celery) and `valkey-yhub`
-- `dev` only (`monitoring: true` in the helmfile environment): a trimmed `kube-prometheus-stack` release (`env.d/dev/values.prometheus.yaml.gotmpl`, operator + CRDs + one Prometheus at https://docs-prometheus.127.0.0.1.nip.io) scraping the backend and yhub through the `serviceMonitor` of the chart, with the token in the `docs-metrics` Secret it creates, and a Grafana at https://docs-grafana.127.0.0.1.nip.io (admin/admin) whose sidecar loads the dashboards of `src/loadtest/dashboards/` from ConfigMaps (legend `{{` escaped for helm's tpl, as the values file explains)
-- Websocket ingress on `/collaboration/ws/` with no `upstream-hash-by`: any yhub replica serves any document
-- DocSpec (conversion), Posthog (analytics) - optional
-
-### Deployment Model
-- Kind cluster with mkcert HTTPS, local registry (localhost:5001)
-- CoreDNS for nip.io domains, dev-backend deps (Keycloak, PostgreSQL, Minio)
-
-### Helm Guidelines
-- Never commit secrets; use Got templating `{{ now | unixEpoch }}`
-- Follow semantic versioning; values use `@param` annotations
+### Helm
+- Never commit secrets; document every value with an `@param` annotation and regenerate the chart README (`src/helm/impress/README.md`)
 
 ## Git Conventions
 
@@ -233,35 +209,59 @@ Run before submitting: `make lint && make frontend-lint && make test`
 
 ## General Practices
 
-- Commit messages should be clear and descriptive
-- Run `make lint` and tests before committing
 - Use DRF for REST APIs with proper serializers
 - Implement proper error handling with try/except blocks
 - Use Django settings for configuration
-- Internationalize user-facing strings with `_()`
+- Internationalize user-facing strings with `_()` (backend) or i18next `t()` (frontend); never edit `translations.json`, it is pulled from Crowdin
 - Cache expensive operations, use database indexes
 - Write docstrings for classes and complex functions
-- Use type checking: TypeScript (frontend), mypy optional (Python)
+- Keep the comments in the code you add short and concise: explain the why, not the what
 
 ## Environment Configuration
 
 Config files in `env.d/development/`: `common`, `postgresql`, `kc_postgresql`, `crowdin`, `yhub`, `yhub-postgres`. The collaboration server reads its own two files and none of the backend's. Create `.local` overrides (gitignored) for custom settings.
 
-## i18n
+## Working efficiently
 
-```bash
-make i18n-generate      # Extract translation strings (backend + frontend)
-make i18n-compile       # Compile translations for all apps
+- Load the Skill that matches the task before exploring: it already holds the commands, helpers and pitfalls.
+- Big files: grep for the symbol, then read only that range. `core/api/viewsets.py` (~3,300 lines), `core/models.py` (~2,100) and `core/api/serializers.py` (~1,000) are never worth reading whole. Backend tests are split per endpoint and action (`core/tests/documents/test_api_documents_<action>.py`), so glob for the test file.
+- Never read generated or vendored files: `translations.json` (i18n), `yarn.lock`, `CHANGELOG.md` beyond its `[Unreleased]` section, `node_modules/`, `dist/`, `.next/`.
+- Verify narrowly first and widen only once that passes: `bin/pytest -n auto <file>::<test> -x -q --tb=short` or `yarn vitest run <file>`, and lint only the files you touched (`yarn eslint <files>`, `docker compose run --rm app-dev ruff check <files>`). Run the full `make lint` / suites once, at the end.
+- Filter long command output (`| tail`, `grep`, `-q`) rather than reading it all.
+
+## Incidental findings
+
+While on a task, if you come across something **unrelated to it** that clearly deserves fixing (a real bug, a security issue, or a strong improvement: algorithm or SQL efficiency, documentation, CI), do not fix it or widen the task. At the end, tell the user in one or two lines (what, where, why it matters) and offer to file it with the `docs-create-issue` Skill, labelled `AI generated`. Only report what you verified, not style nits or guesses.
+
+## Knowledge feedback
+
+At the end of a meaningful task, consider whether you verified something repository-specific that would have saved real time or prevented a mistake had you known it at the start: a required service, a command that looks right but is not, a test-suite limitation, a helper to prefer, an invariant, a recurring failure and how to diagnose it.
+
+Record it only if all of these hold:
+
+- it is verified, not a guess;
+- it is not already findable in this file, a Skill, a README, the Makefile, a package script or the nearby code;
+- a competent developer or agent doing a similar task six months from now would be materially helped by it.
+
+Never record facts about the current issue, temporary bugs, line numbers, branch names, one-off decisions or generic programming advice. Do not update agent documentation just to summarize the task.
+
+Put it in the narrowest place that fits:
+
+- **This file**: repository-wide rules and conventions that most tasks need, whatever the agent
+- **An existing Skill** for the workflow it belongs to (backend, frontend, E2E tests, review, running the stack…), when your agent setup has one. Skills are versioned in `.agents/skills/<name>/SKILL.md`, the one place to edit them: `.claude/` is gitignored and `make skills` regenerates `.claude/skills/` from it, so an edit there is lost and will not show in `git diff`. The same goes for the `local-*` skills, which only exist in `.claude/skills/`: name them in your report
+- **The subsystem's own documentation** (e.g. `src/yhub-server/README.md`, `documentation/`) when it is useful to humans too
+- **A new Skill** only for a substantial, repeatable workflow with no natural home, never for a single tip
+
+A repository fact belongs in the repository, where every agent and developer gets it, not in a personal agent memory; keep personal memory for the user's own preferences.
+
+Prefer amending an existing line or section to adding a new one, and keep it to a line or two. Give the reason when it is not obvious. An instruction you found to be wrong is worth fixing or removing too. When in doubt, do not edit: mention it in your report instead. A human reviews the change like any code.
+
+This file is loaded into every session, so each line costs tokens on every task. Before adding a line here, check whether it only serves one area; if so, it belongs in that area's Skill or README. Remove what has gone stale or become derivable from the code. Two Skills that trigger on the same request (a similar `description`) must be merged.
+
+Close your report with one short line, and skip it for trivial tasks:
+
+```text
+Agent knowledge: none.
+Agent knowledge: added to <file> that <fact>, because <what it would have saved>.
+Agent knowledge (unverified, not recorded): <fact>.
 ```
-
-Internationalize user-facing strings with `_()` (backend) or i18next (frontend).
-
-## Key Directories
-
-- `src/backend/` - Django REST API backend
-- `src/frontend/` - Next.js (apps/impress, packages/i18n, servers/y-provider)
-- `src/yhub-server/` - Collaboration server (yhub)
-- `src/helm/` - Helmfile and Helm chart for Kubernetes deployment
-- `src/mail/` - Email template generator (MJML)
-- `documentation/` - Documentation
-- `.github/` - GitHub workflows and templates
