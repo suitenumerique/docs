@@ -4,7 +4,7 @@ import NextError from 'next/error';
 import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import error_img from '@/assets/icons/error-planetes.png';
+import Error500Svg from '@/assets/icons/error-500.svg';
 import { ErrorPage } from '@/components';
 import { PageLayout } from '@/layouts';
 
@@ -13,11 +13,14 @@ const Error = () => {
 
   return (
     <ErrorPage
-      image={error_img}
-      description={t('An unexpected error occurred.', {
+      illustration={<Error500Svg aria-hidden="true" />}
+      title={t('An unexpected error occurred.', {
         description: 'Generic error page title and message',
       })}
-      showReload
+      description={t(
+        'An unexpected error occurred. Go grab a coffee or try to refresh the page.',
+        { description: 'Message of the server error page, informal tone' },
+      )}
     />
   );
 };
