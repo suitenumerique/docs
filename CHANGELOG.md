@@ -15,6 +15,7 @@ and this project adheres to
 - 💄(frontend) restore native task checkboxes and dim completed tasks #2857
 - ⬆️(frontend) upgrade BlockNote to 0.56.0 #2936
 - ♻️(frontend) export PDFs with the Typst engine #2936
+- 💄(frontend) redesign 500 error standalone page #2801
 
 ### Fixed
 

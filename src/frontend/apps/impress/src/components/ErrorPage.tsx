@@ -1,31 +1,41 @@
-import { Button } from '@gouvfr-lasuite/ui-components';
 import Head from 'next/head';
-import Image, { StaticImageData } from 'next/image';
+import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
+import { css } from 'styled-components';
 
-import { Box, Icon, StyledLink, Text } from '@/components';
+import HomeSvg from '@/icons/house-rounded.svg';
+import RetrySvg from '@/icons/retry.svg';
 
-const StyledButton = styled(Button)`
-  width: fit-content;
+import { Box } from './Box';
+import { Icon } from './Icon';
+import { StyledLink } from './Link';
+import { Text } from './Text';
+
+const actionCss = css`
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: var(--c--globals--spacings--3xs);
+  outline: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  &:focus-visible {
+    outline: 2px solid
+      var(--c--contextuals--content--semantic--neutral--tertiary);
+    border-radius: 1px;
+    outline-offset: var(--c--globals--spacings--st);
+  }
 `;
 
-interface ErrorPageProps {
-  image: StaticImageData;
-  description: string;
-  refreshTarget?: string;
-  showReload?: boolean;
-}
+const SAFE_RELATIVE_PATH = /^\/(?!\/)[\w\-.~%!$&'()*+,;=:@/?#[\]]*$/;
 
 const getSafeRefreshUrl = (target?: string): string | undefined => {
-  if (!target) {
+  if (!target || !SAFE_RELATIVE_PATH.test(target)) {
     return undefined;
-  }
-
-  if (typeof window === 'undefined') {
-    return target.startsWith('/') && !target.startsWith('//')
-      ? target
-      : undefined;
   }
 
   try {
@@ -39,107 +49,111 @@ const getSafeRefreshUrl = (target?: string): string | undefined => {
   }
 };
 
+interface ErrorPageProps {
+  illustration: ReactNode;
+  title: string;
+  description: string;
+  refreshTarget?: string;
+}
+
 export const ErrorPage = ({
-  image,
+  illustration,
+  title,
   description,
   refreshTarget,
-  showReload,
 }: ErrorPageProps) => {
   const { t } = useTranslation();
+  const pageTitle = `${title} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`;
 
-  const errorTitle = t('An unexpected error occurred.', {
-    description: 'Generic error page title and message',
-  });
-  const safeTarget = getSafeRefreshUrl(refreshTarget);
+  const handleRefresh = () => {
+    const safeTarget = getSafeRefreshUrl(refreshTarget);
+    if (!safeTarget) {
+      window.location.reload();
+      return;
+    }
+    window.location.assign(safeTarget);
+  };
 
   return (
     <>
       <Head>
-        <title>
-          {errorTitle} -{' '}
-          {t('Docs', {
-            description: 'Product name, shown in page titles and the logo',
-          })}
-        </title>
-        <meta
-          property="og:title"
-          content={`${errorTitle} - ${t('Docs', { description: 'Product name, shown in page titles and the logo' })}`}
-          key="title"
-        />
+        <title>{pageTitle}</title>
+        <meta property="og:title" content={pageTitle} key="title" />
       </Head>
       <Box
         $align="center"
         $margin="auto"
-        $gap="md"
-        $padding={{ bottom: '2rem' }}
+        $gap="base"
+        $padding={{ horizontal: 'base', bottom: 'lg' }}
+        className="--docs--error-page"
       >
-        <Text as="h1" $textAlign="center" className="sr-only">
-          {errorTitle} -{' '}
-          {t('Docs', {
-            description: 'Product name, shown in page titles and the logo',
-          })}
-        </Text>
-        <Image
-          src={image}
-          alt=""
-          width={300}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-          }}
-          loading="eager"
-        />
-
-        <Text
-          as="p"
-          $textAlign="center"
-          $maxWidth="350px"
-          $theme="neutral"
-          $margin="0"
-        >
-          {description}
-        </Text>
-
-        <Box $direction="row" $gap="sm">
-          <StyledLink href="/">
-            <StyledButton
-              color="neutral"
-              icon={
-                <Icon
-                  iconName="house"
-                  variant="symbols-outlined"
-                  $withThemeInherited
-                />
-              }
+        <Box $align="center" $gap="xxxs">
+          {illustration}
+          <Text
+            as="h1"
+            $size="md"
+            $weight="bold"
+            $textAlign="center"
+            $margin="0"
+            $theme="neutral"
+            $variation="primary"
+          >
+            {title}
+          </Text>
+          <Text
+            as="p"
+            $textAlign="center"
+            $maxWidth="228px"
+            $theme="neutral"
+            $variation="secondary"
+            $margin="0"
+            $size="xs"
+          >
+            {description}
+          </Text>
+        </Box>
+        <Box $direction="row" $align="center" $gap="base">
+          <StyledLink href="/" $css={actionCss}>
+            <Icon
+              icon={<HomeSvg width={16} height={16} />}
+              $theme="neutral"
+              $variation="tertiary"
+            />
+            <Text
+              $size="xs"
+              $weight={500}
+              $theme="neutral"
+              $variation="tertiary"
+              $margin="0"
             >
               {t('Home', {
                 description: 'Button/link label to go back to the home page',
               })}
-            </StyledButton>
+            </Text>
           </StyledLink>
-
-          {(safeTarget || showReload) && (
-            <StyledButton
-              color="neutral"
-              variant="bordered"
-              icon={
-                <Icon
-                  iconName="refresh"
-                  variant="symbols-outlined"
-                  $withThemeInherited
-                />
-              }
-              onClick={() =>
-                safeTarget
-                  ? window.location.assign(safeTarget)
-                  : window.location.reload()
-              }
+          <Box
+            as="button"
+            type="button"
+            $css={actionCss}
+            onClick={handleRefresh}
+          >
+            <Icon
+              icon={<RetrySvg width={16} height={16} />}
+              $theme="neutral"
+              $variation="tertiary"
+            />
+            <Text
+              $size="xs"
+              $weight={500}
+              $theme="neutral"
+              $variation="tertiary"
+              $margin="0"
             >
               {t('Refresh page', {
                 description: 'Button on the error page to reload the page',
               })}
-            </StyledButton>
-          )}
+            </Text>
+          </Box>
         </Box>
       </Box>
     </>
