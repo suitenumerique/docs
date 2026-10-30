@@ -147,7 +147,8 @@ test.describe('Doc Routing', () => {
 
   test('checks redirect if unsync version', async ({ page }) => {
     await overrideConfig(page, {
-      RELEASE_VERSION: '0.0.0',
+      // Backend newer than the frontend: the only case triggering a reload
+      RELEASE_VERSION: '999.0.0',
     });
 
     let counterReload = 0;
@@ -168,7 +169,7 @@ test.describe('Doc Routing', () => {
         () => page.evaluate(() => sessionStorage.getItem('reload-version')),
         { timeout: 10000 },
       )
-      .toBe('0.0.0');
+      .toBe('999.0.0');
   });
 });
 
