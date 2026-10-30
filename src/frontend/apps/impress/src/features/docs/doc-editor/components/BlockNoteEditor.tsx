@@ -6,7 +6,6 @@ import {
   withPageBreak,
 } from '@blocknote/core';
 import { CommentsExtension } from '@blocknote/core/comments';
-import '@blocknote/core/fonts/inter.css';
 import * as localesBN from '@blocknote/core/locales';
 import { withCollaboration } from '@blocknote/core/yjs';
 import {
