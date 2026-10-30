@@ -1,9 +1,13 @@
 import { Loader } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { css } from 'styled-components';
+import { useDebouncedCallback } from 'use-debounce';
 
+import AnchorIcon from '@/assets/icons/ui-kit/hashtag.svg';
 import { Box, Text } from '@/components';
 import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
+import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import {
   KEY_DOC,
   getEmojiAndTitle,
@@ -12,12 +16,66 @@ import {
   useTrans,
 } from '@/docs/doc-management/';
 
+import { getBlockAnchorLabel } from './getBlockAnchorLabel';
+
+const BLOCK_LABEL_REFRESH_DELAY = 2000;
+
 interface LinkSelectedProps {
   docId: string;
   blockId?: string;
   isEditable: boolean;
+  editor?: DocsBlockNoteEditor;
 }
-export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
+
+/**
+ * The text of the linked block, kept up to date while the editor changes.
+ * Only for an anchor in the current doc: its blocks are the ones of the editor.
+ */
+const useSameDocBlockLabel = (
+  editor: DocsBlockNoteEditor | undefined,
+  isSameDoc: boolean,
+  blockId?: string,
+) => {
+  const getLabel = useCallback(
+    () =>
+      editor && isSameDoc && blockId
+        ? getBlockAnchorLabel(editor, blockId)
+        : null,
+    [editor, isSameDoc, blockId],
+  );
+  const [label, setLabel] = useState(getLabel);
+  // The lookup the label comes from: the mount does not walk the doc twice.
+  const labelSourceRef = useRef(getLabel);
+  // Looking for the block walks the doc: it waits for the edits to settle.
+  const refreshLabel = useDebouncedCallback(
+    () => setLabel(getLabel()),
+    BLOCK_LABEL_REFRESH_DELAY,
+  );
+
+  // Recomputes the label when the link changes, and refreshes it after the
+  // edits of the doc.
+  useEffect(() => {
+    if (labelSourceRef.current !== getLabel) {
+      labelSourceRef.current = getLabel;
+      setLabel(getLabel());
+    }
+
+    if (!editor || !isSameDoc || !blockId) {
+      return;
+    }
+
+    const unsubscribe = editor.onChange(() => refreshLabel());
+
+    return () => {
+      unsubscribe();
+      refreshLabel.cancel();
+    };
+  }, [editor, isSameDoc, blockId, getLabel, refreshLabel]);
+
+  return label;
+};
+
+export const LinkSelected = ({ docId, blockId, editor }: LinkSelectedProps) => {
   const { data: doc, isLoading } = useDoc(
     { id: docId },
     {
@@ -28,10 +86,20 @@ export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
   const { untitledDocument } = useTrans();
   const href = `/docs/${docId}/${blockId ? `#${blockId}` : ''}`;
   const visualHref = `/${docId}/`;
-  const label = doc ? doc.title || untitledDocument : visualHref;
-  const isHrefFallback = !isLoading && !doc;
-  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(label);
   const { currentDoc } = useDocStore();
+  const blockLabel = useSameDocBlockLabel(
+    editor,
+    currentDoc?.id === docId,
+    blockId,
+  );
+  const label = doc ? doc.title || untitledDocument : visualHref;
+  const isHrefFallback = !isLoading && !doc && !blockLabel;
+  // The text of a block is not a title: its emoji stays in the text, and the
+  // icon is the one of an anchor.
+  const { emoji, titleWithoutEmoji } = blockLabel
+    ? { emoji: undefined, titleWithoutEmoji: blockLabel }
+    : getEmojiAndTitle(label);
+  const DefaultIcon = blockLabel ? AnchorIcon : SelectedPageIcon;
   const isDeletedDoc = !!currentDoc?.deleted_at;
   const router = useRouter();
 
@@ -119,8 +187,8 @@ export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
       {emoji ? (
         <Text $size="16px">{emoji}</Text>
       ) : (
-        <SelectedPageIcon
-          width={11.5}
+        <DefaultIcon
+          width={blockLabel ? 16 : 11.5}
           color="var(--c--contextuals--content--semantic--brand--tertiary)"
         />
       )}
@@ -139,7 +207,7 @@ export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
           text-underline-offset: 0.2em;
         `}
       >
-        {isLoading ? (
+        {isLoading && !blockLabel ? (
           <Box
             as="span"
             $display="inline-flex"

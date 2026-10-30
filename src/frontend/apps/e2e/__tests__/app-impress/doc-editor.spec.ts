@@ -866,6 +866,29 @@ test.describe('Doc Editor', () => {
     await expect(otherPage.getByText('My Block')).toBeInViewport();
 
     await cleanup();
+
+    // Pasted in the same doc, the link shows the text of its block and
+    // scrolls to it
+    await page.goto(url);
+    await expect(editor.getByText('First Block')).toBeInViewport();
+
+    await page.evaluate(async (blockUrl) => {
+      await navigator.clipboard.writeText(blockUrl);
+    }, clipboardContent);
+    await editor.getByText('First Block').click();
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Control+V');
+
+    const blockLink = editor.locator(
+      '.--docs--interlinking-link-inline-content',
+    );
+    await expect(blockLink).toHaveText('My Block');
+
+    await blockLink.click();
+    await expect(page).toHaveURL(clipboardContent);
+    await expect(blockLink).not.toBeInViewport();
+    await expect(editor.getByText('My Block').last()).toBeInViewport();
   });
 
   test('it checks "Equation block" feature', async ({ page, browserName }) => {
