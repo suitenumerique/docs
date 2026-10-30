@@ -32,9 +32,9 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
-    "@tiptap/core": "3.31.4",
-    "@tiptap/extensions": "3.31.4",
-    "@tiptap/pm": "3.31.4",
+    "@tiptap/core": "3.32.0",
+    "@tiptap/extensions": "3.32.0",
+    "@tiptap/pm": "3.32.0",
     "@types/node": "24.13.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
@@ -43,6 +43,7 @@
     "figlet": "1.12.0",
     "postcss": "8.5.29",
     "prosemirror-model": "1.25.12",
+    "prosemirror-transform": "1.12.4",
     "prosemirror-view": "1.42.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",

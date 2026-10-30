@@ -7,15 +7,21 @@ import { docxDefaultSchemaMappings } from '@blocknote/xl-docx-exporter';
 
 import {
   blockMappingCalloutDocx,
-  blockMappingImageDocx,
   blockMappingQuoteDocx,
   blockMappingUploadLoaderDocx,
+  createBlockMappingImageDocx,
 } from './blocks-mapping';
-import { createInlineContentMappingInterlinkingLinkDocx } from './inline-content-mapping';
+import {
+  createInlineContentMappingInterlinkingLinkDocx,
+  inlineContentMappingMentionSearchDocx,
+  inlineContentMappingUserMentionDocx,
+} from './inline-content-mapping';
 import { DocsExporterDocx } from './types';
+import { getBlockMappingFunction } from './utils';
 
 export const getDocxDocsSchemaMappings = (
   interlinkTitles: Map<string, string>,
+  imageUnavailableText: string,
 ): DocsExporterDocx['mappings'] => ({
   ...docxDefaultSchemaMappings,
   blockMapping: {
@@ -30,9 +36,9 @@ export const getDocxDocsSchemaMappings = (
     // Renders the Mermaid source to a PNG in the browser (async mapping).
     diagram: diagramBlockMapping,
     quote: blockMappingQuoteDocx,
-    image: blockMappingImageDocx,
+    image: createBlockMappingImageDocx(imageUnavailableText),
     uploadLoader: blockMappingUploadLoaderDocx,
-    table: (block, exporter, nestedLevel, numberedListIndex, children) => {
+    table: (block, exporter, nestedLevel, numberedListIndex) => {
       /**
        * Nan values are not supported, so we need to replace them with undefined
        * to avoid issues during the export.
@@ -47,19 +53,17 @@ export const getDocxDocsSchemaMappings = (
         );
       }
 
-      return docxDefaultSchemaMappings.blockMapping.table(
-        block,
-        exporter,
-        nestedLevel,
-        numberedListIndex,
-        children,
-      );
+      return getBlockMappingFunction(
+        docxDefaultSchemaMappings.blockMapping.table,
+      )(block, exporter, nestedLevel, numberedListIndex);
     },
   },
   inlineContentMapping: {
     ...docxDefaultSchemaMappings.inlineContentMapping,
     interlinkingLinkInline:
       createInlineContentMappingInterlinkingLinkDocx(interlinkTitles),
+    mentionSearchInline: inlineContentMappingMentionSearchDocx,
+    userMentionInline: inlineContentMappingUserMentionDocx,
     // Renders inline math as a native (editable) Word equation.
     math: inlineMathMapping,
   },

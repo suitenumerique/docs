@@ -381,7 +381,8 @@ test.describe('Doc Export', () => {
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
     const pdfString = pdfBuffer.toString('latin1');
 
-    expect(pdfString).toContain('/Lang (fr)');
+    // The PDF writers do not agree on the spacing: "/Lang (fr)" or "/Lang(fr)"
+    expect(pdfString).toMatch(/\/Lang\s*\(fr\)/);
   });
 
   test('it exports the doc to PDF with PRINT feature and checks regressions', async ({

@@ -4,17 +4,15 @@
  */
 import { DOCXExporter } from '@blocknote/xl-docx-exporter';
 import { ODTExporter } from '@blocknote/xl-odt-exporter';
-import { PDFExporter } from '@blocknote/xl-pdf-exporter';
-import { DocumentProps, pdf } from '@react-pdf/renderer';
-import jsonemoji from 'emoji-datasource-apple' with { type: 'json' };
 import i18next from 'i18next';
-import { cloneElement, isValidElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { Doc } from '@/docs/doc-management/types';
+import { fallbackLng } from '@/i18n/config';
 
 import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
+import { DocsPDFExporter } from '../exporterPDF';
 import { getDocxDocsSchemaMappings } from '../mappingDocx';
 import { getOdtDocsSchemaMappings } from '../mappingODT';
 import { getPdfDocsSchemaMappings } from '../mappingPDF';
@@ -30,53 +28,44 @@ export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
 
     const exportDocument = editor.document;
     const interlinkTitles = await resolveInterlinkTitles(exportDocument);
+    const imageUnavailableText = t('This image could not be exported.', {
+      description:
+        'Shown in an exported document in place of an image that could not be fetched',
+    });
     let blobExport: Blob | undefined = undefined;
     if (format === 'pdf') {
-      const exporter = new PDFExporter(
+      const exporter = new DocsPDFExporter(
         editor.schema,
-        getPdfDocsSchemaMappings(interlinkTitles),
+        getPdfDocsSchemaMappings(interlinkTitles, imageUnavailableText),
         {
           resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
-          emojiSource: {
-            format: 'png',
-            builder(code) {
-              const emojisFound = jsonemoji.filter(
-                (e) =>
-                  e.unified.split('-')[0].toLowerCase() ===
-                  code.split('-')[0].toLowerCase(),
-              );
-
-              const emoji = emojisFound.find((e) =>
-                e.unified.toLocaleLowerCase().includes(code.toLowerCase()),
-              );
-
-              if (emoji) {
-                return `/assets/fonts/emoji/${emoji.image}`;
-              }
-
-              return '/assets/fonts/emoji/fallback.png';
-            },
-          },
         },
       );
-      const rawPdfDocument = (await exporter.toReactPDFDocument(
-        exportDocument,
-      )) as React.ReactElement<DocumentProps>;
 
-      // Add language, title and outline properties to improve PDF accessibility and navigation
-      const pdfDocument = isValidElement(rawPdfDocument)
-        ? cloneElement(rawPdfDocument, {
-            language: i18next.language,
-            title: documentTitle,
-            pageMode: 'useOutlines',
-          })
-        : rawPdfDocument;
+      // The title and the language are required to declare the PDF as
+      // accessible (PDF/UA-1). A document that does not conform, e.g. that
+      // does not start with a level 1 heading, is still exported as a tagged
+      // PDF, only without the conformance claim.
+      // Typst only accepts the language code, a region ("en-US") fails the
+      // compilation.
+      const result = await exporter.toPDF(exportDocument, {
+        title: documentTitle,
+        lang: (i18next.language || fallbackLng).split('-')[0],
+      });
 
-      blobExport = await pdf(pdfDocument).toBlob();
+      if (result.error) {
+        throw new Error(
+          `PDF compilation failed: ${result.compileErrors
+            .map((error) => error.message)
+            .join(', ')}`,
+        );
+      }
+
+      blobExport = result.blob;
     } else if (format === 'docx') {
       const exporter = new DOCXExporter(
         editor.schema,
-        getDocxDocsSchemaMappings(interlinkTitles),
+        getDocxDocsSchemaMappings(interlinkTitles, imageUnavailableText),
         {
           resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
         },
@@ -89,7 +78,7 @@ export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
     } else if (format === 'odt') {
       const exporter = new ODTExporter(
         editor.schema,
-        getOdtDocsSchemaMappings(interlinkTitles),
+        getOdtDocsSchemaMappings(interlinkTitles, imageUnavailableText),
         {
           resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
         },

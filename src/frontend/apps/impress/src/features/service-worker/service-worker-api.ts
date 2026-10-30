@@ -17,10 +17,15 @@ self.addEventListener('activate', function (event) {
   event.waitUntil(DocsDB.cleanupOutdatedVersion());
 });
 
+/**
+ * On the origin and the path only: a third-party url can carry an api url in
+ * its query.
+ */
 export const isApiUrl = (href: string) => {
+  const { origin, pathname } = new URL(href);
   return (
-    href.includes(`${self.location.origin}/api/`) ||
-    href.includes(`${SW_DEV_API}/api/`)
+    [self.location.origin, SW_DEV_API].includes(origin) &&
+    pathname.startsWith('/api/')
   );
 };
 
@@ -169,6 +174,19 @@ registerRoute(
   }),
   'DELETE',
 );
+
+/**
+ * The other api mutations (duplicate, accesses, invitations...) are not
+ * replayed offline, but their failure still tells that the network is gone.
+ * Registered after the routes above, which take precedence.
+ */
+(['POST', 'PUT', 'PATCH', 'DELETE'] as const).forEach((method) => {
+  registerRoute(
+    ({ url }) => isApiUrl(url.href),
+    new NetworkOnly({ plugins: [new OfflinePlugin()] }),
+    method,
+  );
+});
 
 /**
  * Login and logout: never from the cache. They go through the identity

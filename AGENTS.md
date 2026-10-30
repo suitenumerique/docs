@@ -129,7 +129,7 @@ make start-tilt             # Start Tilt for hot-reload
 
 ### Frontend
 
-- **Editor**: BlockNote.js 0.46.x (Tiptap-based block editor)
+- **Editor**: BlockNote.js 0.54.x (Tiptap-based block editor)
 - **Real-time**: Yjs with the plain `y-websocket` `WebsocketProvider` (`features/docs/doc-management/stores/useProviderStore.tsx`), and an HTTP polling fallback (`@y/yhub-http-fallback`) used while the websocket cannot be opened. Hocuspocus is gone
 - **Offline**: documents are kept locally (`y-indexeddb`) and a service worker (`features/service-worker/`) caches pages and API answers and replays queued mutations when back online
 - **Version history**: built from the activity API of yhub, not from the backend

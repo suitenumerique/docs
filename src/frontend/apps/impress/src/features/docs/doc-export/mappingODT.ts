@@ -7,10 +7,14 @@ import { odtDefaultSchemaMappings } from '@blocknote/xl-odt-exporter';
 
 import {
   blockMappingCalloutODT,
-  blockMappingImageODT,
   blockMappingUploadLoaderODT,
+  createBlockMappingImageODT,
 } from './blocks-mapping';
-import { createInlineContentMappingInterlinkingLinkODT } from './inline-content-mapping';
+import {
+  createInlineContentMappingInterlinkingLinkODT,
+  inlineContentMappingMentionSearchODT,
+  inlineContentMappingUserMentionODT,
+} from './inline-content-mapping';
 import { DocsExporterODT } from './types';
 
 // Align default inline mappings to our editor inline schema without using `any`
@@ -19,12 +23,13 @@ const baseInlineMappings =
 
 export const getOdtDocsSchemaMappings = (
   interlinkTitles: Map<string, string>,
+  imageUnavailableText: string,
 ): DocsExporterODT['mappings'] => ({
   ...odtDefaultSchemaMappings,
   blockMapping: {
     ...odtDefaultSchemaMappings.blockMapping,
     callout: blockMappingCalloutODT,
-    image: blockMappingImageODT,
+    image: createBlockMappingImageODT(imageUnavailableText),
     // We're reusing the file block mapping for PDF blocks
     // The types don't match exactly but the implementation is compatible
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +45,8 @@ export const getOdtDocsSchemaMappings = (
     ...baseInlineMappings,
     interlinkingLinkInline:
       createInlineContentMappingInterlinkingLinkODT(interlinkTitles),
+    mentionSearchInline: inlineContentMappingMentionSearchODT,
+    userMentionInline: inlineContentMappingUserMentionODT,
     // Renders inline math as a native (editable) ODF formula object.
     math: inlineMathMapping,
   },

@@ -1,18 +1,39 @@
 import React from 'react';
 
 import { DocsExporterODT } from '../types';
-import { convertSvgToPng, odtRegisterParagraphStyleForBlock } from '../utils';
+import {
+  convertSvgToPng,
+  getImageUnavailableText,
+  odtRegisterParagraphStyleForBlock,
+} from '../utils';
 
 const MAX_WIDTH = 600;
 
-export const blockMappingImageODT: DocsExporterODT['mappings']['blockMapping']['image'] =
+/**
+ * An image that cannot be resolved or decoded is replaced by
+ * `unavailableText` instead of being dropped.
+ */
+export const createBlockMappingImageODT =
+  (
+    unavailableText: string,
+  ): DocsExporterODT['mappings']['blockMapping']['image'] =>
   async (block, exporter) => {
+    if (!block.props.url) {
+      return null;
+    }
+
+    const unavailable = React.createElement(
+      'text:p',
+      { 'text:style-name': 'Text_20_body' },
+      getImageUnavailableText(unavailableText, block.props),
+    );
+
     try {
       const blob = await exporter.resolveFile(block.props.url);
 
       if (!blob || !blob.type) {
         console.warn(`Failed to resolve image: ${block.props.url}`);
-        return null;
+        return unavailable;
       }
 
       let pngConverted: string | undefined;
@@ -21,7 +42,7 @@ export const blockMappingImageODT: DocsExporterODT['mappings']['blockMapping']['
 
       if (!blob.type.includes('image')) {
         console.warn(`Not an image type: ${blob.type}`);
-        return null;
+        return unavailable;
       }
 
       if (blob.type.includes('svg')) {
@@ -37,7 +58,7 @@ export const blockMappingImageODT: DocsExporterODT['mappings']['blockMapping']['
       }
 
       if (!dimensions) {
-        return null;
+        return unavailable;
       }
 
       const { width, height } = dimensions;
@@ -121,7 +142,7 @@ export const blockMappingImageODT: DocsExporterODT['mappings']['blockMapping']['
       return frame;
     } catch (error) {
       console.error(`Error processing image for ODT export:`, error);
-      return null;
+      return unavailable;
     }
   };
 

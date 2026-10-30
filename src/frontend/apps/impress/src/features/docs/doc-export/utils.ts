@@ -16,6 +16,36 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
 /**
+ * BlockNote types a block mapping as either a function, that renders the block
+ * only, or a `{ withChildren }` mapping, that also renders its children.
+ * Returns a default mapping of the first kind as a function, so that it can be
+ * wrapped. Throws if BlockNote changes it to the second kind, as the wrapper
+ * would then drop the children.
+ */
+export const getBlockMappingFunction = <M>(
+  mapping: M,
+): Extract<M, (...args: never[]) => unknown> => {
+  if (typeof mapping !== 'function') {
+    throw new Error('This block mapping renders the children of the block');
+  }
+
+  return mapping as Extract<M, (...args: never[]) => unknown>;
+};
+
+/**
+ * Text replacing an image that cannot be exported, followed by its caption,
+ * else its name, so that the reader knows which image is missing.
+ */
+export const getImageUnavailableText = (
+  unavailableText: string,
+  { caption, name }: { caption?: string; name?: string },
+): string => {
+  const label = caption || name;
+
+  return `⚠️ ${unavailableText}${label ? ` (${label})` : ''}`;
+};
+
+/**
  * Recursively collects the distinct doc ids referenced by
  * `interlinkingLinkInline` inline content nodes across a block tree,
  * including nested blocks (lists, callouts) and table cells.
@@ -217,12 +247,8 @@ export async function convertSvgToPng(
  * @throws Will throw an error if the canvas context cannot be initialized.
  */
 // Convert any raster format (PNG, WebP, JPEG, …) to a PNG data URL via
-// canvas. This has two benefits:
-//   1. Formats unsupported by @react-pdf/renderer (e.g. WebP) are
-//      transcoded to PNG which react-pdf can embed.
-//   2. Passing a raw Blob to react-pdf triggers a WASM "too many
-//      arguments" error in its internal image pipeline; a canvas-derived
-//      data URL sidesteps that entirely.
+// canvas, so that formats the Typst engine of the PDF export cannot decode
+// (e.g. WebP) are transcoded to PNG, which it embeds.
 export async function convertBlobToPng(
   blob: Blob,
   width?: number,
