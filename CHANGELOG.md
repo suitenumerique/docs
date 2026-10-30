@@ -12,6 +12,7 @@ and this project adheres to
 - ✨(frontend) scroll smoothly to a block linked from the same doc #2932
 - ✨(frontend) add a /children block listing the sub-docs #2799
 - 🤖(agents) add AI skills #2746
+- ✨(frontend) better interlink anchor on same document #2932
 
 ### Changed
 
