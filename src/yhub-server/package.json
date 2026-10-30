@@ -34,6 +34,9 @@
     "vite": "8.3.5",
     "vitest": "5.0.3"
   },
+  "resolutions": {
+    "decode-uri-component": "0.5.1"
+  },
   "engines": {
     "node": ">=22.12"
   },
