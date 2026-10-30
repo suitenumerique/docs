@@ -26,6 +26,11 @@ and this project adheres to
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
 
+### Fixed
+
+- 🐛(frontend) duplicate the sub-docs created without reloading the page #2915
+- 🐛(frontend) show the doc tree actions of the item under the pointer
+
 ## [v6.0.4] - 2026-10-26
 
 ### Changed
