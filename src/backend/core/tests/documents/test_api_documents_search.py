@@ -39,9 +39,10 @@ def test_api_documents_search_anonymous(search_query, indexer_settings):
     responses.add(
         responses.POST,
         "http://find/api/v1.0/search",
-        json=[],
+        json={"results": []},
         status=200,
     )
+    search_query.return_value = {"results": []}
 
     q = "alpha"
     response = APIClient().get("/api/v1.0/documents/search/", data={"q": q})
@@ -585,18 +586,26 @@ def test_api_documents_search_success(indexer_settings):
     indexer_settings.SEARCH_URL = "http://find/api/v1.0/search"
     assert get_document_indexer() is not None
 
-    document = {"id": "doc-123", "title": "alpha", "path": "path/to/alpha.pdf"}
+    document = {
+        "id": "doc-123",
+        "service": "docs",
+        "title": "alpha",
+        "score": 2.3,
+        "path": "000000010000002",
+        "depth": 2,
+        "numchild": 0,
+        "size": 42,
+        "created_at": "2026-10-01T10:00:00Z",
+        "updated_at": "2026-10-02T10:00:00Z",
+        "reach": "public",
+        "tags": [],
+    }
 
     # Find response
     responses.add(
         responses.POST,
         "http://find/api/v1.0/search",
-        json=[
-            {
-                "_id": str(document["id"]),
-                "_source": {"title": document["title"], "path": document["path"]},
-            },
-        ],
+        json={"results": [document]},
         status=200,
     )
     response = APIClient().get("/api/v1.0/documents/search/", data={"q": "alpha"})
@@ -609,6 +618,4 @@ def test_api_documents_search_success(indexer_settings):
         "next": None,
         "previous": None,
     }
-    assert results == [
-        {"id": document["id"], "title": document["title"], "path": document["path"]}
-    ]
+    assert results == [document]

@@ -56,6 +56,10 @@ and this project adheres to
 - 📝(docs) recreate the containers when upgrading a compose install #2985
 - 🐛(frontend) fix Enter and Space in modals opened from the doc tree #2879
 
+### Changed
+
+- ♻️(backend) read the new search response schema of Find
+
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909

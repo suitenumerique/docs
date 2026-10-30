@@ -457,24 +457,35 @@ def test_find_document_indexer_search(mock_search_query):
     # Mock API response from Find
     hits = [
         {
-            "_id": "doc-123",
-            "_source": {
-                "title": "Test Document",
-                "content": "This is test content",
-                "updated_at": "2024-01-01T00:00:00Z",
-                "path": "/some/path/doc-123",
-            },
+            "id": "doc-123",
+            "service": "docs",
+            "title": "Test Document",
+            "score": 1.5,
+            "path": "/some/path/doc-123",
+            "depth": 3,
+            "numchild": 0,
+            "size": 20,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+            "reach": "restricted",
+            "tags": [],
         },
         {
-            "_id": "doc-456",
-            "_source": {
-                "title.fr": "Document de test",
-                "content": "Contenu de test",
-                "updated_at": "2024-01-02T00:00:00Z",
-            },
+            "id": "doc-456",
+            "service": "docs",
+            "title": "Document de test",
+            "score": None,
+            "path": "/some/path/doc-456",
+            "depth": 3,
+            "numchild": 2,
+            "size": 15,
+            "created_at": "2024-01-02T00:00:00Z",
+            "updated_at": "2024-01-02T00:00:00Z",
+            "reach": None,
+            "tags": ["tag"],
         },
     ]
-    mock_search_query.return_value = hits
+    mock_search_query.return_value = {"results": hits}
 
     q = "test"
     token = "fake-token"
@@ -504,20 +515,4 @@ def test_find_document_indexer_search(mock_search_query):
         "search_type": search_type,
     }
 
-    assert len(results) == 2
-    assert results == [
-        {
-            "id": hits[0]["_id"],
-            "title": hits[0]["_source"]["title"],
-            "content": hits[0]["_source"]["content"],
-            "updated_at": hits[0]["_source"]["updated_at"],
-            "path": hits[0]["_source"]["path"],
-        },
-        {
-            "id": hits[1]["_id"],
-            "title": hits[1]["_source"]["title.fr"],
-            "title.fr": hits[1]["_source"]["title.fr"],  # <- Find response artefact
-            "content": hits[1]["_source"]["content"],
-            "updated_at": hits[1]["_source"]["updated_at"],
-        },
-    ]
+    assert results == hits

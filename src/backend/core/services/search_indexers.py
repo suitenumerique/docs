@@ -15,7 +15,6 @@ import requests
 from core import models
 from core.enums import SearchType
 from core.services.yhub_services import YHubError, YHubService
-from core.utils.dicts import get_value_by_pattern
 from core.utils.paths import get_ancestor_to_descendants_map
 from core.utils.yjs import yjs_to_text
 
@@ -290,56 +289,20 @@ class FindDocumentIndexer(BaseDocumentIndexer):
         path: str = None,
         search_type: SearchType = None,
     ):
-        """format Find search results"""
-        search_results = super().search(
+        """
+        Return the documents matching the query, as listed by Find.
+
+        Find answers with {"results": [...]}, each result already carrying its
+        id and its title, whatever the language it was indexed under.
+        """
+        return super().search(
             q=q,
             token=token,
             visited=visited,
             nb_results=nb_results,
             path=path,
             search_type=search_type,
-        )
-        return [
-            {
-                **hit["_source"],
-                "id": hit["_id"],
-                "title": self.get_title(hit["_source"]),
-            }
-            for hit in search_results
-        ]
-
-    @staticmethod
-    def get_title(source):
-        """
-        Find returns the titles with an extension depending on the language.
-        This function extracts the title in a generic way.
-
-        Handles multiple cases:
-        - Localized title fields like "title.<some_extension>"
-        - Fallback to plain "title" field if localized version not found
-        - Returns empty string if no title field exists
-
-        Args:
-            source (dict): The _source dictionary from a search hit
-
-        Returns:
-            str: The extracted title or empty string if not found
-
-        Example:
-            >>> get_title({"title.fr": "Bonjour", "id": 1})
-            "Bonjour"
-            >>> get_title({"title": "Hello", "id": 1})
-            "Hello"
-            >>> get_title({"id": 1})
-            ""
-        """
-        titles = get_value_by_pattern(source, r"^title\.")
-        for title in titles:
-            if title:
-                return title
-        if "title" in source:
-            return source["title"]
-        return ""
+        )["results"]
 
     def serialize_document(self, document, content, accesses):
         """
