@@ -24,6 +24,11 @@ body > #__next > .c__app > div:has(> .c__loader) {
   box-sizing: border-box;
 }
 
+.bn-inline-content-section .bn-code-block-source-popup-body > pre > code {
+  display: block;
+  min-height: 1.5em;
+}
+
 *:focus-visible {
   outline: 2px solid var(--c--globals--colors--brand-400);
   outline-offset: calc(-1 * var(--c--globals--spacings--4xs));

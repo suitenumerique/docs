@@ -19,6 +19,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) fix Firefox crash when typing in inline equations #2818
 - 🐛(frontend) no offline banner when a third-party POST fails #2939
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
 
