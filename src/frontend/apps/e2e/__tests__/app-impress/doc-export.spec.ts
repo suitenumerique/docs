@@ -450,6 +450,11 @@ test.describe('Doc Export', () => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
+    // The fixture holds the content only, without the title heading.
+    await page.getByText('Include document title').click();
+    await expect(
+      page.getByRole('checkbox', { name: 'Include document title' }),
+    ).not.toBeChecked();
     await page.getByTestId('doc-export-download-button').click();
 
     const download = await downloadPromise;

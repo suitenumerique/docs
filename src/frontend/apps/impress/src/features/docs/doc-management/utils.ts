@@ -38,3 +38,42 @@ export const getEmojiAndTitle = (title: string) => {
 
   return { emoji: null, titleWithoutEmoji: title };
 };
+
+const normalizeTitle = (title: string) =>
+  getEmojiAndTitle(title)
+    .titleWithoutEmoji.replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+
+type InlineNode = { text?: unknown; content?: unknown };
+
+/** The plain text of inline content, links included. */
+const inlineText = (content: unknown): string =>
+  Array.isArray(content)
+    ? content
+        .map((node: InlineNode) =>
+          typeof node.text === 'string' ? node.text : inlineText(node.content),
+        )
+        .join('')
+    : '';
+
+/**
+ * Whether the document already opens with its title: a first block that is a
+ * level 1 heading of the same text, emoji, case and spacing aside.
+ */
+export const startsWithTitle = (
+  blocks: { type: string; props?: unknown; content?: unknown }[],
+  title: string,
+): boolean => {
+  const [first] = blocks;
+  const normalizedTitle = normalizeTitle(title);
+  if (
+    !normalizedTitle ||
+    first?.type !== 'heading' ||
+    (first.props as { level?: unknown } | undefined)?.level !== 1
+  ) {
+    return false;
+  }
+
+  return normalizeTitle(inlineText(first.content)) === normalizedTitle;
+};

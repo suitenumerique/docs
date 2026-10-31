@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a dedicated document abilities endpoint #2885
+- ✨(frontend) include the title in exports, with an option to exclude it #1956
 
 ### Changed
 

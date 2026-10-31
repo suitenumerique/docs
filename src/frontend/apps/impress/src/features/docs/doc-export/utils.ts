@@ -7,6 +7,7 @@ import { Canvg } from 'canvg';
 import { IParagraphOptions, ShadingType } from 'docx';
 import React from 'react';
 
+import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { getDoc } from '@/docs/doc-management/api/useDoc';
 
 const WINDOWS_RESERVED_FILENAME =
@@ -150,6 +151,27 @@ export function getExportFilename(title: string): string {
   }
 
   return WINDOWS_RESERVED_FILENAME.test(filename) ? `_${filename}` : filename;
+}
+
+/**
+ * Builds the level 1 heading that prepends the title to an exported document.
+ */
+export function createTitleBlock(
+  title: string,
+): DocsBlockNoteEditor['document'][number] {
+  return {
+    id: 'doc-title',
+    type: 'heading',
+    props: {
+      level: 1,
+      isToggleable: false,
+      textColor: 'default',
+      backgroundColor: 'default',
+      textAlignment: 'left',
+    },
+    content: [{ type: 'text', text: title, styles: {} }],
+    children: [],
+  };
 }
 
 /**

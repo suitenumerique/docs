@@ -21,12 +21,15 @@ import { resolveInterlinkTitles } from '../utils';
 export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
   const { t } = useTranslation();
 
-  const docToBlob = async (format: string, documentTitle: string) => {
+  const docToBlob = async (
+    format: string,
+    documentTitle: string,
+    exportDocument: DocsBlockNoteEditor['document'],
+  ) => {
     if (!editor) {
       return;
     }
 
-    const exportDocument = editor.document;
     const interlinkTitles = await resolveInterlinkTitles(exportDocument);
     const imageUnavailableText = t('This image could not be exported.', {
       description:
