@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
+import { DEFAULT_QUERY_RETRY } from '@/core';
 import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
 import {
   KEY_DOC,
@@ -23,6 +24,12 @@ export const LinkSelected = ({ docId, blockId }: LinkSelectedProps) => {
     {
       queryKey: [KEY_DOC, { id: docId }],
       refetchOnWindowFocus: (query) => query.state.error?.status !== 403,
+      retry: (failureCount, error) => {
+        if ([401, 403, 404].includes(error.status)) {
+          return false;
+        }
+        return failureCount < DEFAULT_QUERY_RETRY;
+      },
     },
   );
   const { untitledDocument } = useTrans();
