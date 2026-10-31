@@ -9,6 +9,8 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a dedicated document abilities endpoint #2885
+- ✨(frontend) include the title in exports, with an option to exclude it #1956
+- ✨(frontend) skip the presenter title slide when the doc opens with it
 
 ### Changed
 

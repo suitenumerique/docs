@@ -7,7 +7,7 @@ import { css } from 'styled-components';
 
 import { Box } from '@/components';
 import { useEditorStore } from '@/docs/doc-editor/stores';
-import { Doc, getEmojiAndTitle } from '@/docs/doc-management';
+import { Doc, getEmojiAndTitle, startsWithTitle } from '@/docs/doc-management';
 
 import { PRESENTER_WINDOW_RADIUS } from '../constants';
 import { useBrowserFullscreen } from '../hooks/useBrowserFullscreen';
@@ -76,6 +76,11 @@ export const PresenterOverlay = ({
     snapshotRef.current = editor ? [...editor.document] : [];
   }
   const snapshotBlocks = snapshotRef.current;
+  // Decided once with the snapshot: a rename during the presentation must not
+  // add or remove the title slide and shift every slide after it.
+  const [hasTitleSlide] = useState(
+    () => !startsWithTitle(snapshotBlocks, doc.title ?? ''),
+  );
 
   const contentSlides = useSlides(snapshotBlocks);
   const title = useMemo(() => {
@@ -92,10 +97,13 @@ export const PresenterOverlay = ({
   }, [doc.title, t]);
   const slides = useMemo<PresenterSlideData[]>(
     () => [
-      { kind: 'title', title, showDividerHint: false },
+      // No generated title slide when the document already opens with it.
+      ...(hasTitleSlide
+        ? [{ kind: 'title' as const, title, showDividerHint: false }]
+        : []),
       ...contentSlides.map((blocks) => ({ kind: 'content' as const, blocks })),
     ],
-    [contentSlides, title],
+    [contentSlides, hasTitleSlide, title],
   );
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
