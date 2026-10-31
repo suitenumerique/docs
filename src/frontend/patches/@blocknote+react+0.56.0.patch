@@ -1,0 +1,28 @@
+diff --git a/node_modules/@blocknote/react/dist/blocknote-react.js b/node_modules/@blocknote/react/dist/blocknote-react.js
+index 0b5409c..0e654d8 100644
+--- a/node_modules/@blocknote/react/dist/blocknote-react.js
++++ b/node_modules/@blocknote/react/dist/blocknote-react.js
+@@ -3271,9 +3271,6 @@ var Ca = (e) => /* @__PURE__ */ J("div", {
+ 						"aria-label": d,
+ 						"aria-invalid": c ? !0 : void 0,
+ 						"aria-describedby": c ? h : void 0
+-					}), r && o.length === 0 && /* @__PURE__ */ q("br", {
+-						"aria-hidden": "true",
+-						contentEditable: !1
+ 					})]
+ 				}), /* @__PURE__ */ q("div", {
+ 					className: "bn-code-block-source-popup-ok-button-wrapper",
+diff --git a/node_modules/@blocknote/react/src/blocks/SourceWithPreview/SourceWithPreview.tsx b/node_modules/@blocknote/react/src/blocks/SourceWithPreview/SourceWithPreview.tsx
+index 9286327..d01f990 100644
+--- a/node_modules/@blocknote/react/src/blocks/SourceWithPreview/SourceWithPreview.tsx
++++ b/node_modules/@blocknote/react/src/blocks/SourceWithPreview/SourceWithPreview.tsx
+@@ -206,9 +206,6 @@ export const SourceWithPreview = (
+               aria-invalid={error ? true : undefined}
+               aria-describedby={error ? errorId : undefined}
+             />
+-            {inline && source.length === 0 && (
+-              <br aria-hidden="true" contentEditable={false} />
+-            )}
+           </pre>
+           <div
+             className="bn-code-block-source-popup-ok-button-wrapper"
