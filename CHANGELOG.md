@@ -16,6 +16,7 @@ and this project adheres to
 - ⬆️(frontend) upgrade BlockNote to 0.56.0 #2936
 - ♻️(frontend) export PDFs with the Typst engine #2936
 - ⚡️(yhub) read the abilities from the dedicated backend endpoint #2922
+- ♻️(backend) remove the unused scope of the document throttles #2951
 
 ### Fixed
 
