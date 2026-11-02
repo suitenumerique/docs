@@ -539,16 +539,16 @@ backend:
   ## @param backend.celery.command Override the celery container command
   ## @param backend.celery.args Override the celery container args
   ## @param backend.celery.resources Resource requirements for the celery container
-  ## @param backend.celery.probes.liveness.exec.command Override the celery container liveness probe command
-  ## @param backend.celery.probes.liveness.initialDelaySeconds Initial delay for the celery container liveness probe
+  ## @param backend.celery.probes.liveness.exec.command Override the celery container liveness probe command, fails when the heartbeat file of the worker (`WORKER_HEARTBEAT_FILE`) is older than 2 minutes
   ## @param backend.celery.probes.liveness.timeoutSeconds Timeout for the celery container liveness probe
-  ## @param backend.celery.probes.readiness.exec.command Override the celery container readiness probe command
-  ## @param backend.celery.probes.readiness.initialDelaySeconds Initial delay for the celery container readiness probe
-  ## @param backend.celery.probes.readiness.timeoutSeconds Timeout for the celery container readiness probe
-  ## @extra backend.celery.probes.liveness.periodSeconds Period for the celery container liveness probe
-  ## @extra backend.celery.probes.liveness.failureThreshold Failure threshold for the celery container liveness probe
-  ## @extra backend.celery.probes.readiness.periodSeconds Period for the celery container readiness probe
-  ## @extra backend.celery.probes.readiness.failureThreshold Failure threshold for the celery container readiness probe
+  ## @param backend.celery.probes.liveness.periodSeconds Period for the celery container liveness probe
+  ## @param backend.celery.probes.liveness.failureThreshold Failure threshold for the celery container liveness probe
+  ## @param backend.celery.probes.startup.exec.command Override the celery container startup probe command, succeeds once the worker created its ready file (`WORKER_READY_FILE`)
+  ## @param backend.celery.probes.startup.timeoutSeconds Timeout for the celery container startup probe
+  ## @param backend.celery.probes.startup.periodSeconds Period for the celery container startup probe
+  ## @param backend.celery.probes.startup.failureThreshold Failure threshold for the celery container startup probe
+  ## @param backend.celery.probes.readiness Readiness probe of the celery container, none by default: no Service sends traffic to the worker
+  ## @extra backend.celery.probes.liveness.initialDelaySeconds Initial delay for the celery container liveness probe
   ## @extra backend.celery.envVars Celery worker specific environment variables (not shared with the backend web deployment)
   ## @skip backend.celery.envVars
   ## @skip backend.celery.envFrom List of environment variables taken from Secrets or configMaps, specific to celery worker
@@ -569,6 +569,12 @@ backend:
     envVars: {}
     envFrom: []
     resources: {}
+    # The worker touches its heartbeat file every 5 seconds from its event
+    # loop (impress/celery_probes.py). The loop also stops while the broker is
+    # unreachable, so the liveness window is long enough to ride out a broker
+    # failover: the container is restarted after 3 to 3.5 minutes without a
+    # heartbeat. A heartbeat dated in the future (node clock stepped back)
+    # fails too, or a stuck worker would pass until the clock caught up.
     probes:
       liveness:
         exec:
@@ -576,20 +582,19 @@ backend:
             [
               "/bin/sh",
               "-c",
-              "celery -A impress.celery_app inspect ping -d impress@$HOSTNAME",
+              'f=/tmp/celery_worker_heartbeat; [ -f "$f" ] && age=$(( $(date +%s) - $(stat -c %Y "$f") )) && [ "$age" -ge 0 ] && [ "$age" -lt 120 ]',
             ]
-        initialDelaySeconds: 60
         timeoutSeconds: 5
-      readiness:
+        periodSeconds: 30
+        failureThreshold: 3
+      # Leaves up to 5 minutes to connect to the broker before liveness starts.
+      startup:
         exec:
-          command:
-            [
-              "/bin/sh",
-              "-c",
-              "celery -A impress.celery_app inspect ping -d impress@$HOSTNAME",
-            ]
-        initialDelaySeconds: 15
+          command: ["/bin/sh", "-c", "test -f /tmp/celery_worker_ready"]
         timeoutSeconds: 5
+        periodSeconds: 5
+        failureThreshold: 60
+      readiness: {}
 
 ## @section frontend
 
