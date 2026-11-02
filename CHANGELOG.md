@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a dedicated document abilities endpoint #2885
+- ✨(backend) allow OIDC back-channel logout configuration
 
 ### Changed
 
