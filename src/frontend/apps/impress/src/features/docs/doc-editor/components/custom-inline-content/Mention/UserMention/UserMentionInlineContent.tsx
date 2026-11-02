@@ -3,6 +3,7 @@ import { createReactInlineContentSpec } from '@blocknote/react';
 import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
+import { inlineNodeCommentsPropSchema } from '@/docs/doc-comments/extensions/InlineNodeCommentsExtension';
 import { UserAvatar } from '@/features/auth';
 
 export type UserMentionInlineContentType = {
@@ -12,6 +13,9 @@ export type UserMentionInlineContentType = {
       default: '';
     };
     fullName: {
+      default: '';
+    };
+    commentMarks?: {
       default: '';
     };
   };
@@ -37,6 +41,7 @@ export const UserMentionInlineContent = createReactInlineContentSpec<
       fullName: {
         default: '',
       },
+      ...inlineNodeCommentsPropSchema,
     },
     content: 'none',
   },

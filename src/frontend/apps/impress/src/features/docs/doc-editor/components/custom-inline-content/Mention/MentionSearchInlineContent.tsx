@@ -1,6 +1,8 @@
 import { StyleSchema } from '@blocknote/core';
 import { createReactInlineContentSpec } from '@blocknote/react';
 
+import { inlineNodeCommentsPropSchema } from '@/docs/doc-comments/extensions/InlineNodeCommentsExtension';
+
 import { Search } from './Search';
 
 export type MentionSearchInlineContentType = {
@@ -13,6 +15,9 @@ export type MentionSearchInlineContentType = {
     trigger?: {
       default: '/';
       values: readonly ['/', '@'];
+    };
+    commentMarks?: {
+      default: '';
     };
   };
   content: 'none';
@@ -41,6 +46,7 @@ export const MentionSearchInlineContent = createReactInlineContentSpec<
         default: '/',
         values: ['/', '@'],
       },
+      ...inlineNodeCommentsPropSchema,
     },
     content: 'none',
   },
