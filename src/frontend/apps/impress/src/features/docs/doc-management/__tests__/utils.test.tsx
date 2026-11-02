@@ -8,6 +8,7 @@ import {
   getDocLinkReach,
   getDocLinkRole,
   getEmojiAndTitle,
+  startsWithTitle,
 } from '../utils';
 
 vi.mock('yjs', () => {
@@ -196,6 +197,71 @@ describe('doc-management utils', () => {
 
       expect(result.emoji).toBe('🚀');
       expect(result.titleWithoutEmoji).toBe('📚 Project Documentation');
+    });
+  });
+
+  describe('startsWithTitle', () => {
+    const heading = (text: string, level = 1) => ({
+      type: 'heading',
+      props: { level },
+      content: [{ type: 'text', text, styles: {} }],
+    });
+
+    it('matches a first heading with the title, emoji, case and spacing aside', () => {
+      expect(startsWithTitle([heading('Roadmap')], 'Roadmap')).toBe(true);
+      expect(startsWithTitle([heading(' q1  ROADMAP ')], '🚀 Q1 Roadmap')).toBe(
+        true,
+      );
+    });
+
+    it('does not match another heading, a paragraph or an empty document', () => {
+      expect(startsWithTitle([heading('Introduction')], 'Roadmap')).toBe(false);
+      expect(
+        startsWithTitle(
+          [{ ...heading('Roadmap'), type: 'paragraph' }],
+          'Roadmap',
+        ),
+      ).toBe(false);
+      expect(startsWithTitle([], 'Roadmap')).toBe(false);
+    });
+
+    it('reads the text inside links', () => {
+      expect(
+        startsWithTitle(
+          [
+            {
+              ...heading(' 2026'),
+              content: [
+                {
+                  type: 'link',
+                  href: 'https://example.com',
+                  content: [{ type: 'text', text: 'Roadmap', styles: {} }],
+                },
+                { type: 'text', text: ' 2026', styles: {} },
+              ],
+            },
+          ],
+          'Roadmap 2026',
+        ),
+      ).toBe(true);
+    });
+
+    it('does not match a heading below level 1', () => {
+      expect(startsWithTitle([heading('Roadmap', 2)], 'Roadmap')).toBe(false);
+    });
+
+    it('does not match an empty title', () => {
+      expect(startsWithTitle([heading('')], '')).toBe(false);
+      expect(startsWithTitle([heading('')], '📝')).toBe(false);
+    });
+
+    it('only looks at the first block', () => {
+      expect(
+        startsWithTitle(
+          [{ ...heading('Intro'), type: 'paragraph' }, heading('Roadmap')],
+          'Roadmap',
+        ),
+      ).toBe(false);
     });
   });
 });

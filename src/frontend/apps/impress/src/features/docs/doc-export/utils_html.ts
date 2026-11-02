@@ -381,13 +381,11 @@ export const improveHtmlAccessibility = (
     }
   });
 
-  // 8) Wrap content in an article with a title landmark if none exists
+  // 8) Wrap content in an article, labelled by the first h1 if there is one,
+  // by the document title otherwise
   const existingH1 = body.querySelector('h1');
-  if (!existingH1) {
-    const titleHeading = parsedDocument.createElement('h1');
-    titleHeading.id = 'doc-title';
-    titleHeading.textContent = documentTitle;
-    body.insertBefore(titleHeading, body.firstChild);
+  if (existingH1) {
+    existingH1.id = 'doc-title';
   }
 
   // If there is no article, group the body content inside one for better semantics.
@@ -395,7 +393,11 @@ export const improveHtmlAccessibility = (
   if (!hasArticle) {
     const article = parsedDocument.createElement('article');
     article.setAttribute('role', 'document');
-    article.setAttribute('aria-labelledby', 'doc-title');
+    if (existingH1) {
+      article.setAttribute('aria-labelledby', 'doc-title');
+    } else {
+      article.setAttribute('aria-label', documentTitle);
+    }
     while (body.firstChild) {
       article.appendChild(body.firstChild);
     }

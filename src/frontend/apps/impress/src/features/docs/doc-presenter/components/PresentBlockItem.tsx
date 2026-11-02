@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Box } from '@/components';
 import type { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
+import { startsWithTitle, useDocStore } from '@/docs/doc-management';
 import PresentIcon from '@/icons/present.svg';
 import { useResponsiveStore } from '@/stores';
 
@@ -24,6 +25,7 @@ export const PresentBlockItem = () => {
     selector: (state) => state?.block,
   });
   const openPresenter = usePresenterStore((state) => state.open);
+  const docTitle = useDocStore((state) => state.currentDoc?.title ?? '');
   const { isMobile } = useResponsiveStore();
 
   // Hidden on mobile (no presenter there) and until a block is targeted
@@ -36,14 +38,17 @@ export const PresentBlockItem = () => {
     <Components.Generic.Menu.Item
       className="bn-menu-item"
       onClick={() => {
+        const blocks = editor.document as PresenterBlock[];
         const contentSlideIndex = getContentSlideIndexForBlock(
-          editor.document as PresenterBlock[],
+          blocks,
           block.id,
         );
 
-        // Overlay slide 0 is the generated title slide; content slides start
-        // at index 1, hence the +1 on the 0-based content-slide index.
-        openPresenter(contentSlideIndex + 1);
+        // Overlay slide 0 is the generated title slide, unless the document
+        // already opens with its title; content slides follow it.
+        openPresenter(
+          contentSlideIndex + (startsWithTitle(blocks, docTitle) ? 0 : 1),
+        );
       }}
     >
       <Box $align="center" $gap="xxs" $direction="row">

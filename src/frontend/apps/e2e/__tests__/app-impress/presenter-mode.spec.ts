@@ -215,6 +215,42 @@ test.describe('Presenter Mode', () => {
     await expect(overlay).toBeHidden();
   });
 
+  test('skips the title slide when the doc opens with its title', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'presenter-own-title',
+      browserName,
+      1,
+    );
+    await tryFocusEditorContent({ page });
+    await page.keyboard.type(`# ${docTitle}`);
+    await page.keyboard.press('Enter');
+    await insertDivider(page);
+    await page.keyboard.press('Enter');
+    await writeInEditor({ page, text: 'Slide two' });
+
+    await page
+      .locator('.bn-block-outer')
+      .filter({ hasText: 'Slide two' })
+      .first()
+      .hover();
+    await page.locator('.bn-side-menu > button').last().click();
+    await page.getByRole('menuitem', { name: 'Present from here' }).click();
+
+    const overlay = page.getByRole('dialog', { name: 'Presenter mode' });
+    await expect(overlay.getByText('2 / 2')).toBeVisible();
+    await expect(overlay.getByText('Slide two')).toBeVisible();
+
+    await overlay.getByRole('button', { name: 'Previous slide' }).click();
+    await expect(overlay.getByText('1 / 2')).toBeVisible();
+    await expect(
+      overlay.getByRole('heading', { name: docTitle, level: 1 }),
+    ).toBeVisible();
+  });
+
   test('does not show selected-node chrome when the first slide block is an image', async ({
     page,
     browserName,

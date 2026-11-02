@@ -52,15 +52,12 @@ describe('improveHtmlAccessibility', () => {
       expect(doc.querySelector('h2')).toBeNull();
     });
 
-    it('inserts an h1 with the document title when none exists', () => {
+    it('does not insert an h1 when none exists', () => {
       const doc = parse(`<p>Content</p>`);
 
-      improveHtmlAccessibility(doc, 'My Doc');
+      improveHtmlAccessibility(doc, 'Doc');
 
-      const h1 = doc.querySelector('h1');
-      expect(h1).not.toBeNull();
-      expect(h1!.id).toBe('doc-title');
-      expect(h1!.textContent).toBe('My Doc');
+      expect(doc.querySelector('h1')).toBeNull();
     });
 
     it('does not insert h1 when the document already has one', () => {
@@ -68,7 +65,7 @@ describe('improveHtmlAccessibility', () => {
         <div data-content-type="heading" data-level="1"><span>Existing</span></div>
       `);
 
-      improveHtmlAccessibility(doc, 'Ignored');
+      improveHtmlAccessibility(doc, 'Doc');
 
       expect(doc.querySelectorAll('h1')).toHaveLength(1);
     });
@@ -262,6 +259,19 @@ describe('improveHtmlAccessibility', () => {
     const article = doc.querySelector('article');
     expect(article).not.toBeNull();
     expect(article!.getAttribute('role')).toBe('document');
+    expect(article!.hasAttribute('aria-labelledby')).toBe(false);
+    expect(article!.getAttribute('aria-label')).toBe('Doc');
+  });
+
+  it('labels the article by its first h1 when there is one', () => {
+    const doc = parse(`
+      <div data-content-type="heading" data-level="1"><span>Doc</span></div>
+    `);
+
+    improveHtmlAccessibility(doc, 'Doc');
+
+    const article = doc.querySelector('article');
     expect(article!.getAttribute('aria-labelledby')).toBe('doc-title');
+    expect(article!.hasAttribute('aria-label')).toBe(false);
   });
 });
