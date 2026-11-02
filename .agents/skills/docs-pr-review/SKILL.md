@@ -1,6 +1,6 @@
 ---
 name: docs-pr-review
-description: Review pull requests and code changes in La Suite Docs. Use when reviewing a PR, branch, diff, or set of changes in the Docs repository. Focus on correctness, regressions, security, permissions, collaborative editing/Yjs behavior, API contracts, database performance, frontend behavior, concurrency, deployment risks, and missing tests. Produce a concise review prioritizing actionable issues over style comments.
+description: Review pull requests and code changes in La Suite Docs. Use when reviewing a PR, branch, diff, or set of changes in the Docs repository. Focus on correctness, regressions, security, permissions, collaborative editing/Yjs behavior, API contracts, database performance, frontend behavior, concurrency, deployment risks, and missing tests. Verifies frontend-side changes in a real browser automatically. Produce a concise review prioritizing actionable issues over style comments.
 ---
 
 # Docs PR review
@@ -18,6 +18,12 @@ ten speculative comments. Do not modify code unless asked.
 - Work out the intent, then which areas it touches: backend, frontend, API
   contract, permissions, collaboration (yhub), Celery, storage, deployment,
   tests.
+- Classify the diff. It is **frontend side** as soon as it touches
+  `src/frontend/` (`apps/impress`, `packages`, i18n, styles, assets; the E2E
+  app on its own does not count), or when a backend or yhub change alters
+  something the UI displays (abilities, error responses, API fields). That
+  triggers the browser check of section 2, automatic when a browser tool is
+  available. Backend-only, docs-only and CI-only PRs skip it explicitly.
 - Read the surrounding code before reporting: another layer may already
   handle the case.
 
@@ -77,16 +83,28 @@ without rollback, loading, empty, error and disabled states, rights changing
 while the page is open. Accessibility: use the `docs-accessibility-review`
 skill for anything beyond the obvious.
 
-**Runtime check (frontend and accessibility).** When the change touches the UI
-or accessibility, verify it in a browser rather than from the diff alone, with
-a browser tool such as the Chrome DevTools or Playwright MCP (stack and login:
-see `docs-accessibility-review`). Look for the tools your agent exposes; never
-invent tool names. If none is available, do not install anything or touch any
+**Runtime check (frontend side PRs).** When your agent exposes a browser tool
+(Chrome DevTools or Playwright MCP, ...; never invent tool names), do it
+automatically, without being asked, in addition to the source review, never
+instead of it. Check that the dev stack is up, otherwise start it with the
+`docs-start` skill; for the stack, login and disposable document, follow
+`docs-accessibility-review` section 4. Then exercise the changed UI: load the
+affected pages, snapshot the accessibility tree, try the changed interactions
+with the keyboard and the mouse, check a narrow (mobile) width, light and dark
+when styles changed, console errors and failed network requests, and the error,
+empty and loading states. Report browser findings like the others, flagged
+**verified in browser**; flag the checks not done **not verified**. If the stack
+cannot be started, apply the same marking and state why.
+
+When no browser tool is available, do not install anything or touch any
 configuration silently: finish the source review, mark the browser checks
-**not verified**, and end by asking the user whether to add one of these MCPs
-to your agent's project-level configuration (not its global one) for a better
-review. The agent may need a restart to load it, so propose a second pass
-afterwards.
+**not verified**, and end the review by telling the user, in these words or
+close to them: "You don't have a browser MCP installed (Chrome DevTools or
+Playwright), so I could not check this PR in a browser. For a better review,
+consider adding one. Do you want me to add it to the project Claude settings?"
+If they accept, add it to the project-level configuration of your agent (not the
+global one), then propose a second pass once the agent has reloaded it, as it
+may need a restart.
 
 **API contract**: both sides agree on field names, nullability, enums, status
 codes and error shape; an old frontend can talk to a new backend during a
@@ -150,6 +168,9 @@ For each finding:
 - Problem, and the scenario in which it happens
 - Impact
 - Suggested fix, in a sentence or two
+
+For a frontend side PR, add a short **Browser verification** part: what was
+loaded, what was exercised, and what was not verified (with the reason).
 
 If nothing meaningful is found, say "No blocking or important issue found",
 then list what deserves manual verification.
