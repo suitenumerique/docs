@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import HomeSvg from '@/icons/house-rounded.svg';
 import RetrySvg from '@/icons/retry.svg';
+import { isSafeRelativePath } from '@/utils/url';
 
 import { Box } from './Box';
 import { ButtonLink } from './Link';
@@ -12,22 +13,13 @@ import { Text } from './Text';
 
 const ACTION_ICON_SIZE = 16;
 
-const SAFE_RELATIVE_PATH = /^\/(?!\/)[\w\-.~%!$&'()*+,;=:@/?#[\]]*$/;
-
 const getSafeRefreshUrl = (target?: string): string | undefined => {
-  if (!target || !SAFE_RELATIVE_PATH.test(target)) {
+  if (!target || !isSafeRelativePath(target)) {
     return undefined;
   }
 
-  try {
-    const url = new URL(target, window.location.origin);
-    if (url.origin !== window.location.origin) {
-      return undefined;
-    }
-    return url.pathname + url.search + url.hash;
-  } catch {
-    return undefined;
-  }
+  const url = new URL(target, window.location.origin);
+  return url.pathname + url.search + url.hash;
 };
 
 interface ErrorPageProps {

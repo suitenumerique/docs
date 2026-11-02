@@ -1,3 +1,19 @@
+const SAFE_RELATIVE_PATH = /^\/(?!\/)[\w\-.~%!$&'()*+,;=:@/?#[\]]*$/;
+
+export function isSafeRelativePath(path: string): boolean {
+  if (!SAFE_RELATIVE_PATH.test(path)) {
+    return false;
+  }
+
+  try {
+    return (
+      new URL(path, window.location.origin).origin === window.location.origin
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function isSafeUrl(url: string): boolean {
   try {
     // Parse the URL with a base to support relative URLs
