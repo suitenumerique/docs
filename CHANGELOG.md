@@ -18,6 +18,7 @@ and this project adheres to
 - ♻️(frontend) export PDFs with the Typst engine #2936
 - ⚡️(yhub) read the abilities from the dedicated backend endpoint #2922
 - ♻️(backend) remove the unused scope of the document throttles #2951
+- ⚡️(backend) probe the celery worker with heartbeat files, not inspect ping
 
 ### Fixed
 

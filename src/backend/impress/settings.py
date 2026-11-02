@@ -706,6 +706,20 @@ class Base(Configuration):
     # Celery
     CELERY_BROKER_URL = values.Value("redis://redis:6379/0")
     CELERY_BROKER_TRANSPORT_OPTIONS = values.DictValue({})
+    # Files read by the probes of the worker container (impress/celery_probes.py)
+    WORKER_HEARTBEAT_FILE = values.Value(
+        "/tmp/celery_worker_heartbeat",  # noqa: S108
+        environ_name="WORKER_HEARTBEAT_FILE",
+        environ_prefix=None,
+    )
+    WORKER_HEARTBEAT_INTERVAL = values.PositiveIntegerValue(
+        5, environ_name="WORKER_HEARTBEAT_INTERVAL", environ_prefix=None
+    )
+    WORKER_READY_FILE = values.Value(
+        "/tmp/celery_worker_ready",  # noqa: S108
+        environ_name="WORKER_READY_FILE",
+        environ_prefix=None,
+    )
 
     # Session
     SESSION_ENGINE = "django.contrib.sessions.backends.cache"

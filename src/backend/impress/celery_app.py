@@ -14,6 +14,8 @@ install(check_options=True)
 # Can not be loaded only after install call.
 from django.conf import settings  # pylint: disable=wrong-import-position
 
+from impress.celery_probes import HeartbeatStep  # pylint: disable=wrong-import-position
+
 app = Celery("impress")
 
 # Using a string here means the worker doesn't have to serialize
@@ -24,3 +26,6 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+
+# Health files read by the probes of the worker container.
+app.steps["consumer"].add(HeartbeatStep)
