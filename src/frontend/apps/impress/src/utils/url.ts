@@ -1,3 +1,25 @@
+const SAFE_RELATIVE_PATH = /^\/(?!\/)[\w\-.~%!$&'()*+,;=:@/?#[\]]*$/;
+
+export function getSafeRefreshUrl(target?: string): string | undefined {
+  if (!target || !SAFE_RELATIVE_PATH.test(target)) {
+    return undefined;
+  }
+
+  if (typeof window === 'undefined') {
+    return target;
+  }
+
+  try {
+    const url = new URL(target, window.location.origin);
+    if (url.origin !== window.location.origin) {
+      return undefined;
+    }
+    return url.pathname + url.search + url.hash;
+  } catch {
+    return undefined;
+  }
+}
+
 export function isSafeUrl(url: string): boolean {
   try {
     // Parse the URL with a base to support relative URLs

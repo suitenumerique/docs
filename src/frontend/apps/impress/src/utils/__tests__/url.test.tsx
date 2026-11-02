@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getSafeRefreshUrl,
   isDataUrl,
   isLocalDevOrigin,
   isSafeUrl,
@@ -113,6 +114,30 @@ describe('isSafeUrl', () => {
         expect(isSafeUrl(url)).toBe(true);
       });
     });
+  });
+});
+
+describe('getSafeRefreshUrl', () => {
+  it('returns a path on this site, query and hash included', () => {
+    expect(getSafeRefreshUrl('/docs/123?from=a#part')).toBe(
+      '/docs/123?from=a#part',
+    );
+  });
+
+  it('returns undefined when no target is given', () => {
+    expect(getSafeRefreshUrl()).toBeUndefined();
+  });
+
+  it('returns undefined for an absolute URL', () => {
+    expect(getSafeRefreshUrl('https://example.com/docs/123')).toBeUndefined();
+  });
+
+  it('returns undefined for a protocol-relative URL', () => {
+    expect(getSafeRefreshUrl('//example.com/docs/123')).toBeUndefined();
+  });
+
+  it('returns undefined for a javascript URL', () => {
+    expect(getSafeRefreshUrl('javascript:alert(1)')).toBeUndefined();
   });
 });
 

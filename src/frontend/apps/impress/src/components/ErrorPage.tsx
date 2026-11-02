@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 import { Box, Icon, StyledLink, Text } from '@/components';
+import { getSafeRefreshUrl } from '@/utils/url';
 
 const StyledButton = styled(Button)`
   width: fit-content;
@@ -16,28 +17,6 @@ interface ErrorPageProps {
   refreshTarget?: string;
   showReload?: boolean;
 }
-
-const getSafeRefreshUrl = (target?: string): string | undefined => {
-  if (!target) {
-    return undefined;
-  }
-
-  if (typeof window === 'undefined') {
-    return target.startsWith('/') && !target.startsWith('//')
-      ? target
-      : undefined;
-  }
-
-  try {
-    const url = new URL(target, window.location.origin);
-    if (url.origin !== window.location.origin) {
-      return undefined;
-    }
-    return url.pathname + url.search + url.hash;
-  } catch {
-    return undefined;
-  }
-};
 
 export const ErrorPage = ({
   image,
