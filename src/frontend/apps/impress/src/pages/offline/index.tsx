@@ -90,7 +90,7 @@ const Page: NextPageWithLayout = () => {
             $theme="neutral"
             $variation="primary"
           >
-            {t('Offline ?!', { description: 'Heading of the offline page' })}
+            {t('Offline ?', { description: 'Heading of the offline page' })}
           </Text>
           <Text
             as="p"

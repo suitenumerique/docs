@@ -7,7 +7,7 @@ test.describe('Offline', () => {
     await expect(
       page.getByRole('heading', {
         level: 1,
-        name: 'Offline ?!',
+        name: 'Offline ?',
       }),
     ).toBeVisible();
     await expect(
