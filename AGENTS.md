@@ -198,6 +198,7 @@ Mandatory description explaining why.
 - Types: `backend`, `frontend`, `ci`, `docker`, `dependencies`, `e2e`, `export`, `auth`, etc.
 - Gitmoji examples: `✨` feature, `🐛` fix, `♻️` refactor, `⬆️` dependency upgrade, `🔒️` security
 - Commits must be signed (`-S`) and signed-off (`--signoff`)
+- One commit = one concern, and the tests and docs of a change go in the same commit, never in a follow-up one (see `CONTRIBUTING.md`)
 
 ### Changelog
 

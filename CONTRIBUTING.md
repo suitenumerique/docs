@@ -129,6 +129,13 @@ Example Commit Message:
 Implemented login and signup features, and integrated OAuth2 for social login.
 ```
 
+#### What goes in one commit
+
+One commit = one concern = one story, told completely.
+
+* **Separate concerns**: do not mix unrelated changes (a feature and an unrelated fix, a refactor and new behaviour) in the same commit.
+* **But do not split a story**: the tests and the documentation that belong to a change are part of that change and go in the **same commit**. No `✅ add tests` or `📝 update docs` commit after the fact. The test shows what the commit is about, and the doc update proves nothing was left stale.
+
 #### Changelog Update
 
 The changelog entry should include a brief summary of the changes, this helps in tracking changes effectively and keeping everyone informed.
