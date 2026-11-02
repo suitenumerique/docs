@@ -20,6 +20,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) keep comments on inline nodes after a reload #2807
 - 🐛(frontend) no offline banner when a third-party POST fails #2939
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
 

@@ -36,6 +36,7 @@ describe('UserMentionInlineContent', () => {
     expect(Object.keys(UserMentionInlineContent.config.propSchema)).toEqual([
       'userId',
       'fullName',
+      'commentMarks',
     ]);
   });
 

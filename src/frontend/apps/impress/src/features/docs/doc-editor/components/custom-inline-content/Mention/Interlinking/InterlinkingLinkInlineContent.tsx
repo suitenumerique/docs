@@ -36,6 +36,13 @@ export type InterlinkingLinkInlineContentType = {
       default: '/';
       values: readonly ['/', '@'];
     };
+    /**
+     * Persisted comment marks for this content-less inline node. See
+     * `INLINE_NODE_COMMENTS_PROP` / `InlineNodeCommentsExtension`.
+     */
+    commentMarks?: {
+      default: '';
+    };
   };
   content: 'none';
 };
@@ -60,6 +67,9 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
       trigger: {
         default: '/',
         values: ['/', '@'],
+      },
+      commentMarks: {
+        default: '',
       },
     },
     content: 'none',
