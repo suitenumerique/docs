@@ -57,8 +57,8 @@ OIDC_REDIRECT_ALLOWED_HOSTS="localhost:8083,localhost:3000"
 OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
 
 # Resource Server Backend
-OIDC_OP_URL=http://localhost:8083/realms/docs
-OIDC_OP_INTROSPECTION_ENDPOINT = http://nginx:8083/realms/docs/protocol/openid-connect/token/introspect
+OIDC_OP_URL=http://localhost:8083/realms/impress
+OIDC_OP_INTROSPECTION_ENDPOINT = http://nginx:8083/realms/impress/protocol/openid-connect/token/introspect
 OIDC_RESOURCE_SERVER_ENABLED=False
 OIDC_RS_CLIENT_ID=docs
 OIDC_RS_CLIENT_SECRET=ThisIsAnExampleKeyForDevPurposeOnly
