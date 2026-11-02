@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) allow OIDC back-channel logout configuration #2953
+
 ## [v6.1.1] - 2026-11-24
 
 ### Added
