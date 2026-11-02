@@ -1,35 +1,16 @@
+import { Button } from '@gouvfr-lasuite/ui-components';
 import Head from 'next/head';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
 import HomeSvg from '@/icons/house-rounded.svg';
 import RetrySvg from '@/icons/retry.svg';
 
 import { Box } from './Box';
-import { Icon } from './Icon';
-import { StyledLink } from './Link';
+import { ButtonLink } from './Link';
 import { Text } from './Text';
 
-const actionCss = css`
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  gap: var(--c--globals--spacings--3xs);
-  outline: none;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  color: inherit;
-  font: inherit;
-  &:focus-visible {
-    outline: 2px solid
-      var(--c--contextuals--content--semantic--neutral--tertiary);
-    border-radius: 1px;
-    outline-offset: var(--c--globals--spacings--st);
-  }
-`;
+const ACTION_ICON_SIZE = 16;
 
 const SAFE_RELATIVE_PATH = /^\/(?!\/)[\w\-.~%!$&'()*+,;=:@/?#[\]]*$/;
 
@@ -112,48 +93,41 @@ export const ErrorPage = ({
             {description}
           </Text>
         </Box>
-        <Box $direction="row" $align="center" $gap="base">
-          <StyledLink href="/" $css={actionCss}>
-            <Icon
-              icon={<HomeSvg width={16} height={16} />}
-              $theme="neutral"
-              $variation="tertiary"
-            />
-            <Text
-              $size="xs"
-              $weight={500}
-              $theme="neutral"
-              $variation="tertiary"
-              $margin="0"
-            >
-              {t('Home', {
-                description: 'Button/link label to go back to the home page',
-              })}
-            </Text>
-          </StyledLink>
-          <Box
-            as="button"
-            type="button"
-            $css={actionCss}
+        <Box $direction="row" $align="center" $gap="xs">
+          <ButtonLink
+            href="/"
+            color="neutral"
+            variant="tertiary"
+            size="nano"
+            icon={
+              <HomeSvg
+                width={ACTION_ICON_SIZE}
+                height={ACTION_ICON_SIZE}
+                aria-hidden="true"
+              />
+            }
+          >
+            {t('Home', {
+              description: 'Button/link label to go back to the home page',
+            })}
+          </ButtonLink>
+          <Button
+            color="neutral"
+            variant="tertiary"
+            size="nano"
+            icon={
+              <RetrySvg
+                width={ACTION_ICON_SIZE}
+                height={ACTION_ICON_SIZE}
+                aria-hidden="true"
+              />
+            }
             onClick={handleRefresh}
           >
-            <Icon
-              icon={<RetrySvg width={16} height={16} />}
-              $theme="neutral"
-              $variation="tertiary"
-            />
-            <Text
-              $size="xs"
-              $weight={500}
-              $theme="neutral"
-              $variation="tertiary"
-              $margin="0"
-            >
-              {t('Refresh page', {
-                description: 'Button on the error page to reload the page',
-              })}
-            </Text>
-          </Box>
+            {t('Refresh page', {
+              description: 'Button on the error page to reload the page',
+            })}
+          </Button>
         </Box>
       </Box>
     </>
