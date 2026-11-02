@@ -16,6 +16,16 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+- The Celery worker container is no longer probed with `celery inspect ping`.
+  The worker touches a heartbeat file from its event loop and creates a ready
+  file once it consumes from the broker: the helm chart checks the first with
+  its liveness probe and the second with a new startup probe, and drops the
+  readiness probe. Both files live in `/tmp` by default
+  (`WORKER_HEARTBEAT_FILE`, `WORKER_READY_FILE`): with a read-only root
+  filesystem mount an `emptyDir` there, and if you move them, change the
+  probe commands (`backend.celery.probes`) accordingly. A probe overridden in
+  your own values keeps working, as the worker still answers `inspect ping`.
+
 - The collaboration server reads the abilities of a caller from the new
   `GET /api/v1.0/documents/{id}/abilities/` endpoint instead of
   `GET /api/v1.0/documents/{id}/`. A backend without that endpoint answers
