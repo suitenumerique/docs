@@ -24,6 +24,7 @@ and this project adheres to
 
 ### Fixed
 
+- 📝(doc) list all and formatted_content as resource server actions #3043
 - 🐛(frontend) stop the right panel from covering the doc header actions
 - ✅(frontend) fix act warnings in the tests and fail on them #2983
 - 🔒️(backend) never lower an existing role when accepting a request #2982
