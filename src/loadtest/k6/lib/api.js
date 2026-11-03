@@ -12,12 +12,12 @@ import { check } from 'k6';
 
 import { COOKIE_NAME } from './session.js';
 
-export const BASE_URL = (__ENV.BASE_URL || 'http://localhost:8071').replace(/\/+$/, '');
+export const BASE_URL = (__ENV.BASE_URL || 'http://localhost:48101').replace(/\/+$/, '');
 export const API = `${BASE_URL}/api/v1.0`;
 // The `Origin` a browser on the application sends, which Django checks a POST
 // against (CSRF_TRUSTED_ORIGINS): the frontend's origin, which is BASE_URL in a
 // deployment where /api is routed on the application's host, and something else
-// in the dev stack (`http://localhost:3000`).
+// in the dev stack (`http://localhost:48100`).
 export const ORIGIN = __ENV.ORIGIN || BASE_URL;
 // Django accepts any 32 alphanumeric characters as long as the cookie and the header agree
 const CSRF_TOKEN = 'k6loadtestk6loadtestk6loadtest00';

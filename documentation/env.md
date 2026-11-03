@@ -195,7 +195,7 @@ documents what each of them changes.
 | POSTGRES                      | **Required.** Url of the yhub database. Created by `yarn init-db`, never by the server                                                               |                        |
 | REDIS_PREFIX                  | Namespace of the redis keys, when the instance is shared                                                                                                | yhub                   |
 | COLLABORATION_BACKEND_BASE_URL | Base url of the Docs backend, which answers who a user is and what they may do with a document                                                         | http://app-dev:8000    |
-| COLLABORATION_SERVER_ORIGIN   | Comma separated list of the origins allowed to open a websocket                                                                                         | http://localhost:3000  |
+| COLLABORATION_SERVER_ORIGIN   | Comma separated list of the origins allowed to open a websocket                                                                                         | http://localhost:48100  |
 | Y_PROVIDER_API_KEY            | Sent as X-Y-Provider-Key on the calls made to the backend, exempting them from the API throttling. The same value as the backend's                      | yprovider-api-key      |
 | YHUB_ORG                      | Organization the documents live under. Must match the YHUB_ORG of the backend                                                                           | docs                   |
 | YHUB_JWT_PRIVATE_KEY          | PEM encoded RSA private key signing the calls made to the backend (RS256). Can be read from a file with YHUB_JWT_PRIVATE_KEY_FILE                       |                        |
@@ -240,7 +240,7 @@ container, the conversion service. It no longer serves the collaboration.
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
 | PORT                           | Port the service listens on                                                                                                                 | 4444                  |
 | COLLABORATION_BACKEND_BASE_URL | Base url of the Docs backend. The JWKS verifying the tokens it is called with is fetched from `{this}/api/v1.0/jwks`, so it has to reach it  | http://app-dev:8000   |
-| COLLABORATION_SERVER_ORIGIN    | Comma separated list of the allowed origins                                                                                                 | http://localhost:3000 |
+| COLLABORATION_SERVER_ORIGIN    | Comma separated list of the allowed origins                                                                                                 | http://localhost:48100 |
 | COLLABORATION_LOGGING          | Set to "true" to log the requests                                                                                                           | false                 |
 | CONVERSION_FILE_MAX_SIZE       | Maximum size, in bytes, of a file submitted for conversion                                                                                  | 20971520              |
 | SENTRY_DSN                     | Sentry DSN, unset disables it                                                                                                               |                       |

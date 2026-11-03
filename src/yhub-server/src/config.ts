@@ -68,7 +68,7 @@ export const COLLABORATION_BACKEND_BASE_URL =
 // two-party contract, hardcoded like the audiences.
 export const SESSION_COOKIE_NAME = 'docs_sessionid';
 export const allowedOrigins = (
-  process.env.COLLABORATION_SERVER_ORIGIN || 'http://localhost:3000'
+  process.env.COLLABORATION_SERVER_ORIGIN || 'http://localhost:48100'
 ).split(',');
 export const Y_PROVIDER_API_KEY = secret(
   'Y_PROVIDER_API_KEY',

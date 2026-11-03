@@ -114,7 +114,7 @@ Add the `WATCHPACK_POLLING=true` environment variable to the frontend-developmen
        dockerfile: ./src/frontend/Dockerfile
        target: impress-dev
        args:
-         API_ORIGIN: "http://localhost:8071"
+         API_ORIGIN: "http://localhost:48101"
          PUBLISH_AS_MIT: "false"
          SW_DEACTIVATED: "true"
      image: impress:frontend-development

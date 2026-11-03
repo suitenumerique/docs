@@ -7,7 +7,7 @@ import { initApp } from '@/servers';
 vi.mock('../src/env', async (importOriginal) => {
   return {
     ...(await importOriginal()),
-    COLLABORATION_SERVER_ORIGIN: 'http://localhost:3000',
+    COLLABORATION_SERVER_ORIGIN: 'http://localhost:48100',
     CONVERSION_FILE_MAX_SIZE: 500 * 1024, // 500kb
   };
 });

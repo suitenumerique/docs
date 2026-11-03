@@ -87,7 +87,7 @@ vi.mock('../src/migration.js', () => ({
 const BASE_ENV = {
   REDIS: 'redis://localhost:6379',
   POSTGRES: 'postgres://localhost:5432/yhub',
-  COLLABORATION_SERVER_ORIGIN: 'http://localhost:3000',
+  COLLABORATION_SERVER_ORIGIN: 'http://localhost:48100',
   SOFT_MIGRATION: 'false',
 };
 
@@ -131,7 +131,7 @@ describe('a valid, minimal environment', () => {
     expect(config.server.apiPrefix).toBe('collaboration');
     expect(config.server.port).toBe(3002);
     expect(config.server.cors).toEqual({
-      origin: ['http://localhost:3000'],
+      origin: ['http://localhost:48100'],
       credentials: true,
     });
     expect(config.worker).not.toBeNull();
@@ -314,7 +314,7 @@ describe('the authorize authz-cache wiring', () => {
   const user = (id: string) => ({
     userid: id,
     cookie: 'csrftoken=x; docs_sessionid=abc',
-    origin: 'http://localhost:3000',
+    origin: 'http://localhost:48100',
     endpoint: 'ydoc',
   });
 

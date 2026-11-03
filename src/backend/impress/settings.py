@@ -1589,7 +1589,7 @@ class Development(Base):
     ALLOWED_HOSTS = ["*"]
     CORS_ALLOW_ALL_ORIGINS = True
     CSRF_TRUSTED_ORIGINS = values.ListValue(
-        ["http://localhost:8072", "http://localhost:3000"],
+        ["http://localhost:8072", "http://localhost:48100"],
         environ_name="DJANGO_CSRF_TRUSTED_ORIGINS",
         environ_prefix=None,
     )

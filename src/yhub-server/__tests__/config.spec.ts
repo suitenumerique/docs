@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // Only what `config.ts` looks at; REDIS/POSTGRES are passed straight through to
 // yhub, which is what validates them, so they are not needed here.
 const BASE_ENV = {
-  COLLABORATION_SERVER_ORIGIN: 'http://localhost:3000',
+  COLLABORATION_SERVER_ORIGIN: 'http://localhost:48100',
 };
 
 const load = () => import('../src/config.js');
@@ -143,9 +143,9 @@ describe('the numeric tuning knobs', () => {
 });
 
 describe('the origin allowlist', () => {
-  it('defaults to localhost:3000', async () => {
+  it('defaults to localhost:48100', async () => {
     const { allowedOrigins } = await load();
-    expect(allowedOrigins).toEqual(['http://localhost:3000']);
+    expect(allowedOrigins).toEqual(['http://localhost:48100']);
   });
 
   it('splits on commas', async () => {
