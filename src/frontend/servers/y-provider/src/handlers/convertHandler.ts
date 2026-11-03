@@ -5,6 +5,7 @@ import {
 } from '@blocknote/core/comments';
 import { YjsThreadStore } from '@blocknote/core/yjs';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
+import { getDocument } from '@blocknote/server-util/dom';
 import * as Sentry from '@sentry/node';
 import { Request, Response } from 'express';
 import * as Y from 'yjs';
@@ -61,18 +62,23 @@ const editor = ServerBlockNoteEditor.create<
   DocsBlockSchema,
   DocsInlineContentSchema,
   DocsStyleSchema
->({
-  schema: docsBlockNoteSchema,
-  extensions: [
-    CommentsExtension({
-      threadStore: commentsThreadStore,
-      resolveUsers: (userIds) =>
-        Promise.resolve(
-          userIds.map((id) => ({ id, username: id, avatarUrl: '' })),
-        ),
-    }),
-  ],
-});
+>(
+  {
+    schema: docsBlockNoteSchema,
+    extensions: [
+      CommentsExtension({
+        threadStore: commentsThreadStore,
+        resolveUsers: (userIds) =>
+          Promise.resolve(
+            userIds.map((id) => ({ id, username: id, avatarUrl: '' })),
+          ),
+      }),
+    ],
+  },
+  // Since BlockNote 0.57, ServerBlockNoteEditor no longer provides its own DOM;
+  // supply one explicitly for the DOM-dependent conversions below.
+  getDocument(),
+);
 
 const ContentTypes = {
   XMarkdown: 'text/x-markdown',

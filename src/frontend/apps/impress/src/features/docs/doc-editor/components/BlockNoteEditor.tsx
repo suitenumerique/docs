@@ -20,6 +20,9 @@ import {
   createReactMathBlockSpec,
   locales as mathLocales,
 } from '@blocknote/math-block';
+// Since BlockNote 0.57, math styles ship in a dedicated stylesheet that must be
+// imported explicitly.
+import '@blocknote/math-block/style.css';
 import {
   FloatingComposerController,
   FloatingThreadController,

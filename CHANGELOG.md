@@ -15,6 +15,7 @@ and this project adheres to
 ### Changed
 
 - 💄(frontend) restore native task checkboxes and dim completed tasks #2857
+- ⬆️(frontend) upgrade BlockNote to 0.57.0 #2818
 - ⬆️(frontend) upgrade BlockNote to 0.56.0 #2936
 - ♻️(frontend) export PDFs with the Typst engine #2936
 - ⚡️(yhub) read the abilities from the dedicated backend endpoint #2922
@@ -23,6 +24,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) fix the inline equation crash when typing a caret #2818
 - 🐛(frontend) no offline banner when a third-party POST fails #2939
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
 - 🐛(frontend) reload on a version mismatch only when frontend behind #2940
