@@ -2,6 +2,8 @@ import { ThreadStoreAuth } from '@blocknote/core/comments';
 
 import { ClientCommentData, ClientThreadData } from '../types';
 
+import { normalizeEmoji } from './normalizeEmoji';
+
 export class DocsThreadStoreAuth extends ThreadStoreAuth {
   constructor(
     private readonly userId: string,
@@ -62,14 +64,16 @@ export class DocsThreadStoreAuth extends ThreadStoreAuth {
     return false;
   }
 
-  canAddReaction(comment: ClientCommentData, emoji?: string): boolean {
+  canAddReaction(comment: ClientCommentData, pickedEmoji?: string): boolean {
     if (!comment.metadata.abilities.reactions) {
       return false;
     }
 
-    if (!emoji) {
+    if (!pickedEmoji) {
       return comment.reactions.length < this.maxReactions;
     }
+
+    const emoji = normalizeEmoji(pickedEmoji);
 
     const hasReactedWithEmoji = comment.reactions.some(
       (reaction) =>
@@ -91,14 +95,16 @@ export class DocsThreadStoreAuth extends ThreadStoreAuth {
     return comment.reactions.length < this.maxReactions;
   }
 
-  canDeleteReaction(comment: ClientCommentData, emoji?: string): boolean {
+  canDeleteReaction(comment: ClientCommentData, pickedEmoji?: string): boolean {
     if (!comment.metadata.abilities.reactions) {
       return false;
     }
 
-    if (!emoji) {
+    if (!pickedEmoji) {
       return true;
     }
+
+    const emoji = normalizeEmoji(pickedEmoji);
 
     return comment.reactions.some(
       (reaction) =>

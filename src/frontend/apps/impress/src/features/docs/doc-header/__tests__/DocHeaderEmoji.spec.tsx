@@ -25,7 +25,7 @@ vi.mock('@/components/Emoji/EmojiPicker', () => ({
     onClickOutside,
   }: ComponentProps<typeof EmojiPicker>) => (
     <div role="dialog" aria-label="Emoji picker">
-      <button type="button" onClick={() => onEmojiSelect({ native: '😀' })}>
+      <button type="button" onClick={() => onEmojiSelect('😀')}>
         😀
       </button>
       <button type="button" onClick={onClickOutside}>

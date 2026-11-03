@@ -17,6 +17,7 @@ and this project adheres to
 - 💄(frontend) restore native task checkboxes and dim completed tasks #2857
 - ⬆️(frontend) upgrade BlockNote to 0.56.0 #2936
 - ⬆️(frontend) upgrade BlockNote to 0.57.0 #2964
+- ♻️(frontend) replace emoji-mart with the Frimousse emoji picker #2964
 - ♻️(frontend) export PDFs with the Typst engine #2936
 - ⚡️(yhub) read the abilities from the dedicated backend endpoint #2922
 - ⚡️(frontend) reuse the cached titles of the interlinks on export #2799

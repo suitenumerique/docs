@@ -12,7 +12,6 @@ import {
   Text,
   TextType,
 } from '@/components';
-import { getEmojidata } from '@/components/Emoji/initEmojiCallout';
 import { useFocusStore } from '@/stores';
 
 import { useDocTitleUpdate } from '../hooks/useDocTitleUpdate';
@@ -85,14 +84,13 @@ export const DocIcon = ({
         const shouldPositionAbove =
           spaceBelow < pickerHeight && spaceAbove >= pickerHeight;
 
-        // Offset to align the picker properly
-        const ROW_OFFSET_TOP = 55;
-        const ROW_OFFSET_BOTTOM = 10;
+        // Counts the margin the picker adds under its top
+        const GAP = 8;
 
         setPickerPosition({
           top: shouldPositionAbove
-            ? rect.top - pickerHeight + ROW_OFFSET_TOP
-            : rect.bottom + ROW_OFFSET_BOTTOM,
+            ? rect.top - pickerHeight - GAP
+            : rect.bottom,
           left: rect.left,
         });
       }
@@ -104,17 +102,17 @@ export const DocIcon = ({
     }
   };
 
-  const handleEmojiSelect = ({ native }: { native: string }) => {
+  const handleEmojiSelect = (emoji: string) => {
     setOpenEmojiPicker(false);
     restoreFocus();
 
     // Update document emoji if docId is provided
     if (docId && title !== undefined) {
-      updateDocEmoji(docId, title ?? '', native);
+      updateDocEmoji(docId, title ?? '', emoji);
     }
 
     // Call the optional callback
-    onEmojiUpdate?.(native);
+    onEmojiUpdate?.(emoji);
   };
 
   const handleClickOutside = () => {
@@ -159,7 +157,6 @@ export const DocIcon = ({
             `}
           >
             <EmojiPicker
-              emojiData={getEmojidata()}
               onEmojiSelect={handleEmojiSelect}
               onClickOutside={handleClickOutside}
               withOverlay={true}

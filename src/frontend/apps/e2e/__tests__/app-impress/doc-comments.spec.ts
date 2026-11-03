@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 
 import { createDoc, getOtherBrowserName, verifyDocName } from './utils-common';
 import {
@@ -14,6 +14,13 @@ import {
 } from './utils-share';
 import { logOut } from './utils-signin';
 import { createRootSubPage } from './utils-sub-pages';
+
+// The reaction picker is a virtualized Frimousse list: search the emoji
+// before clicking it, as it may not be rendered yet.
+const pickReaction = async (page: Page, label: string) => {
+  await page.getByRole('searchbox', { name: 'Search' }).fill(label);
+  await page.getByRole('gridcell', { name: label, exact: true }).click();
+};
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -56,7 +63,7 @@ test.describe('Doc Comments', () => {
 
     // We add a reaction with the first user
     await thread.locator('[data-test="addreaction"]').first().click();
-    await page.getByRole('button', { name: '👍' }).click();
+    await pickReaction(page, 'Thumbs up');
 
     await expect(
       thread
@@ -83,7 +90,7 @@ test.describe('Doc Comments', () => {
 
     await otherThread.getByText('This is a comment').first().hover();
     await otherThread.locator('[data-test="addreaction"]').first().click();
-    await otherPage.getByRole('button', { name: '👍' }).click();
+    await pickReaction(otherPage, 'Thumbs up');
 
     // We check that the comment made by the first user is visible for the second user
     await expect(
@@ -155,7 +162,7 @@ test.describe('Doc Comments', () => {
 
     // We add a reaction with the first user
     await thread.locator('[data-test="addreaction"]').first().click();
-    await page.getByRole('button', { name: '👍' }).click();
+    await pickReaction(page, 'Thumbs up');
 
     await expect(thread.locator('.bn-comment-reaction')).toHaveText('👍1');
 

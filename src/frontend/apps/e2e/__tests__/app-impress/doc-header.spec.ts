@@ -221,7 +221,9 @@ test.describe('Doc Header', () => {
     // Add emoji
     await expect(removeEmoji).toBeHidden();
     await addEmoji.click();
-    await page.getByRole('button', { name: '😍' }).first().click();
+    await page
+      .getByRole('gridcell', { name: 'Smiling face with heart-eyes' })
+      .click();
     // The 1 April the emoji is a fish
     await expect(emojiPicker).toHaveText(/😍|🐟/);
 
@@ -229,7 +231,9 @@ test.describe('Doc Header', () => {
     await emojiPicker.click({
       delay: 100,
     });
-    await page.getByRole('button', { name: '😀' }).first().click();
+    await page
+      .getByRole('gridcell', { name: 'Grinning face', exact: true })
+      .click();
     await expect(emojiPicker).toHaveText('😀');
 
     // Update title

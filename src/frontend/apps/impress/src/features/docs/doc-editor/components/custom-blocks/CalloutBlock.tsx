@@ -10,11 +10,11 @@ import {
 import { insertOrUpdateBlockForSlashMenu } from '@blocknote/core/extensions';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import type { TFunction } from 'i18next';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, BoxButton, EmojiPicker, Icon } from '@/components';
-import { getEmojidata } from '@/components/Emoji/initEmojiCallout';
 
 import type { DocsBlockNoteEditor } from '../../types';
 
@@ -27,6 +27,35 @@ const CalloutBlockStyle = createGlobalStyle`
     white-space: pre-wrap;
   }
 `;
+
+export const CALLOUT_EMOJIS = [
+  '💡',
+  '👉',
+  '☝️',
+  '👌',
+  '🔑',
+  '🚧',
+  '⚠️',
+  '🔥',
+  '📌',
+  '✂️',
+  '❓',
+  '⛔',
+  '🚫',
+  '⏰',
+  '☎️',
+  '🚨',
+  '♻️',
+  '✅',
+  '🔒',
+  '📎',
+  '📖',
+  '🗣️',
+  '➡️',
+  '📢',
+  '🛠️',
+  '⚙️',
+];
 
 type CreateCalloutBlockConfig = BlockConfig<
   'callout',
@@ -57,7 +86,12 @@ const CalloutComponent = ({
   editor,
   contentRef,
 }: CalloutComponentProps) => {
+  const { t } = useTranslation();
   const [openEmojiPicker, setOpenEmojiPicker] = useState(false);
+  const highlightedEmojis = useMemo(
+    () => ({ label: t('Callout'), emojis: CALLOUT_EMOJIS }),
+    [t],
+  );
   const isEditable = editor.isEditable;
 
   const toggleEmojiPicker = (e: React.MouseEvent) => {
@@ -71,8 +105,8 @@ const CalloutComponent = ({
 
   const onClickOutside = () => setOpenEmojiPicker(false);
 
-  const onEmojiSelect = ({ native }: { native: string }) => {
-    editor.updateBlock(block, { props: { emoji: native } });
+  const onEmojiSelect = (emoji: string) => {
+    editor.updateBlock(block, { props: { emoji } });
     setOpenEmojiPicker(false);
   };
 
@@ -129,7 +163,7 @@ const CalloutComponent = ({
 
         {openEmojiPicker && (
           <EmojiPicker
-            emojiData={getEmojidata()}
+            highlightedEmojis={highlightedEmojis}
             onClickOutside={onClickOutside}
             onEmojiSelect={onEmojiSelect}
             withOverlay={true}

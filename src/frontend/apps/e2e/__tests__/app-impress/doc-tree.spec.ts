@@ -540,7 +540,9 @@ test.describe('Doc Tree', () => {
 
     // Update the emoji from the tree
     await row.locator('.--docs--doc-icon').click();
-    await page.getByRole('button', { name: '😀' }).first().click();
+    await page
+      .getByRole('gridcell', { name: 'Grinning face', exact: true })
+      .click();
 
     // Verify the emoji is updated in the tree and in the document title
     await expect(row.getByText('😀')).toBeVisible();

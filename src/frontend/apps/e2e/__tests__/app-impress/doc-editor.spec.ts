@@ -440,20 +440,20 @@ test.describe('Doc Editor', () => {
     const emojiButton = calloutBlock.getByRole('button');
     await expect(emojiButton).toHaveText('💡');
     await emojiButton.click();
-    // Group smiley
-    await expect(page.getByRole('button', { name: '🤠' })).toBeVisible();
-    // Group animals
-    await page.getByText('Animals & Nature').scrollIntoViewIfNeeded();
-    await expect(page.getByRole('button', { name: '🦆' })).toBeVisible();
-    // Group travel
-    await page.getByText('Travel & Places').scrollIntoViewIfNeeded();
-    await expect(page.getByRole('button', { name: '🚝' })).toBeVisible();
-    // Group objects
-    await page.getByText('Objects').scrollIntoViewIfNeeded();
-    await expect(page.getByRole('button', { name: '🪇' })).toBeVisible();
-    // Group symbol
-    await page.getByText('Symbols').scrollIntoViewIfNeeded();
-    await expect(page.getByRole('button', { name: '🛃' })).toBeVisible();
+    // The list is virtualized: reach one emoji of several groups by searching
+    const search = page.getByRole('searchbox', { name: 'Search' });
+    for (const label of [
+      'Cowboy hat face', // Smileys
+      'Duck', // Animals
+      'Monorail', // Travel
+      'Key', // Objects
+      'Passport control', // Symbols
+    ]) {
+      await search.fill(label);
+      await expect(
+        page.getByRole('gridcell', { name: label, exact: true }),
+      ).toBeVisible();
+    }
 
     await page.keyboard.press('Escape');
 
@@ -487,7 +487,9 @@ test.describe('Doc Editor', () => {
     await page.waitForTimeout(500);
 
     await treeRow.locator('.--docs--doc-icon').click();
-    await page.getByRole('button', { name: '😀' }).first().click();
+    await page
+      .getByRole('gridcell', { name: 'Grinning face', exact: true })
+      .click();
 
     await navigateToPageFromTree({ page, title: docChild1 });
 
