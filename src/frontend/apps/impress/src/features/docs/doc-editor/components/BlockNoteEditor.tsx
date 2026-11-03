@@ -19,6 +19,7 @@ import {
   createReactMathBlockSpec,
   locales as mathLocales,
 } from '@blocknote/math-block';
+import '@blocknote/math-block/style.css';
 import {
   FloatingComposerController,
   FloatingThreadController,

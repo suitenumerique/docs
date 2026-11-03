@@ -1,11 +1,6 @@
 import { Exporter } from '@blocknote/core';
-import {
-  IRunPropertiesOptions,
-  Paragraph,
-  ParagraphChild,
-  Table,
-  TextRun,
-} from 'docx';
+import type { DOCXBlockResult } from '@blocknote/xl-docx-exporter';
+import { IRunPropertiesOptions, ParagraphChild, TextRun } from 'docx';
 
 import {
   DocsBlockSchema,
@@ -41,7 +36,7 @@ export type DocsExporterDocx = Exporter<
   DocsBlockSchema,
   DocsInlineContentSchema,
   DocsStyleSchema,
-  Promise<Paragraph[] | Paragraph | Table> | Paragraph[] | Paragraph | Table,
+  DOCXBlockResult,
   ParagraphChild,
   IRunPropertiesOptions,
   TextRun

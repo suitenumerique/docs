@@ -68,6 +68,10 @@ const HEADING_SIZES_REM = [1.875, 1.5, 1.25, 1.125, 1, 0.875];
 /**
  * Color of the links in the editor. The PDF page is always white, so the
  * light theme is used whatever the theme of the user.
+ *
+ * The BlockNote preamble wraps the links in an explicit text color (and
+ * underlines them): a plain `set text` could not override it, so the color is
+ * set on the text inside the link.
  */
 const LINK_COLOR = tokens.themes.default.globals.colors['gray-600'];
 
@@ -81,8 +85,7 @@ export const getPdfDocsStyleRules = (baseFontSize: number) =>
       (size, index) =>
         `#show heading.where(level: ${index + 1}): set text(size: ${size * baseFontSize}pt)`,
     ),
-    `#show link: set text(fill: rgb(${strLit(LINK_COLOR)}))`,
-    `#show link: underline`,
+    `#show link: it => { show text: set text(fill: rgb(${strLit(LINK_COLOR)})); it }`,
   ].join('\n');
 
 /**

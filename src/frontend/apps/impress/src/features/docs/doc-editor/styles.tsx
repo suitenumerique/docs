@@ -46,7 +46,7 @@ export const DocsEditorStyle = createGlobalStyle`
     * To fix a visual bug with multi-column blocks
     * The first block in a multi-column layout had a negative margin
     * by default, causing layout issues. This rule resets the margin.
-    * Current bug Blocknote version: 0.54.0
+    * Still present in BlockNote 0.57.0
     * TODO: Check if Blocknote updates this behavior in future versions
     * and if yes, remove this rule.
     */

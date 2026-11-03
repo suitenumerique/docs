@@ -31,11 +31,12 @@ describe('getPdfDocsStyleRules', () => {
     );
   });
 
-  it('colors and underlines the links like the editor', () => {
+  it('colors the text of the links like the editor', () => {
     const rules = getPdfDocsStyleRules(12);
 
-    expect(rules).toContain('#show link: set text(fill: rgb("#5D5D70"))');
-    expect(rules).toContain('#show link: underline');
+    expect(rules).toContain(
+      '#show link: it => { show text: set text(fill: rgb("#5D5D70")); it }',
+    );
   });
 });
 

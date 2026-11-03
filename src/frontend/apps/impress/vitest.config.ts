@@ -15,11 +15,7 @@ export default defineConfig({
     },
     server: {
       deps: {
-        inline: [
-          '@blocknote/math-block',
-          '@gouvfr-lasuite/ui-kit',
-          '@gouvfr-lasuite/cunningham-react',
-        ],
+        inline: ['@gouvfr-lasuite/ui-kit', '@gouvfr-lasuite/cunningham-react'],
       },
     },
   },
