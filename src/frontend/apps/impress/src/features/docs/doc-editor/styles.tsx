@@ -23,6 +23,15 @@ export const DocsEditorStyle = createGlobalStyle`
   .bn-root {
     .bn-editor {
       height: 100%;
+      font-family:
+        'Inter Variable',
+        'SF Pro Display',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Open Sans',
+        'Segoe UI',
+        'Roboto',
+        sans-serif;
     }
 
     &.bn-mantine .bn-suggestion-menu-item-small {
@@ -66,6 +75,17 @@ export const DocsEditorStyle = createGlobalStyle`
     */
     img.bn-visual-media[src*='-unsafe'] {
       pointer-events: none;
+    }
+
+    /**
+     * Read-only and presentation mode: visually hide the source popup of math
+     * and diagram blocks. BlockNote opens it from the selection even when the
+     * editor is not editable, so this only hides it and does not prevent it.
+     * TODO: remove once BlockNote ignores the selection when the editor is not
+     * editable, https://github.com/TypeCellOS/BlockNote/issues/3291
+     */
+    .bn-editor:not([contenteditable='true']) .bn-source-block-popup {
+      display: none;
     }
 
     /**
@@ -319,8 +339,7 @@ export const DocsEditorStyle = createGlobalStyle`
       & .bn-editor h1 {
         font-size: 1.6rem;
       }
-      .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
-        .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
+      .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']:has(.ProseMirror-trailingBreak:only-child)::after {
         font-size: 14px;
       }
     }

@@ -20,6 +20,7 @@ and this project adheres to
 - ⚡️(yhub) read the abilities from the dedicated backend endpoint #2922
 - ⚡️(frontend) reuse the cached titles of the interlinks on export #2799
 - ♻️(backend) remove the unused scope of the document throttles #2951
+- 💄(frontend) use true italic Inter in the editor #2861
 
 ### Fixed
 
@@ -27,15 +28,15 @@ and this project adheres to
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
 - 🐛(frontend) reload on a version mismatch only when frontend behind #2940
 - 🐛(frontend) keep comments on inline atoms after reload #2965
+- 🐛(frontend) hide source popup in read-only mode #2908
+- 🐛(frontend) duplicate the sub-docs created without reloading the page #2915
+- 🐛(frontend) show the doc tree actions of the item under the pointer
 
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
 
-### Fixed
 
-- 🐛(frontend) duplicate the sub-docs created without reloading the page #2915
-- 🐛(frontend) show the doc tree actions of the item under the pointer
 
 ## [v6.0.4] - 2026-10-26
 
@@ -103,6 +104,7 @@ and this project adheres to
 - 🐛(backend) send the mention email when the cache is unreachable #2803
 - 🐛(backend) give media-auth its own throttle scope
 - 💄(frontend) remove the vertical line next to nested blocks #2825
+- 🐛(frontend) fix Enter and Space in modals opened from the doc tree #2879
 
 ## [v6.0.1] - 2026-10-15
 

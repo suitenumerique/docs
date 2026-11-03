@@ -881,6 +881,28 @@ test.describe('Doc Editor', () => {
     await expect(
       editor.locator('.katex-html').filter({ hasText: 'E=mc2' }),
     ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(page, 'Public', 'Reading');
+
+    // The source popup must stay hidden on a read-only view
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      browserName,
+      docUrl: page.url(),
+      withoutSignIn: true,
+    });
+
+    const equation = otherPage.locator('.katex-html').filter({
+      hasText: 'E=mc2',
+    });
+    await expect(equation).toBeVisible();
+    await equation.click();
+    await expect(otherPage.locator('.bn-source-block-popup')).toHaveCSS(
+      'display',
+      'none',
+    );
+
+    await cleanup();
   });
 
   test('it checks "Diagram block" feature', async ({ page, browserName }) => {
