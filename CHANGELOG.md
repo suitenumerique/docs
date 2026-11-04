@@ -62,6 +62,8 @@ and this project adheres to
 - 🐛(ci) post the preview comment once a conflicting PR is fixed #3039
 - 🐛(frontend) align the file attachment icon and name on the same line #2967
 - 🐛(frontend) exit fullscreen before printing presenter slides #2944
+- 🐛(frontend) hide Share and Leave in the doc menu when the doc is
+  deleted #2968
 
 ## [v6.1.0] - 2026-11-12
 

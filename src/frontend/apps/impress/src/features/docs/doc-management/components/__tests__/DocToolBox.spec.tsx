@@ -1,8 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { PropsWithChildren, useEffect } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 
+import { useTreeContextOrNull } from '@/docs/doc-tree/utils';
 import { AppWrapper } from '@/tests/utils';
 
 import { Doc, LinkReach, Role } from '../../types';
@@ -232,4 +233,53 @@ describe('<DocToolBox /> - move into a doc', () => {
       expect(option).not.toBeInTheDocument();
     }
   });
+});
+
+describe('<DocToolBox /> - deleted doc', () => {
+  // Leave is only offered on the root of the tree.
+  const TreeRoot = ({ doc, children }: PropsWithChildren<{ doc: Doc }>) => {
+    const treeContext = useTreeContextOrNull<Doc>();
+
+    useEffect(() => {
+      treeContext?.setRoot(doc);
+    }, [treeContext, doc]);
+
+    return treeContext?.root ? children : null;
+  };
+
+  test.each([
+    ['shows', null, true],
+    ['hides', '2026-01-01T00:00:00Z', false],
+  ])(
+    '%s Share and Leave when deleted_at is %s',
+    async (_, deletedAt, isShown) => {
+      isFeatureFlagActivatedMock.mockReturnValue(false);
+      useConfigMock.mockReturnValue({ data: {} });
+      const doc = createDoc({ deleted_at: deletedAt });
+
+      render(
+        <AppWrapper>
+          <TreeRoot doc={doc}>
+            <DocToolBox doc={doc} isCurrentDoc />
+          </TreeRoot>
+        </AppWrapper>,
+      );
+
+      await userEvent.click(
+        await screen.findByRole('button', {
+          name: /Open the document options/i,
+        }),
+      );
+      await screen.findByRole('menuitem', { name: 'Copy link' });
+
+      for (const name of ['Share', 'Leave']) {
+        const option = screen.queryByRole('menuitem', { name });
+        if (isShown) {
+          expect(option).toBeInTheDocument();
+        } else {
+          expect(option).not.toBeInTheDocument();
+        }
+      }
+    },
+  );
 });

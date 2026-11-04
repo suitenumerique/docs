@@ -237,7 +237,7 @@ const DocToolBoxComponent = ({
       callback: () => {
         setIsModalShareOpen(true);
       },
-      isHidden: !authenticated,
+      isHidden: !authenticated || Boolean(doc.deleted_at),
       showSeparator: isCurrentDoc,
     },
     {
@@ -412,8 +412,11 @@ const DocToolBoxComponent = ({
        * leave a child if the parent is not left.
        * ⚠️ This doc can still be a child for other users.
        * Unauthenticated visitors also cannot leave.
+       * A deleted document cannot be left either. `abilities.leave`
+       * cannot tell it: it is also false for owners and admins, who
+       * leave through the member flow of the modal.
        */
-      isHidden: !isTopParent || !authenticated,
+      isHidden: !isTopParent || !authenticated || Boolean(doc.deleted_at),
     },
     {
       label: t('Delete', {
