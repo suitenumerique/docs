@@ -13,7 +13,6 @@ from django.utils.module_loading import import_string
 import requests
 
 from core import models
-from core.enums import SearchType
 from core.services.yhub_services import YHubError, YHubService
 from core.utils.paths import get_ancestor_to_descendants_map
 from core.utils.yjs import yjs_to_text
@@ -217,15 +216,13 @@ class BaseDocumentIndexer(ABC):
         Must be implemented by subclasses.
         """
 
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def search(  # noqa : PLR0913, PLR0917
+    def search(
         self,
         q: str,
         token: str,
         visited: tuple[str, ...] = (),
         nb_results: int = None,
         path: str = None,
-        search_type: SearchType = None,
     ):
         """
         Search for documents in Find app.
@@ -244,9 +241,6 @@ class BaseDocumentIndexer(ABC):
                 Defaults to 50 if not specified.
             path (str, optional):
                 The parent path to search descendants of.
-            search_type (SearchType, optional):
-                Type of search to perform. Can be SearchType.HYBRID or SearchType.FULL_TEXT.
-                If None, the backend search service will use its default search behavior.
         """
         nb_results = nb_results or self.search_limit
         results = self.search_query(
@@ -258,7 +252,6 @@ class BaseDocumentIndexer(ABC):
                 "order_by": "updated_at",
                 "order_direction": "desc",
                 "path": path,
-                "search_type": search_type,
             },
             token=token,
         )
@@ -279,15 +272,13 @@ class FindDocumentIndexer(BaseDocumentIndexer):
     Document indexer that indexes and searches documents with La Suite Find app.
     """
 
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def search(  # noqa : PLR0913, PLR0917
+    def search(
         self,
         q: str,
         token: str,
         visited: tuple[()] = (),
         nb_results: int = None,
         path: str = None,
-        search_type: SearchType = None,
     ):
         """
         Return the documents matching the query, as listed by Find.
@@ -301,7 +292,6 @@ class FindDocumentIndexer(BaseDocumentIndexer):
             visited=visited,
             nb_results=nb_results,
             path=path,
-            search_type=search_type,
         )["results"]
 
     def serialize_document(self, document, content, accesses):

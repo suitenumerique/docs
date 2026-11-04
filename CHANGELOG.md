@@ -44,6 +44,7 @@ and this project adheres to
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
+- 🔥(backend) remove the hybrid search, which Find no longer offers
 
 
 ## [v6.0.4] - 2026-10-26

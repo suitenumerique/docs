@@ -86,7 +86,7 @@ from core.utils.treebeard import create_tree_node_with_retry
 from core.utils.users import users_sharing_documents_with
 from core.utils.yjs import extract_attachments_from_update
 
-from ..enums import FeatureFlag, SearchType
+from ..enums import FeatureFlag
 from . import permissions, serializers, utils
 from .filters import (
     DocumentFilter,
@@ -1753,15 +1753,15 @@ class DocumentViewSet(
         """
         Returns an ordered list of documents best matching the search query parameter 'q'.
 
-        It depends on a search configurable Search Indexer. If no Search Indexer is configured
+        It depends on a search configurable Search Indexer, used for the users having the
+        full text search feature flag. Otherwise, or if no Search Indexer is configured
         or if it is not reachable, the function falls back to a basic title search.
         """
         params = serializers.SearchQueryParamDocumentSerializer(
             data=request.query_params
         )
         params.is_valid(raise_exception=True)
-        search_type = self._get_search_type()
-        if search_type == SearchType.TITLE:
+        if not waffle.flag_is_active(request, FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH):
             return self._search_using_database(
                 request, params.validated_data, *args, **kwargs
             )
@@ -1774,9 +1774,7 @@ class DocumentViewSet(
             )
 
         try:
-            return self._search_using_indexer(
-                indexer, request, params=params, search_type=search_type
-            )
+            return self._search_using_indexer(indexer, request, params=params)
         except requests.exceptions.RequestException as e:
             logger.error("Error while searching documents with indexer: %s", e)
             # fallback on title search if the indexer is not reached
@@ -1784,21 +1782,8 @@ class DocumentViewSet(
                 request, params.validated_data, *args, **kwargs
             )
 
-    def _get_search_type(self) -> SearchType:
-        """
-        Returns the search type to use for the search endpoint based on feature flags.
-        If a user has both flags activated the most advanced search is used
-        (HYBRID > FULL_TEXT > TITLE).
-        A user with no flag will default to the basic title search.
-        """
-        if waffle.flag_is_active(self.request, FeatureFlag.FLAG_FIND_HYBRID_SEARCH):
-            return SearchType.HYBRID
-        if waffle.flag_is_active(self.request, FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH):
-            return SearchType.FULL_TEXT
-        return SearchType.TITLE
-
     @staticmethod
-    def _search_using_indexer(indexer, request, params, search_type):
+    def _search_using_indexer(indexer, request, params):
         """
         Returns a list of documents matching the query (q) according to the configured indexer.
         """
@@ -1818,7 +1803,6 @@ class DocumentViewSet(
 
         results = indexer.search(
             q=params.validated_data["q"],
-            search_type=search_type,
             token=request.session.get("oidc_access_token"),
             path=path,
             visited=get_visited_document_ids_of(queryset, request.user),

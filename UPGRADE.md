@@ -37,6 +37,11 @@ the following command inside your docker container:
     easy_thumbnails_source;
   DELETE FROM django_migrations WHERE app = 'easy_thumbnails';
   ```
+- The `flag_find_hybrid_search` feature flag is gone: Find no longer offers a
+  hybrid search, and it already answered these users with its full text
+  search. Give `flag_find_full_text_search` to the users who only had
+  `flag_find_hybrid_search`, or they fall back to the title search. Then
+  delete `flag_find_hybrid_search` in the admin.
 
 ## [v6.0.2] - 2026-10-21
 
