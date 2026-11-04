@@ -42,11 +42,8 @@ To create one, use the `bin/generate-oidc-store-refresh-token-key.sh` command.
 
 ## Feature flags
 
-The Find search integration is controlled by two feature flags:
-- `flag_find_hybrid_search`
-- `flag_find_full_text_search`
-
-If a user has both flags activated the most advanced search is used (hybrid > full text > title).
-A user with no flag will default to the basic title search.
+The Find search integration is controlled by the `flag_find_full_text_search`
+feature flag: the users having it search the full text of the documents in Find,
+the others search the titles of the documents in the database.
 
 Feature flags can be activated through the admin interface. 

@@ -12,7 +12,6 @@ from django.db import transaction
 import pytest
 
 from core import factories, models
-from core.enums import SearchType
 from core.services.search_indexers import FindDocumentIndexer
 from core.utils.yjs import base64_yjs_to_text
 
@@ -492,14 +491,12 @@ def test_find_document_indexer_search(mock_search_query):
     nb_results = 10
     path = "/some/path/"
     visited = ["doc-123"]
-    search_type = SearchType.HYBRID
     results = FindDocumentIndexer().search(
         q=q,
         token=token,
         nb_results=nb_results,
         path=path,
         visited=visited,
-        search_type=search_type,
     )
 
     mock_search_query.assert_called_once()
@@ -512,7 +509,6 @@ def test_find_document_indexer_search(mock_search_query):
         "order_by": "updated_at",
         "order_direction": "desc",
         "path": path,
-        "search_type": search_type,
     }
 
     assert results == hits

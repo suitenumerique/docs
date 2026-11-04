@@ -12,7 +12,7 @@ from rest_framework.test import APIClient
 from waffle.testutils import override_flag
 
 from core import factories
-from core.enums import FeatureFlag, SearchType
+from core.enums import FeatureFlag
 from core.models import LinkReachChoices
 from core.services.search_indexers import get_document_indexer
 
@@ -21,9 +21,9 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(autouse=True)
-def enable_flag_find_hybrid_search():
-    """Enable flag_find_hybrid_search for all tests in this module."""
-    with override_flag(FeatureFlag.FLAG_FIND_HYBRID_SEARCH, active=True):
+def enable_flag_find_full_text_search():
+    """Enable flag_find_full_text_search for all tests in this module."""
+    with override_flag(FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH, active=True):
         yield
 
 
@@ -57,7 +57,6 @@ def test_api_documents_search_anonymous(search_query, indexer_settings):
             "order_by": "updated_at",
             "order_direction": "desc",
             "path": None,
-            "search_type": SearchType.HYBRID,
         },
         "token": None,
     }

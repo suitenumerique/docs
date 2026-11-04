@@ -48,22 +48,9 @@ class DocumentAttachmentStatus(StrEnum):
     READY = "ready"
 
 
-class SearchType(str, Enum):
-    """
-    Defines the possible search types for a document search query.
-        - TITLE: DRF based search in the title of the documents only.
-        - HYBRID and FULL_TEXT: more advanced search based on Find indexer.
-    """
-
-    TITLE = "title"
-    HYBRID = "hybrid"
-    FULL_TEXT = "full-text"
-
-
 class FeatureFlag(str, Enum):
     """
     Defines the possible feature flags for the application.
     """
 
-    FLAG_FIND_HYBRID_SEARCH = "flag_find_hybrid_search"
     FLAG_FIND_FULL_TEXT_SEARCH = "flag_find_full_text_search"

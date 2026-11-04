@@ -16,6 +16,12 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+- The `flag_find_hybrid_search` feature flag is gone: Find no longer offers a
+  hybrid search, and it already answered these users with its full text
+  search. Give `flag_find_full_text_search` to the users who only had
+  `flag_find_hybrid_search`, or they fall back to the title search. Then
+  delete `flag_find_hybrid_search` in the admin.
+
 - The Celery worker container is no longer probed with `celery inspect ping`.
   The worker touches a heartbeat file from its event loop and creates a ready
   file once it consumes from the broker: the helm chart checks the first with

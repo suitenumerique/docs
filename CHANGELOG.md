@@ -16,6 +16,10 @@ and this project adheres to
 
 - 🐛(backend) fix the search in a document through Find #2977
 
+### Removed
+
+- 🔥(backend) remove the hybrid search, which Find no longer offers #2977
+
 ## [v6.1.0] - 2026-11-12
 
 ### Added
