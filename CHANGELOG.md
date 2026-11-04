@@ -24,6 +24,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) align the file attachment icon and name on the same line #2947
 - 🐛(frontend) no offline banner when a third-party POST fails #2939
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
 - 🐛(frontend) reload on a version mismatch only when frontend behind #2940
