@@ -12,6 +12,10 @@ and this project adheres to
 - ⚡️(backend) probe the celery worker with heartbeat files, 
   not inspect ping #2956
 
+### Fixed
+
+- 🐛(backend) fix the search in a document through Find #2977
+
 ## [v6.1.0] - 2026-11-12
 
 ### Added
