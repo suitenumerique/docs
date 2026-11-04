@@ -84,37 +84,43 @@ describe('mountPresenterPrintSlides', () => {
     ).toBe(`/docs/${LINKED_DOC_ID}/`);
   });
 
-  test('prints the fallback label of an interlink whose doc cannot be loaded', async () => {
-    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          setTimeout(
-            () =>
-              resolve(
-                new Response(JSON.stringify({ detail: 'Forbidden' }), {
-                  status: 403,
-                }),
-              ),
-            200,
-          );
-        }),
-    );
-    let printedLabel: string | null | undefined;
-    vi.spyOn(window, 'print').mockImplementation(() => {
-      printedLabel = document.querySelector(
-        '.--docs--interlinking-link-inline-content',
-      )?.textContent;
-      window.dispatchEvent(new Event('afterprint'));
-    });
+  test.each([
+    [403, 'No access'],
+    [404, `/${LINKED_DOC_ID}/`],
+  ])(
+    'prints the label of an interlink whose doc cannot be loaded (%i)',
+    async (status, expectedLabel) => {
+      const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(
+              () =>
+                resolve(
+                  new Response(JSON.stringify({ detail: 'Error' }), {
+                    status,
+                  }),
+                ),
+              200,
+            );
+          }),
+      );
+      let printedLabel: string | null | undefined;
+      vi.spyOn(window, 'print').mockImplementation(() => {
+        printedLabel = document.querySelector(
+          '.--docs--interlinking-link-inline-content',
+        )?.textContent;
+        window.dispatchEvent(new Event('afterprint'));
+      });
 
-    await printPresenterSlides(
-      [{ kind: 'content', blocks: [interlinkParagraph] }],
-      {
-        queryClient: new QueryClient({ defaultOptions }),
-      },
-    );
+      await printPresenterSlides(
+        [{ kind: 'content', blocks: [interlinkParagraph] }],
+        {
+          queryClient: new QueryClient({ defaultOptions }),
+        },
+      );
 
-    expect(printedLabel).toBe(`/${LINKED_DOC_ID}/`);
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-  });
+      expect(printedLabel).toBe(expectedLabel);
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    },
+  );
 });
