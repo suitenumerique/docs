@@ -25,6 +25,7 @@ vi.mock('../src/env', async (importOriginal) => {
 });
 
 import { docsBlockNoteSchema } from '@/blockSpecs';
+import { serverDocument } from '@/dom';
 import { initApp } from '@/servers';
 
 import { JWKS_URL, COLLABORATION_SERVER_ORIGIN as origin } from '../src/env';
@@ -93,18 +94,21 @@ const buildYjsUpdateWithComment = (): Buffer => {
     threadsDoc.getMap('threads'),
     new DefaultThreadStoreAuth('fixture-user', 'editor'),
   );
-  const commentsEditor = ServerBlockNoteEditor.create({
-    schema: docsBlockNoteSchema,
-    extensions: [
-      CommentsExtension({
-        threadStore,
-        resolveUsers: (userIds) =>
-          Promise.resolve(
-            userIds.map((id) => ({ id, username: id, avatarUrl: '' })),
-          ),
-      }),
-    ],
-  });
+  const commentsEditor = ServerBlockNoteEditor.create(
+    {
+      schema: docsBlockNoteSchema,
+      extensions: [
+        CommentsExtension({
+          threadStore,
+          resolveUsers: (userIds) =>
+            Promise.resolve(
+              userIds.map((id) => ({ id, username: id, avatarUrl: '' })),
+            ),
+        }),
+      ],
+    },
+    serverDocument,
+  );
 
   const commentMark = commentsEditor.editor.pmSchema.marks.comment;
   const pmNode = commentsEditor._blocksToProsemirrorNode([
@@ -272,7 +276,7 @@ describe('Conversion Testing', () => {
   test('POST /api/convert BlockNote to Yjs', async () => {
     const destroySpy = vi.spyOn(Y.Doc.prototype, 'destroy');
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create();
+    const editor = ServerBlockNoteEditor.create({}, serverDocument);
     const blocks = await editor.tryParseMarkdownToBlocks(expectedMarkdown);
     const response = await request(app)
       .post('/api/convert')
@@ -314,7 +318,7 @@ describe('Conversion Testing', () => {
 
   test('POST /api/convert Yjs to HTML', async () => {
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create();
+    const editor = ServerBlockNoteEditor.create({}, serverDocument);
     const blocks = await editor.tryParseMarkdownToBlocks(expectedMarkdown);
     const yDocument = editor.blocksToYDoc(blocks, 'document-store');
     const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
@@ -336,7 +340,7 @@ describe('Conversion Testing', () => {
     'POST /api/convert current Yjs document to %s',
     async (accept) => {
       const app = initApp();
-      const editor = ServerBlockNoteEditor.create();
+      const editor = ServerBlockNoteEditor.create({}, serverDocument);
       const blocks = await editor.tryParseMarkdownToBlocks(expectedMarkdown);
       const ydoc = blocksToYDoc(editor.editor, blocks, 'document-store');
       try {
@@ -364,7 +368,7 @@ describe('Conversion Testing', () => {
 
   test('POST /api/convert Yjs to Markdown', async () => {
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create();
+    const editor = ServerBlockNoteEditor.create({}, serverDocument);
     const blocks = await editor.tryParseMarkdownToBlocks(expectedMarkdown);
     const yDocument = editor.blocksToYDoc(blocks, 'document-store');
     const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
@@ -387,7 +391,7 @@ describe('Conversion Testing', () => {
   test('POST /api/convert Yjs to JSON', async () => {
     const destroySpy = vi.spyOn(YCurrent.Doc.prototype, 'destroy');
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create();
+    const editor = ServerBlockNoteEditor.create({}, serverDocument);
     const blocks = await editor.tryParseMarkdownToBlocks(expectedMarkdown);
     const yDocument = editor.blocksToYDoc(blocks, 'document-store');
     const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
@@ -428,9 +432,10 @@ describe('Conversion Testing', () => {
 
   test('POST /api/convert Yjs to HTML with callout block', async () => {
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create({
-      schema: docsBlockNoteSchema,
-    });
+    const editor = ServerBlockNoteEditor.create(
+      { schema: docsBlockNoteSchema },
+      serverDocument,
+    );
     const blocks = [
       {
         type: 'callout' as const,
@@ -463,9 +468,10 @@ describe('Conversion Testing', () => {
 
   test('POST /api/convert Yjs to Markdown preserves callout content', async () => {
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create({
-      schema: docsBlockNoteSchema,
-    });
+    const editor = ServerBlockNoteEditor.create(
+      { schema: docsBlockNoteSchema },
+      serverDocument,
+    );
     const blocks = [
       {
         type: 'callout' as const,
@@ -490,9 +496,10 @@ describe('Conversion Testing', () => {
 
   test('POST /api/convert Yjs to Markdown preserves interlinking link', async () => {
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create({
-      schema: docsBlockNoteSchema,
-    });
+    const editor = ServerBlockNoteEditor.create(
+      { schema: docsBlockNoteSchema },
+      serverDocument,
+    );
     const blocks = [
       {
         type: 'paragraph' as const,
@@ -547,9 +554,10 @@ describe('Conversion Testing', () => {
 
   test('POST /api/convert Yjs to HTML with PDF block', async () => {
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create({
-      schema: docsBlockNoteSchema,
-    });
+    const editor = ServerBlockNoteEditor.create(
+      { schema: docsBlockNoteSchema },
+      serverDocument,
+    );
     const blocks = [
       {
         type: 'pdf' as const,
@@ -578,9 +586,10 @@ describe('Conversion Testing', () => {
 
   test('POST /api/convert Yjs to HTML strips unsafe PDF URL schemes', async () => {
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create({
-      schema: docsBlockNoteSchema,
-    });
+    const editor = ServerBlockNoteEditor.create(
+      { schema: docsBlockNoteSchema },
+      serverDocument,
+    );
     const blocks = [
       {
         type: 'pdf' as const,
@@ -608,9 +617,10 @@ describe('Conversion Testing', () => {
 
   test('POST /api/convert Yjs to HTML with interlinking inline content', async () => {
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create({
-      schema: docsBlockNoteSchema,
-    });
+    const editor = ServerBlockNoteEditor.create(
+      { schema: docsBlockNoteSchema },
+      serverDocument,
+    );
     const blocks = [
       {
         type: 'paragraph' as const,
@@ -653,9 +663,10 @@ describe('Conversion Testing', () => {
 
   test('POST /api/convert Yjs to HTML with disabled interlinking renders no link', async () => {
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create({
-      schema: docsBlockNoteSchema,
-    });
+    const editor = ServerBlockNoteEditor.create(
+      { schema: docsBlockNoteSchema },
+      serverDocument,
+    );
     const blocks = [
       {
         type: 'paragraph' as const,
@@ -692,9 +703,10 @@ describe('Conversion Testing', () => {
 
   test('POST /api/convert Yjs to BlockNote JSON preserves pageBreak block', async () => {
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create({
-      schema: docsBlockNoteSchema,
-    });
+    const editor = ServerBlockNoteEditor.create(
+      { schema: docsBlockNoteSchema },
+      serverDocument,
+    );
     const blocks = [
       {
         type: 'paragraph' as const,
@@ -723,9 +735,10 @@ describe('Conversion Testing', () => {
 
   test('POST /api/convert Yjs to BlockNote JSON preserves uploadLoader block', async () => {
     const app = initApp();
-    const editor = ServerBlockNoteEditor.create({
-      schema: docsBlockNoteSchema,
-    });
+    const editor = ServerBlockNoteEditor.create(
+      { schema: docsBlockNoteSchema },
+      serverDocument,
+    );
     const blocks = [
       {
         type: 'uploadLoader' as const,
@@ -766,17 +779,20 @@ describe('Conversion Testing', () => {
     const app = initApp();
     // Written the way the frontend writes it, with its own docChildren spec,
     // so the test fails if the server schema drops the block when reading
-    const frontendEditor = ServerBlockNoteEditor.create({
-      schema: BlockNoteSchema.create({
-        blockSpecs: {
-          ...defaultBlockSpecs,
-          docChildren: createBlockSpec(
-            { type: 'docChildren', propSchema: {}, content: 'none' },
-            { render: () => ({ dom: document.createElement('div') }) },
-          )(),
-        },
-      }),
-    });
+    const frontendEditor = ServerBlockNoteEditor.create(
+      {
+        schema: BlockNoteSchema.create({
+          blockSpecs: {
+            ...defaultBlockSpecs,
+            docChildren: createBlockSpec(
+              { type: 'docChildren', propSchema: {}, content: 'none' },
+              { render: () => ({ dom: serverDocument.createElement('div') }) },
+            )(),
+          },
+        }),
+      },
+      serverDocument,
+    );
     const yDocument = frontendEditor.blocksToYDoc(
       [
         { type: 'paragraph' as const, content: 'Before' },
