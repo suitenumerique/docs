@@ -14,6 +14,7 @@ and this project adheres to
 - ✨(frontend) mention users in the comments #2326
 - 🤖(agents) add AI skills #2746
 - ✨(frontend) better interlink anchor on same document #2932
+- ✨(frontend) show "no access" in a link to a doc without access #2932
 
 ### Changed
 

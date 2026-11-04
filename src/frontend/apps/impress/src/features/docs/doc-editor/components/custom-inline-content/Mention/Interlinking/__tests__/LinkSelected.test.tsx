@@ -7,7 +7,11 @@ import { AppWrapper } from '@/tests/utils';
 
 const DOC_ID = 'a1b2c3d4-e5f6-4789-a123-1234567890ab';
 
-let mockDocQuery: { data?: { title?: string }; isLoading: boolean } = {
+let mockDocQuery: {
+  data?: { title?: string };
+  isLoading: boolean;
+  error?: { status: number };
+} = {
   data: undefined,
   isLoading: true,
 };
@@ -63,6 +67,36 @@ describe('LinkSelected', () => {
 
     expect(screen.getByText('📄')).toBeInTheDocument();
     expect(screen.getByText('My document')).toBeInTheDocument();
+  });
+
+  it('tells there is no access to the doc instead of showing its slug', () => {
+    mockDocQuery = {
+      data: undefined,
+      isLoading: false,
+      error: { status: 403 },
+    };
+
+    render(<LinkSelected docId={DOC_ID} isEditable={true} />, {
+      wrapper: AppWrapper,
+    });
+
+    expect(screen.getByText('No access')).toBeInTheDocument();
+    expect(screen.getByText('No access')).toHaveStyle('font-style: italic');
+    expect(screen.queryByText(`/${DOC_ID}/`)).not.toBeInTheDocument();
+  });
+
+  it('shows the slug of a doc that failed to load for another reason', () => {
+    mockDocQuery = {
+      data: undefined,
+      isLoading: false,
+      error: { status: 500 },
+    };
+
+    render(<LinkSelected docId={DOC_ID} isEditable={true} />, {
+      wrapper: AppWrapper,
+    });
+
+    expect(screen.getByText(`/${DOC_ID}/`)).toBeInTheDocument();
   });
 
   it('falls back to the href when the doc has no title', () => {

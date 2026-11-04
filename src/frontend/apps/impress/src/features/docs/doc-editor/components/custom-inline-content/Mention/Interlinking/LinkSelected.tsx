@@ -90,7 +90,11 @@ export const LinkSelected = ({
   doc: preloadedDoc,
   editor,
 }: LinkSelectedProps) => {
-  const { data: fetchedDoc, isLoading } = useDoc(
+  const {
+    data: fetchedDoc,
+    isLoading,
+    error,
+  } = useDoc(
     { id: docId },
     {
       queryKey: [KEY_DOC, { id: docId }],
@@ -109,9 +113,17 @@ export const LinkSelected = ({
     currentDoc?.id === docId,
     blockId,
   );
-  const label = doc ? doc.title || untitledDocument : visualHref;
+  // The slug of a doc is shown only when nothing more is known about it
+  const isNoAccess = !doc && error?.status === 403;
+  const label = doc
+    ? doc.title || untitledDocument
+    : isNoAccess
+      ? t('No access', {
+          description: 'You do not have access to this document',
+        })
+      : visualHref;
   const isBlockAnchor = blockLabel !== null;
-  const isHrefFallback = !isLoading && !doc && !isBlockAnchor;
+  const isHrefFallback = !isLoading && !doc && !isNoAccess && !isBlockAnchor;
   // The text of a block is not a title: its emoji stays in the text, and the
   // icon is the one of an anchor. A deleted block has no text left.
   const { emoji, titleWithoutEmoji } = isBlockAnchor
@@ -127,7 +139,9 @@ export const LinkSelected = ({
     : getEmojiAndTitle(label);
   const DefaultIcon = isBlockAnchor ? AnchorIcon : SelectedPageIcon;
   // Italic tells a text made up by Docs from what the user wrote
-  const isMadeUpText = isBlockAnchor && (!blockLabel || blockLabel.isFallback);
+  const isMadeUpText = isBlockAnchor
+    ? !blockLabel || blockLabel.isFallback
+    : isNoAccess;
   const isDeletedDoc = !!currentDoc?.deleted_at;
   // The compat router is null outside of the Next.js router context, e.g. in
   // the slides print root, where nothing can be clicked.
