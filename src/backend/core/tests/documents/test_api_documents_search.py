@@ -619,3 +619,46 @@ def test_api_documents_search_success(indexer_settings):
         "previous": None,
     }
     assert results == [document]
+
+
+@mock.patch("core.services.search_indexers.FindDocumentIndexer.search_query")
+def test_api_documents_search_indexer_in_document(search_query, indexer_settings):
+    """
+    Searching in a document through the indexer should restrict the search to the
+    descendants of the document, by its path.
+    """
+    indexer_settings.SEARCH_URL = "http://find/api/v1.0/search"
+    search_query.return_value = {"results": []}
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(users=[user])
+
+    response = client.get(
+        "/api/v1.0/documents/search/", data={"q": "alpha", "document": parent.id}
+    )
+
+    assert response.status_code == 200
+    assert search_query.call_args.kwargs["data"]["path"] == parent.path
+
+
+@mock.patch("core.services.search_indexers.FindDocumentIndexer.search_query")
+def test_api_documents_search_indexer_in_unknown_document(
+    search_query, indexer_settings
+):
+    """Searching through the indexer in a document that does not exist is a 404."""
+    indexer_settings.SEARCH_URL = "http://find/api/v1.0/search"
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.get(
+        "/api/v1.0/documents/search/",
+        data={"q": "alpha", "document": fake.uuid4()},
+    )
+
+    assert response.status_code == 404
+    assert not search_query.called
