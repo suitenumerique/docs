@@ -60,6 +60,7 @@ and this project adheres to
 - 🐛(backend) stop throttling the config endpoint #3005
 - 🐛(backend) throttle anonymous users per browser, not per IP address #3005
 - 🐛(ci) post the preview comment once a conflicting PR is fixed #3039
+- 🐛(frontend) align the file attachment icon and name on the same line #2967
 - 🐛(frontend) exit fullscreen before printing presenter slides #2944
 
 ## [v6.1.0] - 2026-11-12

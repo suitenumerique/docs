@@ -24,7 +24,6 @@ import {
   FloatingComposerController,
   FloatingThreadController,
   ReactAudioBlock,
-  ReactFileBlock,
   ReactImageBlock,
   ReactVideoBlock,
   ThreadsSidebar,
@@ -99,7 +98,6 @@ const baseBlockNoteSchema = withPageBreak(
     blockSpecs: {
       ...defaultBlockSpecs,
       audio: ReactAudioBlock(),
-      file: ReactFileBlock(),
       image: ReactImageBlock(),
       video: ReactVideoBlock(),
       callout: CalloutBlock(),
