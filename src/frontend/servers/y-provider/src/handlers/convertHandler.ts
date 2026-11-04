@@ -6,7 +6,6 @@ import {
 import { yDocToBlocks } from '@blocknote/core/y';
 import { YjsThreadStore } from '@blocknote/core/yjs';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
-import { getDocument } from '@blocknote/server-util/dom';
 import * as Sentry from '@sentry/node';
 import * as YCurrent from '@y/y';
 import { Request, Response } from 'express';
@@ -18,6 +17,7 @@ import {
   DocsStyleSchema,
   docsBlockNoteSchema,
 } from '@/blockSpecs';
+import { serverDocument } from '@/dom';
 import { logger } from '@/utils';
 
 interface ErrorResponse {
@@ -77,8 +77,7 @@ const editor = ServerBlockNoteEditor.create<
       }),
     ],
   },
-  // Node has no DOM global: the HTML and Markdown conversions need a document.
-  getDocument(),
+  serverDocument,
 );
 
 const ContentTypes = {
