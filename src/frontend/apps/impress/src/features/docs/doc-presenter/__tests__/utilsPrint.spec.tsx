@@ -2,6 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { defaultOptions } from '@/core';
 import { KEY_DOC } from '@/docs/doc-management';
 
 import type { PresenterBlock } from '../types';
@@ -84,7 +85,7 @@ describe('mountPresenterPrintSlides', () => {
   });
 
   test('prints the fallback label of an interlink whose doc cannot be loaded', async () => {
-    vi.spyOn(global, 'fetch').mockImplementation(
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(
       () =>
         new Promise((resolve) => {
           setTimeout(
@@ -109,12 +110,11 @@ describe('mountPresenterPrintSlides', () => {
     await printPresenterSlides(
       [{ kind: 'content', blocks: [interlinkParagraph] }],
       {
-        queryClient: new QueryClient({
-          defaultOptions: { queries: { retry: false } },
-        }),
+        queryClient: new QueryClient({ defaultOptions }),
       },
     );
 
     expect(printedLabel).toBe(`/${LINKED_DOC_ID}/`);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });

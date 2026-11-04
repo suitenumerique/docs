@@ -1,7 +1,6 @@
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { DEFAULT_QUERY_RETRY } from '@/core';
 
 import { User } from './types';
 
@@ -42,13 +41,6 @@ export function useAuthQuery(
     queryKey: [KEY_AUTH],
     queryFn: getMe,
     staleTime: 1000 * 60 * 15, // 15 minutes
-    retry: (failureCount, error) => {
-      // we assume that a 401 means the user is not logged in
-      if (error.status === 401) {
-        return false;
-      }
-      return failureCount < DEFAULT_QUERY_RETRY;
-    },
     ...queryConfig,
   });
 }

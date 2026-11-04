@@ -6,6 +6,7 @@ import {
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
+import { APIError } from '@/api';
 import { Auth, KEY_AUTH, setAuthUrl } from '@/features/auth';
 import { useRouteChangeCompleteFocus } from '@/hooks/useRouteChangeCompleteFocus';
 import { useResponsiveStore } from '@/stores/';
@@ -16,16 +17,30 @@ import { ThemeProvider } from './config/ThemeProvider';
 export const DEFAULT_QUERY_RETRY = 1;
 
 /**
+ * A 401, 403 or 404 answer will not change on a second attempt, so only the
+ * other errors (network, 5xx...) are retried.
+ */
+export const defaultQueryRetry = (failureCount: number, error: unknown) => {
+  if (error instanceof APIError && [401, 403, 404].includes(error.status)) {
+    return false;
+  }
+  return failureCount < DEFAULT_QUERY_RETRY;
+};
+
+/**
  * QueryClient:
  *  - defaultOptions:
  *    - staleTime:
  *      - global cache duration - we decided 3 minutes
  *      - It can be overridden to each query
+ *    - retry:
+ *      - no retry on 401, 403 and 404, one retry otherwise
+ *      - It can be overridden to each query
  */
-const defaultOptions = {
+export const defaultOptions = {
   queries: {
     staleTime: 1000 * 60 * 3,
-    retry: DEFAULT_QUERY_RETRY,
+    retry: defaultQueryRetry,
   },
 };
 
