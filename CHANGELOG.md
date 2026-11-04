@@ -15,6 +15,7 @@ and this project adheres to
 
 ### Changed
 
+- ⬆️(dependencies) update all BlockNote packages to 0.57.0
 - ⬆️(dependencies) update BlockNote preview builds to a2bce36
 - ⬆️(dependencies) use BlockNote 1264ceb builds, keeping Typst on 0.56.0
 - 🔧(frontend) confirm restores, hide empty history menus and simplify labels

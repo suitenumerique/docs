@@ -16,8 +16,8 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@blocknote/core": "https://pkg.pr.new/@blocknote/core@a2bce36",
-    "@blocknote/server-util": "https://pkg.pr.new/@blocknote/server-util@a2bce36",
+    "@blocknote/core": "0.57.0",
+    "@blocknote/server-util": "0.57.0",
     "@sentry/node": "10.75.0",
     "@sentry/profiling-node": "10.75.0",
     "@tiptap/extensions": "*",

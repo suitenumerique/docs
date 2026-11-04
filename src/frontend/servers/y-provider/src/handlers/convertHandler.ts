@@ -17,6 +17,7 @@ import {
   DocsStyleSchema,
   docsBlockNoteSchema,
 } from '@/blockSpecs';
+import { serverDocument } from '@/dom';
 import { logger } from '@/utils';
 
 interface ErrorResponse {
@@ -63,18 +64,21 @@ const editor = ServerBlockNoteEditor.create<
   DocsBlockSchema,
   DocsInlineContentSchema,
   DocsStyleSchema
->({
-  schema: docsBlockNoteSchema,
-  extensions: [
-    CommentsExtension({
-      threadStore: commentsThreadStore,
-      resolveUsers: (userIds) =>
-        Promise.resolve(
-          userIds.map((id) => ({ id, username: id, avatarUrl: '' })),
-        ),
-    }),
-  ],
-});
+>(
+  {
+    schema: docsBlockNoteSchema,
+    extensions: [
+      CommentsExtension({
+        threadStore: commentsThreadStore,
+        resolveUsers: (userIds) =>
+          Promise.resolve(
+            userIds.map((id) => ({ id, username: id, avatarUrl: '' })),
+          ),
+      }),
+    ],
+  },
+  serverDocument,
+);
 
 const ContentTypes = {
   XMarkdown: 'text/x-markdown',
