@@ -142,6 +142,18 @@ class Base(Configuration):
         default=50, environ_name="SEARCH_INDEXER_QUERY_LIMIT", environ_prefix=None
     )
 
+    # Menshen, the token exchange server of La Suite (core.services.menshen_services)
+    MENSHEN_URL = values.Value(None, environ_name="MENSHEN_URL", environ_prefix=None)
+    MENSHEN_CLIENT_ID = values.Value(
+        None, environ_name="MENSHEN_CLIENT_ID", environ_prefix=None
+    )
+    MENSHEN_CLIENT_SECRET = SecretFileValue(
+        None, environ_name="MENSHEN_CLIENT_SECRET", environ_prefix=None
+    )
+    MENSHEN_TIMEOUT = values.FloatValue(
+        3.0, environ_name="MENSHEN_TIMEOUT", environ_prefix=None
+    )
+
     MEDIA_AUTH_ORIGINAL_URL_HEADER = values.Value(
         default="HTTP_X_ORIGINAL_URL",
         environ_name="MEDIA_AUTH_ORIGINAL_URL_HEADER",

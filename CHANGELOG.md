@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ➕(backend) add menshen-client dependency #2977
+- ✨(backend) add a Menshen token exchange service #2977
 
 ### Changed
 
