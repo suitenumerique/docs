@@ -27,6 +27,7 @@ and this project adheres to
 - ⚡️(frontend) reuse the cached titles of the interlinks on export #2799
 - ♻️(backend) remove the unused scope of the document throttles #2951
 - 💄(frontend) use true italic Inter in the editor #2861
+- ♻️(backend) read the new search response schema of Find
 - 🔧(backend) make the timeout of the Find search configurable
 - 🔧(backend) read OIDC_STORE_REFRESH_TOKEN_KEY from a generated file in dev
 
@@ -44,10 +45,6 @@ and this project adheres to
 - 🐛(backend) fix the search in a document through Find
 - 🐛(backend) stop refreshing the OIDC token in the search
 - 🐛(backend) index the rest of a batch when Find refuses a document
-
-### Changed
-
-- ♻️(backend) read the new search response schema of Find
 
 ### Removed
 
