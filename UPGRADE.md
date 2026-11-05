@@ -56,7 +56,11 @@ the following command inside your docker container:
     `FIND_TOKEN_ENCRYPTION_KEY` (a Fernet key), and `FIND_AUDIENCE`,
     `FIND_SEARCH_ACTION_SCOPE` and `FIND_SEARCH_SERVICES` if Menshen and Find
     use other names than `find`, `action:search-find-docs` and `docs`.
-    `OIDC_STORE_ACCESS_TOKEN` must stay enabled.
+    `OIDC_STORE_ACCESS_TOKEN` must stay enabled. `OIDC_STORE_REFRESH_TOKEN`
+    and `OIDC_STORE_REFRESH_TOKEN_KEY` are no longer used by the search: the
+    search no longer refreshes the access token, nor answers 401 once the
+    refresh token has expired. Disable them unless something else of your
+    deployment needs them.
 
   The token is exchanged at login only: the users logged in before the
   upgrade search the titles in the database until they log in again. So do

@@ -67,13 +67,12 @@ FIND_TOKEN_ENCRYPTION_KEY="<your-32-byte-encryption-key==>"
 
 # OIDC authentication
 OIDC_STORE_ACCESS_TOKEN=True  # Store the access token in the session, exchanged at login
-OIDC_STORE_REFRESH_TOKEN=True  # Store the encrypted refresh token in the session
-OIDC_STORE_REFRESH_TOKEN_KEY="<your-32-byte-encryption-key==>"
 ```
 
-`FIND_TOKEN_ENCRYPTION_KEY` and `OIDC_STORE_REFRESH_TOKEN_KEY` must be valid
-Fernet keys (32 url-safe base64-encoded bytes), distinct from one another. To
-create one, use the `bin/generate-oidc-store-refresh-token-key.sh` command.
+`FIND_TOKEN_ENCRYPTION_KEY` must be a valid Fernet key (32 url-safe
+base64-encoded bytes), e.g. `openssl rand 32 | base64 | tr '+/' '-_'`.
+The search does not use the refresh token of the identity provider:
+`OIDC_STORE_REFRESH_TOKEN` is not needed for it.
 Secrets can be read from files with the `_FILE` variants, e.g.
 `MENSHEN_CLIENT_SECRET_FILE` and `FIND_TOKEN_ENCRYPTION_KEY_FILE`.
 

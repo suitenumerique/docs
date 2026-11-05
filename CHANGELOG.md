@@ -40,6 +40,7 @@ and this project adheres to
 - 🐛(frontend) keep the focus on the emoji button of a tree item #2964
 - 🐛(backend) keep the case of titles and names in email subjects #2792
 - 🐛(backend) fix the search in a document through Find
+- 🐛(backend) stop refreshing the OIDC token in the search
 
 ### Changed
 
