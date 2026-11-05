@@ -42,6 +42,7 @@ and this project adheres to
 - 🐛(backend) keep the case of titles and names in email subjects #2792
 - 🐛(backend) fix the search in a document through Find
 - 🐛(backend) stop refreshing the OIDC token in the search
+- 🐛(backend) index the rest of a batch when Find refuses a document
 
 ### Changed
 
