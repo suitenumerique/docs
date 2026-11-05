@@ -13,13 +13,27 @@ from django.utils.module_loading import import_string
 import requests
 
 from core import models
-from core.enums import SearchType
+from core.services.find_tokens import forget_find_token, get_find_token
 from core.services.yhub_services import YHubError, YHubService
-from core.utils.dicts import get_value_by_pattern
 from core.utils.paths import get_ancestor_to_descendants_map
 from core.utils.yjs import yjs_to_text
 
 logger = logging.getLogger(__name__)
+
+
+class SearchIndexerError(Exception):
+    """The search indexer could not answer a search."""
+
+
+class SearchIndexerAuthenticationError(SearchIndexerError):
+    """The search indexer rejected the token of the user."""
+
+
+class SearchIndexerUnavailableError(SearchIndexerError):
+    """
+    The search indexer cannot search for this session, e.g. it holds no token for
+    it. Not a failure: the search is expected to be made otherwise.
+    """
 
 
 @cache
@@ -132,6 +146,7 @@ class BaseDocumentIndexer(ABC):
     def index(self, queryset=None, batch_size=None):
         """
         Fetch documents in batches, serialize them, and push to the search backend.
+        Return the number of documents the search backend indexed.
 
         Args:
             queryset (optional): Document queryset
@@ -181,8 +196,7 @@ class BaseDocumentIndexer(ABC):
                     )
 
             if serialized_batch:
-                self.push(serialized_batch)
-                count += len(serialized_batch)
+                count += self.push(serialized_batch)
 
         return count
 
@@ -213,30 +227,35 @@ class BaseDocumentIndexer(ABC):
     @abstractmethod
     def push(self, data):
         """
-        Push a batch of serialized documents to the backend.
+        Push a batch of serialized documents to the backend, and return the
+        number of documents it indexed.
 
         Must be implemented by subclasses.
         """
 
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def search(  # noqa : PLR0913, PLR0917
+    def search(
         self,
         q: str,
-        token: str,
+        session,
         visited: tuple[str, ...] = (),
         nb_results: int = None,
         path: str = None,
-        search_type: SearchType = None,
     ):
         """
-        Search for documents in Find app.
+        Search for documents in Find app, in the services of FIND_SEARCH_SERVICES.
         Ensure the same default ordering as "Docs" list : -updated_at
 
         Returns ids of the documents
 
+        Raises:
+            SearchIndexerUnavailableError: the indexer cannot search for this
+                session.
+            SearchIndexerError: the indexer could not answer.
+
         Args:
             q (str): user query.
-            token (str): OIDC Authentication token.
+            session: Session of the user, which holds what the indexer needs to
+                authenticate them.
             visited (list, optional):
                 List of ids of active public documents with LinkTrace
                 Defaults to settings.SEARCH_INDEXER_BATCH_SIZE.
@@ -245,29 +264,25 @@ class BaseDocumentIndexer(ABC):
                 Defaults to 50 if not specified.
             path (str, optional):
                 The parent path to search descendants of.
-            search_type (SearchType, optional):
-                Type of search to perform. Can be SearchType.HYBRID or SearchType.FULL_TEXT.
-                If None, the backend search service will use its default search behavior.
         """
         nb_results = nb_results or self.search_limit
         results = self.search_query(
             data={
                 "q": q,
                 "visited": visited,
-                "services": ["docs"],
+                "services": list(settings.FIND_SEARCH_SERVICES),
                 "nb_results": nb_results,
                 "order_by": "updated_at",
                 "order_direction": "desc",
                 "path": path,
-                "search_type": search_type,
             },
-            token=token,
+            session=session,
         )
 
         return results
 
     @abstractmethod
-    def search_query(self, data, token) -> dict:
+    def search_query(self, data, session) -> dict:
         """
         Retrieve documents from the Find app API.
 
@@ -280,66 +295,31 @@ class FindDocumentIndexer(BaseDocumentIndexer):
     Document indexer that indexes and searches documents with La Suite Find app.
     """
 
-    # pylint: disable=too-many-arguments, too-many-positional-arguments
-    def search(  # noqa : PLR0913, PLR0917
+    def search(
         self,
         q: str,
-        token: str,
+        session,
         visited: tuple[()] = (),
         nb_results: int = None,
         path: str = None,
-        search_type: SearchType = None,
     ):
-        """format Find search results"""
-        search_results = super().search(
+        """
+        Return the documents matching the query, as listed by Find.
+
+        Find answers with {"results": [...]}, each result already carrying its
+        id and its title, whatever the language it was indexed under.
+        """
+        body = super().search(
             q=q,
-            token=token,
+            session=session,
             visited=visited,
             nb_results=nb_results,
             path=path,
-            search_type=search_type,
         )
-        return [
-            {
-                **hit["_source"],
-                "id": hit["_id"],
-                "title": self.get_title(hit["_source"]),
-            }
-            for hit in search_results
-        ]
-
-    @staticmethod
-    def get_title(source):
-        """
-        Find returns the titles with an extension depending on the language.
-        This function extracts the title in a generic way.
-
-        Handles multiple cases:
-        - Localized title fields like "title.<some_extension>"
-        - Fallback to plain "title" field if localized version not found
-        - Returns empty string if no title field exists
-
-        Args:
-            source (dict): The _source dictionary from a search hit
-
-        Returns:
-            str: The extracted title or empty string if not found
-
-        Example:
-            >>> get_title({"title.fr": "Bonjour", "id": 1})
-            "Bonjour"
-            >>> get_title({"title": "Hello", "id": 1})
-            "Hello"
-            >>> get_title({"id": 1})
-            ""
-        """
-        titles = get_value_by_pattern(source, r"^title\.")
-        for title in titles:
-            if title:
-                return title
-        if "title" in source:
-            return source["title"]
-        return ""
+        results = body.get("results") if isinstance(body, dict) else None
+        if not isinstance(results, list):
+            raise SearchIndexerError("Find answered a search without results")
+        return results
 
     def serialize_document(self, document, content, accesses):
         """
@@ -372,37 +352,149 @@ class FindDocumentIndexer(BaseDocumentIndexer):
             "is_active": not bool(document.ancestors_deleted_at),
         }
 
-    def search_query(self, data, token) -> requests.Response:
+    def search_query(self, data, session) -> dict:
         """
-        Retrieve documents from the Find app API.
+        Retrieve documents from the Find app API, with the Find token exchanged at
+        the login of the user and kept in their session.
 
         Args:
             data (dict): search data
-            token (str): OICD token
+            session: Session of the user
 
         Returns:
-            dict: A JSON-serializable dictionary.
+            dict: The body of the answer of Find.
+
+        Raises:
+            SearchIndexerUnavailableError: the session holds no usable Find token
+                (anonymous user, Menshen failing at login, token expired...).
+            SearchIndexerAuthenticationError: Find rejected the token (401), which
+                is dropped from the session: there is no use sending it again.
+            SearchIndexerError: Find could not be reached or did not answer
+                a search result.
         """
-        response = requests.post(
-            self.search_url,
-            json=data,
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=10,
-        )
-        response.raise_for_status()
-        return response.json()
+        token = get_find_token(session)
+        if not token:
+            raise SearchIndexerUnavailableError("No usable Find token in the session")
+
+        try:
+            response = requests.post(
+                self.search_url,
+                json=data,
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=settings.FIND_SEARCH_TIMEOUT,
+            )
+        except requests.RequestException as error:
+            raise SearchIndexerError(f"Find could not be reached: {error}") from error
+
+        if response.status_code == 401:
+            forget_find_token(session)
+            raise SearchIndexerAuthenticationError(
+                "Find rejected the token of the session (401), it is dropped"
+            )
+        if response.status_code in (400, 403):
+            # Find's answer is generic, and its validation errors echo the query
+            # of the user: the configuration is what helps here.
+            raise SearchIndexerError(
+                f"Find refused the search ({response.status_code}): the token "
+                "must grant the search in each service of FIND_SEARCH_SERVICES "
+                f"({settings.FIND_SEARCH_SERVICES}), check FIND_AUDIENCE "
+                f"({settings.FIND_AUDIENCE}), FIND_SEARCH_ACTION_SCOPE "
+                f"({settings.FIND_SEARCH_ACTION_SCOPE}) and the rule of Menshen"
+            )
+        if not response.ok:
+            raise SearchIndexerError(f"Find answered {response.status_code}")
+
+        try:
+            return response.json()
+        except ValueError as error:
+            raise SearchIndexerError(
+                "Find answered a search that is not JSON"
+            ) from error
 
     def push(self, data):
         """
-        Push a batch of documents to the Find backend.
+        Push a batch of documents to the Find backend, and return the number of
+        documents Find indexed.
+
+        Find answers each document of a batch with its own status. A document Find
+        refuses is logged rather than raised, so that it does not hold back the
+        others: on a 207, some documents could not be indexed; on a 400, some failed
+        validation and Find indexed none, so the batch is sent again without them.
+        Any other error (authentication, unavailability...) is raised.
 
         Args:
             data (list): List of document dictionaries.
         """
-        response = requests.post(
+        response = self.post_batch(data)
+
+        if response.status_code == 400:
+            results = self.get_bulk_results(response, data)
+            if results is not None:
+                self.log_failed_documents(data, results, "failed validation")
+                valid = [
+                    data[r["index"]] for r in results if r.get("status") == "valid"
+                ]
+                if not valid:
+                    return 0
+                # Sent once more: a second refusal is raised, not retried
+                data = valid
+                response = self.post_batch(data)
+
+        response.raise_for_status()
+
+        if response.status_code == 207:
+            results = self.get_bulk_results(response, data) or []
+            failed = self.log_failed_documents(data, results, "could not be indexed")
+            return len(data) - failed
+
+        return len(data)
+
+    def post_batch(self, data):
+        """Send a batch of documents to the indexing endpoint of Find."""
+        return requests.post(
             self.indexer_url,
             json=data,
             headers={"Authorization": f"Bearer {self.indexer_secret}"},
             timeout=10,
         )
-        response.raise_for_status()
+
+    @staticmethod
+    def get_bulk_results(response, data):
+        """
+        Return the status Find answered for each document of a batch, or None when
+        the answer is not one status per document (e.g. a body Find could not read).
+        """
+        try:
+            results = response.json()
+        except ValueError:
+            return None
+        if not isinstance(results, list) or not all(
+            isinstance(result, dict)
+            and isinstance(result.get("index"), int)
+            and 0 <= result["index"] < len(data)
+            for result in results
+        ):
+            return None
+        return results
+
+    @staticmethod
+    def log_failed_documents(data, results, reason):
+        """Log the documents of a batch Find answered in error, return their number."""
+        failed = [result for result in results if result.get("status") == "error"]
+        for result in failed:
+            errors = result.get("errors") or []
+            details = "; ".join(
+                f"{'.'.join(str(loc) for loc in error.get('loc', []))}: "
+                f"{error.get('msg')}"
+                for error in errors
+                if isinstance(error, dict)
+            )
+            # OpenSearch can quote a field in its reason: keep it short
+            details = details or str(result.get("message", ""))[:200]
+            logger.error(
+                "Document %s was not indexed by Find, it %s: %s",
+                data[result["index"]].get("id"),
+                reason,
+                details,
+            )
+        return len(failed)

@@ -11,6 +11,10 @@ and this project adheres to
 - ✨(backend) add a dedicated document abilities endpoint #2885
 - ✨(frontend) add a /children block listing the sub-docs #2799
 - 🤖(agents) add AI skills #2746
+- ➕(backend) add menshen-client dependency
+- ✨(backend) add a Menshen token exchange service
+- ✨(backend) exchange a Find token at login and revoke it at logout
+- ✨(backend) search Find with the token exchanged at login
 
 ### Changed
 
@@ -23,6 +27,9 @@ and this project adheres to
 - ⚡️(frontend) reuse the cached titles of the interlinks on export #2799
 - ♻️(backend) remove the unused scope of the document throttles #2951
 - 💄(frontend) use true italic Inter in the editor #2861
+- ♻️(backend) read the new search response schema of Find
+- 🔧(backend) make the timeout of the Find search configurable
+- 🔧(backend) read OIDC_STORE_REFRESH_TOKEN_KEY from a generated file in dev
 
 ### Fixed
 
@@ -35,10 +42,14 @@ and this project adheres to
 - 🐛(frontend) show the doc tree actions of the item under the pointer
 - 🐛(frontend) keep the focus on the emoji button of a tree item #2964
 - 🐛(backend) keep the case of titles and names in email subjects #2792
+- 🐛(backend) fix the search in a document through Find
+- 🐛(backend) stop refreshing the OIDC token in the search
+- 🐛(backend) index the rest of a batch when Find refuses a document
 
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
+- 🔥(backend) remove the hybrid search, which Find no longer offers
 
 
 ## [v6.0.4] - 2026-10-26

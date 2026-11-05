@@ -54,6 +54,7 @@ dependencies = [
     "langfuse==3.11.2",
     "lxml==6.1.3",
     "markdown==3.11",
+    "menshen-client==0.3.0",
     "mozilla-django-oidc==5.0.2",
     "nested-multipart-parser==1.6.0",
     "openai==3.29.0",

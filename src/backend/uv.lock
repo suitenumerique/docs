@@ -989,6 +989,7 @@ dependencies = [
     { name = "langfuse" },
     { name = "lxml" },
     { name = "markdown" },
+    { name = "menshen-client" },
     { name = "mozilla-django-oidc" },
     { name = "nested-multipart-parser" },
     { name = "openai" },
@@ -1067,6 +1068,7 @@ requires-dist = [
     { name = "langfuse", specifier = "==3.11.2" },
     { name = "lxml", specifier = "==6.1.3" },
     { name = "markdown", specifier = "==3.11" },
+    { name = "menshen-client", specifier = "==0.3.0" },
     { name = "mozilla-django-oidc", specifier = "==5.0.2" },
     { name = "nested-multipart-parser", specifier = "==1.6.0" },
     { name = "openai", specifier = "==3.29.0" },
@@ -1445,6 +1447,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729, upload-time = "2022-08-14T12:40:10.846Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
+]
+
+[[package]]
+name = "menshen-client"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx2" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/46/6c/71057f698c261b20bb969387494072010d4fea3029a5480942546c6d5443/menshen_client-0.3.0.tar.gz", hash = "sha256:b1a1d12a6277988e657e24ccc8a9ecf487d170bb9b0a0b10b1214eb8ee260308", size = 7611, upload-time = "2026-11-02T15:06:20.427Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a5/c5/bef9dba4e39cd05aabe74d3488c393b4b2f963587df78c29b6ecdabe4a99/menshen_client-0.3.0-py3-none-any.whl", hash = "sha256:6cddbf3024a661cac72ea47fbe0bcfc4355ef51d39b944708a736835803be1f2", size = 7923, upload-time = "2026-11-02T15:06:19.288Z" },
 ]
 
 [[package]]

@@ -37,6 +37,35 @@ the following command inside your docker container:
     easy_thumbnails_source;
   DELETE FROM django_migrations WHERE app = 'easy_thumbnails';
   ```
+- The `flag_find_hybrid_search` feature flag is gone: Find no longer offers a
+  hybrid search, and it already answered these users with its full text
+  search. Give `flag_find_full_text_search` to the users who only had
+  `flag_find_hybrid_search`, or they fall back to the title search. Then
+  delete `flag_find_hybrid_search` in the admin.
+- The Find search now authenticates users with a token exchanged with
+  [Menshen](https://github.com/suitenumerique/menshen) at login, as Find
+  requires since its ADR-0001: deploy this version together with a Find that
+  implements it. Before upgrading, when `SEARCH_INDEXER_CLASS` is the Find
+  indexer (see `documentation/search.md`):
+  - register Docs in Menshen with an exchange rule to Find for the
+    `action:search-find-docs` action scope, the token lifetime of which
+    (`exchanged_token_duration`) is at least `SESSION_COOKIE_AGE`;
+  - have the identity provider add `menshen` to the audience of the access
+    tokens of Docs;
+  - set `MENSHEN_URL`, `MENSHEN_CLIENT_ID`, `MENSHEN_CLIENT_SECRET` and
+    `FIND_TOKEN_ENCRYPTION_KEY` (a Fernet key), and `FIND_AUDIENCE`,
+    `FIND_SEARCH_ACTION_SCOPE` and `FIND_SEARCH_SERVICES` if Menshen and Find
+    use other names than `find`, `action:search-find-docs` and `docs`.
+    `OIDC_STORE_ACCESS_TOKEN` must stay enabled. `OIDC_STORE_REFRESH_TOKEN`
+    and `OIDC_STORE_REFRESH_TOKEN_KEY` are no longer used by the search: the
+    search no longer refreshes the access token, nor answers 401 once the
+    refresh token has expired. Disable them unless something else of your
+    deployment needs them.
+
+  The token is exchanged at login only: the users logged in before the
+  upgrade search the titles in the database until they log in again. So do
+  the users who get `flag_find_full_text_search` during their session, and
+  everyone while Menshen is not configured.
 
 ## [v6.0.2] - 2026-10-21
 
