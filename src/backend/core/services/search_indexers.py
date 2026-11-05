@@ -13,11 +13,27 @@ from django.utils.module_loading import import_string
 import requests
 
 from core import models
+from core.services.find_tokens import forget_find_token, get_find_token
 from core.services.yhub_services import YHubError, YHubService
 from core.utils.paths import get_ancestor_to_descendants_map
 from core.utils.yjs import yjs_to_text
 
 logger = logging.getLogger(__name__)
+
+
+class SearchIndexerError(Exception):
+    """The search indexer could not answer a search."""
+
+
+class SearchIndexerAuthenticationError(SearchIndexerError):
+    """The search indexer rejected the token of the user."""
+
+
+class SearchIndexerUnavailableError(SearchIndexerError):
+    """
+    The search indexer cannot search for this session, e.g. it holds no token for
+    it. Not a failure: the search is expected to be made otherwise.
+    """
 
 
 @cache
@@ -219,20 +235,26 @@ class BaseDocumentIndexer(ABC):
     def search(
         self,
         q: str,
-        token: str,
+        session,
         visited: tuple[str, ...] = (),
         nb_results: int = None,
         path: str = None,
     ):
         """
-        Search for documents in Find app.
+        Search for documents in Find app, in the services of FIND_SEARCH_SERVICES.
         Ensure the same default ordering as "Docs" list : -updated_at
 
         Returns ids of the documents
 
+        Raises:
+            SearchIndexerUnavailableError: the indexer cannot search for this
+                session.
+            SearchIndexerError: the indexer could not answer.
+
         Args:
             q (str): user query.
-            token (str): OIDC Authentication token.
+            session: Session of the user, which holds what the indexer needs to
+                authenticate them.
             visited (list, optional):
                 List of ids of active public documents with LinkTrace
                 Defaults to settings.SEARCH_INDEXER_BATCH_SIZE.
@@ -247,19 +269,19 @@ class BaseDocumentIndexer(ABC):
             data={
                 "q": q,
                 "visited": visited,
-                "services": ["docs"],
+                "services": list(settings.FIND_SEARCH_SERVICES),
                 "nb_results": nb_results,
                 "order_by": "updated_at",
                 "order_direction": "desc",
                 "path": path,
             },
-            token=token,
+            session=session,
         )
 
         return results
 
     @abstractmethod
-    def search_query(self, data, token) -> dict:
+    def search_query(self, data, session) -> dict:
         """
         Retrieve documents from the Find app API.
 
@@ -275,7 +297,7 @@ class FindDocumentIndexer(BaseDocumentIndexer):
     def search(
         self,
         q: str,
-        token: str,
+        session,
         visited: tuple[()] = (),
         nb_results: int = None,
         path: str = None,
@@ -286,13 +308,17 @@ class FindDocumentIndexer(BaseDocumentIndexer):
         Find answers with {"results": [...]}, each result already carrying its
         id and its title, whatever the language it was indexed under.
         """
-        return super().search(
+        body = super().search(
             q=q,
-            token=token,
+            session=session,
             visited=visited,
             nb_results=nb_results,
             path=path,
-        )["results"]
+        )
+        results = body.get("results") if isinstance(body, dict) else None
+        if not isinstance(results, list):
+            raise SearchIndexerError("Find answered a search without results")
+        return results
 
     def serialize_document(self, document, content, accesses):
         """
@@ -325,25 +351,64 @@ class FindDocumentIndexer(BaseDocumentIndexer):
             "is_active": not bool(document.ancestors_deleted_at),
         }
 
-    def search_query(self, data, token) -> requests.Response:
+    def search_query(self, data, session) -> dict:
         """
-        Retrieve documents from the Find app API.
+        Retrieve documents from the Find app API, with the Find token exchanged at
+        the login of the user and kept in their session.
 
         Args:
             data (dict): search data
-            token (str): OICD token
+            session: Session of the user
 
         Returns:
-            dict: A JSON-serializable dictionary.
+            dict: The body of the answer of Find.
+
+        Raises:
+            SearchIndexerUnavailableError: the session holds no usable Find token
+                (anonymous user, Menshen failing at login, token expired...).
+            SearchIndexerAuthenticationError: Find rejected the token (401), which
+                is dropped from the session: there is no use sending it again.
+            SearchIndexerError: Find could not be reached or did not answer
+                a search result.
         """
-        response = requests.post(
-            self.search_url,
-            json=data,
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=10,
-        )
-        response.raise_for_status()
-        return response.json()
+        token = get_find_token(session)
+        if not token:
+            raise SearchIndexerUnavailableError("No usable Find token in the session")
+
+        try:
+            response = requests.post(
+                self.search_url,
+                json=data,
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10,
+            )
+        except requests.RequestException as error:
+            raise SearchIndexerError(f"Find could not be reached: {error}") from error
+
+        if response.status_code == 401:
+            forget_find_token(session)
+            raise SearchIndexerAuthenticationError(
+                "Find rejected the token of the session (401), it is dropped"
+            )
+        if response.status_code in (400, 403):
+            # Find's answer is generic, and its validation errors echo the query
+            # of the user: the configuration is what helps here.
+            raise SearchIndexerError(
+                f"Find refused the search ({response.status_code}): the token "
+                "must grant the search in each service of FIND_SEARCH_SERVICES "
+                f"({settings.FIND_SEARCH_SERVICES}), check FIND_AUDIENCE "
+                f"({settings.FIND_AUDIENCE}), FIND_SEARCH_ACTION_SCOPE "
+                f"({settings.FIND_SEARCH_ACTION_SCOPE}) and the rule of Menshen"
+            )
+        if not response.ok:
+            raise SearchIndexerError(f"Find answered {response.status_code}")
+
+        try:
+            return response.json()
+        except ValueError as error:
+            raise SearchIndexerError(
+                "Find answered a search that is not JSON"
+            ) from error
 
     def push(self, data):
         """

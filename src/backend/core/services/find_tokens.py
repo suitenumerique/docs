@@ -19,12 +19,9 @@ import time
 
 from django.conf import settings
 
-import waffle
 from cryptography.fernet import Fernet, InvalidToken
 
-from core.enums import FeatureFlag
 from core.services import menshen_services
-from core.services.search_indexers import FindDocumentIndexer, get_document_indexer
 
 logger = logging.getLogger(__name__)
 
@@ -51,29 +48,16 @@ def get_cipher():
         ) from error
 
 
-def is_find_search_enabled(request):
-    """
-    Whether the user of the request searches with Find: the Find indexer is
-    configured and the full text search flag is active for them.
-    """
-    return isinstance(
-        get_document_indexer(), FindDocumentIndexer
-    ) and waffle.flag_is_active(request, FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH)
-
-
 def exchange_find_token(request):
     """
     Exchange the access token of the user, just logged in, for a Find token kept
     in their session. It replaces the Find token the session may already hold,
     which is revoked.
 
-    It does nothing unless the user searches with Find, and never fails: a login
-    must not depend on Menshen. Without a Find token, the user searches the
-    database until their next login.
+    Called at login for the users who search with Find (see core.signals). It
+    never fails: a login must not depend on Menshen. Without a Find token, the
+    user searches the database until their next login.
     """
-    if not is_find_search_enabled(request):
-        return
-
     access_token = request.session.get(OIDC_ACCESS_TOKEN_SESSION_KEY)
     if not access_token:
         logger.warning(
@@ -130,6 +114,12 @@ def get_find_token(session):
     except (FindTokenConfigurationError, InvalidToken) as error:
         logger.warning("The Find token of a session cannot be decrypted: %s", error)
         return None
+
+
+def forget_find_token(session):
+    """Drop the Find token of a session, e.g. once Find has rejected it."""
+    session.pop(TOKEN_SESSION_KEY, None)
+    session.pop(EXPIRATION_SESSION_KEY, None)
 
 
 def revoke(token):

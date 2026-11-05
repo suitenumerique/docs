@@ -71,6 +71,8 @@ from core.services.jwt_services import (
 )
 from core.services.jwt_services import JWTService
 from core.services.search_indexers import (
+    SearchIndexerError,
+    SearchIndexerUnavailableError,
     get_document_indexer,
     get_visited_document_ids_of,
 )
@@ -1753,34 +1755,31 @@ class DocumentViewSet(
         """
         Returns an ordered list of documents best matching the search query parameter 'q'.
 
-        It depends on a search configurable Search Indexer, used for the users having the
-        full text search feature flag. Otherwise, or if no Search Indexer is configured
-        or if it is not reachable, the function falls back to a basic title search.
+        It depends on a configurable Search Indexer, used for the users having the
+        full text search feature flag. Otherwise the function falls back to a basic
+        title search: when no Search Indexer is configured, when it cannot search
+        for the session of the user (e.g. Find without a token for it), and
+        whenever it fails to answer.
         """
         params = serializers.SearchQueryParamDocumentSerializer(
             data=request.query_params
         )
         params.is_valid(raise_exception=True)
-        if not waffle.flag_is_active(request, FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH):
-            return self._search_using_database(
-                request, params.validated_data, *args, **kwargs
-            )
 
         indexer = get_document_indexer()
-        if indexer is None:
-            # fallback on title search if the indexer is not configured
-            return self._search_using_database(
-                request, params.validated_data, *args, **kwargs
-            )
+        if indexer is not None and waffle.flag_is_active(
+            request, FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH
+        ):
+            try:
+                return self._search_using_indexer(indexer, request, params=params)
+            except SearchIndexerUnavailableError:
+                pass
+            except SearchIndexerError as e:
+                logger.error("Error while searching documents with indexer: %s", e)
 
-        try:
-            return self._search_using_indexer(indexer, request, params=params)
-        except requests.exceptions.RequestException as e:
-            logger.error("Error while searching documents with indexer: %s", e)
-            # fallback on title search if the indexer is not reached
-            return self._search_using_database(
-                request, params.validated_data, *args, **kwargs
-            )
+        return self._search_using_database(
+            request, params.validated_data, *args, **kwargs
+        )
 
     @staticmethod
     def _search_using_indexer(indexer, request, params):
@@ -1803,7 +1802,7 @@ class DocumentViewSet(
 
         results = indexer.search(
             q=params.validated_data["q"],
-            token=request.session.get("oidc_access_token"),
+            session=request.session,
             path=path,
             visited=get_visited_document_ids_of(queryset, request.user),
         )

@@ -13,9 +13,11 @@ from django.db import transaction
 
 import pytest
 from rest_framework.test import APIClient
+from waffle.testutils import override_flag
 
 from core import factories, models
 from core.authentication.backends import OIDCAuthenticationBackend
+from core.enums import FeatureFlag
 
 pytestmark = pytest.mark.django_db
 
@@ -263,10 +265,13 @@ def test_signals_document_created(
 # Login and logout
 
 
+@pytest.mark.usefixtures("indexer_settings")
+@override_flag(FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH, active=True)
 def test_signals_login_exchanges_a_find_token():
     """
     Logging in through the OIDC callback should exchange the access token of the
-    identity provider, already stored in the session, for the logged-in user.
+    identity provider, already stored in the session, for the logged-in user who
+    searches with Find.
     """
     user = factories.UserFactory()
     client = APIClient()

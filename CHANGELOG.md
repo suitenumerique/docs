@@ -14,6 +14,7 @@ and this project adheres to
 - ➕(backend) add menshen-client dependency
 - ✨(backend) add a Menshen token exchange service
 - ✨(backend) exchange a Find token at login and revoke it at logout
+- ✨(backend) search Find with the token exchanged at login
 
 ### Changed
 

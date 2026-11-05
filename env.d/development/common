@@ -100,6 +100,14 @@ SEARCH_INDEXER_SECRET=find-api-key-for-docs-with-exactly-50-chars-length  # Key 
 INDEXING_URL=http://find:8000/api/v1.0/documents/index/
 SEARCH_URL=http://find:8000/api/v1.0/documents/search/
 SEARCH_INDEXER_QUERY_LIMIT=50
+# Users with flag_find_full_text_search search Find with a token exchanged
+# with Menshen at login (see documentation/search.md). MENSHEN_CLIENT_SECRET
+# goes in common.local.
+# MENSHEN_URL=http://menshen:8000
+# MENSHEN_CLIENT_ID=docs
+# FIND_AUDIENCE=find
+# FIND_SEARCH_ACTION_SCOPE=action:search-find-docs
+# FIND_SEARCH_SERVICES=docs
 # Key encrypting the Find tokens kept in the sessions, generated locally by
 # "make generate-secret-keys", never committed.
 FIND_TOKEN_ENCRYPTION_KEY_FILE=/data/find/token-encryption.key

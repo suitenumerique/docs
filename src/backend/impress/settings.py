@@ -169,6 +169,10 @@ class Base(Configuration):
     FIND_TOKEN_ENCRYPTION_KEY = SecretFileValue(
         None, environ_name="FIND_TOKEN_ENCRYPTION_KEY", environ_prefix=None
     )
+    # Services searched in Find: each must be granted by the scope of the token
+    FIND_SEARCH_SERVICES = values.ListValue(
+        ["docs"], environ_name="FIND_SEARCH_SERVICES", environ_prefix=None
+    )
 
     MEDIA_AUTH_ORIGINAL_URL_HEADER = values.Value(
         default="HTTP_X_ORIGINAL_URL",
