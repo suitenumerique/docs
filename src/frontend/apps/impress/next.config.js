@@ -8,7 +8,7 @@ const buildId = crypto.randomBytes(256).toString('hex').slice(0, 8);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ['docs.127.0.0.1.nip.io'],
+  allowedDevOrigins: ['docs.127.0.0.1.nip.io', process.env.ALLOWED_DEV_ORIGIN].filter(Boolean),
   output: 'export',
   trailingSlash: true,
   // `@blocknote/math-block` imports `katex/dist/katex.min.css` from its entry
