@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ➕(backend) add menshen-client dependency #2977
+
 ### Changed
 
 - 📦️(docker) keep the yarn cache out of the node images #2992
