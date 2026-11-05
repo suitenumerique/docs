@@ -10,8 +10,12 @@ from django.db import transaction
 from django.db.models import signals
 from django.dispatch import receiver
 
+import waffle
+
 from core import models
+from core.enums import FeatureFlag
 from core.services.find_tokens import exchange_find_token, revoke_find_token
+from core.services.search_indexers import FindDocumentIndexer, get_document_indexer
 from core.tasks.access import reset_service_connections_on_commit
 from core.tasks.search import (
     trigger_batch_document_indexer,
@@ -122,10 +126,23 @@ def invalidate_bulk_changed_caches(user_ids, removed_document_ids):
         document.invalidate_nb_accesses_cache()
 
 
+def searches_with_find(request):
+    """
+    Whether the user of the request searches with Find: the Find indexer is
+    configured and the full text search flag is active for them.
+    """
+    return isinstance(
+        get_document_indexer(), FindDocumentIndexer
+    ) and waffle.flag_is_active(request, FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH)
+
+
 @receiver(user_logged_in)
 def exchange_find_token_at_login(sender, request, user, **kwargs):  # pylint: disable=unused-argument
-    """Exchange the fresh access token of the user for a Find token."""
-    if request is not None:
+    """
+    Exchange the fresh access token of the user for a Find token, if, and only if,
+    they search with Find.
+    """
+    if request is not None and searches_with_find(request):
         exchange_find_token(request)
 
 

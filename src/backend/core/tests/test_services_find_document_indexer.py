@@ -487,13 +487,13 @@ def test_find_document_indexer_search(mock_search_query):
     mock_search_query.return_value = {"results": hits}
 
     q = "test"
-    token = "fake-token"
+    session = {}
     nb_results = 10
     path = "/some/path/"
     visited = ["doc-123"]
     results = FindDocumentIndexer().search(
         q=q,
-        token=token,
+        session=session,
         nb_results=nb_results,
         path=path,
         visited=visited,
