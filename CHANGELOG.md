@@ -22,6 +22,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(backend) fix the search in a document through Find #2977
+- 🐛(backend) stop refreshing the OIDC token in the search #2977
 
 ### Removed
 

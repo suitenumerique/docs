@@ -1750,7 +1750,6 @@ class DocumentViewSet(
         duplicated_root.delete()
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
-    @utils.conditional_refresh_oidc_token
     def search(self, request, *args, **kwargs):
         """
         Returns an ordered list of documents best matching the search query parameter 'q'.
