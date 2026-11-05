@@ -213,7 +213,7 @@ Run before submitting: `make lint && make frontend-lint && make test`
 - Use DRF for REST APIs with proper serializers
 - Implement proper error handling with try/except blocks
 - Use Django settings for configuration
-- Internationalize user-facing strings with `_()` (backend) or i18next `t()` (frontend); never edit `translations.json`, it is pulled from Crowdin
+- Internationalize user-facing strings with `_()` (backend) or i18next `t()` (frontend, always with a `description` for the translator); never edit `translations.json`, it is pulled from Crowdin
 - Cache expensive operations, use database indexes
 - Write docstrings for classes and complex functions
 - Keep the comments in the code you add short and concise: explain the why, not the what

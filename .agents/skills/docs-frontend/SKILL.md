@@ -61,8 +61,11 @@ From `src/frontend/apps/impress`:
 - **Client state** in a Zustand store only when several components share it;
   otherwise keep it local.
 - **i18n**: every user-visible string, `aria-label` and announcement goes
-  through `const { t } = useTranslation()`. Never edit `translations.json`:
-  it is pulled from Crowdin.
+  through `const { t } = useTranslation()`, and every `t()` call carries a
+  `description` giving the translator the context (what it is, where it is
+  shown): `t('Search', { description: 'Placeholder of a search input' })`.
+  Add it to the `t()` calls you write or touch, not to the whole file. Never
+  edit `translations.json`: it is pulled from Crowdin.
 - **Styles**: the `$css` and layout props of `Box`/`Text`, and the Cunningham
   tokens, rather than hard-coded colours or sizes.
 - Accessibility of a new or changed interaction: follow the
