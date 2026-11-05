@@ -63,6 +63,7 @@ MENSHEN_CLIENT_SECRET="<secret of Docs in Menshen>"
 FIND_AUDIENCE="find"  # The default
 FIND_SEARCH_ACTION_SCOPE="action:search-find-docs"  # The default
 FIND_SEARCH_SERVICES="docs"  # The default, comma-separated
+FIND_SEARCH_TIMEOUT=10  # The default, in seconds, before searching the database instead
 FIND_TOKEN_ENCRYPTION_KEY="<your-32-byte-encryption-key==>"
 
 # OIDC authentication
@@ -97,7 +98,8 @@ always answers:
 - for the sessions without a usable Find token: Menshen failing or not
   configured at login, the flag granted since the login, the token expired, or
   encrypted with a former `FIND_TOKEN_ENCRYPTION_KEY`;
-- whenever Find fails to answer: unreachable, an error, an unexpected answer.
+- whenever Find fails to answer: unreachable, slower than
+  `FIND_SEARCH_TIMEOUT`, an error, an unexpected answer.
   A token Find rejects (401) is dropped from the session.
 
 The failures are logged: a `400` or `403` from Find usually means that the

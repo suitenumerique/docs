@@ -18,6 +18,7 @@ and this project adheres to
 - 📦️(docker) keep the yarn cache out of the node images #2992
 - ⚡️(backend) probe the celery worker with heartbeat files, 
   not inspect ping #2956
+- 🔧(backend) make the timeout of the Find search configurable #2977
 
 ### Fixed
 

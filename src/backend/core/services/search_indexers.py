@@ -380,7 +380,7 @@ class FindDocumentIndexer(BaseDocumentIndexer):
                 self.search_url,
                 json=data,
                 headers={"Authorization": f"Bearer {token}"},
-                timeout=10,
+                timeout=settings.FIND_SEARCH_TIMEOUT,
             )
         except requests.RequestException as error:
             raise SearchIndexerError(f"Find could not be reached: {error}") from error
