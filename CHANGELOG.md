@@ -12,6 +12,7 @@ and this project adheres to
 - ✨(frontend) add a /children block listing the sub-docs #2799
 - 🤖(agents) add AI skills #2746
 - ➕(backend) add menshen-client dependency
+- ✨(backend) add a Menshen token exchange service
 
 ### Changed
 
