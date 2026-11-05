@@ -14,6 +14,8 @@ CVE-2026-16742
 CVE-2025-69720
 # perl
 CVE-2026-9538
+# zlib
+CVE-2026-76844
 
 # SQLite — yhub runtime uses PostgreSQL/Redis, not SQLite FTS5.
 # Review when Debian publishes a fix.
