@@ -81,6 +81,11 @@ data/jwt/private.pem:
 data/jwt/yhub-private.pem:
 	@bin/generate-jwt-private-key.sh
 
+# Fernet key encrypting the Find tokens kept in the sessions. Generated locally,
+# never committed. Regenerate it by deleting the file.
+data/find/token-encryption.key:
+	@bin/generate-find-token-encryption-key.sh
+
 # -- Project
 
 create-env-local-files: ## create env.local files in env.d/development
@@ -96,7 +101,10 @@ create-env-local-files:
 
 generate-secret-keys:
 generate-secret-keys: ## generate the secret keys needed by the dev stack
-generate-secret-keys: data/jwt/private.pem data/jwt/yhub-private.pem
+generate-secret-keys: \
+	data/jwt/private.pem \
+	data/jwt/yhub-private.pem \
+	data/find/token-encryption.key
 	@bin/generate-oidc-store-refresh-token-key.sh
 .PHONY: generate-secret-keys
 
@@ -258,6 +266,7 @@ run-backend: ## Start only the backend application and all needed services
 	@$(MAKE) create-docker-network
 	@$(MAKE) data/jwt/private.pem
 	@$(MAKE) data/jwt/yhub-private.pem
+	@$(MAKE) data/find/token-encryption.key
 	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider-development-converter
@@ -276,6 +285,7 @@ run-e2e:
 	@$(MAKE) create-docker-network
 	@$(MAKE) data/jwt/private.pem
 	@$(MAKE) data/jwt/yhub-private.pem
+	@$(MAKE) data/find/token-encryption.key
 	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE_E2E) up --force-recreate -d y-provider-converter

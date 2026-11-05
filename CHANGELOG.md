@@ -10,6 +10,7 @@ and this project adheres to
 
 - ➕(backend) add menshen-client dependency #2977
 - ✨(backend) add a Menshen token exchange service #2977
+- ✨(backend) exchange a Find token at login and revoke it at logout #2977
 
 ### Changed
 

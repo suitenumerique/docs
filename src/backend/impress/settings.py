@@ -154,6 +154,22 @@ class Base(Configuration):
         3.0, environ_name="MENSHEN_TIMEOUT", environ_prefix=None
     )
 
+    # Find tokens, exchanged with Menshen at login (core.services.find_tokens).
+    # The defaults are the names documented by Find and Menshen for Docs; an
+    # environment may configure other ones in Menshen.
+    FIND_AUDIENCE = values.Value(
+        "find", environ_name="FIND_AUDIENCE", environ_prefix=None
+    )
+    FIND_SEARCH_ACTION_SCOPE = values.Value(
+        "action:search-find-docs",
+        environ_name="FIND_SEARCH_ACTION_SCOPE",
+        environ_prefix=None,
+    )
+    # Fernet key encrypting the Find tokens kept in the sessions
+    FIND_TOKEN_ENCRYPTION_KEY = SecretFileValue(
+        None, environ_name="FIND_TOKEN_ENCRYPTION_KEY", environ_prefix=None
+    )
+
     MEDIA_AUTH_ORIGINAL_URL_HEADER = values.Value(
         default="HTTP_X_ORIGINAL_URL",
         environ_name="MEDIA_AUTH_ORIGINAL_URL_HEADER",

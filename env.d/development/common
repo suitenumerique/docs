@@ -100,5 +100,8 @@ SEARCH_INDEXER_SECRET=find-api-key-for-docs-with-exactly-50-chars-length  # Key 
 INDEXING_URL=http://find:8000/api/v1.0/documents/index/
 SEARCH_URL=http://find:8000/api/v1.0/documents/search/
 SEARCH_INDEXER_QUERY_LIMIT=50
+# Key encrypting the Find tokens kept in the sessions, generated locally by
+# "make generate-secret-keys", never committed.
+FIND_TOKEN_ENCRYPTION_KEY_FILE=/data/find/token-encryption.key
 
 CONVERSION_UPLOAD_ENABLED=true
