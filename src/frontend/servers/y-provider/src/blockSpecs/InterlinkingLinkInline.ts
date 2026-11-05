@@ -13,6 +13,10 @@ const interlinkingPropSchema = {
     values: ['/', '@'] as const,
   },
   title: { default: '' as string },
+  // Persisted comment marks (see the frontend `InlineNodeCommentsExtension`).
+  // Declared here so the attribute is recognized, not dropped, when the server
+  // converts the document to/from a Yjs fragment.
+  commentMarks: { default: '' as string },
 } as const;
 
 const interlinkingConfig = {
