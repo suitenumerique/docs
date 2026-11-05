@@ -864,7 +864,7 @@ class Base(Configuration):
     OIDC_STORE_REFRESH_TOKEN = values.BooleanValue(
         default=False, environ_name="OIDC_STORE_REFRESH_TOKEN", environ_prefix=None
     )
-    OIDC_STORE_REFRESH_TOKEN_KEY = values.Value(
+    OIDC_STORE_REFRESH_TOKEN_KEY = SecretFileValue(
         default=None,
         environ_name="OIDC_STORE_REFRESH_TOKEN_KEY",
         environ_prefix=None,
