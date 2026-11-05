@@ -19,7 +19,7 @@ bash .agents/skills/docs-start/check-stack.sh
 Run it with the Bash tool (Git Bash on Windows). It is read-only and takes
 around 20 seconds. It reports:
 
-- the Docker daemon, the `lasuite-network` network, the `env.d/development/*.local` files and the JWT keys,
+- the Docker daemon, the `lasuite-network` network, the `env.d/development/*.local` files and the keys of `data/` (JWT, Find tokens, OIDC refresh tokens),
 - **how the frontend is served**: the `frontend-development` container, a host
   process on :3000 (a local `yarn dev`: `mode: local`), or nothing yet,
 - each dev image: missing, stale or up to date,
@@ -38,9 +38,8 @@ the keys, builds every image, runs the migrations, builds the mails, starts
 everything and seeds the demo data. Never run it on a stack that is already
 set up, nor while a local `yarn dev` holds :3000 (it starts the frontend
 container, which cannot bind the port): stop the local frontend first. It
-rebuilds everything, flushes the database (`make demo` runs
-`resetdb`), and `generate-secret-keys` appends one more
-`OIDC_STORE_REFRESH_TOKEN_KEY` to `common.local` on every run.
+rebuilds everything and flushes the database (`make demo` runs
+`resetdb`).
 
 **An image is stale only when its dependencies changed.** Every dev container
 bind-mounts its sources, so code changes never need a rebuild. Only these do:
@@ -134,7 +133,7 @@ say "Nothing to do". Then give the user a short summary:
   http://localhost:1081, MinIO http://localhost:9001,
 - the logins: `impress` / `impress` for the app (Keycloak); `admin@example.com`
   / `admin` for the Django admin once `make demo` or `make superuser` has run,
-- the notes from the check (local frontend, duplicated keys, drifted
+- the notes from the check (local frontend, leftover keys, drifted
   `node_modules`).
 
 ## Troubleshooting

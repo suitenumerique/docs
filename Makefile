@@ -86,6 +86,11 @@ data/jwt/yhub-private.pem:
 data/find/token-encryption.key:
 	@bin/generate-find-token-encryption-key.sh
 
+# Fernet key encrypting the OIDC refresh tokens kept in the sessions. Generated
+# locally, never committed. Regenerate it by deleting the file.
+data/oidc/refresh-token.key:
+	@bin/generate-oidc-store-refresh-token-key.sh
+
 # -- Project
 
 create-env-local-files: ## create env.local files in env.d/development
@@ -104,8 +109,8 @@ generate-secret-keys: ## generate the secret keys needed by the dev stack
 generate-secret-keys: \
 	data/jwt/private.pem \
 	data/jwt/yhub-private.pem \
-	data/find/token-encryption.key
-	@bin/generate-oidc-store-refresh-token-key.sh
+	data/find/token-encryption.key \
+	data/oidc/refresh-token.key
 .PHONY: generate-secret-keys
 
 pre-bootstrap: \
@@ -267,6 +272,7 @@ run-backend: ## Start only the backend application and all needed services
 	@$(MAKE) data/jwt/private.pem
 	@$(MAKE) data/jwt/yhub-private.pem
 	@$(MAKE) data/find/token-encryption.key
+	@$(MAKE) data/oidc/refresh-token.key
 	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider-development-converter
@@ -286,6 +292,7 @@ run-e2e:
 	@$(MAKE) data/jwt/private.pem
 	@$(MAKE) data/jwt/yhub-private.pem
 	@$(MAKE) data/find/token-encryption.key
+	@$(MAKE) data/oidc/refresh-token.key
 	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE_E2E) up --force-recreate -d y-provider-converter

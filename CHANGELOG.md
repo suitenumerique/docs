@@ -28,6 +28,7 @@ and this project adheres to
 - ♻️(backend) remove the unused scope of the document throttles #2951
 - 💄(frontend) use true italic Inter in the editor #2861
 - 🔧(backend) make the timeout of the Find search configurable
+- 🔧(backend) read OIDC_STORE_REFRESH_TOKEN_KEY from a generated file in dev
 
 ### Fixed
 
