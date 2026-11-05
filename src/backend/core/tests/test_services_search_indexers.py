@@ -36,7 +36,7 @@ class FakeDocumentIndexer(BaseDocumentIndexer):
         return {}
 
     def push(self, data):
-        pass
+        return len(data)
 
     def search_query(self, data, session):
         return {}
@@ -263,7 +263,7 @@ def test_services_search_indexers_index_errors(indexer_settings):
         FindDocumentIndexer().index()
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 def test_services_search_indexers_batches_pass_only_batch_accesses(
     mock_push, indexer_settings
 ):
@@ -303,7 +303,7 @@ def test_services_search_indexers_batches_pass_only_batch_accesses(
     assert seen_doc_ids == {str(d.id) for d in documents}
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_batch_size_argument(mock_push):
     """
@@ -341,7 +341,7 @@ def test_services_search_indexers_batch_size_argument(mock_push):
     assert seen_doc_ids == {str(d.id) for d in documents}
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_index_the_content_of_the_collaboration_server(
     mock_push,
@@ -356,7 +356,7 @@ def test_services_search_indexers_index_the_content_of_the_collaboration_server(
     assert indexed["content"] == base64_yjs_to_text(factories.YDOC_HELLO_WORLD_BASE64)
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_skip_documents_the_content_of_which_is_unreadable(
     mock_push,
@@ -383,7 +383,7 @@ def test_services_search_indexers_skip_documents_the_content_of_which_is_unreada
     assert results == {str(readable.id)}
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ignore_empty_documents(mock_push):
     """
@@ -418,7 +418,7 @@ def test_services_search_indexers_ignore_empty_documents(mock_push):
     }
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 def test_services_search_indexers_skip_empty_batches(mock_push, indexer_settings):
     """
     Documents indexing batch can be empty if all the docs are empty.
@@ -445,7 +445,7 @@ def test_services_search_indexers_skip_empty_batches(mock_push, indexer_settings
     assert results == [str(document.id)]
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ancestors_link_reach(mock_push):
     """Document accesses and reach should take into account ancestors link reaches."""
@@ -466,7 +466,7 @@ def test_services_search_indexers_ancestors_link_reach(mock_push):
     assert results[str(document.id)]["reach"] == "public"
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ancestors_users(mock_push):
     """Document accesses and reach should include users from ancestors."""
@@ -489,7 +489,7 @@ def test_services_search_indexers_ancestors_users(mock_push):
     }
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ancestors_teams(mock_push):
     """Document accesses and reach should include teams from ancestors."""

@@ -146,6 +146,7 @@ class BaseDocumentIndexer(ABC):
     def index(self, queryset=None, batch_size=None):
         """
         Fetch documents in batches, serialize them, and push to the search backend.
+        Return the number of documents the search backend indexed.
 
         Args:
             queryset (optional): Document queryset
@@ -195,8 +196,7 @@ class BaseDocumentIndexer(ABC):
                     )
 
             if serialized_batch:
-                self.push(serialized_batch)
-                count += len(serialized_batch)
+                count += self.push(serialized_batch)
 
         return count
 
@@ -227,7 +227,8 @@ class BaseDocumentIndexer(ABC):
     @abstractmethod
     def push(self, data):
         """
-        Push a batch of serialized documents to the backend.
+        Push a batch of serialized documents to the backend, and return the
+        number of documents it indexed.
 
         Must be implemented by subclasses.
         """
@@ -412,15 +413,88 @@ class FindDocumentIndexer(BaseDocumentIndexer):
 
     def push(self, data):
         """
-        Push a batch of documents to the Find backend.
+        Push a batch of documents to the Find backend, and return the number of
+        documents Find indexed.
+
+        Find answers each document of a batch with its own status. A document Find
+        refuses is logged rather than raised, so that it does not hold back the
+        others: on a 207, some documents could not be indexed; on a 400, some failed
+        validation and Find indexed none, so the batch is sent again without them.
+        Any other error (authentication, unavailability...) is raised.
 
         Args:
             data (list): List of document dictionaries.
         """
-        response = requests.post(
+        response = self.post_batch(data)
+
+        if response.status_code == 400:
+            results = self.get_bulk_results(response, data)
+            if results is not None:
+                self.log_failed_documents(data, results, "failed validation")
+                valid = [
+                    data[r["index"]] for r in results if r.get("status") == "valid"
+                ]
+                if not valid:
+                    return 0
+                # Sent once more: a second refusal is raised, not retried
+                data = valid
+                response = self.post_batch(data)
+
+        response.raise_for_status()
+
+        if response.status_code == 207:
+            results = self.get_bulk_results(response, data) or []
+            failed = self.log_failed_documents(data, results, "could not be indexed")
+            return len(data) - failed
+
+        return len(data)
+
+    def post_batch(self, data):
+        """Send a batch of documents to the indexing endpoint of Find."""
+        return requests.post(
             self.indexer_url,
             json=data,
             headers={"Authorization": f"Bearer {self.indexer_secret}"},
             timeout=10,
         )
-        response.raise_for_status()
+
+    @staticmethod
+    def get_bulk_results(response, data):
+        """
+        Return the status Find answered for each document of a batch, or None when
+        the answer is not one status per document (e.g. a body Find could not read).
+        """
+        try:
+            results = response.json()
+        except ValueError:
+            return None
+        if not isinstance(results, list) or not all(
+            isinstance(result, dict)
+            and isinstance(result.get("index"), int)
+            and 0 <= result["index"] < len(data)
+            for result in results
+        ):
+            return None
+        return results
+
+    @staticmethod
+    def log_failed_documents(data, results, reason):
+        """Log the documents of a batch Find answered in error, return their number."""
+        failed = [result for result in results if result.get("status") == "error"]
+        for result in failed:
+            errors = result.get("errors") or []
+            details = "; ".join(
+                f"{'.'.join(str(loc) for loc in error.get('loc', []))}: "
+                f"{error.get('msg')}"
+                for error in errors
+                if isinstance(error, dict)
+            )
+            # OpenSearch can quote a field in its reason: keep it short
+            details = details or str(result.get("message", ""))[:200]
+            logger.error(
+                "Document %s was not indexed by Find, it %s: %s",
+                data[result["index"]].get("id"),
+                reason,
+                details,
+            )
+        return len(failed)

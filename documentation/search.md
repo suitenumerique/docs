@@ -12,6 +12,12 @@ Configure a **Service** for Docs application with these settings
 
 See [how-to-use-indexer.md](how-to-use-indexer.md) for details.
 
+Find validates each document of a batch. A document it refuses is logged as an
+error ("Document <id> was not indexed by Find") and the rest of the batch is
+indexed all the same. Find refuses, for example, a document shared with a user
+whose `sub` is longer than 50 characters, or with a team whose name is not a
+slug.
+
 ## Configure Menshen
 
 Find authenticates the searches with a user token exchanged with

@@ -24,6 +24,7 @@ and this project adheres to
 
 - 🐛(backend) fix the search in a document through Find #2977
 - 🐛(backend) stop refreshing the OIDC token in the search #2977
+- 🐛(backend) index the rest of a batch when Find refuses a document #2977
 
 ### Removed
 
