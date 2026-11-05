@@ -49,7 +49,7 @@ dependencies = [
     "emoji==2.16.0",
     "factory_boy==3.3.3",
     "gunicorn==26.2.0",
-    "joserfc==1.7.5",
+    "joserfc==1.7.6",
     "jsonschema==4.26.0",
     "langfuse==3.11.2",
     "lxml==6.1.3",
