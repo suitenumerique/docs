@@ -10,7 +10,7 @@ export const useClipboard = () => {
 
   return useCallback(
     (text: string, successMessage?: string, errorMessage?: string) => {
-      navigator.clipboard
+      return navigator.clipboard
         .writeText(text)
         .then(() => {
           const message =
@@ -21,6 +21,7 @@ export const useClipboard = () => {
           toast(message, VariantType.SUCCESS, {
             duration: 3000,
           });
+          return true;
         })
         .catch(() => {
           const message =
@@ -31,6 +32,7 @@ export const useClipboard = () => {
           toast(message, VariantType.ERROR, {
             duration: 3000,
           });
+          return false;
         });
     },
     [t, toast],

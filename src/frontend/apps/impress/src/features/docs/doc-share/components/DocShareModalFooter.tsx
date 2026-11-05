@@ -1,4 +1,5 @@
 import { Button } from '@gouvfr-lasuite/ui-components';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -18,6 +19,25 @@ export const DocShareModalFooter = ({
 }: DocShareModalFooterProps) => {
   const copyDocLink = useCopyDocLink(doc.id);
   const { t } = useTranslation();
+  const [copyStatus, setCopyStatus] = useState('');
+
+  const handleCopyLink = async () => {
+    // Reset first, so copying twice in a row is announced again.
+    setCopyStatus('');
+
+    const copied = await copyDocLink();
+
+    setCopyStatus(
+      copied
+        ? t('Link Copied !', {
+            description: 'Toast confirming a link was copied to the clipboard',
+          })
+        : t('Failed to copy link', {
+            description: 'Toast shown when copying a link failed',
+          }),
+    );
+  };
+
   return (
     <Box
       $css={css`
@@ -37,7 +57,7 @@ export const DocShareModalFooter = ({
       >
         <Button
           fullWidth={false}
-          onClick={copyDocLink}
+          onClick={() => void handleCopyLink()}
           variant="secondary"
           icon={<Icon iconName="add_link" $withThemeInherited />}
         >
@@ -48,6 +68,14 @@ export const DocShareModalFooter = ({
         <Button onClick={onClose}>
           {t('OK', { description: 'Button closing a dialog' })}
         </Button>
+      </Box>
+      {/*
+        The copy confirmation is only shown as a toast, which assistive
+        technologies do not announce. This region is present before the copy
+        happens so the status message is read out (RGAA 7.5).
+      */}
+      <Box className="sr-only" role="status" aria-live="polite">
+        {copyStatus}
       </Box>
     </Box>
   );
