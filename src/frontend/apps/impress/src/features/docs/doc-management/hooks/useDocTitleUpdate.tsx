@@ -1,6 +1,7 @@
 import { useTreeContext } from '@gouvfr-lasuite/ui-components';
 import { useCallback } from 'react';
 
+import { updateNodeKeepingButtonFocus } from '@/docs/doc-tree/utils';
 import { useBroadcastStore } from '@/stores/useBroadcastStore';
 
 import { KEY_DOC, KEY_LIST_DOC, useUpdateDoc } from '../api';
@@ -26,7 +27,7 @@ export const useDocTitleUpdate = (options?: UseDocUpdateOptions) => {
         if (treeContext.root?.id === updatedDoc.id) {
           treeContext?.setRoot(updatedDoc);
         } else {
-          treeContext?.treeData.updateNode(updatedDoc.id, updatedDoc);
+          updateNodeKeepingButtonFocus(treeContext, updatedDoc.id, updatedDoc);
         }
       }
 

@@ -33,6 +33,7 @@ and this project adheres to
 - 🐛(frontend) hide source popup in read-only mode #2908
 - 🐛(frontend) duplicate the sub-docs created without reloading the page #2915
 - 🐛(frontend) show the doc tree actions of the item under the pointer
+- 🐛(frontend) keep the focus on the emoji button of a tree item #2964
 - 🐛(backend) keep the case of titles and names in email subjects #2792
 
 ### Removed

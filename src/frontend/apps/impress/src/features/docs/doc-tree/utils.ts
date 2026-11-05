@@ -82,6 +82,33 @@ export const syncDocInTree = (
 };
 
 /**
+ * Rebuilds the item of a doc with `updateNode`, giving the focus back to the
+ * button of the item that held it (e.g. the emoji one), which the rebuild
+ * would otherwise drop on the body. The new row is found again by position.
+ */
+export const updateNodeKeepingButtonFocus = (
+  treeContext: TreeContextType<Doc>,
+  docId: string,
+  data: Partial<Doc>,
+) => {
+  const getButtons = () =>
+    Array.from(
+      document.querySelectorAll<HTMLElement>(
+        `[data-testid="doc-sub-page-item-${docId}"] button`,
+      ),
+    );
+  const focusedIndex = getButtons().findIndex(
+    (button) => button === document.activeElement,
+  );
+
+  treeContext.treeData.updateNode(docId, data);
+
+  if (focusedIndex !== -1) {
+    requestAnimationFrame(() => getButtons()[focusedIndex]?.focus());
+  }
+};
+
+/**
  * Adds `delta` to the `numchild` of a doc kept by the tree, so what reads it
  * (e.g. the duplicate action of its item) doesn't go stale when a child is
  * created or deleted. No-op when the tree doesn't hold the doc.
