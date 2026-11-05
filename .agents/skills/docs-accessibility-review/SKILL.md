@@ -1,6 +1,6 @@
 ---
 name: docs-accessibility-review
-description: Review the accessibility of added or modified frontend code in La Suite Docs (PRs, diffs, React components, styles, editor features). Covers HTML semantics, accessible names, ARIA, keyboard navigation, focus entry and restoration (Cancel, Escape, submit, removed trigger), screen-reader announcements, forms, dialogs, menus, the document tree, BlockNote and collaboration. Verifies in a real browser when one is available and keeps static, browser, axe and screen-reader evidence apart.
+description: Review the accessibility of added or modified frontend code in La Suite Docs (PRs, diffs, React components, styles, editor features). Covers HTML semantics, accessible names, ARIA, keyboard navigation, focus entry and restoration (Cancel, Escape, submit, removed trigger), screen-reader announcements, forms, dialogs, menus, the document tree, BlockNote and collaboration. Verifies in a real browser by default (loads the browser tools and starts the stack when needed) and keeps static, browser, axe and screen-reader evidence apart.
 ---
 
 # Docs accessibility review
@@ -41,14 +41,20 @@ Check only the dimensions the change touches:
 
 Describe the expected behaviour before choosing a fix. Do not add ARIA, a focus trap or a live region by reflex.
 
-## 4. Verify at runtime when possible
+## 4. Verify in a real browser (default, not optional)
 
-- Use whatever browser tooling this session exposes (Playwright MCP, Chrome DevTools MCP, Claude in Chrome, …). Discover the actual tool names; never invent them. No browser MCP is configured in the repository itself.
-- The stack must be running (`make run`, frontend on http://localhost:3000). Log in with the seeded accounts of `docker/auth/realm.json` (`user-e2e-chromium` / `password-e2e-chromium`, or `impress` / `impress`); do not guess others. Use a disposable document. Check that the served build contains the reviewed change.
-- Reach the UI with real key presses, then read the accessibility snapshot and `document.activeElement` at each transition. Take screenshots for focus visibility.
-- axe is **not** a dependency of the E2E suite. Use it only through available tooling (e.g. an MCP or DevTools injection); do not add the package without asking. Scan the rendered states, portals included.
-- If no browser is available, finish the source review, say so, and list the exact remaining manual steps. Never report a blocked check as passing, and never install tools or change MCP configuration silently.
-- An accessibility tree, a DOM mutation of the announcer or a clean axe run is not speech. Only an actual screen-reader session (NVDA, VoiceOver, …) verifies what is spoken and when.
+Source reading alone misses most accessibility regressions (focus that lands nowhere, a name that differs from the code, a sticky header hiding the focus). Run the changed flows in a browser unless it is truly impossible, and make the attempt before saying it is.
+
+1. **Get a browser tool.** Tools may be deferred: search for them (`ToolSearch` with `playwright`, `chrome-devtools`, `chrome`, `browser`) and load their schemas before concluding there is none. Playwright MCP and Chrome DevTools MCP are the usual ones; Claude in Chrome and the built-in browser also work (load their skill first). Discover the real tool names; never invent them. No browser MCP is configured in the repository itself.
+2. **Get the stack running.** Check `http://localhost:3000` and the backend on :8071. A failed request is not a reason to stop: load the `docs-start` Skill and start what is missing (it runs only the needed Makefile targets, and copes with a local `yarn dev`). Check that the served build contains the reviewed change (branch checked out, `yarn dev` or the rebuilt image).
+3. **Log in and prepare data.** Seeded accounts of `docker/auth/realm.json`: `user-e2e-chromium` / `password-e2e-chromium`, or `impress` / `impress`; do not guess others. Work in a disposable document and delete it afterwards.
+4. **Drive each row of the matrix with real key presses** (`Tab`, `Shift+Tab`, `Enter`, `Space`, arrows, `Escape`), not clicks or `.focus()`. After every transition read the accessibility snapshot and `document.activeElement` (and the selection in the editor), and take a screenshot for focus visibility and for a focus hidden under the sticky header. Check each exit path of an overlay separately. Repeat with a pointer when behaviour should differ between keyboard and pointer.
+5. **Also exercise** 200 % zoom and a 320 px viewport (resize), `prefers-reduced-motion` (emulate it), and dark / high contrast if colours changed.
+6. **axe** is **not** a dependency of the E2E suite. Use it only through the available tooling (an MCP, or injecting it through DevTools); do not add the package without asking. Scan every rendered state, portals included.
+7. **Only if it is really impossible** (no browser tool after searching, the stack cannot start after trying), finish the source review, say which step failed and why, and list the exact remaining manual steps. Never report a blocked check as passing, never skip the browser because a first request failed, and never install tools or change MCP configuration silently.
+8. An accessibility tree, a DOM mutation of the announcer or a clean axe run is not speech. Only an actual screen-reader session (NVDA, VoiceOver, …) verifies what is spoken and when.
+
+A finding raised from the source and not reproduced in the browser stays **static** and is reported as a risk, not as a confirmed issue. A browser run that contradicts the source reading wins.
 
 Label every piece of evidence: **static**, **browser/DOM**, **axe**, **screen reader**, or **not verified**.
 
@@ -72,4 +78,4 @@ Severity by user impact: **critical** — an essential flow cannot be completed 
 
 Keep apart new regressions (checked against the base when possible, otherwise say it is unknown), pre-existing issues nearby, and unverified risks. Merge findings caused by the same shared primitive.
 
-End with a compact coverage table (flow/state × static / browser / axe / screen reader) and the manual checks still needed. Say "No confirmed issue found in the reviewed scope" when that is the case, never "fully accessible" or a conformance percentage. Name the dimensions and tools that were skipped or failed.
+End with a compact coverage table (flow/state × static / browser / axe / screen reader) stating which browser tool and stack were used, or the step that failed, and the manual checks still needed. Say "No confirmed issue found in the reviewed scope" when that is the case, never "fully accessible" or a conformance percentage. Name the dimensions and tools that were skipped or failed.
