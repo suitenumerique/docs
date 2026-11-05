@@ -32,6 +32,7 @@ and this project adheres to
 - 🐛(frontend) duplicate the sub-docs created without reloading the page #2915
 - 🐛(frontend) show the doc tree actions of the item under the pointer
 - 🐛(backend) keep the case of titles and names in email subjects #2792
+- 🐛(frontend) exit fullscreen before printing presenter slides #2897
 
 ### Removed
 
