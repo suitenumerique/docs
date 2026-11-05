@@ -35,15 +35,23 @@ export const DocShareModalFooter = ({
       return;
     }
 
-    setCopyStatus(
-      copied
-        ? t('Link Copied !', {
-            description: 'Toast confirming a link was copied to the clipboard',
-          })
-        : t('Failed to copy link', {
-            description: 'Toast shown when copying a link failed',
-          }),
-    );
+    const message = copied
+      ? t('Link Copied !', {
+          description: 'Toast confirming a link was copied to the clipboard',
+        })
+      : t('Failed to copy link', {
+          description: 'Toast shown when copying a link failed',
+        });
+
+    // Restore the message in a separate task, otherwise consecutive identical
+    // messages can be coalesced with the reset and never announced.
+    window.setTimeout(() => {
+      if (copyId !== latestCopyId.current) {
+        return;
+      }
+
+      setCopyStatus(message);
+    }, 0);
   };
 
   return (

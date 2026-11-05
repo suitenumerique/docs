@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -49,7 +49,7 @@ describe('DocShareModalFooter', () => {
     await userEvent.click(screen.getByRole('button', { name: /copy link/i }));
 
     expect(mocks.copyDocLink).toHaveBeenCalledTimes(1);
-    expect(status).toHaveTextContent('Link Copied !');
+    await waitFor(() => expect(status).toHaveTextContent('Link Copied !'));
   });
 
   test('announces when copying the link failed', async () => {
@@ -59,6 +59,10 @@ describe('DocShareModalFooter', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /copy link/i }));
 
-    expect(screen.getByRole('status')).toHaveTextContent('Failed to copy link');
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Failed to copy link',
+      ),
+    );
   });
 });
