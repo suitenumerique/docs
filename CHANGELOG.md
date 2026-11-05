@@ -11,6 +11,7 @@ and this project adheres to
 - ✨(backend) add a dedicated document abilities endpoint #2885
 - ✨(frontend) add a /children block listing the sub-docs #2799
 - 🤖(agents) add AI skills #2746
+- ➕(backend) add menshen-client dependency
 
 ### Changed
 
