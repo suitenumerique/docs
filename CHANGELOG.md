@@ -21,6 +21,7 @@ and this project adheres to
 - 🔧(backend) make the timeout of the Find search configurable #2977
 - 🔧(backend) read OIDC_STORE_REFRESH_TOKEN_KEY from a generated file 
   in dev #2977 
+- ♻️(backend) read the new search response schema of Find #2977
 
 ### Fixed
 
@@ -75,10 +76,6 @@ and this project adheres to
 - 🐛(backend) keep the case of titles and names in email subjects #2792
 - 📝(docs) recreate the containers when upgrading a compose install #2985
 - 🐛(frontend) fix Enter and Space in modals opened from the doc tree #2879
-
-### Changed
-
-- ♻️(backend) read the new search response schema of Find
 
 ### Removed
 
