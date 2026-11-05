@@ -173,6 +173,10 @@ class Base(Configuration):
     FIND_SEARCH_SERVICES = values.ListValue(
         ["docs"], environ_name="FIND_SEARCH_SERVICES", environ_prefix=None
     )
+    # Seconds a search waits for Find before falling back on the database
+    FIND_SEARCH_TIMEOUT = values.FloatValue(
+        10.0, environ_name="FIND_SEARCH_TIMEOUT", environ_prefix=None
+    )
 
     MEDIA_AUTH_ORIGINAL_URL_HEADER = values.Value(
         default="HTTP_X_ORIGINAL_URL",

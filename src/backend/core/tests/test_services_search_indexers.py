@@ -742,6 +742,20 @@ def test_services_search_indexers_search(mock_post, indexer_settings, find_sessi
 
 
 @patch("requests.post")
+def test_services_search_indexers_search_timeout(
+    mock_post, indexer_settings, find_session
+):
+    """The search should wait for Find no longer than FIND_SEARCH_TIMEOUT."""
+    indexer_settings.FIND_SEARCH_TIMEOUT = 2.5
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {"results": []}
+
+    FindDocumentIndexer().search(q="alpha", session=find_session)
+
+    assert mock_post.call_args.kwargs["timeout"] == 2.5
+
+
+@patch("requests.post")
 def test_services_search_indexers_search_services(
     mock_post, indexer_settings, find_session
 ):
