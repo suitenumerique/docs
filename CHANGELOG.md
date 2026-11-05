@@ -28,6 +28,7 @@ and this project adheres to
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
 - 🐛(frontend) fix the slides pdf export of docs with interlinks #2928
 - 🐛(frontend) reload on a version mismatch only when frontend behind #2940
+- 🐛(frontend) keep comments on inline atoms after reload #2965
 - 🐛(frontend) hide source popup in read-only mode #2908
 - 🐛(frontend) duplicate the sub-docs created without reloading the page #2915
 - 🐛(frontend) show the doc tree actions of the item under the pointer

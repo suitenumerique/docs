@@ -44,6 +44,7 @@ import {
   useCommentSidebarStore,
   useComments,
 } from '@/docs/doc-comments';
+import { InlineAtomCommentAnchor } from '@/docs/doc-comments/extensions/InlineAtomCommentAnchor';
 import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
 import { type Doc } from '@/docs/doc-management/types';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
@@ -312,6 +313,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           FindAndReplace.configure({
             injectCSS: false,
           }),
+          InlineAtomCommentAnchor,
         ],
       },
       visualMedia: {
