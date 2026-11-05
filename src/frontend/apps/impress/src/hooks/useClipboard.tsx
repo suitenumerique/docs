@@ -10,8 +10,10 @@ export const useClipboard = () => {
 
   return useCallback(
     (text: string, successMessage?: string, errorMessage?: string) => {
-      return navigator.clipboard
-        .writeText(text)
+      // Wrapped in a promise so a missing Clipboard API or a synchronous
+      // throw from `writeText` also ends up in the error branch.
+      return Promise.resolve()
+        .then(() => navigator.clipboard.writeText(text))
         .then(() => {
           const message =
             successMessage ??

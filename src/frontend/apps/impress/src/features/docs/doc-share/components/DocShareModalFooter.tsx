@@ -1,5 +1,5 @@
 import { Button } from '@gouvfr-lasuite/ui-components';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -20,12 +20,20 @@ export const DocShareModalFooter = ({
   const copyDocLink = useCopyDocLink(doc.id);
   const { t } = useTranslation();
   const [copyStatus, setCopyStatus] = useState('');
+  const latestCopyId = useRef(0);
 
   const handleCopyLink = async () => {
+    const copyId = ++latestCopyId.current;
+
     // Reset first, so copying twice in a row is announced again.
     setCopyStatus('');
 
     const copied = await copyDocLink();
+
+    // Ignore the result of a copy that a newer click has superseded.
+    if (copyId !== latestCopyId.current) {
+      return;
+    }
 
     setCopyStatus(
       copied
