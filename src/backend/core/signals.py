@@ -4,12 +4,14 @@ Declare and configure the signals for the impress core application
 
 from functools import partial
 
+from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import signals
 from django.dispatch import receiver
 
 from core import models
+from core.services.find_tokens import exchange_find_token, revoke_find_token
 from core.tasks.access import reset_service_connections_on_commit
 from core.tasks.search import (
     trigger_batch_document_indexer,
@@ -118,3 +120,20 @@ def invalidate_bulk_changed_caches(user_ids, removed_document_ids):
         "id", "path"
     ):
         document.invalidate_nb_accesses_cache()
+
+
+@receiver(user_logged_in)
+def exchange_find_token_at_login(sender, request, user, **kwargs):  # pylint: disable=unused-argument
+    """Exchange the fresh access token of the user for a Find token."""
+    if request is not None:
+        exchange_find_token(request)
+
+
+@receiver(user_logged_out)
+def revoke_find_token_at_logout(sender, request, user, **kwargs):  # pylint: disable=unused-argument
+    """
+    Revoke the Find token of the user: Django sends this signal before flushing
+    the session, which still holds it.
+    """
+    if request is not None:
+        revoke_find_token(request)
