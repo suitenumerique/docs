@@ -37,6 +37,7 @@ and this project adheres to
 - 🐛(backend) keep the case of titles and names in email subjects #2792
 - 🔒️(backend) never lower an existing role when accepting a request
 - 🐛(backend) delete the access requests a role given another way covers
+- 🗃️(backend) delete the stored access requests a role already covers
 
 ### Removed
 
