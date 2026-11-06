@@ -18,8 +18,9 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.sites.models import Site
 from django.core.cache import cache
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.db.models import Count
 from django.db.models.functions import Left, Length
 from django.dispatch import Signal
@@ -1877,10 +1878,15 @@ class DocumentAskForAccess(BaseModel):
         user_role = self.document.get_role(user)
         is_admin_or_owner = user_role in PRIVILEGED_ROLES
 
+        # Accepting never lowers a role: only the roles above the requester's can be
+        # given, up to the role of the user accepting
+        requester_priority = RoleChoices.get_priority(self.get_requester_role())
         set_role_to = [
             role
             for role in RoleChoices.values
-            if RoleChoices.get_priority(role) <= RoleChoices.get_priority(user_role)
+            if requester_priority
+            < RoleChoices.get_priority(role)
+            <= RoleChoices.get_priority(user_role)
         ]
 
         return {
@@ -1892,18 +1898,81 @@ class DocumentAskForAccess(BaseModel):
             "set_role_to": set_role_to,
         }
 
+    def get_requester_role(self):
+        """
+        Return the role the requester holds on the document. Queried rather than read
+        with Document.get_role, which would answer with the roles annotated on the
+        document for the current user, the one accepting.
+        """
+        return RoleChoices.max(
+            *DocumentAccess.objects.filter(
+                models.Q(user=self.user) | models.Q(team__in=self.user.teams),
+                document__path__in=self.document.get_self_and_ancestors_paths(),
+            ).values_list("role", flat=True)
+        )
+
+    def _get_locked_access(self):
+        """Return the requester's access to the document, locked, or None."""
+        return (
+            DocumentAccess.objects.select_for_update()
+            .filter(document=self.document, user=self.user)
+            .first()
+        )
+
+    def _get_or_create_locked_access(self, role):
+        """
+        Like get_or_create, under a lock: return the requester's access to the
+        document and whether it was just created with the given role.
+        """
+        access = self._get_locked_access()
+        if access is not None:
+            return access, False
+        try:
+            # Savepoint: a failed insert must leave the outer transaction usable
+            with transaction.atomic():
+                access = DocumentAccess.objects.create(
+                    document=self.document, user=self.user, role=role
+                )
+            return access, True
+        # BaseModel.save() runs full_clean(), which reports the unique constraint first
+        except DjangoValidationError, IntegrityError:
+            # Created concurrently since our read, when there was nothing to lock
+            access = self._get_locked_access()
+            if access is None:
+                raise
+            return access, False
+
     def accept(self, role=None):
-        """Accept a document ask for access resource."""
+        """
+        Accept the request: give the user an access to the document, or raise the role
+        of the access they already have.
+
+        It never lowers a role. A request can outlive its reason (the user was given a
+        role another way since), and lowering a role is a change made on the access
+        itself, where the rights of the caller on that access are checked: an owner
+        must not be demoted through an old request.
+        """
         if role is None:
             role = self.role
 
-        DocumentAccess.objects.update_or_create(
-            document=self.document,
-            user=self.user,
-            defaults={"role": role},
-            create_defaults={"role": role},
-        )
-        self.delete()
+        with transaction.atomic():
+            access, created = self._get_or_create_locked_access(role)
+            if not created:
+                if RoleChoices.get_priority(role) <= RoleChoices.get_priority(
+                    access.role
+                ):
+                    raise ValidationError(
+                        {
+                            "detail": _(
+                                "This user already has this role or a higher one "
+                                "on this document."
+                            )
+                        }
+                    )
+                access.role = role
+                access.save()
+            # May already be gone: saving the access deletes the requests it covers
+            self.delete()
 
     def send_ask_for_access_email(self, email, language=None):
         """

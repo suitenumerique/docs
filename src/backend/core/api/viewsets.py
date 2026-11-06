@@ -3132,6 +3132,15 @@ class DocumentAskForAccessViewSet(
         serializer = serializers.DocumentAskForAccessCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        # Such a request could never be approved: accepting never lowers a role
+        if models.RoleChoices.get_priority(
+            serializer.validated_data["role"]
+        ) <= models.RoleChoices.get_priority(document.get_role(request.user)):
+            return drf.response.Response(
+                {"detail": "You already have this role or a higher one."},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
         queryset = self.get_queryset()
 
         if queryset.filter(user=request.user).exists():
@@ -3161,9 +3170,14 @@ class DocumentAskForAccessViewSet(
         target_role = serializer.validated_data.get(
             "role", document_ask_for_access.role
         )
-        abilities = document_ask_for_access.get_abilities(request.user)
 
-        if target_role not in abilities["set_role_to"]:
+        # The role of the requester, the lower bound of `set_role_to`, is checked by
+        # `accept`, under a lock on their access
+        if models.RoleChoices.get_priority(
+            target_role
+        ) > models.RoleChoices.get_priority(
+            self.get_document_or_404().get_role(request.user)
+        ):
             return drf.response.Response(
                 {"detail": "You cannot accept a role higher than your own."},
                 status=drf.status.HTTP_400_BAD_REQUEST,
