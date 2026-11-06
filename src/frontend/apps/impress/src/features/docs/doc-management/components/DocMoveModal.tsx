@@ -14,8 +14,10 @@ import { useDebouncedCallback } from 'use-debounce';
 
 import { Box, ButtonCloseModal, Text } from '@/components';
 import { QuickSearch } from '@/components/quick-search';
-import { Doc, useMoveDoc, useTrans } from '@/docs/doc-management';
+import { Doc, Role, useMoveDoc, useTrans } from '@/docs/doc-management';
 import { DocSearchContent } from '@/docs/doc-search';
+import { KEY_DOC_TREE, useDocTree } from '@/docs/doc-tree/api/useDocTree';
+import { useTreeContextOrNull } from '@/docs/doc-tree/utils';
 import {
   DocsGridItemDate,
   DocsGridItemTitle,
@@ -107,6 +109,18 @@ export const DocMoveModal = ({
   const isModal = (isDesktop || isTablet) && !isMobile;
   const handleInputSearch = useDebouncedCallback(setSearch, 700);
   const { toast } = useToast();
+
+  const searchInTree = !doc.abilities.move_to_another_tree;
+  // Only a document page has a tree, elsewhere (e.g. the grid) we fetch it.
+  const treeRootId = useTreeContextOrNull<Doc>()?.root?.id;
+  const { data: fetchedTree } = useDocTree(
+    { docId: doc.id },
+    {
+      enabled: searchInTree && !treeRootId,
+      queryKey: [KEY_DOC_TREE, { id: doc.id }],
+    },
+  );
+  const rootId = treeRootId ?? fetchedTree?.id;
 
   const handleSelect = (docSelected: Doc) => {
     setDocSelected(docSelected);
@@ -261,7 +275,9 @@ export const DocMoveModal = ({
                         })
                   }
                   search={search}
+                  filter={searchInTree ? 'current' : 'all'}
                   filterResults={(docResults) => docResults.id !== doc.id}
+                  parentDocId={searchInTree ? rootId : undefined}
                   onSelect={handleSelect}
                   onLoadingChange={setLoading}
                   isSearchNotMandatory
@@ -343,6 +359,8 @@ export const DocMoveModal = ({
           title={t('Move document', {
             description: 'Title of the dialog to move a document',
           })}
+          // The role that gives the right to move a document into it.
+          role={Role.ADMIN}
         />
       )}
     </>

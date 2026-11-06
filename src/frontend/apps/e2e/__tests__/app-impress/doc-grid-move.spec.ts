@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import {
   clickInDocOptionMenu,
+  clickInEditorMenu,
   createDoc,
   getGridRow,
   getOtherBrowserName,
@@ -322,7 +323,7 @@ test.describe('Doc grid move', () => {
       page
         .getByRole('dialog')
         .getByText(
-          'You need edit access to the destination. Request access, then try again.',
+          'You need to be an administrator of the destination. Request access, then try again.',
         ),
     ).toBeVisible();
 
@@ -347,10 +348,7 @@ test.describe('Doc grid move', () => {
     const container = otherPage.getByTestId(
       `doc-share-access-request-row-${emailRequest}`,
     );
-    await container.getByTestId('doc-role-dropdown').click();
-    await otherPage
-      .getByRole('menuitemradio', { name: 'Administrator' })
-      .click();
+    // The request already asks for the role that allows the move
     await container.getByRole('button', { name: 'Approve' }).click();
 
     await expect(otherPage.getByText('Access Requests')).toBeHidden();
@@ -396,6 +394,69 @@ test.describe('Doc grid move', () => {
     await expect(docTree.getByText(titleDoc1)).toBeVisible({
       timeout: 15000,
     });
+
+    await cleanup();
+  });
+
+  test('it only offers the docs of its tree to an administrator', async ({
+    page,
+    browserName,
+  }) => {
+    test.slow();
+    await page.goto('/');
+    const [titleOutside] = await createDoc(page, 'Outside', browserName, 1);
+
+    // Another user makes the first user an administrator of their tree
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      docUrl: '/',
+      browserName,
+    });
+    await createDoc(otherPage, 'Shared root', browserName, 1);
+    await otherPage.getByRole('button', { name: 'Share' }).click();
+    await addNewMember(otherPage, 0, 'Administrator', browserName);
+    await otherPage
+      .getByRole('dialog')
+      .getByRole('button', { name: 'close' })
+      .click();
+    const { name: titleTarget } = await createRootSubPage(
+      otherPage,
+      browserName,
+      'Target child',
+    );
+    const { name: titleMoved } = await createRootSubPage(
+      otherPage,
+      browserName,
+      'Moved child',
+    );
+
+    // Only an owner may move a doc out of its tree
+    await page.goto(otherPage.url());
+    await verifyDocName(page, titleMoved);
+    await clickInEditorMenu(page, 'Move into a doc');
+
+    const input = page.getByRole('combobox', { name: 'Search for a doc...' });
+    await input.fill(titleOutside);
+    await expect(page.getByText('No documents found').first()).toBeVisible();
+    await expect(
+      page.getByRole('option').filter({ hasText: titleOutside }),
+    ).toBeHidden();
+
+    await input.fill(titleTarget);
+    await page.getByRole('option').filter({ hasText: titleTarget }).click();
+    const moveResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/move/') &&
+        response.request().method() === 'POST',
+    );
+    await page
+      .getByRole('button', {
+        name: 'Move the document to the selected location',
+      })
+      .click();
+    expect((await moveResponse).ok()).toBeTruthy();
+    await expect(
+      page.getByRole('heading', { name: 'Choose a new parent doc' }),
+    ).toBeHidden();
 
     await cleanup();
   });
@@ -496,6 +557,7 @@ const data = [
       link_configuration: true,
       invite_owner: true,
       move: true,
+      move_to_another_tree: true,
       partial_update: true,
       restore: true,
       retrieve: true,
@@ -543,6 +605,7 @@ const data = [
       link_configuration: true,
       invite_owner: true,
       move: true,
+      move_to_another_tree: false,
       partial_update: true,
       restore: true,
       retrieve: true,
@@ -589,6 +652,7 @@ const data = [
       link_configuration: false,
       invite_owner: false,
       move: false,
+      move_to_another_tree: false,
       partial_update: false,
       restore: false,
       retrieve: true,

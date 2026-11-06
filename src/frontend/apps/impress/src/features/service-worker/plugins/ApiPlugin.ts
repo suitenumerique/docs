@@ -267,6 +267,7 @@ export class ApiPlugin implements WorkboxPlugin {
         media_auth: true,
         mention: true,
         move: true,
+        move_to_another_tree: true,
         partial_update: true,
         restore: true,
         retrieve: true,

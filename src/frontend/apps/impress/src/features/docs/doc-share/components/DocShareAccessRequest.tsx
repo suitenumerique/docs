@@ -220,12 +220,14 @@ export const QuickSearchGroupAccessRequest = ({
 
 type ButtonAccessRequestProps = {
   docId: Doc['id'];
+  role?: Role;
 } & Omit<ButtonProps, 'onClick'> & {
     onClick?: MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>;
   };
 
 export const ButtonAccessRequest = ({
   docId,
+  role = Role.EDITOR,
   onClick,
   ...buttonProps
 }: ButtonAccessRequestProps) => {
@@ -265,7 +267,7 @@ export const ButtonAccessRequest = ({
   return (
     <Button
       onClick={(e) => {
-        createRequest({ docId, role: Role.ADMIN });
+        createRequest({ docId, role });
         onClick?.(e);
       }}
       disabled={hasRequested}

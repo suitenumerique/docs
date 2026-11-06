@@ -59,6 +59,7 @@ and this project adheres to
 - 👷(ci) scan images with trivy only on release/ branches or the trivy
   label #2984
 - 💄(frontend) redesign 500 error standalone page #2801
+- 🚸(frontend) only offer the documents a doc can be moved into
 
 ### Fixed
 

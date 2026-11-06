@@ -2,6 +2,7 @@ import { Button } from '@gouvfr-lasuite/ui-components';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { AlertModal, Box, Icon, Text } from '@/components';
+import { Role } from '@/docs/doc-management';
 
 import { useDocAccessRequests } from '../api/useDocAccessRequest';
 
@@ -14,6 +15,8 @@ interface AlertModalRequestAccessProps {
   onConfirm: () => void;
   targetDocumentTitle: string;
   title: string;
+  /** The role requested, the first one that allows the action. */
+  role: Role;
 }
 
 export const AlertModalRequestAccess = ({
@@ -23,6 +26,7 @@ export const AlertModalRequestAccess = ({
   onConfirm,
   targetDocumentTitle,
   title,
+  role,
 }: AlertModalRequestAccessProps) => {
   const { t } = useTranslation();
   const { data: requests } = useDocAccessRequests({
@@ -47,7 +51,7 @@ export const AlertModalRequestAccess = ({
         <>
           <Text $display="inline">
             <Trans
-              i18nKey="You don't have permission to move this document to <strong>{{targetDocumentTitle}}</strong>. You need edit access to the destination. Request access, then try again."
+              i18nKey="You don't have permission to move this document to <strong>{{targetDocumentTitle}}</strong>. You need to be an administrator of the destination. Request access, then try again."
               values={{
                 targetDocumentTitle,
               }}
@@ -92,7 +96,7 @@ export const AlertModalRequestAccess = ({
               description: 'Button to dismiss a dialog without confirming',
             })}
           </Button>
-          <ButtonAccessRequest docId={docId} onClick={onConfirm} />
+          <ButtonAccessRequest docId={docId} role={role} onClick={onConfirm} />
         </Box>
       }
     />
