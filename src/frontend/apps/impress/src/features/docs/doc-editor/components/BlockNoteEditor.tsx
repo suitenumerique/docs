@@ -44,6 +44,7 @@ import {
   DocsCommentsStyle,
   useCommentSidebarStore,
   useComments,
+  useOpenCommentAnchor,
 } from '@/docs/doc-comments';
 import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
 import { type Doc } from '@/docs/doc-management/types';
@@ -356,6 +357,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   useUploadStatus(editor);
 
   useScrollToBlockAnchor();
+
+  useOpenCommentAnchor(editor, threadStore, showComments);
 
   useEffect(() => {
     setEditor(editor);
