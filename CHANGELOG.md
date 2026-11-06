@@ -12,6 +12,10 @@ and this project adheres to
 - ⚡️(backend) probe the celery worker with heartbeat files, 
   not inspect ping #2956
 
+### Fixed 
+
+- 🔒️(backend) never lower an existing role when accepting a request #2982
+
 ## [v6.1.0] - 2026-11-12
 
 ### Added
