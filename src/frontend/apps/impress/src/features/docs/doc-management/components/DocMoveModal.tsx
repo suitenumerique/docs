@@ -14,7 +14,7 @@ import { useDebouncedCallback } from 'use-debounce';
 
 import { Box, ButtonCloseModal, Text } from '@/components';
 import { QuickSearch } from '@/components/quick-search';
-import { Doc, useMoveDoc, useTrans } from '@/docs/doc-management';
+import { Doc, isInSameTree, useMoveDoc, useTrans } from '@/docs/doc-management';
 import { DocSearchContent } from '@/docs/doc-search';
 import {
   DocsGridItemDate,
@@ -107,6 +107,8 @@ export const DocMoveModal = ({
   const isModal = (isDesktop || isTablet) && !isMobile;
   const handleInputSearch = useDebouncedCallback(setSearch, 700);
   const { toast } = useToast();
+  // Without it, the backend only accepts the targets of the document's tree.
+  const canMoveToAnotherTree = doc.abilities.move_to_another_tree;
 
   const handleSelect = (docSelected: Doc) => {
     setDocSelected(docSelected);
@@ -204,6 +206,22 @@ export const DocMoveModal = ({
                 description: 'Heading of the dialog to move a document',
               })}
             </Text>
+            {!canMoveToAnotherTree && (
+              <Text
+                $size="sm"
+                $weight="400"
+                $variation="secondary"
+                $margin={{ top: '2xs' }}
+              >
+                {t(
+                  'Only an owner can move this document out of its root document.',
+                  {
+                    description:
+                      'Note of the move dialog when only documents of the same root document can be chosen',
+                  },
+                )}
+              </Text>
+            )}
             <Box $position="absolute" $css="top: 8px; right: 8px;">
               <ButtonCloseModal
                 aria-label={t('Close the move modal', {
@@ -261,7 +279,10 @@ export const DocMoveModal = ({
                         })
                   }
                   search={search}
-                  filterResults={(docResults) => docResults.id !== doc.id}
+                  filterResults={(docResults) =>
+                    docResults.id !== doc.id &&
+                    (canMoveToAnotherTree || isInSameTree(docResults, doc))
+                  }
                   onSelect={handleSelect}
                   onLoadingChange={setLoading}
                   isSearchNotMandatory

@@ -1,8 +1,8 @@
 """
 Test moving documents within the document tree via an detail action API endpoint.
 """
+# pylint: disable=too-many-lines
 
-import random
 from unittest import mock
 from uuid import uuid4
 
@@ -122,12 +122,14 @@ def test_api_documents_move_invalid_position():
 @pytest.mark.parametrize("position", enums.MoveNodePositionChoices.values)
 @pytest.mark.parametrize("target_parent_role", models.RoleChoices.values)
 @pytest.mark.parametrize("target_role", models.RoleChoices.values)
+@pytest.mark.parametrize("document_role", ["administrator", "owner"])
 def test_api_documents_move_authenticated_target_roles_mocked(
-    target_role, target_parent_role, position
+    document_role, target_role, target_parent_role, position
 ):
     """
     Only authenticated users with sufficient permissions on the target document (or its
     parent depending on the position chosen), should be allowed to move documents.
+    The target being in another tree, only an owner of the document may move it there.
     """
 
     user = factories.UserFactory()
@@ -136,7 +138,7 @@ def test_api_documents_move_authenticated_target_roles_mocked(
 
     power_roles = ["administrator", "owner"]
 
-    document = factories.DocumentFactory(users=[(user, random.choice(power_roles))])
+    document = factories.DocumentFactory(users=[(user, document_role)])
     children = factories.DocumentFactory.create_batch(3, parent=document)
 
     target_parent = factories.DocumentFactory(users=[(user, target_parent_role)])
@@ -154,13 +156,21 @@ def test_api_documents_move_authenticated_target_roles_mocked(
 
     document.refresh_from_db()
 
-    if (
+    can_move_to_target = (
         position in ["first-child", "last-child"]
         and (target_role in power_roles or target_parent_role in power_roles)
     ) or (
         position in ["first-sibling", "last-sibling", "left", "right"]
         and target_parent_role in power_roles
-    ):
+    )
+    if can_move_to_target and document_role == "administrator":
+        assert response.status_code == 403
+        assert response.json() == {
+            "detail": "Only an owner can move a document to another tree."
+        }
+        assert document.is_root() is True
+        mock_capture.assert_not_called()
+    elif can_move_to_target:
         assert response.status_code == 200
         assert response.json() == {"message": "Document moved successfully."}
 
@@ -797,6 +807,158 @@ def test_api_documents_move_root_as_sibling_of_root_preserves_owner(position):
     assert document.accesses.count() == 1
     assert document.accesses.get(role="owner").user == user
     assert document.invitations.count() == 0
+
+
+@pytest.mark.parametrize(
+    "position,target_is_root",
+    [
+        ("first-child", True),
+        ("last-child", True),
+        ("first-child", False),
+        ("last-child", False),
+        ("first-sibling", False),
+        ("last-sibling", False),
+        ("left", False),
+        ("right", False),
+    ],
+)
+def test_api_documents_move_administrator_cannot_take_over_a_root(
+    position, target_is_root, mock_reset_service_connections, capture_service_resets
+):
+    """
+    An administrator of a root document must not be able to move it into a tree of
+    their own, whatever the position: the document would leave the scope of its
+    owners, and the administrator would be left as its only owner.
+    """
+    owner, administrator, editor = factories.UserFactory.create_batch(3)
+    client = APIClient()
+    client.force_login(administrator)
+
+    document = factories.DocumentFactory(
+        users=[(owner, "owner"), (administrator, "administrator"), (editor, "editor")]
+    )
+    factories.InvitationFactory(document=document)
+
+    own_root = factories.DocumentFactory(users=[(administrator, "owner")])
+    own_child = factories.DocumentFactory(parent=own_root)
+    target = own_root if target_is_root else own_child
+    assert document.get_abilities(administrator)["move_to_another_tree"] is False
+
+    with (
+        mock.patch("core.api.viewsets.posthog_capture") as mock_capture,
+        capture_service_resets(),
+    ):
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/move/",
+            data={"target_document_id": str(target.id), "position": position},
+        )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "Only an owner can move a document to another tree."
+    }
+
+    document.refresh_from_db()
+    assert document.is_root()
+    assert set(document.accesses.values_list("user", "role")) == {
+        (owner.id, "owner"),
+        (administrator.id, "administrator"),
+        (editor.id, "editor"),
+    }
+    assert document.invitations.count() == 1
+    mock_capture.assert_not_called()
+    mock_reset_service_connections.assert_not_called()
+
+
+@pytest.mark.parametrize("access_on", ["root", "document"])
+@pytest.mark.parametrize("position", enums.MoveNodePositionChoices.values)
+def test_api_documents_move_administrator_cannot_take_a_sub_document_to_another_tree(
+    position, access_on
+):
+    """
+    An administrator of a sub-document, directly or through an ancestor, must not be
+    able to move it into another tree, away from the owners of its current tree.
+    """
+    owner, administrator = factories.UserFactory.create_batch(2)
+    client = APIClient()
+    client.force_login(administrator)
+
+    root = factories.DocumentFactory(users=[(owner, "owner")])
+    document = factories.DocumentFactory(parent=root)
+    factories.UserDocumentAccessFactory(
+        document=root if access_on == "root" else document,
+        user=administrator,
+        role="administrator",
+    )
+
+    own_root = factories.DocumentFactory(users=[(administrator, "owner")])
+    target = factories.DocumentFactory(parent=own_root)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(target.id), "position": position},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "Only an owner can move a document to another tree."
+    }
+    document.refresh_from_db()
+    assert document.is_child_of(root)
+
+
+def test_api_documents_move_inherited_owner_can_move_to_another_tree():
+    """
+    Being owner through an ancestor is enough to move a document into another tree,
+    even with a lower direct role on the document itself.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    root = factories.DocumentFactory(users=[(user, "owner")])
+    document = factories.DocumentFactory(parent=root, users=[(user, "administrator")])
+    target = factories.DocumentFactory(users=[(user, "administrator")])
+    assert document.get_abilities(user)["move_to_another_tree"] is True
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(target.id), "position": "last-child"},
+    )
+
+    assert response.status_code == 200
+    document.refresh_from_db()
+    assert document.is_child_of(target)
+
+
+@pytest.mark.parametrize("position", enums.MoveNodePositionChoices.values)
+def test_api_documents_move_administrator_can_move_within_the_same_tree(position):
+    """
+    An administrator who is not an owner can still reorganize documents within their
+    tree: the owners of the tree keep their access, and so do direct accesses.
+    """
+    owner, administrator, editor = factories.UserFactory.create_batch(3)
+    client = APIClient()
+    client.force_login(administrator)
+
+    root = factories.DocumentFactory(
+        users=[(owner, "owner"), (administrator, "administrator")]
+    )
+    parent = factories.DocumentFactory(parent=root)
+    document = factories.DocumentFactory(parent=root, users=[(editor, "editor")])
+    target = factories.DocumentFactory(parent=parent)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(target.id), "position": position},
+    )
+
+    assert response.status_code == 200
+    document.refresh_from_db()
+    assert document.get_root() == root
+    assert list(document.accesses.values_list("user", "role")) == [
+        (editor.id, "editor")
+    ]
 
 
 def test_api_documents_move_scope_change_deletion_is_atomic(monkeypatch):

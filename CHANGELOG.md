@@ -23,6 +23,7 @@ and this project adheres to
 - ⚡️(frontend) reuse the cached titles of the interlinks on export #2799
 - ♻️(backend) remove the unused scope of the document throttles #2951
 - 💄(frontend) use true italic Inter in the editor #2861
+- 🚸(frontend) only offer the documents a doc can be moved into
 
 ### Fixed
 
@@ -35,6 +36,7 @@ and this project adheres to
 - 🐛(frontend) show the doc tree actions of the item under the pointer
 - 🐛(frontend) keep the focus on the emoji button of a tree item #2964
 - 🐛(backend) keep the case of titles and names in email subjects #2792
+- 🔒️(backend) require the owner role to move a document to another tree
 
 ### Removed
 

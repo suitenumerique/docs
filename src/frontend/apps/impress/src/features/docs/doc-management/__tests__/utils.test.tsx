@@ -8,6 +8,7 @@ import {
   getDocLinkReach,
   getDocLinkRole,
   getEmojiAndTitle,
+  isInSameTree,
 } from '../utils';
 
 vi.mock('yjs', () => {
@@ -197,5 +198,19 @@ describe('doc-management utils', () => {
       expect(result.emoji).toBe('🚀');
       expect(result.titleWithoutEmoji).toBe('📚 Project Documentation');
     });
+  });
+});
+
+describe('isInSameTree', () => {
+  it('compares the root step of the paths', () => {
+    expect(isInSameTree({ path: '0000001' }, { path: '00000010000002' })).toBe(
+      true,
+    );
+    expect(
+      isInSameTree({ path: '00000010000001' }, { path: '00000010000002' }),
+    ).toBe(true);
+    expect(
+      isInSameTree({ path: '00000010000001' }, { path: '00000020000001' }),
+    ).toBe(false);
   });
 });
