@@ -5,9 +5,10 @@ import {
   TreeViewMoveModeEnum,
   VariantType,
   useModal,
+  useTreeContext,
 } from '@gouvfr-lasuite/ui-components';
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
@@ -22,6 +23,8 @@ import {
 } from '@/docs/docs-grid/components/DocsGridItem';
 import { useToast } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
+
+import { useDocSearchFilterStore } from '../../doc-search/stores/useDocSearchFilterStore';
 
 const AlertModalRequestAccess = dynamic(
   () =>
@@ -107,6 +110,22 @@ export const DocMoveModal = ({
   const isModal = (isDesktop || isTablet) && !isMobile;
   const handleInputSearch = useDebouncedCallback(setSearch, 700);
   const { toast } = useToast();
+  // Without it, the backend only accepts the targets of the document's tree.
+  const canMoveToAnotherTree = doc.abilities.move_to_another_tree;
+  const treeContext = useTreeContext<Doc>();
+  const { setFilter } = useDocSearchFilterStore();
+
+  /**
+   * If we cannot move to another tree, we set the filter
+   * to 'current' to restrict the search to the current tree.  
+   */
+  useEffect(() => {
+    if (canMoveToAnotherTree) {
+      return;
+    }
+
+    setFilter('current');
+  }, [canMoveToAnotherTree, setFilter]);
 
   const handleSelect = (docSelected: Doc) => {
     setDocSelected(docSelected);
@@ -262,6 +281,7 @@ export const DocMoveModal = ({
                   }
                   search={search}
                   filterResults={(docResults) => docResults.id !== doc.id}
+                  parentDocId={treeContext?.root?.id}
                   onSelect={handleSelect}
                   onLoadingChange={setLoading}
                   isSearchNotMandatory
