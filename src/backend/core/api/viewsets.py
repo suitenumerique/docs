@@ -1042,7 +1042,8 @@ class DocumentViewSet(
         Move a document to another location within the document tree.
 
         The user must be an administrator or owner of both the document being moved
-        and the target parent document.
+        and the target parent document, and an owner of the document being moved when
+        it goes to another tree.
         """
         user = request.user
         document = self.get_object()  # including permission checks
@@ -1091,14 +1092,6 @@ class DocumentViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        try:
-            document.move(target_document, pos=position)
-        except InvalidMoveToDescendant:
-            return drf.response.Response(
-                {"target_document_id": "Cannot move a document to its own descendant."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         # A move changes the document's permission scope in any of these cases:
         #   - it is currently a root (it carries its own scope),
         #   - it is moving into a different tree (different current root than target's),
@@ -1114,11 +1107,29 @@ class DocumentViewSet(
             ]
             and target_document.is_root()
         )
-        scope_changes = (
-            document.is_root()
-            or becomes_sibling_root
-            or document.get_root() != target_document.get_root()
+        leaves_tree = (
+            not becomes_sibling_root
+            and document.get_root() != target_document.get_root()
         )
+        scope_changes = document.is_root() or becomes_sibling_root or leaves_tree
+
+        # Moving a document into another tree takes it away from everyone who has
+        # access to it through its current tree, owners included: an administrator
+        # could otherwise move a document into a tree of their own and become its
+        # only owner. A promotion to root is safe, the owners of the root are kept.
+        if leaves_tree and document.get_role(user) != models.RoleChoices.OWNER:
+            raise drf.exceptions.PermissionDenied(
+                "Only an owner can move a document to another tree."
+            )
+
+        try:
+            document.move(target_document, pos=position)
+        except InvalidMoveToDescendant:
+            return drf.response.Response(
+                {"target_document_id": "Cannot move a document to its own descendant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if scope_changes:
             document.accesses.all().delete()
             document.invitations.all().delete()
