@@ -94,6 +94,7 @@ export interface Doc {
     media_auth: boolean;
     mention: boolean;
     move: boolean;
+    move_to_another_tree: boolean;
     partial_update: boolean;
     restore: boolean;
     retrieve: boolean;

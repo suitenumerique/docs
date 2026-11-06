@@ -381,7 +381,10 @@ const DocToolBoxComponent = ({
       callback: () => {
         setIsModalMoveOpen(true);
       },
-      isHidden: !doc.abilities.move,
+      // A root document can only go to another tree.
+      isHidden:
+        !doc.abilities.move ||
+        (doc.depth === 1 && !doc.abilities.move_to_another_tree),
     },
     { type: 'separator' },
     {
