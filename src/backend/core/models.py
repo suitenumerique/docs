@@ -587,6 +587,8 @@ class UserReconciliation(BaseModel):
 
         # Actually perform the bulk operations
         DocumentAccess.objects.bulk_update(updated_accesses, ["user", "role"])
+        # Saved in bulk, without DocumentAccess.save()
+        DocumentAskForAccess.delete_covered_by(updated_accesses)
 
         if removed_accesses:
             ids_to_delete = [entry.id for entry in removed_accesses]
@@ -1715,9 +1717,18 @@ class DocumentAccess(BaseAccess):
         return f"{self.user!s} is {self.role:s} in document {self.document!s}"
 
     def save(self, *args, **kwargs):
-        """Override save to clear the document's cache for number of accesses."""
+        """
+        Override save to clear the document's cache for number of accesses, and to
+        delete the access requests this access now covers.
+        """
         super().save(*args, **kwargs)
         self.document.invalidate_nb_accesses_cache()
+        # A partial save may leave fields unsaved: cover from what is stored then
+        DocumentAskForAccess.delete_covered_by(
+            [self]
+            if kwargs.get("update_fields") is None
+            else DocumentAccess.objects.filter(pk=self.pk)
+        )
 
     @property
     def target_key(self):
@@ -1872,6 +1883,30 @@ class DocumentAskForAccess(BaseModel):
 
     def __str__(self):
         return f"{self.user!s} asked for access to document {self.document!s}"
+
+    @classmethod
+    def delete_covered_by(cls, accesses):
+        """
+        Delete the pending requests that the given accesses cover: their user holds
+        the role requested or a higher one. Granted another way than by accepting it,
+        a request would otherwise stay pending in the share dialog for nothing.
+        """
+        query = models.Q()
+        for access in accesses:
+            if access.user_id is None:
+                continue
+            priority = RoleChoices.get_priority(access.role)
+            query |= models.Q(
+                document_id=access.document_id,
+                user_id=access.user_id,
+                role__in=[
+                    role
+                    for role in RoleChoices.values
+                    if RoleChoices.get_priority(role) <= priority
+                ],
+            )
+        if query:
+            cls.objects.filter(query).delete()
 
     def get_abilities(self, user):
         """Compute and return abilities for a given user."""

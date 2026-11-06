@@ -13,6 +13,7 @@ import { useBroadcastStore } from '@/stores/useBroadcastStore';
 
 import { OptionType } from '../types';
 
+import { KEY_LIST_DOC_ACCESS_REQUESTS } from './useDocAccessRequest';
 import { KEY_LIST_DOC_ACCESSES } from './useDocAccesses';
 import { KEY_LIST_USER } from './useUsers';
 
@@ -62,6 +63,10 @@ export function useCreateDocAccess() {
       });
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC_ACCESSES],
+      });
+      // The backend deletes the request of the user the access covers
+      void queryClient.resetQueries({
+        queryKey: [KEY_LIST_DOC_ACCESS_REQUESTS],
       });
 
       // Broadcast to every user connected to the document
