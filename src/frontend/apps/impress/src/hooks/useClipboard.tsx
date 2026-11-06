@@ -10,8 +10,10 @@ export const useClipboard = () => {
 
   return useCallback(
     (text: string, successMessage?: string, errorMessage?: string) => {
-      navigator.clipboard
-        .writeText(text)
+      // Wrapped in a promise so a missing Clipboard API or a synchronous
+      // throw from `writeText` also ends up in the error branch.
+      return Promise.resolve()
+        .then(() => navigator.clipboard.writeText(text))
         .then(() => {
           const message =
             successMessage ??
@@ -21,6 +23,7 @@ export const useClipboard = () => {
           toast(message, VariantType.SUCCESS, {
             duration: 3000,
           });
+          return true;
         })
         .catch(() => {
           const message =
@@ -31,6 +34,7 @@ export const useClipboard = () => {
           toast(message, VariantType.ERROR, {
             duration: 3000,
           });
+          return false;
         });
     },
     [t, toast],

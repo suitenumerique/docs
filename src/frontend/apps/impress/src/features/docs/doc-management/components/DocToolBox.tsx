@@ -225,7 +225,7 @@ const DocToolBoxComponent = ({
       }),
       icon: <LinkIcon width={18} height={18} aria-hidden="true" />,
       callback: () => {
-        copyDocLink();
+        void copyDocLink();
         restoreFocus();
       },
     },

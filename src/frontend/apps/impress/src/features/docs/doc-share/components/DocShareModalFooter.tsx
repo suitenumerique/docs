@@ -1,4 +1,5 @@
 import { Button } from '@gouvfr-lasuite/ui-components';
+import { announce } from '@react-aria/live-announcer';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -18,6 +19,22 @@ export const DocShareModalFooter = ({
 }: DocShareModalFooterProps) => {
   const copyDocLink = useCopyDocLink(doc.id);
   const { t } = useTranslation();
+
+  const handleCopyLink = async () => {
+    const copied = await copyDocLink();
+
+    announce(
+      copied
+        ? t('Link Copied !', {
+            description: 'Toast confirming a link was copied to the clipboard',
+          })
+        : t('Failed to copy link', {
+            description: 'Toast shown when copying a link failed',
+          }),
+      copied ? 'polite' : 'assertive',
+    );
+  };
+
   return (
     <Box
       $css={css`
@@ -37,7 +54,7 @@ export const DocShareModalFooter = ({
       >
         <Button
           fullWidth={false}
-          onClick={copyDocLink}
+          onClick={() => void handleCopyLink()}
           variant="secondary"
           icon={<Icon iconName="add_link" $withThemeInherited />}
         >
