@@ -18,9 +18,9 @@ PYTHONPATH=/app
 # Mail
 DJANGO_EMAIL_BRAND_NAME="La Suite Numérique"
 DJANGO_EMAIL_HOST="mailcatcher"
-DJANGO_EMAIL_LOGO_IMG="http://localhost:3000/assets/logo-suite-numerique.png"
+DJANGO_EMAIL_LOGO_IMG="http://localhost:48100/assets/logo-suite-numerique.png"
 DJANGO_EMAIL_PORT=1025
-DJANGO_EMAIL_URL_APP="http://localhost:3000"
+DJANGO_EMAIL_URL_APP="http://localhost:48100"
 
 # JWT
 # The key itself is generated locally by "make generate-secret-keys", it is
@@ -35,11 +35,11 @@ STORAGES_STATICFILES_BACKEND=django.contrib.staticfiles.storage.StaticFilesStora
 AWS_S3_ENDPOINT_URL=http://minio:9000
 AWS_S3_ACCESS_KEY_ID=impress
 AWS_S3_SECRET_ACCESS_KEY=password
-MEDIA_BASE_URL=http://localhost:8083
+MEDIA_BASE_URL=http://localhost:48102
 
 # OIDC
 OIDC_OP_JWKS_ENDPOINT=http://nginx:8083/realms/impress/protocol/openid-connect/certs
-OIDC_OP_AUTHORIZATION_ENDPOINT=http://localhost:8083/realms/impress/protocol/openid-connect/auth
+OIDC_OP_AUTHORIZATION_ENDPOINT=http://localhost:48102/realms/impress/protocol/openid-connect/auth
 OIDC_OP_TOKEN_ENDPOINT=http://nginx:8083/realms/impress/protocol/openid-connect/token
 OIDC_OP_USER_ENDPOINT=http://nginx:8083/realms/impress/protocol/openid-connect/userinfo
 OIDC_OP_INTROSPECTION_ENDPOINT=http://nginx:8083/realms/impress/protocol/openid-connect/token/introspect
@@ -49,15 +49,15 @@ OIDC_RP_CLIENT_SECRET=ThisIsAnExampleKeyForDevPurposeOnly
 OIDC_RP_SIGN_ALGO=RS256
 OIDC_RP_SCOPES="openid email"
 
-LOGIN_REDIRECT_URL=http://localhost:3000
-LOGIN_REDIRECT_URL_FAILURE=http://localhost:3000
-LOGOUT_REDIRECT_URL=http://localhost:3000
+LOGIN_REDIRECT_URL=http://localhost:48100
+LOGIN_REDIRECT_URL_FAILURE=http://localhost:48100
+LOGOUT_REDIRECT_URL=http://localhost:48100
 
-OIDC_REDIRECT_ALLOWED_HOSTS="localhost:8083,localhost:3000"
+OIDC_REDIRECT_ALLOWED_HOSTS="localhost:48102,localhost:48100"
 OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
 
 # Resource Server Backend
-OIDC_OP_URL=http://localhost:8083/realms/docs
+OIDC_OP_URL=http://localhost:48102/realms/docs
 OIDC_OP_INTROSPECTION_ENDPOINT = http://nginx:8083/realms/docs/protocol/openid-connect/token/introspect
 OIDC_RESOURCE_SERVER_ENABLED=False
 OIDC_RS_CLIENT_ID=docs
@@ -74,16 +74,14 @@ OIDC_RS_ALLOWED_AUDIENCES=""
 # OIDC_STORE_REFRESH_TOKEN_KEY="your-32-byte-encryption-key=="
 
 # User reconciliation
-USER_RECONCILIATION_FORM_URL=http://localhost:3000
+USER_RECONCILIATION_FORM_URL=http://localhost:48100
 
 # Collaboration
-COLLABORATION_BACKEND_BASE_URL=http://app-dev:8000
-COLLABORATION_SERVER_ORIGIN=http://localhost:3000
-COLLABORATION_WS_URL=ws://localhost:3002/collaboration/ws/v1/docs
+COLLABORATION_WS_URL=ws://localhost:48104/collaboration/ws/v1/docs
 COLLABORATION_WS_INACTIVITY_TIMEOUT=15 # Seconds
 # server-to-server, reached with an admin JWT (aud: yhub)
-COLLABORATION_API_URL=http://yhub:3002/collaboration
-YHUB_API_BASE_URL=http://yhub:3002
+COLLABORATION_API_URL=http://yhub:48104/collaboration
+YHUB_API_BASE_URL=http://yhub:48104
 
 DJANGO_SERVER_TO_SERVER_API_TOKENS=server-api-token
 Y_PROVIDER_API_BASE_URL=http://y-provider-development-converter:4444/api/

@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 48100",
     "build": "prettier --check . && yarn stylelint && next build --webpack",
     "postbuild": "node scripts/postbuild.mjs",
     "build:ci": "cp .env.development .env.local && yarn build",

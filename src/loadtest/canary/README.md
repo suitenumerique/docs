@@ -68,7 +68,7 @@ node dist/index.js --manifest manifest.json --url https://docs.example.com \
 Progress goes to stderr, one line per iteration. The exit code is `0` when at
 least one iteration ran and none failed.
 
-Keep it on the dev stack's `http://localhost:3000` for a local check: the
+Keep it on the dev stack's `http://localhost:48100` for a local check: the
 frontend served by the compose `frontend-development` container, or `yarn dev`
 in `src/frontend/apps/impress`.
 

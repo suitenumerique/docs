@@ -85,17 +85,16 @@ Production deployments differ significantly from development environments. The t
 
 ## 5. Ports (dev defaults)
 
-| Port      | Service               |
-| --------- | --------------------- |
-| 3000      | Next.js               |
-| 8071      | Django                |
-| 3002      | yhub (collaboration WS) |
-| 8080      | Keycloak              |
-| 8083      | Nginx proxy           |
-| 9000/9001 | MinIO                 |
-| 15432     | PostgreSQL (main)     |
-| 5433      | PostgreSQL (Keycloak) |
-| 1081      | MailCatcher           |
+| Port        | Service                 |
+| ----------- | ----------------------- |
+| 48100       | Next.js                 |
+| 48101       | Django                  |
+| 48102       | Nginx proxy             |
+| 48103       | Keycloak                |
+| 48104       | yhub (collaboration WS) |
+| 48105       | MailCatcher             |
+| 48106/48107 | MinIO                   |
+| 48108       | PostgreSQL (main)       |
 
 **With fulltext search service**
 

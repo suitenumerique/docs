@@ -114,7 +114,7 @@ export class Pair {
       const url = new URL(config.url);
       // what a login would have left: the session, on the host of the
       // application, which is the host of its API as well (a cookie ignores
-      // the port, so the dev stack's :3000 and :8071 share it)
+      // the port, so the dev stack's :48100 and :48101 share it)
       const cookie = {
         domain: url.hostname,
         path: '/',

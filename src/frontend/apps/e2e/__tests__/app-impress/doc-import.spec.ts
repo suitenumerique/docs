@@ -88,19 +88,19 @@ test.describe('Doc Import', () => {
           .getByText('Paragraph'),
       ).toBeVisible();
       await expect(
-        editor.locator('a[href="http://localhost:3000/"]').getByText('Example'),
+        editor.locator('a[href="http://localhost:48100/"]').getByText('Example'),
       ).toBeVisible();
 
       /* eslint-disable playwright/no-conditional-expect */
       if (isMDCheck && process.env.IS_INSTANCE !== 'true') {
         await expect(
           editor.locator(
-            'img[src="http://localhost:3000/assets/logo-suite-numerique.png"]',
+            'img[src="http://localhost:48100/assets/logo-suite-numerique.png"]',
           ),
         ).toBeVisible();
         await expect(
           editor.locator(
-            'img[src="http://localhost:3000/assets/icon-docs.svg"]',
+            'img[src="http://localhost:48100/assets/icon-docs.svg"]',
           ),
         ).toBeVisible();
       } else {

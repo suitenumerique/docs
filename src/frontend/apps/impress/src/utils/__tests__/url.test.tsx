@@ -132,7 +132,7 @@ describe('isSameOrigin', () => {
   });
 
   it('returns false for a localhost URL on a different port', () => {
-    // window.location is http://localhost:3000 in this test environment.
+    // window.location is http://localhost:48100 in this test environment.
     // A different port is a different origin, full stop: the local-dev
     // convenience lives in isLocalDevOrigin, not here.
     expect(isSameOrigin('http://localhost:8083/media/image.png')).toBe(false);
@@ -151,7 +151,7 @@ describe('isSameOrigin', () => {
 
 describe('isLocalDevOrigin', () => {
   it('returns true for a localhost URL on a different port, same protocol', () => {
-    // window.location is http://localhost:3000 in this test environment,
+    // window.location is http://localhost:48100 in this test environment,
     // matching a local dev setup where the frontend, API and media server
     // run on different ports of the same host.
     expect(isLocalDevOrigin('http://localhost:8083/media/image.png')).toBe(

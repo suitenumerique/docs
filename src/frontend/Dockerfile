@@ -30,7 +30,7 @@ FROM frontend-deps AS impress-dev
 
 WORKDIR /home/frontend/apps/impress
 
-EXPOSE 3000
+EXPOSE 48100
 
 CMD [ "yarn", "dev"]
 

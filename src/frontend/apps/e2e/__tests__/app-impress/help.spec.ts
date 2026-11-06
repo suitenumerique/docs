@@ -280,8 +280,8 @@ test.describe('Help feature', () => {
         theme_customization: {
           onboarding: {
             enabled: true,
-            learn_more_url: 'http://localhost:3000/learn-more',
-            ready_template_url: 'http://localhost:3000/ready-template',
+            learn_more_url: 'http://localhost:48100/learn-more',
+            ready_template_url: 'http://localhost:48100/ready-template',
           },
         },
       });
@@ -317,14 +317,14 @@ test.describe('Help feature', () => {
       await expect(step3).toHaveAttribute('tabindex', '0');
       await expect(
         step3.getByRole('link', { name: 'ready-made template' }),
-      ).toHaveAttribute('href', 'http://localhost:3000/ready-template');
+      ).toHaveAttribute('href', 'http://localhost:48100/ready-template');
 
       const learnMoreLink = page.getByRole('link', {
         name: 'Learn more docs features',
       });
       await expect(learnMoreLink).toHaveAttribute(
         'href',
-        'http://localhost:3000/learn-more',
+        'http://localhost:48100/learn-more',
       );
       await learnMoreLink.click();
 

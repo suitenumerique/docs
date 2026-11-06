@@ -36,8 +36,8 @@ docker run --rm -v ./src/loadtest/k6:/k6:ro -v ./manifest.json:/manifest.json:ro
 | Variable | Default | What it is |
 | -------- | ------- | ---------- |
 | `MANIFEST` | `/manifest.json` | The manifest file |
-| `BASE_URL` | `http://localhost:8071` | Where the API is, without `/api/v1.0` |
-| `ORIGIN` | `BASE_URL` | The frontend's origin, for CSRF. `http://localhost:3000` in the dev stack |
+| `BASE_URL` | `http://localhost:48101` | Where the API is, without `/api/v1.0` |
+| `ORIGIN` | `BASE_URL` | The frontend's origin, for CSRF. `http://localhost:48100` in the dev stack |
 | `MEDIA_BASE_URL` | `https://docs.example.com` | The host of the media urls `media-auth` is asked about |
 
 ### `scenarios/page-open.js` — the HTTP baseline (plan, scenario 2)

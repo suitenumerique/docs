@@ -3,7 +3,7 @@ export const COLLABORATION_BACKEND_BASE_URL =
 export const COLLABORATION_LOGGING =
   process.env.COLLABORATION_LOGGING || 'false';
 export const COLLABORATION_SERVER_ORIGIN =
-  process.env.COLLABORATION_SERVER_ORIGIN || 'http://localhost:3000';
+  process.env.COLLABORATION_SERVER_ORIGIN || 'http://localhost:48100';
 export const CONVERSION_FILE_MAX_SIZE = process.env.CONVERSION_FILE_MAX_SIZE
   ? Number(process.env.CONVERSION_FILE_MAX_SIZE)
   : 20971520; // 20 MB default

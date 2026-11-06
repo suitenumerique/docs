@@ -102,13 +102,13 @@ make i18n-compile       # Compile translations for all apps
 
 ### Dev Service URLs
 
-- Frontend: http://localhost:3000
-- Backend API/Admin: http://localhost:8071
-- Keycloak (auth): http://localhost:8083
-- MinIO (S3): http://localhost:9000
-- Collaboration server (yhub): http://localhost:3002 (websocket on `/collaboration/ws/v1/docs/{docid}`)
-- yhub PostgreSQL: localhost:5433 (its own database, apart from the backend's on 15432)
-- Mailcatcher: http://localhost:1081
+- Frontend: http://localhost:48100
+- Backend API/Admin: http://localhost:48101
+- Keycloak (auth, through the nginx proxy): http://localhost:48102 (Keycloak itself: 48103)
+- MinIO (S3): http://localhost:48106 (console: 48107)
+- Collaboration server (yhub): http://localhost:48104 (websocket on `/collaboration/ws/v1/docs/{docid}`)
+- Mailcatcher: http://localhost:48105
+- Backend PostgreSQL: localhost:48108 (yhub and Keycloak PostgreSQL are not published: reach them with `docker compose exec`)
 
 ## Architecture
 

@@ -703,7 +703,7 @@
         "access.token.lifespan": "-1",
         "client.secret.creation.time": "1707820779",
         "user.info.response.signature.alg": "RS256",
-        "post.logout.redirect.uris": "http://localhost:8070/*##http://localhost:3200/*##http://localhost:3000/*",
+        "post.logout.redirect.uris": "http://localhost:8070/*##http://localhost:3200/*##http://localhost:48100/*",
         "oauth2.device.authorization.grant.enabled": "false",
         "use.jwks.url": "false",
         "backchannel.logout.revoke.offline.tokens": "false",

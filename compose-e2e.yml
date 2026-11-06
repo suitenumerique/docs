@@ -6,12 +6,12 @@ services:
       dockerfile: ./src/frontend/Dockerfile
       target: frontend-production
       args:
-        API_ORIGIN: "http://localhost:8071"
+        API_ORIGIN: "http://localhost:48101"
         PUBLISH_AS_MIT: "false"
         SW_DEACTIVATED: "true"
     image: impress:frontend-production
     ports:
-      - "3000:3000"
+      - "48100:3000"
 
   y-provider-converter:
     user: ${DOCKER_USER:-1000}
@@ -47,7 +47,7 @@ services:
     volumes:
       - ./data/jwt:/data/jwt:ro
     ports:
-      - "3002:3002"
+      - "48104:48104"
     depends_on:
       yhub-valkey:
         condition: service_healthy

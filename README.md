@@ -188,7 +188,7 @@ Start services:
 make run
 ```
 
-Open <https://localhost:3000>
+Open <https://localhost:48100>
 
 Default credentials (development only):
 
@@ -259,7 +259,7 @@ Create a superuser:
 make superuser
 ```
 
-Admin UI: <http://localhost:8071/admin>
+Admin UI: <http://localhost:48101/admin>
 
 ## Contributing
 

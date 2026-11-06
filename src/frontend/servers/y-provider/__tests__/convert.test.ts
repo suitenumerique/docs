@@ -18,7 +18,7 @@ import * as Y from 'yjs';
 vi.mock('../src/env', async (importOriginal) => {
   return {
     ...(await importOriginal()),
-    COLLABORATION_SERVER_ORIGIN: 'http://localhost:3000',
+    COLLABORATION_SERVER_ORIGIN: 'http://localhost:48100',
   };
 });
 
@@ -491,7 +491,7 @@ describe('Conversion Testing', () => {
     // The markdown serializer keeps the link text and URL but drops the
     // optional title attribute (still present in the HTML export).
     expect(response.text).toContain(
-      '[Other doc](http://localhost:3000/docs/00000000-0000-0000-0000-000000000123/)',
+      '[Other doc](http://localhost:48100/docs/00000000-0000-0000-0000-000000000123/)',
     );
   });
 
@@ -589,7 +589,7 @@ describe('Conversion Testing', () => {
 
     expect(response.status).toBe(200);
     expect(response.text).toContain(
-      'href="http://localhost:3000/docs/00000000-0000-0000-0000-000000000123/"',
+      'href="http://localhost:48100/docs/00000000-0000-0000-0000-000000000123/"',
     );
     expect(response.text).toContain(
       'data-doc-id="00000000-0000-0000-0000-000000000123"',

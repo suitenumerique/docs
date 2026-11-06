@@ -188,7 +188,7 @@ describe('the resolve* lookups', () => {
   const user = {
     userid: 'u1',
     cookie: 'docs_sessionid=abc',
-    origin: 'http://localhost:3000',
+    origin: 'http://localhost:48100',
   };
 
   it('resolveUserid answers the backend id as a string', async () => {
