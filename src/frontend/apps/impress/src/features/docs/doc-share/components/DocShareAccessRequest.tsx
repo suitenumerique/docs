@@ -54,7 +54,30 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
   const { isSmallMobile } = useResponsiveStore();
   const { toast } = useToast();
   const { spacingsTokens } = useCunninghamTheme();
-  const { mutate: acceptDocAccessRequests } = useAcceptDocAccessRequest();
+  const userName = accessRequest.user.full_name || accessRequest.user.email;
+  const { mutate: acceptDocAccessRequests } = useAcceptDocAccessRequest({
+    onError: (error) => {
+      // The roles offered are the ones the user may give: a 400 means the
+      // requester already holds this role or a higher one, which an
+      // accepted request never lowers
+      toast(
+        error.status === 400
+          ? t('{{name}} already has this role or a higher one.', {
+              description:
+                'Toast shown when approving an access request is refused because the user already has this role or a higher one',
+              name: userName,
+            })
+          : t('Error while approving the request.', {
+              description:
+                'Toast shown when approving an access request failed',
+            }),
+        VariantType.ERROR,
+        {
+          duration: 4000,
+        },
+      );
+    },
+  });
   const [role, setRole] = useState(accessRequest.role);
 
   const { mutate: removeDocAccess } = useDeleteDocAccessRequest({
@@ -102,7 +125,7 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
               rolesAllowed={accessRequest.abilities.set_role_to}
               ariaLabel={t('Change role for {{name}}', {
                 description: 'Accessible name of the role dropdown of a member',
-                name: accessRequest.user.full_name || accessRequest.user.email,
+                name: userName,
               })}
             />
             <Button
