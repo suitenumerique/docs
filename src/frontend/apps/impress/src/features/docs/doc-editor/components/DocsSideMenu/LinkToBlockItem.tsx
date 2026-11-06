@@ -30,7 +30,7 @@ export const LinkToBlockItem = () => {
       return;
     }
 
-    copyToClipboard(
+    void copyToClipboard(
       `${window.location.origin}${window.location.pathname}#${block.id}`,
       t('Link Copied !', {
         description: 'Toast confirming a link was copied to the clipboard',

@@ -15,7 +15,7 @@ export const useCopyPresenterLink = (docId: Doc['id']) => {
 
   return useCallback(
     (index: number) => {
-      copyToClipboard(
+      void copyToClipboard(
         `${window.location.origin}/docs/${docId}/?view=present&slide=${index + 1}`,
         t('Link Copied !', {
           description: 'Toast confirming a link was copied to the clipboard',
