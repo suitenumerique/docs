@@ -4,9 +4,14 @@ import { APIError, errorCauses, fetchAPI } from '@/api';
 
 export type MentionUser = {
   docId: string;
-  /** Id of the block containing the mention, used for the email deeplink. */
+  /**
+   * Id of the block or of the comment containing the mention, used for the
+   * email deeplink.
+   */
   anchorId: string;
   mentionedUserId: string;
+  /** Thread of the comment containing the mention, if any. */
+  threadId?: string;
 };
 
 export type MentionUserResponse = {
@@ -24,12 +29,14 @@ export const mentionUser = async ({
   docId,
   anchorId,
   mentionedUserId,
+  threadId,
 }: MentionUser): Promise<MentionUserResponse> => {
   const response = await fetchAPI(`documents/${docId}/mention/`, {
     method: 'POST',
     body: JSON.stringify({
       anchor_id: anchorId,
       mentioned_user_id: mentionedUserId,
+      ...(threadId && { thread_id: threadId }),
     }),
   });
 
@@ -50,8 +57,8 @@ type UseMentionUserOptions = UseMutationOptions<
 >;
 
 /**
- * Records the mention of a user in the doc body, the backend then notifies
- * the user by email.
+ * Records the mention of a user in the doc body or in a comment, the backend
+ * then notifies the user by email.
  */
 export function useMentionUser(options?: UseMentionUserOptions) {
   return useMutation<MentionUserResponse, APIError, MentionUser>({

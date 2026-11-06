@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
+import { useMentionNotifyError } from '@/docs/doc-editor/components/custom-inline-content/Mention/UserMention/useMentionNotifyError';
 import { User, avatarUrlFromName } from '@/features/auth';
 import { Doc, useProviderStore } from '@/features/docs/doc-management';
 
@@ -20,6 +21,7 @@ export function useComments(
   const { themeTokens } = useCunninghamTheme();
   const { setThreadStore } = useThreadStore();
   const { data: config } = useConfig();
+  const notifyMentionError = useMentionNotifyError();
 
   const threadStore = useMemo(() => {
     return new DocsThreadStore(
@@ -58,6 +60,10 @@ export function useComments(
       threadStore?.destroy();
     };
   }, [threadStore]);
+
+  useEffect(() => {
+    threadStore.setMentionErrorHandler(notifyMentionError);
+  }, [threadStore, notifyMentionError]);
 
   const resolveUsers = useCallback(
     async (userIds: string[]) => {
