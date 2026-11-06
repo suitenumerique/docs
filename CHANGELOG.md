@@ -45,6 +45,7 @@ and this project adheres to
 - 🐛(backend) keep the case of titles and names in email subjects #2792
 - 📝(docs) recreate the containers when upgrading a compose install
 - 🔒️(backend) duplicate a sub doc in its parent only with rights on it
+- 🐛(frontend) add the copy of a sub doc to the tree only if it lands there
 
 ### Removed
 
