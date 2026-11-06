@@ -851,6 +851,7 @@ def test_api_documents_move_administrator_cannot_take_over_a_root(
     own_root = factories.DocumentFactory(users=[(administrator, "owner")])
     own_child = factories.DocumentFactory(parent=own_root)
     target = own_root if target_is_root else own_child
+    assert document.get_abilities(administrator)["move_to_another_tree"] is False
 
     with (
         mock.patch("core.api.viewsets.posthog_capture") as mock_capture,
@@ -967,6 +968,7 @@ def test_api_documents_move_inherited_owner_can_move_to_another_tree():
     root = factories.DocumentFactory(users=[(user, "owner")])
     document = factories.DocumentFactory(parent=root, users=[(user, "administrator")])
     target = factories.DocumentFactory(users=[(user, "administrator")])
+    assert document.get_abilities(user)["move_to_another_tree"] is True
 
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/move/",
