@@ -101,12 +101,31 @@ test.describe('Doc Comments', () => {
     ).toBeVisible();
     await expect(otherThread.locator('.bn-comment-reaction')).toHaveText('👍2');
 
-    // We add a comment with the second user
+    // We add a comment with the second user, mentioning the first one
     await otherThread
       .getByRole('paragraph')
       .last()
       .fill('This is a comment from the other user');
+    await otherPage.keyboard.press('End');
+    await otherPage.keyboard.type(' ');
+    await otherPage.keyboard.press('@');
+    await otherPage
+      .getByRole('combobox', { name: 'Search for a person or a document' })
+      .fill(browserName);
+    await otherPage
+      .getByRole('group', { name: 'Mention a person' })
+      .getByRole('option')
+      .filter({ hasText: new RegExp(browserName, 'i') })
+      .click();
+
+    // The mentioned user is notified once the comment is saved
+    const responseMention = otherPage.waitForResponse(
+      (response) =>
+        response.url().includes('/mention/') &&
+        response.request().method() === 'POST',
+    );
     await otherThread.locator('[data-test="save"]').click();
+    expect((await responseMention).status()).toBe(201);
 
     // We check that the second user can see the comment he just made
     await expect(
@@ -132,6 +151,9 @@ test.describe('Doc Comments', () => {
     await expect(
       thread.getByText(`${process.env.FIRST_NAME} ${otherBrowserName}`).first(),
     ).toBeVisible();
+    await expect(
+      thread.locator('.--docs--user-mention-inline-content'),
+    ).toContainText(new RegExp(browserName, 'i'));
 
     await cleanup();
   });

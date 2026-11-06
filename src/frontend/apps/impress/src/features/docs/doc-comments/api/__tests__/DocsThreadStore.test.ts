@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -20,10 +21,13 @@ const makeThread = (id: string, comments: unknown[] | null = []) => ({
   abilities: {},
 });
 
-const makeComment = (id: string) => ({
+const makeComment = (
+  id: string,
+  body: unknown = { type: 'doc', content: [] },
+) => ({
   id,
   user: { full_name: 'Test User' },
-  body: { type: 'doc', content: [] },
+  body,
   created_at: '2025-12-04T08:10:47.976364Z',
   updated_at: '2025-12-04T08:10:47.976364Z',
   reactions: [],
@@ -221,5 +225,140 @@ describe('DocsThreadStore - Orphan Thread Handling', () => {
       expect(threadStore.getThreads().has(threadId)).toBe(true);
       expect(threadStore.getThreads().get(threadId)?.comments).toHaveLength(1);
     });
+  });
+});
+
+describe('DocsThreadStore - Mentions in comments', () => {
+  const MENTION_URL = `${BASE_URL}/documents/${docId}/mention/`;
+  const threadId = 'thread-1';
+  const commentUrl = (commentId = '') =>
+    `${BASE_URL}/documents/${docId}/threads/${threadId}/comments/${commentId ? `${commentId}/` : ''}`;
+  const bodyMentioning = (...userIds: string[]) => [
+    {
+      type: 'paragraph',
+      content: [
+        { type: 'text', text: 'Hello ', styles: {} },
+        ...userIds.map((userId) => ({
+          type: 'userMentionInline',
+          props: { userId, fullName: `User ${userId}` },
+        })),
+      ],
+      children: [],
+    },
+  ];
+  const mentionsPosted = () =>
+    fetchMock.callHistory
+      .calls(MENTION_URL)
+      .map(({ options }) => JSON.parse(options.body as string));
+
+  let threadStore: DocsThreadStore;
+
+  beforeEach(async () => {
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
+    vi.spyOn(document, 'dispatchEvent').mockReturnValue(true);
+    fetchMock.get(THREADS_URL, [
+      makeThread(threadId, [makeComment('comment-1', bodyMentioning('u1'))]),
+    ]);
+    fetchMock.get(
+      threadUrl(threadId),
+      makeThread(threadId, [makeComment('comment-1')]),
+    );
+    fetchMock.post(MENTION_URL, { status: 201, body: {} });
+
+    threadStore = new DocsThreadStore(docId, undefined, {
+      canSee: true,
+      canComment: true,
+    } as unknown as DocsThreadStoreAuth);
+    await threadStore.initThreads();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    fetchMock.hardReset();
+  });
+
+  it('notifies the users mentioned in a new thread, anchored on its comment', async () => {
+    const body = bodyMentioning('u1', 'u2');
+    fetchMock.post(
+      THREADS_URL,
+      makeThread('thread-2', [makeComment('comment-2', body)]),
+    );
+
+    await threadStore.createThread({ initialComment: { body } });
+
+    await waitFor(() => expect(mentionsPosted()).toHaveLength(2));
+    expect(mentionsPosted()).toEqual([
+      {
+        anchor_id: 'comment-2',
+        thread_id: 'thread-2',
+        mentioned_user_id: 'u1',
+      },
+      {
+        anchor_id: 'comment-2',
+        thread_id: 'thread-2',
+        mentioned_user_id: 'u2',
+      },
+    ]);
+  });
+
+  it('notifies the users mentioned in a reply', async () => {
+    const body = bodyMentioning('u3');
+    fetchMock.post(commentUrl(), makeComment('comment-3', body));
+
+    await threadStore.addComment({ threadId, comment: { body } });
+
+    await waitFor(() =>
+      expect(mentionsPosted()).toEqual([
+        {
+          anchor_id: 'comment-3',
+          thread_id: threadId,
+          mentioned_user_id: 'u3',
+        },
+      ]),
+    );
+  });
+
+  it('notifies only the users newly mentioned by an edit', async () => {
+    fetchMock.put(commentUrl('comment-1'), 200);
+
+    await threadStore.updateComment({
+      threadId,
+      commentId: 'comment-1',
+      comment: { body: bodyMentioning('u1', 'u4') },
+    });
+
+    await waitFor(() =>
+      expect(mentionsPosted()).toEqual([
+        {
+          anchor_id: 'comment-1',
+          thread_id: threadId,
+          mentioned_user_id: 'u4',
+        },
+      ]),
+    );
+  });
+
+  it('does not call the backend for a comment without mention', async () => {
+    const body = bodyMentioning();
+    fetchMock.post(commentUrl(), makeComment('comment-3', body));
+
+    await threadStore.addComment({ threadId, comment: { body } });
+
+    expect(fetchMock.callHistory.calls(MENTION_URL)).toHaveLength(0);
+  });
+
+  it('reports once when mentioned users could not be notified', async () => {
+    const onMentionError = vi.fn();
+    threadStore.setMentionErrorHandler(onMentionError);
+    fetchMock.removeRoutes();
+    fetchMock.post(MENTION_URL, { status: 400, body: {} });
+    const body = bodyMentioning('u5', 'u6');
+    fetchMock.post(commentUrl(), makeComment('comment-3', body));
+
+    await threadStore.addComment({ threadId, comment: { body } });
+
+    await waitFor(() => expect(onMentionError).toHaveBeenCalledTimes(1));
+    expect(fetchMock.callHistory.calls(MENTION_URL)).toHaveLength(2);
   });
 });

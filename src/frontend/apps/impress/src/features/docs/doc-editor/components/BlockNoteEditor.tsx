@@ -44,6 +44,7 @@ import {
   DocsCommentsStyle,
   useCommentSidebarStore,
   useComments,
+  useOpenCommentAnchor,
 } from '@/docs/doc-comments';
 import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
 import { type Doc } from '@/docs/doc-management/types';
@@ -68,6 +69,7 @@ import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { DocsSideMenu } from './DocsSideMenu/DocsSideMenu';
+import { commentEditorSchema } from './commentEditorSchema';
 import {
   CalloutBlock,
   DocChildrenBlock,
@@ -305,7 +307,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         // Highlights the source of code blocks and of the math / diagram
         // blocks' editable LaTeX / Mermaid popups.
         syntaxHighlighter,
-        CommentsExtension({ threadStore, resolveUsers }),
+        CommentsExtension({
+          threadStore,
+          resolveUsers,
+          schema: commentEditorSchema,
+        }),
         ...(aiExtension ? [aiExtension] : []),
       ],
       _tiptapOptions: {
@@ -351,6 +357,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   useUploadStatus(editor);
 
   useScrollToBlockAnchor();
+
+  useOpenCommentAnchor(editor, threadStore, showComments);
 
   useEffect(() => {
     setEditor(editor);

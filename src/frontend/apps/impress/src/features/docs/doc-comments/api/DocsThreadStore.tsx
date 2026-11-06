@@ -3,6 +3,7 @@ import type { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
+import { mentionUser } from '@/docs/doc-editor/api';
 import { Doc } from '@/features/docs/doc-management';
 
 import { useEditorStore } from '../../doc-editor/stores';
@@ -15,6 +16,7 @@ import {
 } from '../types';
 
 import { DocsThreadStoreAuth } from './DocsThreadStoreAuth';
+import { getMentionedUserIds } from './getMentionedUserIds';
 import { normalizeEmoji } from './normalizeEmoji';
 
 type ServerThreadListResponse = ServerThread[];
@@ -36,6 +38,7 @@ export class DocsThreadStore extends ThreadStore {
   private yDoc?: Y.Doc;
   private lastPingAt = 0;
   private pingTimer?: ReturnType<typeof setTimeout>;
+  private onMentionError?: () => void;
 
   constructor(
     protected docId: Doc['id'],
@@ -127,6 +130,54 @@ export class DocsThreadStore extends ThreadStore {
       at: Date.now(),
       docId: this.docId,
       threadId,
+    });
+  }
+
+  /**
+   * Called when a user mentioned in a comment could not be notified.
+   */
+  public setMentionErrorHandler(handler?: () => void) {
+    this.onMentionError = handler;
+  }
+
+  /**
+   * Notifies the users mentioned in a saved comment, the comment being the
+   * anchor of the email deeplink: it is only known once the comment is saved.
+   * The users already mentioned before an edit are not notified again.
+   */
+  private notifyMentionedUsers({
+    threadId,
+    commentId,
+    body,
+    previousBody,
+  }: {
+    threadId: string;
+    commentId: string;
+    body: unknown;
+    previousBody?: unknown;
+  }) {
+    const alreadyMentioned = new Set(getMentionedUserIds(previousBody));
+    const userIds = getMentionedUserIds(body).filter(
+      (userId) => !alreadyMentioned.has(userId),
+    );
+
+    if (userIds.length === 0) {
+      return Promise.resolve();
+    }
+
+    return Promise.allSettled(
+      userIds.map((mentionedUserId) =>
+        mentionUser({
+          docId: this.docId,
+          anchorId: commentId,
+          threadId,
+          mentionedUserId,
+        }),
+      ),
+    ).then((results) => {
+      if (results.some(({ status }) => status === 'rejected')) {
+        this.onMentionError?.();
+      }
     });
   }
 
@@ -271,6 +322,15 @@ export class DocsThreadStore extends ThreadStore {
     this.notifySubscribers();
     this.ping(threadData.id);
 
+    const initialComment = thread.comments?.[0];
+    if (initialComment) {
+      void this.notifyMentionedUsers({
+        threadId: thread.id,
+        commentId: initialComment.id,
+        body: initialComment.body,
+      });
+    }
+
     return threadData;
   };
 
@@ -398,6 +458,12 @@ export class DocsThreadStore extends ThreadStore {
 
     const comment = (await response.json()) as ServerComment;
 
+    void this.notifyMentionedUsers({
+      threadId,
+      commentId: comment.id,
+      body: comment.body,
+    });
+
     // Optimistically update local thread with new comment
     const existing = this.threads.get(threadId);
     if (existing) {
@@ -429,6 +495,9 @@ export class DocsThreadStore extends ThreadStore {
     commentId: string;
   }) => {
     const { threadId, commentId, comment } = options;
+    const previousBody = this.threads
+      .get(threadId)
+      ?.comments.find(({ id }) => id === commentId)?.body;
 
     const response = await fetchAPI(
       `documents/${this.docId}/threads/${threadId}/comments/${commentId}/`,
@@ -446,6 +515,13 @@ export class DocsThreadStore extends ThreadStore {
         await errorCauses(response),
       );
     }
+
+    void this.notifyMentionedUsers({
+      threadId,
+      commentId,
+      body: comment.body,
+      previousBody,
+    });
 
     await this.refreshThread(threadId);
     this.ping(threadId);

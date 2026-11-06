@@ -1,5 +1,4 @@
-import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
-import { useTranslation } from 'react-i18next';
+import { CommentEditorSubmitExtension } from '@blocknote/core/comments';
 import { validate as uuidValidate } from 'uuid';
 
 import { useMentionUser } from '@/docs/doc-editor/api';
@@ -13,6 +12,7 @@ import {
   INITIAL_BLOCK_ID,
   replaceInitialBlockId,
 } from './replaceInitialBlockId';
+import { useMentionNotifyError } from './useMentionNotifyError';
 import {
   MentionableUser,
   getMentionableUserName,
@@ -31,6 +31,9 @@ interface UseSearchUserMentionParams {
  * The users proposed by the search of the mentions, and what happens when one
  * is picked: the search is replaced by the mention and the backend notifies
  * the user by email, with the block as anchor.
+ *
+ * In a comment, the anchor is the comment, which only exists once it is
+ * saved: the thread store notifies the mentioned users at that time.
  */
 export const useSearchUserMention = ({
   editor,
@@ -39,15 +42,8 @@ export const useSearchUserMention = ({
   enabled,
   onPick,
 }: UseSearchUserMentionParams) => {
-  const { t } = useTranslation();
-  const { toast } = useToastProvider();
   const { currentDoc } = useDocStore();
-  const notifyError = () => {
-    toast(
-      t('The person could not be notified of the mention.'),
-      VariantType.ERROR,
-    );
-  };
+  const notifyError = useMentionNotifyError();
   const { mutate: mentionUser } = useMentionUser({ onError: notifyError });
 
   /**
@@ -64,13 +60,21 @@ export const useSearchUserMention = ({
       return;
     }
 
+    const isCommentEditor = !!editor.getExtension(CommentEditorSubmitExtension);
     const pos = getPos();
-    let anchorId = pos === undefined ? undefined : getBlockIdAtPos(editor, pos);
+    let anchorId =
+      pos === undefined || isCommentEditor
+        ? undefined
+        : getBlockIdAtPos(editor, pos);
 
     onPick({
       type: 'userMentionInline',
       props: { userId: user.id, fullName: getMentionableUserName(user) },
     });
+
+    if (isCommentEditor) {
+      return;
+    }
 
     // After the pick, so that the search is not re-rendered while it is used.
     // TODO: remove when BlockNote stops giving "initialBlockId" to the first
