@@ -15,6 +15,7 @@ and this project adheres to
 ### Fixed 
 
 - 🔒️(backend) never lower an existing role when accepting a request #2982
+- 🐛(backend) delete the access requests a role given another way covers #2982
 
 ## [v6.1.0] - 2026-11-12
 
