@@ -1,4 +1,5 @@
 """Test API for document ask for access."""
+# pylint: disable=too-many-lines
 
 import uuid
 from unittest import mock
@@ -858,6 +859,105 @@ def test_api_documents_ask_for_access_accept_owner_can_accept_owner_role():
     assert not DocumentAskForAccess.objects.filter(
         id=document_ask_for_access.id
     ).exists()
+
+
+def test_api_documents_ask_for_access_accept_admin_cannot_demote_owner():
+    """
+    A request can outlive its reason: the user asked for access, was then made owner
+    directly. An admin accepting that old request must not demote the owner, a change
+    the accesses API refuses them.
+    """
+    admin = UserFactory()
+    document = DocumentFactory(users=[(admin, RoleChoices.ADMIN)])
+    owner_access = UserDocumentAccessFactory(document=document, role=RoleChoices.OWNER)
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, user=owner_access.user, role=RoleChoices.READER
+    )
+
+    client = APIClient()
+    client.force_login(admin)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/",
+        data={"role": RoleChoices.READER},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "This user already has this role or a higher one on this document."
+    }
+    owner_access.refresh_from_db()
+    assert owner_access.role == RoleChoices.OWNER
+    assert DocumentAskForAccess.objects.filter(id=document_ask_for_access.id).exists()
+
+
+@pytest.mark.parametrize("accepter_role", [RoleChoices.OWNER, RoleChoices.ADMIN])
+@pytest.mark.parametrize(
+    "current_role, target_role",
+    [
+        (RoleChoices.OWNER, RoleChoices.ADMIN),
+        (RoleChoices.ADMIN, RoleChoices.ADMIN),
+        (RoleChoices.ADMIN, RoleChoices.EDITOR),
+        (RoleChoices.EDITOR, RoleChoices.EDITOR),
+        (RoleChoices.EDITOR, RoleChoices.READER),
+        (RoleChoices.COMMENTER, RoleChoices.READER),
+        (RoleChoices.READER, RoleChoices.READER),
+    ],
+)
+def test_api_documents_ask_for_access_accept_never_lowers_a_role(
+    accepter_role, current_role, target_role
+):
+    """
+    Accepting a request at the role the user already has, or a lower one, is refused
+    and leaves the access and the request as they are: lowering a role is done on the
+    access itself.
+    """
+    user = UserFactory()
+    document = DocumentFactory(users=[(user, accepter_role)])
+    document_access = UserDocumentAccessFactory(document=document, role=current_role)
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, user=document_access.user, role=RoleChoices.EDITOR
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/",
+        data={"role": target_role},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "This user already has this role or a higher one on this document."
+    }
+    document_access.refresh_from_db()
+    assert document_access.role == current_role
+    assert DocumentAskForAccess.objects.filter(id=document_ask_for_access.id).exists()
+
+
+def test_api_documents_ask_for_access_accept_owner_cannot_demote_another_owner():
+    """An owner accepting an old request of another owner does not demote them either."""
+    user = UserFactory()
+    document = DocumentFactory(users=[(user, RoleChoices.OWNER)])
+    owner_access = UserDocumentAccessFactory(document=document, role=RoleChoices.OWNER)
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, user=owner_access.user, role=RoleChoices.READER
+    )
+
+    client = APIClient()
+    client.force_login(user)
+    url = (
+        f"/api/v1.0/documents/{document.id}/ask-for-access/"
+        f"{document_ask_for_access.id}/accept/"
+    )
+
+    for role in [RoleChoices.READER, RoleChoices.OWNER]:
+        response = client.post(url, data={"role": role})
+        assert response.status_code == 400
+
+    owner_access.refresh_from_db()
+    assert owner_access.role == RoleChoices.OWNER
 
 
 @pytest.mark.parametrize("role", [RoleChoices.OWNER, RoleChoices.ADMIN])

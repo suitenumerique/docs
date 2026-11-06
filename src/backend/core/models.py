@@ -1893,17 +1893,41 @@ class DocumentAskForAccess(BaseModel):
         }
 
     def accept(self, role=None):
-        """Accept a document ask for access resource."""
+        """
+        Accept the request: give the user an access to the document, or raise the role
+        of the access they already have.
+
+        It never lowers a role. A request can outlive its reason (the user was given a
+        role another way since), and lowering a role is a change made on the access
+        itself, where the rights of the caller on that access are checked: an owner
+        must not be demoted through an old request.
+        """
         if role is None:
             role = self.role
 
-        DocumentAccess.objects.update_or_create(
-            document=self.document,
-            user=self.user,
-            defaults={"role": role},
-            create_defaults={"role": role},
-        )
-        self.delete()
+        with transaction.atomic():
+            access = (
+                DocumentAccess.objects.select_for_update()
+                .filter(document=self.document, user=self.user)
+                .first()
+            )
+            if access is None:
+                DocumentAccess.objects.create(
+                    document=self.document, user=self.user, role=role
+                )
+            elif RoleChoices.get_priority(role) > RoleChoices.get_priority(access.role):
+                access.role = role
+                access.save()
+            else:
+                raise ValidationError(
+                    {
+                        "detail": _(
+                            "This user already has this role or a higher one "
+                            "on this document."
+                        )
+                    }
+                )
+            self.delete()
 
     def send_ask_for_access_email(self, email, language=None):
         """
