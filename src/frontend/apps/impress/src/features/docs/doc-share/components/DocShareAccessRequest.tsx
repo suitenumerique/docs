@@ -54,7 +54,21 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
   const { isSmallMobile } = useResponsiveStore();
   const { toast } = useToast();
   const { spacingsTokens } = useCunninghamTheme();
-  const { mutate: acceptDocAccessRequests } = useAcceptDocAccessRequest();
+  // The roles offered come from `set_role_to`, so the backend accepts them:
+  // a failure here is unexpected
+  const { mutate: acceptDocAccessRequests } = useAcceptDocAccessRequest({
+    onError: () => {
+      toast(
+        t('Error while approving the request.', {
+          description: 'Toast shown when approving an access request failed',
+        }),
+        VariantType.ERROR,
+        {
+          duration: 4000,
+        },
+      );
+    },
+  });
   const [role, setRole] = useState(accessRequest.role);
 
   const { mutate: removeDocAccess } = useDeleteDocAccessRequest({
