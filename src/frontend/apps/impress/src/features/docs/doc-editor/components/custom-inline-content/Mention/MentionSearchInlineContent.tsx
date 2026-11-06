@@ -1,6 +1,7 @@
 import { StyleSchema } from '@blocknote/core';
 import { createReactInlineContentSpec } from '@blocknote/react';
 
+import { MentionTriggerExtension } from './MentionTriggerExtension';
 import { Search } from './Search';
 
 export type MentionSearchInlineContentType = {
@@ -53,4 +54,5 @@ export const MentionSearchInlineContent = createReactInlineContentSpec<
       return <Search {...props} />;
     },
   },
+  [MentionTriggerExtension()],
 );
