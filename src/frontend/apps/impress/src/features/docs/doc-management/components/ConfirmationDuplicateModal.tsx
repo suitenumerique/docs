@@ -63,12 +63,13 @@ export const useDuplicatedDoc = ({
   const { isTopRoot } = useDocUtils(doc);
   const router = useRouter();
   const { toast } = useToastProvider();
-  // The backend duplicates a sub-doc as a sibling only for editors and above.
-  // For a reader, the copy becomes a new root doc, outside of the current tree.
-  const isDuplicateInTree = !isTopRoot && doc.abilities.partial_update;
-
   return useDuplicateDoc({
     onSuccess: (data) => {
+      // The backend puts the copy of a sub-doc beside it only when the user
+      // may create children in its parent, otherwise the copy is a new root:
+      // where it landed is only known from the response.
+      const isDuplicateInTree = data.depth > 1;
+
       onSuccess?.();
 
       toast(
