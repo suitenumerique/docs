@@ -1,3 +1,4 @@
+import { CommentEditorSubmitExtension } from '@blocknote/core/comments';
 import { MantineProvider } from '@mantine/core';
 import { announce } from '@react-aria/live-announcer';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -104,6 +105,7 @@ const renderSearch = async ({
   isEditable = true,
   trigger = '/',
   blockId = BLOCK_ID,
+  isCommentEditor = false,
 } = {}) => {
   const updateInlineContent = vi.fn();
   const contentRef = vi.fn();
@@ -119,6 +121,11 @@ const renderSearch = async ({
     isEditable,
     focus,
     insertInlineContent,
+    // A comment editor is told apart by the extension submitting the comment
+    getExtension: (extension: unknown) =>
+      isCommentEditor && extension === CommentEditorSubmitExtension
+        ? {}
+        : undefined,
     // Used to find the block containing the search
     transact: (callback: (tr: unknown) => unknown) =>
       callback({
@@ -568,6 +575,23 @@ describe('Search with the "@" trigger', () => {
     expect(fetchMock.callHistory.calls(MENTION_URL)).toHaveLength(0);
   });
 
+  it('inserts the mention without notifying the user in a comment', async () => {
+    const { updateInlineContent } = await renderSearch({
+      trigger: '@',
+      isCommentEditor: true,
+    });
+
+    fireEvent.click(await screen.findByText('Mehdi Benali'));
+
+    expect(updateInlineContent).toHaveBeenCalledWith({
+      type: 'userMentionInline',
+      props: { userId: 'user-2', fullName: 'Mehdi Benali' },
+    });
+    // Notified by the thread store once the comment is saved
+    expect(fetchMock.callHistory.calls(MENTION_URL)).toHaveLength(0);
+    expect(mockToast).not.toHaveBeenCalled();
+  });
+
   it('still links a doc', async () => {
     const { updateInlineContent } = await renderSearch({ trigger: '@' });
 
@@ -633,12 +657,17 @@ describe('Search with the "@" trigger', () => {
     fireEvent.input(screen.getByRole('combobox'), {
       target: { value: 'meh' },
     });
+    // The comment composers close on an Escape reaching the document
+    const onDocumentKeyDown = vi.fn();
+    document.addEventListener('keydown', onDocumentKeyDown);
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Escape' });
+    document.removeEventListener('keydown', onDocumentKeyDown);
 
     expect(updateInlineContent).toHaveBeenCalledWith({
       type: 'mentionSearchInline',
       props: { disabled: true },
     });
     expect(insertInlineContent).toHaveBeenCalledWith(['@meh']);
+    expect(onDocumentKeyDown).not.toHaveBeenCalled();
   });
 });

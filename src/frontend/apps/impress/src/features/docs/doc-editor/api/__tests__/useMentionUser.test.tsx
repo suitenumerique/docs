@@ -33,6 +33,20 @@ describe('mentionUser', () => {
     });
   });
 
+  it('posts the thread of a mention made in a comment', async () => {
+    fetchMock.post(url, { status: 201, body: { id: 'mention-id' } });
+
+    await mentionUser({ ...params, threadId: 'thread-id' });
+
+    expect(
+      JSON.parse(fetchMock.callHistory.lastCall(url)?.options.body as string),
+    ).toEqual({
+      anchor_id: params.anchorId,
+      mentioned_user_id: params.mentionedUserId,
+      thread_id: 'thread-id',
+    });
+  });
+
   it('throws an APIError when the backend refuses the mention', async () => {
     fetchMock.post(url, {
       status: 400,

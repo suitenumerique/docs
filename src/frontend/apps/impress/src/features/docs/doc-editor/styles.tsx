@@ -14,6 +14,10 @@ export const DocsEditorStyle = createGlobalStyle`
     --bn-colors-side-menu: var(
       --c--contextuals--content--semantic--neutral--tertiary
     );
+    --bn-font-family:
+      'Inter Variable', 'SF Pro Display', -apple-system, BlinkMacSystemFont,
+      'Open Sans', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+      'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
   .bn-root .mantine-Chip-label {
     --chip-color: var(--c--contextuals--content--semantic--brand--tertiary);
@@ -23,15 +27,10 @@ export const DocsEditorStyle = createGlobalStyle`
   .bn-root {
     .bn-editor {
       height: 100%;
-      font-family:
-        'Inter Variable',
-        'SF Pro Display',
-        -apple-system,
-        BlinkMacSystemFont,
-        'Open Sans',
-        'Segoe UI',
-        'Roboto',
-        sans-serif;
+    }
+
+    .bn-default-styles {
+      font-family: var(--bn-font-family);
     }
 
     &.bn-mantine .bn-suggestion-menu-item-small {

@@ -1,5 +1,8 @@
 import { StyleSchema } from '@blocknote/core';
-import { createReactInlineContentSpec } from '@blocknote/react';
+import {
+  ReactCustomInlineContentRenderProps,
+  createReactInlineContentSpec,
+} from '@blocknote/react';
 
 import { MentionTriggerExtension } from './MentionTriggerExtension';
 import { Search } from './Search';
@@ -17,6 +20,23 @@ export type MentionSearchInlineContentType = {
     };
   };
   content: 'none';
+};
+
+type MentionSearchRenderProps = ReactCustomInlineContentRenderProps<
+  MentionSearchInlineContentType,
+  StyleSchema
+>;
+
+/**
+ * A read-only editor displaying a search left open when the content was
+ * saved (a comment) must not open it and take the focus.
+ */
+export const MentionSearchRender = (props: MentionSearchRenderProps) => {
+  if (props.inlineContent.props.disabled || !props.editor.isEditable) {
+    return null;
+  }
+
+  return <Search {...props} />;
 };
 
 /**
@@ -46,13 +66,7 @@ export const MentionSearchInlineContent = createReactInlineContentSpec<
     content: 'none',
   },
   {
-    render: (props) => {
-      if (props.inlineContent.props.disabled) {
-        return null;
-      }
-
-      return <Search {...props} />;
-    },
+    render: (props) => <MentionSearchRender {...props} />,
   },
   [MentionTriggerExtension()],
 );

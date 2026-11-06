@@ -28,7 +28,7 @@ const inputStyle = css`
   color: var(--c--globals--colors--gray-700);
   font-size: var(--c--globals--font--sizes--md);
   width: 100%;
-  font-family: 'Inter';
+  font-family: var(--bn-font-family);
 `;
 
 const DROPDOWN_MAX_HEIGHT = 500;
@@ -250,6 +250,8 @@ export const Search = ({
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
       e.preventDefault();
+      // Closes the search only, not the comment composer hosting it
+      e.stopPropagation();
       // Keep the trigger character and typed text in the editor when closing with Escape
       closeSearch(`${trigger}${search}`);
     } else if (e.key === 'Backspace' && search.length === 0) {
@@ -301,7 +303,7 @@ export const Search = ({
             tabIndex={-1} // Ensure the span is focusable
           >
             {' '}
-            <Box as="span" aria-hidden="true" $height="25px">
+            <Box as="span" aria-hidden="true">
               {trigger}
             </Box>
             <Box
