@@ -1576,9 +1576,14 @@ class DocumentViewSet(
                 if accesses_to_create:
                     models.DocumentAccess.objects.bulk_create(accesses_to_create)
 
-        elif not document_to_duplicate.is_root() and choices.RoleChoices.get_priority(
-            user_role
-        ) < choices.RoleChoices.get_priority(models.RoleChoices.EDITOR):
+        elif (
+            not document_to_duplicate.is_root()
+            # A sibling copy lands in the parent of its source: a role on the
+            # source says nothing about the right to create in that parent.
+            and not document_to_duplicate.get_parent()
+            .get_abilities(user)
+            .get("children_create")
+        ):
             duplicated_document = create_tree_node_with_retry(
                 lambda: models.Document.add_root(
                     creator=user,
