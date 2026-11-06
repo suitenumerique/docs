@@ -35,6 +35,7 @@ and this project adheres to
 - 🐛(frontend) show the doc tree actions of the item under the pointer
 - 🐛(frontend) keep the focus on the emoji button of a tree item #2964
 - 🐛(backend) keep the case of titles and names in email subjects #2792
+- 🔒️(backend) duplicate a sub doc in its parent only with rights on it
 
 ### Removed
 

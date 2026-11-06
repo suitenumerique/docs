@@ -418,7 +418,9 @@ def test_api_documents_duplicate_reader_non_root_document():
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(users=[(user, "reader")])
+    document = factories.DocumentFactory(
+        link_reach="restricted", users=[(user, "reader")]
+    )
     child = factories.DocumentFactory(parent=document)
 
     assert child.get_role(user) == "reader"
@@ -440,6 +442,148 @@ def test_api_documents_duplicate_reader_non_root_document():
         {"duplicated_from": str(child.id)},
         document=duplicated_document,
     )
+
+
+@pytest.mark.parametrize("parent_role", [None, "reader", "commenter"])
+@pytest.mark.parametrize("child_role", ["editor", "administrator", "owner"])
+def test_api_documents_duplicate_non_root_document_no_create_right_on_parent(
+    child_role, parent_role
+):
+    """
+    The copy of a sub-document lands beside it, in its parent. A user who may
+    not create children in that parent gets the copy as a new root they own,
+    whatever their role on the sub-document, and the parent is left untouched.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(
+        link_reach="restricted",
+        users=[(user, parent_role)] if parent_role else [],
+    )
+    child = factories.DocumentFactory(
+        parent=parent, link_reach="restricted", users=[(user, child_role)]
+    )
+
+    response = client.post(
+        f"/api/v1.0/documents/{child.id!s}/duplicate/", format="json"
+    )
+
+    assert response.status_code == 201
+    assert response.json()["user_role"] == "owner"
+    duplicated_document = models.Document.objects.get(id=response.json()["id"])
+    assert duplicated_document.is_root()
+    assert duplicated_document.creator == user
+    assert list(duplicated_document.accesses.values_list("user", "role")) == [
+        (user.id, "owner")
+    ]
+    assert list(models.Document.objects.get(pk=parent.pk).get_children()) == [child]
+
+
+@pytest.mark.parametrize("via", ["parent", "grandparent", "team"])
+def test_api_documents_duplicate_non_root_document_create_right_on_parent(via):
+    """
+    A user allowed to create children in the parent of a sub-document, through
+    a direct, inherited or team access, gets the copy beside the sub-document.
+    The copy inherits their rights from the parent: no access is added to it.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    grandparent = factories.DocumentFactory(
+        link_reach="restricted",
+        users=[(user, "editor")] if via == "grandparent" else [],
+    )
+    with mock.patch(
+        "core.models.User.teams", new_callable=mock.PropertyMock
+    ) as mock_teams:
+        mock_teams.return_value = ["lasuite"] if via == "team" else []
+        parent = factories.DocumentFactory(
+            parent=grandparent,
+            link_reach="restricted",
+            users=[(user, "editor")] if via == "parent" else [],
+            teams=[("lasuite", "editor")] if via == "team" else [],
+        )
+        child = factories.DocumentFactory(
+            parent=parent, link_reach="restricted", users=[(user, "reader")]
+        )
+
+        response = client.post(
+            f"/api/v1.0/documents/{child.id!s}/duplicate/", format="json"
+        )
+
+    assert response.status_code == 201
+    duplicated_document = models.Document.objects.get(id=response.json()["id"])
+    assert duplicated_document.is_sibling_of(child)
+    assert duplicated_document.accesses.count() == 0
+
+
+@pytest.mark.parametrize("reach", ["authenticated", "public"])
+@pytest.mark.parametrize(
+    "link_role, is_sibling",
+    [("reader", False), ("commenter", False), ("editor", True)],
+)
+def test_api_documents_duplicate_non_root_document_parent_link_role(
+    reach, link_role, is_sibling
+):
+    """
+    The link of the parent counts in the right to create children in it: an
+    editor link puts the copy beside the sub-document, a lower one makes it a
+    new root owned by the user.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(link_reach=reach, link_role=link_role)
+    child = factories.DocumentFactory(
+        parent=parent, link_reach="restricted", users=[(user, "editor")]
+    )
+
+    response = client.post(
+        f"/api/v1.0/documents/{child.id!s}/duplicate/", format="json"
+    )
+
+    assert response.status_code == 201
+    duplicated_document = models.Document.objects.get(id=response.json()["id"])
+    if is_sibling:
+        assert duplicated_document.is_sibling_of(child)
+        assert duplicated_document.accesses.count() == 0
+    else:
+        assert duplicated_document.is_root()
+        assert duplicated_document.accesses.get().role == "owner"
+
+
+def test_api_documents_duplicate_with_descendants_no_create_right_on_parent():
+    """
+    Duplicating a sub-document with its descendants, without the right to
+    create children in its parent, puts the whole copy under a new root.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(link_reach="restricted")
+    child = factories.DocumentFactory(
+        parent=parent, link_reach="restricted", users=[(user, "editor")]
+    )
+    grandchild = factories.DocumentFactory(parent=child, title="Grandchild")
+
+    response = client.post(
+        f"/api/v1.0/documents/{child.id!s}/duplicate/",
+        {"with_descendants": True},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    duplicated_document = models.Document.objects.get(id=response.json()["id"])
+    assert duplicated_document.is_root()
+    duplicated_children = list(duplicated_document.get_children())
+    assert len(duplicated_children) == 1
+    assert duplicated_children[0].duplicated_from == grandchild
+    assert list(models.Document.objects.get(pk=parent.pk).get_children()) == [child]
 
 
 def test_api_documents_duplicate_with_descendants_simple():
@@ -795,10 +939,10 @@ def test_api_documents_duplicate_with_descendants_and_accesses():
 
 
 @pytest.mark.parametrize("role", ["editor", "reader"])
-def test_api_documents_duplicate_with_descendants_non_root_document_becomes_root(role):
+def test_api_documents_duplicate_with_descendants_non_root_document(role):
     """
-    When duplicating a non-root document with descendants as a reader/editor,
-    it should become a root document and still duplicate its children.
+    A reader or editor of a sub-document who owns its parent gets the copy,
+    with its descendants, beside the sub-document.
     """
     user = factories.UserFactory()
     client = APIClient()
@@ -836,6 +980,7 @@ def test_api_documents_duplicate_with_descendants_non_root_document_becomes_root
     )
 
     assert duplicated_child.title == "Sub Document (copy)"
+    assert duplicated_child.is_sibling_of(child)
 
     dup_grandchildren = duplicated_child.get_children()
     assert dup_grandchildren.count() == 1

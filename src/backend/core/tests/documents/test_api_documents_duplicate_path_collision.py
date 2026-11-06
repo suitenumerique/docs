@@ -87,7 +87,7 @@ def test_api_documents_duplicate_retries_root_path_collision():
     client = APIClient()
     client.force_login(user)
 
-    parent = factories.DocumentFactory()
+    parent = factories.DocumentFactory(link_reach="restricted")
     child = factories.DocumentFactory(
         parent=parent, users=[(user, "reader")], title="Sub Document"
     )
