@@ -43,6 +43,8 @@ and this project adheres to
 - 🐛(yhub) restart when valkey turns read-only after a failover
 - 🐛(frontend) hide the sub-doc creation entries without children_create #3031
 - 🔒️(backend) duplicate a sub doc in its parent only with rights on it #2979
+- 🐛(frontend) add the copy of a sub doc to the tree only if it lands 
+  there #2979
 
 ## [v6.1.0] - 2026-11-12
 
