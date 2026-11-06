@@ -1117,6 +1117,7 @@ class DocumentViewSet(
         # it through its current tree: into another tree, an administrator would be
         # left as its only owner, and a promotion to root drops everyone but the
         # owners of the root, owners of intermediate documents included.
+        # Same rule as the `move_to_another_tree` ability, without its queries.
         if scope_changes and document.get_role(user) != models.RoleChoices.OWNER:
             raise drf.exceptions.PermissionDenied(
                 "Only an owner can move a document out of its tree."

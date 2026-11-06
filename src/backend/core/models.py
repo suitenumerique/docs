@@ -1459,6 +1459,7 @@ class Document(MP_Node, BaseModel):
             "leave": can_leave,
             "mention": has_access_role and can_comment,
             "move": is_owner_or_admin and not is_deleted,
+            "move_to_another_tree": is_owner and not is_deleted,
             "partial_update": can_update,
             "restore": is_owner and bool(self.deleted_at),
             "retrieve": retrieve,
