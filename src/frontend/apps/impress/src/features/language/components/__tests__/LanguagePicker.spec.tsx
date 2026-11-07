@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import i18next from 'i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -71,7 +71,10 @@ describe.each([
   });
 
   afterEach(async () => {
-    await i18next.changeLanguage('en');
+    // The picker is still mounted here, it re-renders with the language.
+    await act(async () => {
+      await i18next.changeLanguage('en');
+    });
   });
 
   const openPicker = async () => {

@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
-import { waitFor } from '@testing-library/react';
+import { act, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { defaultOptions } from '@/core';
@@ -52,7 +52,7 @@ describe('mountPresenterPrintSlides', () => {
   });
 
   afterEach(() => {
-    cleanup?.();
+    act(() => cleanup?.());
     cleanup = undefined;
     vi.restoreAllMocks();
   });
@@ -64,10 +64,13 @@ describe('mountPresenterPrintSlides', () => {
       title: 'Linked doc',
     });
 
-    const mount = mountPresenterPrintSlides(
-      [{ kind: 'content', blocks: [interlinkParagraph] }],
-      { queryClient },
-    );
+    let mount!: ReturnType<typeof mountPresenterPrintSlides>;
+    act(() => {
+      mount = mountPresenterPrintSlides(
+        [{ kind: 'content', blocks: [interlinkParagraph] }],
+        { queryClient },
+      );
+    });
     cleanup = mount.cleanup;
 
     await waitFor(() => {
@@ -107,12 +110,18 @@ describe('mountPresenterPrintSlides', () => {
       window.dispatchEvent(new Event('afterprint'));
     });
 
-    await printPresenterSlides(
-      [{ kind: 'content', blocks: [interlinkParagraph] }],
-      {
-        queryClient: new QueryClient({ defaultOptions }),
-      },
-    );
+    // Only the mount is wrapped: printing waits for renders that an async `act`
+    // would hold back until the end.
+    let printing = Promise.resolve();
+    act(() => {
+      printing = printPresenterSlides(
+        [{ kind: 'content', blocks: [interlinkParagraph] }],
+        {
+          queryClient: new QueryClient({ defaultOptions }),
+        },
+      );
+    });
+    await waitFor(() => printing, { timeout: 3000 });
 
     expect(printedLabel).toBe(`/${LINKED_DOC_ID}/`);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
