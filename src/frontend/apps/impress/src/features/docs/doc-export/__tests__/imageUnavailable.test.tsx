@@ -1,7 +1,7 @@
 import { COLORS_DEFAULT } from '@blocknote/core';
 import { Paragraph } from 'docx';
 import { ReactElement } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createBlockMappingImageDocx,
@@ -32,7 +32,15 @@ const failingExporter = {
   options: { colors: COLORS_DEFAULT },
 };
 
+// The ODT mapping logs the error of the image it replaces
+const spyConsoleError = () =>
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+
 describe('image that cannot be exported', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('is replaced by a message in a Docx export instead of failing it', async () => {
     const result = await getBlockMappingFunction(
       createBlockMappingImageDocx('Image unavailable'),
@@ -43,6 +51,7 @@ describe('image that cannot be exported', () => {
   });
 
   it('is replaced by a message in an ODT export', async () => {
+    const consoleError = spyConsoleError();
     const result = (await getBlockMappingFunction(
       createBlockMappingImageODT('Image unavailable'),
     )(
@@ -53,9 +62,14 @@ describe('image that cannot be exported', () => {
 
     expect(result.type).toBe('text:p');
     expect(result.props.children).toBe('⚠️ Image unavailable');
+    expect(consoleError).toHaveBeenCalledWith(
+      'Error processing image for ODT export:',
+      new Error('401 Unauthorized'),
+    );
   });
 
   it('names the missing image by its caption in the message', async () => {
+    spyConsoleError();
     const result = (await getBlockMappingFunction(
       createBlockMappingImageODT('Image unavailable'),
     )(
