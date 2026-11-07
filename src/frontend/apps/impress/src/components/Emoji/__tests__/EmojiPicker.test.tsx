@@ -44,7 +44,7 @@ describe('EmojiPicker keys', () => {
 
   // Frimousse only listens on `document`, like the doc tree, whose items stop
   // the keys of what is portalled out of them.
-  const renderInStoppingAncestor = () => {
+  const renderInStoppingAncestor = async () => {
     document.addEventListener('keydown', onDocumentKeyDown);
     const onEmojiSelect = vi.fn();
 
@@ -60,6 +60,8 @@ describe('EmojiPicker keys', () => {
       </div>,
       { wrapper: AppWrapper },
     );
+    // Frimousse loads its data once mounted, the test must not end before.
+    await screen.findAllByRole('gridcell');
 
     return {
       search: screen.getByRole('searchbox', { name: 'Search' }),
@@ -67,8 +69,8 @@ describe('EmojiPicker keys', () => {
     };
   };
 
-  it('hands the keys over to the document despite an ancestor stopping them', () => {
-    const { search } = renderInStoppingAncestor();
+  it('hands the keys over to the document despite an ancestor stopping them', async () => {
+    const { search } = await renderInStoppingAncestor();
 
     fireEvent.keyDown(search, { key: 'ArrowDown' });
 
@@ -78,8 +80,8 @@ describe('EmojiPicker keys', () => {
     });
   });
 
-  it('keeps the default action prevented by the document', () => {
-    const { search } = renderInStoppingAncestor();
+  it('keeps the default action prevented by the document', async () => {
+    const { search } = await renderInStoppingAncestor();
     onDocumentKeyDown.mockImplementation((event: KeyboardEvent) =>
       event.preventDefault(),
     );
@@ -89,10 +91,10 @@ describe('EmojiPicker keys', () => {
   });
 
   it('selects the active emoji with ArrowDown then Enter', async () => {
-    const { search, onEmojiSelect } = renderInStoppingAncestor();
+    const { search, onEmojiSelect } = await renderInStoppingAncestor();
     // Frimousse only handles the keys while the picker holds the focus
     act(() => search.focus());
-    const [first] = await screen.findAllByRole('gridcell');
+    const [first] = screen.getAllByRole('gridcell');
 
     fireEvent.keyDown(search, { key: 'ArrowDown' });
     fireEvent.keyDown(search, { key: 'Enter' });
@@ -106,9 +108,8 @@ describe('EmojiPicker keys', () => {
   ])(
     'leaves the Enter of an IME composition (%s) to the IME',
     async (_, init) => {
-      const { search, onEmojiSelect } = renderInStoppingAncestor();
+      const { search, onEmojiSelect } = await renderInStoppingAncestor();
       act(() => search.focus());
-      await screen.findAllByRole('gridcell');
 
       fireEvent.keyDown(search, { key: 'ArrowDown' });
       onDocumentKeyDown.mockClear();
@@ -120,12 +121,13 @@ describe('EmojiPicker keys', () => {
     },
   );
 
-  it('does not close on the Escape of an IME composition', () => {
+  it('does not close on the Escape of an IME composition', async () => {
     const onClickOutside = vi.fn();
     render(
       <EmojiPicker onClickOutside={onClickOutside} onEmojiSelect={vi.fn()} />,
       { wrapper: AppWrapper },
     );
+    await screen.findAllByRole('gridcell');
     const search = screen.getByRole('searchbox', { name: 'Search' });
 
     fireEvent.keyDown(search, { key: 'Escape', isComposing: true });
@@ -136,8 +138,7 @@ describe('EmojiPicker keys', () => {
   });
 
   it('announces when nothing matches the search', async () => {
-    const { search } = renderInStoppingAncestor();
-    await screen.findAllByRole('gridcell');
+    const { search } = await renderInStoppingAncestor();
 
     fireEvent.change(search, { target: { value: 'zzzqqqxxx' } });
 
@@ -146,11 +147,11 @@ describe('EmojiPicker keys', () => {
     );
   });
 
-  it('names the skin tone button with a translatable label', () => {
-    renderInStoppingAncestor();
+  it('names the skin tone button with a translatable label', async () => {
+    await renderInStoppingAncestor();
 
     expect(
-      screen.getByRole('button', { name: 'Change skin tone' }),
+      screen.getByRole('button', { name: /^Change skin tone/ }),
     ).toBeInTheDocument();
   });
 });

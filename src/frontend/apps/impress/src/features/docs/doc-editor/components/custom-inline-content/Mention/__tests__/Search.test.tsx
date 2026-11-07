@@ -1,6 +1,12 @@
 import { MantineProvider } from '@mantine/core';
 import { announce } from '@react-aria/live-announcer';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { PropsWithChildren } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -335,7 +341,7 @@ describe('Search with the "@" trigger', () => {
   afterEach(() => {
     // The globals stay stubbed until the component is unmounted, as the
     // list may still re-render once the users are loaded.
-    useDocStore.setState({ currentDoc: undefined });
+    act(() => useDocStore.setState({ currentDoc: undefined }));
   });
 
   it('proposes the users and the docs in two sections', async () => {

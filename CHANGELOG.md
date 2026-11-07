@@ -23,6 +23,7 @@ and this project adheres to
 - ⚡️(frontend) reuse the cached titles of the interlinks on export #2799
 - ♻️(backend) remove the unused scope of the document throttles #2951
 - 💄(frontend) use true italic Inter in the editor #2861
+- ✅(frontend) fix act warnings in the tests and fail on them #2976
 
 ### Fixed
 
