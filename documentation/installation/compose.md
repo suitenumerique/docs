@@ -304,27 +304,58 @@ You can also check the [Changelog](../../CHANGELOG.md) for brief summary of the 
 
 ### Step 1: Edit the images tag with the desired version
 
+If your compose file predates the collaboration server, adding a service is not
+enough: the backend needs its key and new variables, and the websocket moves
+from the y-provider to the collaboration server in the nginx configuration.
+Download the files of
+[Step 1](#step-1-prepare-your-working-environment) of the installation again
+(`compose.yaml`, `env.d/*`, `default.conf.template`), carry your values over
+to them, and configure what is new as described for
+[Postgresql](#postgresql), [Redis](#redis) and the
+[Collaboration server](#collaboration-server), its keys included. Then follow
+[Upgrading from a release without the collaboration server](#upgrading-from-a-release-without-the-collaboration-server)
+along the steps below.
+
 ### Step 2: Pull the images
 
 ```bash
 docker compose pull
 ```
 
-### Step 3: Restart your containers
+### Step 3: Stop the application
 
 ```bash
-docker compose restart
+docker compose stop frontend backend yhub y-provider
 ```
 
+The databases keep running for the migrations. The old release must not serve
+anyone once they ran: it may still use a column the new one removed.
+
 ### Step 4: Run the database migrations
-Your database schemas may need to be updated. The backend's:
+
+Your database schemas may need to be updated, before the new release starts.
+`docker compose run` creates its container from the image you just pulled. The
+backend's:
+
 ```bash
 docker compose run --rm backend python manage.py migrate
 ```
+
 and the collaboration server's, which is the same command as at install time:
+
 ```bash
-docker compose run --rm yhub node dist/init-db.js
+docker compose run --rm yhub node dist/init-db.js --attempts=1
 ```
+
+### Step 5: Recreate your containers
+
+```bash
+docker compose up -d
+```
+
+It recreates every container whose image or settings changed, and starts the
+ones you stopped. `docker compose restart` would not: it restarts the existing
+containers, still on the old images and settings.
 
 ## Upgrading from a release without the collaboration server
 
@@ -333,15 +364,18 @@ the object storage, one object per document at key `{document-id}/file`, and the
 collaboration server starts out knowing none of them. It has to be handed the
 corpus, otherwise those documents open **empty**.
 
-1. Before letting anyone in, uncomment the `SOFT_MIGRATION` block of
-   `env.d/yhub` and point it at your media bucket (`LEGACY_S3_ENDPOINT_URL`,
-   `LEGACY_S3_ACCESS_KEY_ID`, `LEGACY_S3_SECRET_ACCESS_KEY`,
-   `LEGACY_S3_BUCKET_NAME`). Read-only credentials scoped to that bucket are
-   enough — this service terminates untrusted traffic, do not give it the
-   backend's read-write keys. A document is then migrated from its legacy
-   object the first time someone opens it.
-2. Then migrate the whole corpus, which that lazy migration never finishes on
-   its own — a document nobody opens stays in the bucket forever:
+1. Before letting anyone in, so before Step 5 of the upgrade, uncomment the
+   `SOFT_MIGRATION` block of `env.d/yhub` and point it at your media bucket
+   (`LEGACY_S3_ENDPOINT_URL`, `LEGACY_S3_ACCESS_KEY_ID`,
+   `LEGACY_S3_SECRET_ACCESS_KEY`, `LEGACY_S3_BUCKET_NAME`). A running container
+   keeps the settings it was created with: if yhub already runs, recreate it
+   with `docker compose up -d yhub`. Read-only credentials scoped to that
+   bucket are enough — this service terminates untrusted traffic, do not give
+   it the backend's read-write keys. A document is then migrated from its
+   legacy object the first time someone opens it.
+2. Once Step 5 has started the collaboration server, migrate the whole corpus,
+   which that lazy migration never finishes on its own — a document nobody
+   opens stays in the bucket forever:
 
    ```bash
    docker compose run --rm backend python manage.py migrate_documents
