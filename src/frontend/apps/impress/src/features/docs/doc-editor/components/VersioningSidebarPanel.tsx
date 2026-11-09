@@ -14,8 +14,6 @@ import { useTranslation } from 'react-i18next';
 
 import { AlertModal, Box, Icon } from '@/components';
 
-import { VersionHistoryDebug } from './VersionHistoryDebug';
-
 interface RestoreRequest {
   snapshotId: string;
   label: string;
@@ -63,13 +61,10 @@ const ConfirmRestoreVersionItem = ({
  */
 export const VersioningSidebarPanel = ({
   onClose,
-  debug,
 }: {
   onClose: () => void;
-  debug: Omit<React.ComponentProps<typeof VersionHistoryDebug>, 'onDismiss'>;
 }) => {
   const { t } = useTranslation();
-  const [showDebug, setShowDebug] = useState(true);
   const [pending, setPending] = useState<RestoreRequest>();
   const pendingRef = useRef<RestoreRequest | undefined>(undefined);
   const submitting = useRef(false);
@@ -141,12 +136,6 @@ export const VersioningSidebarPanel = ({
             overflow-x: hidden;
           `}
       >
-        {showDebug && (
-          <VersionHistoryDebug
-            {...debug}
-            onDismiss={() => setShowDebug(false)}
-          />
-        )}
         <VersioningSidebar
           onClose={onClose}
           snapshotMenu={

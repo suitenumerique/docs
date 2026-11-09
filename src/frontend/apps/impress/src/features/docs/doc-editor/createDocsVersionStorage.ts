@@ -89,11 +89,15 @@ export const createDocsVersionStorage = (
     getContent: storage.getContent,
     getAttributions: storage.getAttributions,
     async restore(id) {
-      const to = Number(id);
+      const range = /^(\d+)-(\d+)$/.exec(id);
+      const versionFrom = Number(range?.[1]);
+      const to = Number(range?.[2]);
       if (
+        !Number.isSafeInteger(versionFrom) ||
+        versionFrom < 0 ||
         !Number.isSafeInteger(to) ||
-        to < 0 ||
-        to === Number.MAX_SAFE_INTEGER
+        versionFrom > to ||
+        !Number.isSafeInteger(to + 1)
       ) {
         throw new Error('Invalid version timestamp');
       }
