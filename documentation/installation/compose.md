@@ -260,11 +260,15 @@ The collaboration server never runs DDL itself, so its schema has to be created
 before it starts:
 
 ```bash
-docker compose run --rm yhub yarn init-db
+docker compose run --rm yhub node dist/init-db.js --attempts=1
 ```
 
 It creates the `yhub` database when it is missing, and every table the version
-you are installing needs. It is idempotent, so re-running it is always safe —
+you are installing needs. `docker compose run` already waits for the database
+to be healthy, so `--attempts=1` runs it once and reports an error at once;
+without it, it would retry any failure, a wrong password included, 60 times 5
+seconds apart, as the helm chart does while its database starts. It is
+idempotent, so re-running it is always safe —
 and it has to be re-run after every upgrade, see below. Until it has run, the
 collaboration server answers every read with a `relation "..." does not exist`
 error and stays unhealthy.
@@ -319,7 +323,7 @@ docker compose run --rm backend python manage.py migrate
 ```
 and the collaboration server's, which is the same command as at install time:
 ```bash
-docker compose run --rm yhub yarn init-db
+docker compose run --rm yhub node dist/init-db.js
 ```
 
 ## Upgrading from a release without the collaboration server

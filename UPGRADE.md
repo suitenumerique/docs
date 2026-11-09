@@ -37,6 +37,19 @@ the following command inside your docker container:
     easy_thumbnails_source;
   DELETE FROM django_migrations WHERE app = 'easy_thumbnails';
   ```
+- The image of the collaboration server (`lasuite/impress-yhub`) is now based
+  on a distroless image: it has no shell (`/bin/sh`), no `yarn` and no
+  entrypoint script. A command you override (`yhub.command`, `yhub.args`,
+  `yhub.initDb.command` in the helm chart) must call `node` directly, which is
+  on the `PATH`. The `init-db` job of the chart now runs
+  `node dist/init-db.js`, which retries the schema script like the shell loop
+  did and reads the same `yhub.initDb.retries` and
+  `yhub.initDb.retryDelaySeconds`. With docker compose, the schema step is now
+  `docker compose run --rm yhub node dist/init-db.js --attempts=1`:
+  `yarn init-db` fails with `exec: "yarn": executable file not found in
+  $PATH`. The new chart needs the new image and the other way round: upgrade
+  the chart and `yhub.image.tag` together, or the job fails on a missing
+  `dist/init-db.js` or a missing `/bin/sh`.
 
 ## [v6.0.2] - 2026-10-21
 
@@ -44,9 +57,10 @@ the following command inside your docker container:
   script again before starting it.** It adds the `yhub_ydoc_versions_v1`
   table, without which every hard deletion of a document fails, and two
   indexes. The helm chart's `init-db` job does it on sync (`yhub.initDb`); with
-  docker compose, `make migrate-yhub`. Each index build holds a SHARE lock on
-  its table, which pauses compaction for a few seconds per million rows: run it
-  in a quiet moment.
+  docker compose, `docker compose run --rm yhub yarn init-db` (`node
+  dist/init-db.js` once the image is distroless, see above). Each index build
+  holds a SHARE lock on its table, which pauses compaction for a few seconds
+  per million rows: run it in a quiet moment.
 - Redis 6.2 or later (or Valkey) is now required by the collaboration server.
 - Roll its workers before its servers when they are deployed apart
   (`yhub.worker.enabled`). The other order is harmless: a stale entry in a
@@ -106,7 +120,8 @@ upgrade, in the order they are done, and end with the API changes.
 
 - ⚠️ **Its schema is not created when it starts.** The server never runs DDL:
   run the script it ships, `yarn init-db` (`node
-  node_modules/@y/hub/bin/init-db.js` in the image), once before starting it
+  node_modules/@y/hub/bin/init-db.js` in the image; `node dist/init-db.js`
+  once the image is distroless, see above), once before starting it
   and again after every upgrade that adds a table. It creates the database when
   it is missing, and it is idempotent, so re-running it is always safe. The
   helm chart runs it as a job (`yhub.initDb`, on by default), next to the

@@ -46,12 +46,9 @@ docker_build(
     'localhost:5001/impress-yhub:latest',
     context='..',
     dockerfile='../src/yhub-server/Dockerfile',
-    only=['./src/yhub-server', './docker', './.dockerignore'],
+    only=['./src/yhub-server', './.dockerignore'],
     target = 'yhub',
     build_args={'DOCKER_USER': '1000:1000'},
-    live_update=[
-        sync('../src/yhub-server', '/app'),
-    ]
 )
 
 k8s_resource('impress-docs-backend-migrate', resource_deps=['dev-backend-postgres'])

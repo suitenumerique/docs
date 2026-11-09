@@ -1165,7 +1165,8 @@ yhub:
   ## without it is refused outright by kubernetes ("container has runAsNonRoot
   ## and image will run as root") on any image that declares none — which every
   ## yhub image built before the un-privileged user was added to its Dockerfile
-  ## does. 1000 is the `node` user the base image already carries.
+  ## does. The distroless image has no user 1000 of its own: the uid and the
+  ## gid are both set here.
   securityContext:
     allowPrivilegeEscalation: false
     capabilities:

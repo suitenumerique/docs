@@ -1,6 +1,6 @@
-# trixie for glibc >= 2.38 — uws prebuilt binaries reject bookworm's 2.36.
-# slim: the full image ships compilers, imagemagick, mariadb... that the server
-# never uses and that the vulnerability scan of the CI reports.
+# trixie for glibc >= 2.38 — uws prebuilt binaries reject bookworm's 2.36, and
+# there is no musl build of them, so no alpine. This image builds; the production
+# one is distroless (see the last stage).
 FROM node:22-trixie-slim AS base
 
 # Upgrade system packages to install security updates
@@ -10,8 +10,7 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# built from the repository root, like every other image here — the entrypoint
-# below lives outside this directory
+# built from the repository root, like every other image here
 COPY ./src/yhub-server/package.json ./src/yhub-server/yarn.lock ./
 
 
@@ -52,36 +51,46 @@ FROM yhub-deps AS yhub-builder
 RUN yarn build
 
 
+# ---- Production dependencies ----
+# installed here because the production image has no yarn
+FROM base AS yhub-production-deps
+
+RUN yarn install --frozen-lockfile --production
+
+
 # ---- Production image ----
-FROM base AS yhub
+# Distroless: Debian 13 (same glibc as above) with Node and only the libraries
+# it needs — no shell, no package manager, none of the packages whose CVEs the
+# scan of the CI kept reporting. The tag follows Debian security updates, so a
+# rebuild picks them up. No entrypoint script either: it needs a shell, and
+# node does not need an /etc/passwd entry for the arbitrary uid kubernetes may
+# run it with.
+FROM gcr.io/distroless/nodejs22-debian13 AS yhub
 
-# the cache is cleaned in the same layer: it keeps a copy of every package of
-# the lockfile, the development ones included
-RUN yarn install --frozen-lockfile --production && \
-  yarn cache clean
+# `node` on the PATH, for the commands of the helm chart and their overrides
+ENV PATH=/nodejs/bin:${PATH}
 
-# npm is not needed at runtime and bundles its own, rarely updated, dependencies
-RUN rm -rf /usr/local/bin/npm /usr/local/bin/npx /usr/local/lib/node_modules/npm
+WORKDIR /app
 
+# package.json for its `"type": "module"`, which dist/ needs
+COPY --from=yhub-production-deps /app/package.json ./
+COPY --from=yhub-production-deps /app/node_modules ./node_modules
 COPY --from=yhub-builder /app/dist ./dist
 
 EXPOSE 3002
-
-# Same entrypoint as the other services: it gives the container user an entry in
-# /etc/passwd, which an arbitrary uid (kubernetes runAsUser) does not have. The
-# group needs the same rights as the owner on /etc/passwd for it to write there.
-COPY ./docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
-RUN chmod g=u /etc/passwd
 
 # Un-privileged user running the application. The server writes nothing outside
 # stdout, so it needs no home and no writable path. Defaulted, unlike the other
 # images of this repository: the helm chart runs the pod with runAsNonRoot, and
 # a build that forgot the argument would produce an image kubernetes refuses to
-# start.
-ARG DOCKER_USER=1000
+# start. The group is named too: the distroless image has no passwd entry
+# for 1000, which would leave it in group 0.
+ARG DOCKER_USER=1000:1000
 USER ${DOCKER_USER}
 
-ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
+# the base image's entrypoint is node: reset it, so that the command below and
+# a `command` set in kubernetes are each the whole command
+ENTRYPOINT []
 
 # sentry.js is preloaded so that error reporting is in place before anything else
 # is imported; it does nothing without a SENTRY_DSN

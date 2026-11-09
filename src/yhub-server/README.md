@@ -590,8 +590,10 @@ exercises a real collaboration server (built with `yarn build`).
 ## Container image
 
 The `Dockerfile` has two final stages, like the other services of this
-repository, both fed by a shared `yhub-deps` stage (full install + `src/`) and,
-for production, a `yhub-builder` stage that runs `yarn build`:
+repository. The development one is fed by a `yhub-deps` stage (full install +
+`src/`); the production one takes the output of `yarn build` from the
+`yhub-builder` stage, built on `yhub-deps`, and the dependencies from
+`yhub-production-deps` (`yarn install --production`):
 
 - `yhub-development` — what the `yhub` service of `compose.yml` builds. It
   starts the server through `yarn dev` (nodemon), and compose bind-mounts
@@ -600,13 +602,20 @@ for production, a `yhub-builder` stage that runs `yarn build`:
   `docker compose logs -f yhub`. A type or syntax error stops at
   `app crashed - waiting for file changes` and the next save starts the server
   again,
-- `yhub` — the production image: production dependencies only, the compiled
-  `dist/` copied from the builder, `node dist/server.js`, and the un-privileged
-  user and the entrypoint the other services use (kubernetes runs the pod with
-  `runAsNonRoot`).
+- `yhub` — the production image, on Google's distroless Node image
+  (`gcr.io/distroless/nodejs22-debian13`): production dependencies only, the
+  compiled `dist/` copied from the builder, `node dist/server.js`, and an
+  un-privileged user (kubernetes runs the pod with `runAsNonRoot`). It has no
+  shell, no package manager and only the Debian packages Node needs, which
+  keeps the vulnerability scan of the CI quiet. `node` is on the `PATH`, and
+  there is no entrypoint: a `command` set in kubernetes is the whole command.
+  To look inside a running pod, use an ephemeral container
+  (`kubectl debug --target`).
 
-Both are built **from the repository root**, like every other image here — the
-entrypoint they share lives outside this directory:
+The base image is Debian 13 (trixie) everywhere: the prebuilt binaries of uws,
+the websocket server of yhub, need glibc 2.38 or later and have no musl build.
+
+Both are built **from the repository root**, like every other image here:
 
 ```
 docker build -f src/yhub-server/Dockerfile --target yhub .
@@ -653,7 +662,8 @@ authority Node trusts (`NODE_EXTRA_CA_CERTS`). The server, the worker and
 The helm chart runs it as a job, through `node dist/init-db.js
 --attempts=60 --delay-seconds=5` (`src/init-db.ts`): that reruns it until it
 succeeds, since nothing in the chart waits for the postgres server to be up.
-The loop is in Node because the production image has no shell.
+The loop is in Node because the production image has no shell. It is also the
+command to run with that image, which has no yarn either.
 
 From the repository root, `make migrate-yhub` runs it against the dev stack —
 the counterpart of `make migrate` for the Django database. `make bootstrap`

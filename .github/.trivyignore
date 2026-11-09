@@ -1,26 +1,4 @@
-# Debian packages of the yhub image (node:22-trixie-slim) for which Debian has
-# not published a fix yet. Remove an entry as soon as the scan passes without it.
-
-# util-linux
-CVE-2026-76642
-CVE-2026-78408
-CVE-2026-78409
-CVE-2026-78410
-# acl
-CVE-2026-54369
-# systemd
-CVE-2026-16742
-# ncurses
-CVE-2025-69720
-# perl
-CVE-2026-9538
-# zlib
-CVE-2026-76844
-
-# SQLite — yhub runtime uses PostgreSQL/Redis, not SQLite FTS5.
-# Review when Debian publishes a fix.
-CVE-2026-119373
-
-# SQLite CLI .recover — not used by yhub.
-# Review when Debian publishes a fix.
-CVE-2026-119586
+# CVEs the trivy scan of the CI ignores, shared by every image it scans
+# (docker-publish.yml). Add an entry only for a vulnerability without a fix
+# that the image cannot avoid, with a comment naming the package and the image,
+# and remove it as soon as the scan passes without it.

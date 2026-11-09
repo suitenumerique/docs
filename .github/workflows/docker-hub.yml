@@ -79,7 +79,7 @@ jobs:
       file: src/yhub-server/Dockerfile
       target: yhub
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
-      docker_user: 1000
+      docker_user: 1000:1000
 
   notify-argocd:
     needs:

@@ -11,8 +11,9 @@ PORT=3002
 REDIS=redis://yhub-valkey:6379
 REDIS_PREFIX=yhub
 # Its own database, next to the Django one on the same server in this example.
-# The schema is created by `docker compose run --rm yhub npm run init-db`,
-# which also creates the database when the user is allowed to.
+# The schema is created by
+# `docker compose run --rm yhub node dist/init-db.js --attempts=1`, which also
+# creates the database when the user is allowed to.
 POSTGRES=postgres://docs:<the DB_PASSWORD of env.d/postgresql>@postgresql:5432/yhub
 
 # Backend. It answers who a user is and what they may do with a document, and
@@ -33,7 +34,7 @@ YHUB_JWT_PRIVATE_KEY_FILE=/keys/yhub-private.pem
 # Soft migration: upgrading an instance whose documents were stored in the S3
 # media bucket, seed a room from that bucket the first time it is opened. A new
 # instance has nothing to migrate and leaves this off. Read the "Upgrading from
-# a release before the collaboration server" section of
+# a release without the collaboration server" section of
 # documentation/installation/compose.md before turning it on.
 #SOFT_MIGRATION=true
 #LEGACY_S3_ENDPOINT_URL=https://${S3_HOST}
