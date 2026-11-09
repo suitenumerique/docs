@@ -785,6 +785,14 @@ class InvitationSerializer(serializers.ModelSerializer):
 
         return role
 
+    def validate_email(self, email):
+        """Refuse to change the email on update: the issuer chose who to invite."""
+        if self.instance and email.lower() != self.instance.email.lower():
+            raise serializers.ValidationError(
+                _("The email of an invitation cannot be changed.")
+            )
+        return email
+
 
 class RoleSerializer(serializers.Serializer):
     """Serializer validating role choices."""
