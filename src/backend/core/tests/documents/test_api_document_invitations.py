@@ -1,6 +1,7 @@
 """
 Unit tests for the Invitation model
 """
+# pylint: disable=too-many-lines
 
 import random
 from datetime import timedelta
@@ -659,11 +660,12 @@ def test_api_document_invitations_create_lower_email():
 
 @pytest.mark.parametrize("via", VIA)
 @pytest.mark.parametrize("role", ["administrator", "owner"])
-def test_api_document_invitations_update_authenticated_privileged_any_field_except_role(
+def test_api_document_invitations_update_authenticated_privileged_read_only_fields(
     role, via, mock_user_teams
 ):
     """
-    Authenticated user can update invitations if they are administrator or owner of the document.
+    Privileged users can update invitations, but the fields other than the role
+    are read only: they are ignored.
     """
     user = factories.UserFactory()
     invitation = factories.InvitationFactory()
@@ -682,8 +684,9 @@ def test_api_document_invitations_update_authenticated_privileged_any_field_exce
     new_invitation_values = serializers.InvitationSerializer(
         instance=factories.InvitationFactory()
     ).data
-    # The update of a role is tested in the next test
+    # The update of a role and of the email are tested in other tests
     del new_invitation_values["role"]
+    new_invitation_values["email"] = invitation.email
 
     client = APIClient()
     client.force_login(user)
@@ -699,12 +702,75 @@ def test_api_document_invitations_update_authenticated_privileged_any_field_exce
     invitation_values = serializers.InvitationSerializer(instance=invitation).data
 
     for key, value in invitation_values.items():
-        if key == "email":
-            assert value == new_invitation_values[key]
-        elif key == "updated_at":
-            assert value > old_invitation_values[key]
-        else:
-            assert value == old_invitation_values[key]
+        assert value == old_invitation_values[key]
+
+
+@pytest.mark.parametrize("method", ["put", "patch"])
+@pytest.mark.parametrize("via", VIA)
+@pytest.mark.parametrize("role", ["administrator", "owner"])
+def test_api_document_invitations_update_email_forbidden(
+    role, via, method, mock_user_teams
+):
+    """
+    The email of an invitation cannot be changed, even by privileged users: the
+    issuer chose who to invite, and an administrator could otherwise redirect an
+    owner invitation.
+    """
+    user = factories.UserFactory()
+    invitation = factories.InvitationFactory()
+
+    if via == USER:
+        factories.UserDocumentAccessFactory(
+            document=invitation.document, user=user, role=role
+        )
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        factories.TeamDocumentAccessFactory(
+            document=invitation.document, team="lasuite", role=role
+        )
+
+    old_invitation_values = serializers.InvitationSerializer(instance=invitation).data
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = getattr(client, method)(
+        f"/api/v1.0/documents/{invitation.document.id!s}/invitations/{invitation.id!s}/",
+        {"email": "attacker@example.com"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "email": ["The email of an invitation cannot be changed."]
+    }
+
+    invitation.refresh_from_db()
+    invitation_values = serializers.InvitationSerializer(instance=invitation).data
+    assert invitation_values == old_invitation_values
+
+
+def test_api_document_invitations_update_email_same_address_other_case():
+    """Sending the email of the invitation with another case is not a change."""
+    user = factories.UserFactory()
+    invitation = factories.InvitationFactory(email="guest@example.com", role="reader")
+    factories.UserDocumentAccessFactory(
+        document=invitation.document, user=user, role="owner"
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.patch(
+        f"/api/v1.0/documents/{invitation.document.id!s}/invitations/{invitation.id!s}/",
+        {"email": "GuEst@example.com", "role": "editor"},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    invitation.refresh_from_db()
+    assert invitation.email == "guest@example.com"
+    assert invitation.role == "editor"
 
 
 @pytest.mark.parametrize("via", VIA)
