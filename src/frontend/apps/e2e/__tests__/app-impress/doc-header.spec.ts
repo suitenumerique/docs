@@ -258,7 +258,7 @@ test.describe('Doc Header', () => {
     await clickInEditorMenu(page, 'Delete');
 
     await expect(
-      page.getByRole('heading', { name: 'Delete a doc' }),
+      page.getByRole('heading', { name: 'Delete a doc', exact: true }),
     ).toBeVisible();
 
     await expect(page.getByText(`This document will be`)).toBeVisible();
@@ -644,7 +644,7 @@ test.describe('Doc Header', () => {
     // The document has a subdocument, so a confirmation modal is shown
     await clickInEditorMenu(page, 'Duplicate');
     const modal = page.getByRole('dialog', {
-      name: 'Confirmation to duplicate the document',
+      name: 'Duplicate',
     });
     await expect(modal).toBeVisible();
     const subdocsCheckbox = modal.getByRole('checkbox', {

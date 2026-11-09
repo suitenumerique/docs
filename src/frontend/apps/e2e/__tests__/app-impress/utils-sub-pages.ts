@@ -49,7 +49,15 @@ export const createRootSubPage = async (
   const [randomDoc] = randomName(docName, browserName, 1);
   await updateDocTitle(page, randomDoc);
 
+  if (isMobile) {
+    await openHeaderMenu(page);
+  }
+
   await expect(docTree.getByText(randomDoc)).toBeVisible();
+
+  if (isMobile) {
+    await closeHeaderMenu(page, true);
+  }
 
   // Return sub page data
   return { name: randomDoc, docTreeItem: subPageItem, item: subPageJson };

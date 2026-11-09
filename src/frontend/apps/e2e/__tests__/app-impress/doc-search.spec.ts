@@ -37,7 +37,7 @@ test.describe('Document search', () => {
     ).toBeVisible();
 
     await expect(
-      page.getByRole('heading', { name: 'Search for a document' }),
+      page.getByRole('heading', { name: 'Search for a document', exact: true }),
     ).toBeVisible();
 
     const inputSearch = page.getByPlaceholder('Type the name of a document');
@@ -101,7 +101,7 @@ test.describe('Document search', () => {
 
     // The search stays open in the first tab
     await expect(
-      page.getByRole('heading', { name: 'Search for a document' }),
+      page.getByRole('heading', { name: 'Search for a document', exact: true }),
     ).toBeVisible();
     await expect(result).toBeVisible();
     await newPage.close();
@@ -110,7 +110,7 @@ test.describe('Document search', () => {
     await result.click();
     await verifyDocName(page, docTitle);
     await expect(
-      page.getByRole('heading', { name: 'Search for a document' }),
+      page.getByRole('heading', { name: 'Search for a document', exact: true }),
     ).toBeHidden();
   });
 
@@ -128,7 +128,7 @@ test.describe('Document search', () => {
 
     await page.keyboard.press('Control+k');
     await expect(
-      page.getByRole('heading', { name: 'Search for a document' }),
+      page.getByRole('heading', { name: 'Search for a document', exact: true }),
     ).toBeVisible();
 
     await page.keyboard.press('Escape');
@@ -141,7 +141,7 @@ test.describe('Document search', () => {
     await page.keyboard.press('Control+k');
     await expect(page.getByRole('textbox', { name: 'Edit URL' })).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: 'Search for a document' }),
+      page.getByRole('heading', { name: 'Search for a document', exact: true }),
     ).toBeHidden();
   });
 
