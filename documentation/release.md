@@ -46,7 +46,7 @@ Whenever we are cooking a new release (e.g. `4.18.1`) we should follow a standar
     🔖(minor) bump release to 4.18.0
     ```
 
-5.  Open a pull request, wait for an approval from your peers and merge it.
+5.  Open a pull request, wait for an approval from your peers and merge it. The CI scans the Docker images of a `release/` branch with trivy: fix or ignore (`.github/.trivyignore`) the vulnerabilities it reports. On any other pull request targeting `main`, add the `trivy` label to get the same scan.
 6.  Checkout and pull changes from the `main` branch to ensure you have the latest updates.
 7.  Tag and push your commit:
 

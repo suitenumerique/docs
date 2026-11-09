@@ -26,6 +26,11 @@ description: Build and push a container image based on the input arguments provi
         required: false
         default: false
         description: if the image should be pushed on the docker registry
+      trivy_scan:
+        type: boolean
+        required: false
+        default: false
+        description: if the amd64 image should be scanned by trivy (it then replaces the build when not pushing)
       docker_user:
         type: string
         required: false
@@ -90,16 +95,22 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       - name: Run trivy scan
-        if: ${{ vars.TRIVY_SCAN_ENABLED == 'true' }}
+        if: ${{ inputs.trivy_scan }}
         uses: numerique-gouv/action-trivy-cache@main
         env:
           DOCKER_USER: ${{ inputs.docker_user }}
         with:
-          docker-build-args: "--target ${{ inputs.target }} -f ${{ inputs.file }}"
+          # Same build args as the publish build below, so the scan checks the
+          # image that would be pushed (with the XL features of the frontend).
+          docker-build-args: >-
+            --target ${{ inputs.target }} -f ${{ inputs.file }}
+            --build-arg DOCKER_USER=${{ inputs.docker_user }}
+            --build-arg PUBLISH_AS_MIT=false
+          docker-context: ${{ inputs.context }}
           docker-image-name: "docker.io/${{ inputs.image_name }}:${{ github.sha }}"
           trivyignores: ./.github/.trivyignore
       - name: Build and push (amd64)
-        if: ${{ inputs.should_push || vars.TRIVY_SCAN_ENABLED != 'true' }}
+        if: ${{ inputs.should_push || !inputs.trivy_scan }}
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7
         with:
           context: ${{ inputs.context }}
