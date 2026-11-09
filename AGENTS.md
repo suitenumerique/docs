@@ -82,6 +82,10 @@ yarn build              # Compile to dist/
 yarn init-db            # Create/upgrade the yhub postgres schema (what `make migrate-yhub` runs)
 ```
 
+When the host has no `yarn`, or `node_modules` is root-owned (created by the compose
+bind mount, a host install fails with EACCES), run the suite inside the running dev
+container, from the project root: `docker compose exec yhub yarn test`.
+
 The container starts with `node --import ./dist/sentry.js dist/server.js`: keep the
 `--import` when overriding the command. `src/yhub-server/README.md` is the reference
 for everything this server does (permissions, roles, migration, storage, metrics).
