@@ -13,8 +13,7 @@ const REQUEST_TIMEOUT_MS = 30_000;
 export class HttpFallback {
   private timer?: ReturnType<typeof setTimeout>;
   private abort?: AbortController;
-  private pending: Uint8Array[] = [];
-  private seeded = false;
+  private pending?: Uint8Array<ArrayBuffer>;
   private active = false;
   private destroyed = false;
   private failures = 0;
@@ -34,9 +33,11 @@ export class HttpFallback {
   }
 
   private onUpdate = (update: Uint8Array, origin: unknown) => {
-    if (origin !== this && !this.readOnly) {
-      this.pending.push(update);
-      if (this.active && !this.abort) {
+    if (this.active && origin !== this && !this.readOnly) {
+      this.pending = this.pending
+        ? Y.mergeUpdates([this.pending, new Uint8Array(update)])
+        : new Uint8Array(update);
+      if (!this.abort) {
         this.schedule(1000);
       }
     }
@@ -47,16 +48,21 @@ export class HttpFallback {
     this.timer = setTimeout(() => void this.round(), delay);
   }
 
-  private async request(method: 'GET' | 'PATCH', body?: Uint8Array) {
+  private async request(
+    method: 'GET' | 'PATCH',
+    controller: AbortController,
+    body?: Uint8Array,
+  ) {
     const response = await this.send(this.url, {
       method,
       credentials: 'include',
-      signal: this.abort?.signal,
+      signal: controller.signal,
       ...(body && {
         headers: { 'content-type': 'application/octet-stream' },
         body: new Uint8Array(body),
       }),
     });
+    controller.signal.throwIfAborted();
     if (!response.ok) {
       if ([401, 403, 404].includes(response.status)) {
         this.disconnect();
@@ -76,17 +82,11 @@ export class HttpFallback {
     const controller = new AbortController();
     this.abort = controller;
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-    if (!this.seeded) {
-      this.pending.unshift(Y.encodeStateAsUpdate(this.doc));
-      this.seeded = true;
-    }
-    const updates = this.pending.splice(0);
+    const update = this.pending;
+    this.pending = undefined;
     try {
       // Readers cannot PATCH; the websocket and backend enforce their rights.
       if (!this.readOnly && this.active) {
-        const update = updates.length
-          ? Y.mergeUpdates(updates.map((item) => new Uint8Array(item)))
-          : undefined;
         const body = encodeAny({
           ...(update && update.byteLength > 2 && { update }),
           ...(this.awareness && {
@@ -95,11 +95,15 @@ export class HttpFallback {
             ]),
           }),
         });
-        await this.request('PATCH', body);
+        await this.request('PATCH', controller, body);
       }
-      const response = await this.request('GET');
+      const response = await this.request('GET', controller);
       const bytes = new Uint8Array(await response.arrayBuffer());
-      if (!this.active || !bytes.length) {
+      if (
+        this.abort !== controller ||
+        controller.signal.aborted ||
+        !bytes.length
+      ) {
         return;
       }
       const remote = decodeAny(bytes) as {
@@ -116,8 +120,12 @@ export class HttpFallback {
       this.synced = true;
       this.onSync();
     } catch (error) {
-      this.pending.unshift(...updates);
-      if (this.active) {
+      if (this.active && this.abort === controller) {
+        if (update) {
+          this.pending = this.pending
+            ? Y.mergeUpdates([update, this.pending])
+            : update;
+        }
         console.error('Collaboration HTTP fallback failed', error);
         this.failures++;
       }
@@ -125,15 +133,15 @@ export class HttpFallback {
       clearTimeout(timeout);
       if (this.abort === controller) {
         this.abort = undefined;
-      }
-      if (this.active && !this.abort) {
-        this.schedule(
-          this.failures
-            ? Math.min(this.pollInterval * 2 ** (this.failures - 1), 60_000)
-            : this.pending.length
-              ? 1000
-              : this.pollInterval,
-        );
+        if (this.active) {
+          this.schedule(
+            this.failures
+              ? Math.min(this.pollInterval * 2 ** (this.failures - 1), 60_000)
+              : this.pending
+                ? 1000
+                : this.pollInterval,
+          );
+        }
       }
     }
   }
@@ -142,6 +150,9 @@ export class HttpFallback {
     if (this.active || this.destroyed) {
       return;
     }
+    // The websocket or local persistence may have changed the doc while inactive.
+    this.pending = this.readOnly ? undefined : Y.encodeStateAsUpdate(this.doc);
+    this.failures = 0;
     this.active = true;
     this.schedule(0);
   }
@@ -152,6 +163,7 @@ export class HttpFallback {
     clearTimeout(this.timer);
     this.abort?.abort();
     this.abort = undefined;
+    this.pending = undefined;
   }
 
   destroy() {

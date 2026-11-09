@@ -76,8 +76,8 @@ export interface AccessPayload {
  * No `delete` facet: deleting a document is Django's, through the admin token.
  *
  * `history.version` covers named-version metadata, not document content. Anyone
- * with history access may read it; editors may name, rename and remove labels
- * inside their existing history ray. Publishing stays withheld.
+ * with history access may read it. Docs does not expose named-version mutations,
+ * so creating, renaming, removing and publishing labels stay withheld.
  *
  * `history.rollback` is granted to an editor, and it is the one thing here that
  * lets a browser change the past rather than read it: `POST /rollback` undoes
@@ -119,7 +119,7 @@ export const browserDocumentPermissions = (
     ? {
         history: {
           from: historyFrom,
-          version: canEdit ? 'crud' : '-r--',
+          version: '-r--',
           ...(canEdit ? { rollback: true } : null),
         },
       }
@@ -136,7 +136,7 @@ export const browserDocumentPermissions = (
       ? {
           activity: '-r--',
           changeset: '-r--',
-          version: canEdit ? 'crud' : '-r--',
+          version: '-r--',
           ...(canEdit ? { rollback: 'c---' } : null),
         }
       : null),
