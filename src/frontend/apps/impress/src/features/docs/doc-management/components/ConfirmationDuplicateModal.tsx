@@ -28,10 +28,6 @@ const ModalStyle = createGlobalStyle`
   .c__modal__footer {
     margin-top: 0;
   }
-  .c__toast__content__children{
-    flex-shrink: 0;
-    flex-grow: 0;
-  }
 `;
 
 interface ConfirmationDuplicateModalProps {
