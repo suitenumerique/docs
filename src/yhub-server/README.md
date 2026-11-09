@@ -650,6 +650,11 @@ encryption`: append `?sslmode=require` to `POSTGRES`
 authority Node trusts (`NODE_EXTRA_CA_CERTS`). The server, the worker and
 `init-db` all read the same url, so the parameter is set once.
 
+The helm chart runs it as a job, through `node dist/init-db.js
+--attempts=60 --delay-seconds=5` (`src/init-db.ts`): that reruns it until it
+succeeds, since nothing in the chart waits for the postgres server to be up.
+The loop is in Node because the production image has no shell.
+
 From the repository root, `make migrate-yhub` runs it against the dev stack —
 the counterpart of `make migrate` for the Django database. `make bootstrap`
 already includes it, so a fresh checkout needs nothing extra; an upgrade is

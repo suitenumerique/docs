@@ -51,28 +51,19 @@ spec:
           command:
             {{- toYaml .Values.yhub.initDb.command | nindent 12 }}
           {{- else }}
-          # The script yhub ships, wrapped as `yarn init-db`, retried until
-          # the postgres server answers: nothing here creates it, and a chart
-          # sync does not wait for whatever does. Retrying the whole script
-          # rather than probing the port first — it is idempotent, so a run
-          # against a database that is up but incomplete is a no-op, and no
-          # postgres client has to be present in the image to ask.
+          # The schema script yhub ships (`bin/init-db.js`), rerun by
+          # `dist/init-db.js` until the postgres server answers: nothing here
+          # creates it, and a chart sync does not wait for whatever does.
+          # Retrying the whole script rather than probing the port first — it
+          # is idempotent, so a rerun creates whatever an earlier attempt left
+          # missing, and no postgres client has to be present in the image to
+          # ask. The loop is in node
+          # (src/yhub-server/src/init-db.ts): the image has no shell.
           command:
-            - /bin/sh
-            - -c
-            - |
-              set -u
-
-              attempt=1
-              until node node_modules/@y/hub/bin/init-db.js; do
-                  if [ "$attempt" -ge {{ .Values.yhub.initDb.retries }} ]; then
-                      echo "database still unreachable after $attempt attempts, giving up"
-                      exit 1
-                  fi
-                  echo "database not ready, retrying in {{ .Values.yhub.initDb.retryDelaySeconds }}s ($attempt/{{ .Values.yhub.initDb.retries }})"
-                  attempt=$((attempt + 1))
-                  sleep {{ .Values.yhub.initDb.retryDelaySeconds }}
-              done
+            - node
+            - dist/init-db.js
+            - --attempts={{ .Values.yhub.initDb.retries }}
+            - --delay-seconds={{ .Values.yhub.initDb.retryDelaySeconds }}
           {{- end }}
           {{- if $envVars}}
           env:
