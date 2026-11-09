@@ -68,6 +68,10 @@ words=wip
 regex=^(⬆️.*|Update (.*) from (.*) to (.*)|(chore|fix)\(package\): update .*)$
 ignore=B6,UC1
 
+[ignore-body-lines]
+# A long "Signed-off-by" line (GitHub noreply addresses) cannot be shortened
+regex=^Signed-off-by:
+
 # [ignore-by-body]
 # Ignore certain rules for commits of which the body has a line that matches a regex
 # E.g. Match bodies that have a line that that contain "release"

@@ -3,17 +3,48 @@ import {
   DefaultProps,
   UnreachableCaseError,
 } from '@blocknote/core';
+import type { QueryClient } from '@tanstack/react-query';
 import { Canvg } from 'canvg';
 import { IParagraphOptions, ShadingType } from 'docx';
 import React from 'react';
 
-import { getDoc } from '@/docs/doc-management/api/useDoc';
+import { KEY_DOC, getDoc } from '@/docs/doc-management/api/useDoc';
 
 const WINDOWS_RESERVED_FILENAME =
   /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
+
+/**
+ * BlockNote types a block mapping as either a function, that renders the block
+ * only, or a `{ withChildren }` mapping, that also renders its children.
+ * Returns a default mapping of the first kind as a function, so that it can be
+ * wrapped. Throws if BlockNote changes it to the second kind, as the wrapper
+ * would then drop the children.
+ */
+export const getBlockMappingFunction = <M>(
+  mapping: M,
+): Extract<M, (...args: never[]) => unknown> => {
+  if (typeof mapping !== 'function') {
+    throw new Error('This block mapping renders the children of the block');
+  }
+
+  return mapping as Extract<M, (...args: never[]) => unknown>;
+};
+
+/**
+ * Text replacing an image that cannot be exported, followed by its caption,
+ * else its name, so that the reader knows which image is missing.
+ */
+export const getImageUnavailableText = (
+  unavailableText: string,
+  { caption, name }: { caption?: string; name?: string },
+): string => {
+  const label = caption || name;
+
+  return `⚠️ ${unavailableText}${label ? ` (${label})` : ''}`;
+};
 
 /**
  * Recursively collects the distinct doc ids referenced by
@@ -77,9 +108,14 @@ export function collectInterlinkingDocIds(blocks: unknown[]): string[] {
  * mapping functions themselves; a doc with no title, or that fails to
  * resolve (deleted, no access, ...), falls back to its relative URL, same
  * as the live editor's `LinkSelected` display.
+ *
+ * A doc already in the query cache is not requested again: the editor has
+ * loaded every interlink it displays, and the export reuses the titles shown
+ * to the user, even when they are stale.
  */
 export async function resolveInterlinkTitles(
   blocks: unknown[],
+  queryClient: QueryClient,
 ): Promise<Map<string, string>> {
   const docIds = collectInterlinkingDocIds(blocks);
   const titleMap = new Map<string, string>();
@@ -88,7 +124,12 @@ export async function resolveInterlinkTitles(
     docIds.map(async (docId) => {
       const href = `/docs/${docId}/`;
       try {
-        const linkedDoc = await getDoc({ id: docId });
+        // A static stale time returns the cached doc as it is, stale or not
+        const linkedDoc = await queryClient.query({
+          queryKey: [KEY_DOC, { id: docId }],
+          queryFn: () => getDoc({ id: docId }),
+          staleTime: 'static',
+        });
         titleMap.set(docId, linkedDoc.title || href);
       } catch {
         titleMap.set(docId, href);
@@ -217,12 +258,8 @@ export async function convertSvgToPng(
  * @throws Will throw an error if the canvas context cannot be initialized.
  */
 // Convert any raster format (PNG, WebP, JPEG, …) to a PNG data URL via
-// canvas. This has two benefits:
-//   1. Formats unsupported by @react-pdf/renderer (e.g. WebP) are
-//      transcoded to PNG which react-pdf can embed.
-//   2. Passing a raw Blob to react-pdf triggers a WASM "too many
-//      arguments" error in its internal image pipeline; a canvas-derived
-//      data URL sidesteps that entirely.
+// canvas, so that formats the Typst engine of the PDF export cannot decode
+// (e.g. WebP) are transcoded to PNG, which it embeds.
 export async function convertBlobToPng(
   blob: Blob,
   width?: number,

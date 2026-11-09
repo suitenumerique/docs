@@ -82,6 +82,33 @@ export const syncDocInTree = (
 };
 
 /**
+ * Rebuilds the item of a doc with `updateNode`, giving the focus back to the
+ * button of the item that held it (e.g. the emoji one), which the rebuild
+ * would otherwise drop on the body. The new row is found again by position.
+ */
+export const updateNodeKeepingButtonFocus = (
+  treeContext: TreeContextType<Doc>,
+  docId: string,
+  data: Partial<Doc>,
+) => {
+  const getButtons = () =>
+    Array.from(
+      document.querySelectorAll<HTMLElement>(
+        `[data-testid="doc-sub-page-item-${docId}"] button`,
+      ),
+    );
+  const focusedIndex = getButtons().findIndex(
+    (button) => button === document.activeElement,
+  );
+
+  treeContext.treeData.updateNode(docId, data);
+
+  if (focusedIndex !== -1) {
+    requestAnimationFrame(() => getButtons()[focusedIndex]?.focus());
+  }
+};
+
+/**
  * Adds `delta` to the `numchild` of a doc kept by the tree, so what reads it
  * (e.g. the duplicate action of its item) doesn't go stale when a child is
  * created or deleted. No-op when the tree doesn't hold the doc.
@@ -109,12 +136,12 @@ export const addToNumchildInTree = (
     return;
   }
 
+  const numchild = Math.max(0, node.numchild + delta);
+  node.numchild = numchild;
   syncDocInTree(
     treeContext as TreeContextType<Doc>,
     docId,
-    {
-      numchild: Math.max(0, node.numchild + delta),
-    },
+    { numchild },
     options,
   );
 };
@@ -183,4 +210,25 @@ export const findIndexInTree = (
     }
   }
   return -1;
+};
+
+/**
+ * Finds the item of a doc in the tree. Unlike `treeData.getNode`, which
+ * returns the doc it was loaded with, the children of the item follow the
+ * updates of the tree (`updateNode`, `addChild`, `deleteNode`).
+ */
+export const findItemInTree = (
+  nodes: TreeDataItem<TreeViewDataType<Doc>>[],
+  key: string,
+): TreeDataItem<TreeViewDataType<Doc>> | undefined => {
+  for (const node of nodes) {
+    if (node.key === key) {
+      return node;
+    }
+    const found = findItemInTree(node.children ?? [], key);
+    if (found) {
+      return found;
+    }
+  }
+  return undefined;
 };

@@ -23,6 +23,15 @@ export const DocsEditorStyle = createGlobalStyle`
   .bn-root {
     .bn-editor {
       height: 100%;
+      font-family:
+        'Inter Variable',
+        'SF Pro Display',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Open Sans',
+        'Segoe UI',
+        'Roboto',
+        sans-serif;
     }
 
     &.bn-mantine .bn-suggestion-menu-item-small {
@@ -37,7 +46,7 @@ export const DocsEditorStyle = createGlobalStyle`
     * To fix a visual bug with multi-column blocks
     * The first block in a multi-column layout had a negative margin
     * by default, causing layout issues. This rule resets the margin.
-    * Current bug Blocknote version: 0.54.0
+    * Still present in BlockNote 0.57.0
     * TODO: Check if Blocknote updates this behavior in future versions
     * and if yes, remove this rule.
     */
@@ -66,6 +75,17 @@ export const DocsEditorStyle = createGlobalStyle`
     */
     img.bn-visual-media[src*='-unsafe'] {
       pointer-events: none;
+    }
+
+    /**
+     * Read-only and presentation mode: visually hide the source popup of math
+     * and diagram blocks. BlockNote opens it from the selection even when the
+     * editor is not editable, so this only hides it and does not prevent it.
+     * TODO: remove once BlockNote ignores the selection when the editor is not
+     * editable, https://github.com/TypeCellOS/BlockNote/issues/3291
+     */
+    .bn-editor:not([contenteditable='true']) .bn-source-block-popup {
+      display: none;
     }
 
     /**
@@ -130,6 +150,7 @@ export const DocsEditorStyle = createGlobalStyle`
     .bn-block-content[data-content-type='checkListItem'][data-checked='true']
       .bn-inline-content {
       text-decoration: none;
+      color: var(--c--contextuals--content--semantic--neutral--tertiary);
     }
     a {
       color: var(--c--globals--colors--gray-600);
@@ -206,35 +227,22 @@ export const DocsEditorStyle = createGlobalStyle`
     }
 
     /**
+    * Sub-docs: BlockNote draws the node selection as an ::after overlay
+    * (translucent fill + inset ring), which is unwanted around the list.
+    */
+    .bn-block-content[data-content-type='docChildren'].ProseMirror-selectednode
+      > *::after,
+    .ProseMirror-selectednode
+      > .bn-block-content[data-content-type='docChildren']
+      > *::after {
+      content: none;
+    }
+
+    /**
     * Checklist items
     */
     .bn-block-content[data-content-type='checkListItem'] > div > input {
-      appearance: none;
-      width: 20px;
-      height: 20px;
-      border: 2px solid
-        var(--c--contextuals--content--semantic--neutral--tertiary);
-      border-radius: 4px;
-      cursor: pointer;
-      position: relative;
-      align-self: center;
-      margin-top: 2px;
-    }
-    .bn-block-content[data-content-type='checkListItem'] > div > input:checked {
-      background-color: var(--c--contextuals--content--semantic--brand--tertiary);
-      border-color: var(--c--contextuals--content--semantic--brand--tertiary);
-    }
-    .bn-block-content[data-content-type='checkListItem']
-      > div
-      > input:checked::after {
-      content: 'check';
-      font-family: 'Material Symbols Outlined Variable', sans-serif;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: var(--c--contextuals--content--semantic--overlay--primary);
-      font-size: 18px;
+      accent-color: var(--c--contextuals--content--semantic--brand--secondary);
     }
 
     /**
@@ -330,8 +338,7 @@ export const DocsEditorStyle = createGlobalStyle`
       & .bn-editor h1 {
         font-size: 1.6rem;
       }
-      .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
-        .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
+      .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']:has(.ProseMirror-trailingBreak:only-child)::after {
         font-size: 14px;
       }
     }

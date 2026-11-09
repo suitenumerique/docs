@@ -6,7 +6,6 @@ import { css } from 'styled-components';
 import RemoveEmojiSVG from '@/assets/icons/ui-kit/face-remove.svg';
 import AddEmojiSVG from '@/assets/icons/ui-kit/face.svg';
 import { Box, EmojiPicker, HorizontalSeparator } from '@/components';
-import { getEmojidata } from '@/components/Emoji/initEmojiCallout';
 import {
   Doc,
   getEmojiAndTitle,
@@ -44,7 +43,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
     restoreFocus();
   };
 
-  const onEmojiSelect = ({ native }: { native: string }) => {
+  const onEmojiSelect = (emoji: string) => {
     const today = new Date();
     const isAprilFools = today.getMonth() === 3 && today.getDate() === 1;
     if (isAprilFools) {
@@ -53,7 +52,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
       return;
     }
 
-    updateDocEmoji(doc.id, latestTitleRef.current, native);
+    updateDocEmoji(doc.id, latestTitleRef.current, emoji);
     closeEmojiPicker();
   };
 
@@ -147,7 +146,6 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
             )}
             {isEmojiPickerOpen && (
               <EmojiPicker
-                emojiData={getEmojidata()}
                 onClickOutside={closeEmojiPicker}
                 onEmojiSelect={onEmojiSelect}
                 withOverlay={true}

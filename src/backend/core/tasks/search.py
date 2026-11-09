@@ -1,9 +1,12 @@
 """Trigger document indexation using celery task."""
 
+import operator
+from functools import partial, reduce
 from logging import getLogger
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Q
 
 from django_redis.cache import RedisCache
@@ -61,6 +64,54 @@ def batch_document_indexer_task(timestamp):
 
         count = indexer.index(queryset)
         logger.info("Indexed %d documents", count)
+
+
+@app.task
+def subtree_document_indexer_task(document_ids):
+    """Celery Task : Sends indexation query for documents and their descendants."""
+    indexer = get_document_indexer()
+
+    if indexer:
+        # Sorted, the descendants of a path follow it: only the top paths are kept
+        roots = []
+        for path in sorted(
+            models.Document.objects.filter(pk__in=document_ids).values_list(
+                "path", flat=True
+            )
+        ):
+            if not roots or not path.startswith(roots[-1]):
+                roots.append(path)
+        if not roots:
+            return
+
+        queryset = models.Document.objects.filter(
+            reduce(operator.or_, (Q(path__startswith=path) for path in roots))
+        )
+
+        count = indexer.index(queryset)
+        logger.info("Indexed %d documents", count)
+
+
+def trigger_subtree_document_indexer(document_ids):
+    """
+    Index documents and their descendants again once the current transaction is
+    committed, whatever their last update.
+
+    The users having access to a document are part of its search index and of the
+    index of its descendants, which inherit its accesses. Unlike
+    trigger_batch_document_indexer, it is not debounced: the batch of a countdown
+    only indexes the documents updated since its first call.
+
+    Args:
+        document_ids (iterable of UUID): The ids of the documents whose accesses changed.
+    """
+    document_ids = [str(document_id) for document_id in document_ids]
+
+    # DO NOT create a task if indexation is disabled
+    if not settings.SEARCH_INDEXER_CLASS or not document_ids:
+        return
+
+    transaction.on_commit(partial(subtree_document_indexer_task.delay, document_ids))
 
 
 def trigger_batch_document_indexer(document_id, updated_at):

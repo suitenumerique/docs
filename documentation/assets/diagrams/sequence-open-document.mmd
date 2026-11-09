@@ -16,7 +16,7 @@ sequenceDiagram
   N->>Y: upgrade, forwards cookie and origin
   Y->>D: GET /api/v1.0/users/me/
   D-->>Y: user id (or 401, then anonymous)
-  Y->>D: GET /api/v1.0/documents/:id/
+  Y->>D: GET /api/v1.0/documents/:id/abilities/
   D-->>Y: abilities, so read-only or read-write
   Note over Y: unknown room, seed it once<br/>from the legacy S3 content
   Y->>P: read the persisted state

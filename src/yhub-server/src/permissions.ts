@@ -17,8 +17,9 @@ import type {
 } from '@y/hub/permissions';
 
 /**
- * The backend's verdict on a document (`GET /api/v1.0/documents/{id}/`), of
- * which only the abilities the policy reads are named here.
+ * The backend's verdict on a document
+ * (`GET /api/v1.0/documents/{id}/abilities/`), of which only the abilities the
+ * policy reads are named here.
  */
 export interface DocumentAbilities {
   retrieve?: boolean;

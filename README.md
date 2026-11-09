@@ -159,6 +159,7 @@ Run Docs locally for development and testing.
 - Docker
 - Docker Compose
 - GNU Make
+- Node.js with `npx`, only to generate the agent skills with `make skills`
 
 Verify installation:
 
@@ -195,6 +196,15 @@ Default credentials (development only):
 username: impress
 password: impress
 ```
+
+Alternatively, you can start the project with the `/docs-start` agent skill.
+The skills live in `.agents/skills/`, which Codex, Cursor and other agents read
+directly. For Claude Code, run `make skills` once (and after each change to
+them) to generate `.claude/skills/`. Other agents that need their own copy
+can be targeted with `make skills SKILLS_AGENT=<agent>`.
+It checks what is already built, stale or running, then runs only the Make
+targets needed: `make bootstrap` on a first run, the rebuild of the images
+whose dependencies changed after a pull, or just `make run`.
 
 ### Frontend development mode
 
@@ -275,7 +285,7 @@ While Docs is a public-driven initiative, our license choice is an invitation fo
 
 ### Stack
 
-Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [ProseMirror](https://prosemirror.net/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction), and [Yjs](https://yjs.dev/). We thank the contributors of all these projects for their awesome work!
+Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [ProseMirror](https://prosemirror.net/), [BlockNote.js](https://www.blocknotejs.org/), [yhub](https://github.com/yjs/yhub), and [Yjs](https://yjs.dev/). We thank the contributors of all these projects for their awesome work!
 
 We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/).
 

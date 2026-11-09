@@ -92,6 +92,7 @@ export interface Doc {
     link_configuration: boolean;
     link_select_options: LinkSelectOption;
     media_auth: boolean;
+    mention: boolean;
     move: boolean;
     partial_update: boolean;
     restore: boolean;

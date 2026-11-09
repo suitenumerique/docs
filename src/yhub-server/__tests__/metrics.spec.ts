@@ -37,7 +37,9 @@ describe('labels', () => {
     const { backendRouteLabel } = await load();
     const docid = '7c0f6f4e-2b0e-4a57-9f0a-3f6f2f0d1e11';
     expect(backendRouteLabel('/api/v1.0/users/me/')).toBe('users_me');
-    expect(backendRouteLabel(`/api/v1.0/documents/${docid}/`)).toBe('document');
+    expect(backendRouteLabel(`/api/v1.0/documents/${docid}/abilities/`)).toBe(
+      'abilities',
+    );
     expect(backendRouteLabel(`/api/v1.0/documents/${docid}/accesses/me/`)).toBe(
       'accesses_me',
     );
@@ -45,6 +47,8 @@ describe('labels', () => {
       backendRouteLabel(`/api/v1.0/documents/${docid}/content-updated/`),
     ).toBe('content_updated');
     expect(backendRouteLabel('/api/v1.0/something/else/')).toBe('other');
+    // yhub reads the abilities from their own route, not from the document
+    expect(backendRouteLabel(`/api/v1.0/documents/${docid}/`)).toBe('other');
   });
 
   it('tells the replicas and the roles apart', async () => {
@@ -219,7 +223,7 @@ describe('timedBackendRequest timeouts', () => {
 
     await expect(
       timedBackendRequest(
-        '/api/v1.0/documents/x/',
+        '/api/v1.0/documents/x/abilities/',
         async () => new Response('{}', { status: 200 }),
         async () => {
           throw err;
@@ -232,7 +236,7 @@ describe('timedBackendRequest timeouts', () => {
       values
         .filter(({ metricName }) => metricName?.endsWith('_count'))
         .map(({ labels }) => `${labels.route}:${labels.status}`),
-    ).toEqual(['document:timeout']);
+    ).toEqual(['abilities:timeout']);
   });
 
   it('books a body-level denial under its own status, and a broken body as an error', async () => {

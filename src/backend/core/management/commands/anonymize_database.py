@@ -13,7 +13,7 @@ It overwrites — in place, irreversibly — every column that holds personal da
 (emails, names, the OIDC ``sub``), user-generated content (document titles and
 excerpts, comment bodies, thread/comment metadata) and secrets (password
 hashes), and TRUNCATEs the operational tables that embed identity (sessions,
-admin log, thumbnail cache). Structural columns that make
+admin log). Structural columns that make
 the data realistic for load testing — the tree ``path``/``depth``/``numchild``,
 ``link_reach``, roles, foreign keys, row counts, timestamps — are deliberately
 preserved, so the result pairs naturally with ``profile_volumetry`` /
@@ -129,8 +129,6 @@ SCRUBS = [
 TRUNCATES = [
     "django_session",  # session_data can carry the authenticated identity
     "django_admin_log",  # object_repr / change_message leak titles and emails
-    "easy_thumbnails_source",  # thumbnail cache: media file paths
-    "easy_thumbnails_thumbnail",
 ]
 
 

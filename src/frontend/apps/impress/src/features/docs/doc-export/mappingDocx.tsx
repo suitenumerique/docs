@@ -4,18 +4,24 @@ import {
   mathBlockMapping,
 } from '@blocknote/math-block/docx-exporter';
 import { docxDefaultSchemaMappings } from '@blocknote/xl-docx-exporter';
+import { Paragraph } from 'docx';
 
 import {
   blockMappingCalloutDocx,
-  blockMappingImageDocx,
   blockMappingQuoteDocx,
   blockMappingUploadLoaderDocx,
+  createBlockMappingImageDocx,
 } from './blocks-mapping';
-import { createInlineContentMappingInterlinkingLinkDocx } from './inline-content-mapping';
+import {
+  createInlineContentMappingInterlinkingLinkDocx,
+  inlineContentMappingMentionSearchDocx,
+  inlineContentMappingUserMentionDocx,
+} from './inline-content-mapping';
 import { DocsExporterDocx } from './types';
 
 export const getDocxDocsSchemaMappings = (
   interlinkTitles: Map<string, string>,
+  imageUnavailableText: string,
 ): DocsExporterDocx['mappings'] => ({
   ...docxDefaultSchemaMappings,
   blockMapping: {
@@ -30,8 +36,10 @@ export const getDocxDocsSchemaMappings = (
     // Renders the Mermaid source to a PNG in the browser (async mapping).
     diagram: diagramBlockMapping,
     quote: blockMappingQuoteDocx,
-    image: blockMappingImageDocx,
+    image: createBlockMappingImageDocx(imageUnavailableText),
     uploadLoader: blockMappingUploadLoaderDocx,
+    // Replaced by a list of links before export, see expandDocChildrenBlocks
+    docChildren: () => new Paragraph(''),
     table: {
       withChildren: (
         block,
@@ -73,6 +81,8 @@ export const getDocxDocsSchemaMappings = (
     ...docxDefaultSchemaMappings.inlineContentMapping,
     interlinkingLinkInline:
       createInlineContentMappingInterlinkingLinkDocx(interlinkTitles),
+    mentionSearchInline: inlineContentMappingMentionSearchDocx,
+    userMentionInline: inlineContentMappingUserMentionDocx,
     // Renders inline math as a native (editable) Word equation.
     math: inlineMathMapping,
   },

@@ -149,7 +149,7 @@ def test_api_documents_mention_authenticated_success(role):
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
     assert email.to == [mentioned_user.email]
-    assert email.subject.lower() == 'mentioning user mentioned you in "my doc"'
+    assert email.subject == 'Mentioning User mentioned you in "My doc"'
     email_content = " ".join(email.body.split())
     assert "Mentioning User mentioned you in the following document: My doc" in (
         email_content
@@ -395,10 +395,7 @@ def test_api_documents_mention_thread():
 
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
-    assert (
-        email.subject.lower()
-        == 'mentioning user mentioned you in a comment in "my doc"'
-    )
+    assert email.subject == 'Mentioning User mentioned you in a comment in "My doc"'
     email_content = " ".join(email.body.split())
     assert (
         "Mentioning User mentioned you in a comment in the following document: My doc"

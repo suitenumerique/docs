@@ -5,9 +5,11 @@ import { type BoxType, HorizontalSeparator } from '@/components';
 
 import type { DocsBlockNoteEditor } from '../../types';
 
+type BlockType = DocsBlockNoteEditor['document'][number]['type'];
+
 type SideMenuSeparatorProps = {
-  typeDisplay?: 'table';
-  typeHide?: 'codeBlock';
+  typeDisplay?: BlockType[];
+  typeHide?: BlockType[];
 } & BoxType;
 
 export const SideMenuSeparator = ({
@@ -21,16 +23,18 @@ export const SideMenuSeparator = ({
     selector: (state) => state?.block,
   });
 
+  const blockType = block?.type as BlockType | undefined;
+
   if (
     typeDisplay &&
-    (block === undefined ||
-      block.type !== typeDisplay ||
+    (blockType === undefined ||
+      !typeDisplay.includes(blockType) ||
       !editor.settings.tables.headers)
   ) {
     return null;
   }
 
-  if (typeHide && (block === undefined || block.type === typeHide)) {
+  if (typeHide && (blockType === undefined || typeHide.includes(blockType))) {
     return null;
   }
 

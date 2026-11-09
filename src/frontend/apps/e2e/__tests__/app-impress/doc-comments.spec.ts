@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 
 import { createDoc, getOtherBrowserName, verifyDocName } from './utils-common';
 import {
@@ -14,6 +14,13 @@ import {
 } from './utils-share';
 import { logOut } from './utils-signin';
 import { createRootSubPage } from './utils-sub-pages';
+
+// The reaction picker is a virtualized Frimousse list: search the emoji
+// before clicking it, as it may not be rendered yet.
+const pickReaction = async (page: Page, label: string) => {
+  await page.getByRole('searchbox', { name: 'Search' }).fill(label);
+  await page.getByRole('gridcell', { name: label, exact: true }).click();
+};
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -56,7 +63,7 @@ test.describe('Doc Comments', () => {
 
     // We add a reaction with the first user
     await thread.locator('[data-test="addreaction"]').first().click();
-    await page.getByRole('button', { name: '👍' }).click();
+    await pickReaction(page, 'Thumbs up');
 
     await expect(
       thread
@@ -83,7 +90,7 @@ test.describe('Doc Comments', () => {
 
     await otherThread.getByText('This is a comment').first().hover();
     await otherThread.locator('[data-test="addreaction"]').first().click();
-    await otherPage.getByRole('button', { name: '👍' }).click();
+    await pickReaction(otherPage, 'Thumbs up');
 
     // We check that the comment made by the first user is visible for the second user
     await expect(
@@ -155,14 +162,14 @@ test.describe('Doc Comments', () => {
 
     // We add a reaction with the first user
     await thread.locator('[data-test="addreaction"]').first().click();
-    await page.getByRole('button', { name: '👍' }).click();
+    await pickReaction(page, 'Thumbs up');
 
     await expect(thread.locator('.bn-comment-reaction')).toHaveText('👍1');
 
     // Edit Comment
     await thread.getByText('This is a comment').first().hover();
     await thread.locator('[data-test="moreactions"]').first().click();
-    await thread.getByRole('menuitem', { name: 'Edit comment' }).click();
+    await page.getByRole('menuitem', { name: 'Edit comment' }).click();
     const commentEditor = thread.getByText('This is a comment').first();
     await commentEditor.fill('This is an edited comment');
     const saveBtn = thread.locator('button[data-test="save"]').first();
@@ -187,7 +194,7 @@ test.describe('Doc Comments', () => {
     // Delete second comment
     await thread.getByText('This is a second comment').first().hover();
     await thread.locator('[data-test="moreactions"]').first().click();
-    await thread.getByRole('menuitem', { name: 'Delete comment' }).click();
+    await page.getByRole('menuitem', { name: 'Delete comment' }).click();
     await expect(
       thread.getByText('This is a second comment').first(),
     ).toBeHidden();
@@ -240,7 +247,7 @@ test.describe('Doc Comments', () => {
 
     await thread.getByText('This is a new comment').first().hover();
     await thread.locator('[data-test="moreactions"]').first().click();
-    await thread.getByRole('menuitem', { name: 'Delete comment' }).click();
+    await page.getByRole('menuitem', { name: 'Delete comment' }).click();
 
     await expect(editor.getByText('Hello')).not.toHaveClass('bn-thread-mark');
     await expect(editor.getByText('Hello')).toHaveCSS(

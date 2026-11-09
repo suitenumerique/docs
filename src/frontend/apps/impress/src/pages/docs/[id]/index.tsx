@@ -7,7 +7,6 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Loading } from '@/components';
-import { DEFAULT_QUERY_RETRY } from '@/core';
 import { DocFloatingBar } from '@/docs/doc-header/components/DocFloatingBar';
 import {
   Doc,
@@ -92,13 +91,6 @@ const DocPage = ({ id }: DocProps) => {
       staleTime: 30000, // 30 seconds - We keep the data fresh as it is a highly collaborative page
       queryKey: [KEY_DOC, { id }],
       retryDelay: 1000,
-      retry: (failureCount, error) => {
-        if (error.status == 403 || error.status == 401 || error.status == 404) {
-          return false;
-        } else {
-          return failureCount < DEFAULT_QUERY_RETRY;
-        }
-      },
     },
   );
 

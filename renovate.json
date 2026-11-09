@@ -38,6 +38,13 @@
       "allowedVersions": "<5.0.0"
     },
     {
+      "description": "Stay on Python 3.14: requires-python in pyproject.toml and the python base image of the Dockerfile must move together, by hand",
+      "groupName": "allowed python versions",
+      "matchManagers": ["pep621", "dockerfile"],
+      "matchPackageNames": ["python"],
+      "allowedVersions": "/^3\\.14\\./"
+    },
+    {
       "groupName": "allowed @ai-sdk/openai versions",
       "matchManagers": ["npm"],
       "matchPackageNames": ["@ai-sdk/openai"],

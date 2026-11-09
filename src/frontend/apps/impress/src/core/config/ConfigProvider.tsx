@@ -14,6 +14,7 @@ import {
 } from '@/features/language';
 import { useAnalytics } from '@/libs';
 import { useSentryStore } from '@/stores/useSentryStore';
+import { isFrontendBehindBackend } from '@/utils/version';
 
 import { useConfig } from './api/useConfig';
 
@@ -91,10 +92,13 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     const frontendVersion = process.env.NEXT_PUBLIC_APP_VERSION;
 
+    // Only a frontend older than the backend can be fixed by a reload. When it
+    // is equal or newer (e.g. during a rollout where the frontend ships first),
+    // or a version cannot be parsed (backend "NA"), reloading is useless.
     if (
       !conf?.RELEASE_VERSION ||
       !frontendVersion ||
-      conf.RELEASE_VERSION === frontendVersion
+      !isFrontendBehindBackend(frontendVersion, conf.RELEASE_VERSION)
     ) {
       return;
     }

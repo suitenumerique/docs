@@ -18,7 +18,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import URLValidator
-from django.db import DatabaseError, transaction
+from django.db import DatabaseError, connection, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Greatest, Left, Length
@@ -103,6 +103,21 @@ from .throttling import (
 logger = logging.getLogger(__name__)
 
 # pylint: disable=too-many-ancestors
+
+# Minimum trigram similarity between a user search and an email or a full name
+USERS_SEARCH_SIMILARITY_THRESHOLD = 0.2
+
+
+def set_trigram_similarity_threshold(threshold):
+    """
+    Set the threshold of the trigram `%` operator for the current transaction only,
+    so that it never leaks to the next users of a pooled connection.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT set_config('pg_trgm.similarity_threshold', %s, true)",
+            [str(threshold)],
+        )
 
 
 class NestedGenericViewSet(viewsets.GenericViewSet):
@@ -233,94 +248,89 @@ class UserViewSet(
 
         filter_data = filterset.form.cleaned_data
         query = remove_accents(filter_data["q"])
+        if not query:
+            return []
 
-        # For emails, match emails by Levenstein distance to prevent typing errors
+        limit = settings.API_USERS_LIST_LIMIT
+
+        # The trigram indexes of migration 0027 are built on these two expressions:
+        # only a `%` filter on them uses the indexes, any other condition on the
+        # user table (a similarity score, the raw columns) scans all the users.
+        queryset = queryset.alias(
+            unaccented_email=db.Func(
+                "email", function="f_unaccent", output_field=db.TextField()
+            ),
+            unaccented_full_name=db.Func(
+                "full_name", function="f_unaccent", output_field=db.TextField()
+            ),
+        )
+
+        # For emails, match emails by Levenstein distance to prevent typing errors,
+        # among the users that the trigram index finds close enough to the query
         if "@" in query:
-            return (
-                queryset.annotate(
-                    distance=RawSQL(
-                        "levenshtein(unaccent(email::text), %s::text)", (query,)
+            with transaction.atomic():
+                set_trigram_similarity_threshold(USERS_SEARCH_SIMILARITY_THRESHOLD)
+                return list(
+                    queryset.filter(unaccented_email__trigram_similar=query)
+                    .annotate(
+                        distance=RawSQL(
+                            "levenshtein(unaccent(email::text), %s::text)", (query,)
+                        )
                     )
+                    .filter(distance__lte=3)
+                    .order_by("distance", "email")[:limit]
                 )
-                .filter(distance__lte=3)
-                .order_by("distance", "email")[: settings.API_USERS_LIST_LIMIT]
-            )
 
-        # Use trigram similarity for non-email-like queries
-        # For performance reasons we filter first by similarity, which relies on an
-        # index, then only calculate precise similarity scores for sorting purposes.
+        # Use trigram similarity for non-email-like queries.
         #
-        # Additionally results are reordered to prefer users "closer" to the current
-        # user: users they recently shared documents with, then same email domain.
-        # To achieve that without complex SQL, we build a proximity score in Python
-        # and return the top N results.
-        # For security results, users that match neither of these proximity criteria
+        # Results are ordered to prefer users "closer" to the current user: users
+        # they recently shared documents with, then users of the same email domain.
+        # For security reasons, users that match neither of these proximity criteria
         # are not returned at all, to prevent email enumeration.
         current_user = self.request.user
         shared_map = users_sharing_documents_with(current_user.id)
+        shared_ids = list(shared_map)
+        user_email_domain = get_domain_from_email(current_user.email)
 
-        user_email_domain = get_domain_from_email(current_user.email) or ""
-
-        candidates = list(
-            queryset.annotate(
-                sim_email=TrigramSimilarity("email", query),
-                sim_name=TrigramSimilarity("full_name", query),
+        similar_users = queryset.filter(
+            db.Q(unaccented_email__trigram_similar=query)
+            | db.Q(unaccented_full_name__trigram_similar=query)
+        ).annotate(
+            similarity=Greatest(
+                TrigramSimilarity("unaccented_email", query),
+                TrigramSimilarity("unaccented_full_name", query),
             )
-            .annotate(similarity=Greatest("sim_email", "sim_name"))
-            .filter(similarity__gt=0.2)
-            .order_by("-similarity")
         )
 
-        # Keep only users that either share documents with the current user
-        # or have an email with the same domain as the current user.
-        filtered_candidates = []
-        for u in candidates:
-            candidate_domain = get_domain_from_email(u.email) or ""
-            if shared_map.get(u.id) or (
-                user_email_domain and candidate_domain == user_email_domain
-            ):
-                filtered_candidates.append(u)
+        with transaction.atomic():
+            set_trigram_similarity_threshold(USERS_SEARCH_SIMILARITY_THRESHOLD)
 
-        candidates = filtered_candidates
-
-        # Build ordering key for each candidate
-        def _sort_key(u):
-            # shared priority: most recent first
-            # Use shared_last_at timestamp numeric for secondary ordering when shared.
-            shared_last_at = shared_map.get(u.id)
-            if shared_last_at:
-                is_shared = 1
-                shared_score = int(shared_last_at.timestamp())
-            else:
-                is_shared = 0
-                shared_score = 0
-
-            # domain proximity
-            candidate_email_domain = get_domain_from_email(u.email) or ""
-
-            same_full_domain = (
-                1
-                if candidate_email_domain
-                and candidate_email_domain == user_email_domain
-                else 0
+            # Bounded by the number of users the current user shares documents with
+            shared_users = (
+                list(similar_users.filter(id__in=shared_ids)) if shared_ids else []
             )
 
-            # similarity fallback
-            sim = getattr(u, "similarity", 0) or 0
+            # A domain can count many users: only fetch the ones that can still fit
+            domain_users = []
+            if user_email_domain and len(shared_users) < limit:
+                domain_users = list(
+                    similar_users.filter(email__endswith=f"@{user_email_domain}")
+                    .exclude(id__in=shared_ids)
+                    .order_by("-similarity")[: limit - len(shared_users)]
+                )
 
-            return (
-                is_shared,
-                shared_score,
-                same_full_domain,
-                sim,
-            )
+        # Most recently shared first, then same domain, then the closest match
+        shared_users.sort(
+            key=lambda user: (
+                shared_map[user.id],
+                bool(user_email_domain)
+                and get_domain_from_email(user.email) == user_email_domain,
+                user.similarity,
+            ),
+            reverse=True,
+        )
 
-        # Sort candidates by the key descending and return top N as a queryset-like
-        # list. Keep return type consistent with previous behavior (QuerySet slice
-        # was returned) by returning a list of model instances.
-        candidates.sort(key=_sort_key, reverse=True)
-
-        return candidates[: settings.API_USERS_LIST_LIMIT]
+        return (shared_users + domain_users)[:limit]
 
     @drf.decorators.action(
         detail=False,
@@ -533,6 +543,9 @@ class DocumentViewSet(
           occurs. Omit for mentions in the document body.
         Returns: 201 with the created mention.
 
+    17. **Abilities**: Get only the abilities of the current user on a document.
+        Example: GET /documents/{id}/abilities/
+
     ### Ordering: created_at, updated_at, is_favorite, title
 
         Example:
@@ -570,6 +583,7 @@ class DocumentViewSet(
     throttle_scope = "document"
     queryset = models.Document.objects.select_related("creator").all()
     serializer_class = serializers.DocumentSerializer
+    abilities_serializer_class = serializers.DocumentAbilitiesSerializer
     ai_translate_serializer_class = serializers.AITranslateSerializer
     all_serializer_class = serializers.ListDocumentSerializer
     children_serializer_class = serializers.ListDocumentSerializer
@@ -621,6 +635,27 @@ class DocumentViewSet(
         """Override to apply annotations to generic views."""
         queryset = super().filter_queryset(queryset)
         user = self.request.user
+
+        if self.action == "abilities":
+            # Computing the abilities reads a few fields, the roles of the user and
+            # their link trace: load nothing else, the favorite status and the creator
+            # included (its id is enough)
+            return (
+                queryset.select_related(None)
+                .only(
+                    "path",
+                    "depth",
+                    "link_reach",
+                    "link_role",
+                    "deleted_at",
+                    "ancestors_deleted_at",
+                    "creator_id",
+                    "numchild",
+                )
+                .annotate_user_roles(user)
+                .annotate_user_has_link_trace(user)
+            )
+
         queryset = queryset.annotate_is_favorite(user)
         queryset = queryset.annotate_user_roles(user)
         queryset = queryset.annotate_user_has_link_trace(user)
@@ -706,6 +741,19 @@ class DocumentViewSet(
         instance.user_has_link_trace = user.is_authenticated
 
         serializer = self.get_serializer(instance)
+        return drf.response.Response(serializer.data)
+
+    @drf.decorators.action(detail=True, methods=["get"], url_path="abilities")
+    def abilities(self, request, *args, **kwargs):
+        """
+        Return only the abilities of the current user on the document, for clients
+        like the collaboration server that need nothing else from `retrieve`.
+
+        Contrary to `retrieve`, no link trace is created: the `leave` ability
+        reflects the link traces as they are.
+        """
+        document = self.get_object()
+        serializer = self.get_serializer(document)
         return drf.response.Response(serializer.data)
 
     def _apply_uploaded_file_conversion(self, serializer):
@@ -812,7 +860,23 @@ class DocumentViewSet(
 
     def perform_destroy(self, instance):
         """Override to implement a soft delete instead of dumping the record in database."""
-        instance.soft_delete()
+        is_privileged = instance.get_role(self.request.user) in choices.PRIVILEGED_ROLES
+        with transaction.atomic():
+            instance.soft_delete()
+            # A creator may only delete a document without children, but nothing
+            # is locked since the permission check: roll back if a child was
+            # added in between. Query the database, the `numchild == 0` of the
+            # instance makes treebeard return no children without asking it.
+            # Children in the trashbin keep their own `deleted_at` and do not count
+            if (
+                not is_privileged
+                and models.Document.objects.filter(
+                    path__startswith=instance.path,
+                    depth=instance.depth + 1,
+                    deleted_at__isnull=True,
+                ).exists()
+            ):
+                raise drf.exceptions.PermissionDenied()
 
         reset_service_connections_on_commit(instance.pk)
 

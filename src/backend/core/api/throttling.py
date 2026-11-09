@@ -41,12 +41,18 @@ class YProviderThrottleMixin:
 
 
 class DocumentThrottle(YProviderThrottleMixin, MonitoredScopedRateThrottle):
-    """Throttle for document-related endpoints, except collaboration-server requests."""
+    """
+    Throttle for document-related endpoints, except collaboration-server requests.
 
-    scope = "document"
+    The scope, and so the rate and the cache key, come from the view's
+    `throttle_scope`: a view without one is not throttled.
+    """
 
 
 class DocumentAccessThrottle(YProviderThrottleMixin, MonitoredScopedRateThrottle):
-    """Throttle for document access endpoints, except collaboration-server requests."""
+    """
+    Throttle for document access endpoints, except collaboration-server requests.
 
-    scope = "document_access"
+    The scope, and so the rate and the cache key, come from the view's
+    `throttle_scope`: a view without one is not throttled.
+    """

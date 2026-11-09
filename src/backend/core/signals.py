@@ -11,7 +11,10 @@ from django.dispatch import receiver
 
 from core import models
 from core.tasks.access import reset_service_connections_on_commit
-from core.tasks.search import trigger_batch_document_indexer
+from core.tasks.search import (
+    trigger_batch_document_indexer,
+    trigger_subtree_document_indexer,
+)
 from core.utils.users import get_users_sharing_documents_with_cache_key
 
 
@@ -72,3 +75,46 @@ def document_access_post_delete(sender, instance, **kwargs):  # pylint: disable=
     cache.delete(cache_key)
 
     reset_service_connections_on_commit(instance.document_id, instance.user_id)
+
+
+@receiver(models.document_accesses_bulk_changed, sender=models.DocumentAccess)
+def document_accesses_bulk_changed(
+    sender, users, updated_accesses, removed_accesses, **kwargs
+):  # pylint: disable=unused-argument
+    """
+    Refresh what the signals and the methods of DocumentAccess keep up to date,
+    bypassed by the bulk operations of a user reconciliation.
+
+    - The users sharing documents with each user changed.
+    - The documents losing an access, and their descendants, have one access less.
+    - The users having access to the documents are part of their search index,
+      and of the index of their descendants.
+    """
+    removed_document_ids = {access.document_id for access in removed_accesses}
+    # Once committed: cleared before, an entry read meanwhile from the accesses
+    # still committed would be cached again for its whole lifetime
+    transaction.on_commit(
+        partial(
+            invalidate_bulk_changed_caches,
+            [user.pk for user in users],
+            removed_document_ids,
+        )
+    )
+
+    trigger_subtree_document_indexer(
+        removed_document_ids | {access.document_id for access in updated_accesses}
+    )
+
+
+def invalidate_bulk_changed_caches(user_ids, removed_document_ids):
+    """
+    Clear the users sharing documents with each user, and the number of accesses
+    of the documents losing an access and of their descendants.
+    """
+    for user_id in user_ids:
+        cache.delete(get_users_sharing_documents_with_cache_key(user_id))
+
+    for document in models.Document.objects.filter(pk__in=removed_document_ids).only(
+        "id", "path"
+    ):
+        document.invalidate_nb_accesses_cache()

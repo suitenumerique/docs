@@ -7,7 +7,6 @@ import {
 } from '@blocknote/core';
 import { CommentsExtension } from '@blocknote/core/comments';
 import { type VersioningController } from '@blocknote/core/extensions';
-import '@blocknote/core/fonts/inter.css';
 import * as localesBN from '@blocknote/core/locales';
 import { YVersioningExtension, withCollaboration } from '@blocknote/core/y';
 import {
@@ -21,6 +20,7 @@ import {
   createReactMathBlockSpec,
   locales as mathLocales,
 } from '@blocknote/math-block';
+import '@blocknote/math-block/style.css';
 import {
   FloatingComposerController,
   FloatingThreadController,
@@ -78,7 +78,12 @@ import { DocsSideMenu } from './DocsSideMenu/DocsSideMenu';
 import { type HistoryDebugSettings } from './VersionHistoryDebug';
 import { VersioningComponentsProvider } from './VersioningComponentsProvider';
 import { VersioningSidebarPanel } from './VersioningSidebarPanel';
-import { CalloutBlock, PdfBlock, UploadLoaderBlock } from './custom-blocks';
+import {
+  CalloutBlock,
+  DocChildrenBlock,
+  PdfBlock,
+  UploadLoaderBlock,
+} from './custom-blocks';
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
@@ -86,6 +91,8 @@ const localesBNAI = BlockNoteAI?.localesAI || {};
 import { createSafeCodeBlockSpec } from './custom-blocks/CodeBlock';
 import {
   InterlinkingLinkInlineContent,
+  MentionSearchInlineContent,
+  UserMentionInlineContent,
   getPastedDocInterlink,
 } from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
@@ -105,6 +112,7 @@ const baseBlockNoteSchema = withPageBreak(
       callout: CalloutBlock(),
       codeBlock: createSafeCodeBlockSpec(),
       diagram: createReactDiagramBlockSpec(),
+      docChildren: DocChildrenBlock(),
       mathBlock: createReactMathBlockSpec(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
@@ -112,6 +120,8 @@ const baseBlockNoteSchema = withPageBreak(
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
       interlinkingLinkInline: InterlinkingLinkInlineContent,
+      mentionSearchInline: MentionSearchInlineContent,
+      userMentionInline: UserMentionInlineContent,
       math: createReactInlineMathSpec(),
     },
   }),

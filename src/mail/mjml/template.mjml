@@ -6,7 +6,7 @@
       We load django tags here so they appear in the body of the HTML output.
       This ensures html-to-text also includes them in the plain text template.
     -->
-    <mj-raw>{% load i18n static extra_tags %}</mj-raw>
+    <mj-raw>{% load i18n static %}</mj-raw>
     <mj-wrapper css-class="wrapper" padding="5px 25px 0px 25px">
       <mj-section css-class="wrapper-logo">
         <mj-column>

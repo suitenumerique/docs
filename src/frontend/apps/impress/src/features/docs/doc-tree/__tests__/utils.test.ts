@@ -1,8 +1,8 @@
 import { TreeContextType } from '@gouvfr-lasuite/ui-components';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Doc } from '../../doc-management';
-import { addToNumchildInTree } from '../utils';
+import { addToNumchildInTree, updateNodeKeepingButtonFocus } from '../utils';
 
 const setup = (numchild: number, isRoot: boolean) => {
   const parent = { id: 'parent-id', numchild } as Doc;
@@ -62,5 +62,53 @@ describe('addToNumchildInTree', () => {
 
     expect(setRoot).not.toHaveBeenCalled();
     expect(updateNode).not.toHaveBeenCalled();
+  });
+});
+
+describe('updateNodeKeepingButtonFocus', () => {
+  const renderItem = () => {
+    document.body.innerHTML = `
+      <a data-testid="doc-sub-page-item-doc-id">
+        <button>emoji</button><button>options</button>
+      </a>`;
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    document.body.innerHTML = '';
+  });
+
+  it('gives the focus back to the same button of the rebuilt item', () => {
+    vi.stubGlobal('requestAnimationFrame', (callback: () => void) =>
+      callback(),
+    );
+    renderItem();
+    const [, options] = document.querySelectorAll('button');
+    options.focus();
+    // The rebuild replaces the buttons by new ones
+    const updateNode = vi.fn(renderItem);
+    const treeContext = {
+      treeData: { updateNode },
+    } as unknown as TreeContextType<Doc>;
+
+    updateNodeKeepingButtonFocus(treeContext, 'doc-id', { title: 'New' });
+
+    expect(updateNode).toHaveBeenCalledWith('doc-id', { title: 'New' });
+    expect(document.activeElement).not.toBe(options);
+    expect(document.activeElement).toBe(document.querySelectorAll('button')[1]);
+  });
+
+  it('does not take the focus when the item did not hold it', () => {
+    vi.stubGlobal('requestAnimationFrame', (callback: () => void) =>
+      callback(),
+    );
+    renderItem();
+    const treeContext = {
+      treeData: { updateNode: vi.fn(renderItem) },
+    } as unknown as TreeContextType<Doc>;
+
+    updateNodeKeepingButtonFocus(treeContext, 'doc-id', { title: 'New' });
+
+    expect(document.activeElement).toBe(document.body);
   });
 });

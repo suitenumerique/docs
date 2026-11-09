@@ -82,6 +82,7 @@ const createDoc = (overrides: Partial<Doc> = {}): Doc => ({
     link_configuration: false,
     link_select_options: {},
     media_auth: false,
+    mention: false,
     move: false,
     partial_update: true,
     restore: false,

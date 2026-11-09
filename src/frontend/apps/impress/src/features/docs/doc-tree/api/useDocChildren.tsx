@@ -2,7 +2,7 @@ import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI, useAPIInfiniteQuery } from '@/api';
 
-import { DocsResponse } from '../../doc-management';
+import { Doc, DocsResponse } from '../../doc-management';
 
 export type DocsChildrenParams = {
   docId: string;
@@ -37,6 +37,24 @@ export const getDocChildren = async (
   return response.json() as Promise<DocsResponse>;
 };
 
+/**
+ * Fetches every direct child of a doc, following the pagination.
+ */
+export const getAllDocChildren = async (docId: string): Promise<Doc[]> => {
+  const children: Doc[] = [];
+  let page = 1;
+  let hasMore = true;
+
+  while (hasMore) {
+    const response = await getDocChildren({ docId, page, page_size: 200 });
+    children.push(...response.results);
+    hasMore = !!response.next;
+    page++;
+  }
+
+  return children;
+};
+
 export const KEY_LIST_DOC_CHILDREN = 'doc-children';
 
 export function useDocChildren(
@@ -49,6 +67,24 @@ export function useDocChildren(
   return useQuery<DocsResponse, APIError, DocsResponse>({
     queryKey: [KEY_LIST_DOC_CHILDREN, params],
     queryFn: () => getDocChildren(params),
+    ...queryConfig,
+  });
+}
+
+/**
+ * Every direct child of a doc, all pages included.
+ */
+export function useAllDocChildren(
+  docId: string | undefined,
+  queryConfig?: Omit<
+    UseQueryOptions<Doc[], APIError, Doc[]>,
+    'queryKey' | 'queryFn'
+  >,
+) {
+  return useQuery<Doc[], APIError, Doc[]>({
+    queryKey: [KEY_LIST_DOC_CHILDREN, { docId, all: true }],
+    queryFn: () => getAllDocChildren(docId as string),
+    enabled: !!docId,
     ...queryConfig,
   });
 }

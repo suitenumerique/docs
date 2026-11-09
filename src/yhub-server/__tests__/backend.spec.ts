@@ -223,7 +223,7 @@ describe('the resolve* lookups', () => {
       identified: true,
     });
     expect(fetchMock.mock.calls[0][0]).toBe(
-      `https://backend.example.test/api/v1.0/documents/${docid}/`,
+      `https://backend.example.test/api/v1.0/documents/${docid}/abilities/`,
     );
   });
 

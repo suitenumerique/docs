@@ -177,6 +177,19 @@ const DocToolBoxComponent = ({
     }
   }, [wordCountLabel]);
 
+  // The modals are rendered here: they keep the toolbox "open" for its parent
+  // until they close, across the menu closing as one of them opens.
+  const isModalOpen =
+    isModalDuplicateOpen ||
+    isModalRemoveOpen ||
+    isModalExportOpen ||
+    isModalShareOpen ||
+    isModalLeaveOpen ||
+    isModalMoveOpen;
+  useEffect(() => {
+    onOpenChange?.(openDropdown || isModalOpen);
+  }, [openDropdown, isModalOpen, onOpenChange]);
+
   const { mutate: detachDoc } = useDetachDoc();
 
   const restoreFocus = useFocusStore((state) => state.restoreFocus);
@@ -410,10 +423,7 @@ const DocToolBoxComponent = ({
         options={(optionsDefault ?? options) as DropdownMenuItem[]}
         isOpen={openDropdown}
         shouldCloseOnInteractOutside={() => true}
-        onOpenChange={(isOpen) => {
-          setOpenDropdown(isOpen);
-          onOpenChange?.(isOpen);
-        }}
+        onOpenChange={setOpenDropdown}
         bottomMessage={
           wordCountLabel && <Text $variation="tertiary">{wordCountLabel}</Text>
         }

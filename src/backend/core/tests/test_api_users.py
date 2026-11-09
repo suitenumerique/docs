@@ -2,6 +2,8 @@
 Test users API endpoints in the impress core app.
 """
 
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 import pytest
@@ -428,6 +430,115 @@ def test_api_users_list_query_inactive():
     assert response.status_code == 200
     user_ids = [user["id"] for user in response.json()]
     assert user_ids == [str(lennon.id)]
+
+
+def test_api_users_list_shared_users_before_more_similar_domain_users():
+    """
+    A user sharing documents with the current user should come first even if
+    enough users of the same domain match the query better to fill the response,
+    and the remaining places should go to the users of the same domain.
+    """
+    user = factories.UserFactory(
+        email="martin.bernard@anct.gouv.fr", full_name="Martin Bernard"
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    shared = factories.UserFactory(
+        email="jp.dupont@beta.gouv.fr", full_name="Jean-Pierre Dupont-Martinez"
+    )
+    document = factories.DocumentFactory()
+    factories.UserDocumentAccessFactory(user=user, document=document)
+    factories.UserDocumentAccessFactory(user=shared, document=document)
+
+    same_domain = [
+        factories.UserFactory(email=f"pierre.{i}@anct.gouv.fr", full_name="Pierre")
+        for i in range(8)
+    ]
+
+    response = client.get("/api/v1.0/users/?q=Pierre")
+
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert len(user_ids) == 5
+    assert user_ids[0] == str(shared.id)
+    assert set(user_ids[1:]) <= {str(other.id) for other in same_domain}
+
+
+@pytest.mark.parametrize(
+    "query,indexes",
+    [
+        (
+            "Bowman",
+            ["user_email_unaccent_trgm_idx", "user_full_name_unaccent_trgm_idx"],
+        ),
+        ("david.bowman@work.com", ["user_email_unaccent_trgm_idx"]),
+    ],
+)
+def test_api_users_list_query_uses_trigram_indexes(query, indexes):
+    """
+    Searching users should go through the trigram indexes on the unaccented email
+    and full name instead of scanning the whole user table.
+    """
+    user = factories.UserFactory(email="user@work.com")
+    dave = factories.UserFactory(
+        email="david.bowman@work.com", full_name="David Bowman"
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    with CaptureQueriesContext(connection) as context:
+        response = client.get(f"/api/v1.0/users/?q={query}")
+
+    assert response.status_code == 200
+    assert [user["id"] for user in response.json()] == [str(dave.id)]
+
+    searches = [
+        captured["sql"]
+        for captured in context.captured_queries
+        if 'FROM "impress_user"' in captured["sql"] and query in captured["sql"]
+    ]
+    assert searches
+
+    with connection.cursor() as cursor:
+        # With so few users, a sequential scan would win even if an index can serve
+        cursor.execute("SET LOCAL enable_seqscan = off")
+        for search in searches:
+            cursor.execute(f"EXPLAIN {search}")
+            plan = "\n".join(row[0] for row in cursor.fetchall())
+            for index in indexes:
+                assert index in plan
+
+
+@pytest.mark.django_db(transaction=True)
+def test_api_users_list_similarity_threshold_does_not_leak():
+    """
+    The trigram similarity threshold set for a search should not stay on the
+    connection after the request, other requests share it through the pool.
+    """
+    user = factories.UserFactory(email="user@work.com")
+    dave = factories.UserFactory(
+        email="david.bowman@work.com", full_name="David Bowman"
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT show_limit()")
+        default_threshold = cursor.fetchone()[0]
+
+    for query in ["Bowman", "david.bowman@work.com"]:
+        response = client.get(f"/api/v1.0/users/?q={query}")
+
+        assert response.status_code == 200
+        assert [user["id"] for user in response.json()] == [str(dave.id)]
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT show_limit()")
+            assert cursor.fetchone()[0] == default_threshold
 
 
 def test_api_users_retrieve_me_anonymous():

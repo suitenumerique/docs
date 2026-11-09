@@ -2,6 +2,7 @@ import {
   FocusEvent,
   HTMLAttributes,
   KeyboardEvent,
+  MouseEvent,
   useCallback,
   useMemo,
   useState,
@@ -20,6 +21,13 @@ type UseTreeItemActionsProps = {
 type UseTreeItemActionsReturn = {
   /** Whether `DocTreeItemActions` should be rendered for this item. */
   areActionsVisible: boolean;
+  /**
+   * Rendered but not shown: only a focus that didn't come from the keyboard
+   * keeps them, e.g. the options button the menu and its modals give the focus
+   * back to when they close, after a click outside too. Unmounting them would
+   * lose that focus; the first key press or hover shows them again.
+   */
+  areActionsTransparent: boolean;
   isMenuOpen: boolean;
   onMenuOpenChange: (isOpen: boolean) => void;
   /**
@@ -37,7 +45,7 @@ type UseTreeItemActionsReturn = {
   itemProps: Required<
     Pick<
       HTMLAttributes<HTMLElement>,
-      'onMouseEnter' | 'onMouseLeave' | 'onFocus' | 'onBlur'
+      'onMouseEnter' | 'onMouseMove' | 'onMouseLeave' | 'onFocus' | 'onBlur'
     >
   >;
 };
@@ -67,13 +75,24 @@ export const useTreeItemActions = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPointerOver, setIsPointerOver] = useState(false);
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
+  const [hasKeyboardFocus, setHasKeyboardFocus] = useState(false);
 
   const onMenuOpenChange = useCallback((isOpen: boolean) => {
     setIsMenuOpen(isOpen);
+    // The menu and its modals cover the page, and React counts them as part
+    // of this item: its `mouseleave` won't come (see `onPointerOver`). They
+    // keep the actions shown meanwhile; the next real move brings it back.
+    if (isOpen) {
+      setIsPointerOver(false);
+    }
   }, []);
 
   const handleActionsKeyDown = useCallback(
     (event: KeyboardEvent<HTMLElement>) => {
+      // The focus left by a click becomes a keyboard focus, see
+      // `areActionsTransparent`.
+      setHasKeyboardFocus(true);
+
       // While the menu is open the keyboard belongs to it: Escape closes it and
       // `onMenuOpenChange` restores focus from there.
       if (isMenuOpen) {
@@ -119,27 +138,41 @@ export const useTreeItemActions = ({
     [isMenuOpen, focusItem],
   );
 
-  const itemProps = useMemo(
-    () => ({
-      onMouseEnter: () => setIsPointerOver(true),
+  const itemProps = useMemo(() => {
+    /**
+     * The menu is portalled, but React bubbles its mouse events through the
+     * item that renders it: only the item's own DOM counts as being over it.
+     */
+    const onPointerOver = (event: MouseEvent<HTMLElement>) => {
+      if (event.currentTarget.contains(event.target as Node)) {
+        setIsPointerOver(true);
+      }
+    };
+
+    return {
+      onMouseEnter: onPointerOver,
+      onMouseMove: onPointerOver,
       onMouseLeave: () => setIsPointerOver(false),
-      onFocus: () => {
+      onFocus: (event: FocusEvent<HTMLElement>) => {
         setHasFocusWithin(true);
+        setHasKeyboardFocus(event.target.matches(':focus-visible'));
         onFocus?.();
       },
       onBlur: (event: FocusEvent<HTMLElement>) => {
         // Focus moving between the item and its own actions is not a blur.
         if (!event.currentTarget.contains(event.relatedTarget)) {
           setHasFocusWithin(false);
+          setHasKeyboardFocus(false);
         }
       },
-    }),
-    [onFocus],
-  );
+    };
+  }, [onFocus]);
+
+  const isShown = isMobile || isMenuOpen || isPointerOver || isActive;
 
   return {
-    areActionsVisible:
-      isMobile || isMenuOpen || isPointerOver || hasFocusWithin || isActive,
+    areActionsVisible: isShown || hasFocusWithin,
+    areActionsTransparent: !isShown && !hasKeyboardFocus,
     isMenuOpen,
     onMenuOpenChange,
     handleActionsKeyDown,

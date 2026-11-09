@@ -1,6 +1,5 @@
 import { Exporter } from '@blocknote/core';
-import { DOCXBlockResult } from '@blocknote/xl-docx-exporter';
-import { Link, Text, TextProps } from '@react-pdf/renderer';
+import type { DOCXBlockResult } from '@blocknote/xl-docx-exporter';
 import { IRunPropertiesOptions, ParagraphChild, TextRun } from 'docx';
 
 import {
@@ -9,17 +8,12 @@ import {
   DocsStyleSchema,
 } from '../doc-editor';
 
+/**
+ * The PDF export is Typst based: every mapping returns Typst markup.
+ * Blocks and inline content map to markup, styles to a wrapper of an inner
+ * Typst expression.
+ */
 export type DocsExporterPDF = Exporter<
-  NoInfer<DocsBlockSchema>,
-  NoInfer<DocsInlineContentSchema>,
-  NoInfer<DocsStyleSchema>,
-  React.ReactElement<Text>,
-  React.ReactElement<Link> | React.ReactElement<Text>,
-  TextProps['style'],
-  React.ReactElement<Text>
->;
-
-export type DocsExporterTypst = Exporter<
   NoInfer<DocsBlockSchema>,
   NoInfer<DocsInlineContentSchema>,
   NoInfer<DocsStyleSchema>,
@@ -27,6 +21,15 @@ export type DocsExporterTypst = Exporter<
   string,
   (inner: string) => string,
   string
+>;
+
+/**
+ * A PDF block mapping that renders the block only, the exporter places its
+ * children after it (and not a `{ withChildren }` mapping).
+ */
+export type DocsBlockMappingPDF<K extends keyof DocsBlockSchema> = Extract<
+  DocsExporterPDF['mappings']['blockMapping'][K],
+  (...args: never[]) => unknown
 >;
 
 export type DocsExporterDocx = Exporter<

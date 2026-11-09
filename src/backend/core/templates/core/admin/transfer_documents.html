@@ -1,0 +1,21 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% block extrahead %}{{ block.super }}{{ form.media }}{% endblock %}
+{% block content %}
+<p>{% translate "Documents created by the source user and its accesses in these documents and their sub-documents, deleted ones included, will be moved to the target user. The accesses of the teams of the source user are left untouched. The target user gets the role the source user inherits from the parent documents, which the source user keeps:" %}</p>
+<ul>
+  {% for document in documents %}
+  <li>{{ document.title }} ({{ document.pk }})</li>
+  {% endfor %}
+</ul>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  {% for document in documents %}
+  <input type="hidden" name="{{ action_checkbox_name }}" value="{{ document.pk }}">
+  {% endfor %}
+  <input type="hidden" name="action" value="transfer_documents">
+  <input type="hidden" name="apply" value="1">
+  <input type="submit" value="{% translate 'Transfer' %}">
+</form>
+{% endblock %}

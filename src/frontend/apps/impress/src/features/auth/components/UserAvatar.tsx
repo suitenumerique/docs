@@ -1,10 +1,13 @@
+import clsx from 'clsx';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { userColorForeground, userColorsForId } from '../userColors';
 
-import { AvatarSvg } from './AvatarSvg';
+import { AvatarSvg, AvatarSvgProps } from './AvatarSvg';
 
-const getInitialFromName = (name: string) => {
+export const getColorFromName = (name: string) => userColorsForId(name).color;
+
+export const getInitialFromName = (name: string) => {
   const splitName = name?.split(' ');
   return (splitName[0]?.charAt(0) || '?') + (splitName?.[1]?.charAt(0) || '');
 };
@@ -13,22 +16,26 @@ type UserAvatarProps = {
   userId?: string;
   fullName?: string;
   background?: string;
-};
+} & Partial<Omit<AvatarSvgProps, 'initials' | 'background'>>;
 
 export const UserAvatar = ({
   userId,
   fullName,
   background,
+  className,
+  foreground,
+  ...props
 }: UserAvatarProps) => {
   const name = fullName?.trim() || '?';
   const color = background || userColorsForId(userId ?? name).color;
 
   return (
     <AvatarSvg
-      className="--docs--user-avatar"
+      {...props}
+      className={clsx('--docs--user-avatar', className)}
       initials={getInitialFromName(name).toUpperCase()}
       background={color}
-      foreground={userColorForeground(color)}
+      foreground={foreground ?? userColorForeground(color)}
     />
   );
 };

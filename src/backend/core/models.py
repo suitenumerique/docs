@@ -22,9 +22,11 @@ from django.core.mail import send_mail
 from django.db import models, transaction
 from django.db.models import Count
 from django.db.models.functions import Left, Length
+from django.dispatch import Signal
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django.utils.text import capfirst
 from django.utils.translation import get_language, override
 from django.utils.translation import gettext_lazy as _
 
@@ -44,6 +46,10 @@ from core.utils.treebeard import create_tree_node_with_retry
 from core.validators import sub_validator
 
 logger = getLogger(__name__)
+
+# Sent once accesses were updated or deleted in bulk, without the signals and the
+# methods of DocumentAccess: core.signals refreshes what they keep up to date.
+document_accesses_bulk_changed = Signal()
 
 
 def get_trashbin_cutoff():
@@ -119,11 +125,14 @@ class UserManager(auth_models.UserManager):
                 return None
 
             if settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION:
-                try:
-                    return self.get(email__iexact=email)
-                except self.model.DoesNotExist:
-                    pass
-            elif (
+                # Active users first, an inactive one is returned so the login is refused
+                users = self.filter(email__iexact=email).order_by("-is_active")[:2]
+                if len(users) == 2 and users[1].is_active:
+                    raise DuplicateEmailError(
+                        _("Several active users are associated with this email.")
+                    ) from err
+                return users[0] if users else None
+            if (
                 self.filter(email__iexact=email).exists()
                 and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
             ):
@@ -444,7 +453,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
 
             try:
                 send_mail(
-                    subject.capitalize(),
+                    capfirst(subject),
                     msg_plain,
                     settings.EMAIL_FROM,
                     emails,
@@ -554,6 +563,8 @@ class UserReconciliation(BaseModel):
         - Transfer link traces from inactive to active user.
         - Transfer comment-related content from inactive to active user
           (threads, comments and reactions)
+        - Transfer the documents created and the invitations issued by the inactive user
+          to the active user.
         - Activate the active user and deactivate the inactive user.
         - Update the reconciliation entry itself.
         """
@@ -591,6 +602,13 @@ class UserReconciliation(BaseModel):
         for document_id in {access.document_id for access in updated_accesses}:
             reset_service_connections_on_commit(document_id)
 
+        document_accesses_bulk_changed.send(
+            sender=DocumentAccess,
+            users=[self.active_user, self.inactive_user],
+            updated_accesses=updated_accesses,
+            removed_accesses=removed_accesses,
+        )
+
         DocumentFavorite.objects.bulk_update(update_favorites, ["user"])
         if removed_favorites:
             ids_to_delete = [entry.id for entry in removed_favorites]
@@ -623,15 +641,27 @@ class UserReconciliation(BaseModel):
                 reaction_id__in=ids_to_delete, user_id=self.inactive_user.pk
             ).delete()
 
+        # Soft deleted documents included, a restored document stays with the active user
+        updated_documents = Document.objects.filter(creator=self.inactive_user).update(
+            creator=self.active_user
+        )
+        updated_invitations = Invitation.objects.filter(
+            issuer=self.inactive_user
+        ).update(issuer=self.active_user)
+
         User.objects.bulk_update([self.active_user, self.inactive_user], ["is_active"])
 
         # Wrap up the reconciliation entry
         self.logs += f"""Requested update for {len(updated_accesses)} DocumentAccess items
             and deletion for {len(removed_accesses)} DocumentAccess items.\n"""
+        self.logs += f"""Transferred {updated_documents} created Document items
+            and {updated_invitations} issued Invitation items.\n"""
         self.status = "done"
         self.save()
 
-        self.send_reconciliation_done_email()
+        # Once committed: a reconciliation processed with others in one transaction,
+        # from the admin, may still be rolled back with them
+        transaction.on_commit(self.send_reconciliation_done_email)
 
     def prepare_documentaccess_reconciliation(self):
         """
@@ -846,7 +876,7 @@ class UserReconciliationCsvImport(BaseModel):
 
             try:
                 send_mail(
-                    subject.capitalize(),
+                    capfirst(subject),
                     msg_plain,
                     settings.EMAIL_FROM,
                     emails,
@@ -1243,6 +1273,7 @@ class Document(MP_Node, BaseModel):
             (self.get_ancestors() | self._meta.model.objects.filter(pk=self.pk))
             .filter(ancestors_deleted_at__isnull=True)
             .order_by("path")
+            .only("path", "link_reach", "link_role")
         )
         ancestors_links = []
         paths_links_mapping = {}
@@ -1375,10 +1406,22 @@ class Document(MP_Node, BaseModel):
         ) and not is_deleted
         can_comment = (can_update or role == RoleChoices.COMMENTER) and not is_deleted
         can_create_children = can_update and user.is_authenticated
+        # A creator keeps the destroy ability only while they can still create
+        # children here, not on authorship alone: a removed or downgraded
+        # creator must not delete the branch (and what others wrote under it).
+        # They can also only delete a document without children: `numchild`
+        # leaves out the children in the trashbin
         can_destroy = (
             is_owner
             if self.is_root()
-            else (is_owner_or_admin or (user.is_authenticated and self.creator == user))
+            else (
+                is_owner_or_admin
+                or (
+                    can_create_children
+                    and self.creator_id == user.pk
+                    and self.numchild == 0
+                )
+            )
         ) and not is_deleted
 
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
@@ -1452,7 +1495,7 @@ class Document(MP_Node, BaseModel):
 
             try:
                 send_mail(
-                    subject.capitalize(),
+                    capfirst(subject),
                     msg_plain,
                     settings.EMAIL_FROM,
                     emails,

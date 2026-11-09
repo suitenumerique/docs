@@ -13,6 +13,10 @@ and this project adheres to
 - ✨(frontend) show yhub version history in the BlockNote sidebar
 - 💄(frontend) share readable author colors across cursors and avatars
 
+- ✨(backend) add a dedicated document abilities endpoint #2885
+- ✨(frontend) add a /children block listing the sub-docs #2799
+- 🤖(agents) add AI skills #2746
+
 ### Changed
 
 - ⬆️(dependencies) update all BlockNote packages to 0.57.0
@@ -25,6 +29,15 @@ and this project adheres to
 - ♻️(frontend) restore bounded editor history through native yhub rollback
 - ♻️(frontend) use standalone YHub version storage and history extension
 - ♻️(frontend) migrate the history panel to RenderInPortalElement
+- 💄(frontend) restore native task checkboxes and dim completed tasks #2857
+- ⬆️(frontend) upgrade BlockNote to 0.56.0 #2936
+- ⬆️(frontend) upgrade BlockNote to 0.57.0 #2964
+- ♻️(frontend) replace emoji-mart with the Frimousse emoji picker #2964
+- ♻️(frontend) export PDFs with the Typst engine #2936
+- ⚡️(yhub) read the abilities from the dedicated backend endpoint #2922
+- ⚡️(frontend) reuse the cached titles of the interlinks on export #2799
+- ♻️(backend) remove the unused scope of the document throttles #2951
+- 💄(frontend) use true italic Inter in the editor #2861
 
 ### Fixed
 
@@ -33,6 +46,50 @@ and this project adheres to
 - 🐛(export) read current and legacy Yjs documents in the converter
 - 🐛(collaboration) restore editor versions without exposing full history
 - 🐛(collaboration) grant bounded named-version access for the history sidebar
+- 🐛(frontend) no offline banner when a third-party POST fails #2939
+- 🐛(frontend) replace an image that cannot be exported by a message #2936
+- 🐛(frontend) fix the slides pdf export of docs with interlinks #2928
+- 🐛(frontend) reload on a version mismatch only when frontend behind #2940
+- 🐛(frontend) hide source popup in read-only mode #2908
+- 🐛(frontend) duplicate the sub-docs created without reloading the page #2915
+- 🐛(frontend) show the doc tree actions of the item under the pointer
+- 🐛(frontend) keep the focus on the emoji button of a tree item #2964
+- 🐛(backend) keep the case of titles and names in email subjects #2792
+
+### Removed
+
+- 🔥(backend) remove easy-thumbnails and Pillow #2909
+
+
+## [v6.0.4] - 2026-10-26
+
+### Changed
+
+- ⚡️(backend) search users through the trigram indexes instead of a full scan
+- 🔒️(backend) only let creators delete their sub docs without children #2873
+
+### Fixed
+
+- 🔒️(backend) require edit rights for creators to delete their sub docs #2873
+- ♻️(frontend) change base image to nginx/nginx-unprivileged #2907
+- ⬆️(backend) upgrade brotli to version 1.2.1
+
+## [v6.0.3] - 2026-10-23
+
+### Added
+
+- ✨(backend) show the last login of users in the admin #2882
+- ✨(backend) filter users sharing an email in the admin #2882
+- ✨(backend) show the release in the admin header #2882
+- ✨(backend) deactivate the least recently used duplicates in the admin #2882
+- ✨(backend) transfer created docs and invitations in reconciliations #2882
+- ✨(backend) merge users from the admin #2882
+- ✨(backend) transfer documents from a user to another in the admin #2882
+
+### Fixed
+
+- 🐛(backend) log in the active user when several users share an email #2882
+- 🐛(backend) refresh caches and search index after a user reconciliation #2882
 
 ## [v6.0.2] - 2026-10-21
 
@@ -41,11 +98,12 @@ and this project adheres to
 - ✨(docspec) handle DocSpec 4xx/5xx import errors distinctly #2552
 - 🌐(frontend) add Crowdin translator context #2785
 - ✨(frontend) open the emoji picker when adding a document emoji #2777
+- ✨(frontend) mention users in the editor from the "@" dropdown #2806
+
 
 ### Changed
 
 - 💄(frontend) limit heading choices to levels 1–3
-
 - ♻️(frontend) replace outdated AGPL mentions of BlockNote XL packages #2775
 - 💄(frontend) update upload loader and error ui #2778
 - ⬆️(yhub) upgrade @y/hub to 0.10.1 #2853
@@ -69,6 +127,7 @@ and this project adheres to
 - 🐛(backend) send the mention email when the cache is unreachable #2803
 - 🐛(backend) give media-auth its own throttle scope
 - 💄(frontend) remove the vertical line next to nested blocks #2825
+- 🐛(frontend) fix Enter and Space in modals opened from the doc tree #2879
 
 ## [v6.0.1] - 2026-10-15
 
@@ -1737,7 +1796,9 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v6.0.2...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v6.0.4...main
+[v6.0.4]: https://github.com/suitenumerique/docs/releases/v6.0.4
+[v6.0.3]: https://github.com/suitenumerique/docs/releases/v6.0.3
 [v6.0.2]: https://github.com/suitenumerique/docs/releases/v6.0.2
 [v6.0.1]: https://github.com/suitenumerique/docs/releases/v6.0.1
 [v6.0.0]: https://github.com/suitenumerique/docs/releases/v6.0.0

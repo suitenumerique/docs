@@ -15,6 +15,7 @@ import {
 } from '../types';
 
 import { DocsThreadStoreAuth } from './DocsThreadStoreAuth';
+import { normalizeEmoji } from './normalizeEmoji';
 
 type ServerThreadListResponse = ServerThread[];
 
@@ -566,7 +567,7 @@ export class DocsThreadStore extends ThreadStore {
       `documents/${this.docId}/threads/${options.threadId}/comments/${options.commentId}/reactions/`,
       {
         method: 'POST',
-        body: JSON.stringify({ emoji: options.emoji }),
+        body: JSON.stringify({ emoji: normalizeEmoji(options.emoji) }),
       },
     );
 
@@ -589,7 +590,10 @@ export class DocsThreadStore extends ThreadStore {
   }) => {
     const response = await fetchAPI(
       `documents/${this.docId}/threads/${options.threadId}/comments/${options.commentId}/reactions/`,
-      { method: 'DELETE', body: JSON.stringify({ emoji: options.emoji }) },
+      {
+        method: 'DELETE',
+        body: JSON.stringify({ emoji: normalizeEmoji(options.emoji) }),
+      },
     );
 
     if (!response.ok) {
