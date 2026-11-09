@@ -125,13 +125,13 @@ Masks are positional `crud` strings where `-` denies, so `'-r--'` is read-only.
 | `ydoc` | `-r--` | `-ru-` | as reader/editor | `cru-` |
 | `awareness` | `-r--` | `-ru-` | as reader/editor | `-ru-` |
 | `history` | `from: <access date>` | `from: <access date>`, `rollback` | — | `from: 0` |
-| `history.version` | `-r--` | `crud` | — | — |
+| `history.version` | `-r--` | `-r--` | — | — |
 | `delete` | — | — | — | `['soft']` |
 | `endpoint.ws` | `-r--` | `-ru-` | as reader/editor | `crud` (`'*'`) |
 | `endpoint.ydoc` | `-r--` | `-ru-` | as reader/editor | `crud` (`'*'`) |
 | `endpoint.activity` | `-r--` | `-r--` | — | `crud` (`'*'`) |
 | `endpoint.changeset` | `-r--` | `-r--` | — | `crud` (`'*'`) |
-| `endpoint.version` | `-r--` | `crud` | — | `crud` (`'*'`) |
+| `endpoint.version` | `-r--` | `-r--` | — | `crud` (`'*'`) |
 | `endpoint.rollback` | — | `c---` | — | `crud` (`'*'`) |
 | every other endpoint | — | — | — | `crud` (`'*'`) |
 
@@ -141,16 +141,21 @@ All three browser columns are the same document permission,
 there is a history to read. `abilities.retrieve` decided whether there is any
 access at all before either.
 
-The sidebar requests `GET /collaboration/changeset/v1/{org}/{docid}` with
-`from=<version timestamp + 1>&ydoc=true` and no finite `to`. The server clamps
+BlockNote 0.57 identifies timeline entries as `<from>-<to>`, including the
+synthetic beginning entry whose two timestamps are equal. Restore validates
+both timestamps as ordered, nonnegative safe integers and requires `to + 1`
+to remain safe. The sidebar requests
+`GET /collaboration/changeset/v1/{org}/{docid}` with
+`from=<selected to + 1>&ydoc=true` and no finite `to`. The server clamps
 the history window to the user's access date and garbage-collects older deleted
 content. The browser receives current content and retained deleted content in
 that bounded window, then collects only `document-store` IDs, including deleted
 descendants. It sends these IDs and the same inclusive `from` to native
 `POST /collaboration/rollback/v1/{org}/{docid}` using lib0-any encoding.
 Other shared roots stay intact; `GET /ydoc?gc=false` remains forbidden to bounded
-browser users. The client pins the old head before restoring and refreshes the
-live document from current GC state afterwards.
+browser users. The client refreshes the live document from current GC state
+afterwards. It does not save a named checkpoint before restoring; rollback
+itself adds an update to continuous history.
 
 Restore is additive, not an atomic replacement or an editing lock. Remote edits
 can race with the changeset/rollback requests: IDs created after the bounded
@@ -213,10 +218,11 @@ The following cells are decisions rather than transcriptions:
   - `prune`, which does erase, stays withheld from everyone.
 - **`history.version` for named versions.** BlockNote includes native version
   metadata when listing activity (`versions=true`), which requires this facet
-  even if no version has been named yet. Readers with history access may read
-  it; editors may create, rename and remove labels inside the same access-date
-  boundary. These operations change metadata, not document content. Publishing
-  stays withheld, as do all version operations for link-only visitors.
+  even if no version has been named yet. Readers and editors with history access
+  may read it inside the same access-date boundary. The storage adapter omits
+  `create`, `rename` and `remove`, disabling named-version mutations in the native
+  sidebar, and browser permissions deny these mutations too. Publishing stays
+  withheld, as do all version operations for link-only visitors.
 - **`delete: ['soft']` and not `'hard'` for the admin.** yhub 0.8 made
   `DELETE /ydoc?hard=true` reachable over REST for the first time. Docs keeps
   irreversible erasure programmatic, behind `reset-ydoc` (see "Deletion").

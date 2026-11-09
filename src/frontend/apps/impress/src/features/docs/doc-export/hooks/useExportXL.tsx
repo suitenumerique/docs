@@ -67,7 +67,7 @@ export const useExportXL = (doc: Doc, editor?: DocsBlockNoteEditor) => {
       // compilation.
       const result = await exporter.toPDF(exportDocument, {
         title: documentTitle,
-        lang: (i18next.language || fallbackLng).split(/[-_]/)[0],
+        lang: (i18next.language || fallbackLng).split('-')[0],
       });
 
       if (result.error) {

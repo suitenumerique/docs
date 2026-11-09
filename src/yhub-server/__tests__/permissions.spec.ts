@@ -121,16 +121,14 @@ describe('named versions', () => {
     }
   });
 
-  it('lets only editors create, rename or remove version metadata', () => {
-    for (const version of ['c---', '--u-', '---d'] as const) {
-      expect(
-        grants(editor, { history: { from: ACCESS_SINCE, version } }),
-      ).toBe(true);
-      expect(grants(editor, { endpoint: { version } })).toBe(true);
-      expect(
-        grants(reader, { history: { from: ACCESS_SINCE, version } }),
-      ).toBe(false);
-      expect(grants(reader, { endpoint: { version } })).toBe(false);
+  it('never lets a browser create, rename or remove version metadata', () => {
+    for (const who of [reader, editor, linkReader, linkEditor]) {
+      for (const version of ['c---', '--u-', '---d'] as const) {
+        expect(
+          grants(who, { history: { from: ACCESS_SINCE, version } }),
+        ).toBe(false);
+        expect(grants(who, { endpoint: { version } })).toBe(false);
+      }
     }
   });
 
@@ -233,13 +231,13 @@ describe('everything the browser must not reach', () => {
     }
   });
 
-  it('grants bounded named versions but neither pruning nor publishing', () => {
+  it('grants bounded version reads but neither pruning nor publishing', () => {
     // what yhub hands a handler as `req.permissions.history` since 0.9.1
     expect(editor.history).toEqual({
       from: ACCESS_SINCE,
       rollback: true,
       prune: false,
-      version: 'crud',
+      version: '-r--',
       publish: false,
     });
   });

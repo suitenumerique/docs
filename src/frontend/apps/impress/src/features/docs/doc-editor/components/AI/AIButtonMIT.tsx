@@ -56,12 +56,12 @@ const sortByPopularLanguages = (
 
 export function AIGroupButton() {
   const editor = useBlockNoteEditor();
-  const portalElement = usePortalElement();
   const Components = useComponentsContext();
   const selectedBlocks = useSelectedBlocks(editor);
   const { t } = useTranslation();
   const { currentDoc } = useDocStore();
   const { data: docOptions } = useDocOptions();
+  const portalElement = usePortalElement();
 
   const languages = useMemo(() => {
     const languages = docOptions?.actions.POST.language.choices;

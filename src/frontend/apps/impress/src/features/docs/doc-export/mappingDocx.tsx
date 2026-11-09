@@ -18,6 +18,7 @@ import {
   inlineContentMappingUserMentionDocx,
 } from './inline-content-mapping';
 import { DocsExporterDocx } from './types';
+import { getBlockMappingFunction } from './utils';
 
 export const getDocxDocsSchemaMappings = (
   interlinkTitles: Map<string, string>,
@@ -40,41 +41,24 @@ export const getDocxDocsSchemaMappings = (
     uploadLoader: blockMappingUploadLoaderDocx,
     // Replaced by a list of links before export, see expandDocChildrenBlocks
     docChildren: () => new Paragraph(''),
-    table: {
-      withChildren: (
-        block,
-        exporter,
-        nestedLevel,
-        numberedListIndex,
-        children,
-      ) => {
-        /**
-         * Nan values are not supported, so we need to replace them with undefined
-         * to avoid issues during the export.
-         */
-        const { columnWidths } = block.content;
-        const hasNaN = columnWidths.some(
-          (width) => typeof width === 'number' && Number.isNaN(width),
+    table: (block, exporter, nestedLevel, numberedListIndex) => {
+      /**
+       * Nan values are not supported, so we need to replace them with undefined
+       * to avoid issues during the export.
+       */
+      const { columnWidths } = block.content;
+      const hasNaN = columnWidths.some(
+        (width) => typeof width === 'number' && Number.isNaN(width),
+      );
+      if (hasNaN) {
+        block.content.columnWidths = columnWidths.map((width) =>
+          typeof width === 'number' && Number.isNaN(width) ? undefined : width,
         );
-        if (hasNaN) {
-          block.content.columnWidths = columnWidths.map((width) =>
-            typeof width === 'number' && Number.isNaN(width)
-              ? undefined
-              : width,
-          );
-        }
+      }
 
-        const mapping = docxDefaultSchemaMappings.blockMapping.table;
-        return typeof mapping === 'function'
-          ? mapping(block, exporter, nestedLevel, numberedListIndex)
-          : mapping.withChildren(
-              block,
-              exporter,
-              nestedLevel,
-              numberedListIndex,
-              children,
-            );
-      },
+      return getBlockMappingFunction(
+        docxDefaultSchemaMappings.blockMapping.table,
+      )(block, exporter, nestedLevel, numberedListIndex);
     },
   },
   inlineContentMapping: {
