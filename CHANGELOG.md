@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) show yhub version history in the BlockNote sidebar
+- 🔧(frontend) provide session-local history grouping debug controls
 - 💄(frontend) share readable author colors across cursors and avatars
 - ✨(backend) add a dedicated document abilities endpoint #2885
 - ✨(frontend) add a /children block listing the sub-docs #2799
