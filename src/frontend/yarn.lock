@@ -2154,10 +2154,10 @@
   resolved "https://registry.yarnpkg.com/@gouvfr-lasuite/integration/-/integration-1.0.2.tgz#ed0000f4b738c5a19bb60f5b80a9a2f5d9414234"
   integrity sha512-npOotZQSyu6SffHiPP+jQVOkJ3qW2KE2cANhEK92sNLX9uZqQaCqljO5GhzsBmh0lB76fiXnrr9i8SIpnDUSZg==
 
-"@gouvfr-lasuite/ui-components@1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@gouvfr-lasuite/ui-components/-/ui-components-1.2.0.tgz#110b5559268a7175f92ca33673cc7ff2b4ba8251"
-  integrity sha512-fQfHRbNa3USnfCy0rPQQEzcDWiLcxdBbQRVhKeICH5TzGbPVL14ebgDrfgSitQrcpSyX/GgZ25q7BzjSWdo6mg==
+"@gouvfr-lasuite/ui-components@1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@gouvfr-lasuite/ui-components/-/ui-components-1.4.0.tgz#79e41fd4f6ee04b42783b3d2d628109c5ed8c56d"
+  integrity sha512-sv08gNX7MkaLNoQI2jJKKIlJ9+onkLCaCaSXyEo+GYedpSSf4EbZx1FPXxVwvXx30KCsAQ0yaSNe90+nFKgKRw==
   dependencies:
     "@dnd-kit/core" "6.3.1"
     "@dnd-kit/modifiers" "9.0.0"
@@ -2186,6 +2186,7 @@
     react-pdf "10.1.0"
     react-resizable-panels "4.12.2"
     react-stately "3.45.0"
+    react-toastify "11.1.0"
     react-virtualized "9.22.6"
     read-excel-file "9.3.1"
     use-resize-observer "9.1.0"
@@ -13641,6 +13642,13 @@ react-style-singleton@^2.2.2, react-style-singleton@^2.2.3:
   dependencies:
     get-nonce "^1.0.0"
     tslib "^2.0.0"
+
+react-toastify@11.1.0:
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/react-toastify/-/react-toastify-11.1.0.tgz#3d3c73a44d5cac868ee9a52e0f90dd706532c4a4"
+  integrity sha512-e9h23x3phN0wbFeB6yovmWp7lobzV4CaCH0LO8nVP6H7Y+3GbcLpIzMm9dJhcp1RXbpyfvjgpfXqO80QAmn7sg==
+  dependencies:
+    clsx "^2.1.1"
 
 react-transition-group@^4.3.0:
   version "4.4.5"
