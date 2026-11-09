@@ -19,6 +19,7 @@ and this project adheres to
 - ⬆️(frontend) upgrade BlockNote to 0.57.0 #2964
 - ⬆️(frontend) upgrade ui-components to 1.4.0
 - 💄(frontend) drop the obsolete toast content override
+- 🐛(frontend) dismiss the duplicate toast through the kit
 - ♻️(frontend) replace emoji-mart with the Frimousse emoji picker #2964
 - ♻️(frontend) export PDFs with the Typst engine #2936
 - ⚡️(yhub) read the abilities from the dedicated backend endpoint #2922

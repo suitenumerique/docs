@@ -3,9 +3,9 @@ import {
   Checkbox,
   Modal,
   ModalSize,
+  type ToastId,
   type TreeContextType,
   VariantType,
-  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
@@ -18,6 +18,7 @@ import {
   deleteDocFromTreeAfterNavigate,
 } from '@/docs/doc-tree/utils';
 import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid/api/useDocsTrashbin';
+import { useToast } from '@/hooks';
 
 import { KEY_LIST_DOC, useDuplicateDoc } from '../api';
 import { useRemoveDoc } from '../api/useRemoveDoc';
@@ -58,7 +59,7 @@ export const useDuplicatedDoc = ({
   const { t } = useTranslation();
   const { isTopRoot } = useDocUtils(doc);
   const router = useRouter();
-  const { toast } = useToastProvider();
+  const { toast, dismissToast } = useToast();
   // The backend duplicates a sub-doc as a sibling only for editors and above.
   // For a reader, the copy becomes a new root doc, outside of the current tree.
   const isDuplicateInTree = !isTopRoot && doc.abilities.partial_update;
@@ -67,7 +68,8 @@ export const useDuplicatedDoc = ({
     onSuccess: (data) => {
       onSuccess?.();
 
-      toast(
+      let toastId: ToastId;
+      toastId = toast(
         isTopRoot && isCurrentDoc
           ? t('Document duplicated to My docs', {
               description:
@@ -81,6 +83,7 @@ export const useDuplicatedDoc = ({
           duration: 10000,
           actions: (
             <ToastActions
+              onDismiss={() => dismissToast(toastId)}
               duplicatedDocId={data.id}
               originalDocId={doc.id}
               isTopRoot={isTopRoot}
@@ -222,7 +225,7 @@ export const ConfirmationDuplicateModal = ({
 export const ToastActions = ({
   isTopRoot,
   isInTree = !isTopRoot,
-  onClose,
+  onDismiss,
   duplicatedDocId,
   originalDocId,
   treeContext,
@@ -230,14 +233,14 @@ export const ToastActions = ({
   isTopRoot: boolean;
   /** Whether the duplicated doc was added to the current tree. */
   isInTree?: boolean;
-  onClose?: () => void;
+  onDismiss: () => void;
   duplicatedDocId: string;
   originalDocId: string;
   treeContext: TreeContextType<Doc | null> | null;
 }) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { toast } = useToastProvider();
+  const { toast } = useToast();
   const { mutateAsync: removeDoc } = useRemoveDoc({
     listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_DOC_TRASHBIN],
     options: {
@@ -271,20 +274,6 @@ export const ToastActions = ({
   });
   const openRef = useRef<HTMLButtonElement & HTMLAnchorElement>(null);
 
-  const hideToastEl = (toastEl: HTMLElement | null) => {
-    if (toastEl) {
-      toastEl.style.display = 'none';
-    }
-
-    onClose?.();
-  };
-
-  const onCloseToast = (
-    e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>,
-  ) => {
-    hideToastEl(e.currentTarget.closest<HTMLElement>('[role="alert"]'));
-  };
-
   // When the toast is displayed, we want to focus the "Open" button for accessibility reasons.
   useEffect(() => {
     openRef.current?.focus();
@@ -296,7 +285,7 @@ export const ToastActions = ({
         ref={openRef}
         variant="tertiary"
         href={`/docs/${isTopRoot ? duplicatedDocId : originalDocId}`}
-        onClick={onCloseToast}
+        onClick={onDismiss}
       >
         {isTopRoot
           ? t('Open document', {
@@ -308,12 +297,9 @@ export const ToastActions = ({
       </ButtonLink>
       <Button
         variant="tertiary"
-        onClick={(e) => {
-          const toastEl =
-            e.currentTarget.closest<HTMLElement>('[role="alert"]');
-
+        onClick={() => {
           removeDoc({ docId: duplicatedDocId })
-            .then(() => hideToastEl(toastEl))
+            .then(() => onDismiss())
             .catch(() => {
               // The error toast is already shown by the mutation's onError.
             });
