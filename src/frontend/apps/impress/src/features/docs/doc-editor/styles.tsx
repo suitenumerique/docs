@@ -193,8 +193,18 @@ export const DocsEditorStyle = createGlobalStyle`
     .bn-block-content:dir(rtl)[data-text-alignment='right'] {
       justify-content: flex-start !important;
     }
-    .bn-block-content:dir(rtl)[data-text-alignment='left'] {
-      justify-content: flex-end !important;
+
+    /**
+    * dir="auto" also reads the caption of images and files: keep their
+    * layout left-to-right so a Hebrew caption does not move the image, and
+    * let the caption take its own direction.
+    */
+    .bn-block-content[data-file-block] {
+      direction: ltr;
+    }
+    .bn-block-content[data-file-block] .bn-file-caption {
+      unicode-bidi: plaintext;
+      text-align: start;
     }
 
     /**
