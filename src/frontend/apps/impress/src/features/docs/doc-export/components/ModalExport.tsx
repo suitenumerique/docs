@@ -234,6 +234,9 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       closeOnClickOutside
       onClose={() => onClose()}
       hideCloseButton
+      aria-label={t('Export', {
+        description: 'Title of the dialog to export a document',
+      })}
       aria-labelledby="modal-export-title"
       aria-describedby="modal-export-description"
       rightActions={
