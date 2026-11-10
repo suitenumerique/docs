@@ -8,7 +8,7 @@ import {
   VariantType,
 } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
@@ -272,17 +272,9 @@ export const ToastActions = ({
       },
     },
   });
-  const openRef = useRef<HTMLButtonElement & HTMLAnchorElement>(null);
-
-  // When the toast is displayed, we want to focus the "Open" button for accessibility reasons.
-  useEffect(() => {
-    openRef.current?.focus();
-  }, []);
-
   return (
     <Box $direction="row" $gap="xs">
       <ButtonLink
-        ref={openRef}
         variant="tertiary"
         href={`/docs/${isTopRoot ? duplicatedDocId : originalDocId}`}
         onClick={onDismiss}
