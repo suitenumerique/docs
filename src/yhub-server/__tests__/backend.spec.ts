@@ -51,6 +51,8 @@ beforeEach(() => {
   vi.resetModules();
   for (const [key, value] of Object.entries(BASE_ENV)) vi.stubEnv(key, value);
   vi.stubEnv('YHUB_JWT_PRIVATE_KEY', '');
+  // read before YHUB_JWT_PRIVATE_KEY by secret(), and set in the dev container
+  vi.stubEnv('YHUB_JWT_PRIVATE_KEY_FILE', '');
   fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);
 });
