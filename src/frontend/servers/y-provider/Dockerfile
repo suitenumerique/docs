@@ -14,7 +14,8 @@ COPY ./src/frontend/yarn.lock ./yarn.lock
 COPY ./src/frontend/servers/y-provider/package.json ./servers/y-provider/package.json
 COPY ./src/frontend/packages/eslint-plugin-docs/package.json ./packages/eslint-plugin-docs/package.json
 
-RUN yarn install
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn,sharing=locked \
+  yarn install
 
 COPY ./src/frontend/packages/eslint-plugin-docs ./packages/eslint-plugin-docs
 COPY ./src/frontend/servers/y-provider ./servers/y-provider
@@ -46,7 +47,8 @@ COPY --from=y-provider-builder \
     /home/frontend/servers/y-provider/dist \
     ./dist
 
-RUN NODE_ENV=production yarn install --frozen-lockfile
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn,sharing=locked \
+  NODE_ENV=production yarn install --frozen-lockfile
 
 # Remove npm, contains CVE related to cross-spawn and we don't use it.
 RUN rm -rf /usr/local/bin/npm /usr/local/lib/node_modules/npm

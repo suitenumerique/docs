@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 📦️(docker) keep the yarn cache out of the node images #2992
+
 ## [v6.1.0] - 2026-11-12
 
 ### Added
