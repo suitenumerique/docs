@@ -8,12 +8,17 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) show yhub version history in the BlockNote sidebar
+- 🔧(frontend) provide session-local history grouping debug controls
+- 💄(frontend) share readable author colors across cursors and avatars
 - ✨(backend) add a dedicated document abilities endpoint #2885
 - ✨(frontend) add a /children block listing the sub-docs #2799
 - 🤖(agents) add AI skills #2746
 
 ### Changed
 
+- ♻️(frontend) migrate collaboration, offline storage and polling to Yjs 14
+- 🔧(collaboration) allow capping yhub compute workers on small instances
 - 💄(frontend) restore native task checkboxes and dim completed tasks #2857
 - ⬆️(frontend) upgrade BlockNote to 0.56.0 #2936
 - ⬆️(frontend) upgrade BlockNote to 0.57.0 #2964
@@ -27,6 +32,8 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(export) read current and legacy Yjs documents in the converter
+- 🔒️(collaboration) restore bounded editor history through native rollback
 - 🐛(frontend) no offline banner when a third-party POST fails #2939
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
 - 🐛(frontend) fix the slides pdf export of docs with interlinks #2928

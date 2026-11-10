@@ -1,6 +1,6 @@
 import { CommentBody, ThreadStore } from '@blocknote/core/comments';
-import type { Awareness } from 'y-protocols/awareness';
-import * as Y from 'yjs';
+import type { Awareness } from '@y/protocols/awareness';
+import * as Y from '@y/y';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Doc } from '@/features/docs/doc-management';

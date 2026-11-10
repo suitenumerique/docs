@@ -6,8 +6,9 @@ import {
   withPageBreak,
 } from '@blocknote/core';
 import { CommentsExtension } from '@blocknote/core/comments';
+import { type VersioningController } from '@blocknote/core/extensions';
 import * as localesBN from '@blocknote/core/locales';
-import { withCollaboration } from '@blocknote/core/yjs';
+import { YVersioningExtension, withCollaboration } from '@blocknote/core/y';
 import {
   createReactDiagramBlockSpec,
   locales as diagramLocales,
@@ -31,14 +32,15 @@ import {
   useCreateBlockNote,
 } from '@blocknote/react';
 import { FindAndReplace } from '@tiptap/extension-find-and-replace';
+import { WebsocketProvider } from '@y/websocket';
+import * as Y from '@y/y';
 import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { WebsocketProvider } from 'y-websocket';
-import * as Y from 'yjs';
 
 import { Box } from '@/components';
 import { useConfig } from '@/core';
+import { collaborationHttpTarget } from '@/core/config/hooks/useCollaborationUrl';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   DocsCommentsStyle,
@@ -47,11 +49,15 @@ import {
 } from '@/docs/doc-comments';
 import { DocsFindReplaceStyle } from '@/docs/doc-find-replace/styles';
 import { type Doc } from '@/docs/doc-management/types';
+import { useDocUserStore, userColorsForId } from '@/docs/doc-share';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
+import { userColorForeground } from '@/features/auth/userColors';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 import { useAnalytics } from '@/libs/Analytics';
 
+import { authorOnlyAttribution } from '../authorOnlyAttribution';
 import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
+import { createDocsVersionStorage } from '../createDocsVersionStorage';
 import {
   useHeadings,
   useScrollToBlockAnchor,
@@ -60,14 +66,18 @@ import {
   useUploadStatus,
 } from '../hook';
 import { useEditorStore } from '../stores';
+import { useVersioningSidebarStore } from '../stores/useVersioningSidebarStore';
 import { DocsEditorStyle } from '../styles';
 import { type DocsBlockNoteEditor } from '../types';
-import { randomColor, sanitizeColor } from '../utils';
+import { sanitizeColor } from '../utils';
 
 import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { DocsSideMenu } from './DocsSideMenu/DocsSideMenu';
+import { type HistoryDebugSettings } from './VersionHistoryDebug';
+import { VersioningComponentsProvider } from './VersioningComponentsProvider';
+import { VersioningSidebarPanel } from './VersioningSidebarPanel';
 import {
   CalloutBlock,
   DocChildrenBlock,
@@ -89,6 +99,7 @@ import XLMultiColumn from './xl-multi-column';
 
 const localesBNMultiColumn = XLMultiColumn?.locales;
 const withMultiColumn = XLMultiColumn?.withMultiColumn;
+const MIN_VERSION_GRANULARITY_MS = 5 * 60_000;
 
 const baseBlockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
@@ -131,6 +142,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const refEditorContainer = useRef<HTMLDivElement>(null);
 
   const { i18n, t } = useTranslation();
+  const {
+    isOpen: isVersioningSidebarOpen,
+    setIsOpen: setIsVersioningSidebarOpen,
+  } = useVersioningSidebarStore();
   const langLocalesBN =
     !i18n.resolvedLanguage || !(i18n.resolvedLanguage in localesBN)
       ? DEFAULT_LOCALE
@@ -161,6 +176,18 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     doc.abilities?.ai_proxy
   );
   const aiExtension = useAI?.(doc.id, aiBlockNoteAllowed);
+  const versionGranularityMs = Math.max(
+    conf?.COLLABORATION_VERSION_GRANULARITY_MS ?? MIN_VERSION_GRANULARITY_MS,
+    MIN_VERSION_GRANULARITY_MS,
+  );
+  const historyDebugSettings = useRef<HistoryDebugSettings | undefined>(
+    undefined,
+  );
+  const historyDefaults = {
+    groupMaxGap: versionGranularityMs,
+    groupMaxDuration: versionGranularityMs,
+    limit: 50,
+  };
 
   const collabName = user?.full_name || user?.email;
   const cursorName =
@@ -178,6 +205,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     canSeeComment,
     user,
   );
+  // Resolve author ids stored in the document (versioning, suggestions) to users.
+  const docUserStore = useDocUserStore(doc.id);
 
   // Comment sidebar
   const { threadsSidebarTarget, filter: threadsSidebarFilter } =
@@ -187,19 +216,60 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   const currentUserAvatarUrl = useMemo(() => {
     if (canSeeComment) {
-      return avatarUrlFromName(collabName, themeTokens?.font?.families?.base);
+      return avatarUrlFromName(
+        collabName,
+        themeTokens?.font?.families?.base,
+        user?.id ?? 'anonymous',
+      );
     }
-  }, [canSeeComment, collabName, themeTokens?.font?.families?.base]);
+  }, [canSeeComment, collabName, themeTokens?.font?.families?.base, user?.id]);
+
+  const collabTarget = useMemo(() => {
+    if (!provider.serverUrl) {
+      return undefined;
+    }
+    return collaborationHttpTarget(provider.serverUrl);
+  }, [provider.serverUrl]);
+
+  const versioningExtension = useMemo(() => {
+    if (!collabTarget) {
+      return undefined;
+    }
+    const storage = createDocsVersionStorage({
+      baseUrl: collabTarget.serverUrl,
+      org: collabTarget.org,
+      docId: doc.id,
+      fragment: provider.doc.get('document-store'),
+      beforeRestoreName:
+        localesBN[langLocalesBN as keyof typeof localesBN].versioning
+          .before_restore,
+      // Read overrides for each request, without reinstalling the editor.
+      get activityParams() {
+        return {
+          group: true,
+          groupByUser: false,
+          ...(historyDebugSettings.current ?? {
+            groupMaxGap: versionGranularityMs,
+            groupMaxDuration: versionGranularityMs,
+            limit: 50,
+          }),
+        };
+      },
+    });
+    return YVersioningExtension({ storage });
+  }, [collabTarget, doc.id, langLocalesBN, provider.doc, versionGranularityMs]);
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     withCollaboration({
       collaboration: {
         provider,
-        fragment: provider.doc.getXmlFragment('document-store'),
+        fragment: provider.doc.get('document-store'),
         user: {
+          id: user?.id ?? 'anonymous',
           name: cursorName,
-          color: randomColor(),
+          color: userColorsForId(user?.id ?? 'anonymous').color,
         },
+        resolveUsers: docUserStore,
         /**
          * We render the cursor with a custom element to:
          * - fix rendering issue with the default cursor
@@ -225,7 +295,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           labelElement.setAttribute('spellcheck', `false`);
           labelElement.setAttribute(
             'style',
-            `background-color: ${safeColor};border: 1px solid ${safeColor};`,
+            `background-color: ${safeColor};border: 1px solid ${safeColor};color: ${userColorForeground(safeColor)};`,
           );
           labelElement.insertBefore(document.createTextNode(user.name), null);
 
@@ -244,6 +314,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
       dictionary: {
         ...localesBN[langLocalesBN as keyof typeof localesBN],
+        suggestion_changes: authorOnlyAttribution(
+          localesBN[langLocalesBN as keyof typeof localesBN].suggestion_changes,
+        ),
         math: mathLocales[langLocalesBNMathDiagram as keyof typeof mathLocales],
         diagram:
           diagramLocales[
@@ -305,6 +378,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         // Highlights the source of code blocks and of the math / diagram
         // blocks' editable LaTeX / Mermaid popups.
         syntaxHighlighter,
+        ...(versioningExtension ? [versioningExtension] : []),
         CommentsExtension({ threadStore, resolveUsers }),
         ...(aiExtension ? [aiExtension] : []),
       ],
@@ -333,6 +407,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     [
       aiExtension,
       cursorName,
+      docUserStore,
       langLocalesBN,
       langLocalesBNMultiColumn,
       langLocalesBNAI,
@@ -341,6 +416,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       uploadFile,
       threadStore,
       resolveUsers,
+      versioningExtension,
     ],
   );
 
@@ -361,7 +437,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }, [setEditor, editor]);
 
   return (
-    <Box ref={refEditorContainer} $height="100%">
+    <Box
+      ref={refEditorContainer}
+      $height="100%"
+      style={{ position: 'relative' }}
+    >
       <DocsEditorStyle />
       <DocsCommentsStyle
         canSeeComment={canSeeComment}
@@ -398,6 +478,45 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
             />,
             threadsSidebarTarget,
           )}
+        {isVersioningSidebarOpen && (
+          <VersioningComponentsProvider>
+            <VersioningSidebarPanel
+              key={doc.id}
+              onClose={() => setIsVersioningSidebarOpen(false)}
+              debug={{
+                defaults: historyDefaults,
+                initialSettings:
+                  historyDebugSettings.current ?? historyDefaults,
+                canCreate: !!doc.abilities.partial_update,
+                onApply: async (settings) => {
+                  historyDebugSettings.current = settings;
+                  const mode =
+                    editor.getExtension<VersioningController>('versioning');
+                  return mode ? mode.list() : { status: 'unavailable' };
+                },
+                onCreate: async () => {
+                  const mode =
+                    editor.getExtension<VersioningController>('versioning');
+                  if (!mode || !doc.abilities.partial_update) {
+                    return { status: 'unavailable' };
+                  }
+                  const latest = mode.store.state;
+                  if (
+                    latest.mode === 'versions' &&
+                    latest.history.data?.[0]?.name
+                  ) {
+                    return { status: 'error', error: { type: 'conflict' } };
+                  }
+                  return mode.create(
+                    t('Test version · {{time}}', {
+                      time: new Date().toLocaleTimeString(),
+                    }),
+                  );
+                },
+              }}
+            />
+          </VersioningComponentsProvider>
+        )}
       </BlockNoteView>
     </Box>
   );
@@ -405,7 +524,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
 interface BlockNoteReaderProps {
   docId: Doc['id'];
-  initialContent: Y.XmlFragment;
+  initialContent: Y.Node;
   isMainEditor?: boolean;
 }
 
@@ -422,6 +541,7 @@ export const BlockNoteReader = ({
       collaboration: {
         fragment: initialContent,
         user: {
+          id: '',
           name: '',
           color: '',
         },

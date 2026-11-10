@@ -104,6 +104,7 @@ beforeEach(() => {
   for (const key of [
     'YHUB_ROLE',
     'YHUB_TASK_CONCURRENCY',
+    'YHUB_COMPUTE_POOL_SIZE',
     'YHUB_TASK_DEBOUNCE_MS',
     'YHUB_MIN_MESSAGE_LIFETIME_MS',
     'YHUB_BACKEND_REQUEST_TIMEOUT_MS',
@@ -157,6 +158,14 @@ describe('a valid, minimal environment', () => {
     vi.stubEnv('YHUB_AUTH_TIMEOUT_MS', '45000');
     await boot();
     expect(createYHub.lastConfig.server.authTimeout).toBe(45000);
+  });
+
+  it('passes a minimal compute and compaction limit to yhub', async () => {
+    vi.stubEnv('YHUB_COMPUTE_POOL_SIZE', '1');
+    vi.stubEnv('YHUB_TASK_CONCURRENCY', '1');
+    await boot();
+    expect(createYHub.lastConfig.computePoolSize).toBe(1);
+    expect(createYHub.lastConfig.worker.taskConcurrency).toBe(1);
   });
 });
 

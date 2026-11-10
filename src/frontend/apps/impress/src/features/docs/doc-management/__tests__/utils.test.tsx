@@ -1,5 +1,5 @@
+import * as Y from '@y/y';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import * as Y from 'yjs';
 
 import { LinkReach, LinkRole } from '../types';
 import {
@@ -10,9 +10,9 @@ import {
   getEmojiAndTitle,
 } from '../utils';
 
-vi.mock('yjs', () => {
+vi.mock('@y/y', () => {
   class MockDoc {
-    getXmlFragment = vi.fn().mockReturnValue('mocked-xml-fragment');
+    get = vi.fn().mockReturnValue('mocked-xml-fragment');
   }
 
   return {

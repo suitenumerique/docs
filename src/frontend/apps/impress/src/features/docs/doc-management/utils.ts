@@ -1,5 +1,5 @@
+import * as Y from '@y/y';
 import emojiRegex from 'emoji-regex';
-import * as Y from 'yjs';
 
 import { Doc, LinkReach } from './types';
 
@@ -11,7 +11,7 @@ export const base64ToYDoc = (base64: string) => {
 };
 
 export const base64ToBlocknoteXmlFragment = (base64: string) => {
-  return base64ToYDoc(base64).getXmlFragment('document-store');
+  return base64ToYDoc(base64).get('document-store');
 };
 
 export const getDocLinkReach = (doc: Doc): LinkReach => {

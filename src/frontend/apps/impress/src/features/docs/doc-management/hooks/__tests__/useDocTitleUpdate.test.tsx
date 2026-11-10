@@ -8,14 +8,14 @@ import { Doc } from '../../types';
 import { useDocTitleUpdate } from '../useDocTitleUpdate';
 
 // Mock useBroadcastStore
-vi.mock('@/stores', () => ({
+vi.mock('@/stores/useBroadcastStore', () => ({
   useBroadcastStore: () => ({
     broadcast: vi.fn(),
   }),
 }));
 
-vi.mock('@gouvfr-lasuite/ui-kit', async () => ({
-  ...(await vi.importActual('@gouvfr-lasuite/ui-kit')),
+vi.mock('@gouvfr-lasuite/ui-components', async () => ({
+  ...(await vi.importActual('@gouvfr-lasuite/ui-components')),
   useTreeContext: () => null,
 }));
 
@@ -58,8 +58,9 @@ describe('useDocTitleUpdate', () => {
       expect(sanitizedTitle).toBe('My Document');
 
       await waitFor(() => {
-        expect(fetchMock.callHistory.calls().length).toBe(1);
+        expect(result.current.isSuccess).toBe(true);
       });
+      expect(fetchMock.callHistory.calls()).toHaveLength(1);
       expect(fetchMock.callHistory.calls()[0].url).toBe(
         'http://test.jest/api/v1.0/documents/test-doc-id/',
       );
@@ -71,7 +72,7 @@ describe('useDocTitleUpdate', () => {
       });
     });
 
-    it('should handle empty title and not call updateDoc', async () => {
+    it('should update the document with an empty title', async () => {
       fetchMock.patch('http://test.jest/api/v1.0/documents/test-doc-id/', {
         body: JSON.stringify({
           id: 'test-doc-id',
@@ -91,8 +92,12 @@ describe('useDocTitleUpdate', () => {
       expect(sanitizedTitle).toBe('');
 
       await waitFor(() => {
-        expect(fetchMock.callHistory.calls().length).toBe(0);
+        expect(result.current.isSuccess).toBe(true);
       });
+      expect(fetchMock.callHistory.calls()).toHaveLength(1);
+      expect(fetchMock.callHistory.calls()[0].args[1]).toEqual(
+        expect.objectContaining({ body: JSON.stringify({ title: '' }) }),
+      );
     });
 
     it('should remove newlines and carriage returns', async () => {
@@ -115,8 +120,9 @@ describe('useDocTitleUpdate', () => {
       expect(sanitizedTitle).toBe('Titlewithnewlines');
 
       await waitFor(() => {
-        expect(fetchMock.callHistory.calls().length).toBe(1);
+        expect(result.current.isSuccess).toBe(true);
       });
+      expect(fetchMock.callHistory.calls()).toHaveLength(1);
     });
   });
 
@@ -136,8 +142,9 @@ describe('useDocTitleUpdate', () => {
       result.current.updateDocEmoji('test-doc-id', 'My Document', '🚀');
 
       await waitFor(() => {
-        expect(fetchMock.callHistory.calls().length).toBe(1);
+        expect(result.current.isSuccess).toBe(true);
       });
+      expect(fetchMock.callHistory.calls()).toHaveLength(1);
       expect(fetchMock.callHistory.calls()[0].url).toBe(
         'http://test.jest/api/v1.0/documents/test-doc-id/',
       );
@@ -164,8 +171,9 @@ describe('useDocTitleUpdate', () => {
       result.current.updateDocEmoji('test-doc-id', '📝 My Document', '🚀');
 
       await waitFor(() => {
-        expect(fetchMock.callHistory.calls().length).toBe(1);
+        expect(result.current.isSuccess).toBe(true);
       });
+      expect(fetchMock.callHistory.calls()).toHaveLength(1);
       expect(fetchMock.callHistory.calls()[0].args[1]).toEqual({
         method: 'PATCH',
         credentials: 'include',
@@ -189,8 +197,9 @@ describe('useDocTitleUpdate', () => {
       result.current.updateDocEmoji('test-doc-id', '📝', '🚀');
 
       await waitFor(() => {
-        expect(fetchMock.callHistory.calls().length).toBe(1);
+        expect(result.current.isSuccess).toBe(true);
       });
+      expect(fetchMock.callHistory.calls()).toHaveLength(1);
       expect(fetchMock.callHistory.calls()[0].args[1]).toEqual({
         method: 'PATCH',
         credentials: 'include',
@@ -214,8 +223,9 @@ describe('useDocTitleUpdate', () => {
       result.current.updateDocEmoji('test-doc-id', '', '🚀');
 
       await waitFor(() => {
-        expect(fetchMock.callHistory.calls().length).toBe(1);
+        expect(result.current.isSuccess).toBe(true);
       });
+      expect(fetchMock.callHistory.calls()).toHaveLength(1);
       expect(fetchMock.callHistory.calls()[0].args[1]).toEqual({
         method: 'PATCH',
         credentials: 'include',
@@ -245,8 +255,9 @@ describe('useDocTitleUpdate', () => {
       );
 
       await waitFor(() => {
-        expect(fetchMock.callHistory.calls().length).toBe(1);
+        expect(result.current.isSuccess).toBe(true);
       });
+      expect(fetchMock.callHistory.calls()).toHaveLength(1);
 
       expect(onSuccess).toHaveBeenCalledWith({
         id: 'test-doc-id',
@@ -266,15 +277,16 @@ describe('useDocTitleUpdate', () => {
         wrapper: AppWrapper,
       });
 
-      try {
-        result.current.updateDocTitle(
-          { id: 'test-doc-id', title: 'Old Document' } as Doc,
-          'Updated Document',
-        );
-      } catch {
-        expect(fetchMock.callHistory.calls().length).toBe(1);
-        expect(onError).toHaveBeenCalledWith(new Error('Update failed'));
-      }
+      result.current.updateDocTitle(
+        { id: 'test-doc-id', title: 'Old Document' } as Doc,
+        'Updated Document',
+      );
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+      expect(fetchMock.callHistory.calls()).toHaveLength(1);
+      expect(onError).toHaveBeenCalledWith(new Error('Update failed'));
     });
   });
 });

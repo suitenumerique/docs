@@ -20,11 +20,13 @@ export type AlertModalProps = {
   title: string;
   cancelLabel?: string;
   confirmLabel?: string;
+  confirmDisabled?: boolean;
 } & Partial<ModalDefaultVariantProps>;
 
 export const AlertModal = ({
   cancelLabel,
   confirmLabel,
+  confirmDisabled,
   description,
   isOpen,
   onClose,
@@ -73,6 +75,7 @@ export const AlertModal = ({
               t('Confirm', { description: 'Button to validate a dialog' })
             }
             color={themeCTA ?? 'error'}
+            disabled={confirmDisabled}
             onClick={onConfirm}
           >
             {confirmLabel ??
