@@ -27,6 +27,12 @@ const nextConfig = {
         headers: [{ key: 'X-Frame-Options', value: 'DENY' }],
       },
       {
+        // Everything but the hashed chunks has a stable name: revalidate it, so
+        // a cache in front never serves the chunk list of an old release
+        source: '/((?!_next/static/).*)',
+        headers: [{ key: 'Cache-Control', value: 'no-cache' }],
+      },
+      {
         // Only `/` and `/home` are indexable. A header, as a meta tag needs
         // JavaScript.
         source: '/((?!home/?$).+)',

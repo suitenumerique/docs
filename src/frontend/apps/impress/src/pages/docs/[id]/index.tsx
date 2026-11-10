@@ -39,10 +39,15 @@ const DocEditor = dynamic(
 
 export function DocLayout() {
   const {
-    query: { id },
+    query: { id: queryId },
+    asPath,
   } = useRouter();
 
-  if (typeof id !== 'string') {
+  // Offline, the service worker answers any doc with the `/docs/[id]/` shell,
+  // whose server-side props carry `[id]`: read the id from the URL instead
+  const id = queryId === '[id]' ? asPath.split(/[/?#]/)[2] : queryId;
+
+  if (typeof id !== 'string' || !id) {
     return null;
   }
 
@@ -222,6 +227,44 @@ interface PageProps {
   publicTitle?: string;
 }
 
+/**
+ * GET a JSON document, `null` on any other answer. `fetch` silently drops a
+ * `Host` header, so this goes through `node:http`.
+ */
+const getJson = async <T,>(
+  url: string,
+  headers: Record<string, string>,
+): Promise<T | null> => {
+  const { request } = url.startsWith('https:')
+    ? await import('node:https')
+    : await import('node:http');
+
+  return new Promise((resolve) => {
+    const req = request(url, { headers, timeout: 2000 }, (res) => {
+      if (res.statusCode !== 200) {
+        res.resume();
+        resolve(null);
+        return;
+      }
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk: string) => {
+        body += chunk;
+      });
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(body) as T);
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+    req.on('timeout', () => req.destroy());
+    req.on('error', () => resolve(null));
+    req.end();
+  });
+};
+
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -248,17 +291,22 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async ({
     return { props: {} };
   }
 
-  try {
-    const response = await fetch(`${backendUrl}/api/v1.0/documents/${id}/`, {
-      headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(2000),
-    });
-    if (!response.ok) {
-      return { props: {} };
-    }
+  // Pass on the public host and scheme: in production the backend only accepts
+  // its public host (ALLOWED_HOSTS) and redirects plain http to https.
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  const host = req.headers['x-forwarded-host'] ?? req.headers.host;
+  if (typeof host === 'string') {
+    headers.Host = host;
+  }
+  const proto = req.headers['x-forwarded-proto'];
+  headers['X-Forwarded-Proto'] = typeof proto === 'string' ? proto : 'https';
 
-    const doc = (await response.json()) as Doc;
-    if (doc.computed_link_reach !== LinkReach.PUBLIC) {
+  try {
+    const doc = await getJson<Doc>(
+      `${backendUrl}/api/v1.0/documents/${id}/`,
+      headers,
+    );
+    if (doc?.computed_link_reach !== LinkReach.PUBLIC) {
       return { props: {} };
     }
 
