@@ -90,6 +90,7 @@ and this project adheres to
 - 🐛(frontend) show the doc tree actions of the item under the pointer #2942
 - 🐛(frontend) only index the landing page, send noindex as a header #2973
 - 🐛(frontend) keep the focus on the emoji button of a tree item #2964
+- ♿️(frontend) stop moving the focus into the duplicate toast
 - 🐛(backend) keep the case of titles and names in email subjects #2792
 - 📝(docs) recreate the containers when upgrading a compose install #2985
 - 🐛(frontend) fix Enter and Space in modals opened from the doc tree #2879
