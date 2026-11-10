@@ -177,6 +177,27 @@ export const DocsEditorStyle = createGlobalStyle`
     }
 
     /**
+    * Right-to-left blocks
+    * Blocks get dir="auto", so a Hebrew or Arabic block is laid out from the
+    * right. BlockNote draws the quote bar with border-left and aligns with
+    * justify-content, whose flex-end is the left edge in a right-to-left
+    * block: mirror the bar, and map the physical alignments back so
+    * "align right" still puts the text on the right.
+    */
+    .bn-block-content:dir(rtl)[data-content-type='quote'] blockquote {
+      border-left: none;
+      border-right: 2px solid #7d797a;
+      padding-left: 0;
+      padding-right: 1em;
+    }
+    .bn-block-content:dir(rtl)[data-text-alignment='right'] {
+      justify-content: flex-start !important;
+    }
+    .bn-block-content:dir(rtl)[data-text-alignment='left'] {
+      justify-content: flex-end !important;
+    }
+
+    /**
     * AI
     */
     ins,
