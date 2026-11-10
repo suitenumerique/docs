@@ -27,7 +27,7 @@ publishes.
 
 | Service | Stack | Owns | Talks to |
 | --- | --- | --- | --- |
-| Frontend | Next.js, BlockNote, static export served by Nginx | nothing | the browser only |
+| Frontend | Next.js, BlockNote, standalone Node server | nothing | the browser, the backend (title of public docs for link previews) |
 | Backend | Django, DRF | documents, users, accesses, attachments | PostgreSQL, Redis, S3, yhub, y-provider, Docspec, OIDC, LLM, search |
 | Celery worker | Celery | nothing | PostgreSQL, Redis, yhub, SMTP, search |
 | yhub server | `@y/hub`, Node | the live document content | Valkey, its PostgreSQL, the backend, S3 |

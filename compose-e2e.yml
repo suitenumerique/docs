@@ -10,6 +10,9 @@ services:
         PUBLISH_AS_MIT: "false"
         SW_DEACTIVATED: "true"
     image: impress:frontend-production
+    environment:
+      PORT: 3000
+      BACKEND_BASE_URL: http://app-dev:8000
     ports:
       - "3000:3000"
 

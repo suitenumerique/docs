@@ -51,19 +51,21 @@ ENV NEXT_PUBLIC_PUBLISH_AS_MIT=${PUBLISH_AS_MIT}
 
 RUN yarn build
 
-# Normalize output path to /app (matches the runtime-prod layout)
+# Normalize output path to /app (matches the runtime-prod layout): the
+# standalone Node server, with the static files it serves next to it
 FROM scratch AS frontend-build-output
-COPY --from=impress-builder /home/frontend/apps/impress/out /app
+COPY --from=impress-builder /home/frontend/apps/impress/.next/standalone /app
+COPY --from=impress-builder /home/frontend/apps/impress/.next/static /app/apps/impress/.next/static
+COPY --from=impress-builder /home/frontend/apps/impress/public /app/apps/impress/public
 
 # When FRONTEND_IMAGE is set to an external image, BuildKit skips
 # frontend-deps,impress-builder, and frontend-build-output entirely
 FROM ${FRONTEND_IMAGE} AS frontend-source
 
 # ---- Front-end image ----
-FROM nginx/nginx-unprivileged:alpine3.24 AS frontend-production
+FROM node:24-alpine AS frontend-production
 
 # Upgrade system packages to install security updates
-USER root
 RUN apk update && \
   apk upgrade && \
   rm -rf /var/cache/apk/*
@@ -73,10 +75,16 @@ ARG DOCKER_USER
 USER ${DOCKER_USER}
 
 COPY --from=frontend-source /app /app
-
-COPY ./src/frontend/apps/impress/conf/default.conf /etc/nginx/conf.d
 COPY ./docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
+
+WORKDIR /app/apps/impress
+
+ENV NODE_ENV=production \
+  HOSTNAME=0.0.0.0 \
+  PORT=8080
+
+EXPOSE 8080
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server.js"]

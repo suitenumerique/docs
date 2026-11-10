@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const path = require('path');
 
 const { InjectManifest } = require('workbox-webpack-plugin');
 
@@ -9,8 +10,30 @@ const buildId = crypto.randomBytes(256).toString('hex').slice(0, 8);
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: ['docs.127.0.0.1.nip.io'],
-  output: 'export',
+  // A Node server (`node server.js`) rather than a static export, so the doc
+  // page can render its title server-side for link previews.
+  output: 'standalone',
+  // Trace from the yarn workspace root, so the shared packages are bundled
+  outputFileTracingRoot: path.join(__dirname, '../../'),
+  // Images are not optimized: leave out sharp and its native binaries
+  outputFileTracingExcludes: { '*': ['node_modules/@img/**'] },
   trailingSlash: true,
+  poweredByHeader: false,
+  // Headers the nginx config of the static export used to send.
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [{ key: 'X-Frame-Options', value: 'DENY' }],
+      },
+      {
+        // Only `/` and `/home` are indexable. A header, as a meta tag needs
+        // JavaScript.
+        source: '/((?!home/?$).+)',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex' }],
+      },
+    ];
+  },
   images: {
     unoptimized: true,
   },

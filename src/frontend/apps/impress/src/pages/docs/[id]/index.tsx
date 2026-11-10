@@ -1,5 +1,6 @@
 import { TreeProvider } from '@gouvfr-lasuite/ui-components';
 import { useQueryClient } from '@tanstack/react-query';
+import type { GetServerSideProps } from 'next';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -12,6 +13,7 @@ import {
   Doc,
   DocPage403,
   KEY_DOC,
+  LinkReach,
   useDoc,
   useDocStore,
   useTrans,
@@ -215,12 +217,89 @@ const DocPage = ({ id }: DocProps) => {
   );
 };
 
-const Page: NextPageWithLayout = () => {
+interface PageProps {
+  // Title of a public doc, `''` when it has none
+  publicTitle?: string;
+}
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+/**
+ * Link previews (Mattermost, Slack, social networks) don't run JavaScript:
+ * render the title of a public doc in the HTML sent by the server. The doc is
+ * fetched without the visitor's cookies, so a restricted or connected-only doc
+ * never leaks its title, it keeps the generic tags.
+ */
+export const getServerSideProps: GetServerSideProps<PageProps> = async ({
+  params,
+  req,
+}) => {
+  const id = params?.id;
+  const backendUrl = process.env.BACKEND_BASE_URL;
+
+  // Client-side navigations fetch these props as JSON and have no use for them
+  if (
+    !backendUrl ||
+    typeof id !== 'string' ||
+    !UUID_REGEX.test(id) ||
+    req.url?.startsWith('/_next/data/')
+  ) {
+    return { props: {} };
+  }
+
+  try {
+    const response = await fetch(`${backendUrl}/api/v1.0/documents/${id}/`, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!response.ok) {
+      return { props: {} };
+    }
+
+    const doc = (await response.json()) as Doc;
+    if (doc.computed_link_reach !== LinkReach.PUBLIC) {
+      return { props: {} };
+    }
+
+    return { props: { publicTitle: doc.title || '' } };
+  } catch {
+    return { props: {} };
+  }
+};
+
+const DocMetaHead = ({ docTitle }: { docTitle: string }) => {
+  const { t } = useTranslation();
+  const { untitledDocument } = useTrans();
+
+  const title = `${docTitle || untitledDocument} - ${t('Docs', {
+    description: 'Product name, shown in page titles and the logo',
+  })}`;
+
+  return (
+    <Head>
+      <title>{title}</title>
+      <meta property="og:title" content={title} key="title" />
+      <meta property="og:type" content="article" />
+      <meta name="twitter:card" content="summary" />
+    </Head>
+  );
+};
+
+const Page: NextPageWithLayout<PageProps> = () => {
   return null;
 };
 
 Page.getLayout = function getLayout() {
   return <DocLayout />;
+};
+
+// Rendered by `_app` outside the providers, which wait for the config on the
+// client: the server would otherwise render none of it
+Page.getHead = function getHead({ publicTitle }) {
+  return publicTitle !== undefined ? (
+    <DocMetaHead docTitle={publicTitle} />
+  ) : null;
 };
 
 export default Page;

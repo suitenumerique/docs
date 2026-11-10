@@ -16,6 +16,16 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+- The frontend image (`lasuite/impress-frontend`) is now a Node server
+  (`node server.js`, based on `node:24-alpine`) instead of nginx serving a
+  static export, so a doc page can render the title of a public doc for link
+  previews. It still listens on port 8080 (set `PORT` to change it) and sends
+  the same `X-Frame-Options` and `X-Robots-Tag` headers. Set
+  `BACKEND_BASE_URL` on the frontend to a URL it can reach the backend at
+  from inside the cluster (for example `http://impress-backend:8000`, with
+  `frontend.envVars` in the Helm chart). Without it, every doc keeps the
+  generic title in its HTML, as before. If you mounted your own nginx config
+  in the frontend container, move it to the reverse proxy in front of it.
 - The collaboration server reads the abilities of a caller from the new
   `GET /api/v1.0/documents/{id}/abilities/` endpoint instead of
   `GET /api/v1.0/documents/{id}/`. A backend without that endpoint answers
