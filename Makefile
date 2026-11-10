@@ -456,7 +456,7 @@ mails-install: ## install the mail generator
 # -- Misc
 SKILLS_CLI    = npx --yes skills@1.7.1
 # Agents that do not read .agents/skills and need their own copy of the skills
-SKILLS_AGENTS = claude-code augment continue goose junie kiro-cli
+SKILLS_AGENTS = claude-code augment continue goose junie kiro-cli mistral-vibe
 SKILLS_AGENT ?= claude-code
 
 skills: ## generate the skills of an agent from .agents/skills (SKILLS_AGENT=claude-code)
