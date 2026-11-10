@@ -24,6 +24,7 @@ and this project adheres to
 - ♻️(backend) remove the unused scope of the document throttles #2951
 - 💄(frontend) use true italic Inter in the editor #2861
 - 🔒️(yhub) build the production image on a distroless base image
+- 👷(ci) scan images with trivy only on release/ branches or the trivy label
 
 ### Fixed
 

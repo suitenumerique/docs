@@ -9,6 +9,9 @@ on:
     tags:
       - "v*"
   pull_request:
+    # `labeled` starts the trivy scan as soon as the `trivy` label is added;
+    # the other labels skip every job (see the `if` of the build jobs).
+    types: [opened, synchronize, reopened, labeled]
     branches:
       - "main"
 
@@ -23,12 +26,18 @@ permissions:
 # Branches and tags get a group of their own, queued instead of cancelled (only
 # the latest pending run is kept): an image push or the Argo CD notification is
 # never stopped halfway, and two runs never race to push the same tag.
+# Adding a label other than `trivy` gets a group of its own: its run does
+# nothing and must not cancel the build of the pull request.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: >-
+    ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{
+    github.event.action == 'labeled' && github.event.label.name != 'trivy'
+    && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build-and-push-backend:
+    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
@@ -39,9 +48,11 @@ jobs:
       file: Dockerfile
       target: backend-production
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
+      trivy_scan: ${{ startsWith(github.head_ref || github.ref_name, 'release/') || contains(github.event.pull_request.labels.*.name, 'trivy') }}
       docker_user: 1001:127
 
   build-and-push-frontend:
+    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
@@ -53,9 +64,11 @@ jobs:
       target: frontend-production
       arm64_reuse_amd64_build_arg: "FRONTEND_IMAGE"
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
+      trivy_scan: ${{ startsWith(github.head_ref || github.ref_name, 'release/') || contains(github.event.pull_request.labels.*.name, 'trivy') }}
       docker_user: 1001:127
 
   build-and-push-y-provider:
+    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
@@ -66,9 +79,11 @@ jobs:
       file: src/frontend/servers/y-provider/Dockerfile
       target: y-provider
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
+      trivy_scan: ${{ startsWith(github.head_ref || github.ref_name, 'release/') || contains(github.event.pull_request.labels.*.name, 'trivy') }}
       docker_user: 1001:127
 
   build-and-push-yhub:
+    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
@@ -79,6 +94,7 @@ jobs:
       file: src/yhub-server/Dockerfile
       target: yhub
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
+      trivy_scan: ${{ startsWith(github.head_ref || github.ref_name, 'release/') || contains(github.event.pull_request.labels.*.name, 'trivy') }}
       docker_user: 1000:1000
 
   notify-argocd:
