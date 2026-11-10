@@ -932,4 +932,43 @@ test.describe('Doc Editor', () => {
       editor.getByLabel('Mermaid diagram').filter({ hasText: 'HelloWorld' }),
     ).toBeVisible();
   });
+
+  test('it lays out right-to-left blocks from the right', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-rtl', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'שלום עולם' });
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Hello world');
+
+    const hebrewBlock = editor
+      .locator('.bn-block-content')
+      .filter({ hasText: 'שלום עולם' });
+    const englishBlock = editor
+      .locator('.bn-block-content')
+      .filter({ hasText: 'Hello world' });
+
+    await expect(hebrewBlock).toHaveCSS('direction', 'rtl');
+    await expect(englishBlock).toHaveCSS('direction', 'ltr');
+
+    // "Align right" keeps a right-to-left block on the right edge
+    await hebrewBlock.getByText('שלום עולם').selectText();
+    await page
+      .locator('.bn-formatting-toolbar button[data-test="alignTextRight"]')
+      .click();
+    await expect(hebrewBlock).toHaveAttribute('data-text-alignment', 'right');
+
+    const blockBox = await hebrewBlock.boundingBox();
+    const textBox = await hebrewBlock
+      .locator('.bn-inline-content')
+      .boundingBox();
+    expect(blockBox).not.toBeNull();
+    expect(textBox).not.toBeNull();
+    expect(
+      Math.abs(blockBox!.x + blockBox!.width - (textBox!.x + textBox!.width)),
+    ).toBeLessThan(2);
+  });
 });
