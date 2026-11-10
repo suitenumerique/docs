@@ -85,7 +85,9 @@ DOCKER_USER=<same as the Makefile> docker compose up -d --force-recreate --renew
   container and fail with "port 3000 is already allocated". Tell the user the
   frontend on :3000 is theirs and was left alone.
 - `mode: undecided`: nothing on :3000, but `src/frontend/node_modules` exists
-  locally. Ask the user whether to run the frontend locally or in Docker.
+  locally and yarn is installed. Ask the user whether to run the frontend
+  locally or in Docker. (Without yarn on the host, the check reports
+  `mode: container` instead: a local frontend needs yarn, the image does not.)
   - Locally: `make run-backend`, then `make run-frontend-development`. That
     target blocks, so start it with `run_in_background`. It stops the
     container and runs `yarn dev`.
@@ -94,6 +96,8 @@ DOCKER_USER=<same as the Makefile> docker compose up -d --force-recreate --renew
 - `mode: container`: `make run`.
 - When the check says the local `node_modules` are out of sync, tell the user
   and offer `cd src/frontend && yarn install`. It mostly hits the yarn cache.
+  The check only runs when yarn is installed; never install yarn to start the
+  stack.
 
 **Already up.** When every backend service is running and answering, the plan
 skips `make run`/`make run-backend` and only recreates what changed. Those

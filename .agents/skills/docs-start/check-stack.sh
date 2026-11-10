@@ -121,9 +121,13 @@ elif [ "$code" != "000" ] && [ -n "$code" ] &&
   curl -sI --max-time 3 http://localhost:3000/ 2>/dev/null | grep -qi '^x-powered-by: next'; then
   FRONTEND_MODE=local
   echo "served by a process on the host, not by docker (http $code): local \`yarn dev\`"
-elif [ -d src/frontend/node_modules ]; then
+elif [ -d src/frontend/node_modules ] && command -v yarn >/dev/null 2>&1; then
   FRONTEND_MODE=undecided
   echo "nothing on :3000; the frontend is installed locally (src/frontend/node_modules)"
+elif [ -d src/frontend/node_modules ]; then
+  # `make run-frontend-development` needs yarn on the host
+  FRONTEND_MODE=container
+  echo "nothing on :3000; src/frontend/node_modules exists but yarn is not installed: the container will serve it"
 else
   FRONTEND_MODE=container
   echo "nothing on :3000; no local install, the container will serve it"

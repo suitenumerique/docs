@@ -587,6 +587,20 @@ Shared fakes live in `__tests__/_helpers.ts`. `yarn typecheck` type-checks
 yet; the pytest-driven integration suite in `.github/workflows/impress.yml`
 exercises a real collaboration server (built with `yarn build`).
 
+Yarn on the host is optional: the `yhub` dev image ships it with every
+dependency, and its working directory `/app` is this directory. From the
+repository root:
+
+```bash
+docker compose exec yhub yarn <cmd>                                     # yhub running
+DOCKER_USER=$(id -u):$(id -g) docker compose run --rm --no-deps yhub yarn <cmd>  # otherwise
+```
+
+`DOCKER_USER` as the Makefile passes it, or `run` uses uid 1000 and the files
+it writes in the bind-mounted sources (`yarn build`) are not yours. After a
+change to `package.json` or `yarn.lock`, rebuild the image and renew its
+volumes (see "Container image").
+
 ## Container image
 
 The `Dockerfile` has two final stages, like the other services of this

@@ -28,6 +28,40 @@ From `src/frontend/apps/impress`:
 `yarn dev` serves the app on :3000 against the backend on :8071 (see the
 `docs-start` skill). `yarn build` also runs `prettier --check` and stylelint.
 
+### Without yarn on the host
+
+When `command -v yarn` fails, run the same commands from the repository root
+in the frontend image: it ships yarn and the dependencies, and its working
+directory is `apps/impress`, so the paths do not change.
+
+```bash
+docker compose exec frontend-development yarn vitest run <path>   # container running
+DOCKER_USER=$(id -u):$(id -g) docker compose run --rm --no-deps \
+  frontend-development sh -c 'yarn vitest run <path> && yarn eslint <files> && yarn tsc --noEmit'
+```
+
+- Prefer `exec` into the running container. Each `run` copies `node_modules`
+  into a fresh volume (about 20 s), so chain the checks in one `sh -c`, and
+  pass `DOCKER_USER` as the Makefile does so written files stay yours.
+- After a `package.json` or `yarn.lock` change, rebuild the image
+  (`make build-frontend`), then renew the `node_modules` volumes of a running
+  `frontend-development` container (`--renew-anon-volumes`, see the
+  `docs-start` skill): `exec` and `make run` keep the old ones.
+- `make frontend-test`, `make frontend-lint` and `make run-frontend-development`
+  call yarn on the host. Run `yarn test` in the image, and serve the frontend
+  with its container, not `yarn dev`: `make run`, or
+  `DOCKER_USER=$(id -u):$(id -g) docker compose up -d frontend-development`
+  when the backend already runs.
+- `make frontend-lint` covers five workspaces: `yarn lint` in the frontend
+  image (impress) and in `y-provider-development-converter` (y-provider),
+  `yarn workspace eslint-plugin-docs run lint` in the frontend image with
+  `-w /home/frontend`, and `npx --no-install eslint` from `src/frontend/apps/e2e`
+  and `src/frontend/packages/i18n`, which no image holds: without Node and
+  `src/frontend/node_modules` on the host, report those two as not run.
+- The `frontend-i18n-*` targets, and so the frontend half of `make i18n-*`,
+  need yarn on the host (the i18n scripts call it themselves): without it, say
+  so and do not run them. `make back-i18n-*` and `crowdin-*` still work.
+
 ## Where things are
 
 - `src/features/<feature>/` holds one feature: `api/` (fetchers and query
@@ -73,8 +107,9 @@ From `src/frontend/apps/impress`:
 
 ## Pitfalls
 
-- **Editor**: check the installed BlockNote API (`node_modules/@blocknote/*`)
-  before using one from memory; it changes between minor versions. Custom
+- **Editor**: check the installed BlockNote API (`node_modules/@blocknote/*`,
+  or `/home/frontend/node_modules/@blocknote/*` in the frontend image when
+  nothing is installed locally) before using one from memory; it changes between minor versions. Custom
   blocks live in `features/docs/doc-editor/components/custom-blocks/`; some
   wrap a BlockNote spec to sanitize legacy content (`CodeBlock.tsx`).
 - **Collaboration**: the document content is a Yjs document synchronized with
@@ -108,6 +143,6 @@ From `src/frontend/apps/impress`:
 ## Before finishing
 
 Run the tests of the files you changed, `yarn eslint` on them and
-`yarn tsc --noEmit`, review `git diff`, and add a `CHANGELOG.md` entry under
-`[Unreleased]` for a user-visible change. Report what was run and what was not
-verified.
+`yarn tsc --noEmit` (in the frontend image without yarn on the host), review
+`git diff`, and add a `CHANGELOG.md` entry under `[Unreleased]` for a
+user-visible change. Report what was run and what was not verified.

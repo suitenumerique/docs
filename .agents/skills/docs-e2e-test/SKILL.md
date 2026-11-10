@@ -41,6 +41,33 @@ small, run as little of it as possible, and only on Chromium.
 Widen only when needed: one test, then its spec file, then closely related
 specs.
 
+### Without yarn on the host
+
+No Docker image holds the E2E workspace or the browsers, so Playwright always
+runs on the host. When `command -v yarn` fails:
+
+- Serve the frontend with its container, on top of the backend of step 1
+  (`make run` would recreate the backend a second time), and wait until it
+  answers before running anything:
+
+  ```bash
+  DOCKER_USER=$(id -u):$(id -g) docker compose up -d frontend-development
+  curl -sf -o /dev/null --max-time 30 --retry 60 --retry-all-errors --retry-delay 2 --retry-max-time 600 http://localhost:3000/
+  ```
+
+  `--retry-all-errors`: the port proxy of Docker accepts and resets the
+  connection until Next.js listens. The `webServer` of `playwright.config.ts`
+  reuses whatever already answers on its `BASE_URL`, and otherwise starts
+  `yarn app:dev`, which fails without yarn: if `apps/e2e/.env.local` (read
+  before `.env`) sets `BASE_URL`, it must be `http://localhost:3000`.
+- If Node is installed and `src/frontend/node_modules` exists, call the
+  binaries with `npx --no-install` from `src/frontend/apps/e2e`:
+  `npx --no-install playwright install --with-deps chromium`,
+  `npx --no-install playwright test <file> --project=chromium -g "<name>"`,
+  `npx --no-install eslint` (the whole workspace, like `yarn lint`).
+- Otherwise E2E tests cannot run: say so and report them as not run. Do not
+  install yarn or the dependencies without asking.
+
 ## Reuse before writing
 
 Search the existing specs and `utils-*.ts` for the feature, its UI labels and
@@ -99,7 +126,8 @@ not repeat a scenario that differs from an existing one by a single action.
 
 ## Before finishing
 
-- `yarn lint` in `src/frontend/apps/e2e`.
+- `yarn lint` in `src/frontend/apps/e2e` (`npx --no-install eslint`
+  without yarn).
 - Review `git diff`: no unrelated test changed, helpers reused, no new sleep,
   no duplicated scenario.
 - Report the tests reused, modified or created (and why a new one was

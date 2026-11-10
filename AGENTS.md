@@ -90,6 +90,17 @@ The container starts with `node --import ./dist/sentry.js dist/server.js`: keep 
 `--import` when overriding the command. `src/yhub-server/README.md` is the reference
 for everything this server does (permissions, roles, migration, storage, metrics).
 
+### Without yarn on the host
+
+Yarn and Node on the host are optional, except Node for E2E tests: when
+`command -v yarn` fails, run the same command in the dev image of the package
+(`frontend-development`: apps/impress, `yhub`: src/yhub-server,
+`y-provider-development-converter`: servers/y-provider), with
+`docker compose exec <service> yarn …` when it runs, otherwise
+`DOCKER_USER=$(id -u):$(id -g) docker compose run --rm --no-deps <service> yarn …`.
+Details: `docs-frontend` and `docs-e2e-test` skills, "Tests" in
+`src/yhub-server/README.md`.
+
 ### Mails
 
 ```bash
@@ -210,7 +221,8 @@ Update `CHANGELOG.md` under `[Unreleased]` with format: `- <gitmoji>(type) descr
 
 ### PR Checklist
 
-Run before submitting: `make lint && make frontend-lint && make test`
+Run before submitting: `make lint && make frontend-lint && make test` (without yarn
+on the host, see the `docs-frontend` skill)
 
 ## General Practices
 
@@ -231,7 +243,7 @@ Config files in `env.d/development/`: `common`, `postgresql`, `kc_postgresql`, `
 - Load the Skill that matches the task before exploring: it already holds the commands, helpers and pitfalls.
 - Big files: grep for the symbol, then read only that range. `core/api/viewsets.py`, `core/models.py` and `core/api/serializers.py` are never worth reading whole. Backend tests are split per endpoint and action (`core/tests/documents/test_api_documents_<action>.py`), so glob for the test file.
 - Never read generated or vendored files: `translations.json` (i18n), `yarn.lock`, `CHANGELOG.md` beyond its `[Unreleased]` section, `node_modules/`, `dist/`, `.next/`.
-- Verify narrowly first and widen only once that passes: `bin/pytest -n auto <file>::<test> -x -q --tb=short` or `yarn vitest run <file>`, and lint only the files you touched (`yarn eslint <files>`, `docker compose run --rm app-dev ruff check <files>`, with paths relative to `src/backend/`). Run the full `make lint` / suites once, at the end.
+- Verify narrowly first and widen only once that passes: `bin/pytest -n auto <file>::<test> -x -q --tb=short` or `yarn vitest run <file>`, and lint only the files you touched (`yarn eslint <files>`, `docker compose run --rm app-dev ruff check <files>`, with paths relative to `src/backend/`); without yarn on the host, run the yarn ones in Docker (see "Without yarn on the host"). Run the full `make lint` / suites once, at the end.
 - Filter long command output (`| tail`, `grep`, `-q`) rather than reading it all.
 
 ## Incidental findings
