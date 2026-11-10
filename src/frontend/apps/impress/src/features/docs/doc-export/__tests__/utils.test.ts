@@ -129,6 +129,99 @@ describe('convertSvgToPng', () => {
     expect(result).toEqual({ png: CANVAS_PNG_URL, width: 200, height: 100 });
   });
 
+  it.each([
+    '0,0,200,100',
+    '0  0  200  100',
+    ' 0 0 200 100 ',
+    '0, 0, 200, 100',
+    '0\t0\t200\t100',
+    '0\n0\n200\n100',
+  ])('preserves the aspect ratio for viewBox %j', async (viewBox) => {
+    const result = await convertSvgToPng(
+      `<svg viewBox="${viewBox}"></svg>`,
+      400,
+    );
+
+    expect(svgInstance().resize).toHaveBeenCalledWith(400, 200, true);
+    expect(result).toEqual({ png: CANVAS_PNG_URL, width: 400, height: 200 });
+  });
+
+  it('preserves fractional natural dimensions', async () => {
+    const result = await convertSvgToPng(
+      '<svg width="10.5" height="5.25"></svg>',
+    );
+
+    expect(result).toEqual({ png: CANVAS_PNG_URL, width: 10.5, height: 5.25 });
+  });
+
+  it('preserves the aspect ratio when resizing fractional dimensions', async () => {
+    const result = await convertSvgToPng(
+      '<svg width="10.5px" height="5.5px"></svg>',
+      420,
+    );
+
+    expect(svgInstance().resize).toHaveBeenCalledWith(420, 220, true);
+    expect(result).toEqual({ png: CANVAS_PNG_URL, width: 420, height: 220 });
+  });
+
+  it.each(
+    ['0', '-1', 'Infinity', '1e309', 'NaN'].flatMap((dimension) => [
+      `<svg width="${dimension}" height="100"></svg>`,
+      `<svg width="200" height="${dimension}"></svg>`,
+      `<svg viewBox="0 0 ${dimension} 100"></svg>`,
+      `<svg viewBox="0 0 200 ${dimension}"></svg>`,
+    ]),
+  )('does not scale invalid dimensions in %s', async (svg) => {
+    const result = await convertSvgToPng(svg, 400);
+
+    expect(svgInstance().resize).not.toHaveBeenCalled();
+    expect(result.width).toBe(400);
+    expect(Number.isFinite(result.height)).toBe(true);
+    expect(result.height).toBeGreaterThan(0);
+  });
+
+  it('uses fallback dimensions when both SVG dimensions are invalid', async () => {
+    const result = await convertSvgToPng(
+      '<svg width="Infinity" height="-1"></svg>',
+    );
+
+    expect(svgInstance().resize).toHaveBeenCalledWith(536, undefined, true);
+    expect(result).toEqual({ png: CANVAS_PNG_URL, width: 536, height: 536 });
+  });
+
+  it.each([-1, 0, Infinity, -Infinity, NaN])(
+    'treats an invalid requested width %s as omitted',
+    async (width) => {
+      const result = await convertSvgToPng(
+        '<svg width="200" height="100"></svg>',
+        width,
+      );
+
+      expect(svgInstance().resize).not.toHaveBeenCalled();
+      expect(result).toEqual({ png: CANVAS_PNG_URL, width: 200, height: 100 });
+    },
+  );
+
+  it.each([-1, 0, Infinity, -Infinity, NaN])(
+    'uses fallback dimensions for requested width %s without SVG dimensions',
+    async (width) => {
+      const result = await convertSvgToPng('<svg></svg>', width);
+
+      expect(svgInstance().resize).toHaveBeenCalledWith(536, undefined, true);
+      expect(result).toEqual({ png: CANVAS_PNG_URL, width: 536, height: 536 });
+    },
+  );
+
+  it('does not resize when a fractional requested width rounds height to zero', async () => {
+    const result = await convertSvgToPng(
+      '<svg width="1000" height="1"></svg>',
+      0.1,
+    );
+
+    expect(svgInstance().resize).not.toHaveBeenCalled();
+    expect(result).toEqual({ png: CANVAS_PNG_URL, width: 1000, height: 1 });
+  });
+
   it('resizes to the given width, preserving the SVG aspect ratio', async () => {
     // SVG is 300×150 (ratio 0.5), requested width=600 → height=300
     await convertSvgToPng('<svg width="300" height="150"></svg>', 600);
