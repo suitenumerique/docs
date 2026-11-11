@@ -40,11 +40,36 @@ describe('previewTitle', () => {
     expect(previewTitle('(טיוטה) שָׁלוֹם')?.words).toEqual(['(הטויט)', 'םולש']);
   });
 
-  it('leaves Latin titles alone', () => {
+  it('leaves Latin titles alone, punctuation included', () => {
     expect(previewTitle('Plan for 2027')).toEqual({
       rtl: false,
       words: ['Plan', 'for', '2027'],
     });
+    expect(previewTitle('Roadmap (draft) [WIP] f(x) -> e.g., (2027)')).toEqual({
+      rtl: false,
+      words: ['Roadmap', '(draft)', '[WIP]', 'f(x)', '->', 'e.g.,', '(2027)'],
+    });
+  });
+
+  it('keeps Latin words and numbers in brackets readable in a Hebrew title', () => {
+    expect(previewTitle('שלום (draft) גרסה (2027)')?.words).toEqual([
+      'םולש',
+      '(draft)',
+      'הסרג',
+      '(2027)',
+    ]);
+  });
+
+  it('writes Arabic-Indic and Persian digits left to right', () => {
+    expect(previewTitle('خطة ٢٠٢٧ ۱۴۰۶')?.words).toEqual([
+      visualWord('خطة'),
+      '٢٠٢٧',
+      '۱۴۰۶',
+    ]);
+  });
+
+  it('accepts the Persian zero-width non-joiner', () => {
+    expect(previewTitle('می‌خواهم')).not.toBeNull();
   });
 
   it('gives up on characters the card fonts lack', () => {
@@ -62,6 +87,11 @@ describe('joinArabic', () => {
   it('does not join after a letter that only joins on its right', () => {
     // داد: dal isolated, alef isolated, dal isolated
     expect(joinArabic('داد')).toBe(forms(0xfea9, 0xfe8d, 0xfea9));
+  });
+
+  it('keeps hamza on its own, after a final letter', () => {
+    // شيء: sheen initial, yeh final, hamza
+    expect(joinArabic('شيء')).toBe(forms(0xfeb7, 0xfef2, 0xfe80));
   });
 
   it('makes the lam-alef ligature', () => {

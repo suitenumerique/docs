@@ -14,7 +14,6 @@ const range = (from: number, to: number) => `${char(from)}-${char(to)}`;
 // follow each other: isolated, final, then initial and medial for the letters
 // that join on both sides.
 const ARABIC_FORMS = new Map<number, [number, boolean]>([
-  [0x0621, [0xfe80, false]],
   [0x0622, [0xfe81, false]],
   [0x0623, [0xfe83, false]],
   [0x0624, [0xfe85, false]],
@@ -60,6 +59,10 @@ const ARABIC_FORMS = new Map<number, [number, boolean]>([
 ]);
 const TATWEEL = 0x0640;
 const LAM = 0x0644;
+// Hamza joins on neither side and has a single form
+const HAMZA = 0x0621;
+const HAMZA_FORM = 0xfe80;
+const ZWNJ = 0x200c;
 // Lam followed by an alef: [isolated ligature]; the final form follows it
 const LAM_ALEF = new Map<number, number>([
   [0x0622, 0xfef5],
@@ -77,14 +80,25 @@ const MARKS = new RegExp(
   )}${char(0x05c7)}${range(0x064b, 0x065f)}${char(0x0670)}]`,
   'g',
 );
-const RTL_LETTER = new RegExp(
-  `[${range(0x05d0, 0x05ea)}${range(0x05f0, 0x05f4)}${range(
-    0x0600,
-    0x06ff,
-  )}${range(0xfb50, 0xfdff)}${range(0xfe70, 0xfeff)}]`,
+// Digits of every script are written left to right
+const DIGIT = new RegExp(
+  `[0-9${range(0x0660, 0x0669)}${range(0x06f0, 0x06f9)}]`,
 );
-const LTR_LETTER = new RegExp(`[A-Za-z0-9${range(0xc0, 0x24f)}]`);
-const DIGITS = /^[0-9.,:/%+-]+$/;
+const RTL_LETTER = new RegExp(
+  `[${range(0x05d0, 0x05ea)}${range(0x05f0, 0x05f2)}${range(
+    0x0620,
+    0x064a,
+  )}${range(0x066e, 0x06d3)}${range(0xfb50, 0xfdff)}${range(0xfe70, 0xfefc)}]`,
+);
+const LTR_LETTER = new RegExp(
+  `[A-Za-z${char(0xaa)}${char(0xb5)}${char(0xba)}${range(0xc0, 0xd6)}${range(
+    0xd8,
+    0xf6,
+  )}${range(0xf8, 0x24f)}]`,
+);
+const NUMBER = new RegExp(
+  `^[0-9${range(0x0660, 0x0669)}${range(0x06f0, 0x06f9)}.,:/%+-]+$`,
+);
 const MIRRORED: Record<string, string> = {
   '(': ')',
   ')': '(',
@@ -99,7 +113,7 @@ const MIRRORED: Record<string, string> = {
 // Characters the card fonts have: Latin, Hebrew, the Arabic letters above and
 // Arabic punctuation and digits. For any other one, next/og would fetch a font
 // or an emoji from the internet: the card then goes without the title.
-const ARABIC_SUPPORTED = [...ARABIC_FORMS.keys(), TATWEEL]
+const ARABIC_SUPPORTED = [...ARABIC_FORMS.keys(), TATWEEL, HAMZA, ZWNJ]
   .map((codePoint) => char(codePoint))
   .join('');
 const SUPPORTED = new RegExp(
@@ -110,7 +124,10 @@ const SUPPORTED = new RegExp(
     0x05be,
   )}${char(0x05c0)}${char(0x05c3)}${char(0x05c6)}${ARABIC_SUPPORTED}${char(
     0x060c,
-  )}${char(0x061b)}${char(0x061f)}${range(0x0660, 0x0669)}]*$`,
+  )}${char(0x061b)}${char(0x061f)}${range(0x0660, 0x0669)}${range(
+    0x06f0,
+    0x06f9,
+  )}]*$`,
 );
 
 const isRtl = (text: string) => {
@@ -142,7 +159,9 @@ export const joinArabic = (word: string) => {
     const codePoint = codePoints[i];
     const forms = ARABIC_FORMS.get(codePoint);
     if (!forms) {
-      out += char(codePoint);
+      // Anything else (hamza, the zero-width non-joiner, punctuation) breaks
+      // the joining
+      out += char(codePoint === HAMZA ? HAMZA_FORM : codePoint);
       continue;
     }
     const joinsPrevious = joinsBoth(codePoints[i - 1]);
@@ -164,19 +183,42 @@ export const joinArabic = (word: string) => {
 /**
  * A word as it is drawn left to right: runs of right-to-left characters
  * reversed (brackets mirrored), and, for a right-to-left word, its runs in
- * reverse order.
+ * reverse order. Letters and digits set the direction of a run; punctuation
+ * between two runs of the same direction takes it, and any other punctuation
+ * takes the word's direction.
  */
 export const visualWord = (word: string) => {
+  const chars = [...joinArabic(word)];
+  const wordRtl = isRtl(word) ?? false;
+  const strong = chars.map((c) =>
+    RTL_LETTER.test(c)
+      ? true
+      : LTR_LETTER.test(c) || DIGIT.test(c)
+        ? false
+        : undefined,
+  );
+  const direction = strong.map((value, i) => {
+    if (value !== undefined) {
+      return value;
+    }
+    const before = strong
+      .slice(0, i)
+      .reverse()
+      .find((s) => s !== undefined);
+    const after = strong.slice(i + 1).find((s) => s !== undefined);
+    return before !== undefined && before === after ? before : wordRtl;
+  });
+
   const runs: { rtl: boolean; text: string }[] = [];
-  for (const c of joinArabic(word)) {
-    const rtl = !LTR_LETTER.test(c);
+  chars.forEach((c, i) => {
+    const rtl = direction[i];
     const last = runs[runs.length - 1];
     if (last && last.rtl === rtl) {
       last.text += c;
     } else {
       runs.push({ rtl, text: c });
     }
-  }
+  });
   const drawn = runs.map(({ rtl, text }) =>
     rtl
       ? [...text]
@@ -186,7 +228,7 @@ export const visualWord = (word: string) => {
       : text,
   );
 
-  return (isRtl(word) ? drawn.reverse() : drawn).join('');
+  return (wordRtl ? drawn.reverse() : drawn).join('');
 };
 
 /**
@@ -215,7 +257,7 @@ export const previewTitle = (title: string) => {
   };
   for (const word of text.split(' ')) {
     // A number stays with the run it is in ("React 18 Native")
-    const direction = DIGITS.test(word)
+    const direction = NUMBER.test(word)
       ? against.length
         ? !rtl
         : undefined
