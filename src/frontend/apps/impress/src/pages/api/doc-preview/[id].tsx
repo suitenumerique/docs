@@ -1,21 +1,15 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ImageResponse } from 'next/og';
 
+import { previewTitle } from '@/docs/doc-meta/previewTitle';
 import { getPublicDoc, getPublicHostname } from '@/docs/doc-meta/server';
 
 const range = (from: number, to: number) =>
   `${String.fromCodePoint(from)}-${String.fromCodePoint(to)}`;
 
-// Characters the bundled font has: Latin, Latin-1, Latin Extended-A, dashes,
-// quotes and the ellipsis. For any other one, next/og would fetch a font or an
-// emoji image from the internet, and the renderer has no right-to-left
-// layout: leave out the title rather than draw it wrong or wait on a CDN.
-const SUPPORTED_TITLE = new RegExp(
-  `^[${range(0x20, 0x7e)}${range(0xa0, 0x17f)}${range(0x2013, 0x2014)}${range(
-    0x2018,
-    0x201d,
-  )}${String.fromCodePoint(0x2026)}]*$`,
-);
 // Docs stores the doc icon as an emoji at the start of the title. Pictographs
 // (but the © and ® the font has), joiners, variation selectors, flag letters,
 // skin tones, keycaps and tag characters.
@@ -28,15 +22,44 @@ const MAX_TITLE_LENGTH = 90;
 const CACHE_TTL = 5 * 60 * 1000;
 const CACHE_SIZE = 200;
 
+// Latin first: the other two only draw what Geist lacks
+const FONTS = [
+  ['Geist', 'Geist-Regular.ttf'],
+  ['Noto Sans Hebrew', 'NotoSansHebrew-Regular.ttf'],
+  ['Vazirmatn', 'Vazirmatn-Regular.ttf'],
+];
+const FONT_DIR = path.join(process.cwd(), 'public/assets/fonts/preview');
+
+type Font = { name: string; data: ArrayBuffer; weight: 400; style: 'normal' };
+let fonts: Promise<Font[]> | undefined;
+
+const loadFonts = () => {
+  fonts ??= Promise.all(
+    FONTS.map(async ([name, file]) => {
+      const data = await readFile(path.join(FONT_DIR, file));
+      return {
+        name,
+        data: data.buffer.slice(
+          data.byteOffset,
+          data.byteOffset + data.byteLength,
+        ),
+        weight: 400 as const,
+        style: 'normal' as const,
+      };
+    }),
+  ).catch((error: unknown) => {
+    fonts = undefined;
+    throw error;
+  });
+  return fonts;
+};
+
 // Rendering blocks the event loop for a few hundred milliseconds: render each
 // card once per CACHE_TTL, whatever the query string
 const cache = new Map<string, { png: Buffer; expires: number }>();
 
-const cardTitle = (title: string) => {
-  const text = title.replace(EMOJI, '').trim();
-  if (!SUPPORTED_TITLE.test(text)) {
-    return '';
-  }
+const shortTitle = (title: string) => {
+  const text = title.replace(EMOJI, '').replace(/\s+/g, ' ').trim();
   if (text.length <= MAX_TITLE_LENGTH) {
     return text;
   }
@@ -48,6 +71,10 @@ const cardTitle = (title: string) => {
 };
 
 const renderCard = async (title: string, host: string) => {
+  // `null` when the fonts can't draw it: the card goes without the title
+  const laidOut = previewTitle(title);
+  const fontSize = title.length > 40 ? 56 : 72;
+
   const image = new ImageResponse(
     <div
       style={{
@@ -65,12 +92,17 @@ const renderCard = async (title: string, host: string) => {
       <div
         style={{
           display: 'flex',
-          fontSize: title.length > 40 ? 56 : 72,
+          flexDirection: laidOut?.rtl ? 'row-reverse' : 'row',
+          flexWrap: 'wrap',
+          columnGap: Math.round(fontSize * 0.28),
+          fontSize,
           lineHeight: 1.2,
           wordBreak: 'break-word',
         }}
       >
-        {title}
+        {laidOut?.words.map((word, index) => (
+          <span key={index}>{word}</span>
+        ))}
       </div>
       <div
         style={{
@@ -84,7 +116,7 @@ const renderCard = async (title: string, host: string) => {
         <span>{host}</span>
       </div>
     </div>,
-    { width: 1200, height: 630 },
+    { width: 1200, height: 630, fonts: await loadFonts() },
   );
 
   return Buffer.from(await image.arrayBuffer());
@@ -105,7 +137,7 @@ export default async function handler(
     return;
   }
 
-  const title = cardTitle(doc.title || '');
+  const title = shortTitle(doc.title || '');
   // Normalized, so host variants the backend accepts share one cache entry
   const host = getPublicHostname(req);
   const key = `${host} ${doc.id} ${title}`;
