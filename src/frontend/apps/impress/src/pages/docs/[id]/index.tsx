@@ -258,6 +258,8 @@ const getJson = async <T,>(
           resolve(null);
         }
       });
+      // A body cut short (timeout, backend gone) never ends: settle anyway
+      res.on('close', () => resolve(null));
     });
     req.on('timeout', () => req.destroy());
     req.on('error', () => resolve(null));
