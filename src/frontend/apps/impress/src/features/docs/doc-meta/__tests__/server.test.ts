@@ -29,6 +29,12 @@ describe('markdownToExcerpt', () => {
     ).toBe('Use snake_case and 1. or *x* & ©');
   });
 
+  it('keeps references it cannot decode, and decodes only once', () => {
+    expect(markdownToExcerpt('&#99999999; &#x26;#169; &amp;amp;')).toBe(
+      '&#99999999; &#169; &amp;',
+    );
+  });
+
   it('cuts long text on a word', () => {
     const excerpt = markdownToExcerpt('word '.repeat(100));
 

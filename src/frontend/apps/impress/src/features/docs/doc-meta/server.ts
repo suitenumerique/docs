@@ -14,6 +14,24 @@ const ENTITIES: Record<string, string> = {
   quot: '"',
 };
 
+// One pass, so a decoded `&` never starts another reference
+const CHARACTER_REFERENCE =
+  /&(?:#x([0-9a-f]{1,6})|#(\d{1,7})|(amp|lt|gt|quot));/gi;
+
+const decodeReference = (
+  reference: string,
+  hex?: string,
+  dec?: string,
+  name?: string,
+) => {
+  if (name) {
+    return ENTITIES[name.toLowerCase()] ?? reference;
+  }
+  const codePoint = hex ? parseInt(hex, 16) : parseInt(dec ?? '', 10);
+
+  return codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : reference;
+};
+
 /**
  * GET a JSON document, `null` on any other answer. `fetch` silently drops a
  * `Host` header, so this goes through `node:http`.
@@ -63,6 +81,16 @@ export const getPublicHost = (req: IncomingMessage) =>
     ?.toString()
     .split(',')[0]
     .trim();
+
+/**
+ * Host name alone, as the backend matches it against ALLOWED_HOSTS: lower
+ * case, without port or trailing dot.
+ */
+export const getPublicHostname = (req: IncomingMessage) =>
+  (getPublicHost(req) ?? '')
+    .toLowerCase()
+    .replace(/:\d*$/, '')
+    .replace(/\.$/, '');
 
 /**
  * Public origin, to build the absolute URLs link previews need. Always https
@@ -136,13 +164,7 @@ export const markdownToExcerpt = (markdown: string, title = '') => {
         // markdown writer adds to plain text
         .replace(/(?<!\\)[*_~`]+/g, '')
         .replace(/\\([!-/:-@[-`{-~])/g, '$1')
-        .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) =>
-          String.fromCodePoint(parseInt(hex, 16)),
-        )
-        .replace(/&#(\d+);/g, (_, dec: string) =>
-          String.fromCodePoint(parseInt(dec, 10)),
-        )
-        .replace(/&(amp|lt|gt|quot);/g, (_, name: string) => ENTITIES[name])
+        .replace(CHARACTER_REFERENCE, decodeReference)
         .trim(),
     )
     .filter((line) => line && !/^[-:\s]+$/.test(line));

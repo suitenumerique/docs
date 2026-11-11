@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { ImageResponse } from 'next/og';
 
-import { getPublicDoc, getPublicHost } from '@/docs/doc-meta/server';
+import { getPublicDoc, getPublicHostname } from '@/docs/doc-meta/server';
 
 const range = (from: number, to: number) =>
   `${String.fromCodePoint(from)}-${String.fromCodePoint(to)}`;
@@ -16,9 +16,11 @@ const SUPPORTED_TITLE = new RegExp(
     0x201d,
   )}${String.fromCodePoint(0x2026)}]*$`,
 );
-// Docs stores the doc icon as an emoji at the start of the title
+// Docs stores the doc icon as an emoji at the start of the title. Pictographs
+// (but the © and ® the font has), joiners, variation selectors, flag letters,
+// skin tones, keycaps and tag characters.
 const EMOJI = new RegExp(
-  `\\p{Extended_Pictographic}|${String.fromCodePoint(0xfe0f)}|${String.fromCodePoint(0x200d)}`,
+  `(?![${String.fromCodePoint(0xa9)}${String.fromCodePoint(0xae)}])\\p{Extended_Pictographic}|[${range(0xfe00, 0xfe0f)}${String.fromCodePoint(0x200d)}${String.fromCodePoint(0x20e3)}${range(0x1f1e6, 0x1f1ff)}${range(0x1f3fb, 0x1f3ff)}${range(0xe0020, 0xe007f)}]`,
   'gu',
 );
 
@@ -104,7 +106,8 @@ export default async function handler(
   }
 
   const title = cardTitle(doc.title || '');
-  const host = getPublicHost(req) ?? '';
+  // Normalized, so host variants the backend accepts share one cache entry
+  const host = getPublicHostname(req);
   const key = `${host} ${doc.id} ${title}`;
 
   const cached = cache.get(key);

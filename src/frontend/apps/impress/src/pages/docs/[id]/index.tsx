@@ -262,11 +262,19 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async ({
 
   const url = `${getPublicOrigin(req)}/docs/${id}/`;
 
+  // The preview text is optional: never fail the page for it
+  let description = '';
+  try {
+    description = await getPublicDocExcerpt(req, doc);
+  } catch {
+    // Keep the generic description
+  }
+
   return {
     props: {
       meta: {
         title: doc.title || '',
-        description: await getPublicDocExcerpt(req, doc),
+        description,
         url,
         image: `${url}preview.png`,
       },
