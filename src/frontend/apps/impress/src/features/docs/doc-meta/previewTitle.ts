@@ -185,11 +185,11 @@ export const joinArabic = (word: string) => {
  * reversed (brackets mirrored), and, for a right-to-left word, its runs in
  * reverse order. Letters and digits set the direction of a run; punctuation
  * between two runs of the same direction takes it, and any other punctuation
- * takes the word's direction.
+ * takes the word's direction, or `fallbackRtl` for a word without letters.
  */
-export const visualWord = (word: string) => {
+export const visualWord = (word: string, fallbackRtl = false) => {
   const chars = [...joinArabic(word)];
-  const wordRtl = isRtl(word) ?? false;
+  const wordRtl = isRtl(word) ?? fallbackRtl;
   const strong = chars.map((c) =>
     RTL_LETTER.test(c)
       ? true
@@ -255,20 +255,28 @@ export const previewTitle = (title: string) => {
     }
     against = [];
   };
-  for (const word of text.split(' ')) {
-    // A number stays with the run it is in ("React 18 Native")
-    const direction = NUMBER.test(word)
-      ? against.length
-        ? !rtl
-        : undefined
-      : isRtl(word);
+  const all = text.split(' ');
+  all.forEach((word, i) => {
+    let direction = isRtl(word);
+    if (direction === undefined && against.length) {
+      // A word without letters stays in the run it is in: a number always
+      // ("React 18", "שלום עולם 2027"), other punctuation when the run goes
+      // on after it ("React & Redux")
+      const next = all
+        .slice(i + 1)
+        .map((w) => isRtl(w))
+        .find((d) => d !== undefined);
+      if (NUMBER.test(word) || next === !rtl) {
+        direction = !rtl;
+      }
+    }
     if (direction !== undefined && direction !== rtl) {
-      against.push(visualWord(word));
+      against.push(visualWord(word, !rtl));
     } else {
       flush();
-      words.push(visualWord(word));
+      words.push(visualWord(word, rtl));
     }
-  }
+  });
   flush();
 
   return { rtl, words };

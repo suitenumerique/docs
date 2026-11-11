@@ -68,6 +68,21 @@ describe('previewTitle', () => {
     ]);
   });
 
+  it('keeps punctuation words inside the run around them', () => {
+    expect(previewTitle('מדריך React & Redux')?.words).toEqual([
+      'ךירדמ',
+      'React & Redux',
+    ]);
+    expect(previewTitle('Plan שלום – עולם')?.words).toEqual([
+      'Plan',
+      'םלוע – םולש',
+    ]);
+  });
+
+  it('mirrors a lone arrow in a Hebrew title', () => {
+    expect(previewTitle('א -> ב')?.words).toEqual(['א', '<-', 'ב']);
+  });
+
   it('accepts the Persian zero-width non-joiner', () => {
     expect(previewTitle('می‌خواهم')).not.toBeNull();
   });
