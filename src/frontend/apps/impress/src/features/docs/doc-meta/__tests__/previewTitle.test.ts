@@ -79,6 +79,30 @@ describe('previewTitle', () => {
     ]);
   });
 
+  it('keeps signs on the side of their number', () => {
+    expect(previewTitle('הנחה 50% מחיר $5')?.words).toEqual([
+      'החנה',
+      '50%',
+      'ריחמ',
+      '$5',
+    ]);
+  });
+
+  it('leaves a separator between two runs going opposite ways on its own', () => {
+    expect(previewTitle('Plan שלום - notes')?.words).toEqual([
+      'Plan',
+      'םולש',
+      '-',
+      'notes',
+    ]);
+    expect(previewTitle('תכנית React - שלום')?.words).toEqual([
+      'תינכת',
+      'React',
+      '-',
+      'םולש',
+    ]);
+  });
+
   it('mirrors a lone arrow in a Hebrew title', () => {
     expect(previewTitle('א -> ב')?.words).toEqual(['א', '<-', 'ב']);
   });

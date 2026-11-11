@@ -189,7 +189,8 @@ export const joinArabic = (word: string) => {
  */
 export const visualWord = (word: string, fallbackRtl = false) => {
   const chars = [...joinArabic(word)];
-  const wordRtl = isRtl(word) ?? fallbackRtl;
+  // A number with its signs ("50%", "$5") reads left to right
+  const wordRtl = isRtl(word) ?? (DIGIT.test(word) ? false : fallbackRtl);
   const strong = chars.map((c) =>
     RTL_LETTER.test(c)
       ? true
@@ -266,7 +267,7 @@ export const previewTitle = (title: string) => {
         .slice(i + 1)
         .map((w) => isRtl(w))
         .find((d) => d !== undefined);
-      if (NUMBER.test(word) || next === !rtl) {
+      if ((NUMBER.test(word) && DIGIT.test(word)) || next === !rtl) {
         direction = !rtl;
       }
     }
