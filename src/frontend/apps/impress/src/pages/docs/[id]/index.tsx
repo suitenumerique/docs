@@ -13,11 +13,15 @@ import {
   Doc,
   DocPage403,
   KEY_DOC,
-  LinkReach,
   useDoc,
   useDocStore,
   useTrans,
 } from '@/docs/doc-management/';
+import {
+  getPublicDoc,
+  getPublicDocExcerpt,
+  getPublicOrigin,
+} from '@/docs/doc-meta/server';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import { PresenterRoot } from '@/features/docs/doc-presenter';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
@@ -223,122 +227,83 @@ const DocPage = ({ id }: DocProps) => {
 };
 
 interface PageProps {
-  // Title of a public doc, `''` when it has none
-  publicTitle?: string;
+  // Set when the doc is public, for link previews
+  meta?: DocMeta;
+}
+
+interface DocMeta {
+  // `''` when the doc has no title or no text
+  title: string;
+  description: string;
+  url: string;
+  image: string;
 }
 
 /**
- * GET a JSON document, `null` on any other answer. `fetch` silently drops a
- * `Host` header, so this goes through `node:http`.
- */
-const getJson = async <T,>(
-  url: string,
-  headers: Record<string, string>,
-): Promise<T | null> => {
-  const { request } = url.startsWith('https:')
-    ? await import('node:https')
-    : await import('node:http');
-
-  return new Promise((resolve) => {
-    const req = request(url, { headers, timeout: 2000 }, (res) => {
-      if (res.statusCode !== 200) {
-        res.resume();
-        resolve(null);
-        return;
-      }
-      let body = '';
-      res.setEncoding('utf8');
-      res.on('data', (chunk: string) => {
-        body += chunk;
-      });
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(body) as T);
-        } catch {
-          resolve(null);
-        }
-      });
-      // A body cut short (timeout, backend gone) never ends: settle anyway
-      res.on('close', () => resolve(null));
-    });
-    req.on('timeout', () => req.destroy());
-    req.on('error', () => resolve(null));
-    req.end();
-  });
-};
-
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-
-/**
  * Link previews (Mattermost, Slack, social networks) don't run JavaScript:
- * render the title of a public doc in the HTML sent by the server. The doc is
- * fetched without the visitor's cookies, so a restricted or connected-only doc
- * never leaks its title, it keeps the generic tags.
+ * render the title, start and preview image of a public doc in the HTML sent
+ * by the server. Restricted and connected-only docs keep the generic tags.
  */
 export const getServerSideProps: GetServerSideProps<PageProps> = async ({
   params,
   req,
 }) => {
   const id = params?.id;
-  const backendUrl = process.env.BACKEND_BASE_URL;
 
   // Client-side navigations fetch these props as JSON and have no use for them
-  if (
-    !backendUrl ||
-    typeof id !== 'string' ||
-    !UUID_REGEX.test(id) ||
-    req.url?.startsWith('/_next/data/')
-  ) {
+  if (typeof id !== 'string' || req.url?.startsWith('/_next/data/')) {
     return { props: {} };
   }
 
-  // In production the backend only accepts its public host (ALLOWED_HOSTS) and
-  // redirects plain http to https. Pass on the public host, the first one when
-  // proxies are chained, and always claim https: Next.js sets
-  // `x-forwarded-proto: http` when the proxy sends none, and this request
-  // carries no credentials.
-  const headers: Record<string, string> = {
-    Accept: 'application/json',
-    'X-Forwarded-Proto': 'https',
+  const doc = await getPublicDoc(req, id);
+  if (!doc) {
+    return { props: {} };
+  }
+
+  const url = `${getPublicOrigin(req)}/docs/${id}/`;
+
+  return {
+    props: {
+      meta: {
+        title: doc.title || '',
+        description: await getPublicDocExcerpt(req, doc),
+        url,
+        image: `${url}preview.png`,
+      },
+    },
   };
-  const host = (req.headers['x-forwarded-host'] ?? req.headers.host)
-    ?.toString()
-    .split(',')[0]
-    .trim();
-  if (host) {
-    headers.Host = host;
-  }
-
-  try {
-    const doc = await getJson<Doc>(
-      `${backendUrl}/api/v1.0/documents/${id}/`,
-      headers,
-    );
-    if (doc?.computed_link_reach !== LinkReach.PUBLIC) {
-      return { props: {} };
-    }
-
-    return { props: { publicTitle: doc.title || '' } };
-  } catch {
-    return { props: {} };
-  }
 };
 
-const DocMetaHead = ({ docTitle }: { docTitle: string }) => {
+const DocMetaHead = ({ meta }: { meta: DocMeta }) => {
   const { t } = useTranslation();
   const { untitledDocument } = useTrans();
 
-  const title = `${docTitle || untitledDocument} - ${t('Docs', {
+  const productName = t('Docs', {
     description: 'Product name, shown in page titles and the logo',
-  })}`;
+  });
+  const title = `${meta.title || untitledDocument} - ${productName}`;
 
   return (
     <Head>
       <title>{title}</title>
       <meta property="og:title" content={title} key="title" />
+      <meta property="og:site_name" content={productName} />
       <meta property="og:type" content="article" />
-      <meta name="twitter:card" content="summary" />
+      <meta property="og:url" content={meta.url} />
+      <meta property="og:image" content={meta.image} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      {meta.description && (
+        <>
+          <meta
+            name="description"
+            content={meta.description}
+            key="description"
+          />
+          <meta property="og:description" content={meta.description} />
+        </>
+      )}
     </Head>
   );
 };
@@ -353,10 +318,8 @@ Page.getLayout = function getLayout() {
 
 // Rendered by `_app` outside the providers, which wait for the config on the
 // client: the server would otherwise render none of it
-Page.getHead = function getHead({ publicTitle }) {
-  return publicTitle !== undefined ? (
-    <DocMetaHead docTitle={publicTitle} />
-  ) : null;
+Page.getHead = function getHead({ meta }) {
+  return meta ? <DocMetaHead meta={meta} /> : null;
 };
 
 export default Page;

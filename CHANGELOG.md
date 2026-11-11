@@ -8,7 +8,7 @@ and this project adheres to
 
 ### Added
 
-- ✨(frontend) render the title of a public doc server-side for link previews #739
+- ✨(frontend) render the title, start and a preview image of a public doc server-side for link previews #739
 - ✨(backend) add a dedicated document abilities endpoint #2885
 - ✨(frontend) add a /children block listing the sub-docs #2799
 - 🤖(agents) add AI skills #2746

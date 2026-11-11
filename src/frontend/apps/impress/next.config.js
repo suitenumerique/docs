@@ -40,6 +40,13 @@ const nextConfig = {
       },
     ];
   },
+  // `/api` belongs to the backend behind the reverse proxy: serve the preview
+  // image of a doc under the doc's own path
+  async rewrites() {
+    return [
+      { source: '/docs/:id/preview.png', destination: '/api/doc-preview/:id' },
+    ];
+  },
   images: {
     unoptimized: true,
   },
