@@ -291,15 +291,22 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async ({
     return { props: {} };
   }
 
-  // Pass on the public host and scheme: in production the backend only accepts
-  // its public host (ALLOWED_HOSTS) and redirects plain http to https.
-  const headers: Record<string, string> = { Accept: 'application/json' };
-  const host = req.headers['x-forwarded-host'] ?? req.headers.host;
-  if (typeof host === 'string') {
+  // In production the backend only accepts its public host (ALLOWED_HOSTS) and
+  // redirects plain http to https. Pass on the public host, the first one when
+  // proxies are chained, and always claim https: Next.js sets
+  // `x-forwarded-proto: http` when the proxy sends none, and this request
+  // carries no credentials.
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'X-Forwarded-Proto': 'https',
+  };
+  const host = (req.headers['x-forwarded-host'] ?? req.headers.host)
+    ?.toString()
+    .split(',')[0]
+    .trim();
+  if (host) {
     headers.Host = host;
   }
-  const proto = req.headers['x-forwarded-proto'];
-  headers['X-Forwarded-Proto'] = typeof proto === 'string' ? proto : 'https';
 
   try {
     const doc = await getJson<Doc>(
