@@ -21,6 +21,14 @@ describe('markdownToExcerpt', () => {
     );
   });
 
+  it('undoes the escapes of the markdown writer', () => {
+    expect(
+      markdownToExcerpt(
+        'Use snake\\_case and 1\\. or \\*x\\*&#x20;&amp; &#169;',
+      ),
+    ).toBe('Use snake_case and 1. or *x* & ©');
+  });
+
   it('cuts long text on a word', () => {
     const excerpt = markdownToExcerpt('word '.repeat(100));
 

@@ -7,6 +7,13 @@ export const UUID_REGEX =
 
 const EXCERPT_LENGTH = 200;
 
+const ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+};
+
 /**
  * GET a JSON document, `null` on any other answer. `fetch` silently drops a
  * `Host` header, so this goes through `node:http`.
@@ -14,13 +21,14 @@ const EXCERPT_LENGTH = 200;
 const getJson = async <T>(
   url: string,
   headers: Record<string, string>,
+  timeout: number,
 ): Promise<T | null> => {
   const { request } = url.startsWith('https:')
     ? await import('node:https')
     : await import('node:http');
 
   return new Promise((resolve) => {
-    const req = request(url, { headers, timeout: 2000 }, (res) => {
+    const req = request(url, { headers, timeout }, (res) => {
       if (res.statusCode !== 200) {
         res.resume();
         resolve(null);
@@ -57,18 +65,18 @@ export const getPublicHost = (req: IncomingMessage) =>
     .trim();
 
 /**
- * Public origin, to build the absolute URLs link previews need.
+ * Public origin, to build the absolute URLs link previews need. Always https
+ * but on a local machine: Next.js sets `x-forwarded-proto: http` when the
+ * proxy sends none, so the header can't tell.
  */
 export const getPublicOrigin = (req: IncomingMessage) => {
-  const proto = req.headers['x-forwarded-proto']
-    ?.toString()
-    .split(',')[0]
-    .trim();
+  const host = getPublicHost(req) ?? '';
+  const isLocal = /^(localhost|127\.0\.0\.1)(:|$)/.test(host);
 
-  return `${proto === 'http' ? 'http' : 'https'}://${getPublicHost(req)}`;
+  return `${isLocal ? 'http' : 'https'}://${host}`;
 };
 
-const backendGet = <T>(req: IncomingMessage, path: string) => {
+const backendGet = <T>(req: IncomingMessage, path: string, timeout = 2000) => {
   const backendUrl = process.env.BACKEND_BASE_URL;
   if (!backendUrl) {
     return Promise.resolve(null);
@@ -86,8 +94,14 @@ const backendGet = <T>(req: IncomingMessage, path: string) => {
   if (host) {
     headers.Host = host;
   }
+  // The backend throttles by client address: count these calls against the
+  // visitor, not against the frontend server they all come from
+  const forwardedFor = req.headers['x-forwarded-for']?.toString();
+  if (forwardedFor) {
+    headers['X-Forwarded-For'] = forwardedFor;
+  }
 
-  return getJson<T>(`${backendUrl}${path}`, headers);
+  return getJson<T>(`${backendUrl}${path}`, headers, timeout);
 };
 
 /**
@@ -118,8 +132,17 @@ export const markdownToExcerpt = (markdown: string, title = '') => {
         // Images, then links: keep the text only
         .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
         .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-        // Inline markers
-        .replace(/[*_~`]+/g, '')
+        // Inline markers, then the escapes and character references the
+        // markdown writer adds to plain text
+        .replace(/(?<!\\)[*_~`]+/g, '')
+        .replace(/\\([!-/:-@[-`{-~])/g, '$1')
+        .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) =>
+          String.fromCodePoint(parseInt(hex, 16)),
+        )
+        .replace(/&#(\d+);/g, (_, dec: string) =>
+          String.fromCodePoint(parseInt(dec, 10)),
+        )
+        .replace(/&(amp|lt|gt|quot);/g, (_, name: string) => ENTITIES[name])
         .trim(),
     )
     .filter((line) => line && !/^[-:\s]+$/.test(line));
@@ -147,9 +170,12 @@ export const getPublicDocExcerpt = async (
   req: IncomingMessage,
   doc: Pick<Doc, 'id' | 'title'>,
 ) => {
+  // The doc is read from the collaboration server and converted: give up
+  // sooner than for the doc itself, the page waits for it
   const formatted = await backendGet<{ content: string | null }>(
     req,
     `/api/v1.0/documents/${doc.id}/formatted-content/?content_format=markdown`,
+    1000,
   );
 
   return formatted?.content

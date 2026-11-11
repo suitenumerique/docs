@@ -3,28 +3,49 @@ import { ImageResponse } from 'next/og';
 
 import { getPublicDoc, getPublicHost } from '@/docs/doc-meta/server';
 
-// The bundled font is Latin only and the renderer lays text out left to right:
-// leave out titles it would draw as boxes or backwards
-const SUPPORTED_TITLE =
-  /^[\p{Script=Latin}\p{Script=Common}\p{Script=Inherited}]*$/u;
+const range = (from: number, to: number) =>
+  `${String.fromCodePoint(from)}-${String.fromCodePoint(to)}`;
 
-/**
- * Preview image of a public doc, served at `/docs/<id>/preview.png` (see the
- * rewrite in next.config.js) for link previews.
- */
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse,
-) {
-  const id = req.query.id;
-  const doc = typeof id === 'string' ? await getPublicDoc(req, id) : null;
-  if (!doc) {
-    res.status(404).end();
-    return;
+// Characters the bundled font has: Latin, Latin-1, Latin Extended-A, dashes,
+// quotes and the ellipsis. For any other one, next/og would fetch a font or an
+// emoji image from the internet, and the renderer has no right-to-left
+// layout: leave out the title rather than draw it wrong or wait on a CDN.
+const SUPPORTED_TITLE = new RegExp(
+  `^[${range(0x20, 0x7e)}${range(0xa0, 0x17f)}${range(0x2013, 0x2014)}${range(
+    0x2018,
+    0x201d,
+  )}${String.fromCodePoint(0x2026)}]*$`,
+);
+// Docs stores the doc icon as an emoji at the start of the title
+const EMOJI = new RegExp(
+  `\\p{Extended_Pictographic}|${String.fromCodePoint(0xfe0f)}|${String.fromCodePoint(0x200d)}`,
+  'gu',
+);
+
+const MAX_TITLE_LENGTH = 90;
+const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_SIZE = 200;
+
+// Rendering blocks the event loop for a few hundred milliseconds: render each
+// card once per CACHE_TTL, whatever the query string
+const cache = new Map<string, { png: Buffer; expires: number }>();
+
+const cardTitle = (title: string) => {
+  const text = title.replace(EMOJI, '').trim();
+  if (!SUPPORTED_TITLE.test(text)) {
+    return '';
+  }
+  if (text.length <= MAX_TITLE_LENGTH) {
+    return text;
   }
 
-  const title = doc.title && SUPPORTED_TITLE.test(doc.title) ? doc.title : '';
+  const cut = text.slice(0, MAX_TITLE_LENGTH);
+  const lastSpace = cut.lastIndexOf(' ');
 
+  return `${lastSpace > MAX_TITLE_LENGTH / 2 ? cut.slice(0, lastSpace) : cut}…`;
+};
+
+const renderCard = async (title: string, host: string) => {
   const image = new ImageResponse(
     <div
       style={{
@@ -42,10 +63,9 @@ export default async function handler(
       <div
         style={{
           display: 'flex',
-          fontSize: 72,
-          fontWeight: 700,
+          fontSize: title.length > 40 ? 56 : 72,
           lineHeight: 1.2,
-          lineClamp: 3,
+          wordBreak: 'break-word',
         }}
       >
         {title}
@@ -59,14 +79,52 @@ export default async function handler(
         }}
       >
         <span>Docs</span>
-        <span>{getPublicHost(req)}</span>
+        <span>{host}</span>
       </div>
     </div>,
     { width: 1200, height: 630 },
   );
 
+  return Buffer.from(await image.arrayBuffer());
+};
+
+/**
+ * Preview image of a public doc, served at `/docs/<id>/preview.png` (see the
+ * rewrite in next.config.js) for link previews.
+ */
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
+  const id = req.query.id;
+  const doc = typeof id === 'string' ? await getPublicDoc(req, id) : null;
+  if (!doc) {
+    res.status(404).end();
+    return;
+  }
+
+  const title = cardTitle(doc.title || '');
+  const host = getPublicHost(req) ?? '';
+  const key = `${host} ${doc.id} ${title}`;
+
+  const cached = cache.get(key);
+  let png = cached && cached.expires > Date.now() ? cached.png : undefined;
+  if (!png) {
+    try {
+      png = await renderCard(title, host);
+    } catch {
+      res.status(500).end();
+      return;
+    }
+    cache.delete(key);
+    if (cache.size >= CACHE_SIZE) {
+      cache.delete(cache.keys().next().value as string);
+    }
+    cache.set(key, { png, expires: Date.now() + CACHE_TTL });
+  }
+
   res.setHeader('Content-Type', 'image/png');
   // Short-lived: the title can change and the doc can stop being public
   res.setHeader('Cache-Control', 'public, max-age=300');
-  res.send(Buffer.from(await image.arrayBuffer()));
+  res.send(png);
 }
