@@ -146,35 +146,117 @@ export const getPublicDoc = async (req: IncomingMessage, id: string) => {
   return doc?.computed_link_reach === LinkReach.PUBLIC ? doc : null;
 };
 
+// Headings, quotes, list items and tasks
+const BLOCK_MARKER = /^\s*(#{1,6}\s+|>\s?|[*+-]\s+(\[[ xX]\]\s+)?|\d+\.\s+)/;
+
+// Punctuation that already ends a line, maybe inside a closing quote or bracket
+const SENTENCE_END = /[.,!?:;…،؛؟۔。！？，；：।॥]["'”’»)\]}]*$/u;
+
+// Opening code fence: a backtick fence has no backtick after it
+const FENCE = /^\s*(`{3,}(?!.*`)|~{3,})/;
+
+const TABLE_ROW = /^\s*\|/;
+const QUOTE = /^\s*>\s?/;
+
+// Words without their diacritics, which are often typed differently
+const words = (text: string) =>
+  (
+    text
+      .normalize('NFD')
+      .replace(/\p{M}/gu, '')
+      .toLowerCase()
+      .match(/[\p{L}\p{N}]+/gu) ?? []
+  )
+    .sort()
+    .join(' ');
+
+const sameWords = (a: string, b: string) => {
+  const wordsA = words(a);
+
+  return wordsA !== '' && wordsA === words(b);
+};
+
+const markdownLineToText = (line: string) =>
+  line
+    .replace(BLOCK_MARKER, '')
+    // Hard line break
+    .replace(/\\\s*$/, '')
+    .replace(/(?<!\\)\|/g, ' ')
+    // Images, then links: keep the text only
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    // Inline markers, then the escapes and character references the
+    // markdown writer adds to plain text
+    .replace(/(?<!\\)[*_~`]+/g, '')
+    .replace(/\\([!-/:-@[-`{-~])/g, '$1')
+    .replace(CHARACTER_REFERENCE, decodeReference)
+    .trim();
+
 /**
  * Plain text start of a markdown document, for a preview description.
  */
 export const markdownToExcerpt = (markdown: string, title = '') => {
-  const lines = markdown
-    .split('\n')
-    .map((line) =>
-      line
-        // Block markers: headings, quotes, list items, tasks, table pipes
-        .replace(/^\s*(#{1,6}\s+|>\s?|[*+-]\s+(\[[ xX]\]\s+)?|\d+\.\s+)/, '')
-        .replace(/\|/g, ' ')
-        // Images, then links: keep the text only
-        .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
-        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-        // Inline markers, then the escapes and character references the
-        // markdown writer adds to plain text
-        .replace(/(?<!\\)[*_~`]+/g, '')
-        .replace(/\\([!-/:-@[-`{-~])/g, '$1')
-        .replace(CHARACTER_REFERENCE, decodeReference)
-        .trim(),
-    )
-    .filter((line) => line && !/^[-:\s]+$/.test(line));
+  const blocks: string[] = [];
+  // The fence that opened the code block we are in
+  let fence = '';
+  let canContinue = false;
+  let inQuote = false;
 
-  // The title is already shown above the description
-  if (lines[0] === title.trim()) {
-    lines.shift();
+  for (const line of markdown.split('\n')) {
+    // Code reads badly in a preview, and a full stop would change it
+    if (fence) {
+      const closing = line.trim();
+      if (closing.startsWith(fence) && /^(`+|~+)$/.test(closing)) {
+        fence = '';
+      }
+      continue;
+    }
+    const opening = FENCE.exec(line);
+    if (opening) {
+      fence = opening[1];
+      canContinue = false;
+      continue;
+    }
+
+    // A quote repeats its marker on each line: read what follows it
+    const isQuote = QUOTE.test(line);
+    const body = isQuote ? line.replace(QUOTE, '') : line;
+
+    const text = markdownLineToText(body);
+    if (!text || /^[-:\s]+$/.test(text)) {
+      canContinue = false;
+      continue;
+    }
+
+    // A wrapped line or a hard line break carries on the same paragraph
+    const continues =
+      canContinue &&
+      (!isQuote || inQuote) &&
+      !BLOCK_MARKER.test(body) &&
+      !TABLE_ROW.test(body);
+    if (continues) {
+      blocks[blocks.length - 1] += ` ${text}`;
+    } else {
+      blocks.push(text);
+    }
+    canContinue = !/^\s*#{1,6}\s/.test(body) && !TABLE_ROW.test(body);
+    inQuote = isQuote;
   }
 
-  const text = lines.join(' ').replace(/\s+/g, ' ');
+  // The title is already shown above the description, often repeated as the
+  // first heading, sometimes with its words in another order
+  if (blocks.length && sameWords(blocks[0], title)) {
+    blocks.shift();
+  }
+
+  // A heading or list item has no full stop: keep it from running into the
+  // next one
+  const text = blocks
+    .map((block, i) =>
+      i < blocks.length - 1 && !SENTENCE_END.test(block) ? `${block}.` : block,
+    )
+    .join(' ')
+    .replace(/\s+/g, ' ');
   if (text.length <= EXCERPT_LENGTH) {
     return text;
   }
