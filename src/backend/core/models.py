@@ -2312,24 +2312,18 @@ class Invitation(BaseModel):
         return timezone.now() > (self.created_at + validity_duration)
 
     def get_abilities(self, user):
-        """Compute and return abilities for a given user."""
-        roles = []
+        """
+        Compute and return abilities for a given user.
 
-        if user.is_authenticated:
-            teams = user.teams
-            try:
-                roles = self.user_roles or []
-            except AttributeError:
-                try:
-                    roles = self.document.accesses.filter(
-                        models.Q(user=user) | models.Q(team__in=teams),
-                    ).values_list("role", flat=True)
-                except self._meta.model.DoesNotExist, IndexError:
-                    roles = []
+        The role of the user counts the ancestors of the document, as for its
+        accesses. The list view precomputes it once for the page (`user_role`).
+        """
+        try:
+            role = self.user_role
+        except AttributeError:
+            role = self.document.get_role(user)
 
-        is_admin_or_owner = bool(
-            set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
-        )
+        is_admin_or_owner = role in PRIVILEGED_ROLES
 
         return {
             "destroy": is_admin_or_owner,
