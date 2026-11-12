@@ -16,6 +16,8 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+## [6.1.0] - 2026-11-12
+
 - The collaboration server reads the abilities of a caller from the new
   `GET /api/v1.0/documents/{id}/abilities/` endpoint instead of
   `GET /api/v1.0/documents/{id}/`. A backend without that endpoint answers
