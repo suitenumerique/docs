@@ -13,6 +13,7 @@ and this project adheres to
 - ⚡️(backend) probe the celery worker with heartbeat files, 
   not inspect ping #2956
 - 💄(frontend) redesign offline error page #2808
+- 🛂(frontend) allow asking for access from a sub-document page #2994
 
 ### Fixed
 

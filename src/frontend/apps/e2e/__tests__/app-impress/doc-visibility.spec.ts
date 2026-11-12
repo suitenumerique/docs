@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-import { BROWSERS, createDoc, verifyDocName } from './utils-common';
+import {
+  BROWSERS,
+  clickInEditorShareButton,
+  createDoc,
+  verifyDocName,
+} from './utils-common';
 import { getEditor, writeInEditor } from './utils-editor';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
 import { SignIn, expectLoginPage, logOut } from './utils-signin';
@@ -435,15 +440,81 @@ test.describe('Doc Visibility: Authenticated', () => {
 
     await otherPage.getByRole('button', { name: 'Share' }).click();
 
+    // The request made on the parent document is detected from the
+    // sub-document: the button is visible and already disabled
     await expect(
-      otherPage.getByText(
-        'As this is a sub-document, please request access to the parent document to enable these features.',
-      ),
+      otherPage.getByRole('button', { name: 'Request access' }),
+    ).toBeDisabled();
+
+    await cleanup();
+  });
+
+  test('It requests access from a sub-document', async ({
+    page,
+    browserName,
+  }) => {
+    test.slow();
+
+    const [docTitle] = await createDoc(
+      page,
+      'Visibility from a sub-page',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, docTitle);
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    const selectVisibility = page.getByTestId('doc-visibility');
+    await selectVisibility.click();
+    await page.getByRole('menuitemradio', { name: 'Connected' }).click();
+
+    await expect(
+      page.getByText('The document visibility has been updated.'),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'close' }).click();
+
+    const docUrl = page.url();
+
+    const { name: childTitle } = await createRootSubPage(
+      page,
+      browserName,
+      'Visibility from a sub-page - child',
+    );
+
+    const urlChildDoc = page.url();
+
+    // The other user connects directly to the sub-document
+    const { otherPage, otherBrowserName, cleanup } =
+      await connectOtherUserToDoc({
+        browserName,
+        docUrl: urlChildDoc,
+        docTitle: childTitle,
+      });
+
+    await otherPage.getByRole('button', { name: 'Share' }).click();
+
+    await otherPage.getByRole('button', { name: 'Request access' }).click();
+
+    await expect(
+      otherPage.getByText('Access request sent successfully.'),
     ).toBeVisible();
 
     await expect(
       otherPage.getByRole('button', { name: 'Request access' }),
-    ).toBeHidden();
+    ).toBeDisabled();
+
+    // The request is attached to the top parent document: the owner sees it
+    // from the root document
+    await page.goto(docUrl);
+    await clickInEditorShareButton(page);
+    await expect(page.getByText('Access Requests')).toBeVisible();
+    await expect(
+      page.getByText(
+        process.env[`SIGN_IN_USERNAME_${otherBrowserName.toUpperCase()}`] || '',
+      ),
+    ).toBeVisible();
 
     await cleanup();
   });

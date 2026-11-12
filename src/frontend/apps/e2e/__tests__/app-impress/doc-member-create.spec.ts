@@ -345,7 +345,7 @@ test.describe('Document create member', () => {
 test.describe('Document create member: Multiple login', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('It cannot request member access on child doc on a 403 page', async ({
+  test('It requests member access on a child doc from a 403 page', async ({
     page,
     browserName,
   }) => {
@@ -356,7 +356,7 @@ test.describe('Document create member: Multiple login', () => {
 
     const [docParent] = await createDoc(
       page,
-      'Block Member access request on child doc - parent',
+      'Member access request on child doc - parent',
       browserName,
       1,
     );
@@ -366,7 +366,7 @@ test.describe('Document create member: Multiple login', () => {
     await createRootSubPage(
       page,
       browserName,
-      'Block Member access request on child doc - child',
+      'Member access request on child doc - child',
     );
 
     const urlDoc = page.url();
@@ -384,15 +384,19 @@ test.describe('Document create member: Multiple login', () => {
     await page.goto(urlDoc);
 
     await expect(
-      page.getByText(
-        "You're currently viewing a sub-document. To gain access, please request permission from the main document.",
-      ),
+      page.getByText('Insufficient access rights to view the document.'),
     ).toBeVisible({
       timeout: 10000,
     });
 
+    // The request is filed on the top parent document
+    await page.getByRole('button', { name: 'Request access' }).click();
+
+    await expect(
+      page.getByText('Your access request for this document is pending.'),
+    ).toBeVisible();
     await expect(
       page.getByRole('button', { name: 'Request access' }),
-    ).toBeHidden();
+    ).toBeDisabled();
   });
 });
