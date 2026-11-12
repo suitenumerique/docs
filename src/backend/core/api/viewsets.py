@@ -1491,6 +1491,24 @@ class DocumentViewSet(
         truncated_title = f"{title[:kept_length].rstrip()}{ellipsis}"
         return _("{title} (copy)").format(title=truncated_title)[:max_length]
 
+    @staticmethod
+    def _get_copied_accesses(source, duplicate, user):
+        """
+        Return the direct accesses of `source`, users' and teams', copied onto
+        `duplicate`, except those of `user`. The accesses inherited from the
+        ancestors of `source` are not copied.
+        """
+        accesses = models.DocumentAccess.objects.filter(document=source)
+        return [
+            models.DocumentAccess(
+                document=duplicate,
+                user_id=access.user_id,
+                team=access.team,
+                role=access.role,
+            )
+            for access in accesses.exclude(user=user)
+        ]
+
     def _duplicate_document_structure(
         self,
         document_to_duplicate,
@@ -1559,26 +1577,20 @@ class DocumentViewSet(
 
             # Handle access duplication for this child
             if with_accesses and is_owner_or_admin:
-                original_accesses = models.DocumentAccess.objects.filter(
-                    document=document_to_duplicate
-                ).exclude(user=user)
-
-                accesses_to_create = [
-                    models.DocumentAccess(
-                        document=duplicated_document,
-                        user_id=access.user_id,
-                        team=access.team,
-                        role=access.role,
+                models.DocumentAccess.objects.bulk_create(
+                    self._get_copied_accesses(
+                        document_to_duplicate, duplicated_document, user
                     )
-                    for access in original_accesses
-                ]
+                )
 
-                if accesses_to_create:
-                    models.DocumentAccess.objects.bulk_create(accesses_to_create)
-
-        elif not document_to_duplicate.is_root() and choices.RoleChoices.get_priority(
-            user_role
-        ) < choices.RoleChoices.get_priority(models.RoleChoices.EDITOR):
+        elif (
+            not document_to_duplicate.is_root()
+            # A sibling copy lands in the parent of its source: a role on the
+            # source says nothing about the right to create in that parent.
+            and not document_to_duplicate.get_parent()
+            .get_abilities(user)
+            .get("children_create")
+        ):
             duplicated_document = create_tree_node_with_retry(
                 lambda: models.Document.add_root(
                     creator=user,
@@ -1588,11 +1600,22 @@ class DocumentViewSet(
                     **link_kwargs,
                 )
             )
-            models.DocumentAccess.objects.create(
-                document=duplicated_document,
-                user=user,
-                role=models.RoleChoices.OWNER,
-            )
+            accesses_to_create = [
+                models.DocumentAccess(
+                    document=duplicated_document,
+                    user=user,
+                    role=models.RoleChoices.OWNER,
+                )
+            ]
+            # The copy leaves the tree of its source: the direct accesses of
+            # the source are the only ones it can keep.
+            if with_accesses and is_owner_or_admin:
+                accesses_to_create.extend(
+                    self._get_copied_accesses(
+                        document_to_duplicate, duplicated_document, user
+                    )
+                )
+            models.DocumentAccess.objects.bulk_create(accesses_to_create)
         else:
             # Treebeard computes the path of the new sibling from the current
             # last one: two requests creating a node at the same level at the
@@ -1621,18 +1644,10 @@ class DocumentViewSet(
                 # If accesses should be duplicated,
                 # add other users' accesses as per original document
                 if with_accesses and is_owner_or_admin:
-                    original_accesses = models.DocumentAccess.objects.filter(
-                        document=document_to_duplicate
-                    ).exclude(user=user)
-
                     accesses_to_create.extend(
-                        models.DocumentAccess(
-                            document=duplicated_document,
-                            user_id=access.user_id,
-                            team=access.team,
-                            role=access.role,
+                        self._get_copied_accesses(
+                            document_to_duplicate, duplicated_document, user
                         )
-                        for access in original_accesses
                     )
 
                 # Bulk create all the duplicated accesses
