@@ -14,6 +14,7 @@ export interface Invitation {
     retrieve: boolean;
     partial_update: boolean;
     update: boolean;
+    set_role_to: Role[];
   };
 }
 

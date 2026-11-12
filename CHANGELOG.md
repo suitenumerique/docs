@@ -21,6 +21,8 @@ and this project adheres to
 - 🐛(frontend) show an error when approving an access request fails #2982
 - 🔒️(backend) refuse to change the email of an invitation #2986
 - 🐛(backend) count the ancestors in the rights on invitations #2986
+- 🔒️(backend) only let owners update or delete an owner invitation #2986
+- 🐛(frontend) follow the abilities of an invitation in the share dialog #2986
 
 ## [v6.1.0] - 2026-11-12
 
