@@ -2324,12 +2324,30 @@ class Invitation(BaseModel):
             role = self.document.get_role(user)
 
         is_admin_or_owner = role in PRIVILEGED_ROLES
+        # Only owners may grant ownership, so only they may alter or cancel an
+        # owner invitation, as for owner accesses
+        can_manage = (
+            role == RoleChoices.OWNER
+            if self.role == RoleChoices.OWNER
+            else is_admin_or_owner
+        )
+        set_role_to = (
+            [
+                candidate_role
+                for candidate_role in RoleChoices.values
+                if RoleChoices.get_priority(candidate_role)
+                <= RoleChoices.get_priority(role)
+            ]
+            if can_manage
+            else []
+        )
 
         return {
-            "destroy": is_admin_or_owner,
-            "update": is_admin_or_owner,
-            "partial_update": is_admin_or_owner,
+            "destroy": can_manage,
+            "update": can_manage,
+            "partial_update": can_manage,
             "retrieve": is_admin_or_owner,
+            "set_role_to": set_role_to,
         }
 
 

@@ -87,7 +87,10 @@ def test_api_document_invitations_ancestors_create(
 def test_api_document_invitations_ancestors_update(
     role, via, invitation_role, mock_user_teams
 ):
-    """Owners and administrators of an ancestor update the invitations of a sub-page."""
+    """
+    Owners and administrators of an ancestor update the invitations of a sub-page,
+    except owner invitations, which only owners may update.
+    """
     user = factories.UserFactory()
     document = create_sub_page(user, role, via, mock_user_teams)
     invitation = factories.InvitationFactory(document=document, role=invitation_role)
@@ -102,7 +105,7 @@ def test_api_document_invitations_ancestors_update(
     )
 
     invitation.refresh_from_db()
-    if role in ["administrator", "owner"]:
+    if role == "owner" or (role == "administrator" and invitation_role != "owner"):
         assert response.status_code == 200
         assert invitation.role == "reader"
     else:
@@ -116,7 +119,10 @@ def test_api_document_invitations_ancestors_update(
 def test_api_document_invitations_ancestors_delete(
     role, via, invitation_role, mock_user_teams
 ):
-    """Owners and administrators of an ancestor cancel the invitations of a sub-page."""
+    """
+    Owners and administrators of an ancestor cancel the invitations of a sub-page,
+    except owner invitations, which only owners may cancel.
+    """
     user = factories.UserFactory()
     document = create_sub_page(user, role, via, mock_user_teams)
     invitation = factories.InvitationFactory(document=document, role=invitation_role)
@@ -128,9 +134,52 @@ def test_api_document_invitations_ancestors_delete(
         f"/api/v1.0/documents/{document.id!s}/invitations/{invitation.id!s}/",
     )
 
-    if role in ["administrator", "owner"]:
+    if role == "owner" or (role == "administrator" and invitation_role != "owner"):
         assert response.status_code == 204
         assert not models.Invitation.objects.exists()
     else:
         assert response.status_code == 403
         assert models.Invitation.objects.filter(id=invitation.id).exists()
+
+
+def test_api_document_invitations_ancestors_owner_direct_administrator():
+    """
+    An owner of the parent who is also a direct administrator of the sub-page
+    manages the owner invitations of the sub-page, as they manage its owner
+    accesses.
+    """
+    alice = factories.UserFactory()
+    bob = factories.UserFactory()
+    parent = factories.DocumentFactory(users=[(alice, "owner")])
+    document = factories.DocumentFactory(
+        parent=parent, users=[(alice, "administrator"), (bob, "owner")]
+    )
+    invitation = factories.InvitationFactory(
+        document=document, role="owner", issuer=bob
+    )
+
+    client = APIClient()
+    client.force_login(alice)
+    url = f"/api/v1.0/documents/{document.id!s}/invitations/{invitation.id!s}/"
+
+    response = client.get(url)
+    assert response.status_code == 200
+    assert response.json()["abilities"] == {
+        "destroy": True,
+        "retrieve": True,
+        "partial_update": True,
+        "update": True,
+        "set_role_to": models.RoleChoices.values,
+    }
+
+    response = client.patch(url, {"role": "editor"}, format="json")
+    assert response.status_code == 200
+    invitation.refresh_from_db()
+    assert invitation.role == "editor"
+
+    response = client.patch(url, {"role": "owner"}, format="json")
+    assert response.status_code == 200
+
+    response = client.delete(url)
+    assert response.status_code == 204
+    assert not models.Invitation.objects.exists()

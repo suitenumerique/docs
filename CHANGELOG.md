@@ -35,6 +35,7 @@ and this project adheres to
 
 - 🔒️(backend) refuse to change the email of an invitation
 - 🐛(backend) count the ancestors in the rights on invitations
+- 🔒️(backend) only let owners update or delete an owner invitation
 - 🐛(frontend) no offline banner when a third-party POST fails #2939
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
 - 🐛(frontend) fix the slides pdf export of docs with interlinks #2928
