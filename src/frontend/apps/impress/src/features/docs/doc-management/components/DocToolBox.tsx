@@ -53,7 +53,7 @@ import {
   useDeleteFavoriteDoc,
 } from '../api';
 import { useCopyDocLink, useTrans } from '../hooks';
-import { Doc, Role } from '../types';
+import { Doc } from '../types';
 
 const DUPLICATE_WITH_CHILDREN_FEATURE_FLAG = 'duplicate_with_children';
 
@@ -349,7 +349,7 @@ const DocToolBoxComponent = ({
       label: t('Move to my docs', {
         description: "Menu action to move a document into the user's own docs",
       }),
-      isHidden: isTopParent || doc.user_role !== Role.OWNER,
+      isHidden: isTopParent || !doc.abilities.move_to_another_tree,
       icon: <DocMoveOutIcon width={18} height={18} aria-hidden="true" />,
       callback: () => {
         if (!treeContext?.root) {
@@ -381,7 +381,10 @@ const DocToolBoxComponent = ({
       callback: () => {
         setIsModalMoveOpen(true);
       },
-      isHidden: !doc.abilities.move,
+      // A root document can only go to another tree.
+      isHidden:
+        !doc.abilities.move ||
+        (doc.depth === 1 && !doc.abilities.move_to_another_tree),
     },
     { type: 'separator' },
     {

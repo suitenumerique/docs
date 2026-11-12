@@ -8,6 +8,7 @@ import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 
 import { DocSearch, useInfiniteSearchDocs } from '../api/useSearchDocs';
 import { useDocSearchFilterStore } from '../stores/useDocSearchFilterStore';
+import { DocSearchFilterTypes } from '../types';
 
 import { DocSearchItem } from './DocSearchItem';
 
@@ -16,6 +17,8 @@ type DocSearchContentProps = {
   hideGroupNameWhenEmpty?: boolean;
   search: string;
   filterResults?: (doc: DocSearch) => boolean;
+  /** Takes precedence over the filter of the search modal (its store). */
+  filter?: DocSearchFilterTypes;
   isSearchNotMandatory?: boolean;
   /** Keep only the first results, the next pages are then not loaded. */
   limit?: number;
@@ -33,6 +36,7 @@ export const DocSearchContent = ({
   hideGroupNameWhenEmpty,
   search,
   filterResults,
+  filter: filterProp,
   onResults,
   onSelect,
   onLoadingChange,
@@ -42,7 +46,8 @@ export const DocSearchContent = ({
   limit,
   silent,
 }: DocSearchContentProps) => {
-  const { filter } = useDocSearchFilterStore();
+  const { filter: storeFilter } = useDocSearchFilterStore();
+  const filter = filterProp ?? storeFilter;
   const {
     data,
     isFetching,

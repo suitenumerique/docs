@@ -16,12 +16,15 @@ import { Box, ButtonCloseModal, Text } from '@/components';
 import { QuickSearch } from '@/components/quick-search';
 import { Doc, useMoveDoc, useTrans } from '@/docs/doc-management';
 import { DocSearchContent } from '@/docs/doc-search';
+import { useTreeContextOrNull } from '@/docs/doc-tree/utils';
 import {
   DocsGridItemDate,
   DocsGridItemTitle,
 } from '@/docs/docs-grid/components/DocsGridItem';
 import { useToast } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
+
+import { isInSameTree } from '../utils';
 
 const AlertModalRequestAccess = dynamic(
   () =>
@@ -107,6 +110,12 @@ export const DocMoveModal = ({
   const isModal = (isDesktop || isTablet) && !isMobile;
   const handleInputSearch = useDebouncedCallback(setSearch, 700);
   const { toast } = useToast();
+  // Without it, the backend only accepts the targets of the document's tree.
+  const canMoveToAnotherTree = doc.abilities.move_to_another_tree;
+  // There is no tree out of a document page, e.g. in the documents grid.
+  const rootId = useTreeContextOrNull<Doc>()?.root?.id;
+  // Let the backend search the tree, or else filter the results on their path.
+  const searchInTree = !canMoveToAnotherTree && !!rootId;
 
   const handleSelect = (docSelected: Doc) => {
     setDocSelected(docSelected);
@@ -261,7 +270,12 @@ export const DocMoveModal = ({
                         })
                   }
                   search={search}
-                  filterResults={(docResults) => docResults.id !== doc.id}
+                  filter={searchInTree ? 'current' : 'all'}
+                  parentDocId={searchInTree ? rootId : undefined}
+                  filterResults={(docResults) =>
+                    docResults.id !== doc.id &&
+                    (canMoveToAnotherTree || isInSameTree(docResults, doc))
+                  }
                   onSelect={handleSelect}
                   onLoadingChange={setLoading}
                   isSearchNotMandatory

@@ -22,6 +22,19 @@ export const getDocLinkRole = (doc: Doc): Doc['link_role'] => {
   return doc.computed_link_role ?? doc.link_role;
 };
 
+// Length of one step of a document path: the `steplen` of the backend tree.
+const DOC_PATH_STEP_LENGTH = 7;
+
+/**
+ * Whether two documents belong to the same tree, i.e. share the same root.
+ */
+export const isInSameTree = (
+  doc: Pick<Doc, 'path'>,
+  otherDoc: Pick<Doc, 'path'>,
+) =>
+  doc.path.slice(0, DOC_PATH_STEP_LENGTH) ===
+  otherDoc.path.slice(0, DOC_PATH_STEP_LENGTH);
+
 export const getEmojiAndTitle = (title: string) => {
   // Use emoji-regex library for comprehensive emoji detection compatible with ES5
   const regex = emojiRegex();

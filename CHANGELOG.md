@@ -30,6 +30,7 @@ and this project adheres to
 - 🔒️(yhub) build the production image on a distroless base image
 - 👷(ci) scan images with trivy only on release/ branches or the trivy label
 - 💄(frontend) redesign 500 error standalone page #2801
+- 🚸(frontend) only offer the documents a doc can be moved into
 
 ### Fixed
 
@@ -44,6 +45,7 @@ and this project adheres to
 - 🐛(frontend) keep the focus on the emoji button of a tree item #2964
 - 🐛(backend) keep the case of titles and names in email subjects #2792
 - 📝(docs) recreate the containers when upgrading a compose install
+- 🔒️(backend) require the owner role to move a document out of its tree
 
 ### Removed
 
