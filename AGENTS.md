@@ -11,7 +11,7 @@ Repository: https://github.com/suitenumerique/docs
 ## Monorepo Structure
 
 - `src/backend/` - Django REST API (Python 3.14+)
-- `src/frontend/apps/impress/` - Main Next.js application (TypeScript, pages router, static export)
+- `src/frontend/apps/impress/` - Main Next.js application (TypeScript, pages router, standalone Node server)
 - `src/frontend/apps/e2e/` - Playwright E2E tests
 - `src/frontend/packages/i18n/` - Shared i18n utilities
 - `src/frontend/packages/eslint-plugin-docs/` - Custom ESLint plugin

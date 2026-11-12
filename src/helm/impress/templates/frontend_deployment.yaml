@@ -99,7 +99,7 @@ spec:
             {{- end }}
             {{- if .Values.frontend.robotsTxt.enabled }}
             - name: robots-txt
-              mountPath: /app/robots.txt
+              mountPath: /app/apps/impress/public/robots.txt
               subPath: robots.txt
               readOnly: true
             {{- end }}

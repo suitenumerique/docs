@@ -1,5 +1,6 @@
 import { TreeProvider } from '@gouvfr-lasuite/ui-components';
 import { useQueryClient } from '@tanstack/react-query';
+import type { GetServerSideProps } from 'next';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -16,6 +17,11 @@ import {
   useDocStore,
   useTrans,
 } from '@/docs/doc-management/';
+import {
+  getPublicDoc,
+  getPublicDocExcerpt,
+  getPublicOrigin,
+} from '@/docs/doc-meta/server';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import { PresenterRoot } from '@/features/docs/doc-presenter';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
@@ -37,10 +43,15 @@ const DocEditor = dynamic(
 
 export function DocLayout() {
   const {
-    query: { id },
+    query: { id: queryId },
+    asPath,
   } = useRouter();
 
-  if (typeof id !== 'string') {
+  // Offline, the service worker answers any doc with the `/docs/[id]/` shell,
+  // whose server-side props carry `[id]`: read the id from the URL instead
+  const id = queryId === '[id]' ? asPath.split(/[/?#]/)[2] : queryId;
+
+  if (typeof id !== 'string' || !id) {
     return null;
   }
 
@@ -215,12 +226,108 @@ const DocPage = ({ id }: DocProps) => {
   );
 };
 
-const Page: NextPageWithLayout = () => {
+interface PageProps {
+  // Set when the doc is public, for link previews
+  meta?: DocMeta;
+}
+
+interface DocMeta {
+  // `''` when the doc has no title or no text
+  title: string;
+  description: string;
+  url: string;
+  image: string;
+}
+
+/**
+ * Link previews (Mattermost, Slack, social networks) don't run JavaScript:
+ * render the title, start and preview image of a public doc in the HTML sent
+ * by the server. Restricted and connected-only docs keep the generic tags.
+ */
+export const getServerSideProps: GetServerSideProps<PageProps> = async ({
+  params,
+  req,
+}) => {
+  const id = params?.id;
+
+  // Client-side navigations fetch these props as JSON and have no use for them
+  if (typeof id !== 'string' || req.url?.startsWith('/_next/data/')) {
+    return { props: {} };
+  }
+
+  const doc = await getPublicDoc(req, id);
+  if (!doc) {
+    return { props: {} };
+  }
+
+  const url = `${getPublicOrigin(req)}/docs/${id}/`;
+
+  // The preview text is optional: never fail the page for it
+  let description = '';
+  try {
+    description = await getPublicDocExcerpt(req, doc);
+  } catch {
+    // Keep the generic description
+  }
+
+  return {
+    props: {
+      meta: {
+        title: doc.title || '',
+        description,
+        url,
+        image: `${url}preview.png`,
+      },
+    },
+  };
+};
+
+const DocMetaHead = ({ meta }: { meta: DocMeta }) => {
+  const { t } = useTranslation();
+  const { untitledDocument } = useTrans();
+
+  const productName = t('Docs', {
+    description: 'Product name, shown in page titles and the logo',
+  });
+  const title = `${meta.title || untitledDocument} - ${productName}`;
+
+  return (
+    <Head>
+      <title>{title}</title>
+      <meta property="og:title" content={title} key="title" />
+      <meta property="og:site_name" content={productName} />
+      <meta property="og:type" content="article" />
+      <meta property="og:url" content={meta.url} />
+      <meta property="og:image" content={meta.image} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      {meta.description && (
+        <>
+          <meta
+            name="description"
+            content={meta.description}
+            key="description"
+          />
+          <meta property="og:description" content={meta.description} />
+        </>
+      )}
+    </Head>
+  );
+};
+
+const Page: NextPageWithLayout<PageProps> = () => {
   return null;
 };
 
 Page.getLayout = function getLayout() {
   return <DocLayout />;
+};
+
+// Rendered by `_app` outside the providers, which wait for the config on the
+// client: the server would otherwise render none of it
+Page.getHead = function getHead({ meta }) {
+  return meta ? <DocMetaHead meta={meta} /> : null;
 };
 
 export default Page;
