@@ -440,7 +440,6 @@ export const BlockNoteReader = ({
       setIdAttribute: true,
       schema: blockNoteSchema,
       extensions: [
-        SelectAllShortcut,
         CommentsExtension({
           threadStore,
           resolveUsers: async () => {
