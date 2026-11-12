@@ -12,7 +12,6 @@ from functools import partial
 from urllib.parse import unquote, urlencode, urlparse
 
 from django.conf import settings
-from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -3028,36 +3027,23 @@ class InvitationViewset(
         queryset = queryset.filter(document=self.kwargs["resource_id"])
 
         if self.action == "list":
+            # The role counts the ancestors, as for the accesses: compute it once
+            # for the page rather than once per invitation
             user = self.request.user
-            teams = user.teams
-
-            # Determine which role the logged-in user has in the document
-            user_roles_query = (
-                models.DocumentAccess.objects.filter(
-                    db.Q(user=user) | db.Q(team__in=teams),
-                    document=self.kwargs["resource_id"],
-                )
-                .values("document")
-                .annotate(roles_array=ArrayAgg("role"))
-                .values("roles_array")
+            document = (
+                models.Document.objects.annotate_user_roles(user)
+                .only("path")
+                .filter(pk=self.kwargs["resource_id"])
+                .first()
             )
+            role = document.get_role(user) if document else None
 
-            queryset = (
-                # The logged-in user should be administrator or owner to see its accesses
-                queryset.filter(
-                    db.Q(
-                        document__accesses__user=user,
-                        document__accesses__role__in=choices.PRIVILEGED_ROLES,
-                    )
-                    | db.Q(
-                        document__accesses__team__in=teams,
-                        document__accesses__role__in=choices.PRIVILEGED_ROLES,
-                    ),
-                )
-                # Abilities are computed based on logged-in user's role and
-                # the user role on each document access
-                .annotate(user_roles=db.Subquery(user_roles_query))
-                .distinct()
+            # The logged-in user should be administrator or owner to see invitations
+            if role not in choices.PRIVILEGED_ROLES:
+                return queryset.none()
+
+            queryset = queryset.annotate(
+                user_role=db.Value(role, output_field=db.CharField())
             )
         return queryset
 

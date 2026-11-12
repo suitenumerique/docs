@@ -269,3 +269,44 @@ def test_models_document_invitations_get_abilities_editor(via, mock_user_teams):
         "partial_update": False,
         "update": False,
     }
+
+
+@pytest.mark.parametrize(
+    "ancestor_role, direct_role, expected",
+    [
+        # The highest role counts, wherever it comes from
+        ("owner", "administrator", "owner"),
+        ("owner", None, "owner"),
+        ("administrator", None, "administrator"),
+        ("administrator", "owner", "owner"),
+        ("editor", None, None),
+        (None, "administrator", "administrator"),
+    ],
+)
+def test_models_document_invitations_get_abilities_ancestors(
+    ancestor_role, direct_role, expected
+):
+    """The role of the user on the ancestors of the document counts."""
+    user = factories.UserFactory()
+    root = factories.DocumentFactory()
+    parent = factories.DocumentFactory(parent=root)
+    document = factories.DocumentFactory(parent=parent)
+    if ancestor_role:
+        factories.UserDocumentAccessFactory(
+            document=root, user=user, role=ancestor_role
+        )
+    if direct_role:
+        factories.UserDocumentAccessFactory(
+            document=document, user=user, role=direct_role
+        )
+
+    invitation = factories.InvitationFactory(document=document)
+    abilities = invitation.get_abilities(user)
+
+    is_admin_or_owner = expected is not None
+    assert abilities == {
+        "destroy": is_admin_or_owner,
+        "retrieve": is_admin_or_owner,
+        "partial_update": is_admin_or_owner,
+        "update": is_admin_or_owner,
+    }

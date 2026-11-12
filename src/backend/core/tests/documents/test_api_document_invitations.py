@@ -64,7 +64,7 @@ def test_api_document_invitations_list_authenticated_privileged(
 
     client = APIClient()
     client.force_login(user)
-    with django_assert_num_queries(3):
+    with django_assert_num_queries(4):
         response = client.get(
             f"/api/v1.0/documents/{document.id!s}/invitations/",
         )
