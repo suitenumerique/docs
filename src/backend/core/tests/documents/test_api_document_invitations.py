@@ -20,6 +20,19 @@ from core.tests.conftest import TEAM, USER, VIA
 
 pytestmark = pytest.mark.django_db
 
+NON_OWNER_ROLES = [
+    role for role in models.RoleChoices.values if role != models.RoleChoices.OWNER
+]
+
+
+def expected_set_role_to(role, invitation_role):
+    """Roles a user with `role` may give to an invitation with `invitation_role`."""
+    if role == "owner":
+        return models.RoleChoices.values
+    if role == "administrator" and invitation_role != "owner":
+        return NON_OWNER_ROLES
+    return []
+
 
 # List
 
@@ -81,10 +94,11 @@ def test_api_document_invitations_list_authenticated_privileged(
                 "issuer": str(i.issuer.id),
                 "is_expired": False,
                 "abilities": {
-                    "destroy": role in ["administrator", "owner"],
-                    "update": role in ["administrator", "owner"],
-                    "partial_update": role in ["administrator", "owner"],
+                    "destroy": role == "owner" or i.role != "owner",
+                    "update": role == "owner" or i.role != "owner",
+                    "partial_update": role == "owner" or i.role != "owner",
                     "retrieve": True,
+                    "set_role_to": expected_set_role_to(role, i.role),
                 },
             }
             for i in [invitation, *other_invitations]
@@ -178,6 +192,7 @@ def test_api_document_invitations_list_expired_invitations_still_listed():
                     "update": True,
                     "partial_update": True,
                     "retrieve": True,
+                    "set_role_to": NON_OWNER_ROLES,
                 },
             },
         ],
@@ -247,6 +262,7 @@ def test_api_document_invitations_retrieve_document_privileged(
     )
 
     assert response.status_code == 200
+    can_manage = role == "owner" or invitation.role != "owner"
     assert response.json() == {
         "id": str(invitation.id),
         "created_at": invitation.created_at.isoformat().replace("+00:00", "Z"),
@@ -256,10 +272,11 @@ def test_api_document_invitations_retrieve_document_privileged(
         "issuer": str(invitation.issuer.id),
         "is_expired": False,
         "abilities": {
-            "destroy": True,
-            "update": True,
-            "partial_update": True,
+            "destroy": can_manage,
+            "update": can_manage,
+            "partial_update": can_manage,
             "retrieve": True,
+            "set_role_to": expected_set_role_to(role, invitation.role),
         },
     }
 
@@ -668,7 +685,7 @@ def test_api_document_invitations_update_authenticated_privileged_read_only_fiel
     are read only: they are ignored.
     """
     user = factories.UserFactory()
-    invitation = factories.InvitationFactory()
+    invitation = factories.InvitationFactory(role=random.choice(NON_OWNER_ROLES))
 
     if via == USER:
         factories.UserDocumentAccessFactory(
@@ -717,7 +734,7 @@ def test_api_document_invitations_update_email_forbidden(
     owner invitation.
     """
     user = factories.UserFactory()
-    invitation = factories.InvitationFactory()
+    invitation = factories.InvitationFactory(role=random.choice(NON_OWNER_ROLES))
 
     if via == USER:
         factories.UserDocumentAccessFactory(
@@ -773,6 +790,80 @@ def test_api_document_invitations_update_email_same_address_other_case():
     assert invitation.role == "editor"
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [{"role": "editor"}, {"email": "attacker@example.com"}],
+)
+@pytest.mark.parametrize("method", ["put", "patch"])
+@pytest.mark.parametrize("via", VIA)
+def test_api_document_invitations_update_owner_invitation_administrator(
+    via, method, payload, mock_user_teams
+):
+    """
+    Administrators cannot update an owner invitation: only owners may grant
+    ownership, as for owner accesses.
+    """
+    user = factories.UserFactory()
+    invitation = factories.InvitationFactory(role="owner")
+
+    if via == USER:
+        factories.UserDocumentAccessFactory(
+            document=invitation.document, user=user, role="administrator"
+        )
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        factories.TeamDocumentAccessFactory(
+            document=invitation.document, team="lasuite", role="administrator"
+        )
+
+    old_invitation_values = serializers.InvitationSerializer(instance=invitation).data
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = getattr(client, method)(
+        f"/api/v1.0/documents/{invitation.document.id!s}/invitations/{invitation.id!s}/",
+        payload,
+        format="json",
+    )
+
+    assert response.status_code == 403
+
+    invitation.refresh_from_db()
+    invitation_values = serializers.InvitationSerializer(instance=invitation).data
+    assert invitation_values == old_invitation_values
+
+
+@pytest.mark.parametrize("via", VIA)
+def test_api_document_invitations_update_owner_invitation_owner(via, mock_user_teams):
+    """Owners can change the role of an owner invitation."""
+    user = factories.UserFactory()
+    invitation = factories.InvitationFactory(role="owner")
+
+    if via == USER:
+        factories.UserDocumentAccessFactory(
+            document=invitation.document, user=user, role="owner"
+        )
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        factories.TeamDocumentAccessFactory(
+            document=invitation.document, team="lasuite", role="owner"
+        )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.patch(
+        f"/api/v1.0/documents/{invitation.document.id!s}/invitations/{invitation.id!s}/",
+        {"role": "editor"},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    invitation.refresh_from_db()
+    assert invitation.role == "editor"
+
+
 @pytest.mark.parametrize("via", VIA)
 @pytest.mark.parametrize("role_set", models.RoleChoices.values)
 @pytest.mark.parametrize("role", ["administrator", "owner"])
@@ -784,7 +875,7 @@ def test_api_document_invitations_update_authenticated_privileged_role(
     but only owners can set the invitation role to the "owner" role.
     """
     user = factories.UserFactory()
-    invitation = factories.InvitationFactory()
+    invitation = factories.InvitationFactory(role=random.choice(NON_OWNER_ROLES))
     old_role = invitation.role
 
     if via == USER:
@@ -941,7 +1032,9 @@ def test_api_document_invitations_delete_privileged_members(role, via, mock_user
             document=document, team="lasuite", role=role
         )
 
-    invitation = factories.InvitationFactory(document=document)
+    invitation = factories.InvitationFactory(
+        document=document, role=random.choice(NON_OWNER_ROLES)
+    )
 
     client = APIClient()
     client.force_login(user)
@@ -950,6 +1043,37 @@ def test_api_document_invitations_delete_privileged_members(role, via, mock_user
         f"/api/v1.0/documents/{document.id!s}/invitations/{invitation.id!s}/",
     )
     assert response.status_code == 204
+
+
+@pytest.mark.parametrize("via", VIA)
+@pytest.mark.parametrize("role", ["owner", "administrator"])
+def test_api_document_invitations_delete_owner_invitation(role, via, mock_user_teams):
+    """Only owners can cancel an owner invitation."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory()
+    if via == USER:
+        factories.UserDocumentAccessFactory(document=document, user=user, role=role)
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        factories.TeamDocumentAccessFactory(
+            document=document, team="lasuite", role=role
+        )
+
+    invitation = factories.InvitationFactory(document=document, role="owner")
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.delete(
+        f"/api/v1.0/documents/{document.id!s}/invitations/{invitation.id!s}/",
+    )
+
+    if role == "owner":
+        assert response.status_code == 204
+        assert not models.Invitation.objects.exists()
+    else:
+        assert response.status_code == 403
+        assert models.Invitation.objects.filter(id=invitation.id).exists()
 
 
 @pytest.mark.parametrize("role", ["reader", "editor"])

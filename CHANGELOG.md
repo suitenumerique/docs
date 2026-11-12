@@ -20,6 +20,7 @@ and this project adheres to
 - 🗃️(backend) delete the stored access requests a role already covers #2982
 - 🐛(frontend) show an error when approving an access request fails #2982
 - 🔒️(backend) refuse to change the email of an invitation #2986
+- 🐛(backend) count the ancestors in the rights on invitations #2986
 
 ## [v6.1.0] - 2026-11-12
 
