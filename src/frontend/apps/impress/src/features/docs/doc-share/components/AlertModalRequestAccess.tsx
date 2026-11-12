@@ -30,9 +30,9 @@ export const AlertModalRequestAccess = ({
     page: 1,
   });
 
-  const hasRequested = !!(
-    requests && requests?.results.find((request) => request.document === docId)
-  );
+  // The API resolves the document to its top parent: the user lacks access here,
+  // so the list only contains their own request, if any
+  const hasRequested = !!requests?.results.length;
 
   return (
     <AlertModal

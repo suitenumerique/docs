@@ -14,7 +14,6 @@ import {
   Icon,
   LoadMoreText,
   Loading,
-  Text,
 } from '@/components';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
@@ -216,11 +215,7 @@ export const ButtonAccessRequest = ({
   ...buttonProps
 }: ButtonAccessRequestProps) => {
   const { authenticated } = useAuth();
-  const {
-    data: requests,
-    error: docAccessError,
-    isLoading,
-  } = useDocAccessRequests({
+  const { data: requests, isLoading } = useDocAccessRequests({
     docId,
     page: 1,
   });
@@ -244,27 +239,13 @@ export const ButtonAccessRequest = ({
     return null;
   }
 
-  if (docAccessError?.status === 404) {
-    return (
-      <Text $maxWidth="320px" $textAlign="center" $size="sm">
-        {t(
-          'As this is a sub-document, please request access to the parent document to enable these features.',
-          {
-            description:
-              'Message in the share dialog when the user lacks rights on a sub-doc',
-          },
-        )}
-      </Text>
-    );
-  }
-
   if (isLoading) {
     return <Loading $height="auto" />;
   }
 
-  const hasRequested = !!(
-    requests && requests?.results.find((request) => request.document === docId)
-  );
+  // The API resolves the document to its top parent: the user lacks access here,
+  // so the list only contains their own request, if any
+  const hasRequested = !!requests?.results.length;
 
   return (
     <Button
