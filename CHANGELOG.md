@@ -29,6 +29,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(backend) ask for access to the top parent doc from a sub-document
 - 🐛(frontend) no offline banner when a third-party POST fails #2939
 - 🐛(frontend) replace an image that cannot be exported by a message #2936
 - 🐛(frontend) fix the slides pdf export of docs with interlinks #2928
