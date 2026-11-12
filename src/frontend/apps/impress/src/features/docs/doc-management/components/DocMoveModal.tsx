@@ -5,10 +5,9 @@ import {
   TreeViewMoveModeEnum,
   VariantType,
   useModal,
-  useTreeContext,
 } from '@gouvfr-lasuite/ui-components';
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
@@ -17,6 +16,7 @@ import { Box, ButtonCloseModal, Text } from '@/components';
 import { QuickSearch } from '@/components/quick-search';
 import { Doc, useMoveDoc, useTrans } from '@/docs/doc-management';
 import { DocSearchContent } from '@/docs/doc-search';
+import { useTreeContextOrNull } from '@/docs/doc-tree/utils';
 import {
   DocsGridItemDate,
   DocsGridItemTitle,
@@ -24,7 +24,7 @@ import {
 import { useToast } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
-import { useDocSearchFilterStore } from '../../doc-search/stores/useDocSearchFilterStore';
+import { isInSameTree } from '../utils';
 
 const AlertModalRequestAccess = dynamic(
   () =>
@@ -112,20 +112,10 @@ export const DocMoveModal = ({
   const { toast } = useToast();
   // Without it, the backend only accepts the targets of the document's tree.
   const canMoveToAnotherTree = doc.abilities.move_to_another_tree;
-  const treeContext = useTreeContext<Doc>();
-  const { setFilter } = useDocSearchFilterStore();
-
-  /**
-   * If we cannot move to another tree, we set the filter
-   * to 'current' to restrict the search to the current tree.  
-   */
-  useEffect(() => {
-    if (canMoveToAnotherTree) {
-      return;
-    }
-
-    setFilter('current');
-  }, [canMoveToAnotherTree, setFilter]);
+  // There is no tree out of a document page, e.g. in the documents grid.
+  const rootId = useTreeContextOrNull<Doc>()?.root?.id;
+  // Let the backend search the tree, or else filter the results on their path.
+  const searchInTree = !canMoveToAnotherTree && !!rootId;
 
   const handleSelect = (docSelected: Doc) => {
     setDocSelected(docSelected);
@@ -280,8 +270,12 @@ export const DocMoveModal = ({
                         })
                   }
                   search={search}
-                  filterResults={(docResults) => docResults.id !== doc.id}
-                  parentDocId={treeContext?.root?.id}
+                  filter={searchInTree ? 'current' : 'all'}
+                  parentDocId={searchInTree ? rootId : undefined}
+                  filterResults={(docResults) =>
+                    docResults.id !== doc.id &&
+                    (canMoveToAnotherTree || isInSameTree(docResults, doc))
+                  }
                   onSelect={handleSelect}
                   onLoadingChange={setLoading}
                   isSearchNotMandatory
