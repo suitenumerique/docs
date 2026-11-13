@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- 🔧(backend) make NUM_PROXIES configurable for the throttles #3005
+
 ### Changed
 
 - 📦️(docker) keep the yarn cache out of the node images #2992

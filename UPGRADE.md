@@ -33,6 +33,10 @@ the following command inside your docker container:
 - `GET /api/v1.0/config/` is no longer throttled, so
   `API_CONFIG_THROTTLE_RATE` is no longer read: you can remove it from your
   environment.
+- Behind reverse proxies, set `NUM_PROXIES` to how many of them sit in front
+  of the backend, so that the throttles key anonymous requests on the client
+  address they append to `X-Forwarded-For`. Left unset, the whole header is
+  used as before, and a client can vary it to escape its limit.
 
 ## [6.1.0] - 2026-11-12
 
