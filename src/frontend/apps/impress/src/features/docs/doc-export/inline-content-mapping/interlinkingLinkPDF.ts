@@ -9,13 +9,18 @@ export const createInlineContentMappingInterlinkingLinkPDF =
     titleMap: Map<string, string>,
   ): DocsExporterPDF['mappings']['inlineContentMapping']['interlinkingLinkInline'] =>
   (inline) => {
-    const title = inline.props.docId && titleMap.get(inline.props.docId);
+    // A label given by the user is not a title: its emoji stays in its text
+    const label = inline.props.label;
+    const title =
+      inline.props.docId && (label || titleMap.get(inline.props.docId));
 
     if (!inline.props.docId || !title || inline.props.disabled) {
       return '';
     }
 
-    const { emoji, titleWithoutEmoji } = getEmojiAndTitle(title);
+    const { emoji, titleWithoutEmoji } = label
+      ? { emoji: undefined, titleWithoutEmoji: label }
+      : getEmojiAndTitle(title);
     const url =
       window.location.origin +
       `/docs/${inline.props.docId}/${inline.props.blockId ? `#${inline.props.blockId}` : ''}`;

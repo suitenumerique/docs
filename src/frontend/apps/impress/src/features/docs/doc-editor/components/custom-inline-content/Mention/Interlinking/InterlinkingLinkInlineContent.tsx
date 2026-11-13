@@ -30,6 +30,13 @@ export type InterlinkingLinkInlineContentType = {
       default: '';
     };
     /**
+     * The text shown instead of the title of the doc or the text of the
+     * block, e.g. the text the link was pasted on
+     */
+    label?: {
+      default: '';
+    };
+    /**
      * @deprecated See `disabled`.
      */
     trigger?: {
@@ -53,6 +60,9 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
       blockId: {
         default: '',
       },
+      label: {
+        default: '',
+      },
       disabled: {
         default: false,
         values: [true, false],
@@ -69,6 +79,7 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
       <InterlinkingLink
         docId={props.inlineContent.props.docId}
         blockId={props.inlineContent.props.blockId}
+        label={props.inlineContent.props.label}
         disabled={props.inlineContent.props.disabled}
         isEditable={props.editor.isEditable}
         editor={props.editor as unknown as DocsBlockNoteEditor}
@@ -88,6 +99,7 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
 interface InterlinkingLinkProps {
   docId?: string;
   blockId?: string;
+  label?: string;
   disabled?: boolean;
   isEditable: boolean;
   editor?: DocsBlockNoteEditor;
@@ -104,6 +116,7 @@ interface InterlinkingLinkProps {
 export const InterlinkingLink = ({
   docId,
   blockId,
+  label,
   disabled,
   isEditable,
   editor,
@@ -124,6 +137,7 @@ export const InterlinkingLink = ({
     <LinkSelected
       docId={docId}
       blockId={blockId}
+      label={label}
       isEditable={isEditable}
       editor={editor}
     />

@@ -49,7 +49,8 @@ export const getImageUnavailableText = (
 /**
  * Recursively collects the distinct doc ids referenced by
  * `interlinkingLinkInline` inline content nodes across a block tree,
- * including nested blocks (lists, callouts) and table cells.
+ * including nested blocks (lists, callouts) and table cells. A link with a
+ * label shows it instead of the title, its doc is not needed.
  */
 export function collectInterlinkingDocIds(blocks: unknown[]): string[] {
   const docIds = new Set<string>();
@@ -63,7 +64,12 @@ export function collectInterlinkingDocIds(blocks: unknown[]): string[] {
         return;
       }
       const props = item.props;
-      if (isRecord(props) && typeof props.docId === 'string' && props.docId) {
+      if (
+        isRecord(props) &&
+        typeof props.docId === 'string' &&
+        props.docId &&
+        !props.label
+      ) {
         docIds.add(props.docId);
       }
     });

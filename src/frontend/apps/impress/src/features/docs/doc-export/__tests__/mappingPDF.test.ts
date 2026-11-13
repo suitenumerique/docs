@@ -106,6 +106,27 @@ describe('getPdfDocsSchemaMappings', () => {
     );
   });
 
+  it('renders the label of an interlink instead of the title of the doc', async () => {
+    const typst = await toTypst(
+      [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'interlinkingLinkInline',
+              props: { docId: 'doc-1', blockId: 'block-1', label: '🎉 see' },
+            },
+          ],
+        },
+      ],
+      new Map([['doc-1', 'Party']]),
+    );
+
+    expect(typst).toContain(
+      `#pdf.artifact[📄 ]#link("${window.location.origin}/docs/doc-1/#block-1")[#"🎉 see"]`,
+    );
+  });
+
   it('renders a pdf block as a link to the file', async () => {
     const typst = await toTypst([
       {

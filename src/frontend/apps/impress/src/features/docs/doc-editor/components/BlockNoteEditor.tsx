@@ -87,6 +87,7 @@ import {
   MentionSearchInlineContent,
   UserMentionInlineContent,
   getPastedDocInterlink,
+  insertPastedDocInterlink,
 } from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
 
@@ -292,23 +293,18 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
          * When pasting a bare link to a doc on this same domain, turn it
          * into an interlink instead of a plain link, so it benefits from
          * the title-sync and navigation behaviour of the interlinking system.
+         * Pasted on a selected text, the interlink replaces it and keeps it
+         * as its label.
          */
         const pastedInterlink = getPastedDocInterlink(
           event,
           pasteEditor as DocsBlockNoteEditor,
         );
         if (pastedInterlink?.docId) {
-          editor.insertInlineContent([
-            {
-              type: 'interlinkingLinkInline',
-              props: {
-                docId: pastedInterlink.docId,
-                ...(pastedInterlink.blockId && {
-                  blockId: pastedInterlink.blockId,
-                }),
-              },
-            },
-          ]);
+          insertPastedDocInterlink(
+            pasteEditor as DocsBlockNoteEditor,
+            pastedInterlink,
+          );
           return true;
         }
 

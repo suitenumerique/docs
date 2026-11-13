@@ -1,3 +1,5 @@
+import { Mark } from '@tiptap/pm/model';
+import { TextSelection, type Transaction } from '@tiptap/pm/state';
 import { validate as uuidValidate } from 'uuid';
 
 import { type DocsBlockNoteEditor } from '@/docs/doc-editor/types';
@@ -7,6 +9,8 @@ const DOC_PATH_REGEX = /^\/docs\/([^/]+)\/?$/;
 export type PastedDocInterlink = {
   docId: string;
   blockId?: string;
+  /** The selected text the link was pasted on, shown instead of the title */
+  label?: string;
 };
 
 /**
@@ -14,25 +18,45 @@ export type PastedDocInterlink = {
  * origin (e.g. copied from the address bar or "Copy link"), returns its
  * doc id (and, if present, the anchored block id from the URL hash) so
  * the paste can be turned into an interlink instead of a plain link.
- * Returns null for anything else (selections, code blocks, links mixed
- * with other text, other origins/routes).
+ * Pasted on a selected text, the interlink keeps that text as its label.
+ * Returns null for anything else (selections across blocks or holding an
+ * inline node, code blocks, links mixed with other text, other
+ * origins/routes).
  */
 export const getPastedDocInterlink = (
   event: ClipboardEvent,
   editor: DocsBlockNoteEditor,
 ): PastedDocInterlink | null => {
-  const hasSelection = editor.transact((tr) => !tr.selection.empty);
-  if (hasSelection) {
+  const selection = editor.transact(({ selection, doc }) => ({
+    isEmpty: selection.empty,
+    isInSameBlock: selection.$from.sameParent(selection.$to),
+    isInCodeBlock:
+      !!selection.$from.parent.type.spec.code &&
+      !!selection.$to.parent.type.spec.code,
+    text: doc.textBetween(selection.from, selection.to).trim(),
+    // An inline node (doc link, mention, math...) has no text: the label would
+    // miss it, and the paste would delete it.
+    hasInlineNode: (() => {
+      let found = false;
+      doc.nodesBetween(selection.from, selection.to, (node) => {
+        found ||= node.isInline && !node.isText;
+        return !found;
+      });
+      return found;
+    })(),
+  }));
+
+  // If the cursor is inside a code block, we don't want to convert the pasted URL into an interlink.
+  if (selection.isInCodeBlock) {
     return null;
   }
 
-  const isInCodeBlock = editor.transact(
-    (tr) =>
-      !!tr.selection.$from.parent.type.spec.code &&
-      !!tr.selection.$to.parent.type.spec.code,
-  );
-  // If the cursor is inside a code block, we don't want to convert the pasted URL into an interlink.
-  if (isInCodeBlock) {
+  // A selection across blocks, holding no text or holding an inline node, is
+  // left to the default paste.
+  if (
+    !selection.isEmpty &&
+    (!selection.isInSameBlock || !selection.text || selection.hasInlineNode)
+  ) {
     return null;
   }
 
@@ -42,6 +66,7 @@ export const getPastedDocInterlink = (
     return null;
   }
 
+  // A relative path is not a URL copied from somewhere: it throws and stays a text.
   let url: URL;
   try {
     url = new URL(text);
@@ -63,5 +88,62 @@ export const getPastedDocInterlink = (
 
   const blockId = url.hash.slice(1) || undefined;
 
-  return blockId ? { docId, blockId } : { docId };
+  return {
+    docId,
+    ...(blockId && { blockId }),
+    ...(!selection.isEmpty && { label: selection.text }),
+  };
+};
+
+const isWhitespaceAt = (tr: Transaction, from: number, to: number) =>
+  /^\s$/.test(tr.doc.textBetween(from, to));
+
+/**
+ * Replaces the selection with the interlink. The whitespace around the
+ * selected text is left out of the replaced range, as it is of the label,
+ * so it stays between the link and the words around it. The comments on the
+ * replaced text move onto the link, otherwise their threads lose their
+ * anchor and show as deleted.
+ */
+export const insertPastedDocInterlink = (
+  editor: DocsBlockNoteEditor,
+  { docId, blockId, label }: PastedDocInterlink,
+) => {
+  editor.transact((tr) => {
+    let { from, to } = tr.selection;
+    while (from < to && isWhitespaceAt(tr, from, from + 1)) {
+      from++;
+    }
+    while (to > from && isWhitespaceAt(tr, to - 1, to)) {
+      to--;
+    }
+    if (from !== tr.selection.from || to !== tr.selection.to) {
+      tr.setSelection(TextSelection.create(tr.doc, from, to));
+    }
+
+    const commentType = tr.doc.type.schema.marks.comment;
+    let comments: readonly Mark[] = [];
+    if (commentType) {
+      tr.doc.nodesBetween(from, to, (node) => {
+        node.marks
+          .filter((mark) => mark.type === commentType)
+          .forEach((mark) => (comments = mark.addToSet(comments)));
+      });
+    }
+
+    editor.insertInlineContent([
+      {
+        type: 'interlinkingLinkInline',
+        props: {
+          docId,
+          ...(blockId && { blockId }),
+          ...(label && { label }),
+        },
+      },
+    ]);
+
+    if (tr.doc.nodeAt(from)?.type.name === 'interlinkingLinkInline') {
+      comments.forEach((mark) => tr.addNodeMark(from, mark));
+    }
+  });
 };

@@ -73,4 +73,14 @@ describe('resolveInterlinkTitles', () => {
 
     expect(titles.get('forbidden')).toBe('/docs/forbidden/');
   });
+
+  it('does not request the doc of a link with a label', async () => {
+    const blocks = paragraphLinkingTo('labelled');
+    Object.assign(blocks[0].content[0].props, { label: 'see there' });
+
+    const titles = await resolveInterlinkTitles(blocks, queryClient);
+
+    expect(titles.has('labelled')).toBe(false);
+    expect(fetchMock.callHistory.calls()).toHaveLength(0);
+  });
 });
