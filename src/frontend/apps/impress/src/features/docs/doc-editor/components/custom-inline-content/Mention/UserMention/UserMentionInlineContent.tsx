@@ -14,6 +14,13 @@ export type UserMentionInlineContentType = {
     fullName: {
       default: '';
     };
+    /**
+     * Persisted comment marks for this content-less inline node. See
+     * `INLINE_NODE_COMMENTS_PROP` / `InlineNodeCommentsExtension`.
+     */
+    commentMarks?: {
+      default: '';
+    };
   };
   content: 'none';
 };
@@ -35,6 +42,9 @@ export const UserMentionInlineContent = createReactInlineContentSpec<
         default: '',
       },
       fullName: {
+        default: '',
+      },
+      commentMarks: {
         default: '',
       },
     },

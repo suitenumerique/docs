@@ -53,6 +53,7 @@ import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelS
 import { useAnalytics } from '@/libs/Analytics';
 
 import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
+import { InlineNodeCommentsExtension } from '../extensions/InlineNodeComments';
 import {
   useHeadings,
   useScrollToBlockAnchor,
@@ -319,6 +320,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           FindAndReplace.configure({
             injectCSS: false,
           }),
+          // Persist comments added on content-less inline nodes (doc links,
+          // user mentions) so they survive a reload and reach collaborators.
+          InlineNodeCommentsExtension,
         ],
       },
       visualMedia: {
@@ -445,6 +449,11 @@ export const BlockNoteReader = ({
           },
         }),
       ],
+      _tiptapOptions: {
+        // Restore comments stored on content-less inline nodes so the reader
+        // shows the same highlights as the editor (#2807, #2878).
+        extensions: [InlineNodeCommentsExtension],
+      },
     }),
     [initialContent, threadStore],
   );
