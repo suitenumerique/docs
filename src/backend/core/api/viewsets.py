@@ -3092,21 +3092,24 @@ class DocumentAskForAccessViewSet(
     serializer_class = serializers.DocumentAskForAccessSerializer
     _document = None
 
-    def get_document_or_404(self):
-        """Get the document related to the viewset or raise a 404 error."""
+    def get_root_document_or_404(self):
+        """
+        Get the top parent document related to the viewset or raise a 404 error.
+
+        An ask for access always targets the root of the document tree, whatever
+        the document (root or sub-document) the request is made from.
+        """
         if self._document is None:
             try:
-                self._document = models.Document.objects.get(
-                    pk=self.kwargs["resource_id"],
-                    depth=1,
-                )
+                document = models.Document.objects.get(pk=self.kwargs["resource_id"])
             except models.Document.DoesNotExist as e:
                 raise drf.exceptions.NotFound("Document not found.") from e
+            self._document = document if document.is_root() else document.get_root()
         return self._document
 
     def get_queryset(self):
         """Return the queryset according to the action."""
-        document = self.get_document_or_404()
+        document = self.get_root_document_or_404()
 
         queryset = super().get_queryset()
         queryset = queryset.filter(document=document)
@@ -3121,7 +3124,7 @@ class DocumentAskForAccessViewSet(
 
     def create(self, request, *args, **kwargs):
         """Create a document ask for access resource."""
-        document = self.get_document_or_404()
+        document = self.get_root_document_or_404()
 
         if document.get_role(request.user) in models.PRIVILEGED_ROLES:
             return drf.response.Response(
@@ -3132,19 +3135,19 @@ class DocumentAskForAccessViewSet(
         serializer = serializers.DocumentAskForAccessCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        queryset = self.get_queryset()
-
-        if queryset.filter(user=request.user).exists():
+        # get_or_create, not a check then a create: on a concurrent duplicate the
+        # unique (user, document) constraint raises IntegrityError, which it
+        # catches to return the existing row instead of a 500
+        ask_for_access, created = models.DocumentAskForAccess.objects.get_or_create(
+            document=document,
+            user=request.user,
+            defaults={"role": serializer.validated_data["role"]},
+        )
+        if not created:
             return drf.response.Response(
                 {"detail": "You already ask to access to this document."},
                 status=drf.status.HTTP_400_BAD_REQUEST,
             )
-
-        ask_for_access = models.DocumentAskForAccess.objects.create(
-            document=document,
-            user=request.user,
-            role=serializer.validated_data["role"],
-        )
 
         send_ask_for_access_mail.delay(ask_for_access.id)
 

@@ -4,6 +4,7 @@ import uuid
 from unittest import mock
 
 from django.core import mail
+from django.db import IntegrityError
 
 import pytest
 from rest_framework.test import APIClient
@@ -99,12 +100,20 @@ def test_api_documents_ask_for_access_create_authenticated():
             assert document.title.lower() in email_subject.lower()
 
 
-def test_api_documents_ask_for_access_create_authenticated_non_root_document():
+def test_api_documents_ask_for_access_create_authenticated_sub_document():
     """
-    Authenticated users should not be able to create a document ask for access on a non-root
-    document.
+    Authenticated users should be able to create a document ask for access from a
+    sub-document: the request is attached to the top parent document and the
+    owners/admins of the top parent are notified by email.
     """
-    parent = DocumentFactory()
+    owner_user = UserFactory(language="en-us")
+    admin_user = UserFactory(language="en-us")
+    parent = DocumentFactory(
+        users=[
+            (owner_user, RoleChoices.OWNER),
+            (admin_user, RoleChoices.ADMIN),
+        ]
+    )
     child = DocumentFactory(parent=parent)
 
     user = UserFactory()
@@ -112,8 +121,111 @@ def test_api_documents_ask_for_access_create_authenticated_non_root_document():
     client = APIClient()
     client.force_login(user)
 
+    assert len(mail.outbox) == 0
+
     response = client.post(f"/api/v1.0/documents/{child.id}/ask-for-access/")
-    assert response.status_code == 404
+    assert response.status_code == 201
+
+    assert DocumentAskForAccess.objects.filter(
+        document=parent,
+        user=user,
+        role=RoleChoices.READER,
+    ).exists()
+    assert not DocumentAskForAccess.objects.filter(document=child).exists()
+
+    # Emails are sent to the owners/admins of the top parent document
+    assert len(mail.outbox) == 2
+    email_recipients = [email.to[0] for email in mail.outbox]
+    assert owner_user.email in email_recipients
+    assert admin_user.email in email_recipients
+
+
+def test_api_documents_ask_for_access_create_authenticated_grandchild_document():
+    """
+    Asking for access from a grandchild document attaches the request to the top
+    parent document.
+    """
+    parent = DocumentFactory()
+    child = DocumentFactory(parent=parent)
+    grandchild = DocumentFactory(parent=child)
+
+    user = UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{grandchild.id}/ask-for-access/",
+        data={"role": RoleChoices.EDITOR},
+    )
+    assert response.status_code == 201
+
+    assert DocumentAskForAccess.objects.filter(
+        document=parent,
+        user=user,
+        role=RoleChoices.EDITOR,
+    ).exists()
+
+
+def test_api_documents_ask_for_access_create_sub_document_with_role_on_sub_document_only():
+    """
+    A user with a role on a sub-document but no access on the top parent should be able
+    to ask for access to the top parent from the sub-document.
+    """
+    parent = DocumentFactory()
+    child = DocumentFactory(parent=parent)
+    user = UserFactory()
+    UserDocumentAccessFactory(document=child, user=user, role=RoleChoices.EDITOR)
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(f"/api/v1.0/documents/{child.id}/ask-for-access/")
+    assert response.status_code == 201
+
+    assert DocumentAskForAccess.objects.filter(
+        document=parent,
+        user=user,
+        role=RoleChoices.READER,
+    ).exists()
+
+
+@pytest.mark.parametrize("role", PRIVILEGED_ROLES)
+def test_api_documents_ask_for_access_create_sub_document_privileged_on_root(role):
+    """
+    Users with privileged access on the top parent should not be able to ask for access,
+    even when the request is made from a sub-document.
+    """
+    user = UserFactory()
+    parent = DocumentFactory(users=[(user, role)])
+    child = DocumentFactory(parent=parent)
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(f"/api/v1.0/documents/{child.id}/ask-for-access/")
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "You already have privileged access to this document."
+    }
+
+
+def test_api_documents_ask_for_access_create_sub_document_already_asked_on_root():
+    """
+    A user who already asked for access to the top parent cannot ask again from another
+    sub-document of the same tree.
+    """
+    user = UserFactory()
+    parent = DocumentFactory()
+    child = DocumentFactory(parent=parent)
+    DocumentAskForAccessFactory(document=parent, user=user, role=RoleChoices.READER)
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(f"/api/v1.0/documents/{child.id}/ask-for-access/")
+    assert response.status_code == 400
+    assert response.json() == {"detail": "You already ask to access to this document."}
 
 
 @pytest.mark.parametrize(
@@ -200,6 +312,54 @@ def test_api_documents_ask_for_access_create_authenticated_already_has_ask_for_a
     assert response.json() == {"detail": "You already ask to access to this document."}
 
 
+def test_api_documents_ask_for_access_create_concurrent_duplicate_returns_400():
+    """
+    If a duplicate ask for access is inserted concurrently, the unique (user, document)
+    constraint fires during the create: the API must answer 400, not 500, and send
+    no email.
+    """
+    user = UserFactory()
+    document = DocumentFactory()
+    # The row already exists, as if a concurrent request had created it first
+    DocumentAskForAccessFactory(document=document, user=user, role=RoleChoices.READER)
+
+    client = APIClient()
+    client.force_login(user)
+
+    # Simulate the race inside get_or_create: the initial lookup misses, the insert
+    # hits the unique constraint, the retry lookup finds the concurrent row
+    racing_queryset = DocumentAskForAccess.objects.get_queryset()
+    real_get = racing_queryset.get
+    get_calls = []
+
+    def flaky_get(*args, **kwargs):
+        get_calls.append(1)
+        if len(get_calls) == 1:
+            raise DocumentAskForAccess.DoesNotExist
+        return real_get(*args, **kwargs)
+
+    racing_queryset.get = flaky_get
+    racing_queryset.create = mock.Mock(
+        side_effect=IntegrityError(
+            "duplicate key value violates unique constraint "
+            "'unique_document_ask_for_access_user'"
+        )
+    )
+
+    with mock.patch.object(
+        DocumentAskForAccess.objects, "get_queryset", return_value=racing_queryset
+    ):
+        response = client.post(f"/api/v1.0/documents/{document.id}/ask-for-access/")
+
+    # The race path was exercised: lookup missed, insert hit the constraint,
+    # retry lookup found the concurrent row
+    assert racing_queryset.create.call_count == 1
+    assert len(get_calls) == 2
+    assert response.status_code == 400
+    assert response.json() == {"detail": "You already ask to access to this document."}
+    assert len(mail.outbox) == 0
+
+
 @pytest.mark.parametrize("role", PRIVILEGED_ROLES)
 def test_api_documents_ask_for_access_create_authenticated_already_has_privileged_access(
     role,
@@ -257,18 +417,32 @@ def test_api_documents_ask_for_access_list_authenticated():
     }
 
 
-def test_api_documents_ask_for_access_list_authenticated_non_root_document():
+def test_api_documents_ask_for_access_list_authenticated_sub_document():
     """
-    Authenticated users should not be able to list document ask for access on a non-root document.
+    Listing ask for access from a sub-document returns the requests of the top parent
+    document: a non-privileged user only sees their own requests.
     """
     parent = DocumentFactory()
     child = DocumentFactory(parent=parent)
+    DocumentAskForAccessFactory.create_batch(
+        3, document=parent, role=RoleChoices.READER
+    )
+
+    user = UserFactory()
+    own_request = DocumentAskForAccessFactory(
+        document=parent, user=user, role=RoleChoices.READER
+    )
 
     client = APIClient()
-    client.force_login(UserFactory())
+    client.force_login(user)
 
     response = client.get(f"/api/v1.0/documents/{child.id}/ask-for-access/")
-    assert response.status_code == 404
+    assert response.status_code == 200
+    body = response.json()
+    assert body["count"] == 1
+    assert len(body["results"]) == 1
+    assert body["results"][0]["id"] == str(own_request.id)
+    assert body["results"][0]["document"] == str(parent.id)
 
 
 def test_api_documents_ask_for_access_list_authenticated_own_request():
@@ -417,20 +591,26 @@ def test_api_documents_ask_for_access_list_owner_or_admin(role):
 
 
 @pytest.mark.parametrize("role", [RoleChoices.OWNER, RoleChoices.ADMIN])
-def test_api_documents_ask_for_access_list_admin_non_root_document(role):
+def test_api_documents_ask_for_access_list_admin_sub_document(role):
     """
-    Authenticated users should not be able to list document ask for access on a non-root document.
+    Owners/admins of the top parent should list all its ask for access requests when
+    querying from a sub-document.
     """
     user = UserFactory()
     parent = DocumentFactory(users=[(user, role)])
-    child = DocumentFactory(parent=parent, users=[(user, role)])
-    DocumentAskForAccessFactory.create_batch(3, document=child, role=RoleChoices.READER)
+    child = DocumentFactory(parent=parent)
+    DocumentAskForAccessFactory.create_batch(
+        3, document=parent, role=RoleChoices.READER
+    )
 
     client = APIClient()
     client.force_login(user)
 
     response = client.get(f"/api/v1.0/documents/{child.id}/ask-for-access/")
-    assert response.status_code == 404
+    assert response.status_code == 200
+    body = response.json()
+    assert body["count"] == 3
+    assert all(result["document"] == str(parent.id) for result in body["results"])
 
 
 ## Retrieve
@@ -529,16 +709,16 @@ def test_api_documents_ask_for_access_retrieve_owner_or_admin(role):
 
 
 @pytest.mark.parametrize("role", [RoleChoices.OWNER, RoleChoices.ADMIN])
-def test_api_documents_ask_for_access_retrieve_authenticated_non_root_document(role):
+def test_api_documents_ask_for_access_retrieve_sub_document(role):
     """
-    Authenticated users should not be able to retrieve document ask for access on a non-root
-    document.
+    Owners/admins of the top parent should be able to retrieve its ask for access
+    requests from a sub-document URL.
     """
     user = UserFactory()
     parent = DocumentFactory(users=[(user, role)])
-    child = DocumentFactory(parent=parent, users=[(user, role)])
+    child = DocumentFactory(parent=parent)
     document_ask_for_access = DocumentAskForAccessFactory(
-        document=child, role=RoleChoices.READER
+        document=parent, role=RoleChoices.READER
     )
 
     client = APIClient()
@@ -547,7 +727,8 @@ def test_api_documents_ask_for_access_retrieve_authenticated_non_root_document(r
     response = client.get(
         f"/api/v1.0/documents/{child.id}/ask-for-access/{document_ask_for_access.id}/"
     )
-    assert response.status_code == 404
+    assert response.status_code == 200
+    assert response.json()["document"] == str(parent.id)
 
 
 ## Delete
@@ -623,16 +804,16 @@ def test_api_documents_ask_for_access_delete_owner_or_admin(role):
 
 
 @pytest.mark.parametrize("role", [RoleChoices.OWNER, RoleChoices.ADMIN])
-def test_api_documents_ask_for_access_delete_authenticated_non_root_document(role):
+def test_api_documents_ask_for_access_delete_sub_document(role):
     """
-    Authenticated users should not be able to delete document ask for access on a non-root
-    document.
+    Owners/admins of the top parent should be able to delete its ask for access
+    requests from a sub-document URL.
     """
     user = UserFactory()
     parent = DocumentFactory(users=[(user, role)])
-    child = DocumentFactory(parent=parent, users=[(user, role)])
+    child = DocumentFactory(parent=parent)
     document_ask_for_access = DocumentAskForAccessFactory(
-        document=child, role=RoleChoices.READER
+        document=parent, role=RoleChoices.READER
     )
 
     client = APIClient()
@@ -641,7 +822,10 @@ def test_api_documents_ask_for_access_delete_authenticated_non_root_document(rol
     response = client.delete(
         f"/api/v1.0/documents/{child.id}/ask-for-access/{document_ask_for_access.id}/"
     )
-    assert response.status_code == 404
+    assert response.status_code == 204
+    assert not DocumentAskForAccess.objects.filter(
+        id=document_ask_for_access.id
+    ).exists()
 
 
 ## Accept
@@ -861,16 +1045,16 @@ def test_api_documents_ask_for_access_accept_owner_can_accept_owner_role():
 
 
 @pytest.mark.parametrize("role", [RoleChoices.OWNER, RoleChoices.ADMIN])
-def test_api_documents_ask_for_access_accept_authenticated_non_root_document(role):
+def test_api_documents_ask_for_access_accept_sub_document(role):
     """
-    Authenticated users should not be able to accept document ask for access on a non-root
-    document.
+    Owners/admins of the top parent should be able to accept its ask for access from a
+    sub-document URL: the access is created on the top parent document.
     """
     user = UserFactory()
     parent = DocumentFactory(users=[(user, role)])
-    child = DocumentFactory(parent=parent, users=[(user, role)])
+    child = DocumentFactory(parent=parent)
     document_ask_for_access = DocumentAskForAccessFactory(
-        document=child, role=RoleChoices.READER
+        document=parent, role=RoleChoices.READER
     )
 
     client = APIClient()
@@ -879,7 +1063,16 @@ def test_api_documents_ask_for_access_accept_authenticated_non_root_document(rol
     response = client.post(
         f"/api/v1.0/documents/{child.id}/ask-for-access/{document_ask_for_access.id}/accept/"
     )
-    assert response.status_code == 404
+    assert response.status_code == 204
+
+    assert not DocumentAskForAccess.objects.filter(
+        id=document_ask_for_access.id
+    ).exists()
+    assert DocumentAccess.objects.filter(
+        document=parent,
+        user=document_ask_for_access.user,
+        role=RoleChoices.READER,
+    ).exists()
 
 
 def test_api_document_ask_for_access_throttling(settings):
