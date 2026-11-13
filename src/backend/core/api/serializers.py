@@ -6,7 +6,6 @@ from os.path import splitext
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
 from django.utils.functional import lazy
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -770,20 +769,31 @@ class InvitationSerializer(serializers.ModelSerializer):
         """Custom validation for the role field."""
         request = self.context.get("request")
         user = getattr(request, "user", None)
-        document_id = self.context["resource_id"]
 
-        # If the role is OWNER, check if the user has OWNER access
+        # Only owners, of the document or of an ancestor, may invite owners
         if role == models.RoleChoices.OWNER:
-            if not models.DocumentAccess.objects.filter(
-                Q(user=user) | Q(team__in=user.teams),
-                document=document_id,
-                role=models.RoleChoices.OWNER,
-            ).exists():
+            document = (
+                self.instance.document
+                if self.instance
+                else models.Document.objects.annotate_user_roles(user)
+                .only("path")
+                .filter(pk=self.context["resource_id"])
+                .first()
+            )
+            if document is None or document.get_role(user) != models.RoleChoices.OWNER:
                 raise serializers.ValidationError(
                     "Only owners of a document can invite other users as owners."
                 )
 
         return role
+
+    def validate_email(self, email):
+        """Refuse to change the email on update: the issuer chose who to invite."""
+        if self.instance and email.lower() != self.instance.email.lower():
+            raise serializers.ValidationError(
+                _("The email of an invitation cannot be changed.")
+            )
+        return email
 
 
 class RoleSerializer(serializers.Serializer):

@@ -2312,30 +2312,42 @@ class Invitation(BaseModel):
         return timezone.now() > (self.created_at + validity_duration)
 
     def get_abilities(self, user):
-        """Compute and return abilities for a given user."""
-        roles = []
+        """
+        Compute and return abilities for a given user.
 
-        if user.is_authenticated:
-            teams = user.teams
-            try:
-                roles = self.user_roles or []
-            except AttributeError:
-                try:
-                    roles = self.document.accesses.filter(
-                        models.Q(user=user) | models.Q(team__in=teams),
-                    ).values_list("role", flat=True)
-                except self._meta.model.DoesNotExist, IndexError:
-                    roles = []
+        The role of the user counts the ancestors of the document, as for its
+        accesses. The list view precomputes it once for the page (`user_role`).
+        """
+        try:
+            role = self.user_role
+        except AttributeError:
+            role = self.document.get_role(user)
 
-        is_admin_or_owner = bool(
-            set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
+        is_admin_or_owner = role in PRIVILEGED_ROLES
+        # Only owners may grant ownership, so only they may alter or cancel an
+        # owner invitation, as for owner accesses
+        can_manage = (
+            role == RoleChoices.OWNER
+            if self.role == RoleChoices.OWNER
+            else is_admin_or_owner
+        )
+        set_role_to = (
+            [
+                candidate_role
+                for candidate_role in RoleChoices.values
+                if RoleChoices.get_priority(candidate_role)
+                <= RoleChoices.get_priority(role)
+            ]
+            if can_manage
+            else []
         )
 
         return {
-            "destroy": is_admin_or_owner,
-            "update": is_admin_or_owner,
-            "partial_update": is_admin_or_owner,
+            "destroy": can_manage,
+            "update": can_manage,
+            "partial_update": can_manage,
             "retrieve": is_admin_or_owner,
+            "set_role_to": set_role_to,
         }
 
 
