@@ -69,6 +69,7 @@ import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { DocsSideMenu } from './DocsSideMenu/DocsSideMenu';
+import { SelectAllShortcut } from './SelectAllShortcut';
 import { commentEditorSchema } from './commentEditorSchema';
 import {
   CalloutBlock,
@@ -312,6 +313,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           resolveUsers,
           schema: commentEditorSchema,
         }),
+        SelectAllShortcut,
         ...(aiExtension ? [aiExtension] : []),
       ],
       _tiptapOptions: {
