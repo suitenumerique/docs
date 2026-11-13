@@ -7,6 +7,8 @@ const DOC_PATH_REGEX = /^\/docs\/([^/]+)\/?$/;
 export type PastedDocInterlink = {
   docId: string;
   blockId?: string;
+  /** The selected text the link was pasted on, shown instead of the title */
+  label?: string;
 };
 
 /**
@@ -14,25 +16,30 @@ export type PastedDocInterlink = {
  * origin (e.g. copied from the address bar or "Copy link"), returns its
  * doc id (and, if present, the anchored block id from the URL hash) so
  * the paste can be turned into an interlink instead of a plain link.
- * Returns null for anything else (selections, code blocks, links mixed
- * with other text, other origins/routes).
+ * Pasted on a selected text, the interlink keeps that text as its label.
+ * Returns null for anything else (selections across blocks, code blocks,
+ * links mixed with other text, other origins/routes).
  */
 export const getPastedDocInterlink = (
   event: ClipboardEvent,
   editor: DocsBlockNoteEditor,
 ): PastedDocInterlink | null => {
-  const hasSelection = editor.transact((tr) => !tr.selection.empty);
-  if (hasSelection) {
+  const selection = editor.transact(({ selection, doc }) => ({
+    isEmpty: selection.empty,
+    isInSameBlock: selection.$from.sameParent(selection.$to),
+    isInCodeBlock:
+      !!selection.$from.parent.type.spec.code &&
+      !!selection.$to.parent.type.spec.code,
+    text: doc.textBetween(selection.from, selection.to).trim(),
+  }));
+
+  // If the cursor is inside a code block, we don't want to convert the pasted URL into an interlink.
+  if (selection.isInCodeBlock) {
     return null;
   }
 
-  const isInCodeBlock = editor.transact(
-    (tr) =>
-      !!tr.selection.$from.parent.type.spec.code &&
-      !!tr.selection.$to.parent.type.spec.code,
-  );
-  // If the cursor is inside a code block, we don't want to convert the pasted URL into an interlink.
-  if (isInCodeBlock) {
+  // A selection across blocks, or holding no text, is left to the default paste.
+  if (!selection.isEmpty && (!selection.isInSameBlock || !selection.text)) {
     return null;
   }
 
@@ -42,6 +49,7 @@ export const getPastedDocInterlink = (
     return null;
   }
 
+  // A relative path is not a URL copied from somewhere: it throws and stays a text.
   let url: URL;
   try {
     url = new URL(text);
@@ -63,5 +71,9 @@ export const getPastedDocInterlink = (
 
   const blockId = url.hash.slice(1) || undefined;
 
-  return blockId ? { docId, blockId } : { docId };
+  return {
+    docId,
+    ...(blockId && { blockId }),
+    ...(!selection.isEmpty && { label: selection.text }),
+  };
 };

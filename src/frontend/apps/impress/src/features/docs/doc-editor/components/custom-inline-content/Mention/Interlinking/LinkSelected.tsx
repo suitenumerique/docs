@@ -25,6 +25,8 @@ const BLOCK_LABEL_REFRESH_DELAY = 2000;
 interface LinkSelectedProps {
   docId: string;
   blockId?: string;
+  /** Shown instead of the title of the doc or the text of the block */
+  label?: string;
   isEditable: boolean;
   /** Skips fetching the doc when the caller already has it */
   doc?: Doc;
@@ -87,6 +89,7 @@ const useSameDocBlockLabel = (
 export const LinkSelected = ({
   docId,
   blockId,
+  label: customLabel,
   doc: preloadedDoc,
   editor,
 }: LinkSelectedProps) => {
@@ -108,9 +111,11 @@ export const LinkSelected = ({
   const href = `/docs/${docId}/${blockId ? `#${blockId}` : ''}`;
   const visualHref = `/${docId}/`;
   const { currentDoc } = useDocStore();
+  const isSameDoc = currentDoc?.id === docId;
+  // A label given by the user is never replaced by the text of the block
   const blockLabel = useSameDocBlockLabel(
     editor,
-    currentDoc?.id === docId,
+    isSameDoc && !customLabel,
     blockId,
   );
   // The slug of a doc is shown only when nothing more is known about it
@@ -122,26 +127,32 @@ export const LinkSelected = ({
           description: 'You do not have access to this document',
         })
       : visualHref;
-  const isBlockAnchor = blockLabel !== null;
-  const isHrefFallback = !isLoading && !doc && !isNoAccess && !isBlockAnchor;
+  const isBlockAnchor = customLabel
+    ? isSameDoc && !!blockId
+    : blockLabel !== null;
+  const isHrefFallback =
+    !customLabel && !isLoading && !doc && !isNoAccess && !isBlockAnchor;
   // The text of a block is not a title: its emoji stays in the text, and the
   // icon is the one of an anchor. A deleted block has no text left.
-  const { emoji, titleWithoutEmoji } = isBlockAnchor
-    ? {
-        emoji: undefined,
-        titleWithoutEmoji:
-          blockLabel?.text ??
-          t('Removed or not found', {
-            description:
-              'Label of a link to a block of the doc that was deleted or does not exist',
-          }),
-      }
-    : getEmojiAndTitle(label);
+  // Neither is a label given by the user.
+  const { emoji, titleWithoutEmoji } = customLabel
+    ? { emoji: undefined, titleWithoutEmoji: customLabel }
+    : isBlockAnchor
+      ? {
+          emoji: undefined,
+          titleWithoutEmoji:
+            blockLabel?.text ??
+            t('Removed or not found', {
+              description:
+                'Label of a link to a block of the doc that was deleted or does not exist',
+            }),
+        }
+      : getEmojiAndTitle(label);
   const DefaultIcon = isBlockAnchor ? AnchorIcon : SelectedPageIcon;
   // Italic tells a text made up by Docs from what the user wrote
-  const isMadeUpText = isBlockAnchor
-    ? !blockLabel || blockLabel.isFallback
-    : isNoAccess;
+  const isMadeUpText =
+    !customLabel &&
+    (isBlockAnchor ? !blockLabel || blockLabel.isFallback : isNoAccess);
   const isDeletedDoc = !!currentDoc?.deleted_at;
   // The compat router is null outside of the Next.js router context, e.g. in
   // the slides print root, where nothing can be clicked.
@@ -258,7 +269,7 @@ export const LinkSelected = ({
           ${isMadeUpText ? 'font-style: italic;' : ''}
         `}
       >
-        {isLoading && !isBlockAnchor ? (
+        {isLoading && !isBlockAnchor && !customLabel ? (
           <Box
             as="span"
             $display="inline-flex"

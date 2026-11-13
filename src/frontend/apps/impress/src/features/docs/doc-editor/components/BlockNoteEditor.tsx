@@ -281,6 +281,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
          * When pasting a bare link to a doc on this same domain, turn it
          * into an interlink instead of a plain link, so it benefits from
          * the title-sync and navigation behaviour of the interlinking system.
+         * Pasted on a selected text, the interlink replaces it and keeps it
+         * as its label.
          */
         const pastedInterlink = getPastedDocInterlink(
           event,
@@ -294,6 +296,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
                 docId: pastedInterlink.docId,
                 ...(pastedInterlink.blockId && {
                   blockId: pastedInterlink.blockId,
+                }),
+                ...(pastedInterlink.label && {
+                  label: pastedInterlink.label,
                 }),
               },
             },

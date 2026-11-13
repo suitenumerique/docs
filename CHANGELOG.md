@@ -15,6 +15,7 @@ and this project adheres to
 - 🤖(agents) add AI skills #2746
 - ✨(frontend) better interlink anchor on same document #2932
 - ✨(frontend) show "no access" in a link to a doc without access #2932
+- ✨(frontend) paste a link to a doc on a text to make it an interlink #2869
 
 ### Changed
 
@@ -44,6 +45,7 @@ and this project adheres to
 - 🐛(frontend) keep the focus on the emoji button of a tree item #2964
 - 🐛(backend) keep the case of titles and names in email subjects #2792
 - 📝(docs) recreate the containers when upgrading a compose install
+- 🐛(y-provider) keep the anchor of a link to a block in conversions #2869
 
 ### Removed
 

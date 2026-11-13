@@ -469,7 +469,20 @@ describe('Conversion Testing', () => {
             type: 'interlinkingLinkInline' as const,
             props: {
               docId: '00000000-0000-0000-0000-000000000123',
+              blockId: '',
               title: 'Other doc',
+              label: '',
+              disabled: false,
+              trigger: '/' as const,
+            },
+          },
+          {
+            type: 'interlinkingLinkInline' as const,
+            props: {
+              docId: '00000000-0000-0000-0000-000000000456',
+              blockId: 'block-1',
+              title: 'Third doc',
+              label: 'see there',
               disabled: false,
               trigger: '/' as const,
             },
@@ -492,6 +505,11 @@ describe('Conversion Testing', () => {
     // optional title attribute (still present in the HTML export).
     expect(response.text).toContain(
       '[Other doc](http://localhost:3000/docs/00000000-0000-0000-0000-000000000123/)',
+    );
+    // The label the link was pasted on wins over the title, and a link to a
+    // block keeps its anchor
+    expect(response.text).toContain(
+      '[see there](http://localhost:3000/docs/00000000-0000-0000-0000-000000000456/#block-1)',
     );
   });
 
@@ -569,7 +587,9 @@ describe('Conversion Testing', () => {
             type: 'interlinkingLinkInline' as const,
             props: {
               docId: '00000000-0000-0000-0000-000000000123',
+              blockId: '',
               title: 'Other doc',
+              label: '',
               disabled: false,
               trigger: '/' as const,
             },
@@ -612,7 +632,9 @@ describe('Conversion Testing', () => {
             type: 'interlinkingLinkInline' as const,
             props: {
               docId: '00000000-0000-0000-0000-000000000123',
+              blockId: '',
               title: 'Hidden',
+              label: '',
               disabled: true,
               trigger: '/' as const,
             },
