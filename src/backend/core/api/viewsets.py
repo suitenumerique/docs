@@ -24,6 +24,7 @@ from django.db.models.functions import Greatest, Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.cache import patch_cache_control
 from django.utils.functional import cached_property
 from django.utils.http import content_disposition_header
 from django.utils.text import slugify
@@ -3206,8 +3207,14 @@ class DocumentAskForAccessViewSet(
 class ConfigView(drf.views.APIView):
     """API ViewSet for sharing some public settings."""
 
+    # Every visitor gets the same payload. It is not authenticated, so that the
+    # session is not read and the response can be kept by a shared cache.
+    authentication_classes = []
     permission_classes = [AllowAny]
-    throttle_scope = "config"
+    # Throttling it protects nothing, and anonymous visitors behind a shared IP
+    # address would hit the limit together: browsers and caches absorb the
+    # calls instead.
+    throttle_classes = []
 
     def get(self, request):
         """
@@ -3255,7 +3262,11 @@ class ConfigView(drf.views.APIView):
         dict_settings["theme_customization"] = self._load_theme_customization()
         dict_settings["RELEASE_VERSION"] = settings.RELEASE
 
-        return drf.response.Response(dict_settings)
+        response = drf.response.Response(dict_settings)
+        patch_cache_control(
+            response, public=True, max_age=settings.API_CONFIG_CACHE_MAX_AGE
+        )
+        return response
 
     def _load_theme_customization(self):
         if not settings.THEME_CUSTOMIZATION_FILE_PATH:

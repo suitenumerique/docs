@@ -55,6 +55,7 @@ and this project adheres to
 - 🐛(backend) name users without an email instead of returning a 500 #2943
 - 🐛(frontend) show an error page when the current user cannot be loaded #2943
 - 🐛(frontend) pick a mention with a click in the comments sidebar #3055
+- 🐛(backend) stop throttling the config endpoint #3005
 
 ## [v6.1.0] - 2026-11-12
 

@@ -37,6 +37,11 @@ the following command inside your docker container:
   only differed by case are kept and now share an email: list them with the
   "duplicate email" filter of the users admin, then merge or deactivate them
   from there.
+- `GET /api/v1.0/config/` is no longer throttled, so
+  `API_CONFIG_THROTTLE_RATE` is no longer read: you can remove it from your
+  environment. Its answer now carries `Cache-Control: public, max-age=300`
+  (`API_CONFIG_CACHE_MAX_AGE`), so a change of the configuration can take up
+  to 5 minutes to reach a browser.
 
 ## [6.1.0] - 2026-11-12
 

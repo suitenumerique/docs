@@ -495,11 +495,6 @@ class Base(Configuration):
                 environ_name="API_MENTION_THROTTLE_RATE",
                 environ_prefix=None,
             ),
-            "config": values.Value(
-                default="30/minute",
-                environ_name="API_CONFIG_THROTTLE_RATE",
-                environ_prefix=None,
-            ),
         },
     }
     MONITORED_THROTTLE_FAILURE_CALLBACK = (
@@ -689,6 +684,12 @@ class Base(Configuration):
         os.path.join(BASE_DIR, "impress/configuration/theme/default.json"),
         environ_name="THEME_CUSTOMIZATION_FILE_PATH",
         environ_prefix=None,
+    )
+
+    # Seconds a browser or a shared cache may keep the answer of the config
+    # endpoint, which is the same for every visitor.
+    API_CONFIG_CACHE_MAX_AGE = values.PositiveIntegerValue(
+        default=300, environ_name="API_CONFIG_CACHE_MAX_AGE", environ_prefix=None
     )
 
     THEME_CUSTOMIZATION_CACHE_TIMEOUT = values.IntegerValue(
