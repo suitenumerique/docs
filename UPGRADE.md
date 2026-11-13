@@ -37,6 +37,10 @@ the following command inside your docker container:
   of the backend, so that the throttles key anonymous requests on the client
   address they append to `X-Forwarded-For`. Left unset, the whole header is
   used as before, and a client can vary it to escape its limit.
+- Anonymous visitors get a `docs_anonymous_id` cookie (signed, HttpOnly,
+  Secure, SameSite=Lax, kept for the browser session) holding a random id,
+  which the throttles use instead of their IP address. It is only set on API
+  responses to anonymous visitors that do not have it yet.
 
 ## [6.1.0] - 2026-11-12
 

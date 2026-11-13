@@ -1,5 +1,6 @@
 """Custom middlewares of the impress core app."""
 
+import uuid
 from secrets import compare_digest
 
 from django.conf import settings
@@ -10,6 +11,56 @@ from django.utils.deprecation import MiddlewareMixin
 # Defined here rather than next to the view so that this module, which is always
 # loaded, does not import prometheus_client when the metrics are disabled.
 METRICS_PATH = "/metrics"
+
+# Salt of the anonymous id cookie signature, so that a value signed with the
+# same secret key for another purpose is not accepted as an anonymous id.
+ANONYMOUS_ID_COOKIE_SALT = "core.middleware.AnonymousIdMiddleware"
+
+
+def get_anonymous_id(request):
+    """
+    Return the id carried by the anonymous id cookie of the request, or None
+    when the cookie is missing or its signature is not valid.
+    """
+    return request.get_signed_cookie(
+        settings.ANONYMOUS_ID_COOKIE_NAME,
+        default=None,
+        salt=ANONYMOUS_ID_COOKIE_SALT,
+    )
+
+
+class AnonymousIdMiddleware(MiddlewareMixin):
+    """
+    Give each anonymous visitor a signed cookie holding a random id.
+
+    The throttles key an anonymous request on this id rather than on its IP
+    address, so that visitors behind a shared NAT do not share their limits
+    (see core.api.throttling.AnonymousIdThrottleMixin). The id is not stored in
+    the session: anonymous visitors have none. Installed after the
+    authentication middleware, which tells whether the visitor is logged in.
+
+    Only API responses carry it: the throttles only apply there, and other
+    callers (the metrics scraper, the admin...) have no use for it.
+    """
+
+    def process_response(self, request, response):
+        """Set the cookie on an API response to an anonymous visitor without one."""
+        if not request.path_info.startswith("/api/"):
+            return response
+
+        user = getattr(request, "user", None)
+        if user is None or user.is_authenticated or get_anonymous_id(request):
+            return response
+
+        response.set_signed_cookie(
+            settings.ANONYMOUS_ID_COOKIE_NAME,
+            uuid.uuid4().hex,
+            salt=ANONYMOUS_ID_COOKIE_SALT,
+            httponly=True,
+            secure=True,
+            samesite="Lax",
+        )
+        return response
 
 
 class SaveRawBodyMiddleware(MiddlewareMixin):

@@ -374,6 +374,7 @@ class Base(Configuration):
         "django.middleware.common.CommonMiddleware",
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "core.middleware.AnonymousIdMiddleware",
         "core.middleware.SaveRawBodyMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "csp.middleware.CSPMiddleware",
@@ -730,6 +731,11 @@ class Base(Configuration):
         default=60 * 60 * 12, environ_name="SESSION_COOKIE_AGE", environ_prefix=None
     )
     SESSION_COOKIE_NAME = "docs_sessionid"
+
+    # Signed cookie identifying an anonymous visitor for the throttles
+    # (core.middleware.AnonymousIdMiddleware). Not in the session: anonymous
+    # visitors have none.
+    ANONYMOUS_ID_COOKIE_NAME = "docs_anonymous_id"
 
     # OIDC - Authorization Code Flow
     OIDC_AUTHENTICATE_CLASS = values.Value(

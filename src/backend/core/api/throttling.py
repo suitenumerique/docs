@@ -7,6 +7,8 @@ from lasuite.drf.throttling import MonitoredScopedRateThrottle
 from rest_framework.throttling import UserRateThrottle
 from sentry_sdk import capture_message
 
+from core.middleware import get_anonymous_id
+
 
 def sentry_monitoring_throttle_failure(message):
     """Log when a failure occurs to detect rate limiting issues."""
@@ -40,7 +42,27 @@ class YProviderThrottleMixin:
         return super().allow_request(request, view)
 
 
-class DocumentThrottle(YProviderThrottleMixin, MonitoredScopedRateThrottle):
+class AnonymousIdThrottleMixin:
+    """
+    Identify an anonymous client by its anonymous id cookie.
+
+    Anonymous visitors behind a shared NAT have the same IP address: keyed on
+    it, they would share their limits. The cookie is set by
+    core.middleware.AnonymousIdMiddleware. Without it, or with a forged one, the
+    client is identified by its IP address as usual.
+    """
+
+    def get_ident(self, request):
+        """Return the anonymous id of the request, or else its IP address."""
+        if anonymous_id := get_anonymous_id(request):
+            return f"anonymous_{anonymous_id}"
+
+        return super().get_ident(request)
+
+
+class DocumentThrottle(
+    YProviderThrottleMixin, AnonymousIdThrottleMixin, MonitoredScopedRateThrottle
+):
     """
     Throttle for document-related endpoints, except collaboration-server requests.
 
@@ -49,7 +71,9 @@ class DocumentThrottle(YProviderThrottleMixin, MonitoredScopedRateThrottle):
     """
 
 
-class DocumentAccessThrottle(YProviderThrottleMixin, MonitoredScopedRateThrottle):
+class DocumentAccessThrottle(
+    YProviderThrottleMixin, AnonymousIdThrottleMixin, MonitoredScopedRateThrottle
+):
     """
     Throttle for document access endpoints, except collaboration-server requests.
 
