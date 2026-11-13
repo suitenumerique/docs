@@ -7,16 +7,24 @@ import { getPastedDocInterlink } from '../pasteInterlink';
 const VALID_DOC_ID = 'a1b2c3d4-e5f6-4789-a123-1234567890ab';
 
 const makeEditor = (
-  opts: { selectionEmpty?: boolean; inCodeBlock?: boolean } = {},
+  opts: {
+    selectedText?: string;
+    inSameBlock?: boolean;
+    inCodeBlock?: boolean;
+  } = {},
 ) => {
-  const { selectionEmpty = true, inCodeBlock = false } = opts;
+  const { selectedText = '', inSameBlock = true, inCodeBlock = false } = opts;
+  const parent = { type: { spec: { code: inCodeBlock } } };
 
   const tr = {
     selection: {
-      empty: selectionEmpty,
-      $from: { parent: { type: { spec: { code: inCodeBlock } } } },
-      $to: { parent: { type: { spec: { code: inCodeBlock } } } },
+      empty: !selectedText,
+      from: 0,
+      to: selectedText.length,
+      $from: { parent, sameParent: () => inSameBlock },
+      $to: { parent },
     },
+    doc: { textBetween: () => selectedText },
   };
 
   return {
@@ -32,11 +40,32 @@ const makeClipboardEvent = (text: string | undefined) =>
   }) as unknown as ClipboardEvent;
 
 describe('getPastedDocInterlink', () => {
-  it('returns null when the editor has a non-empty selection', () => {
-    const editor = makeEditor({ selectionEmpty: false });
+  it('keeps the selected text as the label of the link', () => {
+    const editor = makeEditor({ selectedText: '  see there ' });
+    const url = `${window.location.origin}/docs/${VALID_DOC_ID}/#block-1`;
+
+    expect(getPastedDocInterlink(makeClipboardEvent(url), editor)).toEqual({
+      docId: VALID_DOC_ID,
+      blockId: 'block-1',
+      label: 'see there',
+    });
+  });
+
+  it('returns null for a selection across blocks or without text', () => {
     const url = `${window.location.origin}/docs/${VALID_DOC_ID}/`;
 
-    expect(getPastedDocInterlink(makeClipboardEvent(url), editor)).toBeNull();
+    expect(
+      getPastedDocInterlink(
+        makeClipboardEvent(url),
+        makeEditor({ selectedText: 'two blocks', inSameBlock: false }),
+      ),
+    ).toBeNull();
+    expect(
+      getPastedDocInterlink(
+        makeClipboardEvent(url),
+        makeEditor({ selectedText: '   ' }),
+      ),
+    ).toBeNull();
   });
 
   it('returns null when the cursor is inside a code block', () => {
@@ -70,6 +99,12 @@ describe('getPastedDocInterlink', () => {
 
     expect(
       getPastedDocInterlink(makeClipboardEvent('not-a-url'), editor),
+    ).toBeNull();
+    expect(
+      getPastedDocInterlink(
+        makeClipboardEvent(`/docs/${VALID_DOC_ID}/`),
+        editor,
+      ),
     ).toBeNull();
   });
 

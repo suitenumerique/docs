@@ -887,9 +887,19 @@ test.describe('Doc Editor', () => {
     );
     await expect(blockLink).toHaveText('My Block');
 
-    await blockLink.click();
+    // Pasted on a selected text, the link keeps that text as its label
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Go to my block');
+    await editor.getByText('Go to my block').selectText();
+    await page.keyboard.press('Control+V');
+
+    const labelLink = blockLink.filter({ hasText: 'Go to my block' });
+    await expect(labelLink).toBeVisible();
+    await expect(blockLink).toHaveCount(2);
+
+    await labelLink.click();
     await expect(page).toHaveURL(clipboardContent);
-    await expect(blockLink).not.toBeInViewport();
+    await expect(labelLink).not.toBeInViewport();
     await expect(editor.getByText('My Block').last()).toBeInViewport();
   });
 

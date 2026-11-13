@@ -13,6 +13,8 @@ const interlinkingPropSchema = {
     values: ['/', '@'] as const,
   },
   title: { default: '' as string },
+  // The text the user pasted the link on, shown instead of the title
+  label: { default: '' as string },
 } as const;
 
 const interlinkingConfig = {
@@ -39,7 +41,7 @@ export const InterlinkingLinkInline = createInlineContentSpec(
   interlinkingConfig,
   {
     render: (inlineContent) => {
-      const { disabled, docId, title } = inlineContent.props;
+      const { disabled, docId, title, label } = inlineContent.props;
       if (disabled || !docId) {
         return { dom: document.createElement('span') };
       }
@@ -48,11 +50,11 @@ export const InterlinkingLinkInline = createInlineContentSpec(
       dom.setAttribute('data-inline-content-type', 'interlinkingLinkInline');
       dom.setAttribute('href', interlinkingHref(docId));
       dom.setAttribute('data-doc-id', docId);
-      dom.textContent = title || docId;
+      dom.textContent = label || title || docId;
       return { dom };
     },
     toExternalHTML: (inlineContent) => {
-      const { disabled, docId, title } = inlineContent.props;
+      const { disabled, docId, title, label } = inlineContent.props;
       // Matches the frontend (InterlinkingLinkInlineContent.tsx): a disabled
       // or unresolved link must not render any visible content.
       if (disabled || !docId) {
@@ -65,7 +67,7 @@ export const InterlinkingLinkInline = createInlineContentSpec(
       if (title) {
         dom.setAttribute('title', title);
       }
-      dom.textContent = title || docId;
+      dom.textContent = label || title || docId;
       return { dom };
     },
   },

@@ -99,6 +99,20 @@ describe('LinkSelected', () => {
     expect(screen.getByText(`/${DOC_ID}/`)).toBeInTheDocument();
   });
 
+  it('shows the label given by the user instead of the title of the doc', () => {
+    mockDocQuery = { data: { title: '📄 My document' }, isLoading: false };
+
+    render(
+      <LinkSelected docId={DOC_ID} label="see there" isEditable={true} />,
+      {
+        wrapper: AppWrapper,
+      },
+    );
+
+    expect(screen.getByText('see there')).toBeInTheDocument();
+    expect(screen.queryByText('My document')).not.toBeInTheDocument();
+  });
+
   it('falls back to the href when the doc has no title', () => {
     mockDocQuery = { data: { title: '' }, isLoading: false };
 
@@ -229,7 +243,7 @@ describe('LinkSelected', () => {
   });
 
   describe('link to a block of the current doc', () => {
-    const renderWithBlock = (block?: { content: unknown }) => {
+    const renderWithBlock = (block?: { content: unknown }, label?: string) => {
       mockCurrentDoc = { id: DOC_ID };
       mockDocQuery = { data: { title: 'My document' }, isLoading: false };
       const editor = {
@@ -241,6 +255,7 @@ describe('LinkSelected', () => {
         <LinkSelected
           docId={DOC_ID}
           blockId="block-1"
+          label={label}
           isEditable={true}
           editor={editor}
         />,
@@ -309,6 +324,23 @@ describe('LinkSelected', () => {
       renderWithBlock({ content: undefined });
 
       expect(screen.getByText('My document')).toBeInTheDocument();
+    });
+
+    it('shows the label given by the user instead of the text of the block', () => {
+      renderWithBlock(
+        { content: [{ type: 'text', text: 'Hello block', styles: {} }] },
+        '🎉 see there',
+      );
+
+      expect(screen.getByText('🎉 see there')).toBeInTheDocument();
+      expect(screen.getByText('🎉 see there')).not.toHaveStyle(
+        'font-style: italic',
+      );
+      expect(screen.queryByText('Hello block')).not.toBeInTheDocument();
+      expect(screen.getByRole('link')).toHaveAttribute(
+        'data-href',
+        `/docs/${DOC_ID}/#block-1`,
+      );
     });
   });
 });

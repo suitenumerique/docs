@@ -15,6 +15,7 @@ and this project adheres to
 - 🤖(agents) add AI skills #2746
 - ✨(frontend) better interlink anchor on same document #2932
 - ✨(frontend) show "no access" in a link to a doc without access #2932
+- ✨(frontend) paste a link to a doc on a text to make it an interlink #2869
 
 ### Changed
 
