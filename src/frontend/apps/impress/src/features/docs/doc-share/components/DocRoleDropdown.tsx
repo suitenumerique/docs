@@ -151,7 +151,8 @@ export const DocRoleDropdown = ({
           label: t('Remove access', {
             description: 'Menu action removing a member from a document',
           }),
-          disabled: !access?.abilities.destroy,
+          disabled: access && !access.abilities.destroy,
+          show: !!access,
           callback: onRemove,
         },
       ]}
