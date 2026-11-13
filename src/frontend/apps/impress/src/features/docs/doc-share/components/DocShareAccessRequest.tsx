@@ -119,23 +119,24 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
                 name: accessRequest.user.full_name || accessRequest.user.email,
               })}
             />
-            <Button
-              color="brand"
-              variant="secondary"
-              onClick={() =>
-                acceptDocAccessRequests({
-                  docId: doc.id,
-                  accessRequestId: accessRequest.id,
-                  role,
-                })
-              }
-              size={isSmallMobile ? 'nano' : 'small'}
-            >
-              {t('Approve', {
-                description: 'Button to accept an access request',
-              })}
-            </Button>
-
+            {accessRequest.abilities.accept && (
+              <Button
+                color="brand"
+                variant="secondary"
+                onClick={() =>
+                  acceptDocAccessRequests({
+                    docId: doc.id,
+                    accessRequestId: accessRequest.id,
+                    role,
+                  })
+                }
+                size={isSmallMobile ? 'nano' : 'small'}
+              >
+                {t('Approve', {
+                  description: 'Button to accept an access request',
+                })}
+              </Button>
+            )}
             {doc.abilities.accesses_manage && (
               <BoxButton
                 onClick={() =>
@@ -144,9 +145,9 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
                     docId: doc.id,
                   })
                 }
-                aria-label={t('Close the access request modal', {
+                aria-label={t('Remove the access request', {
                   description:
-                    'Accessible name of the button closing the access request dialog',
+                    'Accessible name of the button removing an access request',
                 })}
               >
                 <Icon iconName="close" $size="16px" />
@@ -283,7 +284,7 @@ export const ButtonAccessRequest = ({
   return (
     <Button
       onClick={(e) => {
-        createRequest({ docId, role: Role.EDITOR });
+        createRequest({ docId, role: Role.ADMIN });
         onClick?.(e);
       }}
       disabled={hasRequested}

@@ -8,7 +8,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccessRequest, Doc, Role } from '@/docs/doc-management';
 import { AppWrapper } from '@/tests/utils';
 
-import { QuickSearchGroupAccessRequest } from '../DocShareAccessRequest';
+import {
+  ButtonAccessRequest,
+  QuickSearchGroupAccessRequest,
+} from '../DocShareAccessRequest';
 
 const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
@@ -21,6 +24,15 @@ vi.mock('@gouvfr-lasuite/ui-components', async (importOriginal) => {
   return {
     ...actual,
     useToastProvider: () => ({ toast: mocks.toast }),
+  };
+});
+
+vi.mock('@/features/auth', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/auth')>();
+
+  return {
+    ...actual,
+    useAuth: () => ({ authenticated: true }),
   };
 });
 
@@ -51,14 +63,27 @@ const ACCESS_REQUEST: AccessRequest = {
   },
 };
 
+const LIST_URL =
+  'http://test.jest/api/v1.0/documents/doc-id/ask-for-access/?page=1';
 const ACCEPT_URL =
   'http://test.jest/api/v1.0/documents/doc-id/ask-for-access/request-id/accept/';
+const DELETE_URL =
+  'http://test.jest/api/v1.0/documents/doc-id/ask-for-access/request-id/';
 
-const renderGroup = () =>
+const mockList = (results: AccessRequest[]) => {
+  fetchMock.removeRoute('list');
+  fetchMock.get(
+    LIST_URL,
+    { body: { count: results.length, next: null, previous: null, results } },
+    { name: 'list' },
+  );
+};
+
+const renderGroup = (doc: Doc = DOC) =>
   render(
     <Command>
       <Command.List>
-        <QuickSearchGroupAccessRequest doc={DOC} />
+        <QuickSearchGroupAccessRequest doc={doc} />
       </Command.List>
     </Command>,
     { wrapper: AppWrapper },
@@ -86,17 +111,7 @@ describe('QuickSearchGroupAccessRequest', () => {
     mocks.toast.mockReset();
     fetchMock.hardReset();
     fetchMock.mockGlobal();
-    fetchMock.get(
-      'http://test.jest/api/v1.0/documents/doc-id/ask-for-access/?page=1',
-      {
-        body: {
-          count: 1,
-          next: null,
-          previous: null,
-          results: [ACCESS_REQUEST],
-        },
-      },
-    );
+    mockList([ACCESS_REQUEST]);
   });
 
   afterEach(() => {
@@ -122,6 +137,93 @@ describe('QuickSearchGroupAccessRequest', () => {
         'Error while approving the request.',
         VariantType.ERROR,
         { duration: 4000 },
+      );
+    });
+  });
+
+  it('approves the request with its role', async () => {
+    fetchMock.post(ACCEPT_URL, { status: 204 });
+
+    renderGroup();
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Approve' }),
+    );
+
+    await waitFor(() => {
+      expect(fetchMock.callHistory.lastCall(ACCEPT_URL)?.options.body).toBe(
+        JSON.stringify({ role: Role.READER }),
+      );
+    });
+    expect(mocks.toast).not.toHaveBeenCalled();
+  });
+
+  it('hides the approve button when the request cannot be accepted', async () => {
+    mockList([
+      {
+        ...ACCESS_REQUEST,
+        abilities: { ...ACCESS_REQUEST.abilities, accept: false },
+      },
+    ]);
+
+    renderGroup();
+
+    expect(
+      await screen.findByRole('button', { name: 'Remove the access request' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Approve' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('removes the request', async () => {
+    fetchMock.delete(DELETE_URL, { status: 204 });
+
+    renderGroup();
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Remove the access request' }),
+    );
+
+    await waitFor(() => {
+      expect(fetchMock.callHistory.called(DELETE_URL)).toBe(true);
+    });
+  });
+
+  it('hides the remove button without the right to manage accesses', async () => {
+    renderGroup({
+      ...DOC,
+      abilities: { ...DOC.abilities, accesses_manage: false },
+    });
+
+    expect(
+      await screen.findByRole('button', { name: 'Approve' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Remove the access request' }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe('ButtonAccessRequest', () => {
+  beforeEach(() => {
+    mocks.toast.mockReset();
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
+    mockList([]);
+  });
+
+  it('requests the admin role', async () => {
+    const CREATE_URL =
+      'http://test.jest/api/v1.0/documents/doc-id/ask-for-access/';
+    fetchMock.post(CREATE_URL, { status: 201 });
+
+    render(<ButtonAccessRequest docId="doc-id" />, { wrapper: AppWrapper });
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Request access' }),
+    );
+
+    await waitFor(() => {
+      expect(fetchMock.callHistory.lastCall(CREATE_URL)?.options.body).toBe(
+        JSON.stringify({ role: Role.ADMIN }),
       );
     });
   });
