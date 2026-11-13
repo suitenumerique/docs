@@ -12,6 +12,7 @@ from rest_framework.status import (
     HTTP_200_OK,
 )
 from rest_framework.test import APIClient
+from rest_framework.throttling import SimpleRateThrottle
 
 from core import factories
 
@@ -209,18 +210,22 @@ def test_api_config_with_original_theme_customization(is_authenticated, settings
     assert content["theme_customization"] == theme_customization
 
 
-def test_api_config_throttling(settings):
-    """Test api config throttling."""
-    current_rate = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["config"]
-    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["config"] = "2/minute"
+@pytest.mark.parametrize("is_authenticated", [False, True])
+def test_api_config_not_throttled(is_authenticated):
+    """
+    The configuration is the same for every visitor, so it is not throttled:
+    it is served even when every rate throttle refuses the request.
+    """
     client = APIClient()
-    for _i in range(2):
+
+    if is_authenticated:
+        user = factories.UserFactory()
+        client.force_login(user)
+
+    with (
+        patch.object(SimpleRateThrottle, "allow_request", return_value=False),
+        patch.object(SimpleRateThrottle, "wait", return_value=None),
+    ):
         response = client.get("/api/v1.0/config/")
-        assert response.status_code == 200
-    with patch("core.api.throttling.capture_message") as mock_capture_message:
-        response = client.get("/api/v1.0/config/")
-        assert response.status_code == 429
-        mock_capture_message.assert_called_once_with(
-            "Rate limit exceeded for scope config", "warning"
-        )
-    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["config"] = current_rate
+
+    assert response.status_code == HTTP_200_OK

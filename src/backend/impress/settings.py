@@ -495,11 +495,6 @@ class Base(Configuration):
                 environ_name="API_MENTION_THROTTLE_RATE",
                 environ_prefix=None,
             ),
-            "config": values.Value(
-                default="30/minute",
-                environ_name="API_CONFIG_THROTTLE_RATE",
-                environ_prefix=None,
-            ),
         },
     }
     MONITORED_THROTTLE_FAILURE_CALLBACK = (

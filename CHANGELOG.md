@@ -15,6 +15,7 @@ and this project adheres to
 ### Fixed
 
 - ✅(frontend) fix act warnings in the tests and fail on them #2983
+- 🐛(backend) stop throttling the config endpoint #3005
 
 ## [v6.1.0] - 2026-11-12
 

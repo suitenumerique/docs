@@ -30,6 +30,9 @@ the following command inside your docker container:
   with the chart, or set `backend.celery.probes.startup` to `null` and
   `backend.celery.probes.liveness` back to the `inspect ping` probe of the
   previous chart version.
+- `GET /api/v1.0/config/` is no longer throttled, so
+  `API_CONFIG_THROTTLE_RATE` is no longer read: you can remove it from your
+  environment.
 
 ## [6.1.0] - 2026-11-12
 
