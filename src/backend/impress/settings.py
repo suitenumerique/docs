@@ -374,6 +374,7 @@ class Base(Configuration):
         "django.middleware.common.CommonMiddleware",
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "core.middleware.AnonymousIdMiddleware",
         "core.middleware.SaveRawBodyMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "csp.middleware.CSPMiddleware",
@@ -454,6 +455,13 @@ class Base(Configuration):
         "DEFAULT_THROTTLE_CLASSES": [
             "lasuite.drf.throttling.MonitoredScopedRateThrottle",
         ],
+        # Number of reverse proxies in front of the backend. The throttles key an
+        # anonymous request on the address found that many positions from the
+        # right of X-Forwarded-For (0: the TCP peer). Left unset, DRF keys on the
+        # whole header, which a client can vary to dodge its limit.
+        "NUM_PROXIES": values.PositiveIntegerValue(
+            default=None, environ_name="NUM_PROXIES", environ_prefix=None
+        ),
         "DEFAULT_THROTTLE_RATES": {
             "user_list_sustained": values.Value(
                 default="180/hour",
@@ -493,11 +501,6 @@ class Base(Configuration):
             "mention": values.Value(
                 default="30/minute",
                 environ_name="API_MENTION_THROTTLE_RATE",
-                environ_prefix=None,
-            ),
-            "config": values.Value(
-                default="30/minute",
-                environ_name="API_CONFIG_THROTTLE_RATE",
                 environ_prefix=None,
             ),
         },
@@ -728,6 +731,11 @@ class Base(Configuration):
         default=60 * 60 * 12, environ_name="SESSION_COOKIE_AGE", environ_prefix=None
     )
     SESSION_COOKIE_NAME = "docs_sessionid"
+
+    # Signed cookie identifying an anonymous visitor for the throttles
+    # (core.middleware.AnonymousIdMiddleware). Not in the session: anonymous
+    # visitors have none.
+    ANONYMOUS_ID_COOKIE_NAME = "docs_anonymous_id"
 
     # OIDC - Authorization Code Flow
     OIDC_AUTHENTICATE_CLASS = values.Value(

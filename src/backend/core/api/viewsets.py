@@ -3177,7 +3177,9 @@ class ConfigView(drf.views.APIView):
     """API ViewSet for sharing some public settings."""
 
     permission_classes = [AllowAny]
-    throttle_scope = "config"
+    # Every visitor gets the same payload: throttling it protects nothing, and
+    # anonymous visitors behind a shared IP address would hit the limit together.
+    throttle_classes = []
 
     def get(self, request):
         """

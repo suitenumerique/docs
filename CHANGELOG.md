@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- 🔧(backend) make NUM_PROXIES configurable for the throttles #3005
+
 ### Changed
 
 - 📦️(docker) keep the yarn cache out of the node images #2992
@@ -15,6 +19,8 @@ and this project adheres to
 ### Fixed
 
 - ✅(frontend) fix act warnings in the tests and fail on them #2983
+- 🐛(backend) stop throttling the config endpoint #3005
+- 🐛(backend) throttle anonymous users per browser, not per IP address #3005
 
 ## [v6.1.0] - 2026-11-12
 
