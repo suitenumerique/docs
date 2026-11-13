@@ -5,23 +5,36 @@ import {
 import { useCallback, useRef } from 'react';
 
 /**
- * The provider's `toast` function is recreated every time any toast is shown
- * anywhere in the app, which breaks memoization for anything that lists it as
- * a dependency - it once caused the BlockNote editor to fully remount (and
- * reset scroll) whenever an unrelated toast fired. Use this instead of
- * `useToastProvider` directly to get a `toast` with a stable identity.
- *
- * @TODO Modify the ui-components library to provide a stable toast function directly.
+ * Keep a stable identity for the toast functions. Listing an unstable one as
+ * a dependency once remounted the BlockNote editor (and reset its scroll)
+ * whenever an unrelated toast fired. The kit memoizes its context, but this
+ * wrapper stays so a future recreation cannot do that again.
  */
 export const useToast = (): ToastProviderContext => {
-  const { toast } = useToastProvider();
+  const { toast, updateToast, dismissToast } = useToastProvider();
   const toastRef = useRef(toast);
+  const updateToastRef = useRef(updateToast);
+  const dismissToastRef = useRef(dismissToast);
   toastRef.current = toast;
+  updateToastRef.current = updateToast;
+  dismissToastRef.current = dismissToast;
 
   const stableToast = useCallback<ToastProviderContext['toast']>(
     (...args) => toastRef.current(...args),
     [],
   );
+  const stableUpdateToast = useCallback<ToastProviderContext['updateToast']>(
+    (...args) => updateToastRef.current(...args),
+    [],
+  );
+  const stableDismissToast = useCallback<ToastProviderContext['dismissToast']>(
+    (...args) => dismissToastRef.current(...args),
+    [],
+  );
 
-  return { toast: stableToast };
+  return {
+    toast: stableToast,
+    updateToast: stableUpdateToast,
+    dismissToast: stableDismissToast,
+  };
 };
