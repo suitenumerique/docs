@@ -26,7 +26,11 @@ export const getUsers = async ({
     throw new APIError('Failed to get the users', await errorCauses(response));
   }
 
-  return response.json() as Promise<UsersResponse>;
+  const users = (await response.json()) as UsersResponse;
+
+  // Users without an email cannot be invited, and the share modal assumes
+  // every search result has one.
+  return users.filter((user) => user.email);
 };
 
 export const KEY_LIST_USER = 'users';
