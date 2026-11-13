@@ -454,6 +454,13 @@ class Base(Configuration):
         "DEFAULT_THROTTLE_CLASSES": [
             "lasuite.drf.throttling.MonitoredScopedRateThrottle",
         ],
+        # Number of reverse proxies in front of the backend. The throttles key an
+        # anonymous request on the address found that many positions from the
+        # right of X-Forwarded-For (0: the TCP peer). Left unset, DRF keys on the
+        # whole header, which a client can vary to dodge its limit.
+        "NUM_PROXIES": values.PositiveIntegerValue(
+            default=None, environ_name="NUM_PROXIES", environ_prefix=None
+        ),
         "DEFAULT_THROTTLE_RATES": {
             "user_list_sustained": values.Value(
                 default="180/hour",

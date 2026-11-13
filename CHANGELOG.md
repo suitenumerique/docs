@@ -11,6 +11,7 @@ and this project adheres to
 - ✨(yhub) expose whether valkey accepts writes as a metric
 - ✨(yhub) size and bound the compute pool: threads, queue, heap per thread
 - ✨(frontend) paste a link to a doc on a text to make it an interlink #2869
+- 🔧(backend) make NUM_PROXIES configurable for the throttles #3005
 
 ### Changed
 

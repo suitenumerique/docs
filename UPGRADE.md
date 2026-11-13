@@ -42,6 +42,13 @@ the following command inside your docker container:
   environment. Its answer now carries `Cache-Control: public, max-age=300`
   (`API_CONFIG_CACHE_MAX_AGE`), so a change of the configuration can take up
   to 5 minutes to reach a browser.
+- **Set `NUM_PROXIES` in every environment before deploying this release.**
+  It is the number of reverse proxies in front of the backend (ingress, load
+  balancer...). It has no default and the Helm chart does not set it, as it
+  differs per deployment. The throttles then key anonymous requests on the
+  client address the proxies append to `X-Forwarded-For`. Left unset, the
+  whole header is used as before, and a client can vary it to escape its
+  limit.
 
 ## [6.1.0] - 2026-11-12
 
