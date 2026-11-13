@@ -374,6 +374,7 @@ class Base(Configuration):
         "django.middleware.common.CommonMiddleware",
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "core.middleware.AnonymousIdMiddleware",
         "core.middleware.SaveRawBodyMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "csp.middleware.CSPMiddleware",
@@ -504,6 +505,14 @@ class Base(Configuration):
             ),
         },
     }
+    # An IP address may send this many times the rate of a scope in anonymous
+    # requests, whatever their anonymous id cookie
+    # (core.api.throttling.AnonymousAddressThrottle).
+    API_ANONYMOUS_ADDRESS_THROTTLE_FACTOR = values.PositiveIntegerValue(
+        default=10,
+        environ_name="API_ANONYMOUS_ADDRESS_THROTTLE_FACTOR",
+        environ_prefix=None,
+    )
     MONITORED_THROTTLE_FAILURE_CALLBACK = (
         "core.api.throttling.sentry_monitoring_throttle_failure"
     )
@@ -736,6 +745,18 @@ class Base(Configuration):
         default=60 * 60 * 12, environ_name="SESSION_COOKIE_AGE", environ_prefix=None
     )
     SESSION_COOKIE_NAME = "docs_sessionid"
+
+    # Signed cookie identifying an anonymous visitor for the throttles
+    # (core.middleware.AnonymousIdMiddleware). Not in the session: anonymous
+    # visitors have none.
+    ANONYMOUS_ID_COOKIE_NAME = "docs_anonymous_id"
+    # Seconds after which the backend refuses an anonymous id and issues a new
+    # one, whatever the browser kept.
+    ANONYMOUS_ID_COOKIE_MAX_AGE = values.PositiveIntegerValue(
+        default=60 * 60 * 24,
+        environ_name="ANONYMOUS_ID_COOKIE_MAX_AGE",
+        environ_prefix=None,
+    )
 
     # OIDC - Authorization Code Flow
     OIDC_AUTHENTICATE_CLASS = values.Value(
@@ -1543,6 +1564,12 @@ class Base(Configuration):
         if cls.OPENAI_SDK_API_KEY and cls.MISTRAL_SDK_API_KEY:
             raise ValueError(
                 "Both OPENAI_SDK and MISTRAL_SDK parameters can not be set simultaneously."
+            )
+
+        # 0 is not "disabled": it would refuse every anonymous document request
+        if cls.API_ANONYMOUS_ADDRESS_THROTTLE_FACTOR < 1:
+            raise ValueError(
+                "API_ANONYMOUS_ADDRESS_THROTTLE_FACTOR must be at least 1."
             )
 
         # a batch of nothing would walk no subtree and never end

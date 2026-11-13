@@ -49,6 +49,17 @@ the following command inside your docker container:
   client address the proxies append to `X-Forwarded-For`. Left unset, the
   whole header is used as before, and a client can vary it to escape its
   limit.
+- Anonymous visitors get a `docs_anonymous_id` cookie (signed, HttpOnly,
+  Secure, SameSite=Lax, kept for the browser session) holding a random id,
+  which the throttles use instead of their IP address. It is only set on API
+  responses to anonymous visitors that do not have it yet. The backend
+  refuses it `ANONYMOUS_ID_COOKIE_MAX_AGE` seconds after it was signed (24
+  hours by default) and issues a new one. As a client can drop the cookie to
+  get a new id, an IP address is also limited, in anonymous requests, to
+  `API_ANONYMOUS_ADDRESS_THROTTLE_FACTOR` times the rate of each endpoint (10
+  by default, at least 1). This ceiling relies on the client address: until
+  `NUM_PROXIES` is set, it has no effect on a client that varies
+  `X-Forwarded-For`.
 
 ## [6.1.0] - 2026-11-12
 

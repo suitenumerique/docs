@@ -62,6 +62,23 @@ def test_settings_yhub_reset_connections_batch_size_zero():
     assert str(excinfo.value) == "YHUB_RESET_CONNECTIONS_BATCH_SIZE must be at least 1."
 
 
+def test_settings_api_anonymous_address_throttle_factor_zero():
+    """A factor of zero would refuse every anonymous request and is refused."""
+
+    class TestSettings(Base):
+        """Fake test settings."""
+
+        API_ANONYMOUS_ADDRESS_THROTTLE_FACTOR = 0
+
+    with pytest.raises(ValueError) as excinfo:
+        TestSettings().post_setup()
+
+    assert (
+        str(excinfo.value)
+        == "API_ANONYMOUS_ADDRESS_THROTTLE_FACTOR must be at least 1."
+    )
+
+
 def test_settings_collaboration_http_fallback_sync_interval_too_low():
     """A polling interval under 5 seconds would flood the backend and is refused."""
 
