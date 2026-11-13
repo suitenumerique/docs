@@ -18,8 +18,9 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.sites.models import Site
 from django.core.cache import cache
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.db.models import Count
 from django.db.models.functions import Left, Length
 from django.dispatch import Signal
@@ -586,6 +587,8 @@ class UserReconciliation(BaseModel):
 
         # Actually perform the bulk operations
         DocumentAccess.objects.bulk_update(updated_accesses, ["user", "role"])
+        # Saved in bulk, without DocumentAccess.save()
+        DocumentAskForAccess.delete_covered_by(updated_accesses)
 
         if removed_accesses:
             ids_to_delete = [entry.id for entry in removed_accesses]
@@ -1714,9 +1717,16 @@ class DocumentAccess(BaseAccess):
         return f"{self.user!s} is {self.role:s} in document {self.document!s}"
 
     def save(self, *args, **kwargs):
-        """Override save to clear the document's cache for number of accesses."""
+        """
+        Override save to clear the document's cache for number of accesses, and to
+        delete the access requests this access now covers.
+        """
         super().save(*args, **kwargs)
         self.document.invalidate_nb_accesses_cache()
+        # Only from what was written: a partial save may leave a new role unsaved
+        update_fields = kwargs.get("update_fields")
+        if update_fields is None or {"role", "user"} & set(update_fields):
+            DocumentAskForAccess.delete_covered_by([self])
 
     @property
     def target_key(self):
@@ -1872,15 +1882,44 @@ class DocumentAskForAccess(BaseModel):
     def __str__(self):
         return f"{self.user!s} asked for access to document {self.document!s}"
 
+    @classmethod
+    def delete_covered_by(cls, accesses):
+        """
+        Delete the pending requests that the given accesses cover: their user holds
+        the role requested or a higher one. Granted another way than by accepting it,
+        a request would otherwise stay pending in the share dialog for nothing.
+        """
+        query = models.Q()
+        for access in accesses:
+            if access.user_id is None:
+                continue
+            priority = RoleChoices.get_priority(access.role)
+            query |= models.Q(
+                document_id=access.document_id,
+                user_id=access.user_id,
+                role__in=[
+                    role
+                    for role in RoleChoices.values
+                    if RoleChoices.get_priority(role) <= priority
+                ],
+            )
+        if query:
+            cls.objects.filter(query).delete()
+
     def get_abilities(self, user):
         """Compute and return abilities for a given user."""
         user_role = self.document.get_role(user)
         is_admin_or_owner = user_role in PRIVILEGED_ROLES
 
+        # Accepting never lowers a role: only the roles above the requester's can be
+        # given, up to the role of the user accepting
+        requester_priority = RoleChoices.get_priority(self.get_requester_role())
         set_role_to = [
             role
             for role in RoleChoices.values
-            if RoleChoices.get_priority(role) <= RoleChoices.get_priority(user_role)
+            if requester_priority
+            < RoleChoices.get_priority(role)
+            <= RoleChoices.get_priority(user_role)
         ]
 
         return {
@@ -1892,18 +1931,69 @@ class DocumentAskForAccess(BaseModel):
             "set_role_to": set_role_to,
         }
 
+    def get_requester_role(self):
+        """
+        Return the role the requester holds on the document. Queried rather than read
+        with Document.get_role, which would answer with the roles annotated on the
+        document for the current user, the one accepting.
+        """
+        return RoleChoices.max(
+            *DocumentAccess.objects.filter(
+                models.Q(user=self.user) | models.Q(team__in=self.user.teams),
+                document__path__in=self.document.get_self_and_ancestors_paths(),
+            ).values_list("role", flat=True)
+        )
+
     def accept(self, role=None):
-        """Accept a document ask for access resource."""
+        """
+        Accept the request: give the user an access to the document, or raise the role
+        of the access they already have.
+
+        It never lowers a role. A request can outlive its reason (the user was given a
+        role another way since), and lowering a role is a change made on the access
+        itself, where the rights of the caller on that access are checked: an owner
+        must not be demoted through an old request.
+        """
         if role is None:
             role = self.role
 
-        DocumentAccess.objects.update_or_create(
-            document=self.document,
-            user=self.user,
-            defaults={"role": role},
-            create_defaults={"role": role},
-        )
-        self.delete()
+        def get_locked_access():
+            return (
+                DocumentAccess.objects.select_for_update()
+                .filter(document=self.document, user=self.user)
+                .first()
+            )
+
+        with transaction.atomic():
+            access = get_locked_access()
+            if access is None:
+                try:
+                    with transaction.atomic():
+                        DocumentAccess.objects.create(
+                            document=self.document, user=self.user, role=role
+                        )
+                except DjangoValidationError, IntegrityError:
+                    # Nothing to lock before: someone gave the user an access in
+                    # the meantime, which this request must not lower either
+                    access = get_locked_access()
+                    if access is None:
+                        raise
+
+            if access is not None:
+                if RoleChoices.get_priority(role) <= RoleChoices.get_priority(
+                    access.role
+                ):
+                    raise ValidationError(
+                        {
+                            "detail": _(
+                                "This user already has this role or a higher one "
+                                "on this document."
+                            )
+                        }
+                    )
+                access.role = role
+                access.save()
+            self.delete()
 
     def send_ask_for_access_email(self, email, language=None):
         """

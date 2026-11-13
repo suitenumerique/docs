@@ -12,6 +12,13 @@ and this project adheres to
 - ⚡️(backend) probe the celery worker with heartbeat files, 
   not inspect ping #2956
 
+### Fixed 
+
+- 🔒️(backend) never lower an existing role when accepting a request #2982
+- 🐛(backend) delete the access requests a role given another way covers #2982
+- 🗃️(backend) delete the stored access requests a role already covers #2982
+- 🐛(frontend) show an error when approving an access request fails #2982
+
 ## [v6.1.0] - 2026-11-12
 
 ### Added
