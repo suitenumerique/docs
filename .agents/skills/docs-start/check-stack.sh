@@ -89,15 +89,16 @@ if [ ${#missing_env[@]} -eq 0 ]; then
 else
   echo "env.d/development/*.local MISSING: ${missing_env[*]}"
 fi
-for k in data/jwt/private.pem data/jwt/yhub-private.pem; do
+# Without one of these files, the backend settings fail to load (`_FILE`)
+for k in data/jwt/private.pem data/jwt/yhub-private.pem \
+  data/find/token-encryption.key data/oidc/refresh-token.key; do
   if [ -f "$k" ]; then echo "$k: ok"; else echo "$k: MISSING (make run-backend creates it)"; fi
 done
 oidc_keys=0
 [ -f env.d/development/common.local ] &&
   oidc_keys=$(grep -c '^OIDC_STORE_REFRESH_TOKEN_KEY=' env.d/development/common.local)
-echo "OIDC_STORE_REFRESH_TOKEN_KEY in common.local: $oidc_keys"
-[ "$oidc_keys" -gt 1 ] &&
-  note "common.local holds $oidc_keys OIDC_STORE_REFRESH_TOKEN_KEY lines (one per bootstrap, the last one wins): harmless but worth cleaning"
+[ "$oidc_keys" -gt 0 ] &&
+  note "common.local holds $oidc_keys OIDC_STORE_REFRESH_TOKEN_KEY line(s), left by former bootstraps: ignored (data/oidc/refresh-token.key wins), they can be removed"
 
 # -- containers ---------------------------------------------------------------
 

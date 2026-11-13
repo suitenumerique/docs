@@ -6,11 +6,32 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ➕(backend) add menshen-client dependency #2977
+- ✨(backend) add a Menshen token exchange service #2977
+- ✨(backend) exchange a Find token at login and revoke it at logout #2977
+- ✨(backend) search Find with the token exchanged at login #2977
+
 ### Changed
 
 - 📦️(docker) keep the yarn cache out of the node images #2992
 - ⚡️(backend) probe the celery worker with heartbeat files, 
   not inspect ping #2956
+- 🔧(backend) make the timeout of the Find search configurable #2977
+- 🔧(backend) read OIDC_STORE_REFRESH_TOKEN_KEY from a generated file 
+  in dev #2977 
+- ♻️(backend) read the new search response schema of Find #2977
+
+### Fixed
+
+- 🐛(backend) fix the search in a document through Find #2977
+- 🐛(backend) stop refreshing the OIDC token in the search #2977
+- 🐛(backend) index the rest of a batch when Find refuses a document #2977
+
+### Removed
+
+- 🔥(backend) remove the hybrid search, which Find no longer offers #2977
 
 ## [v6.1.0] - 2026-11-12
 

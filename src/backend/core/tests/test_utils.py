@@ -9,7 +9,7 @@ import pycrdt
 import pytest
 
 from core import factories
-from core.utils.dicts import get_value_by_pattern, lowercase_keys
+from core.utils.dicts import lowercase_keys
 from core.utils.paths import get_ancestor_to_descendants_map
 from core.utils.users import (
     get_users_sharing_documents_with_cache_key,
@@ -216,41 +216,6 @@ def test_utils_users_sharing_documents_with_empty_result():
 
     cached_data = cache.get(cache_key)
     assert cached_data == {}
-
-
-def test_utils_get_value_by_pattern_matching_key():
-    """Test extracting value from a dictionary with a matching key pattern."""
-    data = {"title.extension": "Bonjour", "id": 1, "content": "test"}
-    result = get_value_by_pattern(data, r"^title\.")
-
-    assert set(result) == {"Bonjour"}
-
-
-def test_utils_get_value_by_pattern_multiple_matches():
-    """Test that all matching keys are returned."""
-    data = {"title.extension_1": "Bonjour", "title.extension_2": "Hello", "id": 1}
-    result = get_value_by_pattern(data, r"^title\.")
-
-    assert set(result) == {
-        "Bonjour",
-        "Hello",
-    }
-
-
-def test_utils_get_value_by_pattern_multiple_extensions():
-    """Test that all matching keys are returned."""
-    data = {"title.extension_1.extension_2": "Bonjour", "id": 1}
-    result = get_value_by_pattern(data, r"^title\.")
-
-    assert set(result) == {"Bonjour"}
-
-
-def test_utils_get_value_by_pattern_no_match():
-    """Test that empty list is returned when no key matches the pattern."""
-    data = {"name": "Test", "id": 1}
-    result = get_value_by_pattern(data, r"^title\.")
-
-    assert result == []
 
 
 def test_utils_lowercase_keys_empty():
