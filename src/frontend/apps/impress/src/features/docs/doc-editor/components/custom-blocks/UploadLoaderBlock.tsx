@@ -87,6 +87,16 @@ const UploadLoaderBlockComponent = ({
         setTimeout(() => {
           // Replace the loading block with the resource block (image, audio, video, pdf ...)
           try {
+            // Guard: skip the write if the block has already been updated by a collaborator
+            const currentBlock = editor.getBlock(block.id);
+            if (
+              !currentBlock ||
+              currentBlock.type !== 'uploadLoader' ||
+              currentBlock.props.type !== 'loading'
+            ) {
+              return;
+            }
+
             editor.updateBlock(block.id, {
               type: block.props.blockUploadType,
               props: {
