@@ -396,27 +396,35 @@ test.describe('Doc Editor', () => {
 
     const fileChooserPromise = page.waitForEvent('filechooser');
 
-    const { editor } = await openSuggestionMenu({ page });
+    // Upload in a column whose sibling is empty: the swaps of the upload
+    // block must not let BlockNote dissolve the column layout
+    const { editor, suggestionMenu } = await openSuggestionMenu({ page });
+    await suggestionMenu.getByText('Two Columns', { exact: true }).click();
+    const columns = editor.locator('[data-node-type="column"]');
+    await expect(columns).toHaveCount(2);
+
+    await page.keyboard.type('/');
     await page.getByText('Embedded file').click();
     await page.getByText('Upload file').click();
 
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.html'));
 
-    await expect(editor.getByText('Analyzing the file')).toBeVisible();
+    await expect(columns.first().getByText('Analyzing the file')).toBeVisible();
 
     // To be sure the retry happens even after a page reload
     await goToGridDoc(page, {
       title: randomDoc,
     });
 
-    await expect(editor.getByText('Analyzing the file')).toBeVisible();
+    await expect(columns.first().getByText('Analyzing the file')).toBeVisible();
 
     // The retry takes a few seconds
-    await expect(editor.getByText('test.html')).toBeVisible({
+    await expect(columns.first().getByText('test.html')).toBeVisible({
       timeout: 7000,
     });
     await expect(editor.getByText('Analyzing the file')).toBeHidden();
+    await expect(columns).toHaveCount(2);
   });
 
   test('it checks if callout custom block', async ({ page, browserName }) => {

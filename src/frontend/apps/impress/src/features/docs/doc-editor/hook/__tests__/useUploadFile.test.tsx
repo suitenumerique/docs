@@ -97,7 +97,7 @@ describe('useUploadFile', () => {
 
 describe('useUploadStatus', () => {
   it('keeps the caption and alignment while the new file is analyzed', () => {
-    const replaceBlocks = vi.fn();
+    const updateBlock = vi.fn();
     const editor = {
       document: [
         {
@@ -112,23 +112,50 @@ describe('useUploadStatus', () => {
           },
         },
       ],
+      updateBlock,
+      onUploadEnd: vi.fn(),
+    } as unknown as DocsBlockNoteEditor;
+
+    renderHook(() => useUploadStatus(editor), { wrapper: AppWrapper });
+
+    expect(updateBlock).toHaveBeenCalledWith(
+      'img',
+      expect.objectContaining({
+        type: 'uploadLoader',
+        props: expect.objectContaining({
+          blockUploadCaption: 'Pont Neuf',
+          blockUploadTextAlignment: 'center',
+        }),
+      }),
+    );
+  });
+
+  it('preserves the column layout when replacing a block with the upload loader', () => {
+    const updateBlock = vi.fn();
+    const replaceBlocks = vi.fn();
+    const editor = {
+      document: [
+        {
+          id: 'img',
+          type: 'image',
+          props: {
+            url: 'https://docs.example/media-check/abc',
+            name: 'photo.png',
+            showPreview: false,
+            caption: '',
+            textAlignment: 'left',
+          },
+        },
+      ],
+      updateBlock,
       replaceBlocks,
       onUploadEnd: vi.fn(),
     } as unknown as DocsBlockNoteEditor;
 
     renderHook(() => useUploadStatus(editor), { wrapper: AppWrapper });
 
-    expect(replaceBlocks).toHaveBeenCalledWith(
-      ['img'],
-      [
-        expect.objectContaining({
-          type: 'uploadLoader',
-          props: expect.objectContaining({
-            blockUploadCaption: 'Pont Neuf',
-            blockUploadTextAlignment: 'center',
-          }),
-        }),
-      ],
-    );
+    // updateBlock is used (not replaceBlocks) to avoid destroying column layouts
+    expect(updateBlock).toHaveBeenCalled();
+    expect(replaceBlocks).not.toHaveBeenCalled();
   });
 });
