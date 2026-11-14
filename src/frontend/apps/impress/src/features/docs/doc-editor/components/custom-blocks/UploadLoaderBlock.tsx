@@ -87,22 +87,17 @@ const UploadLoaderBlockComponent = ({
         setTimeout(() => {
           // Replace the loading block with the resource block (image, audio, video, pdf ...)
           try {
-            editor.replaceBlocks(
-              [block.id],
-              [
-                {
-                  type: block.props.blockUploadType,
-                  props: {
-                    url: `${mediaUrl}${response.file}`,
-                    showPreview: block.props.blockUploadShowPreview,
-                    name: block.props.blockUploadName,
-                    caption: block.props.blockUploadCaption,
-                    backgroundColor: 'default',
-                    textAlignment: block.props.blockUploadTextAlignment,
-                  },
-                } as never,
-              ],
-            );
+            editor.updateBlock(block.id, {
+              type: block.props.blockUploadType,
+              props: {
+                url: `${mediaUrl}${response.file}`,
+                showPreview: block.props.blockUploadShowPreview,
+                name: block.props.blockUploadName,
+                caption: block.props.blockUploadCaption,
+                backgroundColor: 'default',
+                textAlignment: block.props.blockUploadTextAlignment,
+              },
+            } as never);
           } catch {
             /* During collaboration, another user might have updated the block */
           }

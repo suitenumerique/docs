@@ -60,7 +60,7 @@ describe('UploadLoaderBlock', () => {
   });
 
   it('restores the caption and alignment once the analysis is done', async () => {
-    const replaceBlocks = vi.fn();
+    const updateBlock = vi.fn();
     const Render = capturedRender.current!;
 
     render(
@@ -83,6 +83,52 @@ describe('UploadLoaderBlock', () => {
         }}
         editor={{
           isEditable: true,
+          updateBlock,
+        }}
+      />,
+      { wrapper: AppWrapper },
+    );
+
+    await waitFor(() => {
+      expect(updateBlock).toHaveBeenCalledWith(
+        'loader',
+        expect.objectContaining({
+          type: 'image',
+          props: expect.objectContaining({
+            caption: 'Pont Neuf',
+            textAlignment: 'center',
+          }),
+        }),
+      );
+    });
+  });
+
+  it('preserves the column layout by using updateBlock instead of replaceBlocks', async () => {
+    const updateBlock = vi.fn();
+    const replaceBlocks = vi.fn();
+    const Render = capturedRender.current!;
+
+    render(
+      <Render
+        block={{
+          id: 'loader',
+          type: 'uploadLoader',
+          props: {
+            information: 'Analyzing file...',
+            type: 'loading',
+            blockUploadName: 'photo.png',
+            blockUploadShowPreview: true,
+            blockUploadType: 'image',
+            blockUploadUrl: analyzeUrl,
+            blockUploadCaption: '',
+            blockUploadTextAlignment: 'left',
+          },
+          content: undefined,
+          children: [],
+        }}
+        editor={{
+          isEditable: true,
+          updateBlock,
           replaceBlocks,
         }}
       />,
@@ -90,18 +136,9 @@ describe('UploadLoaderBlock', () => {
     );
 
     await waitFor(() => {
-      expect(replaceBlocks).toHaveBeenCalledWith(
-        ['loader'],
-        [
-          expect.objectContaining({
-            type: 'image',
-            props: expect.objectContaining({
-              caption: 'Pont Neuf',
-              textAlignment: 'center',
-            }),
-          }),
-        ],
-      );
+      expect(updateBlock).toHaveBeenCalled();
     });
+
+    expect(replaceBlocks).not.toHaveBeenCalled();
   });
 });

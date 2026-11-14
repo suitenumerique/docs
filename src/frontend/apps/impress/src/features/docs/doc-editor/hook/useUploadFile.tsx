@@ -143,24 +143,19 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
       try {
         const information = t('Analyzing the file');
 
-        editor.replaceBlocks(
-          [block.id],
-          [
-            {
-              type: 'uploadLoader',
-              props: {
-                information,
-                type: 'loading',
-                blockUploadName,
-                blockUploadType,
-                blockUploadUrl,
-                blockUploadShowPreview,
-                blockUploadCaption,
-                blockUploadTextAlignment,
-              },
-            },
-          ],
-        );
+        editor.updateBlock(block.id, {
+          type: 'uploadLoader',
+          props: {
+            information,
+            type: 'loading',
+            blockUploadName,
+            blockUploadType,
+            blockUploadUrl,
+            blockUploadShowPreview,
+            blockUploadCaption,
+            blockUploadTextAlignment,
+          },
+        });
 
         // Only the user who uploaded the file hears it, not the collaborators
         // nor a page reload.
