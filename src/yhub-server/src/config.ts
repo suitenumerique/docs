@@ -226,7 +226,8 @@ export const SENTRY_TRACES_SAMPLE_RATE = rateEnv(
   'SENTRY_TRACES_SAMPLE_RATE',
   0,
 );
-// Relative to the traces: the share of sampled traces that are also profiled.
+// The share of the processes that profile their sampled traces (a profiling
+// session per process since Sentry 11, no longer a draw per trace).
 export const SENTRY_PROFILES_SAMPLE_RATE = rateEnv(
   'SENTRY_PROFILES_SAMPLE_RATE',
   0,
