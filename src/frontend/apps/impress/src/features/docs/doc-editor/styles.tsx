@@ -14,10 +14,23 @@ export const DocsEditorStyle = createGlobalStyle`
     --bn-colors-side-menu: var(
       --c--contextuals--content--semantic--neutral--tertiary
     );
-    --bn-font-family:
-      'Inter Variable', 'SF Pro Display', -apple-system, BlinkMacSystemFont,
-      'Open Sans', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
-      'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    --bn-font-family: var(
+      --c--globals--font--families--base,
+      'Inter Variable',
+      'SF Pro Display',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Open Sans',
+      'Segoe UI',
+      'Roboto',
+      'Oxygen',
+      'Ubuntu',
+      'Cantarell',
+      'Fira Sans',
+      'Droid Sans',
+      'Helvetica Neue',
+      sans-serif
+    );
   }
   .bn-root .mantine-Chip-label {
     --chip-color: var(--c--contextuals--content--semantic--brand--tertiary);

@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Changed
 
+- 💄(frontend) use the theme font in the editor #3020
 - 📦️(docker) keep the yarn cache out of the node images #2992
 - 🔧(yhub) SENTRY_PROFILES_SAMPLE_RATE samples processes since sentry 11 #2872
 - ⚡️(backend) probe the celery worker with heartbeat files, 
