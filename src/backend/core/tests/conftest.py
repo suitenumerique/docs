@@ -239,3 +239,10 @@ def user_token():
     A fixture to create a user token for testing.
     """
     return build_authorization_bearer("some_token")
+
+
+@pytest.fixture
+def docs_admin_client(client):
+    """Log a superuser in the client."""
+    client.force_login(factories.UserFactory(is_staff=True, is_superuser=True))
+    return client

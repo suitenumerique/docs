@@ -495,6 +495,10 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         return []
 
 
+# The reconciled users are asked for a confirmation by email
+RECONCILED_USER_CHOICES = models.Q(email__isnull=False) & ~models.Q(email="")
+
+
 class UserReconciliation(BaseModel):
     """Model to run batch jobs to replace an active user by another one"""
 
@@ -508,6 +512,7 @@ class UserReconciliation(BaseModel):
         null=True,
         blank=True,
         related_name="active_user",
+        limit_choices_to=RECONCILED_USER_CHOICES,
     )
     inactive_user = models.ForeignKey(
         User,
@@ -515,6 +520,7 @@ class UserReconciliation(BaseModel):
         null=True,
         blank=True,
         related_name="inactive_user",
+        limit_choices_to=RECONCILED_USER_CHOICES,
     )
     active_email_confirmation_id = models.UUIDField(
         default=uuid.uuid4, unique=True, editable=False, null=True
@@ -555,12 +561,15 @@ class UserReconciliation(BaseModel):
         For pending queries, identify the actual users and send validation emails
         """
         if self.status == "pending":
-            self.active_user = User.objects.filter(
-                email=normalize_email(self.active_email)
-            ).first()
-            self.inactive_user = User.objects.filter(
-                email=normalize_email(self.inactive_email)
-            ).first()
+            # Keep the users picked in the admin: several users can share an email
+            if self.active_user is None:
+                self.active_user = User.objects.filter(
+                    email=normalize_email(self.active_email)
+                ).first()
+            if self.inactive_user is None:
+                self.inactive_user = User.objects.filter(
+                    email=normalize_email(self.inactive_email)
+                ).first()
 
             if self.active_user and self.active_user == self.inactive_user:
                 self.status = "error"

@@ -277,10 +277,53 @@ def process_reconciliation(_modeladmin, _request, queryset):
         entry.process_reconciliation_request()
 
 
+class UserReconciliationForm(forms.ModelForm):
+    """Form picking the reconciled users, whose emails are copied on save."""
+
+    class Meta:
+        model = models.UserReconciliation
+        fields = (
+            "active_user",
+            "inactive_user",
+            "active_email_checked",
+            "inactive_email_checked",
+            "source_unique_id",
+            "status",
+            "logs",
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in ("active_user", "inactive_user"):
+            # Missing when the admin excludes every field for view-only staff
+            if field_name in self.fields:
+                self.fields[field_name].required = True
+
+    def clean(self):
+        """The two users must be different."""
+        cleaned_data = super().clean()
+        active_user = cleaned_data.get("active_user")
+        inactive_user = cleaned_data.get("inactive_user")
+        if active_user is not None and active_user == inactive_user:
+            self.add_error(
+                "inactive_user", _("The user to deactivate must be another user.")
+            )
+        return cleaned_data
+
+    def save(self, commit=True):
+        """Copy the emails of the picked users, the model is keyed on them."""
+        self.instance.active_email = self.instance.active_user.email
+        self.instance.inactive_email = self.instance.inactive_user.email
+        return super().save(commit=commit)
+
+
 @admin.register(models.UserReconciliation)
 class UserReconciliationAdmin(admin.ModelAdmin):
     """Admin class for UserReconciliation model."""
 
+    form = UserReconciliationForm
+    # A plain select would load every user into the page
+    autocomplete_fields = ["active_user", "inactive_user"]
     list_display = ["id", "__str__", "created_at", "status"]
     actions = [process_reconciliation]
 

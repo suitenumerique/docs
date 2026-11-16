@@ -30,6 +30,7 @@ and this project adheres to
 - 🔒️(backend) match emails in a single normalized form #3017
 - 🐛(backend) ask for access to the top parent doc from a sub-document #2994
 - 🔒️(backend) require the owner role to move a document out of its tree #2978
+- 🐛(backend) speed up the reconciliation admin with user autocompletes #3013
 
 ## [v6.1.0] - 2026-11-12
 

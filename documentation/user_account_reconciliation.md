@@ -20,6 +20,9 @@ Once the CSV file is processed, this will create entries in "Core" > "User recon
 
 In "Core" > "User reconciliations", an admin can then select all rows they wish to process and check the action "Process selected user reconciliations". Only rows that have the status `ready` and for which both emails have been validated will be processed.
 
+A reconciliation can also be added by hand in "Core" > "User reconciliations". Its two users are picked in search
+boxes, which need the permission to view users (`core.view_user`) on top of the reconciliation permissions.
+
 ## Merging users from the admin
 
 Duplicate accounts can also be merged without a request: in "Core" > "Users", select the users to merge
