@@ -20,7 +20,7 @@
     "test:watch": "vitest --watch"
   },
   "dependencies": {
-    "@ai-sdk/openai": "3.0.119",
+    "@ai-sdk/openai": "3.0.139",
     "@blocknote/code-block": "0.57.0",
     "@blocknote/core": "0.57.0",
     "@blocknote/diagram-block": "0.57.0",
