@@ -15,6 +15,10 @@ and this project adheres to
 ### Fixed
 
 - ✅(frontend) fix act warnings in the tests and fail on them #2983
+- 🔒️(backend) never lower an existing role when accepting a request #2982
+- 🐛(backend) delete the access requests a role given another way covers #2982
+- 🗃️(backend) delete the stored access requests a role already covers #2982
+- 🐛(frontend) show an error when approving an access request fails #2982
 
 ## [v6.1.0] - 2026-11-12
 
