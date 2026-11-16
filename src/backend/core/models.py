@@ -6,6 +6,7 @@ Declare and configure the models for the impress core application
 
 import operator
 import smtplib
+import string
 import uuid
 from datetime import timedelta
 from functools import partial, reduce
@@ -51,6 +52,21 @@ logger = getLogger(__name__)
 # Sent once accesses were updated or deleted in bulk, without the signals and the
 # methods of DocumentAccess: core.signals refreshes what they keep up to date.
 document_accesses_bulk_changed = Signal()
+
+
+# ASCII only: PostgreSQL's UPPER() and Python's str.lower() also fold some
+# non-ASCII letters into ASCII ones (ı to I, ſ to S), merging distinct addresses.
+_ASCII_LOWERCASE_TABLE = str.maketrans(
+    string.ascii_uppercase,
+    string.ascii_lowercase,
+)
+
+
+def normalize_email(email):
+    """Strip an email and lowercase its ASCII letters only."""
+    if not email:
+        return email
+    return email.strip().translate(_ASCII_LOWERCASE_TABLE)
 
 
 def get_trashbin_cutoff():
@@ -125,16 +141,21 @@ class UserManager(auth_models.UserManager):
             if not email:
                 return None
 
+            normalized_email = normalize_email(email)
+            # A blank email would match the users stored without one
+            if not normalized_email:
+                return None
+
             if settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION:
                 # Active users first, an inactive one is returned so the login is refused
-                users = self.filter(email__iexact=email).order_by("-is_active")[:2]
+                users = self.filter(email=normalized_email).order_by("-is_active")[:2]
                 if len(users) == 2 and users[1].is_active:
                     raise DuplicateEmailError(
                         _("Several active users are associated with this email.")
                     ) from err
                 return users[0] if users else None
             if (
-                self.filter(email__iexact=email).exists()
+                self.filter(email=normalized_email).exists()
                 and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
             ):
                 raise DuplicateEmailError(
@@ -229,6 +250,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         If it's a new user, give its user access to the documents they were invited to.
         """
         is_adding = self._state.adding
+        self.email = normalize_email(self.email)
         super().save(*args, **kwargs)
 
         if is_adding:
@@ -404,7 +426,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         Expired invitations are ignored.
         """
         valid_invitations = Invitation.objects.filter(
-            email__iexact=self.email,
+            email=normalize_email(self.email),
             created_at__gte=(
                 timezone.now()
                 - timedelta(seconds=settings.INVITATION_VALIDITY_DURATION)
@@ -533,10 +555,17 @@ class UserReconciliation(BaseModel):
         For pending queries, identify the actual users and send validation emails
         """
         if self.status == "pending":
-            self.active_user = User.objects.filter(email=self.active_email).first()
-            self.inactive_user = User.objects.filter(email=self.inactive_email).first()
+            self.active_user = User.objects.filter(
+                email=normalize_email(self.active_email)
+            ).first()
+            self.inactive_user = User.objects.filter(
+                email=normalize_email(self.inactive_email)
+            ).first()
 
-            if self.active_user and self.inactive_user:
+            if self.active_user and self.active_user == self.inactive_user:
+                self.status = "error"
+                self.logs = "Error: Active and inactive emails are the same address."
+            elif self.active_user and self.inactive_user:
                 if not self.active_email_checked:
                     self.send_reconciliation_confirm_email(
                         self.active_user, "active", self.active_email_confirmation_id
@@ -2393,13 +2422,18 @@ class Invitation(BaseModel):
     def __str__(self):
         return f"{self.email} invited to {self.document}"
 
+    def save(self, *args, **kwargs):
+        """Normalize the email before saving."""
+        self.email = normalize_email(self.email)
+        super().save(*args, **kwargs)
+
     def clean(self):
         """Validate fields."""
         super().clean()
 
         # Check if an identity already exists for the provided email
         if (
-            User.objects.filter(email__iexact=self.email).exists()
+            User.objects.filter(email=normalize_email(self.email)).exists()
             and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
         ):
             raise ValidationError(

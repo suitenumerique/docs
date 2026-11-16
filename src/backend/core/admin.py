@@ -12,7 +12,7 @@ from django.contrib.auth import admin as auth_admin
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Q
-from django.db.models.functions import Coalesce, Lower
+from django.db.models.functions import Coalesce
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils.text import format_lazy
@@ -30,7 +30,7 @@ admin.site.site_header = format_lazy("{} {}", admin.site.site_header, settings.R
 
 
 class DuplicateEmailFilter(admin.SimpleListFilter):
-    """Filter the users whose email is shared with another user, case ignored."""
+    """Filter the users whose email is shared with another user."""
 
     title = _("duplicate email")
     parameter_name = "duplicate_email"
@@ -43,7 +43,7 @@ class DuplicateEmailFilter(admin.SimpleListFilter):
         """Keep the users sharing their email with another user."""
         if self.value() != "yes":
             return queryset
-        others = models.User.objects.filter(email__iexact=OuterRef("email")).exclude(
+        others = models.User.objects.filter(email=OuterRef("email")).exclude(
             pk=OuterRef("pk")
         )
         return queryset.filter(Exists(others))
@@ -171,7 +171,7 @@ class UserAdmin(auth_admin.UserAdmin):
     def get_ordering(self, request):
         """Group the users sharing an email when filtering on duplicates."""
         if DuplicateEmailFilter.parameter_name in request.GET:
-            return (Lower("email"), "created_at")
+            return ("email", "created_at")
         return super().get_ordering(request)
 
     def has_delete_permission(self, request, obj=None):
@@ -239,7 +239,7 @@ class UserAdmin(auth_admin.UserAdmin):
         ):
             if not user.email:
                 continue
-            if kept.setdefault(user.email.lower(), user) is not user:
+            if kept.setdefault(user.email, user) is not user:
                 deactivated.append(user.pk)
         models.User.objects.filter(pk__in=deactivated).update(is_active=False)
         self.message_user(request, f"{len(deactivated)} users deactivated.")

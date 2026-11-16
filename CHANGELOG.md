@@ -25,7 +25,7 @@ and this project adheres to
 - 🔒️(backend) only let owners update or delete an owner invitation #2986
 - 🐛(frontend) follow the abilities of an invitation in the share dialog #2986
 - 🐛(frontend) keep comments on inline nodes after a reload #2898
-
+- 🔒️(backend) match emails in a single normalized form #3017
 
 ## [v6.1.0] - 2026-11-12
 
