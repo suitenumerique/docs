@@ -3,18 +3,21 @@ import {
   TreeProvider,
 } from '@gouvfr-lasuite/ui-components';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useState } from 'react';
 
 import '@/i18n/initI18n';
 
 export const AppWrapper = ({ children }: PropsWithChildren) => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
-  });
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false,
+          },
+        },
+      }),
+  );
 
   return (
     <CunninghamProvider theme="default">
