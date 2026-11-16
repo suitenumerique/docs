@@ -1,0 +1,13 @@
+cicap:
+  enabled: true
+  # Service name used in MALWARE_DETECTION_PARAMETERS "server_address"
+  # (defaults to <release>-dev-backend-cicap, i.e. cicap-dev-backend-cicap)
+  #serviceNameOverride: cicap
+  port: 1344
+  # MaxObjectSize limits the size of files scanned by the ICAP service
+  maxObjectSize: 100M
+  # StreamMaxLength limits the size of files scanned by clamd
+  streamMaxLength: 100M
+  # The chart already requests 1536Mi (limit 3Gi) for clamd, which keeps the
+  # whole ClamAV database in memory, and nothing for c-icap: raise
+  # clamd.resources if the pod cannot schedule or is OOM-killed.
