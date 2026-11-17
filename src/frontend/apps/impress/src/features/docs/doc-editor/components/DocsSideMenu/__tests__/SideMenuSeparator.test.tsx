@@ -8,6 +8,8 @@ import { createReactMathBlockSpec } from '@blocknote/math-block';
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { AppWrapper } from '@/tests/utils';
+
 import { SideMenuSeparator } from '../SideMenuSeparator';
 
 const schema = BlockNoteSchema.create({
@@ -37,7 +39,9 @@ const renderFor = (type: string) => {
   sideMenu.editor = editor;
   sideMenu.block = editor.getBlock('block');
 
-  return render(<SideMenuSeparator hideWithoutColors />);
+  return render(<SideMenuSeparator hideWithoutColors />, {
+    wrapper: AppWrapper,
+  });
 };
 
 describe('SideMenuSeparator with hideWithoutColors', () => {
@@ -67,7 +71,7 @@ describe('SideMenuSeparator with hideWithoutColors', () => {
   it('hides the separator when no block is hovered', () => {
     sideMenu.block = undefined;
 
-    render(<SideMenuSeparator hideWithoutColors />);
+    render(<SideMenuSeparator hideWithoutColors />, { wrapper: AppWrapper });
 
     expect(screen.queryByRole('separator')).not.toBeInTheDocument();
   });
