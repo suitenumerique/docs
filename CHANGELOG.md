@@ -29,6 +29,7 @@ and this project adheres to
 - 🐛(frontend) keep comments on inline nodes after a reload #2898
 - 🔒️(backend) match emails in a single normalized form #3017
 - 🐛(backend) ask for access to the top parent doc from a sub-document #2994
+- 🐛(frontend) hide the block menu separator on blocks without colors #3021
 
 ## [v6.1.0] - 2026-11-12
 

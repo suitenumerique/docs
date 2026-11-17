@@ -1,3 +1,4 @@
+import { blockHasType } from '@blocknote/core';
 import { SideMenuExtension } from '@blocknote/core/extensions';
 import { useBlockNoteEditor, useExtensionState } from '@blocknote/react';
 
@@ -9,12 +10,12 @@ type BlockType = DocsBlockNoteEditor['document'][number]['type'];
 
 type SideMenuSeparatorProps = {
   typeDisplay?: BlockType[];
-  typeHide?: BlockType[];
+  hideWithoutColors?: boolean;
 } & BoxType;
 
 export const SideMenuSeparator = ({
   typeDisplay,
-  typeHide,
+  hideWithoutColors,
   ...props
 }: SideMenuSeparatorProps) => {
   const editor: DocsBlockNoteEditor = useBlockNoteEditor();
@@ -34,7 +35,15 @@ export const SideMenuSeparator = ({
     return null;
   }
 
-  if (typeHide && (blockType === undefined || typeHide.includes(blockType))) {
+  // Same check as BlockNote's BlockColorsItem, so the separator goes with "Colors"
+  if (
+    hideWithoutColors &&
+    (block === undefined ||
+      (!blockHasType(block, editor, block.type, { textColor: 'string' }) &&
+        !blockHasType(block, editor, block.type, {
+          backgroundColor: 'string',
+        })))
+  ) {
     return null;
   }
 
