@@ -30,6 +30,13 @@ the following command inside your docker container:
   with the chart, or set `backend.celery.probes.startup` to `null` and
   `backend.celery.probes.liveness` back to the `inspect ping` probe of the
   previous chart version.
+- The migration `0037_normalize_stored_emails` strips the emails of users and
+  invitations and lowercases their ASCII letters, so that they are matched
+  exactly. It keeps only the most recent invitation of a document per email
+  and cannot restore the original case when reverted. Accounts whose emails
+  only differed by case are kept and now share an email: list them with the
+  "duplicate email" filter of the users admin, then merge or deactivate them
+  from there.
 
 ## [6.1.0] - 2026-11-12
 

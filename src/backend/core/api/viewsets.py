@@ -1041,7 +1041,8 @@ class DocumentViewSet(
         Move a document to another location within the document tree.
 
         The user must be an administrator or owner of both the document being moved
-        and the target parent document.
+        and the target parent document, and an owner of the document being moved when
+        it leaves its tree (to another tree or as a new root).
         """
         user = request.user
         document = self.get_object()  # including permission checks
@@ -1090,14 +1091,6 @@ class DocumentViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        try:
-            document.move(target_document, pos=position)
-        except InvalidMoveToDescendant:
-            return drf.response.Response(
-                {"target_document_id": "Cannot move a document to its own descendant."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         # A move changes the document's permission scope in any of these cases:
         #   - it is currently a root (it carries its own scope),
         #   - it is moving into a different tree (different current root than target's),
@@ -1113,11 +1106,30 @@ class DocumentViewSet(
             ]
             and target_document.is_root()
         )
-        scope_changes = (
-            document.is_root()
-            or becomes_sibling_root
-            or document.get_root() != target_document.get_root()
+        leaves_tree = (
+            not becomes_sibling_root
+            and document.get_root() != target_document.get_root()
         )
+        scope_changes = document.is_root() or becomes_sibling_root or leaves_tree
+
+        # Wiping the accesses takes the document away from everyone who has access to
+        # it through its current tree: into another tree, an administrator would be
+        # left as its only owner, and a promotion to root drops everyone but the
+        # owners of the root, owners of intermediate documents included.
+        # Same rule as the `move_to_another_tree` ability, without its queries.
+        if scope_changes and document.get_role(user) != models.RoleChoices.OWNER:
+            raise drf.exceptions.PermissionDenied(
+                "Only an owner can move a document out of its tree."
+            )
+
+        try:
+            document.move(target_document, pos=position)
+        except InvalidMoveToDescendant:
+            return drf.response.Response(
+                {"target_document_id": "Cannot move a document to its own descendant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if scope_changes:
             document.accesses.all().delete()
             document.invitations.all().delete()
@@ -3078,21 +3090,24 @@ class DocumentAskForAccessViewSet(
     serializer_class = serializers.DocumentAskForAccessSerializer
     _document = None
 
-    def get_document_or_404(self):
-        """Get the document related to the viewset or raise a 404 error."""
+    def get_root_document_or_404(self):
+        """
+        Get the top parent document related to the viewset or raise a 404 error.
+
+        An ask for access always targets the root of the document tree, whatever
+        the document (root or sub-document) the request is made from.
+        """
         if self._document is None:
             try:
-                self._document = models.Document.objects.get(
-                    pk=self.kwargs["resource_id"],
-                    depth=1,
-                )
+                document = models.Document.objects.get(pk=self.kwargs["resource_id"])
             except models.Document.DoesNotExist as e:
                 raise drf.exceptions.NotFound("Document not found.") from e
+            self._document = document if document.is_root() else document.get_root()
         return self._document
 
     def get_queryset(self):
         """Return the queryset according to the action."""
-        document = self.get_document_or_404()
+        document = self.get_root_document_or_404()
 
         queryset = super().get_queryset()
         queryset = queryset.filter(document=document)
@@ -3107,7 +3122,7 @@ class DocumentAskForAccessViewSet(
 
     def create(self, request, *args, **kwargs):
         """Create a document ask for access resource."""
-        document = self.get_document_or_404()
+        document = self.get_root_document_or_404()
 
         if document.get_role(request.user) in models.PRIVILEGED_ROLES:
             return drf.response.Response(
@@ -3127,19 +3142,19 @@ class DocumentAskForAccessViewSet(
                 status=drf.status.HTTP_400_BAD_REQUEST,
             )
 
-        queryset = self.get_queryset()
-
-        if queryset.filter(user=request.user).exists():
+        # get_or_create, not a check then a create: on a concurrent duplicate the
+        # unique (user, document) constraint raises IntegrityError, which it
+        # catches to return the existing row instead of a 500
+        ask_for_access, created = models.DocumentAskForAccess.objects.get_or_create(
+            document=document,
+            user=request.user,
+            defaults={"role": serializer.validated_data["role"]},
+        )
+        if not created:
             return drf.response.Response(
                 {"detail": "You already ask to access to this document."},
                 status=drf.status.HTTP_400_BAD_REQUEST,
             )
-
-        ask_for_access = models.DocumentAskForAccess.objects.create(
-            document=document,
-            user=request.user,
-            role=serializer.validated_data["role"],
-        )
 
         send_ask_for_access_mail.delay(ask_for_access.id)
 
@@ -3162,7 +3177,7 @@ class DocumentAskForAccessViewSet(
         if models.RoleChoices.get_priority(
             target_role
         ) > models.RoleChoices.get_priority(
-            self.get_document_or_404().get_role(request.user)
+            self.get_root_document_or_404().get_role(request.user)
         ):
             return drf.response.Response(
                 {"detail": "You cannot accept a role higher than your own."},

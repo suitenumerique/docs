@@ -77,6 +77,82 @@ def test_models_users_sub_validator(sub, is_valid):
             user.full_clean()
 
 
+def test_models_normalize_email():
+    """The "normalize_email" function should strip and lowercase ASCII letters only."""
+    assert models.normalize_email("  John.Doe@Example.COM ") == "john.doe@example.com"
+    assert models.normalize_email("dısk@example.com") == "dısk@example.com"
+    assert models.normalize_email("alice.ſmith@corp.test") == "alice.ſmith@corp.test"
+    assert models.normalize_email("\u212aelvin@corp.test") == "\u212aelvin@corp.test"
+    assert models.normalize_email(None) is None
+    assert models.normalize_email("") == ""
+
+
+def test_models_users_email_normalized_on_save():
+    """The email of a user should be normalized when saved."""
+    user = factories.UserFactory(email="John.Doe@Example.COM")
+    user.refresh_from_db()
+    assert user.email == "john.doe@example.com"
+
+
+def test_models_users_get_user_by_sub_or_email_email_matching():
+    """Users should be found by email ignoring ASCII case only."""
+    user = factories.UserFactory(email="disk@example.com")
+    manager = models.User.objects
+
+    assert manager.get_user_by_sub_or_email(user.sub, None) == user
+    assert manager.get_user_by_sub_or_email("unknown-sub", "disk@example.com") == user
+    assert manager.get_user_by_sub_or_email("unknown-sub", "DISK@EXAMPLE.COM") == user
+    assert manager.get_user_by_sub_or_email("unknown-sub", "dısk@example.com") is None
+    assert manager.get_user_by_sub_or_email("unknown-sub", "diſk@example.com") is None
+    assert (
+        manager.get_user_by_sub_or_email("unknown-sub", "dis\u212a@example.com") is None
+    )
+
+
+def test_models_users_get_user_by_sub_or_email_non_ascii_no_duplicate_error(
+    settings,
+):
+    """An email differing by a non-ASCII letter should not be reported as a duplicate."""
+    factories.UserFactory(email="disk@example.com")
+    manager = models.User.objects
+
+    settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION = False
+    settings.OIDC_ALLOW_DUPLICATE_EMAILS = False
+
+    assert manager.get_user_by_sub_or_email("unknown-sub", "dısk@example.com") is None
+    with pytest.raises(models.DuplicateEmailError):
+        manager.get_user_by_sub_or_email("unknown-sub", "DISK@example.com")
+
+
+@pytest.mark.parametrize("fallback", [True, False])
+def test_models_users_get_user_by_sub_or_email_blank_email(fallback, settings):
+    """A blank email, once stripped, should match no user, not those without email."""
+    factories.UserFactory(email="")
+    settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION = fallback
+    settings.OIDC_ALLOW_DUPLICATE_EMAILS = False
+
+    assert models.User.objects.get_user_by_sub_or_email("unknown-sub", "   ") is None
+
+
+def test_models_users_convert_valid_invitations_non_ascii():
+    """
+    Invitations should be converted for the same email in another ASCII case,
+    not for an email differing by a non-ASCII letter.
+    """
+    document = factories.DocumentFactory()
+    other_document = factories.DocumentFactory()
+    factories.InvitationFactory(email="alice.smith@corp.test", document=document)
+    factories.InvitationFactory(email="ALICE.SMITH@CORP.TEST", document=other_document)
+
+    non_ascii_user = factories.UserFactory(email="alıce.smith@corp.test")
+    assert not models.DocumentAccess.objects.filter(user=non_ascii_user).exists()
+    assert models.Invitation.objects.count() == 2
+
+    user = factories.UserFactory(email="Alice.Smith@corp.test")
+    assert models.DocumentAccess.objects.filter(user=user).count() == 2
+    assert models.Invitation.objects.count() == 0
+
+
 def test_modes_users_convert_valid_invitations():
     """
     The "convert_valid_invitations" method should convert valid invitations to document accesses.

@@ -216,7 +216,9 @@ describe('ButtonAccessRequest', () => {
       'http://test.jest/api/v1.0/documents/doc-id/ask-for-access/';
     fetchMock.post(CREATE_URL, { status: 201 });
 
-    render(<ButtonAccessRequest docId="doc-id" />, { wrapper: AppWrapper });
+    render(<ButtonAccessRequest docId="doc-id" role={Role.ADMIN} />, {
+      wrapper: AppWrapper,
+    });
     await userEvent.click(
       await screen.findByRole('button', { name: 'Request access' }),
     );

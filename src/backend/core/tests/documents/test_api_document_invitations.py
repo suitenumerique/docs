@@ -672,6 +672,24 @@ def test_api_document_invitations_create_lower_email():
     assert response.json()["email"] == "guest@example.com"
 
 
+def test_api_document_invitations_create_lower_email_ascii_only():
+    """Only ASCII letters of the email should be converted to lowercase."""
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(users=[(user, "owner")])
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/invitations/",
+        {"email": "\u212aEVIN@example.com", "role": "reader"},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.json()["email"] == "\u212aevin@example.com"
+
+
 # Update
 
 
@@ -788,6 +806,32 @@ def test_api_document_invitations_update_email_same_address_other_case():
     invitation.refresh_from_db()
     assert invitation.email == "guest@example.com"
     assert invitation.role == "editor"
+
+
+def test_api_document_invitations_update_email_non_ascii_forbidden():
+    """An email only differing from the invitation's by a non-ASCII letter is a change."""
+    user = factories.UserFactory()
+    invitation = factories.InvitationFactory(email="alice@example.com", role="reader")
+    factories.UserDocumentAccessFactory(
+        document=invitation.document, user=user, role="owner"
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.patch(
+        f"/api/v1.0/documents/{invitation.document.id!s}/invitations/{invitation.id!s}/",
+        {"email": "alıce@example.com", "role": "editor"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "email": ["The email of an invitation cannot be changed."]
+    }
+    invitation.refresh_from_db()
+    assert invitation.email == "alice@example.com"
+    assert invitation.role == "reader"
 
 
 @pytest.mark.parametrize(

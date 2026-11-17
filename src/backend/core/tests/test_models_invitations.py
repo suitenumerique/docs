@@ -13,6 +13,7 @@ from django.utils import timezone
 import pytest
 from faker import Faker
 from freezegun import freeze_time
+from rest_framework import exceptions as drf_exceptions
 
 from core import factories, models
 from core.tests.conftest import TEAM, USER, VIA
@@ -61,6 +62,32 @@ def test_models_invitations_role_among_choices():
         exceptions.ValidationError, match="Value 'boss' is not a valid choice"
     ):
         factories.InvitationFactory(role="boss")
+
+
+def test_models_invitations_email_normalized_on_save():
+    """The email of an invitation should be normalized when saved."""
+    invitation = factories.InvitationFactory(email=" Guest@Example.COM ")
+    invitation.refresh_from_db()
+    assert invitation.email == "guest@example.com"
+
+
+def test_models_invitations_clean_email_case_insensitive_already_registered():
+    """Inviting an existing user's email with a different ASCII case should be rejected."""
+    factories.UserFactory(email="alice.smith@corp.test")
+
+    with pytest.raises(
+        drf_exceptions.ValidationError,
+        match="already associated to a registered user",
+    ):
+        factories.InvitationFactory(email="ALICE.SMITH@CORP.TEST")
+
+
+def test_models_invitations_clean_non_ascii_email_allowed():
+    """Inviting an email differing from an existing user's by a non-ASCII letter works."""
+    factories.UserFactory(email="alice.smith@corp.test")
+
+    invitation = factories.InvitationFactory(email="alıce.smith@corp.test")
+    assert invitation.email == "alıce.smith@corp.test"
 
 
 def test_models_invitations_is_expired():

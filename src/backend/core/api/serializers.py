@@ -761,7 +761,7 @@ class InvitationSerializer(serializers.ModelSerializer):
             attrs["issuer"] = user
 
         if attrs.get("email"):
-            attrs["email"] = attrs["email"].lower()
+            attrs["email"] = models.normalize_email(attrs["email"])
 
         return attrs
 
@@ -789,7 +789,7 @@ class InvitationSerializer(serializers.ModelSerializer):
 
     def validate_email(self, email):
         """Refuse to change the email on update: the issuer chose who to invite."""
-        if self.instance and email.lower() != self.instance.email.lower():
+        if self.instance and models.normalize_email(email) != self.instance.email:
             raise serializers.ValidationError(
                 _("The email of an invitation cannot be changed.")
             )

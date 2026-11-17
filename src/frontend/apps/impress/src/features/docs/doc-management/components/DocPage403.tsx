@@ -24,19 +24,14 @@ export const DocPage403 = ({ id }: DocProps) => {
     setIsSkeletonVisible(false);
   }, [setIsSkeletonVisible]);
 
-  const {
-    data: requests,
-    isLoading: isLoadingRequest,
-    error: docAccessError,
-  } = useDocAccessRequests({
+  const { data: requests, isLoading: isLoadingRequest } = useDocAccessRequests({
     docId: id,
     page: 1,
   });
 
-  const hasRequested = !!requests?.results.find(
-    (request) => request.document === id,
-  );
-  const isSubDocument = docAccessError?.status === 404;
+  // The API resolves the document to its top parent: on this page the user has
+  // no access, so the list only contains their own request, if any
+  const hasRequested = !!requests?.results.length;
 
   if (isLoadingRequest) {
     return <Loading />;
@@ -102,25 +97,6 @@ export const DocPage403 = ({ id }: DocProps) => {
                   description: 'Message on the access denied page',
                 })}
           </Text>
-          {isSubDocument && (
-            <Text
-              as="p"
-              $textAlign="center"
-              $maxWidth="228px"
-              $theme="neutral"
-              $variation="secondary"
-              $margin="0"
-              $size="xs"
-            >
-              {t(
-                "You're currently viewing a sub-document. To gain access, please request permission from the main document.",
-                {
-                  description:
-                    'Message on the access denied page of a sub-document',
-                },
-              )}
-            </Text>
-          )}
         </Box>
         <Box $direction="row" $align="center" $gap="base">
           <StyledLink
@@ -156,15 +132,13 @@ export const DocPage403 = ({ id }: DocProps) => {
               })}
             </Text>
           </StyledLink>
-          {!isSubDocument && (
-            <ButtonAccessRequest
-              docId={id}
-              color="brand"
-              variant="tertiary"
-              size="small"
-              icon={<BubbleTextSvg width={16} height={16} aria-hidden="true" />}
-            />
-          )}
+          <ButtonAccessRequest
+            docId={id}
+            color="brand"
+            variant="tertiary"
+            size="small"
+            icon={<BubbleTextSvg width={16} height={16} aria-hidden="true" />}
+          />
         </Box>
       </Box>
     </>

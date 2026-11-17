@@ -84,6 +84,7 @@ const createDoc = (overrides: Partial<Doc> = {}): Doc => ({
     media_auth: false,
     mention: false,
     move: false,
+    move_to_another_tree: false,
     partial_update: true,
     restore: false,
     retrieve: false,
@@ -193,5 +194,42 @@ describe('<DocToolBox /> - duplicate with children', () => {
     expect(
       screen.queryByTestId('confirmation-duplicate-modal'),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('<DocToolBox /> - move into a doc', () => {
+  const findMoveOption = async () => {
+    await userEvent.click(
+      screen.getByRole('button', { name: /Open the document options/i }),
+    );
+    await screen.findByRole('menuitem', { name: 'Duplicate' });
+
+    return screen.queryByRole('menuitem', { name: 'Move into a doc' });
+  };
+
+  test.each([
+    ['shows it for a root doc that may go to another tree', 1, true, true],
+    [
+      'hides it for a root doc that may not go to another tree',
+      1,
+      false,
+      false,
+    ],
+    ['shows it for a sub doc that may only move in its tree', 2, false, true],
+  ])('%s', async (_, depth, moveToAnotherTree, isShown) => {
+    isFeatureFlagActivatedMock.mockReturnValue(false);
+    useConfigMock.mockReturnValue({ data: {} });
+    const doc = createDoc({ depth });
+    doc.abilities.move = true;
+    doc.abilities.move_to_another_tree = moveToAnotherTree;
+
+    render(<DocToolBox doc={doc} isCurrentDoc />, { wrapper: AppWrapper });
+
+    const option = await findMoveOption();
+    if (isShown) {
+      expect(option).toBeInTheDocument();
+    } else {
+      expect(option).not.toBeInTheDocument();
+    }
   });
 });
