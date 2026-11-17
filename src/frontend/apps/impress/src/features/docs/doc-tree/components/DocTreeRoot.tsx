@@ -182,10 +182,6 @@ export const DocTreeRoot = ({
         `}
         href={`/docs/${root.id}`}
         onClick={(e) => {
-          if (!e.currentTarget.contains(e.target as Node)) {
-            e.preventDefault();
-            return;
-          }
           e.stopPropagation();
           e.preventDefault();
           selectRoot();
@@ -194,7 +190,20 @@ export const DocTreeRoot = ({
         aria-label={`${t('Open root document', { description: 'Accessible name of the link opening the root doc' })}: ${title}`}
         tabIndex={-1} // the item itself is the tab stop
       >
-        <Box $direction="row" $align="center" $width="100%">
+        <Box
+          $direction="row"
+          $align="center"
+          $width="100%"
+          onClick={(e) => {
+            // The modals opened from the actions menu are portals: React
+            // bubbles their clicks up to the link, which would prevent their
+            // default (reverting a checkbox) and navigate. Stop them here, as
+            // `TreeViewItem` does for the sub pages.
+            if (!e.currentTarget.contains(e.target as Node)) {
+              e.stopPropagation();
+            }
+          }}
+        >
           <SimpleDocItem doc={root} showDate={true} />
           {areActionsVisible && (
             <DocTreeItemActions

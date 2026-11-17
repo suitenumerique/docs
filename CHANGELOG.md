@@ -31,6 +31,7 @@ and this project adheres to
 - 🔒️(backend) only let owners update or delete an owner invitation #2986
 - 🐛(frontend) follow the abilities of an invitation in the share dialog #2986
 - 🐛(frontend) keep comments on inline nodes after a reload #2898
+- 🐛(frontend) let the checkboxes of the tree root modals be unchecked #3015
 - 🔒️(backend) match emails in a single normalized form #3017
 - 🐛(backend) ask for access to the top parent doc from a sub-document #2994
 - 🔒️(backend) require the owner role to move a document out of its tree #2978

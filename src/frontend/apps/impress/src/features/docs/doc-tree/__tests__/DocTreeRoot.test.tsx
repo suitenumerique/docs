@@ -13,10 +13,11 @@ import { DocTreeRoot } from '../components/DocTreeRoot';
 const mocks = vi.hoisted(() => ({
   focusMainContentStart: vi.fn(),
   onPortalButtonClick: vi.fn(),
+  push: vi.fn(),
 }));
 
 vi.mock('next/router', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: mocks.push }),
 }));
 
 vi.mock('@/layouts/utils', () => ({
@@ -30,11 +31,23 @@ vi.mock('../components/DocTreeItemActions', async () => {
   return {
     DocTreeItemActions: () =>
       createPortal(
-        createElement(
-          'button',
-          { type: 'button', onClick: mocks.onPortalButtonClick },
-          'Cancel the download',
-        ),
+        [
+          createElement(
+            'button',
+            {
+              key: 'button',
+              type: 'button',
+              onClick: mocks.onPortalButtonClick,
+            },
+            'Cancel the download',
+          ),
+          createElement(
+            'label',
+            { key: 'checkbox' },
+            createElement('input', { type: 'checkbox', defaultChecked: true }),
+            'Duplicate subdocs',
+          ),
+        ],
         document.body,
       ),
   };
@@ -75,5 +88,34 @@ describe('DocTreeRoot', () => {
     expect(mocks.onPortalButtonClick).toHaveBeenCalledTimes(2);
 
     expect(mocks.focusMainContentStart).not.toHaveBeenCalled();
+  });
+
+  it('lets a checkbox in a portal outside the item be toggled', async () => {
+    const user = userEvent.setup();
+    useResponsiveStore.setState({ isMobile: true });
+    mocks.push.mockClear();
+
+    render(
+      <DocTreeRoot
+        currentDoc={doc}
+        rootItemRef={createRef()}
+        treeContext={treeContext}
+      />,
+      { wrapper: AppWrapper },
+    );
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: 'Duplicate subdocs',
+    });
+    expect(checkbox).toBeChecked();
+
+    await user.click(checkbox);
+    expect(checkbox).not.toBeChecked();
+
+    await user.click(screen.getByText('Duplicate subdocs'));
+    expect(checkbox).toBeChecked();
+
+    // The click must not reach the link of the root doc either
+    expect(mocks.push).not.toHaveBeenCalled();
   });
 });

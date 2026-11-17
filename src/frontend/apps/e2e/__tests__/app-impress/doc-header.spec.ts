@@ -670,14 +670,23 @@ test.describe('Doc Header', () => {
       page.getByTestId('doc-tree').getByText(childTitle),
     ).toBeVisible();
 
-    // Duplicate again, this time excluding the subdocuments
-    await clickInEditorMenu(page, 'Duplicate');
+    // Duplicate again from the tree root, this time excluding the subdocuments
+    const rootItem = page.getByTestId('doc-tree-root-item');
+    await rootItem.hover();
+    await clickInDocOptionMenu(page, rootItem, 'Duplicate');
     await expect(modal).toBeVisible();
     await modal.getByText('Duplicate subdocs').click();
     await expect(subdocsCheckbox).not.toBeChecked();
+    const duplicateRequest = page.waitForRequest(
+      (request) =>
+        request.url().includes('/duplicate/') && request.method() === 'POST',
+    );
     await modal
       .getByRole('button', { name: 'Confirm the duplicate action' })
       .click();
+    expect((await duplicateRequest).postDataJSON()).toMatchObject({
+      with_descendants: false,
+    });
     await expect(modal).toBeHidden();
 
     await expect(
