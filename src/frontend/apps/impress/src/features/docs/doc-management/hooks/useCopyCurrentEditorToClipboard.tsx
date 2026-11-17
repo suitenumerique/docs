@@ -1,17 +1,16 @@
-import { VariantType } from '@gouvfr-lasuite/ui-components';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { expandDocChildrenBlocks } from '@/docs/doc-export/utils_doc_children';
-import { useToast } from '@/hooks';
 
 import { useDocStore } from '../stores';
 
 export const useCopyCurrentEditorToClipboard = () => {
   const { editor } = useEditorStore();
   const { currentDoc } = useDocStore();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 

@@ -1,11 +1,10 @@
-import { VariantType } from '@gouvfr-lasuite/ui-components';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { DropdownMenu, DropdownMenuOption, Text } from '@/components';
 import { Access, Doc, Role, useTrans } from '@/docs/doc-management/';
-import { useToast } from '@/hooks';
 
 import { useDeleteDocAccess, useDeleteDocInvitation } from '../api';
 import { Invitation, isInvitation } from '../types';
@@ -35,7 +34,7 @@ export const DocRoleDropdown = ({
 }: DocRoleDropdownProps) => {
   const { t } = useTranslation();
   const { transRole, translatedRoles } = useTrans();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
 
   const { mutate: removeDocInvitation } = useDeleteDocInvitation({
     onError: (error) => {

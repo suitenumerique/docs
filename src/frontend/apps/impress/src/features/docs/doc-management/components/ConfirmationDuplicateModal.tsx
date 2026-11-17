@@ -6,6 +6,7 @@ import {
   type ToastId,
   type TreeContextType,
   VariantType,
+  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
@@ -18,7 +19,6 @@ import {
   deleteDocFromTreeAfterNavigate,
 } from '@/docs/doc-tree/utils';
 import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid/api/useDocsTrashbin';
-import { useToast } from '@/hooks';
 
 import { KEY_LIST_DOC, useDuplicateDoc } from '../api';
 import { useRemoveDoc } from '../api/useRemoveDoc';
@@ -59,7 +59,7 @@ export const useDuplicatedDoc = ({
   const { t } = useTranslation();
   const { isTopRoot } = useDocUtils(doc);
   const router = useRouter();
-  const { toast, dismissToast } = useToast();
+  const { toast, dismissToast } = useToastProvider();
   return useDuplicateDoc({
     onSuccess: (data) => {
       // The backend puts the copy of a sub-doc beside it only when the user
@@ -241,7 +241,7 @@ export const ToastActions = ({
 }) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { mutateAsync: removeDoc } = useRemoveDoc({
     listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_DOC_TRASHBIN],
     options: {

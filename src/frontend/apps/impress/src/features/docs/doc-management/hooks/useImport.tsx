@@ -1,10 +1,9 @@
-import { VariantType } from '@gouvfr-lasuite/ui-components';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import { t } from 'i18next';
 import { useCallback, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 import { useConfig } from '@/core';
-import { useToast } from '@/hooks';
 import { formatFileSize } from '@/utils';
 
 import { ContentTypes, useImportDoc } from '../api/useImportDoc';
@@ -20,7 +19,7 @@ interface AcceptedMap {
 }
 
 export const useImport = ({ onDragOver, onImportSuccess }: UseImportProps) => {
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { data: config } = useConfig();
 
   const MAX_FILE_SIZE = useMemo(() => {

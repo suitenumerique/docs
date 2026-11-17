@@ -2,6 +2,7 @@ import {
   Button,
   ButtonProps,
   VariantType,
+  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import { MouseEventHandler, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +20,6 @@ import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
 import { AccessRequest, Doc, Role } from '@/docs/doc-management/';
 import { useAuth } from '@/features/auth';
-import { useToast } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 import {
@@ -51,7 +51,7 @@ type Props = {
 const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
   const { t } = useTranslation();
   const { isSmallMobile } = useResponsiveStore();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { spacingsTokens } = useCunninghamTheme();
   // The roles offered come from `set_role_to`, so the backend accepts them:
   // a failure here is unexpected
@@ -237,7 +237,7 @@ export const ButtonAccessRequest = ({
     page: 1,
   });
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { mutate: createRequest } = useCreateDocAccessRequest({
     onSuccess: () => {
       toast(

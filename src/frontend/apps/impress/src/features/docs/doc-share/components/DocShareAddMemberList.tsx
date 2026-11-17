@@ -1,4 +1,8 @@
-import { Button, VariantType } from '@gouvfr-lasuite/ui-components';
+import {
+  Button,
+  VariantType,
+  useToastProvider,
+} from '@gouvfr-lasuite/ui-components';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,7 +11,6 @@ import { Box, Card } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
-import { useToast } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 import { useCreateDocAccess, useCreateDocInvitation } from '../api';
@@ -35,7 +38,7 @@ export const DocShareAddMemberList = ({
   afterInvite,
 }: Props) => {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { isSmallMobile } = useResponsiveStore();
   const [isLoading, setIsLoading] = useState(false);
   const { spacingsTokens } = useCunninghamTheme();

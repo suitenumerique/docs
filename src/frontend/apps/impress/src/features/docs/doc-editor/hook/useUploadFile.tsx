@@ -1,5 +1,5 @@
 import { Block } from '@blocknote/core';
-import { VariantType } from '@gouvfr-lasuite/ui-components';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import { announce } from '@react-aria/live-announcer';
 import { captureException } from '@sentry/nextjs';
 import { useCallback, useEffect } from 'react';
@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 
 import { APIError, backendUrl } from '@/api';
 import { useConfig } from '@/core';
-import { useToast } from '@/hooks';
 import { formatFileSize } from '@/utils';
 import { isSafeUrl } from '@/utils/url';
 
@@ -46,7 +45,7 @@ const fileTextAlignment = (props: object): TextAlignment => {
 
 export const useUploadFile = (docId: string) => {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { data: config } = useConfig();
   const { mutateAsync: createDocAttachment } = useCreateDocAttachment();
 
