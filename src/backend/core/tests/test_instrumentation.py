@@ -10,11 +10,13 @@ from unittest import mock
 
 from django.core.signals import request_finished
 
+import httpx2
 import pytest
 import requests
 from prometheus_client import REGISTRY, CollectorRegistry, generate_latest
 
 from core import factories, instrumentation, metrics
+from core.services import menshen_services
 from core.services.yhub_services import APIError, YHubService
 
 pytestmark = pytest.mark.django_db
@@ -65,6 +67,9 @@ def test_instrumentation_outgoing_request_counts_the_status():
     [
         (requests.ReadTimeout("too slow"), "timeout"),
         (requests.ConnectTimeout("too slow"), "timeout"),
+        (httpx2.ReadTimeout("too slow"), "timeout"),
+        (httpx2.ConnectTimeout("too slow"), "timeout"),
+        (httpx2.ConnectError("refused"), "error"),
         (requests.ConnectionError("refused"), "error"),
         (ValueError("anything else"), "error"),
     ],
@@ -105,6 +110,36 @@ def test_instrumentation_yhub_client_is_measured_by_endpoint(metrics_enabled):
     assert sample(DURATION, **labels, status="404") == missing_before + 1
     # the document never makes it to a label
     assert str(document.id) not in generate_latest(REGISTRY).decode()
+
+
+@mock.patch.object(httpx2.Client, "post")
+def test_instrumentation_menshen_client_is_measured_by_operation(
+    mock_post, metrics_enabled
+):
+    """The Menshen client is measured under its operation, with Menshen's status."""
+    metrics_enabled.MENSHEN_URL = "http://menshen:8000"
+    metrics_enabled.MENSHEN_CLIENT_ID = "docs"
+    metrics_enabled.MENSHEN_CLIENT_SECRET = "docs-secret"
+    labels = {"service": "menshen", "operation": "revoke", "method": "POST"}
+    ok_before = sample(DURATION, **labels, status="200")
+    refused_before = sample(DURATION, **labels, status="401")
+    timeout_before = sample(DURATION, **labels, status="timeout")
+
+    request = httpx2.Request("POST", "http://menshen:8000/auth/token/revoke/")
+    mock_post.side_effect = [
+        httpx2.Response(200, request=request),
+        httpx2.Response(401, request=request),
+        httpx2.ReadTimeout("too slow"),
+    ]
+    menshen_services.revoke_token("exchanged-token")
+    for _ in range(2):
+        with pytest.raises(menshen_services.APIError):
+            menshen_services.revoke_token("exchanged-token")
+
+    assert sample(DURATION, **labels, status="200") == ok_before + 1
+    assert sample(DURATION, **labels, status="401") == refused_before + 1
+    assert sample(DURATION, **labels, status="timeout") == timeout_before + 1
+    assert sample(INFLIGHT, **labels) == 0
 
 
 class FakePool:

@@ -58,8 +58,9 @@ scrape_configs:
 - Calls to the other services, in
   `docs_outgoing_request_duration_seconds{service,operation,method,status}` and
   `docs_outgoing_requests_inflight{service,operation,method}`. `service` is
-  `yhub`, `y-provider` or `docspec`; `operation` is the endpoint (`ydoc`,
-  `create-ydoc`, `reset-connections`, `convert`, ...), never the url; `status`
+  `yhub`, `y-provider`, `docspec` or `menshen`; `operation` is the endpoint
+  (`ydoc`, `create-ydoc`, `reset-connections`, `convert`, `exchange`,
+  `revoke`, ...), never the url; `status`
   is the http status, `timeout` when the call was given up on, `error` when it
   never got an answer. These calls are made inside requests (`duplicate`,
   `formatted-content`, document creation from a file) and from the Celery

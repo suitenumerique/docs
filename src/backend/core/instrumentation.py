@@ -11,6 +11,7 @@ from contextlib import contextmanager
 
 from django.conf import settings
 
+import httpx2
 import requests
 
 
@@ -49,7 +50,7 @@ def outgoing_request(service, operation, method="POST"):
     try:
         yield observed
         status = str(observed.status) if observed.status is not None else "unknown"
-    except requests.Timeout:
+    except requests.Timeout, httpx2.TimeoutException:
         status = "timeout"
         raise
     finally:

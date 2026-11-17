@@ -2,16 +2,19 @@
 Tests for Find search feature flags
 """
 
+import time
 from unittest import mock
 
 from django.http import HttpResponse
 
 import pytest
 import responses
+from cryptography.fernet import Fernet
 from rest_framework.test import APIClient
 from waffle.testutils import override_flag
 
-from core.enums import FeatureFlag, SearchType
+from core import factories
+from core.enums import FeatureFlag
 from core.services.search_indexers import get_document_indexer
 
 pytestmark = pytest.mark.django_db
@@ -20,71 +23,36 @@ pytestmark = pytest.mark.django_db
 @responses.activate
 @mock.patch("core.api.viewsets.DocumentViewSet._search_using_database")
 @mock.patch("core.api.viewsets.DocumentViewSet._search_using_indexer")
-@pytest.mark.parametrize(
-    "activated_flags,"
-    "expected_search_type,"
-    "expected_search_using_indexer_called,"
-    "expected_search_using_database_called",
-    [
-        ([], SearchType.TITLE, False, True),
-        ([FeatureFlag.FLAG_FIND_HYBRID_SEARCH], SearchType.HYBRID, True, False),
-        (
-            [
-                FeatureFlag.FLAG_FIND_HYBRID_SEARCH,
-                FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH,
-            ],
-            SearchType.HYBRID,
-            True,
-            False,
-        ),
-        ([FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH], SearchType.FULL_TEXT, True, False),
-    ],
-)
-@pytest.mark.usefixtures("indexer_settings")
-# pylint: disable=too-many-arguments, too-many-positional-arguments
-def test_api_documents_search_success(  # noqa : PLR0913, PLR0917
+@pytest.mark.parametrize("full_text_search_flag", [False, True])
+def test_api_documents_search_success(
     mock_search_using_indexer,
     mock_search_using_database,
-    activated_flags,
-    expected_search_type,
-    expected_search_using_indexer_called,
-    expected_search_using_database_called,
+    full_text_search_flag,
+    indexer_settings,
 ):
     """
-    Test that the API endpoint for searching documents returns a successful response
-    with the expected search type according to the activated feature flags,
-    and that the appropriate search method is called.
+    Only the users having the full text search flag should search with the indexer,
+    the others should search the titles in the database, even with a Find token.
     """
     assert get_document_indexer() is not None
+    key = Fernet.generate_key()
+    indexer_settings.FIND_TOKEN_ENCRYPTION_KEY = key.decode()
 
     mock_search_using_indexer.return_value = HttpResponse()
     mock_search_using_database.return_value = HttpResponse()
 
     with override_flag(
-        FeatureFlag.FLAG_FIND_HYBRID_SEARCH,
-        active=FeatureFlag.FLAG_FIND_HYBRID_SEARCH in activated_flags,
+        FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH, active=full_text_search_flag
     ):
-        with override_flag(
-            FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH,
-            active=FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH in activated_flags,
-        ):
-            response = APIClient().get(
-                "/api/v1.0/documents/search/", data={"q": "alpha"}
-            )
+        client = APIClient()
+        client.force_login(factories.UserFactory())
+        session = client.session
+        session["find_access_token"] = Fernet(key).encrypt(b"find-token").decode()
+        session["find_access_token_expiration"] = time.time() + 3600
+        session.save()
+
+        response = client.get("/api/v1.0/documents/search/", data={"q": "alpha"})
 
     assert response.status_code == 200
-
-    if expected_search_using_indexer_called:
-        mock_search_using_indexer.assert_called_once()
-        assert (
-            mock_search_using_indexer.call_args.kwargs["search_type"]
-            == expected_search_type
-        )
-    else:
-        assert not mock_search_using_indexer.called
-
-    if expected_search_using_database_called:
-        assert SearchType.TITLE == expected_search_type
-        mock_search_using_database.assert_called_once()
-    else:
-        assert not mock_search_using_database.called
+    assert mock_search_using_indexer.called is full_text_search_flag
+    assert mock_search_using_database.called is not full_text_search_flag

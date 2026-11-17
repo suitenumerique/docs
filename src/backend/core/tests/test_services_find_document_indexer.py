@@ -12,7 +12,6 @@ from django.db import transaction
 import pytest
 
 from core import factories, models
-from core.enums import SearchType
 from core.services.search_indexers import FindDocumentIndexer
 from core.utils.yjs import base64_yjs_to_text
 
@@ -457,38 +456,47 @@ def test_find_document_indexer_search(mock_search_query):
     # Mock API response from Find
     hits = [
         {
-            "_id": "doc-123",
-            "_source": {
-                "title": "Test Document",
-                "content": "This is test content",
-                "updated_at": "2024-01-01T00:00:00Z",
-                "path": "/some/path/doc-123",
-            },
+            "id": "doc-123",
+            "service": "docs",
+            "title": "Test Document",
+            "score": 1.5,
+            "path": "/some/path/doc-123",
+            "depth": 3,
+            "numchild": 0,
+            "size": 20,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+            "reach": "restricted",
+            "tags": [],
         },
         {
-            "_id": "doc-456",
-            "_source": {
-                "title.fr": "Document de test",
-                "content": "Contenu de test",
-                "updated_at": "2024-01-02T00:00:00Z",
-            },
+            "id": "doc-456",
+            "service": "docs",
+            "title": "Document de test",
+            "score": None,
+            "path": "/some/path/doc-456",
+            "depth": 3,
+            "numchild": 2,
+            "size": 15,
+            "created_at": "2024-01-02T00:00:00Z",
+            "updated_at": "2024-01-02T00:00:00Z",
+            "reach": None,
+            "tags": ["tag"],
         },
     ]
-    mock_search_query.return_value = hits
+    mock_search_query.return_value = {"results": hits}
 
     q = "test"
-    token = "fake-token"
+    session = {}
     nb_results = 10
     path = "/some/path/"
     visited = ["doc-123"]
-    search_type = SearchType.HYBRID
     results = FindDocumentIndexer().search(
         q=q,
-        token=token,
+        session=session,
         nb_results=nb_results,
         path=path,
         visited=visited,
-        search_type=search_type,
     )
 
     mock_search_query.assert_called_once()
@@ -501,23 +509,6 @@ def test_find_document_indexer_search(mock_search_query):
         "order_by": "updated_at",
         "order_direction": "desc",
         "path": path,
-        "search_type": search_type,
     }
 
-    assert len(results) == 2
-    assert results == [
-        {
-            "id": hits[0]["_id"],
-            "title": hits[0]["_source"]["title"],
-            "content": hits[0]["_source"]["content"],
-            "updated_at": hits[0]["_source"]["updated_at"],
-            "path": hits[0]["_source"]["path"],
-        },
-        {
-            "id": hits[1]["_id"],
-            "title": hits[1]["_source"]["title.fr"],
-            "title.fr": hits[1]["_source"]["title.fr"],  # <- Find response artefact
-            "content": hits[1]["_source"]["content"],
-            "updated_at": hits[1]["_source"]["updated_at"],
-        },
-    ]
+    assert results == hits

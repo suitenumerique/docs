@@ -94,6 +94,8 @@ services:
       - ./src/backend:/app
       - ./data/static:/data/static
       - ./data/jwt:/data/jwt:ro
+      - ./data/find:/data/find:ro
+      - ./data/oidc:/data/oidc:ro
       - /app/.venv
     depends_on:
       postgresql:
@@ -124,6 +126,8 @@ services:
       - ./src/backend:/app
       - ./data/static:/data/static
       - ./data/jwt:/data/jwt:ro
+      - ./data/find:/data/find:ro
+      - ./data/oidc:/data/oidc:ro
       - /app/.venv
     depends_on:
       - app-dev

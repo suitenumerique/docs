@@ -1,15 +1,23 @@
 """
-Tests of the signals reporting the changes of accesses to the collaboration
-server, whichever code changed them.
+Tests of the signals of the core application: the changes of accesses reported
+to the collaboration server, whichever code changed them, and the Find token
+exchanged at login and revoked at logout.
 """
 
+import time
 from unittest import mock
 
+from django.contrib import auth
+from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.db import transaction
 
 import pytest
+from rest_framework.test import APIClient
+from waffle.testutils import override_flag
 
 from core import factories, models
+from core.authentication.backends import OIDCAuthenticationBackend
+from core.enums import FeatureFlag
 
 pytestmark = pytest.mark.django_db
 
@@ -252,3 +260,100 @@ def test_signals_document_created(
         factories.DocumentFactory(link_reach="public")
 
     mock_reset_service_connections.assert_not_called()
+
+
+# Login and logout
+
+
+@pytest.mark.usefixtures("indexer_settings")
+@override_flag(FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH, active=True)
+def test_signals_login_exchanges_a_find_token():
+    """
+    Logging in through the OIDC callback should exchange the access token of the
+    identity provider, already stored in the session, for the logged-in user who
+    searches with Find.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    session = client.session
+    session["oidc_states"] = {
+        "the-state": {
+            "nonce": "the-nonce",
+            "code_verifier": None,
+            "added_on": time.time(),
+        }
+    }
+    session.save()
+
+    def authenticate(self, request, **kwargs):  # pylint: disable=unused-argument
+        # mozilla-django-oidc stores the tokens in the session, then returns the user
+        request.session["oidc_access_token"] = "idp-access-token"
+        return user
+
+    seen = {}
+
+    def exchange(request):
+        seen["access_token"] = request.session.get("oidc_access_token")
+        seen["user"] = request.user
+
+    with (
+        mock.patch.object(OIDCAuthenticationBackend, "authenticate", authenticate),
+        mock.patch(
+            "core.signals.exchange_find_token", side_effect=exchange
+        ) as mock_exchange,
+    ):
+        response = client.get(
+            "/api/v1.0/callback/", {"code": "the-code", "state": "the-state"}
+        )
+
+    assert response.status_code == 302
+    assert client.session[auth.SESSION_KEY] == str(user.pk)
+    mock_exchange.assert_called_once()
+    assert seen == {"access_token": "idp-access-token", "user": user}
+
+
+def test_signals_logout_revokes_the_find_token(settings):
+    """
+    Logging out should revoke the Find token while the session still holds it,
+    before Django flushes it.
+    """
+    settings.OIDC_OP_LOGOUT_ENDPOINT = None
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+    session = client.session
+    session["find_access_token"] = "encrypted-find-token"
+    session.save()
+
+    seen = {}
+
+    def revoke(request):
+        seen["find_access_token"] = request.session.get("find_access_token")
+        seen["user"] = request.session.get(auth.SESSION_KEY)
+
+    with mock.patch(
+        "core.signals.revoke_find_token", side_effect=revoke
+    ) as mock_revoke:
+        response = client.post("/api/v1.0/logout/")
+
+    assert response.status_code == 302
+    mock_revoke.assert_called_once()
+    assert seen == {"find_access_token": "encrypted-find-token", "user": str(user.pk)}
+    assert "find_access_token" not in client.session
+    assert auth.SESSION_KEY not in client.session
+
+
+@mock.patch("core.signals.revoke_find_token")
+@mock.patch("core.signals.exchange_find_token")
+def test_signals_login_and_logout_without_request(mock_exchange, mock_revoke):
+    """
+    The login and logout signals sent without a request, as code outside a view
+    may do, have no session to read: nothing should be exchanged nor revoked.
+    """
+    user = factories.UserFactory()
+
+    user_logged_in.send(sender=user.__class__, request=None, user=user)
+    user_logged_out.send(sender=user.__class__, request=None, user=user)
+
+    assert not mock_exchange.called
+    assert not mock_revoke.called

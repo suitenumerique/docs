@@ -1,6 +1,7 @@
 """Fixtures for tests in the impress core application"""
 
 import base64
+import time
 from contextlib import contextmanager
 from unittest import mock
 
@@ -9,6 +10,7 @@ from django.db import transaction
 
 import pytest
 import responses
+from cryptography.fernet import Fernet
 
 from core import factories
 from core.services.yhub_services import YHubService
@@ -150,6 +152,20 @@ def indexer_settings_fixture(settings):
 
     # clear cache to prevent issues with other tests
     get_document_indexer.cache_clear()
+
+
+@pytest.fixture(name="find_session")
+def find_session_fixture(settings):
+    """
+    A session holding the Find token "mytoken", as the login of a user who
+    searches with Find leaves it (see core.services.find_tokens).
+    """
+    key = Fernet.generate_key()
+    settings.FIND_TOKEN_ENCRYPTION_KEY = key.decode()
+    return {
+        "find_access_token": Fernet(key).encrypt(b"mytoken").decode(),
+        "find_access_token_expiration": time.time() + 3600,
+    }
 
 
 def resource_server_backend_setup(settings):

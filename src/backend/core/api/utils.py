@@ -6,10 +6,8 @@ from abc import ABC, abstractmethod
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import default_storage
-from django.utils.decorators import method_decorator
 
 import botocore
-from lasuite.oidc_login.decorators import refresh_oidc_access_token
 from rest_framework.throttling import BaseThrottle
 
 from core.utils.s3 import get_s3_client, get_unsigned_s3_client
@@ -93,19 +91,6 @@ def generate_s3_authorization_headers(key):
     auth.add_auth(request)
 
     return request
-
-
-def conditional_refresh_oidc_token(func):
-    """
-    Conditionally apply refresh_oidc_access_token decorator.
-
-    The decorator is only applied if OIDC_STORE_REFRESH_TOKEN is True, meaning
-    we can actually refresh something. Broader settings checks are done in settings.py.
-    """
-    if settings.OIDC_STORE_REFRESH_TOKEN:
-        return method_decorator(refresh_oidc_access_token)(func)
-
-    return func
 
 
 class AIBaseRateThrottle(BaseThrottle, ABC):

@@ -9,6 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
 
 import pytest
+import requests
 import responses
 from requests import HTTPError
 
@@ -16,6 +17,9 @@ from core import factories, models
 from core.services.search_indexers import (
     BaseDocumentIndexer,
     FindDocumentIndexer,
+    SearchIndexerAuthenticationError,
+    SearchIndexerError,
+    SearchIndexerUnavailableError,
     get_document_indexer,
     get_visited_document_ids_of,
 )
@@ -32,9 +36,9 @@ class FakeDocumentIndexer(BaseDocumentIndexer):
         return {}
 
     def push(self, data):
-        pass
+        return len(data)
 
-    def search_query(self, data, token):
+    def search_query(self, data, session):
         return {}
 
 
@@ -259,7 +263,7 @@ def test_services_search_indexers_index_errors(indexer_settings):
         FindDocumentIndexer().index()
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 def test_services_search_indexers_batches_pass_only_batch_accesses(
     mock_push, indexer_settings
 ):
@@ -299,7 +303,7 @@ def test_services_search_indexers_batches_pass_only_batch_accesses(
     assert seen_doc_ids == {str(d.id) for d in documents}
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_batch_size_argument(mock_push):
     """
@@ -337,7 +341,7 @@ def test_services_search_indexers_batch_size_argument(mock_push):
     assert seen_doc_ids == {str(d.id) for d in documents}
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_index_the_content_of_the_collaboration_server(
     mock_push,
@@ -352,7 +356,7 @@ def test_services_search_indexers_index_the_content_of_the_collaboration_server(
     assert indexed["content"] == base64_yjs_to_text(factories.YDOC_HELLO_WORLD_BASE64)
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_skip_documents_the_content_of_which_is_unreadable(
     mock_push,
@@ -379,7 +383,7 @@ def test_services_search_indexers_skip_documents_the_content_of_which_is_unreada
     assert results == {str(readable.id)}
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ignore_empty_documents(mock_push):
     """
@@ -414,7 +418,7 @@ def test_services_search_indexers_ignore_empty_documents(mock_push):
     }
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 def test_services_search_indexers_skip_empty_batches(mock_push, indexer_settings):
     """
     Documents indexing batch can be empty if all the docs are empty.
@@ -441,7 +445,7 @@ def test_services_search_indexers_skip_empty_batches(mock_push, indexer_settings
     assert results == [str(document.id)]
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ancestors_link_reach(mock_push):
     """Document accesses and reach should take into account ancestors link reaches."""
@@ -462,7 +466,7 @@ def test_services_search_indexers_ancestors_link_reach(mock_push):
     assert results[str(document.id)]["reach"] == "public"
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ancestors_users(mock_push):
     """Document accesses and reach should include users from ancestors."""
@@ -485,7 +489,7 @@ def test_services_search_indexers_ancestors_users(mock_push):
     }
 
 
-@patch.object(FindDocumentIndexer, "push")
+@patch.object(FindDocumentIndexer, "push", side_effect=len)
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ancestors_teams(mock_push):
     """Document accesses and reach should include teams from ancestors."""
@@ -593,27 +597,112 @@ def test_get_visited_document_ids_of_deleted():
 
 
 @responses.activate
-def test_services_search_indexers_search_errors(indexer_settings):
+def test_services_search_indexers_search_token_rejected(indexer_settings, find_session):
     """
-    Documents indexing response handling on Find API HTTP errors.
+    A token rejected by Find should be dropped from the session, there is no use
+    sending it again, and raise a dedicated error.
     """
-    factories.DocumentFactory()
-
     indexer_settings.SEARCH_URL = "http://app-find/api/v1.0/documents/search/"
 
     responses.add(
         responses.POST,
         "http://app-find/api/v1.0/documents/search/",
         status=401,
-        body=json_dumps({"message": "Authentication failed."}),
+        body=json_dumps({"detail": "Invalid token."}),
     )
 
-    with pytest.raises(HTTPError):
-        FindDocumentIndexer().search(q="alpha", token="mytoken")
+    with pytest.raises(SearchIndexerAuthenticationError, match=r"\(401\)"):
+        FindDocumentIndexer().search(q="alpha", session=find_session)
+
+    assert find_session == {}
+
+
+@pytest.mark.parametrize("token_kind", ["missing", "expired"])
+@responses.activate
+def test_services_search_indexers_search_without_a_find_token(
+    token_kind, indexer_settings, find_session
+):
+    """
+    A session without a usable Find token cannot search Find: a dedicated error
+    should be raised without calling Find, and the session left as it is.
+    """
+    indexer_settings.SEARCH_URL = "http://app-find/api/v1.0/documents/search/"
+    if token_kind == "missing":
+        session = {}
+    else:
+        session = {**find_session, "find_access_token_expiration": 0}
+
+    with pytest.raises(SearchIndexerUnavailableError):
+        FindDocumentIndexer().search(q="alpha", session=session)
+
+    assert not responses.calls
+    if token_kind == "expired":
+        assert session["find_access_token"] == find_session["find_access_token"]
+
+
+@pytest.mark.parametrize(
+    "find_answer, message",
+    [
+        ({"body": requests.ConnectionError("refused")}, "could not be reached"),
+        ({"body": requests.Timeout("too slow")}, "could not be reached"),
+        ({"status": 500, "body": "Internal Server Error"}, "Find answered 500"),
+        ({"status": 503, "json": {"detail": "unavailable"}}, "Find answered 503"),
+        ({"status": 200, "body": "<html></html>"}, "not JSON"),
+        ({"status": 200, "json": {"detail": "?"}}, "without results"),
+        ({"status": 200, "json": {"results": {}}}, "without results"),
+        ({"status": 200, "json": ["alpha"]}, "without results"),
+    ],
+)
+@responses.activate
+def test_services_search_indexers_search_errors(
+    find_answer, message, indexer_settings, find_session
+):
+    """Every failure of the Find search should raise a SearchIndexerError."""
+    indexer_settings.SEARCH_URL = "http://app-find/api/v1.0/documents/search/"
+    responses.add(
+        responses.POST, "http://app-find/api/v1.0/documents/search/", **find_answer
+    )
+
+    with pytest.raises(SearchIndexerError, match=message) as error:
+        FindDocumentIndexer().search(q="alpha", session=find_session)
+
+    assert not isinstance(error.value, SearchIndexerAuthenticationError)
+
+
+@pytest.mark.parametrize("status", [400, 403])
+@responses.activate
+def test_services_search_indexers_search_refused(
+    status, indexer_settings, find_session
+):
+    """
+    A search refused by Find should point at the configuration of the token and
+    the services, the usual cause, without the answer of Find, which can echo the
+    query of the user.
+    """
+    indexer_settings.SEARCH_URL = "http://app-find/api/v1.0/documents/search/"
+    indexer_settings.FIND_AUDIENCE = "find-development"
+    indexer_settings.FIND_SEARCH_ACTION_SCOPE = "action:search-find-docs-development"
+    indexer_settings.FIND_SEARCH_SERVICES = ["docs-development"]
+    responses.add(
+        responses.POST,
+        "http://app-find/api/v1.0/documents/search/",
+        status=status,
+        json={"detail": [{"msg": "bad", "input": "secret query"}]},
+    )
+
+    with pytest.raises(SearchIndexerError) as error:
+        FindDocumentIndexer().search(q="secret query", session=find_session)
+
+    message = str(error.value)
+    assert f"Find refused the search ({status})" in message
+    assert "['docs-development']" in message
+    assert "find-development" in message
+    assert "action:search-find-docs-development" in message
+    assert "secret query" not in message
 
 
 @patch("requests.post")
-def test_services_search_indexers_search(mock_post, indexer_settings):
+def test_services_search_indexers_search(mock_post, indexer_settings, find_session):
     """
     search() should call requests.post to SEARCH_URL with the
     document ids from linktraces.
@@ -622,7 +711,8 @@ def test_services_search_indexers_search(mock_post, indexer_settings):
     indexer = FindDocumentIndexer()
 
     mock_response = mock_post.return_value
-    mock_response.raise_for_status.return_value = None  # No error
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"results": []}
 
     doc1, doc2, _ = factories.DocumentFactory.create_batch(3)
 
@@ -633,7 +723,7 @@ def test_services_search_indexers_search(mock_post, indexer_settings):
 
     visited = get_visited_document_ids_of(models.Document.objects.all(), user)
 
-    indexer.search(q="alpha", visited=visited, token="mytoken")
+    indexer.search(q="alpha", visited=visited, session=find_session)
 
     args, kwargs = mock_post.call_args
 
@@ -652,7 +742,40 @@ def test_services_search_indexers_search(mock_post, indexer_settings):
 
 
 @patch("requests.post")
-def test_services_search_indexers_search_nb_results(mock_post, indexer_settings):
+def test_services_search_indexers_search_timeout(
+    mock_post, indexer_settings, find_session
+):
+    """The search should wait for Find no longer than FIND_SEARCH_TIMEOUT."""
+    indexer_settings.FIND_SEARCH_TIMEOUT = 2.5
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {"results": []}
+
+    FindDocumentIndexer().search(q="alpha", session=find_session)
+
+    assert mock_post.call_args.kwargs["timeout"] == 2.5
+
+
+@patch("requests.post")
+def test_services_search_indexers_search_services(
+    mock_post, indexer_settings, find_session
+):
+    """The services searched should be the ones of FIND_SEARCH_SERVICES."""
+    indexer_settings.FIND_SEARCH_SERVICES = ["docs-development", "drive"]
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {"results": []}
+
+    FindDocumentIndexer().search(q="alpha", session=find_session)
+
+    assert mock_post.call_args.kwargs["json"]["services"] == [
+        "docs-development",
+        "drive",
+    ]
+
+
+@patch("requests.post")
+def test_services_search_indexers_search_nb_results(
+    mock_post, indexer_settings, find_session
+):
     """
     Find API call should have nb_results == SEARCH_INDEXER_QUERY_LIMIT
     or the given nb_results argument.
@@ -663,7 +786,8 @@ def test_services_search_indexers_search_nb_results(mock_post, indexer_settings)
     indexer = FindDocumentIndexer()
 
     mock_response = mock_post.return_value
-    mock_response.raise_for_status.return_value = None  # No error
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"results": []}
 
     doc1, doc2, _ = factories.DocumentFactory.create_batch(3)
 
@@ -674,7 +798,7 @@ def test_services_search_indexers_search_nb_results(mock_post, indexer_settings)
 
     visited = get_visited_document_ids_of(models.Document.objects.all(), user)
 
-    indexer.search(q="alpha", visited=visited, token="mytoken")
+    indexer.search(q="alpha", visited=visited, session=find_session)
 
     args, kwargs = mock_post.call_args
 
@@ -682,57 +806,9 @@ def test_services_search_indexers_search_nb_results(mock_post, indexer_settings)
     assert kwargs.get("json")["nb_results"] == 25
 
     # The argument overrides the setting value
-    indexer.search(q="alpha", visited=visited, token="mytoken", nb_results=109)
+    indexer.search(q="alpha", visited=visited, session=find_session, nb_results=109)
 
     args, kwargs = mock_post.call_args
 
     assert args[0] == indexer_settings.SEARCH_URL
     assert kwargs.get("json")["nb_results"] == 109
-
-
-def test_search_indexer_get_title_with_localized_field():
-    """Test extracting title from localized title field."""
-    source = {"title.extension": "Bonjour", "id": 1, "content": "test"}
-    result = FindDocumentIndexer.get_title(source)
-
-    assert result == "Bonjour"
-
-
-def test_search_indexer_get_title_with_multiple_localized_fields():
-    """Test that first matching localized title is returned."""
-    source = {"title.extension": "Bonjour", "title.en": "Hello", "id": 1}
-    result = FindDocumentIndexer.get_title(source)
-
-    assert result in ["Bonjour", "Hello"]
-
-
-def test_search_indexer_get_title_fallback_to_plain_title():
-    """Test fallback to plain 'title' field when no localized field exists."""
-    source = {"title": "Hello World", "id": 1}
-    result = FindDocumentIndexer.get_title(source)
-
-    assert result == "Hello World"
-
-
-def test_search_indexer_get_title_no_title_field():
-    """Test that empty string is returned when no title field exists."""
-    source = {"id": 1, "content": "test"}
-    result = FindDocumentIndexer.get_title(source)
-
-    assert result == ""
-
-
-def test_search_indexer_get_title_with_empty_localized_title():
-    """Test that fallback works when localized title is empty."""
-    source = {"title.extension": "", "title": "Fallback Title", "id": 1}
-    result = FindDocumentIndexer.get_title(source)
-
-    assert result == "Fallback Title"
-
-
-def test_search_indexer_get_title_with_multiple_extension():
-    """Test extracting title from title field with multiple extensions."""
-    source = {"title.extension_1.extension_2": "Bonjour", "id": 1, "content": "test"}
-    result = FindDocumentIndexer.get_title(source)
-
-    assert result == "Bonjour"
