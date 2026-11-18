@@ -89,23 +89,16 @@ describe('UserMentionSearchGroup', () => {
   it('marks only the current user with (You)', () => {
     renderGroup();
 
-    const currentUserRow = screen
-      .getByText('Dupont Thomas')
-      .closest('[cmdk-item]');
+    const currentUserRow = screen.getByRole('option', {
+      name: /Dupont Thomas/,
+    });
 
-    const otherUserRow = screen
-      .getByText('Dupont Julie')
-      .closest('[cmdk-item]');
+    const otherUserRow = screen.getByRole('option', {
+      name: /Dupont Julie/,
+    });
 
-    expect(currentUserRow).not.toBeNull();
-    expect(otherUserRow).not.toBeNull();
+    expect(within(currentUserRow).getByText('(You)')).toBeInTheDocument();
 
-    expect(
-      within(currentUserRow as HTMLElement).getByText('(You)'),
-    ).toBeInTheDocument();
-
-    expect(
-      within(otherUserRow as HTMLElement).queryByText('(You)'),
-    ).not.toBeInTheDocument();
+    expect(within(otherUserRow).queryByText('(You)')).not.toBeInTheDocument();
   });
 });
