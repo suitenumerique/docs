@@ -1,10 +1,18 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Command } from 'cmdk';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppWrapper } from '@/tests/utils';
 
 import { UserMentionSearchGroup } from '../UserMentionSearchGroup';
+vi.mock('@/features/auth', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/auth')>();
+
+  return {
+    ...actual,
+    useAuth: () => ({ user: { id: '1' } }),
+  };
+});
 
 const USERS = [
   { id: '1', full_name: 'Dupont Thomas', short_name: 'Thomas' },
@@ -77,5 +85,27 @@ describe('UserMentionSearchGroup', () => {
     fireEvent.click(screen.getByText('Dupont Julie'));
 
     expect(onSelect).toHaveBeenCalledWith(USERS[1]);
+  });
+  it('marks only the current user with (You)', () => {
+    renderGroup();
+
+    const currentUserRow = screen
+      .getByText('Dupont Thomas')
+      .closest('[cmdk-item]');
+
+    const otherUserRow = screen
+      .getByText('Dupont Julie')
+      .closest('[cmdk-item]');
+
+    expect(currentUserRow).not.toBeNull();
+    expect(otherUserRow).not.toBeNull();
+
+    expect(
+      within(currentUserRow as HTMLElement).getByText('(You)'),
+    ).toBeInTheDocument();
+
+    expect(
+      within(otherUserRow as HTMLElement).queryByText('(You)'),
+    ).not.toBeInTheDocument();
   });
 });

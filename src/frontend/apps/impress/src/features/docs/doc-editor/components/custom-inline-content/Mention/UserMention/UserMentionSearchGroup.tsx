@@ -6,7 +6,7 @@ import {
   QuickSearchGroup,
   QuickSearchItemContent,
 } from '@/components/quick-search';
-import { UserAvatar } from '@/features/auth';
+import { UserAvatar, useAuth } from '@/features/auth';
 
 import { MentionableUser, getMentionableUserName } from './useMentionableUsers';
 
@@ -24,6 +24,7 @@ export const UserMentionSearchGroup = ({
   onSelect,
 }: UserMentionSearchGroupProps) => {
   const { t } = useTranslation();
+  const { user: currentUser } = useAuth();
 
   if (users.length === 0) {
     return null;
@@ -60,6 +61,17 @@ export const UserMentionSearchGroup = ({
                 >
                   {name}
                 </Text>
+                {user.id === currentUser?.id && (
+                  <Text
+                    $size="sm"
+                    $color="var(--c--contextuals--content--semantic--neutral--secondary)"
+                  >
+                    {t('(You)', {
+                      description:
+                        'Label indicating that this user is the currently logged-in user',
+                    })}
+                  </Text>
+                )}
               </Box>
             }
             right={
