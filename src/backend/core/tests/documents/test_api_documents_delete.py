@@ -160,6 +160,39 @@ def test_api_documents_delete_downgraded_creator(role):
     assert subpage.deleted_at is None
 
 
+@pytest.mark.parametrize("reach", ["public", "authenticated"])
+def test_api_documents_delete_link_only_creator(reach):
+    """
+    A creator with no access at all must not be able to destroy the subpage they
+    created, even when a link definition on an ancestor gives them the editor
+    role: the destroy ability follows the access-based children_create rule.
+    """
+    owner = factories.UserFactory()
+    creator = factories.UserFactory()
+    document = factories.DocumentFactory(
+        link_reach=reach,
+        link_role=models.LinkRoleChoices.EDITOR,
+        users=[(owner, "owner")],
+    )
+    subpage = factories.DocumentFactory(
+        parent=document,
+        creator=creator,
+        link_reach=models.LinkReachChoices.RESTRICTED,
+    )
+
+    client = APIClient()
+    client.force_login(creator)
+
+    response = client.delete(f"/api/v1.0/documents/{subpage.id!s}/")
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "You do not have permission to perform this action."
+    }
+    subpage.refresh_from_db()
+    assert subpage.deleted_at is None
+
+
 def test_api_documents_delete_creator_with_access_is_kept():
     """
     The creator of a subpage without children who still holds access

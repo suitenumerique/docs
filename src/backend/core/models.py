@@ -1446,7 +1446,9 @@ class Document(MP_Node, BaseModel):
             is_owner_or_admin or role == RoleChoices.EDITOR
         ) and not is_deleted
         can_comment = (can_update or role == RoleChoices.COMMENTER) and not is_deleted
-        can_create_children = can_update and user.is_authenticated
+        # Creating a child requires an actual access with at least an editor
+        # role on the tree: a link definition alone is not enough
+        can_create_children = can_update_from_access and user.is_authenticated
         # A creator keeps the destroy ability only while they can still create
         # children here, not on authorship alone: a removed or downgraded
         # creator must not delete the branch (and what others wrote under it).

@@ -18,6 +18,8 @@ and this project adheres to
   not inspect ping #2956
 - 💄(frontend) redesign offline error page #2808
 - 🛂(frontend) allow asking for access from a sub-document page #2994
+- 🔒️(backend) require an editor access on the tree to create a child document,
+  a link definition alone is not enough anymore #3031
 
 ### Fixed
 

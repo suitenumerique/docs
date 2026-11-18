@@ -53,13 +53,16 @@ def test_api_documents_children_create_anonymous(reach, role, depth):
         ["restricted", "editor"],
         ["restricted", "reader"],
         ["public", "reader"],
+        ["public", "editor"],
         ["authenticated", "reader"],
+        ["authenticated", "editor"],
     ],
 )
 def test_api_documents_children_create_authenticated_forbidden(reach, role, depth):
     """
-    Authenticated users with no write access on a document should not be allowed
-    to create a nested document.
+    Authenticated users without a specific access granting at least the editor
+    role should not be allowed to create a nested document: a link definition
+    alone, even with the editor role, is not enough.
     """
     user = factories.UserFactory()
 
@@ -84,26 +87,22 @@ def test_api_documents_children_create_authenticated_forbidden(reach, role, dept
 
 
 @pytest.mark.parametrize("depth", [1, 2, 3])
-@pytest.mark.parametrize(
-    "reach,role",
-    [
-        ["public", "editor"],
-        ["authenticated", "editor"],
-    ],
-)
-def test_api_documents_children_create_authenticated_success(reach, role, depth):
+def test_api_documents_children_create_team_access_success(depth, mock_user_teams):
     """
-    Authenticated users with write access on a document should be able
-    to create a nested document.
+    Authenticated users with a write access through their team on a document
+    should be able to create a nested document, even with a restricted link.
     """
     user = factories.UserFactory()
+    mock_user_teams.return_value = ["lasuite"]
 
     client = APIClient()
     client.force_login(user)
 
     for i in range(depth):
         if i == 0:
-            document = factories.DocumentFactory(link_reach=reach, link_role=role)
+            document = factories.DocumentFactory(
+                link_reach="restricted", teams=[("lasuite", "editor")]
+            )
         else:
             document = factories.DocumentFactory(
                 parent=document, link_reach="restricted"
@@ -210,7 +209,10 @@ def test_api_documents_children_create_authenticated_title_null():
     client.force_login(user)
 
     parent = factories.DocumentFactory(
-        title=None, link_reach="authenticated", link_role="editor"
+        title=None,
+        link_reach="authenticated",
+        link_role="editor",
+        users=[(user, "editor")],
     )
     factories.DocumentFactory(title=None, parent=parent)
 
