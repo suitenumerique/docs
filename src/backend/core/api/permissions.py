@@ -1,13 +1,12 @@
 """Permission handlers for the impress core app."""
 
 from django.core import exceptions
-from django.db.models import Q
 from django.http import Http404
 
 from rest_framework import permissions
 
 from core import choices
-from core.models import DocumentAccess, RoleChoices, get_trashbin_cutoff
+from core.models import Document, RoleChoices, get_trashbin_cutoff
 
 ACTION_FOR_METHOD_TO_PERMISSION = {
     "abilities": {"GET": "retrieve"},
@@ -89,12 +88,15 @@ class CanCreateInvitationPermission(permissions.BasePermission):
                 "You must set a document ID in kwargs to manage document invitations."
             ) from exc
 
-        # Check if the user has access to manage invitations (Owner/Admin roles)
-        return DocumentAccess.objects.filter(
-            Q(user=user) | Q(team__in=user.teams),
-            document=document_id,
-            role__in=[RoleChoices.OWNER, RoleChoices.ADMIN],
-        ).exists()
+        # Owners and administrators, of the document or of an ancestor, manage
+        # its invitations, as they manage its accesses
+        document = (
+            Document.objects.annotate_user_roles(user)
+            .only("path")
+            .filter(pk=document_id)
+            .first()
+        )
+        return bool(document) and document.get_role(user) in choices.PRIVILEGED_ROLES
 
 
 class ResourceWithAccessPermission(permissions.BasePermission):

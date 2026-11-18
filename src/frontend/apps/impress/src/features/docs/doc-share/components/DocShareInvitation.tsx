@@ -44,7 +44,8 @@ export const DocShareInvitationItem = ({
   };
 
   const { toast } = useToast();
-  const canUpdate = doc.abilities.accesses_manage;
+  // Administrators may not manage an owner invitation
+  const canUpdate = invitation.abilities.partial_update;
 
   const { mutate: updateDocInvitation } = useUpdateDocInvitation({
     onError: (error) => {
@@ -86,6 +87,7 @@ export const DocShareInvitationItem = ({
               currentRole={invitation.role}
               onSelectRole={onUpdate}
               canUpdate={canUpdate}
+              rolesAllowed={invitation.abilities.set_role_to}
               doc={doc}
               access={invitation}
               ariaLabel={t('Change role for {{email}}', {

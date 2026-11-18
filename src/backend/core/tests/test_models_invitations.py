@@ -2,6 +2,7 @@
 Unit tests for the Invitation model
 """
 
+import random
 from datetime import timedelta
 from unittest import mock
 
@@ -12,6 +13,7 @@ from django.utils import timezone
 import pytest
 from faker import Faker
 from freezegun import freeze_time
+from rest_framework import exceptions as drf_exceptions
 
 from core import factories, models
 from core.tests.conftest import TEAM, USER, VIA
@@ -60,6 +62,32 @@ def test_models_invitations_role_among_choices():
         exceptions.ValidationError, match="Value 'boss' is not a valid choice"
     ):
         factories.InvitationFactory(role="boss")
+
+
+def test_models_invitations_email_normalized_on_save():
+    """The email of an invitation should be normalized when saved."""
+    invitation = factories.InvitationFactory(email=" Guest@Example.COM ")
+    invitation.refresh_from_db()
+    assert invitation.email == "guest@example.com"
+
+
+def test_models_invitations_clean_email_case_insensitive_already_registered():
+    """Inviting an existing user's email with a different ASCII case should be rejected."""
+    factories.UserFactory(email="alice.smith@corp.test")
+
+    with pytest.raises(
+        drf_exceptions.ValidationError,
+        match="already associated to a registered user",
+    ):
+        factories.InvitationFactory(email="ALICE.SMITH@CORP.TEST")
+
+
+def test_models_invitations_clean_non_ascii_email_allowed():
+    """Inviting an email differing from an existing user's by a non-ASCII letter works."""
+    factories.UserFactory(email="alice.smith@corp.test")
+
+    invitation = factories.InvitationFactory(email="alıce.smith@corp.test")
+    assert invitation.email == "alıce.smith@corp.test"
 
 
 def test_models_invitations_is_expired():
@@ -175,6 +203,7 @@ def test_models_document_invitations_get_abilities_anonymous():
         "retrieve": False,
         "partial_update": False,
         "update": False,
+        "set_role_to": [],
     }
 
 
@@ -188,6 +217,7 @@ def test_models_document_invitations_get_abilities_authenticated():
         "retrieve": False,
         "partial_update": False,
         "update": False,
+        "set_role_to": [],
     }
 
 
@@ -210,7 +240,12 @@ def test_models_document_invitations_get_abilities_privileged_member(
 
     factories.UserDocumentAccessFactory(document=document)  # another one
 
-    invitation = factories.InvitationFactory(document=document)
+    invitation = factories.InvitationFactory(
+        document=document,
+        role=random.choice(
+            [r for r in models.RoleChoices.values if r != models.RoleChoices.OWNER]
+        ),
+    )
     abilities = invitation.get_abilities(user)
 
     assert abilities == {
@@ -218,6 +253,93 @@ def test_models_document_invitations_get_abilities_privileged_member(
         "retrieve": True,
         "partial_update": True,
         "update": True,
+        "set_role_to": [
+            r
+            for r in models.RoleChoices.values
+            if role == "owner" or r != models.RoleChoices.OWNER
+        ],
+    }
+
+
+@pytest.mark.parametrize("via", VIA)
+@pytest.mark.parametrize("role", ["administrator", "owner"])
+def test_models_document_invitations_get_abilities_owner_invitation(
+    role, via, mock_user_teams
+):
+    """Only owners can update or delete an owner invitation."""
+
+    user = factories.UserFactory()
+    document = factories.DocumentFactory()
+    if via == USER:
+        factories.UserDocumentAccessFactory(document=document, user=user, role=role)
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        factories.TeamDocumentAccessFactory(
+            document=document, team="lasuite", role=role
+        )
+
+    invitation = factories.InvitationFactory(document=document, role="owner")
+    abilities = invitation.get_abilities(user)
+
+    is_owner = role == "owner"
+    assert abilities == {
+        "destroy": is_owner,
+        "retrieve": True,
+        "partial_update": is_owner,
+        "update": is_owner,
+        "set_role_to": models.RoleChoices.values if is_owner else [],
+    }
+
+
+@pytest.mark.parametrize(
+    "ancestor_role, direct_role, expected",
+    [
+        # The highest role counts, wherever it comes from
+        ("owner", "administrator", "owner"),
+        ("owner", None, "owner"),
+        ("administrator", None, "administrator"),
+        ("administrator", "owner", "owner"),
+        ("editor", None, None),
+        (None, "administrator", "administrator"),
+    ],
+)
+@pytest.mark.parametrize("invitation_role", ["owner", "editor"])
+def test_models_document_invitations_get_abilities_ancestors(
+    ancestor_role, direct_role, expected, invitation_role
+):
+    """The role of the user on the ancestors of the document counts."""
+    user = factories.UserFactory()
+    root = factories.DocumentFactory()
+    parent = factories.DocumentFactory(parent=root)
+    document = factories.DocumentFactory(parent=parent)
+    if ancestor_role:
+        factories.UserDocumentAccessFactory(
+            document=root, user=user, role=ancestor_role
+        )
+    if direct_role:
+        factories.UserDocumentAccessFactory(
+            document=document, user=user, role=direct_role
+        )
+
+    invitation = factories.InvitationFactory(document=document, role=invitation_role)
+    abilities = invitation.get_abilities(user)
+
+    can_manage = expected == "owner" or (
+        expected == "administrator" and invitation_role != "owner"
+    )
+    set_role_to = []
+    if can_manage:
+        set_role_to = [
+            r
+            for r in models.RoleChoices.values
+            if expected == "owner" or r != models.RoleChoices.OWNER
+        ]
+    assert abilities == {
+        "destroy": can_manage,
+        "retrieve": expected is not None,
+        "partial_update": can_manage,
+        "update": can_manage,
+        "set_role_to": set_role_to,
     }
 
 
@@ -243,6 +365,7 @@ def test_models_document_invitations_get_abilities_reader(via, mock_user_teams):
         "retrieve": False,
         "partial_update": False,
         "update": False,
+        "set_role_to": [],
     }
 
 
@@ -268,4 +391,5 @@ def test_models_document_invitations_get_abilities_editor(via, mock_user_teams):
         "retrieve": False,
         "partial_update": False,
         "update": False,
+        "set_role_to": [],
     }

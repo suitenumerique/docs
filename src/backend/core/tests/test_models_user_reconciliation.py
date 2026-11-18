@@ -130,6 +130,58 @@ def test_incorrect_email_format_handling():
     assert "Reconciliation of your Docs accounts not completed" in email_content
 
 
+def test_user_reconciliation_csv_import_same_address():
+    """Emails only differing by ASCII case are logged and trigger an error email."""
+    csv_import = models.UserReconciliationCsvImport.objects.create(
+        file=ContentFile(
+            b"active_email,inactive_email,active_email_checked,inactive_email_checked,id\n"
+            b"User@example.com,user@example.com,1,1,41\n",
+            name="same_address.csv",
+        )
+    )
+    user_reconciliation_csv_import_job(csv_import.id)
+    csv_import.refresh_from_db()
+
+    assert csv_import.status == "done"
+    assert "set as both active and inactive email" in csv_import.logs
+    assert models.UserReconciliation.objects.count() == 0
+
+    # pylint: disable-next=no-member
+    assert len(mail.outbox) == 1
+    # pylint: disable-next=no-member
+    assert mail.outbox[0].to == ["User@example.com"]
+
+
+def test_user_reconciliation_save_same_address_sets_error():
+    """Saving fails into error status when both emails are the same address."""
+    user = factories.UserFactory(email="user@example.com")
+
+    reconciliation = models.UserReconciliation.objects.create(
+        active_email="User@example.com", inactive_email="user@example.com"
+    )
+
+    assert reconciliation.status == "error"
+    assert "are the same address" in reconciliation.logs
+    user.refresh_from_db()
+    assert user.is_active is True
+    # pylint: disable-next=no-member
+    assert len(mail.outbox) == 0
+
+
+def test_user_reconciliation_save_non_ascii_email_not_matched():
+    """An email differing from a user's by a non-ASCII letter matches no user."""
+    factories.UserFactory(email="active@example.com")
+    factories.UserFactory(email="inactive@example.com")
+
+    reconciliation = models.UserReconciliation.objects.create(
+        active_email="actıve@example.com", inactive_email="Inactive@example.com"
+    )
+
+    assert reconciliation.status == "error"
+    assert reconciliation.active_user is None
+    assert reconciliation.inactive_user.email == "inactive@example.com"
+
+
 def test_incorrect_csv_data_handling_grist_form():
     """Test that a CSV file with incorrect data is handled gracefully."""
     example_csv_path = (

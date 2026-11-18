@@ -82,7 +82,8 @@ describe('with a SENTRY_DSN', () => {
         environment: undefined,
         release: undefined,
         tracesSampleRate: 0,
-        profilesSampleRate: 0,
+        profileSessionSampleRate: 0,
+        profileLifecycle: 'trace',
       }),
     );
     // the native profiler is not loaded by a deployment that does not profile
@@ -120,7 +121,8 @@ describe('with a SENTRY_DSN', () => {
         environment: 'preprod',
         release: 'docs@5.0.0',
         tracesSampleRate: 0.25,
-        profilesSampleRate: 0.5,
+        profileSessionSampleRate: 0.5,
+        profileLifecycle: 'trace',
       }),
     );
   });

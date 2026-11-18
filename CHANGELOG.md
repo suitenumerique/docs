@@ -9,8 +9,11 @@ and this project adheres to
 ### Changed
 
 - 📦️(docker) keep the yarn cache out of the node images #2992
+- 🔧(yhub) SENTRY_PROFILES_SAMPLE_RATE samples processes since sentry 11 #2872
 - ⚡️(backend) probe the celery worker with heartbeat files, 
   not inspect ping #2956
+- 💄(frontend) redesign offline error page #2808
+- 🛂(frontend) allow asking for access from a sub-document page #2994
 
 ### Fixed
 
@@ -19,6 +22,15 @@ and this project adheres to
 - 🐛(backend) delete the access requests a role given another way covers #2982
 - 🗃️(backend) delete the stored access requests a role already covers #2982
 - 🐛(frontend) show an error when approving an access request fails #2982
+- 🔒️(backend) refuse to change the email of an invitation #2986
+- 🐛(backend) count the ancestors in the rights on invitations #2986
+- 🔒️(backend) only let owners update or delete an owner invitation #2986
+- 🐛(frontend) follow the abilities of an invitation in the share dialog #2986
+- 🐛(frontend) keep comments on inline nodes after a reload #2898
+- 🔒️(backend) match emails in a single normalized form #3017
+- 🐛(backend) ask for access to the top parent doc from a sub-document #2994
+- 🔒️(backend) require the owner role to move a document out of its tree #2978
+- 🐛(backend) speed up the reconciliation admin with user autocompletes #3013
 
 ## [v6.1.0] - 2026-11-12
 
@@ -48,6 +60,7 @@ and this project adheres to
 - 👷(ci) scan images with trivy only on release/ branches or the trivy
   label #2984
 - 💄(frontend) redesign 500 error standalone page #2801
+- 🚸(frontend) only offer the documents a doc can be moved into
 
 ### Fixed
 
