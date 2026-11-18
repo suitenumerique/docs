@@ -134,7 +134,8 @@ export const getInterlinkinghMenuItems = (
   editor: DocsBlockNoteEditor,
   t: TFunction<'translation', undefined>,
   group: string,
-  createPage: () => void,
+  // Left out when the user cannot create a child of the current doc
+  createPage?: () => void,
 ) => [
   {
     key: 'link-doc',
@@ -158,19 +159,23 @@ export const getInterlinkinghMenuItems = (
       description: 'Description of the "Link a doc" editor menu entry',
     }),
   },
-  {
-    key: 'new-sub-doc',
-    title: t('New sub-doc', {
-      description: 'Action to create a doc nested under the current doc',
-    }),
-    onItemClick: createPage,
-    aliases: ['new sub-doc'],
-    group,
-    icon: <AddPageIcon />,
-    subtext: t('Create a new sub-doc', {
-      description: 'Description of the "New sub-doc" editor menu entry',
-    }),
-  },
+  ...(createPage
+    ? [
+        {
+          key: 'new-sub-doc',
+          title: t('New sub-doc', {
+            description: 'Action to create a doc nested under the current doc',
+          }),
+          onItemClick: createPage,
+          aliases: ['new sub-doc'],
+          group,
+          icon: <AddPageIcon />,
+          subtext: t('Create a new sub-doc', {
+            description: 'Description of the "New sub-doc" editor menu entry',
+          }),
+        },
+      ]
+    : []),
 ];
 
 /**
@@ -184,12 +189,18 @@ export const getLinksGroupTitle = (t: TFunction<'translation', undefined>) =>
 export const useGetInterlinkingMenuItems = () => {
   const { currentDoc } = useDocStore();
   const createChildDoc = useCreateChildDocTree(currentDoc?.id);
+  const canCreateChildDoc = !!currentDoc?.abilities.children_create;
 
   return (
     editor: DocsBlockNoteEditor,
     t: TFunction<'translation', undefined>,
   ) =>
-    getInterlinkinghMenuItems(editor, t, getLinksGroupTitle(t), createChildDoc);
+    getInterlinkinghMenuItems(
+      editor,
+      t,
+      getLinksGroupTitle(t),
+      canCreateChildDoc ? createChildDoc : undefined,
+    );
 };
 
 const DisableInvalidInterlink = ({

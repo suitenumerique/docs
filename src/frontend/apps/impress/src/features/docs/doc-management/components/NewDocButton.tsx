@@ -29,7 +29,11 @@ export const NewDocButton = ({ onClose }: NewDocButtonProps) => {
   const { t } = useTranslation();
   const { currentDoc } = useDocStore();
   const { data: config } = useConfig();
-  const isDropdownEnabled = config?.CONVERSION_UPLOAD_ENABLED || currentDoc;
+  // On a doc page, the menu only offers the sub-doc creation: hide it when
+  // the user cannot create children there
+  const isDropdownEnabled = currentDoc
+    ? currentDoc.abilities.children_create
+    : config?.CONVERSION_UPLOAD_ENABLED;
 
   return (
     <>
@@ -103,7 +107,7 @@ export function DropdownArrow() {
             });
           }
         },
-        isHidden: !currentDoc,
+        isHidden: !currentDoc?.abilities.children_create,
       },
       {
         label: t('Import a document', {

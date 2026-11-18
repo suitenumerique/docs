@@ -41,6 +41,7 @@ and this project adheres to
 - 🐛(frontend) show right-to-left text from the right in the editor #2919
 - 🐛(yhub) report unready when valkey only accepts reads
 - 🐛(yhub) restart when valkey turns read-only after a failover
+- 🐛(frontend) hide the sub-doc creation entries without children_create #3031
 
 ## [v6.1.0] - 2026-11-12
 
