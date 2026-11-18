@@ -227,7 +227,7 @@ class AIService:
         tool_defs = [
             ToolDefinition(
                 name=name,
-                description=defn.get("description", ""),
+                description=defn.get("description") or name,
                 parameters_json_schema=defn.get("inputSchema", {}),
                 kind="external",
                 metadata={

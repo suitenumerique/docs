@@ -484,9 +484,24 @@ def test_tool_definitions_to_toolset_missing_fields():
     tool_defs = toolset.tool_defs
     assert len(tool_defs) == 1
     assert tool_defs[0].name == "myTool"
-    assert tool_defs[0].description == ""
+    assert tool_defs[0].description == "myTool"
     assert tool_defs[0].parameters_json_schema == {}
     assert tool_defs[0].metadata == {"output_schema": None}
+
+
+@pytest.mark.parametrize("description", [None, ""])
+def test_tool_definitions_to_toolset_empty_description(description):
+    """Should fall back to the tool name when the description is null or empty."""
+    tool_definitions = {
+        "applyDocumentOperations": {
+            "description": description,
+            "inputSchema": {"type": "object"},
+        },
+    }
+
+    toolset = AIService.tool_definitions_to_toolset(tool_definitions)
+
+    assert toolset.tool_defs[0].description == "applyDocumentOperations"
 
 
 # -- AIService.stream --
