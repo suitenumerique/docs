@@ -32,6 +32,7 @@ and this project adheres to
 - 🔒️(backend) require the owner role to move a document out of its tree #2978
 - 🐛(backend) speed up the reconciliation admin with user autocompletes #3013
 - 🐛(frontend) show right-to-left text from the right in the editor #2919
+- 🐛(yhub) report unready when valkey only accepts reads
 
 ## [v6.1.0] - 2026-11-12
 

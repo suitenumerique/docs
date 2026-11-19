@@ -85,11 +85,15 @@ It is not a fork of yhub — it is a thin wrapper, written in TypeScript under
     serving perfectly well,
   - `GET /collaboration/ready/v1` → `200 {"status":"ready","checks":{…}}`, or
     `503` with the offending store marked `unreachable`, after asking postgres
-    (`SELECT 1`) and redis (`PING`) in parallel, each with a two second
-    budget. A **readiness** failure takes the pod out of the service endpoints
-    and leaves its siblings serving. The body names the store but never the
-    error: the route is public, and a postgres client will happily put its
-    connection string in the message it raises — that goes to the log instead,
+    (`SELECT 1`) and redis in parallel, each with a two second budget. A
+    **readiness** failure takes the pod out of the service endpoints and leaves
+    its siblings serving. Redis is asked with a write, `SET
+    {prefix}:health:<hostname>` with a 30 s expiry, not a `PING`: after a
+    Sentinel failover the demoted node answers `PING` and keeps yhub's
+    connections, but refuses every update with `READONLY`. That state is
+    reported as `readonly`. The body names the store but never the error: the
+    route is public, and a postgres client will happily put its connection
+    string in the message it raises — that goes to the log instead,
 - mirrors the environment conventions used elsewhere in this repository
   (`*_FILE` secret indirection, `COLLABORATION_SERVER_ORIGIN` allowlist, …).
 

@@ -27,6 +27,7 @@ import {
   UUID4,
 } from './config.js';
 import { SOFT_MIGRATION, fullMigrate } from './migration.js';
+import { probeRedis } from './redis-health.js';
 import type { AppAuthInfo, DocRef, YHub } from './yhub.js';
 
 // Mimic the old y-provider REST responses (JSON, not yhub's lib0-any
@@ -143,7 +144,9 @@ export const api = [
   // serve a single document without: the postgres holding the persisted state
   // and the redis carrying the updates between replicas. Answering 503 takes
   // this pod out of the service endpoints and leaves the others serving, which
-  // is the whole difference with the liveness probe above.
+  // is the whole difference with the liveness probe above. Redis is probed
+  // with a write: a replica left behind by a failover answers a `PING` but
+  // refuses every update (`readonly`).
   createApiEndpoint('ready', {
     scope: 'global',
     get: {
@@ -153,7 +156,9 @@ export const api = [
         const checks = Object.fromEntries(
           await Promise.all([
             checkStore('postgres', () => req.yhub.persistence.sql`SELECT 1`),
-            checkStore('redis', () => req.yhub.stream.redis.ping()),
+            probeRedis(req.yhub.stream.redis, req.yhub.stream.prefix).then(
+              (state): [string, string] => ['redis', state],
+            ),
           ]),
         );
         const ready = Object.values(checks).every((state) => state === 'ok');

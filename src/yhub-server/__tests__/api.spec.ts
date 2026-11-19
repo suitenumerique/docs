@@ -9,6 +9,9 @@
 // updates are genuine and the contentmap is decoded the way yhub decodes it.
 // The fake instance has the compute pool of yhub 0.10 — no `patchYdoc` — and
 // these tests would answer 400 again if the handler went back to it.
+//
+// The `ready` route is covered at the end: it must report a redis that only
+// accepts reads, which a PING cannot see.
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -262,5 +265,67 @@ describe('create-ydoc', () => {
 
     expect(res.status).toBe(401);
     expect(yhub.stream.addMessage).not.toHaveBeenCalled();
+  });
+});
+
+// `ready` probes redis with a write: a replica left behind by a failover
+// answers PING, so only a write tells that the updates can no longer land.
+describe('ready', () => {
+  const readyHandler = async (): Promise<Handler> => {
+    const { api } = await import('../src/api.js');
+    const endpoint = (
+      api as unknown as Array<{
+        name: string;
+        opts: { get: { handler: Handler } };
+      }>
+    ).find((e) => e.name === 'ready');
+    if (endpoint == null) throw new Error('ready is not mounted');
+    return endpoint.opts.get.handler;
+  };
+
+  const probe = async (set: () => Promise<unknown>) => {
+    const handler = await readyHandler();
+    const res = await handler({
+      yhub: {
+        persistence: { sql: vi.fn(async () => [{ '?column?': 1 }]) },
+        stream: { prefix: 'yhub', redis: { set: vi.fn(set) } },
+      },
+    });
+    const body = (await res.json()) as {
+      status: string;
+      checks: Record<string, string>;
+    };
+    return { status: res.status, body };
+  };
+
+  it('is ready when both stores answer', async () => {
+    expect(await probe(async () => 'OK')).toEqual({
+      status: 200,
+      body: { status: 'ready', checks: { postgres: 'ok', redis: 'ok' } },
+    });
+  });
+
+  it('is not ready when redis only accepts reads', async () => {
+    const result = await probe(async () => {
+      throw new Error("READONLY You can't write against a read only replica.");
+    });
+
+    expect(result).toEqual({
+      status: 503,
+      body: {
+        status: 'unready',
+        checks: { postgres: 'ok', redis: 'readonly' },
+      },
+    });
+  });
+
+  it('is not ready when redis cannot be reached, and hides the error', async () => {
+    const result = await probe(async () => {
+      throw new Error('connect ECONNREFUSED redis://user:secret@valkey:6379');
+    });
+
+    expect(result.status).toBe(503);
+    expect(result.body.checks.redis).toBe('unreachable');
+    expect(JSON.stringify(result.body)).not.toContain('secret');
   });
 });
