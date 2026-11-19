@@ -5,9 +5,9 @@ landingURL: https://github.com/suitenumerique/docs
 creationDate: 2023-12-10
 logo: https://raw.githubusercontent.com/suitenumerique/docs/main/docs/assets/docs-logo.png
 usedBy:
-  - Direction interministériel du numérique (DINUM)
+  - Direction interministérielle du numérique (DINUM)
 fundedBy:
-  - name: Direction interministériel du numérique (DINUM)
+  - name: Direction interministérielle du numérique (DINUM)
     url: https://www.numerique.gouv.fr
 roadmap: "https://github.com/orgs/suitenumerique/projects/2/views/1"
 softwareType: "standalone/other"
@@ -23,5 +23,3 @@ maintenance:
   contacts:
     - name: "Virgile Deville"
       email: "virgile.deville@numerique.gouv.fr"
-    - name: "samuel.paccoud"
-      email: "samuel.paccoud@numerique.gouv.fr"
