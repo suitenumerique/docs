@@ -16,6 +16,30 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+- The Celery worker container is no longer probed with `celery inspect ping`.
+  The worker touches a heartbeat file from its event loop and creates a ready
+  file once it consumes from the broker: the helm chart checks the first with
+  its liveness probe and the second with a new startup probe, and drops the
+  readiness probe. Both files live in `/tmp` by default
+  (`WORKER_HEARTBEAT_FILE`, `WORKER_READY_FILE`): with a read-only root
+  filesystem mount an `emptyDir` there, and if you move them, change the
+  probe commands (`backend.celery.probes`) accordingly. A probe overridden in
+  your own values keeps working, as the worker still answers `inspect ping`.
+  The other way round, an older worker image (`backend.image.tag` pinned)
+  writes neither file, so the kubelet restarts it in a loop: upgrade the image
+  with the chart, or set `backend.celery.probes.startup` to `null` and
+  `backend.celery.probes.liveness` back to the `inspect ping` probe of the
+  previous chart version.
+- The migration `0037_normalize_stored_emails` strips the emails of users and
+  invitations and lowercases their ASCII letters, so that they are matched
+  exactly. It keeps only the most recent invitation of a document per email
+  and cannot restore the original case when reverted. Accounts whose emails
+  only differed by case are kept and now share an email: list them with the
+  "duplicate email" filter of the users admin, then merge or deactivate them
+  from there.
+
+## [6.1.0] - 2026-11-12
+
 - The collaboration server reads the abilities of a caller from the new
   `GET /api/v1.0/documents/{id}/abilities/` endpoint instead of
   `GET /api/v1.0/documents/{id}/`. A backend without that endpoint answers

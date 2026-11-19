@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { useOpenPresenterShortcut } from '../hooks/useOpenPresenterShortcut';
@@ -6,13 +6,18 @@ import { usePresenterStore } from '../stores';
 
 const press = (init: KeyboardEventInit) => {
   const event = new KeyboardEvent('keydown', { ...init, cancelable: true });
-  document.dispatchEvent(event);
+  act(() => {
+    document.dispatchEvent(event);
+  });
   return event;
 };
 
 describe('useOpenPresenterShortcut', () => {
   afterEach(() => {
-    usePresenterStore.setState({ isOpen: false, initialSlideIndex: 0 });
+    // The hook is still mounted here, it re-renders with the store.
+    act(() => {
+      usePresenterStore.setState({ isOpen: false, initialSlideIndex: 0 });
+    });
   });
 
   test('Ctrl+Alt+P opens the presenter on the first slide', () => {

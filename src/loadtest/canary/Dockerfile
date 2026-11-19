@@ -7,13 +7,15 @@ WORKDIR /app
 COPY ./src/loadtest/canary/package.json ./src/loadtest/canary/yarn.lock ./
 
 FROM base AS builder
-RUN yarn install --frozen-lockfile
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn,sharing=locked \
+  yarn install --frozen-lockfile
 COPY ./src/loadtest/canary/tsconfig.json ./src/loadtest/canary/tsconfig.build.json ./
 COPY ./src/loadtest/canary/src ./src
 RUN yarn build
 
 FROM base AS canary
-RUN yarn install --frozen-lockfile --production
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn,sharing=locked \
+  yarn install --frozen-lockfile --production
 COPY --from=builder /app/dist ./dist
 USER pwuser
 ENTRYPOINT ["node", "dist/index.js"]

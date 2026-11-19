@@ -93,6 +93,32 @@ def test_authentication_getter_existing_user_via_email_case_insensitive(
     assert user == db_user
 
 
+def test_authentication_getter_existing_user_via_email_non_ascii(monkeypatch):
+    """
+    If an existing user doesn't match the sub and the email differs from its email
+    by a non-ASCII letter, a new user should be created.
+    """
+
+    klass = OIDCAuthenticationBackend()
+    db_user = UserFactory(email="disk@example.com")
+
+    def get_userinfo_mocked(*args):
+        return {"sub": "other-sub", "email": "dısk@example.com"}
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+
+    user = klass.get_or_create_user(
+        access_token="test-token", id_token=None, payload=None
+    )
+
+    assert user != db_user
+    assert user.sub == "other-sub"
+    assert user.email == "dısk@example.com"
+    assert models.User.objects.count() == 2
+    db_user.refresh_from_db()
+    assert db_user.email == "disk@example.com"
+
+
 def test_authentication_getter_existing_user_via_email_skips_inactive(monkeypatch):
     """
     If an active and an inactive user share the email, the active user should be returned.

@@ -11,15 +11,8 @@ const TestComponent = () => {
 
 describe('useSWRegister', () => {
   it('checks service-worker is register', () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    const registerSpy = vi.fn();
-    registerSpy.mockImplementation(
-      () =>
-        new Promise((reject) => {
-          reject('error');
-        }),
-    );
+    // The hook sets the update handler on the registration
+    const registerSpy = vi.fn().mockResolvedValue({});
 
     const addEventListenerSpy = vi.fn();
 

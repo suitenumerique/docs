@@ -536,7 +536,7 @@ command of the container has to keep the `--import`.
 | `SENTRY_ENVIRONMENT` | `production` | Environment the events are reported under |
 | `SENTRY_RELEASE` | detected | Release the events are reported under |
 | `SENTRY_TRACES_SAMPLE_RATE` | `0` | Share of the traces that are sent, `0` to `1` |
-| `SENTRY_PROFILES_SAMPLE_RATE` | `0` | Share of the sampled traces that are profiled, `0` to `1` |
+| `SENTRY_PROFILES_SAMPLE_RATE` | `0` | Share of the processes that profile their sampled traces, `0` to `1` |
 
 A rate that is not a number between 0 and 1 is a startup error.
 

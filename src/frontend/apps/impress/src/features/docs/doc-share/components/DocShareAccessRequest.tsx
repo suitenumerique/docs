@@ -14,7 +14,6 @@ import {
   Icon,
   LoadMoreText,
   Loading,
-  Text,
 } from '@/components';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
@@ -54,7 +53,21 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
   const { isSmallMobile } = useResponsiveStore();
   const { toast } = useToast();
   const { spacingsTokens } = useCunninghamTheme();
-  const { mutate: acceptDocAccessRequests } = useAcceptDocAccessRequest();
+  // The roles offered come from `set_role_to`, so the backend accepts them:
+  // a failure here is unexpected
+  const { mutate: acceptDocAccessRequests } = useAcceptDocAccessRequest({
+    onError: () => {
+      toast(
+        t('Error while approving the request.', {
+          description: 'Toast shown when approving an access request failed',
+        }),
+        VariantType.ERROR,
+        {
+          duration: 4000,
+        },
+      );
+    },
+  });
   const [role, setRole] = useState(accessRequest.role);
 
   const { mutate: removeDocAccess } = useDeleteDocAccessRequest({
@@ -105,23 +118,24 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
                 name: accessRequest.user.full_name || accessRequest.user.email,
               })}
             />
-            <Button
-              color="brand"
-              variant="secondary"
-              onClick={() =>
-                acceptDocAccessRequests({
-                  docId: doc.id,
-                  accessRequestId: accessRequest.id,
-                  role,
-                })
-              }
-              size={isSmallMobile ? 'nano' : 'small'}
-            >
-              {t('Approve', {
-                description: 'Button to accept an access request',
-              })}
-            </Button>
-
+            {accessRequest.abilities.accept && (
+              <Button
+                color="brand"
+                variant="secondary"
+                onClick={() =>
+                  acceptDocAccessRequests({
+                    docId: doc.id,
+                    accessRequestId: accessRequest.id,
+                    role,
+                  })
+                }
+                size={isSmallMobile ? 'nano' : 'small'}
+              >
+                {t('Approve', {
+                  description: 'Button to accept an access request',
+                })}
+              </Button>
+            )}
             {doc.abilities.accesses_manage && (
               <BoxButton
                 onClick={() =>
@@ -130,9 +144,9 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
                     docId: doc.id,
                   })
                 }
-                aria-label={t('Close the access request modal', {
+                aria-label={t('Remove the access request', {
                   description:
-                    'Accessible name of the button closing the access request dialog',
+                    'Accessible name of the button removing an access request',
                 })}
               >
                 <Icon iconName="close" $size="16px" />
@@ -206,21 +220,19 @@ export const QuickSearchGroupAccessRequest = ({
 
 type ButtonAccessRequestProps = {
   docId: Doc['id'];
+  role?: Role;
 } & Omit<ButtonProps, 'onClick'> & {
     onClick?: MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>;
   };
 
 export const ButtonAccessRequest = ({
   docId,
+  role = Role.EDITOR,
   onClick,
   ...buttonProps
 }: ButtonAccessRequestProps) => {
   const { authenticated } = useAuth();
-  const {
-    data: requests,
-    error: docAccessError,
-    isLoading,
-  } = useDocAccessRequests({
+  const { data: requests, isLoading } = useDocAccessRequests({
     docId,
     page: 1,
   });
@@ -244,32 +256,18 @@ export const ButtonAccessRequest = ({
     return null;
   }
 
-  if (docAccessError?.status === 404) {
-    return (
-      <Text $maxWidth="320px" $textAlign="center" $size="sm">
-        {t(
-          'As this is a sub-document, please request access to the parent document to enable these features.',
-          {
-            description:
-              'Message in the share dialog when the user lacks rights on a sub-doc',
-          },
-        )}
-      </Text>
-    );
-  }
-
   if (isLoading) {
     return <Loading $height="auto" />;
   }
 
-  const hasRequested = !!(
-    requests && requests?.results.find((request) => request.document === docId)
-  );
+  // The API resolves the document to its top parent: the user lacks access here,
+  // so the list only contains their own request, if any
+  const hasRequested = !!requests?.results.length;
 
   return (
     <Button
       onClick={(e) => {
-        createRequest({ docId, role: Role.EDITOR });
+        createRequest({ docId, role });
         onClick?.(e);
       }}
       disabled={hasRequested}

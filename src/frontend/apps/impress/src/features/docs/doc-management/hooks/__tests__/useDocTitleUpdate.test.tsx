@@ -8,14 +8,14 @@ import { Doc } from '../../types';
 import { useDocTitleUpdate } from '../useDocTitleUpdate';
 
 // Mock useBroadcastStore
-vi.mock('@/stores', () => ({
+vi.mock('@/stores/useBroadcastStore', () => ({
   useBroadcastStore: () => ({
     broadcast: vi.fn(),
   }),
 }));
 
-vi.mock('@gouvfr-lasuite/ui-kit', async () => ({
-  ...(await vi.importActual('@gouvfr-lasuite/ui-kit')),
+vi.mock('@gouvfr-lasuite/ui-components', async () => ({
+  ...(await vi.importActual('@gouvfr-lasuite/ui-components')),
   useTreeContext: () => null,
 }));
 

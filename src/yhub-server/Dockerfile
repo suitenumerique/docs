@@ -20,7 +20,8 @@ COPY ./src/yhub-server/package.json ./src/yhub-server/yarn.lock ./
 # also runs its one-off `yarn init-db` here.
 FROM base AS yhub-deps
 
-RUN yarn install --frozen-lockfile
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn,sharing=locked \
+  yarn install --frozen-lockfile
 
 # whole directories rather than a glob, so a new module or tsconfig cannot be
 # forgotten
@@ -55,7 +56,8 @@ RUN yarn build
 # installed here because the production image has no yarn
 FROM base AS yhub-production-deps
 
-RUN yarn install --frozen-lockfile --production
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn,sharing=locked \
+  yarn install --frozen-lockfile --production
 
 
 # ---- Production image ----

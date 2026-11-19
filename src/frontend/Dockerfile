@@ -14,7 +14,10 @@ COPY ./src/frontend/yarn.lock ./yarn.lock
 COPY ./src/frontend/apps/impress/package.json ./apps/impress/package.json
 COPY ./src/frontend/packages/eslint-plugin-docs/package.json ./packages/eslint-plugin-docs/package.json
 
-RUN yarn install --frozen-lockfile
+# Keep the yarn download cache out of the image (it weighed more than
+# node_modules itself), while still reusing it between local builds
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn,sharing=locked \
+  yarn install --frozen-lockfile
 
 COPY .dockerignore ./.dockerignore
 COPY ./src/frontend/.prettierrc.js ./.prettierrc.js

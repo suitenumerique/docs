@@ -955,4 +955,122 @@ test.describe('Doc Editor', () => {
       editor.getByLabel('Mermaid diagram').filter({ hasText: 'HelloWorld' }),
     ).toBeVisible();
   });
+
+  test('it lays out right-to-left blocks from the right', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-rtl', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'שלום עולם' });
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('עולם מקונן');
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.type('Hello world');
+
+    const hebrewBlock = editor
+      .locator('.bn-block-content')
+      .filter({ hasText: 'שלום עולם' });
+    const nestedBlock = editor
+      .locator('.bn-block-group .bn-block-group .bn-block-content')
+      .filter({ hasText: 'עולם מקונן' });
+    const englishBlock = editor
+      .locator('.bn-block-content')
+      .filter({ hasText: 'Hello world' });
+
+    await expect(hebrewBlock).toHaveCSS('direction', 'rtl');
+    await expect(nestedBlock).toHaveCSS('direction', 'rtl');
+    await expect(englishBlock).toHaveCSS('direction', 'ltr');
+
+    // A nested right-to-left block is indented from the right
+    const parentText = await hebrewBlock
+      .locator('.bn-inline-content')
+      .boundingBox();
+    const childText = await nestedBlock
+      .locator('.bn-inline-content')
+      .boundingBox();
+    expect(parentText).not.toBeNull();
+    expect(childText).not.toBeNull();
+    expect(
+      parentText!.x + parentText!.width - (childText!.x + childText!.width),
+    ).toBeGreaterThan(20);
+
+    // "Align right" keeps a right-to-left block on the right edge
+    const toolbar = page.locator('.bn-formatting-toolbar');
+    await hebrewBlock.getByText('שלום עולם').selectText();
+    await toolbar.locator('button[data-test="alignTextRight"]').click();
+    await expect(hebrewBlock).toHaveAttribute('data-text-alignment', 'right');
+
+    const hebrewBox = await hebrewBlock.boundingBox();
+    const textBox = await hebrewBlock
+      .locator('.bn-inline-content')
+      .boundingBox();
+    expect(hebrewBox).not.toBeNull();
+    expect(textBox).not.toBeNull();
+    expect(
+      Math.abs(hebrewBox!.x + hebrewBox!.width - (textBox!.x + textBox!.width)),
+    ).toBeLessThan(2);
+
+    // A right aligned image stays on the right with a right-to-left caption
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await openSuggestionMenu({
+      page,
+      suggestion: 'Resizable image with caption',
+    });
+    await page.getByText('Upload image').click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(
+      path.join(__dirname, 'assets/logo-suite-numerique.png'),
+    );
+
+    const fileBlock = editor.locator('.bn-block-content[data-file-block]');
+    const image = fileBlock.locator('img.bn-visual-media');
+    // Wait for the final image, which replaces the media-check one
+    await expect(image).toHaveAttribute(
+      'src',
+      /media\/.*\/attachments\/.*\.png/,
+      { timeout: 10000 },
+    );
+
+    await image.click();
+    await toolbar.locator('button[data-test="editcaption"]').click();
+    await page.getByPlaceholder('Edit caption').fill('כיתוב בעברית');
+    await page.keyboard.press('Enter');
+    await expect(fileBlock.locator('.bn-file-caption')).toHaveText(
+      'כיתוב בעברית',
+    );
+
+    // Shrink the image so that its alignment shows
+    await image.hover();
+    const handle = await fileBlock
+      .locator('.bn-resize-handle')
+      .last()
+      .boundingBox();
+    expect(handle).not.toBeNull();
+    await page.mouse.move(
+      handle!.x + handle!.width / 2,
+      handle!.y + handle!.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(handle!.x - 300, handle!.y + handle!.height / 2, {
+      steps: 10,
+    });
+    await page.mouse.up();
+
+    await image.click();
+    await toolbar.locator('button[data-test="alignTextRight"]').click();
+    await expect(fileBlock).toHaveAttribute('data-text-alignment', 'right');
+
+    const blockBox = await fileBlock.boundingBox();
+    const imageBox = await image.boundingBox();
+    expect(blockBox).not.toBeNull();
+    expect(imageBox).not.toBeNull();
+    expect(imageBox!.width).toBeLessThan(blockBox!.width - 100);
+    expect(
+      Math.abs(blockBox!.x + blockBox!.width - (imageBox!.x + imageBox!.width)),
+    ).toBeLessThan(6);
+  });
 });

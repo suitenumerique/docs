@@ -45,7 +45,10 @@ if (SENTRY_DSN) {
     release: SENTRY_RELEASE,
     integrations,
     tracesSampleRate: SENTRY_TRACES_SAMPLE_RATE,
-    profilesSampleRate: SENTRY_PROFILES_SAMPLE_RATE,
+    // Sentry 11 dropped the per-trace profile sampling: the rate now picks the
+    // processes that profile, and those profile whatever trace they sample.
+    profileSessionSampleRate: SENTRY_PROFILES_SAMPLE_RATE,
+    profileLifecycle: 'trace',
   });
   Sentry.setTag('application', 'yhub-server');
   // the server and the worker are the same image: tell them apart

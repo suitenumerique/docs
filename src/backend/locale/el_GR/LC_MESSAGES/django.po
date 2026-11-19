@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-22 16:37+0000\n"
-"PO-Revision-Date: 2026-10-23 08:58\n"
+"POT-Creation-Date: 2026-11-04 15:19+0000\n"
+"PO-Revision-Date: 2026-11-12 10:29\n"
 "Last-Translator: \n"
 "Language-Team: Greek\n"
 "Language: el_GR\n"
@@ -117,33 +117,33 @@ msgstr "Δημιουργός είμαι εγώ"
 msgid "Favorite"
 msgstr "Αγαπημένο"
 
-#: core/api/serializers.py:532
+#: core/api/serializers.py:551
 msgid "A new document was created on your behalf!"
 msgstr "Ένα νέο έγγραφο δημιουργήθηκε εκ μέρους σας!"
 
-#: core/api/serializers.py:536
+#: core/api/serializers.py:555
 msgid "You have been granted ownership of a new document:"
 msgstr "Σας παραχωρήθηκε η ιδιοκτησία ενός νέου εγγράφου:"
 
-#: core/api/serializers.py:572
+#: core/api/serializers.py:591
 msgid "This field is required."
 msgstr "Αυτό το πεδίο είναι υποχρεωτικό."
 
-#: core/api/serializers.py:583
+#: core/api/serializers.py:602
 #, python-format
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr "Η εμβέλεια συνδέσμου '%(link_reach)s' δεν επιτρέπεται βάσει της διαμόρφωσης του γονικού εγγράφου."
 
-#: core/api/viewsets.py:1420 core/api/viewsets.py:1428
+#: core/api/viewsets.py:1484 core/api/viewsets.py:1492
 #, python-brace-format
 msgid "{title} (copy)"
 msgstr ""
 
-#: core/api/viewsets.py:1479
+#: core/api/viewsets.py:1543
 msgid "Untitled document (copy)"
 msgstr ""
 
-#: core/api/viewsets.py:3380
+#: core/api/viewsets.py:3444
 #, python-format
 msgid "A comment can have a maximum of %(max)d distinct reactions."
 msgstr ""
@@ -208,151 +208,151 @@ msgstr "Αριστερά"
 msgid "Right"
 msgstr "Δεξιά"
 
-#: core/models.py:87
+#: core/models.py:88
 msgid "id"
 msgstr "αναγνωριστικό"
 
-#: core/models.py:88
+#: core/models.py:89
 msgid "primary key for the record as UUID"
 msgstr "πρωτεύον κλειδί για την εγγραφή ως UUID"
 
-#: core/models.py:94
+#: core/models.py:95
 msgid "created on"
 msgstr "δημιουργήθηκε στις"
 
-#: core/models.py:95
+#: core/models.py:96
 msgid "date and time at which a record was created"
 msgstr "ημερομηνία και ώρα δημιουργίας μιας εγγραφής"
 
-#: core/models.py:100 core/models.py:2379
+#: core/models.py:101 core/models.py:2393
 msgid "updated on"
 msgstr "ενημερώθηκε στις"
 
-#: core/models.py:101
+#: core/models.py:102
 msgid "date and time at which a record was last updated"
 msgstr "ημερομηνία και ώρα τελευταίας ενημέρωσης μιας εγγραφής"
 
-#: core/models.py:131
+#: core/models.py:132
 msgid "Several active users are associated with this email."
 msgstr ""
 
-#: core/models.py:140
+#: core/models.py:141
 msgid "We couldn't find a user with this sub but the email is already associated with a registered user."
 msgstr "Δεν μπορέσαμε να βρούμε χρήστη με αυτό το sub, αλλά το email σχετίζεται ήδη με έναν εγγεγραμμένο χρήστη."
 
-#: core/models.py:151
+#: core/models.py:152
 msgid "sub"
 msgstr "sub (αναγνωριστικό υποκειμένου)"
 
-#: core/models.py:152
+#: core/models.py:153
 msgid "Required. 255 characters or fewer. ASCII characters only."
 msgstr "Υποχρεωτικό. 255 χαρακτήρες ή λιγότεροι. Μόνο χαρακτήρες ASCII."
 
-#: core/models.py:160
+#: core/models.py:161
 msgid "full name"
 msgstr "πλήρες όνομα"
 
-#: core/models.py:162
+#: core/models.py:163
 msgid "short name"
 msgstr "σύντομο όνομα"
 
-#: core/models.py:165
+#: core/models.py:166
 msgid "identity email address"
 msgstr "διεύθυνση email ταυτότητας"
 
-#: core/models.py:170
+#: core/models.py:171
 msgid "admin email address"
 msgstr "διεύθυνση email διαχειριστή"
 
-#: core/models.py:177
+#: core/models.py:178
 msgid "language"
 msgstr "γλώσσα"
 
-#: core/models.py:178
+#: core/models.py:179
 msgid "The language in which the user wants to see the interface."
 msgstr "Η γλώσσα στην οποία ο χρήστης θέλει να δει τη διεπαφή."
 
-#: core/models.py:186
+#: core/models.py:187
 msgid "The timezone in which the user wants to see times."
 msgstr "Η ζώνη ώρας στην οποία ο χρήστης θέλει να βλέπει την ώρα."
 
-#: core/models.py:189
+#: core/models.py:190
 msgid "device"
 msgstr "συσκευή"
 
-#: core/models.py:191
+#: core/models.py:192
 msgid "Whether the user is a device or a real user."
 msgstr "Εάν ο χρήστης είναι μια συσκευή ή πραγματικός χρήστης."
 
-#: core/models.py:194
+#: core/models.py:195
 msgid "staff status"
 msgstr "κατάσταση προσωπικού"
 
-#: core/models.py:196
+#: core/models.py:197
 msgid "Whether the user can log into this admin site."
 msgstr "Εάν ο χρήστης μπορεί να συνδεθεί σε αυτόν τον ιστότοπο διαχείρισης."
 
-#: core/models.py:199
+#: core/models.py:200
 msgid "active"
 msgstr "ενεργός"
 
-#: core/models.py:202
+#: core/models.py:203
 msgid "Whether this user should be treated as active. Unselect this instead of deleting accounts."
 msgstr "Εάν αυτός ο χρήστης πρέπει να θεωρείται ενεργός. Αποεπιλέξτε το αντί να διαγράψετε λογαριασμούς."
 
-#: core/models.py:207
+#: core/models.py:208
 msgid "first connection status"
 msgstr "πρώτη κατάσταση σύνδεσης"
 
-#: core/models.py:209
+#: core/models.py:210
 msgid "Whether the user has completed the first connection process."
 msgstr "Εάν ο χρήστης έχει ολοκληρώσει τη διαδικασία της πρώτης σύνδεσης."
 
-#: core/models.py:219
+#: core/models.py:220
 msgid "user"
 msgstr "χρήστης"
 
-#: core/models.py:220
+#: core/models.py:221
 msgid "users"
 msgstr "χρήστες"
 
-#: core/models.py:477
+#: core/models.py:478
 msgid "Active email address"
 msgstr "Ενεργή διεύθυνση email"
 
-#: core/models.py:478
+#: core/models.py:479
 msgid "Email address to deactivate"
 msgstr "Διεύθυνση email για απενεργοποίηση"
 
-#: core/models.py:505
+#: core/models.py:506
 msgid "Unique ID in the source file"
 msgstr "Μοναδικό αναγνωριστικό στο πηγαίο αρχείο"
 
-#: core/models.py:511 core/models.py:841
+#: core/models.py:512 core/models.py:842
 msgid "Pending"
 msgstr "Σε εκκρεμότητα"
 
-#: core/models.py:512
+#: core/models.py:513
 msgid "Ready"
 msgstr "Έτοιμο"
 
-#: core/models.py:513 core/models.py:843
+#: core/models.py:514 core/models.py:844
 msgid "Done"
 msgstr "Ολοκληρώθηκε"
 
-#: core/models.py:514 core/models.py:844
+#: core/models.py:515 core/models.py:845
 msgid "Error"
 msgstr "Σφάλμα"
 
-#: core/models.py:522
+#: core/models.py:523
 msgid "user reconciliation"
 msgstr "συμφωνία χρήστη"
 
-#: core/models.py:523
+#: core/models.py:524
 msgid "user reconciliations"
 msgstr "συμφωνία χρηστών"
 
-#: core/models.py:793
+#: core/models.py:794
 msgid "You have requested a reconciliation of your user accounts on Docs.\n"
 "            To confirm that you are the one who initiated the request\n"
 "            and that this email belongs to you:"
@@ -360,53 +360,53 @@ msgstr "Έχετε ζητήσει έναν συνδυασμό των λογαρ�
 "            Για να επιβεβαιώσετε ότι είστε εκείνος που ξεκίνησε το αίτημα\n"
 "            και ότι αυτό το email ανήκει σε σας:"
 
-#: core/models.py:799
+#: core/models.py:800
 msgid "Confirm by clicking the link to start the reconciliation"
 msgstr "Επιβεβαιώστε κάνοντας κλικ στο σύνδεσμο για να ξεκινήσει η συμφωνία"
 
-#: core/models.py:804 core/models.py:910
+#: core/models.py:805 core/models.py:911
 msgid "Click here"
 msgstr "Κάντε κλικ εδώ"
 
-#: core/models.py:805
+#: core/models.py:806
 msgid "Confirm"
 msgstr "Επιβεβαίωση"
 
-#: core/models.py:816
+#: core/models.py:817
 msgid "Your reconciliation request has been processed.\n"
 "            New documents are likely associated with your account:"
 msgstr "Το αίτημά σας για συμφωνία έχει επεξεργαστεί.\n"
 "            Νέα έγγραφα είναι πιθανό να σχετίζονται με τον λογαριασμό σας:"
 
-#: core/models.py:821
+#: core/models.py:822
 msgid "Your accounts have been merged"
 msgstr "Οι λογαριασμοί σας έχουν συγχωνευθεί"
 
-#: core/models.py:826
+#: core/models.py:827
 msgid "Click here to see"
 msgstr "Κάντε κλικ εδώ για να δείτε"
 
-#: core/models.py:827
+#: core/models.py:828
 msgid "See my documents"
 msgstr "Δείτε τα έγγραφά μου"
 
-#: core/models.py:837
+#: core/models.py:838
 msgid "CSV file"
 msgstr "Αρχείο CSV"
 
-#: core/models.py:842
+#: core/models.py:843
 msgid "Running"
 msgstr "Εκτελείται"
 
-#: core/models.py:852
+#: core/models.py:853
 msgid "user reconciliation CSV import"
 msgstr "εισαγωγή CSV συμφωνίας χρηστών"
 
-#: core/models.py:853
+#: core/models.py:854
 msgid "user reconciliation CSV imports"
 msgstr "εισαγωγές CSV συμφωνίας χρηστών"
 
-#: core/models.py:897
+#: core/models.py:898
 #, python-brace-format
 msgid "Your request for reconciliation was unsuccessful.\n"
 "            Reconciliation failed for the following email addresses:\n"
@@ -419,273 +419,273 @@ msgstr "Το αίτημά σας για επαλήθευση δεν ολοκλη
 "            Παρακαλούμε ελέγξτε αν υπάρχουν τυπογραφικά λάθη.\n"
 "            Μπορείτε να υποβάλετε ένα νέο αίτημα με τις σωστές διευθύνσεις email."
 
-#: core/models.py:905
+#: core/models.py:906
 msgid "Reconciliation of your Docs accounts not completed"
 msgstr "Η συμφωνία των λογαριασμών σας Docs δεν ολοκληρώθηκε"
 
-#: core/models.py:911
+#: core/models.py:912
 msgid "Make a new request"
 msgstr "Κάντε ένα νέο αίτημα"
 
-#: core/models.py:1026
+#: core/models.py:1027
 msgid "title"
 msgstr "τίτλος"
 
-#: core/models.py:1027
+#: core/models.py:1028
 msgid "excerpt"
 msgstr "απόσπασμα"
 
-#: core/models.py:1074
+#: core/models.py:1075
 msgid "Document"
 msgstr "Έγγραφο"
 
-#: core/models.py:1075
+#: core/models.py:1076
 msgid "Documents"
 msgstr "Έγγραφα"
 
-#: core/models.py:1092 core/models.py:1471 core/models.py:2210
+#: core/models.py:1093 core/models.py:1485 core/models.py:2224
 msgid "Untitled Document"
 msgstr "Έγγραφο χωρίς τίτλο"
 
-#: core/models.py:1472
+#: core/models.py:1486
 msgid "Open"
 msgstr "Άνοιγμα"
 
-#: core/models.py:1507
+#: core/models.py:1521
 #, python-brace-format
 msgid "{name} shared a document with you!"
 msgstr "Ο/Η {name} μοιράστηκε ένα έγγραφο μαζί σας!"
 
-#: core/models.py:1511
+#: core/models.py:1525
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
 msgstr "Ο/Η {name} σας προσκάλεσε με τον ρόλο \"{role}\" στο ακόλουθο έγγραφο:"
 
-#: core/models.py:1517
+#: core/models.py:1531
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
 msgstr "Ο/Η {name} μοιράστηκε ένα έγγραφο μαζί σας: {title}"
 
-#: core/models.py:1617
+#: core/models.py:1631
 msgid "Document/user link trace"
 msgstr "Ίχνος συνδέσμου εγγράφου/χρήστη"
 
-#: core/models.py:1618
+#: core/models.py:1632
 msgid "Document/user link traces"
 msgstr "Ίχνη συνδέσμου εγγράφου/χρήστη"
 
-#: core/models.py:1624
+#: core/models.py:1638
 msgid "A link trace already exists for this document/user."
 msgstr "Ένα ίχνος συνδέσμου υπάρχει ήδη για αυτό το έγγραφο/χρήστη."
 
-#: core/models.py:1647
+#: core/models.py:1661
 msgid "Document favorite"
 msgstr "Αγαπημένο έγγραφο"
 
-#: core/models.py:1648
+#: core/models.py:1662
 msgid "Document favorites"
 msgstr "Αγαπημένα έγγραφα"
 
-#: core/models.py:1654
+#: core/models.py:1668
 msgid "This document is already targeted by a favorite relation instance for the same user."
 msgstr "Αυτό το έγγραφο στοχεύεται ήδη από μια σχέση αγαπημένου για τον ίδιο χρήστη."
 
-#: core/models.py:1676
+#: core/models.py:1690
 msgid "Document/user relation"
 msgstr "Σχέση εγγράφου/χρήστη"
 
-#: core/models.py:1677
+#: core/models.py:1691
 msgid "Document/user relations"
 msgstr "Σχέσεις εγγράφου/χρήστη"
 
-#: core/models.py:1683
+#: core/models.py:1697
 msgid "This user is already in this document."
 msgstr "Αυτός ο χρήστης συμμετέχει ήδη σε αυτό το έγγραφο."
 
-#: core/models.py:1689
+#: core/models.py:1703
 msgid "This team is already in this document."
 msgstr "Αυτή η ομάδα συμμετέχει ήδη σε αυτό το έγγραφο."
 
-#: core/models.py:1695
+#: core/models.py:1709
 msgid "Either user or team must be set, not both."
 msgstr "Πρέπει να οριστεί είτε χρήστης είτε ομάδα, όχι και τα δύο."
 
-#: core/models.py:1846
+#: core/models.py:1860
 msgid "Document ask for access"
 msgstr "Αίτημα πρόσβασης σε έγγραφο"
 
-#: core/models.py:1847
+#: core/models.py:1861
 msgid "Document ask for accesses"
 msgstr "Αιτήματα πρόσβασης σε έγγραφα"
 
-#: core/models.py:1853
+#: core/models.py:1867
 msgid "This user has already asked for access to this document."
 msgstr "Αυτός ο χρήστης έχει ήδη ζητήσει πρόσβαση σε αυτό το έγγραφο."
 
-#: core/models.py:1910
+#: core/models.py:1924
 #, python-brace-format
 msgid "{name} would like access to a document!"
 msgstr "Ο/Η {name} θα ήθελε πρόσβαση σε ένα έγγραφο!"
 
-#: core/models.py:1914
+#: core/models.py:1928
 #, python-brace-format
 msgid "{name} would like access to the following document:"
 msgstr "Ο/Η {name} θα ήθελε πρόσβαση στο ακόλουθο έγγραφο:"
 
-#: core/models.py:1920
+#: core/models.py:1934
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
 msgstr "Ο/Η {name} ζητά πρόσβαση στο έγγραφο: {title}"
 
-#: core/models.py:1962
+#: core/models.py:1976
 msgid "Thread"
 msgstr "Νήμα"
 
-#: core/models.py:1963
+#: core/models.py:1977
 msgid "Threads"
 msgstr "Νήματα"
 
-#: core/models.py:1966 core/models.py:2018
+#: core/models.py:1980 core/models.py:2032
 msgid "Anonymous"
 msgstr "Ανώνυμος"
 
-#: core/models.py:2013
+#: core/models.py:2027
 msgid "Comment"
 msgstr "Σχόλιο"
 
-#: core/models.py:2014
+#: core/models.py:2028
 msgid "Comments"
 msgstr "Σχόλια"
 
-#: core/models.py:2063
+#: core/models.py:2077
 msgid "This emoji has already been reacted to this comment."
 msgstr "Αυτό το emoji έχει χρησιμοποιηθεί ήδη ως αντίδραση σε αυτό το σχόλιο."
 
-#: core/models.py:2067
+#: core/models.py:2081
 msgid "Reaction"
 msgstr "Αντίδραση"
 
-#: core/models.py:2068
+#: core/models.py:2082
 msgid "Reactions"
 msgstr "Αντιδράσεις"
 
-#: core/models.py:2119
+#: core/models.py:2133
 msgid "Mention"
 msgstr ""
 
-#: core/models.py:2120
+#: core/models.py:2134
 msgid "Mentions"
 msgstr ""
 
-#: core/models.py:2133
+#: core/models.py:2147
 msgid "a deleted user"
 msgstr ""
 
-#: core/models.py:2143
+#: core/models.py:2157
 msgid "The thread does not belong to this document."
 msgstr ""
 
-#: core/models.py:2212
+#: core/models.py:2226
 #, python-brace-format
 msgid "{name} mentioned you in a comment in \"{title}\""
 msgstr ""
 
-#: core/models.py:2216
+#: core/models.py:2230
 #, python-brace-format
 msgid "{name} mentioned you in a comment in the following document:"
 msgstr ""
 
-#: core/models.py:2219
+#: core/models.py:2233
 #, python-brace-format
 msgid "{name} mentioned you in \"{title}\""
 msgstr ""
 
-#: core/models.py:2222
+#: core/models.py:2236
 #, python-brace-format
 msgid "{name} mentioned you in the following document:"
 msgstr ""
 
-#: core/models.py:2248
+#: core/models.py:2262
 msgid "email address"
 msgstr "διεύθυνση email"
 
-#: core/models.py:2267
+#: core/models.py:2281
 msgid "Document invitation"
 msgstr "Πρόσκληση σε έγγραφο"
 
-#: core/models.py:2268
+#: core/models.py:2282
 msgid "Document invitations"
 msgstr "Προσκλήσεις εγγράφου"
 
-#: core/models.py:2288
+#: core/models.py:2302
 msgid "This email is already associated to a registered user."
 msgstr "Αυτό το email σχετίζεται ήδη με έναν εγγεγραμμένο χρήστη."
 
-#: core/models.py:2331
+#: core/models.py:2345
 msgid "Migrated"
 msgstr ""
 
-#: core/models.py:2332
+#: core/models.py:2346
 msgid "Already migrated"
 msgstr ""
 
-#: core/models.py:2333
+#: core/models.py:2347
 msgid "Nothing in the object storage"
 msgstr ""
 
-#: core/models.py:2334
+#: core/models.py:2348
 msgid "No readable version"
 msgstr ""
 
-#: core/models.py:2335
+#: core/models.py:2349
 msgid "Failed"
 msgstr ""
 
-#: core/models.py:2359
+#: core/models.py:2373
 msgid "status"
 msgstr ""
 
-#: core/models.py:2361
+#: core/models.py:2375
 msgid "versions"
 msgstr ""
 
-#: core/models.py:2364
+#: core/models.py:2378
 msgid "applied"
 msgstr ""
 
-#: core/models.py:2365
+#: core/models.py:2379
 msgid "versions that added content, one activity entry each"
 msgstr ""
 
-#: core/models.py:2369
+#: core/models.py:2383
 msgid "skipped"
 msgstr ""
 
-#: core/models.py:2370
+#: core/models.py:2384
 msgid "versions that could not be read"
 msgstr ""
 
-#: core/models.py:2374
+#: core/models.py:2388
 msgid "dropped"
 msgstr ""
 
-#: core/models.py:2375
+#: core/models.py:2389
 msgid "versions older than the ones the server replays"
 msgstr ""
 
-#: core/models.py:2377
+#: core/models.py:2391
 msgid "duration"
 msgstr ""
 
-#: core/models.py:2378
+#: core/models.py:2392
 msgid "error"
 msgstr ""
 
-#: core/models.py:2383
+#: core/models.py:2397
 msgid "Document migration"
 msgstr ""
 
-#: core/models.py:2384
+#: core/models.py:2398
 msgid "Document migrations"
 msgstr ""
 
@@ -705,23 +705,23 @@ msgstr ""
 msgid "Transfer"
 msgstr ""
 
-#: core/templates/mail/html/template.html:160
+#: core/templates/mail/html/template.html:154
 #: core/templates/mail/text/template.txt:4
 msgid "Logo email"
 msgstr "Λογότυπο email"
 
-#: core/templates/mail/html/template.html:258
+#: core/templates/mail/html/template.html:220
 #: core/templates/mail/text/template.txt:15
 msgid " Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team. "
 msgstr " Docs, το νέο απαραίτητο εργαλείο σας για την οργάνωση, τον διαμοιρασμό και τη συνεργασία στα έγγραφά σας ως ομάδα. "
 
-#: core/templates/mail/html/template.html:265
+#: core/templates/mail/html/template.html:227
 #: core/templates/mail/text/template.txt:17
 #, python-format
 msgid " Brought to you by %(brandname)s "
 msgstr " Σας προσφέρεται από την %(brandname)s "
 
-#: impress/settings.py:1002
+#: impress/settings.py:995
 msgid "Docs AI"
 msgstr "Τεχνητή Νοημοσύνη (AI) Docs"
 

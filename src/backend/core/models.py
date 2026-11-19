@@ -6,6 +6,7 @@ Declare and configure the models for the impress core application
 
 import operator
 import smtplib
+import string
 import uuid
 from datetime import timedelta
 from functools import partial, reduce
@@ -18,8 +19,9 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.sites.models import Site
 from django.core.cache import cache
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import send_mail
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.db.models import Count
 from django.db.models.functions import Left, Length
 from django.dispatch import Signal
@@ -50,6 +52,21 @@ logger = getLogger(__name__)
 # Sent once accesses were updated or deleted in bulk, without the signals and the
 # methods of DocumentAccess: core.signals refreshes what they keep up to date.
 document_accesses_bulk_changed = Signal()
+
+
+# ASCII only: PostgreSQL's UPPER() and Python's str.lower() also fold some
+# non-ASCII letters into ASCII ones (ı to I, ſ to S), merging distinct addresses.
+_ASCII_LOWERCASE_TABLE = str.maketrans(
+    string.ascii_uppercase,
+    string.ascii_lowercase,
+)
+
+
+def normalize_email(email):
+    """Strip an email and lowercase its ASCII letters only."""
+    if not email:
+        return email
+    return email.strip().translate(_ASCII_LOWERCASE_TABLE)
 
 
 def get_trashbin_cutoff():
@@ -124,16 +141,21 @@ class UserManager(auth_models.UserManager):
             if not email:
                 return None
 
+            normalized_email = normalize_email(email)
+            # A blank email would match the users stored without one
+            if not normalized_email:
+                return None
+
             if settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION:
                 # Active users first, an inactive one is returned so the login is refused
-                users = self.filter(email__iexact=email).order_by("-is_active")[:2]
+                users = self.filter(email=normalized_email).order_by("-is_active")[:2]
                 if len(users) == 2 and users[1].is_active:
                     raise DuplicateEmailError(
                         _("Several active users are associated with this email.")
                     ) from err
                 return users[0] if users else None
             if (
-                self.filter(email__iexact=email).exists()
+                self.filter(email=normalized_email).exists()
                 and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
             ):
                 raise DuplicateEmailError(
@@ -228,6 +250,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         If it's a new user, give its user access to the documents they were invited to.
         """
         is_adding = self._state.adding
+        self.email = normalize_email(self.email)
         super().save(*args, **kwargs)
 
         if is_adding:
@@ -403,7 +426,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         Expired invitations are ignored.
         """
         valid_invitations = Invitation.objects.filter(
-            email__iexact=self.email,
+            email=normalize_email(self.email),
             created_at__gte=(
                 timezone.now()
                 - timedelta(seconds=settings.INVITATION_VALIDITY_DURATION)
@@ -472,6 +495,10 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         return []
 
 
+# The reconciled users are asked for a confirmation by email
+RECONCILED_USER_CHOICES = models.Q(email__isnull=False) & ~models.Q(email="")
+
+
 class UserReconciliation(BaseModel):
     """Model to run batch jobs to replace an active user by another one"""
 
@@ -485,6 +512,7 @@ class UserReconciliation(BaseModel):
         null=True,
         blank=True,
         related_name="active_user",
+        limit_choices_to=RECONCILED_USER_CHOICES,
     )
     inactive_user = models.ForeignKey(
         User,
@@ -492,6 +520,7 @@ class UserReconciliation(BaseModel):
         null=True,
         blank=True,
         related_name="inactive_user",
+        limit_choices_to=RECONCILED_USER_CHOICES,
     )
     active_email_confirmation_id = models.UUIDField(
         default=uuid.uuid4, unique=True, editable=False, null=True
@@ -532,10 +561,20 @@ class UserReconciliation(BaseModel):
         For pending queries, identify the actual users and send validation emails
         """
         if self.status == "pending":
-            self.active_user = User.objects.filter(email=self.active_email).first()
-            self.inactive_user = User.objects.filter(email=self.inactive_email).first()
+            # Keep the users picked in the admin: several users can share an email
+            if self.active_user is None:
+                self.active_user = User.objects.filter(
+                    email=normalize_email(self.active_email)
+                ).first()
+            if self.inactive_user is None:
+                self.inactive_user = User.objects.filter(
+                    email=normalize_email(self.inactive_email)
+                ).first()
 
-            if self.active_user and self.inactive_user:
+            if self.active_user and self.active_user == self.inactive_user:
+                self.status = "error"
+                self.logs = "Error: Active and inactive emails are the same address."
+            elif self.active_user and self.inactive_user:
                 if not self.active_email_checked:
                     self.send_reconciliation_confirm_email(
                         self.active_user, "active", self.active_email_confirmation_id
@@ -586,6 +625,8 @@ class UserReconciliation(BaseModel):
 
         # Actually perform the bulk operations
         DocumentAccess.objects.bulk_update(updated_accesses, ["user", "role"])
+        # Saved in bulk, without DocumentAccess.save()
+        DocumentAskForAccess.delete_covered_by(updated_accesses)
 
         if removed_accesses:
             ids_to_delete = [entry.id for entry in removed_accesses]
@@ -1459,6 +1500,7 @@ class Document(MP_Node, BaseModel):
             "leave": can_leave,
             "mention": has_access_role and can_comment,
             "move": is_owner_or_admin and not is_deleted,
+            "move_to_another_tree": is_owner and not is_deleted,
             "partial_update": can_update,
             "restore": is_owner and bool(self.deleted_at),
             "retrieve": retrieve,
@@ -1714,9 +1756,18 @@ class DocumentAccess(BaseAccess):
         return f"{self.user!s} is {self.role:s} in document {self.document!s}"
 
     def save(self, *args, **kwargs):
-        """Override save to clear the document's cache for number of accesses."""
+        """
+        Override save to clear the document's cache for number of accesses, and to
+        delete the access requests this access now covers.
+        """
         super().save(*args, **kwargs)
         self.document.invalidate_nb_accesses_cache()
+        # A partial save may leave fields unsaved: cover from what is stored then
+        DocumentAskForAccess.delete_covered_by(
+            [self]
+            if kwargs.get("update_fields") is None
+            else DocumentAccess.objects.filter(pk=self.pk)
+        )
 
     @property
     def target_key(self):
@@ -1872,15 +1923,44 @@ class DocumentAskForAccess(BaseModel):
     def __str__(self):
         return f"{self.user!s} asked for access to document {self.document!s}"
 
+    @classmethod
+    def delete_covered_by(cls, accesses):
+        """
+        Delete the pending requests that the given accesses cover: their user holds
+        the role requested or a higher one. Granted another way than by accepting it,
+        a request would otherwise stay pending in the share dialog for nothing.
+        """
+        query = models.Q()
+        for access in accesses:
+            if access.user_id is None:
+                continue
+            priority = RoleChoices.get_priority(access.role)
+            query |= models.Q(
+                document_id=access.document_id,
+                user_id=access.user_id,
+                role__in=[
+                    role
+                    for role in RoleChoices.values
+                    if RoleChoices.get_priority(role) <= priority
+                ],
+            )
+        if query:
+            cls.objects.filter(query).delete()
+
     def get_abilities(self, user):
         """Compute and return abilities for a given user."""
         user_role = self.document.get_role(user)
         is_admin_or_owner = user_role in PRIVILEGED_ROLES
 
+        # Accepting never lowers a role: only the roles above the requester's can be
+        # given, up to the role of the user accepting
+        requester_priority = RoleChoices.get_priority(self.get_requester_role())
         set_role_to = [
             role
             for role in RoleChoices.values
-            if RoleChoices.get_priority(role) <= RoleChoices.get_priority(user_role)
+            if requester_priority
+            < RoleChoices.get_priority(role)
+            <= RoleChoices.get_priority(user_role)
         ]
 
         return {
@@ -1892,18 +1972,81 @@ class DocumentAskForAccess(BaseModel):
             "set_role_to": set_role_to,
         }
 
+    def get_requester_role(self):
+        """
+        Return the role the requester holds on the document. Queried rather than read
+        with Document.get_role, which would answer with the roles annotated on the
+        document for the current user, the one accepting.
+        """
+        return RoleChoices.max(
+            *DocumentAccess.objects.filter(
+                models.Q(user=self.user) | models.Q(team__in=self.user.teams),
+                document__path__in=self.document.get_self_and_ancestors_paths(),
+            ).values_list("role", flat=True)
+        )
+
+    def _get_locked_access(self):
+        """Return the requester's access to the document, locked, or None."""
+        return (
+            DocumentAccess.objects.select_for_update()
+            .filter(document=self.document, user=self.user)
+            .first()
+        )
+
+    def _get_or_create_locked_access(self, role):
+        """
+        Like get_or_create, under a lock: return the requester's access to the
+        document and whether it was just created with the given role.
+        """
+        access = self._get_locked_access()
+        if access is not None:
+            return access, False
+        try:
+            # Savepoint: a failed insert must leave the outer transaction usable
+            with transaction.atomic():
+                access = DocumentAccess.objects.create(
+                    document=self.document, user=self.user, role=role
+                )
+            return access, True
+        # BaseModel.save() runs full_clean(), which reports the unique constraint first
+        except DjangoValidationError, IntegrityError:
+            # Created concurrently since our read, when there was nothing to lock
+            access = self._get_locked_access()
+            if access is None:
+                raise
+            return access, False
+
     def accept(self, role=None):
-        """Accept a document ask for access resource."""
+        """
+        Accept the request: give the user an access to the document, or raise the role
+        of the access they already have.
+
+        It never lowers a role. A request can outlive its reason (the user was given a
+        role another way since), and lowering a role is a change made on the access
+        itself, where the rights of the caller on that access are checked: an owner
+        must not be demoted through an old request.
+        """
         if role is None:
             role = self.role
 
-        DocumentAccess.objects.update_or_create(
-            document=self.document,
-            user=self.user,
-            defaults={"role": role},
-            create_defaults={"role": role},
-        )
-        self.delete()
+        with transaction.atomic():
+            access, created = self._get_or_create_locked_access(role)
+            if not created:
+                if RoleChoices.get_priority(role) <= RoleChoices.get_priority(
+                    access.role
+                ):
+                    raise ValidationError(
+                        {
+                            "detail": _(
+                                "This user already has this role or a higher one "
+                                "on this document."
+                            )
+                        }
+                    )
+                access.role = role
+                access.save()
+            # May already be gone: saving the access deletes the requests it covers
+            self.delete()
 
     def send_ask_for_access_email(self, email, language=None):
         """
@@ -2289,13 +2432,18 @@ class Invitation(BaseModel):
     def __str__(self):
         return f"{self.email} invited to {self.document}"
 
+    def save(self, *args, **kwargs):
+        """Normalize the email before saving."""
+        self.email = normalize_email(self.email)
+        super().save(*args, **kwargs)
+
     def clean(self):
         """Validate fields."""
         super().clean()
 
         # Check if an identity already exists for the provided email
         if (
-            User.objects.filter(email__iexact=self.email).exists()
+            User.objects.filter(email=normalize_email(self.email)).exists()
             and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
         ):
             raise ValidationError(
@@ -2312,30 +2460,42 @@ class Invitation(BaseModel):
         return timezone.now() > (self.created_at + validity_duration)
 
     def get_abilities(self, user):
-        """Compute and return abilities for a given user."""
-        roles = []
+        """
+        Compute and return abilities for a given user.
 
-        if user.is_authenticated:
-            teams = user.teams
-            try:
-                roles = self.user_roles or []
-            except AttributeError:
-                try:
-                    roles = self.document.accesses.filter(
-                        models.Q(user=user) | models.Q(team__in=teams),
-                    ).values_list("role", flat=True)
-                except self._meta.model.DoesNotExist, IndexError:
-                    roles = []
+        The role of the user counts the ancestors of the document, as for its
+        accesses. The list view precomputes it once for the page (`user_role`).
+        """
+        try:
+            role = self.user_role
+        except AttributeError:
+            role = self.document.get_role(user)
 
-        is_admin_or_owner = bool(
-            set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
+        is_admin_or_owner = role in PRIVILEGED_ROLES
+        # Only owners may grant ownership, so only they may alter or cancel an
+        # owner invitation, as for owner accesses
+        can_manage = (
+            role == RoleChoices.OWNER
+            if self.role == RoleChoices.OWNER
+            else is_admin_or_owner
+        )
+        set_role_to = (
+            [
+                candidate_role
+                for candidate_role in RoleChoices.values
+                if RoleChoices.get_priority(candidate_role)
+                <= RoleChoices.get_priority(role)
+            ]
+            if can_manage
+            else []
         )
 
         return {
-            "destroy": is_admin_or_owner,
-            "update": is_admin_or_owner,
-            "partial_update": is_admin_or_owner,
+            "destroy": can_manage,
+            "update": can_manage,
+            "partial_update": can_manage,
             "retrieve": is_admin_or_owner,
+            "set_role_to": set_role_to,
         }
 
 

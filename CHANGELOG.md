@@ -6,8 +6,38 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 📦️(docker) keep the yarn cache out of the node images #2992
+- 🔧(yhub) SENTRY_PROFILES_SAMPLE_RATE samples processes since sentry 11 #2872
+- ⚡️(backend) probe the celery worker with heartbeat files, 
+  not inspect ping #2956
+- 💄(frontend) redesign offline error page #2808
+- 🛂(frontend) allow asking for access from a sub-document page #2994
+
+### Fixed
+
+- ✅(frontend) fix act warnings in the tests and fail on them #2983
+- 🔒️(backend) never lower an existing role when accepting a request #2982
+- 🐛(backend) delete the access requests a role given another way covers #2982
+- 🗃️(backend) delete the stored access requests a role already covers #2982
+- 🐛(frontend) show an error when approving an access request fails #2982
+- 🔒️(backend) refuse to change the email of an invitation #2986
+- 🐛(backend) count the ancestors in the rights on invitations #2986
+- 🔒️(backend) only let owners update or delete an owner invitation #2986
+- 🐛(frontend) follow the abilities of an invitation in the share dialog #2986
+- 🐛(frontend) keep comments on inline nodes after a reload #2898
+- 🔒️(backend) match emails in a single normalized form #3017
+- 🐛(backend) ask for access to the top parent doc from a sub-document #2994
+- 🔒️(backend) require the owner role to move a document out of its tree #2978
+- 🐛(backend) speed up the reconciliation admin with user autocompletes #3013
+- 🐛(frontend) show right-to-left text from the right in the editor #2919
+
+## [v6.1.0] - 2026-11-12
+
 ### Added
 
+- ✨(frontend) mention users in the editor from the "@" dropdown #2806
 - ✨(backend) add a dedicated document abilities endpoint #2885
 - ✨(frontend) scroll smoothly to a block linked from the same doc #2932
 - ✨(frontend) add a /children block listing the sub-docs #2799
@@ -27,9 +57,11 @@ and this project adheres to
 - ⚡️(frontend) reuse the cached titles of the interlinks on export #2799
 - ♻️(backend) remove the unused scope of the document throttles #2951
 - 💄(frontend) use true italic Inter in the editor #2861
-- 🔒️(yhub) build the production image on a distroless base image
-- 👷(ci) scan images with trivy only on release/ branches or the trivy label
+- 🔒️(yhub) build the production image on a distroless base image #2985
+- 👷(ci) scan images with trivy only on release/ branches or the trivy
+  label #2984
 - 💄(frontend) redesign 500 error standalone page #2801
+- 🚸(frontend) only offer the documents a doc can be moved into
 
 ### Fixed
 
@@ -40,16 +72,16 @@ and this project adheres to
 - 🐛(frontend) reload on a version mismatch only when frontend behind #2940
 - 🐛(frontend) hide source popup in read-only mode #2908
 - 🐛(frontend) duplicate the sub-docs created without reloading the page #2915
-- 🐛(frontend) show the doc tree actions of the item under the pointer
+- 🐛(frontend) show the doc tree actions of the item under the pointer #2942
 - 🐛(frontend) only index the landing page, send noindex as a header #2973
 - 🐛(frontend) keep the focus on the emoji button of a tree item #2964
 - 🐛(backend) keep the case of titles and names in email subjects #2792
-- 📝(docs) recreate the containers when upgrading a compose install
+- 📝(docs) recreate the containers when upgrading a compose install #2985
+- 🐛(frontend) fix Enter and Space in modals opened from the doc tree #2879
 
 ### Removed
 
 - 🔥(backend) remove easy-thumbnails and Pillow #2909
-
 
 ## [v6.0.4] - 2026-10-26
 
@@ -88,8 +120,6 @@ and this project adheres to
 - ✨(docspec) handle DocSpec 4xx/5xx import errors distinctly #2552
 - 🌐(frontend) add Crowdin translator context #2785
 - ✨(frontend) open the emoji picker when adding a document emoji #2777
-- ✨(frontend) mention users in the editor from the "@" dropdown #2806
-
 
 ### Changed
 
@@ -117,7 +147,6 @@ and this project adheres to
 - 🐛(backend) send the mention email when the cache is unreachable #2803
 - 🐛(backend) give media-auth its own throttle scope
 - 💄(frontend) remove the vertical line next to nested blocks #2825
-- 🐛(frontend) fix Enter and Space in modals opened from the doc tree #2879
 
 ## [v6.0.1] - 2026-10-15
 
@@ -1786,7 +1815,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v6.0.4...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v6.1.0...main
+[v6.1.0]: https://github.com/suitenumerique/docs/releases/v6.1.0
 [v6.0.4]: https://github.com/suitenumerique/docs/releases/v6.0.4
 [v6.0.3]: https://github.com/suitenumerique/docs/releases/v6.0.3
 [v6.0.2]: https://github.com/suitenumerique/docs/releases/v6.0.2

@@ -1,9 +1,11 @@
 import { QueryClient } from '@tanstack/react-query';
-import { waitFor } from '@testing-library/react';
+import { act, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { defaultOptions } from '@/core';
 import { KEY_DOC } from '@/docs/doc-management';
+// The slides render in their own root, out of the app providers
+import '@/i18n/initI18n';
 
 import type { PresenterBlock } from '../types';
 import {
@@ -52,7 +54,7 @@ describe('mountPresenterPrintSlides', () => {
   });
 
   afterEach(() => {
-    cleanup?.();
+    act(() => cleanup?.());
     cleanup = undefined;
     vi.restoreAllMocks();
   });
@@ -64,10 +66,13 @@ describe('mountPresenterPrintSlides', () => {
       title: 'Linked doc',
     });
 
-    const mount = mountPresenterPrintSlides(
-      [{ kind: 'content', blocks: [interlinkParagraph] }],
-      { queryClient },
-    );
+    let mount!: ReturnType<typeof mountPresenterPrintSlides>;
+    act(() => {
+      mount = mountPresenterPrintSlides(
+        [{ kind: 'content', blocks: [interlinkParagraph] }],
+        { queryClient },
+      );
+    });
     cleanup = mount.cleanup;
 
     await waitFor(() => {
@@ -90,18 +95,11 @@ describe('mountPresenterPrintSlides', () => {
   ])(
     'prints the label of an interlink whose doc cannot be loaded (%i)',
     async (status, expectedLabel) => {
+      let respond!: (response: Response) => void;
       const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(
         () =>
           new Promise((resolve) => {
-            setTimeout(
-              () =>
-                resolve(
-                  new Response(JSON.stringify({ detail: 'Error' }), {
-                    status,
-                  }),
-                ),
-              200,
-            );
+            respond = resolve;
           }),
       );
       let printedLabel: string | null | undefined;
@@ -109,15 +107,30 @@ describe('mountPresenterPrintSlides', () => {
         printedLabel = document.querySelector(
           '.--docs--interlinking-link-inline-content',
         )?.textContent;
-        window.dispatchEvent(new Event('afterprint'));
+        // `afterprint` unmounts the slides.
+        act(() => {
+          window.dispatchEvent(new Event('afterprint'));
+        });
       });
 
-      await printPresenterSlides(
-        [{ kind: 'content', blocks: [interlinkParagraph] }],
-        {
-          queryClient: new QueryClient({ defaultOptions }),
-        },
-      );
+      const queryClient = new QueryClient({ defaultOptions });
+      // Each step that renders runs in `act`. Printing is awaited after them,
+      // out of `act`, so an update left over from a step still fails the test.
+      let printing = Promise.resolve();
+      act(() => {
+        printing = printPresenterSlides(
+          [{ kind: 'content', blocks: [interlinkParagraph] }],
+          { queryClient },
+        );
+      });
+      await act(async () => {
+        await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+      });
+      await act(async () => {
+        respond(new Response(JSON.stringify({ detail: 'Error' }), { status }));
+        await vi.waitFor(() => expect(queryClient.isFetching()).toBe(0));
+      });
+      await printing;
 
       expect(printedLabel).toBe(expectedLabel);
       expect(fetchSpy).toHaveBeenCalledTimes(1);

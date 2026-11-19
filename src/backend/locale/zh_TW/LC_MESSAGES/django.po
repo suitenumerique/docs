@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-22 16:37+0000\n"
-"PO-Revision-Date: 2026-10-23 08:58\n"
+"POT-Creation-Date: 2026-11-04 15:19+0000\n"
+"PO-Revision-Date: 2026-11-12 10:29\n"
 "Last-Translator: \n"
 "Language-Team: Chinese Traditional\n"
 "Language: zh_TW\n"
@@ -31,19 +31,19 @@ msgstr ""
 
 #: core/admin.py:81
 msgid "Personal info"
-msgstr ""
+msgstr "個人資訊"
 
 #: core/admin.py:94 core/admin.py:344
 msgid "Permissions"
-msgstr ""
+msgstr "權限"
 
 #: core/admin.py:107
 msgid "Important dates"
-msgstr ""
+msgstr "重要日期"
 
 #: core/admin.py:184
 msgid "Permanently delete selected users"
-msgstr ""
+msgstr "永久刪除所選使用者"
 
 #: core/admin.py:191
 msgid "Merge into another user"
@@ -63,11 +63,11 @@ msgstr ""
 
 #: core/admin.py:262
 msgid "Import job created and queued."
-msgstr ""
+msgstr "匯入任務已建立並加入佇列。"
 
 #: core/admin.py:266
 msgid "Process selected user reconciliations"
-msgstr ""
+msgstr "處理所選使用者的帳號合併"
 
 #: core/admin.py:300
 msgid "from"
@@ -87,7 +87,7 @@ msgstr ""
 
 #: core/admin.py:354
 msgid "Tree structure"
-msgstr ""
+msgstr "樹狀結構"
 
 #: core/admin.py:408
 msgid "Transfer to another user"
@@ -103,307 +103,307 @@ msgstr ""
 
 #: core/api/filters.py:48
 msgid "Title"
-msgstr ""
+msgstr "標題"
 
 #: core/api/filters.py:51
 msgid "Search"
-msgstr ""
+msgstr "搜尋"
 
 #: core/api/filters.py:65
 msgid "Creator is me"
-msgstr ""
+msgstr "建立者是我"
 
 #: core/api/filters.py:68
 msgid "Favorite"
-msgstr ""
+msgstr "收藏"
 
-#: core/api/serializers.py:532
+#: core/api/serializers.py:551
 msgid "A new document was created on your behalf!"
-msgstr ""
+msgstr "已為你建立了新文件！"
 
-#: core/api/serializers.py:536
+#: core/api/serializers.py:555
 msgid "You have been granted ownership of a new document:"
-msgstr ""
+msgstr "你已成為新文件的所有者："
 
-#: core/api/serializers.py:572
+#: core/api/serializers.py:591
 msgid "This field is required."
-msgstr ""
+msgstr "此欄位為必填。"
 
-#: core/api/serializers.py:583
+#: core/api/serializers.py:602
 #, python-format
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
-msgstr ""
+msgstr "根據父文件設定，不允許連結範圍「%(link_reach)s」。"
 
-#: core/api/viewsets.py:1420 core/api/viewsets.py:1428
+#: core/api/viewsets.py:1484 core/api/viewsets.py:1492
 #, python-brace-format
 msgid "{title} (copy)"
 msgstr ""
 
-#: core/api/viewsets.py:1479
+#: core/api/viewsets.py:1543
 msgid "Untitled document (copy)"
 msgstr ""
 
-#: core/api/viewsets.py:3380
+#: core/api/viewsets.py:3444
 #, python-format
 msgid "A comment can have a maximum of %(max)d distinct reactions."
-msgstr ""
+msgstr "一則留言最多可有 %(max)d 種不同的表情回應。"
 
 #: core/apps.py:12
 msgid "Impress core application"
-msgstr ""
+msgstr "Impress 核心應用程式"
 
 #: core/choices.py:35 core/choices.py:43
 msgid "Reader"
-msgstr ""
+msgstr "檢視者"
 
 #: core/choices.py:36 core/choices.py:44
 msgid "Commenter"
-msgstr ""
+msgstr "留言者"
 
 #: core/choices.py:37 core/choices.py:45
 msgid "Editor"
-msgstr ""
+msgstr "編輯者"
 
 #: core/choices.py:46
 msgid "Administrator"
-msgstr ""
+msgstr "管理員"
 
 #: core/choices.py:47
 msgid "Owner"
-msgstr ""
+msgstr "所有者"
 
 #: core/choices.py:59
 msgid "Restricted"
-msgstr ""
+msgstr "受限"
 
 #: core/choices.py:63
 msgid "Authenticated"
-msgstr ""
+msgstr "已認證"
 
 #: core/choices.py:65
 msgid "Public"
-msgstr ""
+msgstr "公開"
 
 #: core/enums.py:36
 msgid "First child"
-msgstr ""
+msgstr "第一個子節點"
 
 #: core/enums.py:37
 msgid "Last child"
-msgstr ""
+msgstr "最後一個子節點"
 
 #: core/enums.py:38
 msgid "First sibling"
-msgstr ""
+msgstr "第一個同層節點"
 
 #: core/enums.py:39
 msgid "Last sibling"
-msgstr ""
+msgstr "最後一個同層節點"
 
 #: core/enums.py:40
 msgid "Left"
-msgstr ""
+msgstr "左"
 
 #: core/enums.py:41
 msgid "Right"
-msgstr ""
-
-#: core/models.py:87
-msgid "id"
-msgstr ""
+msgstr "右"
 
 #: core/models.py:88
-msgid "primary key for the record as UUID"
-msgstr ""
+msgid "id"
+msgstr "ID"
 
-#: core/models.py:94
-msgid "created on"
-msgstr ""
+#: core/models.py:89
+msgid "primary key for the record as UUID"
+msgstr "記錄的主鍵（UUID）"
 
 #: core/models.py:95
+msgid "created on"
+msgstr "建立於"
+
+#: core/models.py:96
 msgid "date and time at which a record was created"
-msgstr ""
+msgstr "記錄的建立日期與時間"
 
-#: core/models.py:100 core/models.py:2379
+#: core/models.py:101 core/models.py:2393
 msgid "updated on"
-msgstr ""
+msgstr "更新於"
 
-#: core/models.py:101
+#: core/models.py:102
 msgid "date and time at which a record was last updated"
-msgstr ""
+msgstr "記錄的最後更新日期與時間"
 
-#: core/models.py:131
+#: core/models.py:132
 msgid "Several active users are associated with this email."
 msgstr ""
 
-#: core/models.py:140
+#: core/models.py:141
 msgid "We couldn't find a user with this sub but the email is already associated with a registered user."
-msgstr ""
-
-#: core/models.py:151
-msgid "sub"
-msgstr ""
+msgstr "未找到此 sub 對應的使用者，但該信箱已被註冊。"
 
 #: core/models.py:152
+msgid "sub"
+msgstr "sub"
+
+#: core/models.py:153
 msgid "Required. 255 characters or fewer. ASCII characters only."
-msgstr ""
+msgstr "必填。不超過 255 個字元。僅限 ASCII 字元。"
 
-#: core/models.py:160
+#: core/models.py:161
 msgid "full name"
-msgstr ""
+msgstr "全名"
 
-#: core/models.py:162
+#: core/models.py:163
 msgid "short name"
-msgstr ""
+msgstr "簡稱"
 
-#: core/models.py:165
+#: core/models.py:166
 msgid "identity email address"
-msgstr ""
+msgstr "身分信箱"
 
-#: core/models.py:170
+#: core/models.py:171
 msgid "admin email address"
-msgstr ""
-
-#: core/models.py:177
-msgid "language"
-msgstr ""
+msgstr "管理員信箱地址"
 
 #: core/models.py:178
+msgid "language"
+msgstr "語言"
+
+#: core/models.py:179
 msgid "The language in which the user wants to see the interface."
-msgstr ""
+msgstr "使用者希望介面顯示的語言。"
 
-#: core/models.py:186
+#: core/models.py:187
 msgid "The timezone in which the user wants to see times."
-msgstr ""
+msgstr "使用者希望時間顯示的時區。"
 
-#: core/models.py:189
+#: core/models.py:190
 msgid "device"
-msgstr ""
+msgstr "裝置"
 
-#: core/models.py:191
+#: core/models.py:192
 msgid "Whether the user is a device or a real user."
-msgstr ""
+msgstr "該使用者是裝置還是真實使用者。"
 
-#: core/models.py:194
+#: core/models.py:195
 msgid "staff status"
-msgstr ""
+msgstr "工作人員狀態"
 
-#: core/models.py:196
+#: core/models.py:197
 msgid "Whether the user can log into this admin site."
-msgstr ""
+msgstr "使用者是否可以登入此管理後台。"
 
-#: core/models.py:199
+#: core/models.py:200
 msgid "active"
-msgstr ""
+msgstr "啟用"
 
-#: core/models.py:202
+#: core/models.py:203
 msgid "Whether this user should be treated as active. Unselect this instead of deleting accounts."
-msgstr ""
+msgstr "此使用者是否處於啟用狀態。如需停用，請取消勾選此項，而非刪除帳號。"
 
-#: core/models.py:207
+#: core/models.py:208
 msgid "first connection status"
-msgstr ""
+msgstr "首次連線狀態"
 
-#: core/models.py:209
+#: core/models.py:210
 msgid "Whether the user has completed the first connection process."
-msgstr ""
-
-#: core/models.py:219
-msgid "user"
-msgstr ""
+msgstr "使用者是否已完成首次連線流程。"
 
 #: core/models.py:220
-msgid "users"
-msgstr ""
+msgid "user"
+msgstr "使用者"
 
-#: core/models.py:477
-msgid "Active email address"
-msgstr ""
+#: core/models.py:221
+msgid "users"
+msgstr "使用者"
 
 #: core/models.py:478
+msgid "Active email address"
+msgstr "生效信箱地址"
+
+#: core/models.py:479
 msgid "Email address to deactivate"
-msgstr ""
+msgstr "待停用信箱地址"
 
-#: core/models.py:505
+#: core/models.py:506
 msgid "Unique ID in the source file"
-msgstr ""
+msgstr "原始檔中的唯一 ID"
 
-#: core/models.py:511 core/models.py:841
+#: core/models.py:512 core/models.py:842
 msgid "Pending"
-msgstr ""
+msgstr "待處理"
 
-#: core/models.py:512
+#: core/models.py:513
 msgid "Ready"
-msgstr ""
-
-#: core/models.py:513 core/models.py:843
-msgid "Done"
-msgstr ""
+msgstr "就緒"
 
 #: core/models.py:514 core/models.py:844
-msgid "Error"
-msgstr ""
+msgid "Done"
+msgstr "已完成"
 
-#: core/models.py:522
-msgid "user reconciliation"
-msgstr ""
+#: core/models.py:515 core/models.py:845
+msgid "Error"
+msgstr "錯誤"
 
 #: core/models.py:523
-msgid "user reconciliations"
-msgstr ""
+msgid "user reconciliation"
+msgstr "帳號合併"
 
-#: core/models.py:793
+#: core/models.py:524
+msgid "user reconciliations"
+msgstr "帳號合併"
+
+#: core/models.py:794
 msgid "You have requested a reconciliation of your user accounts on Docs.\n"
 "            To confirm that you are the one who initiated the request\n"
 "            and that this email belongs to you:"
 msgstr ""
 
-#: core/models.py:799
+#: core/models.py:800
 msgid "Confirm by clicking the link to start the reconciliation"
-msgstr ""
+msgstr "點選連結確認，開始帳號合併"
 
-#: core/models.py:804 core/models.py:910
+#: core/models.py:805 core/models.py:911
 msgid "Click here"
-msgstr ""
+msgstr "點選這裡"
 
-#: core/models.py:805
+#: core/models.py:806
 msgid "Confirm"
-msgstr ""
+msgstr "確認"
 
-#: core/models.py:816
+#: core/models.py:817
 msgid "Your reconciliation request has been processed.\n"
 "            New documents are likely associated with your account:"
 msgstr ""
 
-#: core/models.py:821
+#: core/models.py:822
 msgid "Your accounts have been merged"
-msgstr ""
-
-#: core/models.py:826
-msgid "Click here to see"
-msgstr ""
+msgstr "你的帳號已完成合併"
 
 #: core/models.py:827
+msgid "Click here to see"
+msgstr "點選這裡檢視"
+
+#: core/models.py:828
 msgid "See my documents"
-msgstr ""
+msgstr "檢視我的文件"
 
-#: core/models.py:837
+#: core/models.py:838
 msgid "CSV file"
-msgstr ""
+msgstr "CSV 檔案"
 
-#: core/models.py:842
+#: core/models.py:843
 msgid "Running"
-msgstr ""
-
-#: core/models.py:852
-msgid "user reconciliation CSV import"
-msgstr ""
+msgstr "進行中"
 
 #: core/models.py:853
-msgid "user reconciliation CSV imports"
-msgstr ""
+msgid "user reconciliation CSV import"
+msgstr "帳號合併 CSV 匯入"
 
-#: core/models.py:897
+#: core/models.py:854
+msgid "user reconciliation CSV imports"
+msgstr "帳號合併 CSV 匯入"
+
+#: core/models.py:898
 #, python-brace-format
 msgid "Your request for reconciliation was unsuccessful.\n"
 "            Reconciliation failed for the following email addresses:\n"
@@ -412,273 +412,273 @@ msgid "Your request for reconciliation was unsuccessful.\n"
 "            You can submit another request with the valid email addresses."
 msgstr ""
 
-#: core/models.py:905
+#: core/models.py:906
 msgid "Reconciliation of your Docs accounts not completed"
-msgstr ""
+msgstr "你的 Docs 帳號合併未完成"
 
-#: core/models.py:911
+#: core/models.py:912
 msgid "Make a new request"
-msgstr ""
-
-#: core/models.py:1026
-msgid "title"
-msgstr ""
+msgstr "發起新請求"
 
 #: core/models.py:1027
-msgid "excerpt"
-msgstr ""
+msgid "title"
+msgstr "標題"
 
-#: core/models.py:1074
-msgid "Document"
-msgstr ""
+#: core/models.py:1028
+msgid "excerpt"
+msgstr "摘要"
 
 #: core/models.py:1075
+msgid "Document"
+msgstr "文件"
+
+#: core/models.py:1076
 msgid "Documents"
-msgstr ""
+msgstr "文件"
 
-#: core/models.py:1092 core/models.py:1471 core/models.py:2210
+#: core/models.py:1093 core/models.py:1485 core/models.py:2224
 msgid "Untitled Document"
-msgstr ""
+msgstr "未命名文件"
 
-#: core/models.py:1472
+#: core/models.py:1486
 msgid "Open"
-msgstr ""
+msgstr "開啟"
 
-#: core/models.py:1507
+#: core/models.py:1521
 #, python-brace-format
 msgid "{name} shared a document with you!"
-msgstr ""
+msgstr "{name} 與你分享了一份文件！"
 
-#: core/models.py:1511
+#: core/models.py:1525
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
-msgstr ""
+msgstr "{name} 邀請你以「{role}」角色加入以下文件："
 
-#: core/models.py:1517
+#: core/models.py:1531
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
-msgstr ""
+msgstr "{name} 與你分享了一份文件：{title}"
 
-#: core/models.py:1617
+#: core/models.py:1631
 msgid "Document/user link trace"
-msgstr ""
+msgstr "文件/使用者關聯記錄"
 
-#: core/models.py:1618
+#: core/models.py:1632
 msgid "Document/user link traces"
-msgstr ""
+msgstr "文件/使用者關聯記錄"
 
-#: core/models.py:1624
+#: core/models.py:1638
 msgid "A link trace already exists for this document/user."
-msgstr ""
+msgstr "此文件/使用者已存在關聯記錄。"
 
-#: core/models.py:1647
+#: core/models.py:1661
 msgid "Document favorite"
-msgstr ""
+msgstr "文件收藏"
 
-#: core/models.py:1648
+#: core/models.py:1662
 msgid "Document favorites"
-msgstr ""
+msgstr "文件收藏"
 
-#: core/models.py:1654
+#: core/models.py:1668
 msgid "This document is already targeted by a favorite relation instance for the same user."
-msgstr ""
+msgstr "此使用者已將此文件加入收藏。"
 
-#: core/models.py:1676
+#: core/models.py:1690
 msgid "Document/user relation"
-msgstr ""
+msgstr "文件/使用者關聯"
 
-#: core/models.py:1677
+#: core/models.py:1691
 msgid "Document/user relations"
-msgstr ""
+msgstr "文件/使用者關聯"
 
-#: core/models.py:1683
+#: core/models.py:1697
 msgid "This user is already in this document."
-msgstr ""
+msgstr "該使用者已是此文件的成員。"
 
-#: core/models.py:1689
+#: core/models.py:1703
 msgid "This team is already in this document."
-msgstr ""
+msgstr "該團隊已是此文件的成員。"
 
-#: core/models.py:1695
+#: core/models.py:1709
 msgid "Either user or team must be set, not both."
-msgstr ""
+msgstr "必須設定使用者或團隊其中之一，不能同時設定兩者。"
 
-#: core/models.py:1846
+#: core/models.py:1860
 msgid "Document ask for access"
-msgstr ""
+msgstr "文件存取申請"
 
-#: core/models.py:1847
+#: core/models.py:1861
 msgid "Document ask for accesses"
-msgstr ""
+msgstr "文件存取申請"
 
-#: core/models.py:1853
+#: core/models.py:1867
 msgid "This user has already asked for access to this document."
-msgstr ""
+msgstr "此使用者已申請過存取此文件的權限。"
 
-#: core/models.py:1910
+#: core/models.py:1924
 #, python-brace-format
 msgid "{name} would like access to a document!"
-msgstr ""
+msgstr "{name} 想要存取文件！"
 
-#: core/models.py:1914
+#: core/models.py:1928
 #, python-brace-format
 msgid "{name} would like access to the following document:"
-msgstr ""
+msgstr "{name} 想要存取以下文件："
 
-#: core/models.py:1920
+#: core/models.py:1934
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
-msgstr ""
+msgstr "{name} 申請存取文件：{title}"
 
-#: core/models.py:1962
+#: core/models.py:1976
 msgid "Thread"
-msgstr ""
+msgstr "討論串"
 
-#: core/models.py:1963
+#: core/models.py:1977
 msgid "Threads"
-msgstr ""
+msgstr "討論串"
 
-#: core/models.py:1966 core/models.py:2018
+#: core/models.py:1980 core/models.py:2032
 msgid "Anonymous"
-msgstr ""
+msgstr "匿名"
 
-#: core/models.py:2013
+#: core/models.py:2027
 msgid "Comment"
-msgstr ""
+msgstr "留言"
 
-#: core/models.py:2014
+#: core/models.py:2028
 msgid "Comments"
-msgstr ""
+msgstr "留言"
 
-#: core/models.py:2063
+#: core/models.py:2077
 msgid "This emoji has already been reacted to this comment."
-msgstr ""
+msgstr "此留言已新增過該表情回應。"
 
-#: core/models.py:2067
+#: core/models.py:2081
 msgid "Reaction"
-msgstr ""
+msgstr "回應"
 
-#: core/models.py:2068
+#: core/models.py:2082
 msgid "Reactions"
-msgstr ""
+msgstr "回應"
 
-#: core/models.py:2119
+#: core/models.py:2133
 msgid "Mention"
 msgstr ""
 
-#: core/models.py:2120
+#: core/models.py:2134
 msgid "Mentions"
 msgstr ""
 
-#: core/models.py:2133
+#: core/models.py:2147
 msgid "a deleted user"
 msgstr ""
 
-#: core/models.py:2143
+#: core/models.py:2157
 msgid "The thread does not belong to this document."
 msgstr ""
 
-#: core/models.py:2212
+#: core/models.py:2226
 #, python-brace-format
 msgid "{name} mentioned you in a comment in \"{title}\""
 msgstr ""
 
-#: core/models.py:2216
+#: core/models.py:2230
 #, python-brace-format
 msgid "{name} mentioned you in a comment in the following document:"
 msgstr ""
 
-#: core/models.py:2219
+#: core/models.py:2233
 #, python-brace-format
 msgid "{name} mentioned you in \"{title}\""
 msgstr ""
 
-#: core/models.py:2222
+#: core/models.py:2236
 #, python-brace-format
 msgid "{name} mentioned you in the following document:"
 msgstr ""
 
-#: core/models.py:2248
+#: core/models.py:2262
 msgid "email address"
-msgstr ""
+msgstr "信箱地址"
 
-#: core/models.py:2267
+#: core/models.py:2281
 msgid "Document invitation"
-msgstr ""
+msgstr "文件邀請"
 
-#: core/models.py:2268
+#: core/models.py:2282
 msgid "Document invitations"
-msgstr ""
+msgstr "文件邀請"
 
-#: core/models.py:2288
+#: core/models.py:2302
 msgid "This email is already associated to a registered user."
-msgstr ""
+msgstr "該信箱已被註冊。"
 
-#: core/models.py:2331
+#: core/models.py:2345
 msgid "Migrated"
 msgstr ""
 
-#: core/models.py:2332
+#: core/models.py:2346
 msgid "Already migrated"
 msgstr ""
 
-#: core/models.py:2333
+#: core/models.py:2347
 msgid "Nothing in the object storage"
 msgstr ""
 
-#: core/models.py:2334
+#: core/models.py:2348
 msgid "No readable version"
 msgstr ""
 
-#: core/models.py:2335
+#: core/models.py:2349
 msgid "Failed"
 msgstr ""
 
-#: core/models.py:2359
+#: core/models.py:2373
 msgid "status"
 msgstr ""
 
-#: core/models.py:2361
+#: core/models.py:2375
 msgid "versions"
 msgstr ""
 
-#: core/models.py:2364
+#: core/models.py:2378
 msgid "applied"
 msgstr ""
 
-#: core/models.py:2365
+#: core/models.py:2379
 msgid "versions that added content, one activity entry each"
 msgstr ""
 
-#: core/models.py:2369
+#: core/models.py:2383
 msgid "skipped"
 msgstr ""
 
-#: core/models.py:2370
+#: core/models.py:2384
 msgid "versions that could not be read"
 msgstr ""
 
-#: core/models.py:2374
+#: core/models.py:2388
 msgid "dropped"
 msgstr ""
 
-#: core/models.py:2375
+#: core/models.py:2389
 msgid "versions older than the ones the server replays"
 msgstr ""
 
-#: core/models.py:2377
+#: core/models.py:2391
 msgid "duration"
 msgstr ""
 
-#: core/models.py:2378
+#: core/models.py:2392
 msgid "error"
 msgstr ""
 
-#: core/models.py:2383
+#: core/models.py:2397
 msgid "Document migration"
 msgstr ""
 
-#: core/models.py:2384
+#: core/models.py:2398
 msgid "Document migrations"
 msgstr ""
 
@@ -698,23 +698,23 @@ msgstr ""
 msgid "Transfer"
 msgstr ""
 
-#: core/templates/mail/html/template.html:160
+#: core/templates/mail/html/template.html:154
 #: core/templates/mail/text/template.txt:4
 msgid "Logo email"
-msgstr ""
+msgstr "郵件標誌"
 
-#: core/templates/mail/html/template.html:258
+#: core/templates/mail/html/template.html:220
 #: core/templates/mail/text/template.txt:15
 msgid " Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team. "
-msgstr ""
+msgstr " Docs，與團隊協作、整理和分享文件的全新必備工具。 "
 
-#: core/templates/mail/html/template.html:265
+#: core/templates/mail/html/template.html:227
 #: core/templates/mail/text/template.txt:17
 #, python-format
 msgid " Brought to you by %(brandname)s "
-msgstr ""
+msgstr " 由 %(brandname)s 提供 "
 
-#: impress/settings.py:1002
+#: impress/settings.py:995
 msgid "Docs AI"
-msgstr ""
+msgstr "Docs AI"
 

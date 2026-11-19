@@ -3,8 +3,7 @@ import {
   BlockNoteSchema,
   defaultInlineContentSpecs,
 } from '@blocknote/core';
-import { render, screen } from '@testing-library/react';
-import { flushSync } from 'react-dom';
+import { act, render, screen } from '@testing-library/react';
 import { createRoot } from 'react-dom/client';
 import { describe, expect, it } from 'vitest';
 
@@ -63,7 +62,7 @@ describe('UserMentionInlineContent', () => {
     editor.mount(document.createElement('div'));
     // Set by the editor view in the app, the React specs need it to render
     editor.elementRenderer = (node, container) => {
-      flushSync(() => createRoot(container).render(node));
+      act(() => createRoot(container).render(node));
     };
 
     const markdown = await editor.blocksToMarkdownLossy();

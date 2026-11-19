@@ -105,6 +105,7 @@ def test_api_documents_trashbin_format():
                     "media_check": False,
                     "mention": False,
                     "move": False,  # Can't move a deleted document
+                    "move_to_another_tree": False,
                     "partial_update": False,
                     "restore": True,
                     "retrieve": True,
@@ -169,6 +170,7 @@ def test_api_documents_trashbin_format():
                     "media_check": False,
                     "mention": False,
                     "move": False,  # Can't move a deleted document
+                    "move_to_another_tree": False,
                     "partial_update": False,
                     "restore": True,
                     "retrieve": True,
