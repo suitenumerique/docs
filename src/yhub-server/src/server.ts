@@ -70,6 +70,7 @@ import {
   publicGlobalPermissions,
   resolveHistoryFrom,
 } from './permissions.js';
+import { startRedisWatchdog } from './redis-watchdog.js';
 import type { AppAuthInfo, DocRef, YHub } from './yhub.js';
 
 // Read the ad-hoc tags the error paths below switch on without trusting the
@@ -482,6 +483,10 @@ const yhub: YHub = (await createYHub({
 if (PROMETHEUS_METRICS_ENABLED) {
   await startMetricsServer(yhub);
 }
+
+// see redis-watchdog.ts: follow a Sentinel failover that left the connections
+// on a read-only node
+startRedisWatchdog(yhub);
 
 // What this process was configured to be, in one line: yhub's own startup log
 // reports neither the role nor the stream settings, and every one of them is an

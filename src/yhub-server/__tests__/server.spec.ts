@@ -74,6 +74,13 @@ vi.mock('@y/hub/plugins/s3', () => ({
   },
 }));
 
+// the watchdog's own behaviour is covered in redis-watchdog.spec.ts; here,
+// only that every role starts it
+const { startRedisWatchdog } = vi.hoisted(() => ({
+  startRedisWatchdog: vi.fn(),
+}));
+vi.mock('../src/redis-watchdog.js', () => ({ startRedisWatchdog }));
+
 vi.mock('../src/migration.js', () => ({
   SOFT_MIGRATION: false,
   fullMigrate: vi.fn(),
@@ -98,6 +105,7 @@ beforeEach(() => {
   vi.resetModules();
   createYHub.mockClear();
   createYHub.lastConfig = undefined;
+  startRedisWatchdog.mockClear();
   s3PluginArgs.length = 0;
   for (const [key, value] of Object.entries(BASE_ENV)) vi.stubEnv(key, value);
   // vars a previous test may have set that must not leak in as defaults
@@ -374,4 +382,19 @@ describe('the authorize authz-cache wiring', () => {
     ).resolves.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
+});
+
+describe('the redis watchdog', () => {
+  it.each(['all', 'server', 'worker'])(
+    'is started on the yhub instance in the %s role',
+    async (role) => {
+      vi.stubEnv('YHUB_ROLE', role);
+
+      await boot();
+
+      expect(startRedisWatchdog).toHaveBeenCalledTimes(1);
+      const [instance] = startRedisWatchdog.mock.calls[0];
+      expect(instance).toBe(await createYHub.mock.results[0].value);
+    },
+  );
 });

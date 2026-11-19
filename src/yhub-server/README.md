@@ -266,6 +266,38 @@ coordination between them.
 
 `YHUB_TASK_CONCURRENCY` is the other half of that knob — see below.
 
+## Valkey failover
+
+yhub's redis clients only reconnect when their socket drops, and yhub offers no
+way to reconnect them from outside. After a Sentinel failover they can stay on
+the demoted node, which answers `PING` but refuses every update with `READONLY`:
+the server stores nothing and the worker claims nothing, until the process
+restarts.
+
+Every process, in every role, therefore runs a watchdog (`src/redis-watchdog.ts`).
+Every 5 s it writes the same health key as the readiness probe (see above).
+When its own connection is read-only, it opens a fresh connection through the
+same `REDIS` URL and writes there too, giving it 2 s to connect, handshake
+included (a stalled node accepts the connection and never answers):
+
+- the fresh connection can write → the Service now reaches the new primary:
+  the process shuts yhub down (websockets closed with 4503, 5 s to drain, 15 s
+  at most) and exits with 1, and kubernetes restarts it onto the new primary,
+- it cannot → the Service still points at the old node, which with
+  chideat/valkey-operator lasts until the operator relabels the pods (about 90 s
+  in production): a restart would land there again, so the watchdog waits and
+  checks again. Meanwhile the server reports `readonly` and is out of the
+  Service.
+
+An unreachable redis triggers nothing: node-redis reconnects by itself when the
+socket drops. To reproduce a demoted node in the compose stack, where nothing
+restarts the process (a fresh connection lands on the same read-only node):
+
+```bash
+docker compose exec yhub-valkey valkey-cli REPLICAOF 192.0.2.1 6379  # read-only
+docker compose exec yhub-valkey valkey-cli REPLICAOF NO ONE          # writable
+```
+
 ## Tuning
 
 Three numbers this wrapper passes to yhub and one it keeps for itself, all of
