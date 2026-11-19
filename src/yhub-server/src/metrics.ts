@@ -37,6 +37,7 @@ import {
   RUNS_SERVER,
   RUNS_WORKER,
 } from './config.js';
+import { probeRedis } from './redis-health.js';
 import type { YHub } from './yhub.js';
 
 export const registry = new Registry();
@@ -247,6 +248,19 @@ export const timedBackendRequest = async <T = Response>(
 
 // What is only known by asking yhub, asked at scrape time.
 const registerYhubGauges = (yhub: YHub): void => {
+  // Asked at scrape time rather than set by the watchdog: a gauge nobody has
+  // set yet reads 0, which a freshly started process would report as "cannot
+  // write" until its first check.
+  new Gauge({
+    name: 'yhub_redis_writable',
+    help: 'Whether this process can write to redis (1) or not (0): a failover left its connections on a read-only replica, or redis is unreachable',
+    registers: [registry],
+    async collect() {
+      const state = await probeRedis(yhub.stream.redis, yhub.stream.prefix);
+      this.set(state === 'ok' ? 1 : 0);
+    },
+  });
+
   if (RUNS_SERVER) {
     // `stream.subs` is yhub's own bookkeeping of who listens to which room on
     // this replica — not a published API, and read defensively for that reason:

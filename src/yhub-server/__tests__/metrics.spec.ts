@@ -8,6 +8,11 @@ import type { Server } from 'node:http';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { fakeLoggerModule } from './_helpers.js';
+
+// metrics.ts reaches @y/hub's logger through the redis write probe
+vi.mock('@y/hub', () => fakeLoggerModule());
+
 const API_KEY = 'test-prometheus-api-key';
 
 const load = () => import('../src/metrics.js');
@@ -372,6 +377,8 @@ describe('startMetricsServer', () => {
           ['room-b', { subs: new Set([3]) }],
         ]),
         getPendingTasksSize: async () => 7,
+        prefix: 'yhub',
+        redis: { set: async () => 'OK' },
       },
     };
 
@@ -381,6 +388,7 @@ describe('startMetricsServer', () => {
       expect(text).toMatch(/yhub_rooms\{[^}]*\} 2/);
       expect(text).toMatch(/yhub_ws_connections\{[^}]*\} 3/);
       expect(text).toMatch(/yhub_worker_pending_tasks\{[^}]*\} 7/);
+      expect(text).toMatch(/yhub_redis_writable\{[^}]*\} 1/);
       // the node runtime collectors are on
       expect(text).toContain('nodejs_eventloop_lag_seconds');
     } finally {
@@ -396,6 +404,12 @@ describe('startMetricsServer', () => {
         getPendingTasksSize: async () => {
           throw new Error('redis is gone');
         },
+        prefix: 'yhub',
+        redis: {
+          set: async () => {
+            throw new Error('redis is gone');
+          },
+        },
       },
     };
 
@@ -404,6 +418,36 @@ describe('startMetricsServer', () => {
       const text = await registry.metrics();
       expect(text).toMatch(/yhub_rooms\{[^}]*\} 0/);
       expect(text).toMatch(/yhub_ws_connections\{[^}]*\} 0/);
+      expect(text).toMatch(/yhub_redis_writable\{[^}]*\} 0/);
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
+  });
+});
+
+describe('yhub_redis_writable', () => {
+  it('reads 0 when a failover left the connection on a read-only replica', async () => {
+    vi.stubEnv('PROMETHEUS_METRICS_PORT', '19466');
+    const { registry, startMetricsServer } = await load();
+    const yhub = {
+      stream: {
+        getPendingTasksSize: async () => 0,
+        prefix: 'yhub',
+        redis: {
+          set: async () => {
+            throw new Error(
+              "READONLY You can't write against a read only replica.",
+            );
+          },
+        },
+      },
+    };
+
+    const server = await startMetricsServer(yhub as never);
+    try {
+      expect(await registry.metrics()).toMatch(
+        /yhub_redis_writable\{[^}]*\} 0/,
+      );
     } finally {
       await new Promise((resolve) => server.close(resolve));
     }

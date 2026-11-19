@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(yhub) expose whether valkey accepts writes as a metric
+
 ### Changed
 
 - 📦️(docker) keep the yarn cache out of the node images #2992

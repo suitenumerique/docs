@@ -539,6 +539,7 @@ the process, and **never** with a document or a user:
 | Metric | Labels | What it tells |
 | ------ | ------ | ------------- |
 | `yhub_ws_connections`, `yhub_rooms` | | Websockets, and documents with at least one, on this replica |
+| `yhub_redis_writable` | | `1` when this process can write to redis, `0` when it cannot: still connected to a replica after a failover, or redis unreachable. Asked at scrape time with the readiness write. Alert on it: a `0` that lasts means the watchdog is waiting for the Service to follow the new primary (see "Valkey failover") |
 | `yhub_auth_duration_seconds` | `phase` (`authenticate`, `authorize`), `endpoint`, `result` (`ok`, `denied`, `unavailable`, `error`) | What admitting a caller costs — backend calls and legacy seed included. It runs on every websocket upgrade, recheck, REST call and fallback poll |
 | `yhub_backend_request_duration_seconds` | `route` (`users_me`, `abilities`, `accesses_me`, `content_updated`), `status` (http status, `timeout`, `error`) | The calls made to the Docs backend |
 | `yhub_backend_requests_inflight` | `route` | Backend calls not answered yet: what piles up when the backend slows down |
