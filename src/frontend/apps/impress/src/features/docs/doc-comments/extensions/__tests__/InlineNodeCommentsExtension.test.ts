@@ -182,9 +182,6 @@ describe('InlineNodeCommentsExtension', () => {
     expect(commentsOf(findNode(editor, ATOM))).toEqual([
       { threadId, orphan: false },
     ]);
-    expect(findYElement(ydoc, ATOM).getAttr(COMMENT_MARKS_PROP)).toBe(
-      JSON.stringify([{ threadId, orphan: false }]),
-    );
 
     const reloaded = createEditor(reload(ydoc), threadStore);
 
@@ -232,9 +229,6 @@ describe('InlineNodeCommentsExtension', () => {
     expect(commentsOf(findNode(editor, ATOM))).toEqual([
       { threadId, orphan: true },
     ]);
-    expect(findYElement(ydoc, ATOM).getAttr(COMMENT_MARKS_PROP)).toBe(
-      JSON.stringify([{ threadId, orphan: true }]),
-    );
 
     // Without the threads, so the orphan state can only come from Yjs.
     const reloaded = createEditor(reload(ydoc));
@@ -305,20 +299,17 @@ describe('InlineNodeCommentsExtension', () => {
     ]);
   });
 
-  it('stores no comment without comment, keeps the attribute out of the blocks and the DOM', async () => {
+  it('writes no attribute, keeps it out of the blocks and the DOM', async () => {
     const ydoc = new Y.Doc();
     const threadStore = createThreadStore();
     const editor = createEditor(ydoc, threadStore);
     writeContent(editor);
 
-    expect(findYElement(ydoc, ATOM).getAttr(COMMENT_MARKS_PROP)).toBeNull();
-
     const threadId = await createThread(threadStore);
     commentFirstParagraph(editor, threadId);
 
-    expect(findYElement(ydoc, ATOM).getAttr(COMMENT_MARKS_PROP)).toContain(
-      threadId,
-    );
+    // @y/prosemirror stores the marks: the attribute is only read
+    expect(findYElement(ydoc, ATOM).getAttr(COMMENT_MARKS_PROP)).toBeNull();
     expect(JSON.stringify(editor.document)).not.toContain(COMMENT_MARKS_PROP);
     expect(editor.domElement?.innerHTML).not.toMatch(/comment-?marks/i);
   });
