@@ -33,11 +33,15 @@ import { InlineNodeCommentsExtension } from '@/docs/doc-comments/extensions/Inli
 import { blockNoteSchema } from '../components/BlockNoteEditor';
 
 import {
+  LEGACY_AUTHORS_ID,
   LEGACY_DOCUMENTS,
   LEGACY_OWNER,
+  LEGACY_USERS,
   LegacyBlock,
   LegacyDocument,
+  LegacyEditActions,
   LegacyThread,
+  LegacyUser,
 } from './fixtures/legacyDocuments';
 
 const FRAGMENT = 'document-store';
@@ -171,9 +175,11 @@ const readWithYjs13 = (editor: LegacyEditor, update: Uint8Array) => {
   return yXmlFragmentToBlocks(editor, ydoc.getXmlFragment(FRAGMENT));
 };
 
-const openWithYjs14 = (update: Uint8Array) => {
-  const ydoc = new Y.Doc();
-  Y.applyUpdate(ydoc, update);
+const openWithYjs14 = (source: Uint8Array | Y.Doc) => {
+  const ydoc = source instanceof Y.Doc ? source : new Y.Doc();
+  if (!(source instanceof Y.Doc)) {
+    Y.applyUpdate(ydoc, source);
+  }
   const editor = BlockNoteEditor.create(
     withCollaboration({
       schema: blockNoteSchema,
@@ -188,6 +194,75 @@ const openWithYjs14 = (update: Uint8Array) => {
   editor.mount(document.createElement('div'));
   editors.push(editor);
   return editor;
+};
+
+type Yjs14Editor = ReturnType<typeof openWithYjs14>;
+
+/** What an edit of the fixture may do, on the real editor. */
+const editActions = (editor: Yjs14Editor): LegacyEditActions => ({
+  get document() {
+    return editor.document;
+  },
+  insertBlocks: (blocks, reference, placement) =>
+    editor.insertBlocks(blocks, reference, placement),
+  updateBlock: (id, update) => editor.updateBlock(id, update),
+  removeBlocks: (ids) => editor.removeBlocks(ids),
+  comment: (blockId, threadId) =>
+    editor.transact((tr) => {
+      let range: { from: number; to: number } | undefined;
+      tr.doc.descendants((node, pos) => {
+        if (range) {
+          return false;
+        }
+        if (node.type.name === 'blockContainer' && node.attrs.id === blockId) {
+          const from = pos + 2;
+          range = { from, to: from + (node.firstChild?.content.size ?? 0) };
+          return false;
+        }
+        return true;
+      });
+      if (!range) {
+        throw new Error(`No block ${blockId} to comment`);
+      }
+      tr.addMark(
+        range.from,
+        range.to,
+        editor.pmSchema.mark('comment', { threadId, orphan: false }),
+      );
+    }),
+});
+
+/**
+ * The edits of the users, each made in an editor of their own on the document
+ * as the previous ones left it. Only what their editor emitted is kept: a diff
+ * against a state vector would carry every deletion ever made, which the
+ * collaboration server would then attribute to them.
+ */
+const writeEdits = (legacyDocument: LegacyDocument, legacy: Uint8Array) => {
+  const shared = new Y.Doc();
+  Y.applyUpdate(shared, legacy);
+  const edits = (legacyDocument.edits ?? []).map(({ user, apply }) => {
+    const ydoc = new Y.Doc();
+    Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(shared));
+    const updates: Uint8Array<ArrayBuffer>[] = [];
+    ydoc.on('update', (update: Uint8Array<ArrayBuffer>) =>
+      updates.push(update),
+    );
+    apply(editActions(openWithYjs14(ydoc)));
+    const update = Y.mergeUpdates(updates);
+    Y.applyUpdate(shared, update);
+    return { user, update };
+  });
+
+  return { edits, result: Y.encodeStateAsUpdate(shared) };
+};
+
+/** The document as the users left it: the legacy state, then their edits. */
+const applyEdits = (legacy: Uint8Array, updates: Uint8Array[]) => {
+  const ydoc = new Y.Doc();
+  Y.applyUpdate(ydoc, legacy);
+  updates.forEach((update) => Y.applyUpdate(ydoc, update));
+  return openWithYjs14(ydoc);
 };
 
 const commentedThreads = (editor: LegacyEditor) => {
@@ -287,19 +362,85 @@ describe('legacy documents', () => {
     );
   });
 
+  it.each(
+    LEGACY_DOCUMENTS.filter(({ edits }) => edits?.length).map(
+      (doc) => [doc.title, doc] as const,
+    ),
+  )('lets the users edit "%s" once migrated', (_title, legacyDocument) => {
+    const { revisions } = writeWithYjs13(createLegacyEditor(), legacyDocument);
+    const { edits } = writeEdits(
+      legacyDocument,
+      revisions.at(-1) as Uint8Array,
+    );
+
+    // each edit changes something, and inserts only from its user's client:
+    // a deletion is keyed by whoever inserted what it deletes
+    edits.forEach(({ update }) => {
+      const ids = Y.createContentIdsFromUpdate(update);
+      expect(ids.inserts.clients.size).toBeLessThanOrEqual(1);
+      expect(
+        ids.inserts.clients.size + ids.deletes.clients.size,
+      ).toBeGreaterThan(0);
+    });
+    const editor = applyEdits(
+      revisions.at(-1) as Uint8Array,
+      edits.map(({ update }) => update),
+    );
+    expect(editor.document.length).toBeGreaterThan(0);
+  });
+
+  it('applies the edits of each user to "Written by several users"', () => {
+    const legacyDocument = LEGACY_DOCUMENTS.find(
+      ({ id }) => id === LEGACY_AUTHORS_ID,
+    ) as LegacyDocument;
+    const { revisions } = writeWithYjs13(createLegacyEditor(), legacyDocument);
+    const { result } = writeEdits(
+      legacyDocument,
+      revisions.at(-1) as Uint8Array,
+    );
+
+    const editor = openWithYjs14(result);
+    const byId = new Map(editor.document.map((block) => [block.id, block]));
+    const plain = (id: string) =>
+      (byId.get(id)?.content as { type: string; text?: string }[])
+        .map((item) => item.text ?? '')
+        .join('');
+
+    expect(plain('legacy-authors-edited')).toContain('written by Alice');
+    expect(plain('legacy-authors-alice')).toContain('completed by Bob');
+    expect(byId.get('legacy-authors-alice-todo')?.props).toMatchObject({
+      checked: true,
+    });
+    expect(byId.get('legacy-authors-formatted')?.content).toContainEqual({
+      type: 'text',
+      text: 'word',
+      styles: { bold: true },
+    });
+    expect(byId.has('legacy-authors-deleted')).toBe(false);
+    expect(byId.get('legacy-authors-chloe')?.type).toBe('callout');
+    expect(byId.get('legacy-authors-chloe-table')?.type).toBe('table');
+    expect([...commentedThreads(editor).keys()]).toEqual([
+      '6c0d1d6e-7a3e-4c5e-9a51-0000000000c3',
+    ]);
+  });
+
   // The backend is not in the frontend container: checked where both are.
   it.skipIf(!fs.existsSync(FIXTURE) || process.env.WRITE_LEGACY_DOCUMENTS)(
     'matches the fixture the preview environments are seeded with',
     () => {
       const fixture = JSON.parse(fs.readFileSync(FIXTURE, 'utf-8')) as {
-        documents: { id: string; revisions: string[] }[];
+        documents: {
+          id: string;
+          revisions: string[];
+          edits: { update: string }[];
+        }[];
       };
       const editor = createLegacyEditor();
 
       expect(fixture.documents.map(({ id }) => id)).toEqual(
         LEGACY_DOCUMENTS.map(({ id }) => id),
       );
-      fixture.documents.forEach(({ revisions }, index) => {
+      fixture.documents.forEach(({ revisions, edits }, index) => {
         const generated = writeWithYjs13(editor, LEGACY_DOCUMENTS[index]);
         expect(
           revisions.map((revision) =>
@@ -311,6 +452,25 @@ describe('legacy documents', () => {
             readWithYjs13(editor, revision),
           ),
         );
+
+        // the committed edits apply to the committed legacy state
+        const legacy = generated.revisions.at(-1) as Uint8Array;
+        const { edits: generatedEdits } = writeEdits(
+          LEGACY_DOCUMENTS[index],
+          legacy,
+        );
+        expect(
+          applyEdits(
+            fromBase64(revisions.at(-1) as string),
+            edits.map(({ update }) => fromBase64(update)),
+          ).document,
+          'Regenerate it with `yarn legacy-documents`',
+        ).toEqual(
+          applyEdits(
+            legacy,
+            generatedEdits.map(({ update }) => update),
+          ).document,
+        );
       });
     },
   );
@@ -319,19 +479,43 @@ describe('legacy documents', () => {
     'writes the fixture the preview environments are seeded with',
     () => {
       const editor = createLegacyEditor();
-      const documents = LEGACY_DOCUMENTS.map((legacyDocument) => ({
-        id: legacyDocument.id,
-        title: legacyDocument.title,
-        parent_id: legacyDocument.parentId ?? null,
-        revisions: writeWithYjs13(editor, legacyDocument).revisions.map(
-          (revision) => toBase64(revision),
-        ),
-        attachments: legacyDocument.attachments ?? [],
-        threads: (legacyDocument.threads ?? []).map(({ id, comment }) => ({
-          id,
-          comment,
-        })),
-      }));
+      const userId = (user: LegacyUser) => LEGACY_USERS[user].id;
+      const documents = LEGACY_DOCUMENTS.map((legacyDocument) => {
+        const { revisions } = writeWithYjs13(editor, legacyDocument);
+        const { edits } = writeEdits(
+          legacyDocument,
+          revisions.at(-1) as Uint8Array,
+        );
+        return {
+          id: legacyDocument.id,
+          title: legacyDocument.title,
+          parent_id: legacyDocument.parentId ?? null,
+          revisions: revisions.map((revision) => toBase64(revision)),
+          attachments: legacyDocument.attachments ?? [],
+          threads: [
+            ...(legacyDocument.threads ?? []).map(({ id, comment }) => ({
+              id,
+              comment,
+              creator_id: null,
+            })),
+            ...(legacyDocument.edits ?? []).flatMap(({ user, thread }) =>
+              thread
+                ? [
+                    {
+                      id: thread.id,
+                      comment: thread.comment,
+                      creator_id: userId(user),
+                    },
+                  ]
+                : [],
+            ),
+          ],
+          edits: edits.map(({ user, update }) => ({
+            user_id: userId(user),
+            update: toBase64(update),
+          })),
+        };
+      });
 
       fs.mkdirSync(path.dirname(FIXTURE), { recursive: true });
       fs.writeFileSync(
@@ -341,6 +525,13 @@ describe('legacy documents', () => {
             generated_by:
               'src/frontend/apps/impress/src/features/docs/doc-editor/__tests__/legacyDocuments.test.ts',
             owner: { id: LEGACY_OWNER.id, full_name: LEGACY_OWNER.fullName },
+            users: Object.values(LEGACY_USERS).map(
+              ({ id, email, fullName }) => ({
+                id,
+                email,
+                full_name: fullName,
+              }),
+            ),
             documents,
           },
           null,

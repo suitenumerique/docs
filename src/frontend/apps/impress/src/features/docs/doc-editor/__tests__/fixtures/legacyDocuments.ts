@@ -18,11 +18,62 @@ export const LEGACY_INLINE_ID = '6c0d1d6e-7a3e-4c5e-9a51-000000000002';
 export const LEGACY_REVISIONS_ID = '6c0d1d6e-7a3e-4c5e-9a51-000000000003';
 export const LEGACY_LONG_ID = '6c0d1d6e-7a3e-4c5e-9a51-000000000004';
 
+export const LEGACY_AUTHORS_ID = '6c0d1d6e-7a3e-4c5e-9a51-000000000005';
+
 /** The user the seed creates, mentioned in the documents. */
 export const LEGACY_OWNER = {
   id: '6c0d1d6e-7a3e-4c5e-9a51-0000000000aa',
   fullName: 'Docs',
 };
+
+/**
+ * Editors of the documents, who change them once migrated: their edits are
+ * attributed to them, the legacy content to `system`.
+ */
+export const LEGACY_USERS = {
+  alice: {
+    id: '6c0d1d6e-7a3e-4c5e-9a51-0000000000b1',
+    email: 'alice@example.com',
+    fullName: 'Alice Martin',
+  },
+  bob: {
+    id: '6c0d1d6e-7a3e-4c5e-9a51-0000000000b2',
+    email: 'bob@example.com',
+    fullName: 'Bob Dupont',
+  },
+  chloe: {
+    id: '6c0d1d6e-7a3e-4c5e-9a51-0000000000b3',
+    email: 'chloe@example.com',
+    fullName: 'Chloé Bernard',
+  },
+};
+
+export type LegacyUser = keyof typeof LEGACY_USERS;
+
+/**
+ * The operations of the Yjs 14 editor an edit is made of. Typed loosely: the
+ * test hands the real editor over.
+ */
+export interface LegacyEditActions {
+  document: { id: string; content?: unknown }[];
+  insertBlocks: (
+    blocks: LegacyBlock[],
+    reference: string,
+    placement: 'before' | 'after',
+  ) => unknown;
+  updateBlock: (id: string, update: LegacyBlock) => unknown;
+  removeBlocks: (ids: string[]) => unknown;
+  /** Put a comment mark of the thread on the whole content of the block. */
+  comment: (blockId: string, threadId: string) => void;
+}
+
+export interface LegacyEdit {
+  user: LegacyUser;
+  /** What the user does in the editor. */
+  apply: (editor: LegacyEditActions) => void;
+  /** A thread this user starts on a block, created by the seed. */
+  thread?: LegacyThread;
+}
 
 /** The kinds of attachment the seed knows how to generate. */
 export type LegacyAttachmentKind = 'png' | 'pdf' | 'wav' | 'txt';
@@ -54,6 +105,12 @@ export interface LegacyDocument {
   revisions: LegacyBlock[][];
   attachments?: LegacyAttachment[];
   threads?: LegacyThread[];
+  /**
+   * Made once the document is migrated, in order, each by a user through the
+   * Yjs 14 editor: the seed writes them into the collaboration server in the
+   * name of that user.
+   */
+  edits?: LegacyEdit[];
 }
 
 const media = (docId: string, name: string) =>
@@ -165,11 +222,13 @@ const blocksDocument: LegacyDocument = {
         children: [{ type: 'paragraph', content: 'Inside the toggle' }],
       },
       {
+        id: 'legacy-blocks-callout',
         type: 'callout',
         props: { emoji: '⚠️', backgroundColor: 'orange' },
         content: [text('A callout with '), text('bold', { bold: true })],
       },
       {
+        id: 'legacy-blocks-code',
         type: 'codeBlock',
         props: { language: 'typescript' },
         content: 'const answer: number = 42;\nconsole.log(answer);',
@@ -297,6 +356,29 @@ const blocksDocument: LegacyDocument = {
       },
       { type: 'paragraph', content: '' },
     ],
+  ],
+  edits: [
+    {
+      user: 'alice',
+      apply: (editor) => {
+        editor.updateBlock('legacy-blocks-callout', {
+          content: [
+            text('A callout with '),
+            text('bold', { bold: true }),
+            text(', completed by Alice'),
+          ],
+        });
+      },
+    },
+    {
+      user: 'bob',
+      apply: (editor) => {
+        editor.updateBlock('legacy-blocks-code', {
+          content:
+            'const answer: number = 42;\n// Bob adds this line\nconsole.log(answer);',
+        });
+      },
+    },
   ],
 };
 
@@ -563,10 +645,144 @@ const longDocument: LegacyDocument = {
   ],
 };
 
+/** One block per id, so that the users edit the legacy blocks. */
+const authorsBlock = (id: string, block: LegacyBlock) => ({
+  id: `legacy-authors-${id}`,
+  ...block,
+});
+
+const authorsDocument: LegacyDocument = {
+  id: LEGACY_AUTHORS_ID,
+  parentId: LEGACY_ROOT_ID,
+  title: 'Written by several users',
+  revisions: [
+    [
+      authorsBlock('title', {
+        type: 'heading',
+        props: { level: 1 },
+        content: 'Written by several users',
+      }),
+      authorsBlock('legacy', {
+        type: 'paragraph',
+        content:
+          'This paragraph was written before the migration, by nobody known: it is attributed to the system.',
+      }),
+      authorsBlock('edited', {
+        type: 'paragraph',
+        content: 'Alice adds a sentence at the end of this legacy paragraph.',
+      }),
+      authorsBlock('formatted', {
+        type: 'paragraph',
+        content: 'Bob makes a word of this legacy paragraph bold.',
+      }),
+      authorsBlock('deleted', {
+        type: 'paragraph',
+        content: 'Bob deletes this legacy paragraph.',
+      }),
+      authorsBlock('list', {
+        type: 'bulletListItem',
+        content: 'A legacy list item',
+      }),
+    ],
+  ],
+  edits: [
+    {
+      user: 'alice',
+      apply: (editor) => {
+        editor.updateBlock('legacy-authors-edited', {
+          content: [
+            text('Alice adds a sentence at the end of this legacy paragraph.'),
+            text(' This sentence is written by Alice.'),
+          ],
+        });
+        editor.insertBlocks(
+          [
+            authorsBlock('alice', {
+              type: 'paragraph',
+              content: 'A paragraph written by Alice, after the migration.',
+            }),
+            authorsBlock('alice-todo', {
+              type: 'checkListItem',
+              content: 'A task Alice adds',
+            }),
+          ],
+          'legacy-authors-edited',
+          'after',
+        );
+      },
+    },
+    {
+      user: 'bob',
+      apply: (editor) => {
+        editor.updateBlock('legacy-authors-formatted', {
+          content: [
+            text('Bob makes a '),
+            text('word', { bold: true }),
+            text(' of this legacy paragraph bold.'),
+          ],
+        });
+        editor.removeBlocks(['legacy-authors-deleted']);
+        // a change to what another user wrote
+        editor.updateBlock('legacy-authors-alice', {
+          content:
+            'A paragraph written by Alice, after the migration, and completed by Bob.',
+        });
+        editor.updateBlock('legacy-authors-alice-todo', {
+          props: { checked: true },
+        });
+      },
+    },
+    {
+      user: 'chloe',
+      thread: {
+        id: '6c0d1d6e-7a3e-4c5e-9a51-0000000000c3',
+        blockId: 'legacy-authors-legacy',
+        comment: 'Chloé comments on the legacy paragraph',
+      },
+      apply: (editor) => {
+        editor.comment(
+          'legacy-authors-legacy',
+          '6c0d1d6e-7a3e-4c5e-9a51-0000000000c3',
+        );
+        editor.insertBlocks(
+          [
+            authorsBlock('chloe', {
+              type: 'callout',
+              content: [
+                text('Chloé adds a callout mentioning '),
+                {
+                  type: 'userMentionInline',
+                  props: {
+                    userId: LEGACY_USERS.alice.id,
+                    fullName: LEGACY_USERS.alice.fullName,
+                  },
+                },
+              ],
+            }),
+            authorsBlock('chloe-table', {
+              type: 'table',
+              content: {
+                type: 'tableContent',
+                rows: [
+                  { cells: ['Author', 'Part'] },
+                  { cells: ['Chloé', 'This table'] },
+                ],
+              },
+            }),
+          ],
+          'legacy-authors-list',
+          'after',
+        );
+      },
+    },
+  ],
+};
+
 export const LEGACY_DOCUMENTS: LegacyDocument[] = [
   rootDocument,
   blocksDocument,
   inlineDocument,
   revisionsDocument,
   longDocument,
+  authorsDocument,
 ];

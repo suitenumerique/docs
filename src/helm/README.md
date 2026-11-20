@@ -12,7 +12,9 @@ in [`impress/README.md`](impress/README.md).
 The `feature` environment (the preview of a pull request labelled `preview`)
 seeds documents saved by the Yjs 13 editor, every block included, for the
 `docs`/`docs` user: a PostSync job runs `create_legacy_documents`, and yhub
-migrates them on first opening (`SOFT_MIGRATION`). `python manage.py
+migrates them on first opening (`SOFT_MIGRATION`). Three dummy editors (Alice,
+Bob, Chloé) then edit some of them, in their name (`YHUB_APPEND_YDOC_ENABLED`,
+QA only), so the attribution shows their parts apart from the legacy content. `python manage.py
 migrate_documents`, run in the backend pod, replays their S3 versions too (the
 full migration), such as the three revisions of "Edited many times".
 
