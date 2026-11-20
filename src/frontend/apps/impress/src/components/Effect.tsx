@@ -33,6 +33,7 @@ const fadeOut = keyframes`
 
 const FadeItem = styled.div<{ $isVisible: boolean }>`
   display: flex;
+  min-width: 0;
   animation: ${({ $isVisible }) => ($isVisible ? fadeIn : fadeOut)} 0.2s ease
     forwards;
 `;

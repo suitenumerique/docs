@@ -103,6 +103,7 @@ export const MainContent = ({
       $css={css`
         overflow-y: auto;
         overflow-x: clip;
+        min-width: 0;
 
         &:focus-visible {
           outline: none;

@@ -23,6 +23,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) stop the right panel from covering the doc header actions
 - ✅(frontend) fix act warnings in the tests and fail on them #2983
 - 🔒️(backend) never lower an existing role when accepting a request #2982
 - 🐛(backend) delete the access requests a role given another way covers #2982

@@ -20,9 +20,13 @@ export const LeftPanelCollapseButton = ({
   const { isSmallMobile } = useResponsiveStore();
 
   return (
-    <CardFloatingBar className="--docs--left-panel-collapse-button">
+    <CardFloatingBar
+      className="--docs--left-panel-collapse-button"
+      $minWidth="0"
+    >
       <Button
         size="small"
+        style={{ minWidth: 0 }}
         onClick={() => togglePanel()}
         aria-label={ariaLabel}
         aria-expanded={isPanelOpen}
@@ -38,6 +42,7 @@ export const LeftPanelCollapseButton = ({
               $weight={700}
               $color="var(--c--globals--colors--gray-1000)"
               $display="unset"
+              $ellipsis
             >
               {buttonTitle}
             </Text>
