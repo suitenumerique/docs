@@ -24,6 +24,24 @@ export const DocsEditorStyle = createGlobalStyle`
     --mantine-primary-color-filled-hover: var(--c--contextuals--content--semantic--brand--tertiary);
   }
 
+  /**
+  * File attachment: keep the icon and the file name on the same line.
+  * BlockNote 0.56's .bn-file-name-with-icon dropped align-items:center,
+  * and the inner <p> keeps the user-agent default margin-block, which
+  * visually breaks the icon + filename onto separate lines.
+  */
+  .bn-file-name-with-icon {
+    display: flex;
+    align-items: center;
+  }
+  .bn-file-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .bn-file-name {
+    margin: 0;
+  }
+
   .bn-root {
     .bn-editor {
       height: 100%;
