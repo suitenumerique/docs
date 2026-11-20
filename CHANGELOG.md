@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(yhub) expose whether valkey accepts writes as a metric
+- ✨(yhub) size and bound the compute pool: threads, queue, heap per thread
 
 ### Changed
 
