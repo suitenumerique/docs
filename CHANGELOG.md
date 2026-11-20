@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(yhub) expose whether valkey accepts writes as a metric
+- ✅(backend) seed the preview environments with Yjs 13 documents #3038
 
 ### Changed
 
