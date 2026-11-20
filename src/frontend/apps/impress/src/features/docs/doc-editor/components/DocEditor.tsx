@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { PropsWithChildren, useEffect, useState } from 'react';
+import { PropsWithChildren, useCallback, useEffect, useState } from 'react';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
@@ -11,7 +11,11 @@ import {
   useProviderStore,
 } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth/';
-import { SkeletonEditorCore, useSkeletonStore } from '@/features/skeletons';
+import {
+  SKELETON_FADE_DURATION_MS,
+  SkeletonEditorCore,
+  useSkeletonStore,
+} from '@/features/skeletons';
 import { useSkeletonFadeOut } from '@/features/skeletons/hooks/useFadeOut';
 import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
@@ -128,7 +132,11 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
       isDeletedDoc={isDeletedDoc}
       readOnly={readOnly}
     >
-      <DocCoreEditor doc={doc} readOnly={readOnly} />
+      <DocCoreEditor
+        key={`${doc.id}:${readOnly ? 'r' : 'w'}`}
+        doc={doc}
+        readOnly={readOnly}
+      />
     </DocEditorContainer>
   );
 };
@@ -140,14 +148,35 @@ interface DocCoreEditorProps {
 
 export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
   const { provider, isReady } = useProviderStore();
-  const isProviderReady = isReady && provider;
-  const showContent = !!(isProviderReady && provider?.roomname === doc.id);
+  const isProviderReadyForDoc = !!(
+    isReady &&
+    provider &&
+    provider.roomname === doc.id
+  );
+
+  // The editor mounts as soon as the provider is ready; `isEditorRendered`
+  // flips once BlockNote has actually painted content so the skeleton can
+  // fade out without flashing an empty doc on large files. DocEditor keys
+  // this component by `doc.id` + `readOnly` so a fresh instance starts at
+  // `false` on each editor replacement, before paint — the provider-loss
+  // case stays on the same key, so the effect below covers it.
+  const [isEditorRendered, setIsEditorRendered] = useState(false);
+  const handleEditorReady = useCallback(() => {
+    setIsEditorRendered(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isProviderReadyForDoc) {
+      setIsEditorRendered(false);
+    }
+  }, [isProviderReadyForDoc]);
+
+  const showContent = isProviderReadyForDoc && isEditorRendered;
   const { skeletonVisible, isFadingOut } = useSkeletonFadeOut(showContent);
 
-  if (skeletonVisible || !isProviderReady || provider?.roomname !== doc.id) {
+  if (!isProviderReadyForDoc) {
     return (
       <SkeletonEditorCore
-        isFadingOut={isFadingOut}
         $css={css`
           padding-top: 0px;
         `}
@@ -155,14 +184,47 @@ export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
     );
   }
 
-  if (readOnly) {
-    return (
-      <BlockNoteReader
-        initialContent={provider.doc.getXmlFragment('document-store')}
-        docId={doc.id}
-      />
-    );
-  }
-
-  return <BlockNoteEditor doc={doc} provider={provider} />;
+  return (
+    <Box $position="relative" $width="100%" $height="100%">
+      {/* `inert` keeps the hidden editor out of focus and input while the
+          skeleton covers it, so a Tab or stray click cannot land on a doc
+          the user cannot see. */}
+      <Box $width="100%" $height="100%" inert={skeletonVisible || undefined}>
+        {readOnly ? (
+          <BlockNoteReader
+            initialContent={provider.doc.getXmlFragment('document-store')}
+            docId={doc.id}
+            onReady={handleEditorReady}
+          />
+        ) : (
+          <BlockNoteEditor
+            doc={doc}
+            provider={provider}
+            onReady={handleEditorReady}
+          />
+        )}
+      </Box>
+      {skeletonVisible && (
+        <Box
+          $position="absolute"
+          $width="100%"
+          $height="100%"
+          $background="var(--c--contextuals--background--surface--primary)"
+          $css={css`
+            top: 0;
+            left: 0;
+            opacity: ${isFadingOut ? 0 : 1};
+            transition: opacity ${SKELETON_FADE_DURATION_MS}ms ease-in-out;
+          `}
+        >
+          <SkeletonEditorCore
+            isFadingOut={isFadingOut}
+            $css={css`
+              padding-top: 0px;
+            `}
+          />
+        </Box>
+      )}
+    </Box>
+  );
 };

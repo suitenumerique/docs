@@ -31,7 +31,7 @@ import {
   useCreateBlockNote,
 } from '@blocknote/react';
 import { FindAndReplace } from '@tiptap/extension-find-and-replace';
-import { useEffect, useMemo, useRef } from 'react';
+import { RefObject, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { WebsocketProvider } from 'y-websocket';
@@ -133,9 +133,14 @@ export const blockNoteDomAttributes = {
 interface BlockNoteEditorProps {
   doc: Doc;
   provider: WebsocketProvider;
+  onReady?: () => void;
 }
 
-export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
+export const BlockNoteEditor = ({
+  doc,
+  provider,
+  onReady,
+}: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { themeTokens } = useCunninghamTheme();
@@ -381,6 +386,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     };
   }, [setEditor, editor]);
 
+  useBlockNoteRenderedSignal(refEditorContainer, onReady);
+
   return (
     <Box ref={refEditorContainer} $height="100%">
       <DocsEditorStyle />
@@ -428,16 +435,19 @@ interface BlockNoteReaderProps {
   docId: Doc['id'];
   initialContent: Y.XmlFragment;
   isMainEditor?: boolean;
+  onReady?: () => void;
 }
 
 export const BlockNoteReader = ({
   docId,
   initialContent,
   isMainEditor = true,
+  onReady,
 }: BlockNoteReaderProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { threadStore } = useComments(docId, false, user);
+  const refEditorContainer = useRef<HTMLDivElement>(null);
   const editor = useCreateBlockNote(
     withCollaboration({
       collaboration: {
@@ -482,8 +492,10 @@ export const BlockNoteReader = ({
 
   useScrollToBlockAnchor(editor);
 
+  useBlockNoteRenderedSignal(refEditorContainer, onReady);
+
   return (
-    <Box>
+    <Box ref={refEditorContainer}>
       <DocsEditorStyle />
       <DocsCommentsStyle canSeeComment={false} />
       <BlockNoteView
@@ -499,4 +511,48 @@ export const BlockNoteReader = ({
       </BlockNoteView>
     </Box>
   );
+};
+
+/**
+ * Fire `onReady` once BlockNote has rendered its ProseMirror content.
+ * Covers the gap between the Yjs provider becoming ready and the editor
+ * actually painting blocks, which is noticeable on large documents.
+ */
+const useBlockNoteRenderedSignal = (
+  containerRef: RefObject<HTMLDivElement | null>,
+  onReady?: () => void,
+) => {
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !onReady) {
+      return;
+    }
+
+    let fired = false;
+    let rafId: number | null = null;
+    const fire = () => {
+      if (fired) {
+        return;
+      }
+      const pm = container.querySelector('.ProseMirror');
+      if (!pm || pm.childNodes.length === 0) {
+        return;
+      }
+      fired = true;
+      observer.disconnect();
+      // One frame of breathing room so the paint lands before the fade starts.
+      rafId = requestAnimationFrame(() => onReady());
+    };
+
+    const observer = new MutationObserver(fire);
+    observer.observe(container, { childList: true, subtree: true });
+    fire();
+
+    return () => {
+      observer.disconnect();
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
+  }, [containerRef, onReady]);
 };
