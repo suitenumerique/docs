@@ -4,11 +4,12 @@ Tests for Find search feature flags
 
 from unittest import mock
 
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 
 import pytest
 import responses
 from rest_framework.test import APIClient
+from waffle import flag_is_active, get_waffle_flag_model
 from waffle.testutils import override_flag
 
 from core.enums import FeatureFlag, SearchType
@@ -88,3 +89,24 @@ def test_api_documents_search_success(  # noqa : PLR0913, PLR0917
         mock_search_using_database.assert_called_once()
     else:
         assert not mock_search_using_database.called
+
+
+def test_feature_flag_cache_is_invalidated(
+    django_capture_on_commit_callbacks,
+):
+    """Updating a feature flag should invalidate its cached value."""
+    Flag = get_waffle_flag_model()
+    flag_name = FeatureFlag.FLAG_FIND_HYBRID_SEARCH.value
+
+    with django_capture_on_commit_callbacks(execute=True):
+        flag = Flag.objects.create(name=flag_name, everyone=True)
+
+    request = HttpRequest()
+
+    assert flag_is_active(request, FeatureFlag.FLAG_FIND_HYBRID_SEARCH) is True
+
+    flag.everyone = False
+    with django_capture_on_commit_callbacks(execute=True):
+        flag.save()
+
+    assert flag_is_active(request, FeatureFlag.FLAG_FIND_HYBRID_SEARCH) is False

@@ -60,7 +60,7 @@ class SearchType(str, Enum):
     FULL_TEXT = "full-text"
 
 
-class FeatureFlag(str, Enum):
+class FeatureFlag(StrEnum):
     """
     Defines the possible feature flags for the application.
     """
