@@ -119,7 +119,7 @@ All commit messages must follow this format:
 * **description**: Include additional details on why you made the changes (**).
 
 (*) ⚠️ Make sure you add no space between the emoji and the (type) but add a space after the closing parenthesis of the type and use no caps!
-(**) ⚠️ Commit description message is mandatory and shouldn't be too long.
+(**) ⚠️ Commit description message is mandatory and short: 1 to 6 lines of at most 72 characters giving the reason for the change, not the list of changes (the diff shows what changed, the pull request description holds the details).
 
 Example Commit Message:
 
