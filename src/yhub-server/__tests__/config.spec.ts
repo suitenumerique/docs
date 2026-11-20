@@ -22,6 +22,10 @@ beforeEach(() => {
     'YHUB_ORG',
     'REDIS_PREFIX',
     'YHUB_TASK_CONCURRENCY',
+    'YHUB_COMPUTE_THREADS',
+    'YHUB_COMPUTE_MAX_QUEUE',
+    'YHUB_COMPUTE_THREAD_MAX_HEAP_MB',
+    'NODE_OPTIONS',
     'YHUB_TASK_DEBOUNCE_MS',
     'YHUB_MIN_MESSAGE_LIFETIME_MS',
     'YHUB_BACKEND_REQUEST_TIMEOUT_MS',
@@ -60,6 +64,70 @@ describe('YHUB_ROLE', () => {
   it('refuses an unknown role', async () => {
     vi.stubEnv('YHUB_ROLE', 'bogus');
     await expect(load()).rejects.toThrow(/YHUB_ROLE must be one of/);
+  });
+});
+
+describe('the compute pool', () => {
+  it('leaves every setting to yhub when none is set', async () => {
+    const { COMPUTE_THREADS, COMPUTE_MAX_QUEUE, COMPUTE_THREAD_MAX_HEAP_MB } =
+      await load();
+    expect(COMPUTE_THREADS).toBeUndefined();
+    expect(COMPUTE_MAX_QUEUE).toBeUndefined();
+    expect(COMPUTE_THREAD_MAX_HEAP_MB).toBeUndefined();
+  });
+
+  it('reads the three settings', async () => {
+    vi.stubEnv('YHUB_COMPUTE_THREADS', '2');
+    vi.stubEnv('YHUB_COMPUTE_MAX_QUEUE', '0');
+    vi.stubEnv('YHUB_COMPUTE_THREAD_MAX_HEAP_MB', '512');
+    const { COMPUTE_THREADS, COMPUTE_MAX_QUEUE, COMPUTE_THREAD_MAX_HEAP_MB } =
+      await load();
+    expect(COMPUTE_THREADS).toBe(2);
+    expect(COMPUTE_MAX_QUEUE).toBe(0);
+    expect(COMPUTE_THREAD_MAX_HEAP_MB).toBe(512);
+  });
+
+  it('refuses a pool without threads, and a number that is not one', async () => {
+    vi.stubEnv('YHUB_COMPUTE_THREADS', '0');
+    await expect(load()).rejects.toThrow(
+      /YHUB_COMPUTE_THREADS must be an integer >= 1/,
+    );
+
+    vi.resetModules();
+    vi.stubEnv('YHUB_COMPUTE_THREADS', '');
+    vi.stubEnv('YHUB_COMPUTE_THREAD_MAX_HEAP_MB', '1g');
+    await expect(load()).rejects.toThrow(/YHUB_COMPUTE_THREAD_MAX_HEAP_MB/);
+
+    vi.resetModules();
+    vi.stubEnv('YHUB_COMPUTE_THREAD_MAX_HEAP_MB', '');
+    vi.stubEnv('YHUB_COMPUTE_MAX_QUEUE', '-1');
+    await expect(load()).rejects.toThrow(/YHUB_COMPUTE_MAX_QUEUE/);
+  });
+
+  it('refuses a thread heap limit that a node heap flag would void', async () => {
+    vi.stubEnv('YHUB_COMPUTE_THREAD_MAX_HEAP_MB', '512');
+    vi.stubEnv('NODE_OPTIONS', '--max-old-space-size=1024');
+    await expect(load()).rejects.toThrow(/has no effect/);
+
+    vi.resetModules();
+    vi.stubEnv('NODE_OPTIONS', '--max_heap_size=1024');
+    await expect(load()).rejects.toThrow(/has no effect/);
+
+    // node takes the single-dash spelling as well
+    vi.resetModules();
+    vi.stubEnv('NODE_OPTIONS', '--enable-source-maps -max-old-space-size=2048');
+    await expect(load()).rejects.toThrow(/has no effect/);
+  });
+
+  it('is not fooled by a flag that merely contains the name', async () => {
+    vi.stubEnv('YHUB_COMPUTE_THREAD_MAX_HEAP_MB', '512');
+    vi.stubEnv('NODE_OPTIONS', '--require=./no-max-old-space-size.js');
+    await expect(load()).resolves.toBeDefined();
+  });
+
+  it('accepts a node heap flag when the threads have no limit of their own', async () => {
+    vi.stubEnv('NODE_OPTIONS', '--max-old-space-size=1024');
+    await expect(load()).resolves.toBeDefined();
   });
 });
 

@@ -36,6 +36,8 @@ const { createYHub, s3PluginArgs } = vi.hoisted(() => {
         prefix: config.redis.prefix,
         redis: fakeYhubRedis(),
       },
+      // what the startup log reads back
+      computePool: { maxThreads: 3, maxQueue: Infinity },
     };
   }) as ReturnType<typeof vi.fn> & { lastConfig?: any };
   return { createYHub, s3PluginArgs: [] as any[] };
@@ -112,6 +114,9 @@ beforeEach(() => {
   for (const key of [
     'YHUB_ROLE',
     'YHUB_TASK_CONCURRENCY',
+    'YHUB_COMPUTE_THREADS',
+    'YHUB_COMPUTE_MAX_QUEUE',
+    'YHUB_COMPUTE_THREAD_MAX_HEAP_MB',
     'YHUB_TASK_DEBOUNCE_MS',
     'YHUB_MIN_MESSAGE_LIFETIME_MS',
     'YHUB_BACKEND_REQUEST_TIMEOUT_MS',
@@ -152,6 +157,23 @@ describe('a valid, minimal environment', () => {
     expect(redis.taskDebounce).toBe(10000);
     expect(redis.minMessageLifetime).toBe(60000);
     expect(worker.taskConcurrency).toBe(5);
+  });
+
+  it('leaves the compute pool to yhub’s defaults when nothing is set', async () => {
+    await boot();
+    expect(createYHub.lastConfig.computePool).toEqual({});
+  });
+
+  it('threads the compute pool settings into the yhub config', async () => {
+    vi.stubEnv('YHUB_COMPUTE_THREADS', '2');
+    vi.stubEnv('YHUB_COMPUTE_MAX_QUEUE', '10');
+    vi.stubEnv('YHUB_COMPUTE_THREAD_MAX_HEAP_MB', '512');
+    await boot();
+    expect(createYHub.lastConfig.computePool).toEqual({
+      maxThreads: 2,
+      maxQueue: 10,
+      resourceLimits: { maxOldGenerationSizeMb: 512 },
+    });
   });
 
   it('hands yhub our auth timeout rather than leaving its 10s default', async () => {

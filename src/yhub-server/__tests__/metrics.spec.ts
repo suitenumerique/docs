@@ -380,6 +380,7 @@ describe('startMetricsServer', () => {
         prefix: 'yhub',
         redis: { set: async () => 'OK' },
       },
+      computePool: { stats: () => ({ queued: 4, busy: 2, workers: 3 }) },
     };
 
     const server = await startMetricsServer(yhub as never);
@@ -389,6 +390,9 @@ describe('startMetricsServer', () => {
       expect(text).toMatch(/yhub_ws_connections\{[^}]*\} 3/);
       expect(text).toMatch(/yhub_worker_pending_tasks\{[^}]*\} 7/);
       expect(text).toMatch(/yhub_redis_writable\{[^}]*\} 1/);
+      expect(text).toMatch(/yhub_compute_threads\{[^}]*\} 3/);
+      expect(text).toMatch(/yhub_compute_threads_busy\{[^}]*\} 2/);
+      expect(text).toMatch(/yhub_compute_queued_tasks\{[^}]*\} 4/);
       // the node runtime collectors are on
       expect(text).toContain('nodejs_eventloop_lag_seconds');
     } finally {
@@ -419,6 +423,7 @@ describe('startMetricsServer', () => {
       expect(text).toMatch(/yhub_rooms\{[^}]*\} 0/);
       expect(text).toMatch(/yhub_ws_connections\{[^}]*\} 0/);
       expect(text).toMatch(/yhub_redis_writable\{[^}]*\} 0/);
+      expect(text).toMatch(/yhub_compute_threads\{[^}]*\} 0/);
     } finally {
       await new Promise((resolve) => server.close(resolve));
     }
