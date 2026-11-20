@@ -11,7 +11,11 @@ from django.core.management import call_command
 import pytest
 
 from core import factories, models
-from core.services.yhub_services import APIError, YHubService
+from core.services.yhub_services import (
+    APIError,
+    ServiceUnavailableError,
+    YHubService,
+)
 from core.utils.yjs import base64_yjs_to_xml
 
 from demo.management.commands import create_legacy_documents as command
@@ -146,14 +150,17 @@ def test_commands_create_legacy_documents_existing_owner(data):
     assert not models.User.objects.filter(id=data["owner"]["id"]).exists()
 
 
-def test_commands_create_legacy_documents_twice(data, s3):
-    """Run again by every deployment, the command leaves the documents alone."""
+def test_commands_create_legacy_documents_twice(data, s3, append_ydoc):
+    """Run again by every deployment, the command leaves everything alone."""
     ids = [document_data["id"] for document_data in data["documents"]]
     call_command("create_legacy_documents")
     root = models.Document.objects.get(id=ids[0])
     version = read(s3, root.file_key).get("VersionId")
+    edits = len(append_ydoc)
 
     call_command("create_legacy_documents")
+
+    assert len(append_ydoc) == edits
 
     assert models.Document.objects.filter(id__in=ids).count() == len(ids)
     assert models.Thread.objects.count() == sum(
@@ -210,16 +217,76 @@ def test_commands_create_legacy_documents_edits_not_enabled(data):
     assert models.Document.objects.filter(id=data["documents"][0]["id"]).exists()
 
 
+@pytest.fixture(name="no_retry_delay")
+def no_retry_delay_fixture(monkeypatch):
+    """Retries without waiting."""
+    monkeypatch.setattr(command, "EDIT_RETRY_DELAY", 0)
+    monkeypatch.setattr(command, "EDIT_ATTEMPTS", 3)
+
+
+@pytest.mark.usefixtures("no_retry_delay")
 def test_commands_create_legacy_documents_edits_failing(data):
-    """An edit the collaboration server refuses leaves nothing behind."""
+    """
+    An edit the collaboration server keeps refusing fails the command, retried
+    first, and leaves the documents: the next run does the edits.
+    """
+    root_id = data["documents"][0]["id"]
     with (
         mock.patch.object(
             YHubService,
             "append_ydoc",
             side_effect=APIError("Unavailable", status_code=503),
-        ),
+        ) as append_ydoc,
         pytest.raises(APIError),
     ):
         call_command("create_legacy_documents")
 
-    assert not models.Document.objects.filter(id=data["documents"][0]["id"]).exists()
+    assert append_ydoc.call_count == 3
+    assert models.Document.objects.filter(id=root_id).exists()
+    # the edits are not marked done
+    assert not models.DocumentAccess.objects.filter(
+        document_id=root_id, role=models.RoleChoices.EDITOR
+    ).exists()
+
+
+@pytest.mark.usefixtures("no_retry_delay")
+def test_commands_create_legacy_documents_edits_after_failure(data, append_ydoc):
+    """The run after a failure does the edits, and only them."""
+    root_id = data["documents"][0]["id"]
+    with (
+        mock.patch.object(
+            YHubService,
+            "append_ydoc",
+            side_effect=ServiceUnavailableError("Starting"),
+        ),
+        pytest.raises(ServiceUnavailableError),
+    ):
+        call_command("create_legacy_documents")
+
+    call_command("create_legacy_documents")
+
+    assert len(append_ydoc) == sum(
+        len(document_data["edits"]) for document_data in data["documents"]
+    )
+    assert models.Document.objects.filter(id=root_id).count() == 1
+    assert models.DocumentAccess.objects.filter(
+        document_id=root_id, role=models.RoleChoices.EDITOR
+    ).count() == len(data["users"])
+
+
+@pytest.mark.usefixtures("no_retry_delay")
+def test_commands_create_legacy_documents_edits_waits_for_yhub(data):
+    """A collaboration server still starting is waited for."""
+    answers = [ServiceUnavailableError("Starting"), None]
+
+    def append(*_args):
+        answer = answers.pop(0) if answers else None
+        if answer:
+            raise answer
+
+    with mock.patch.object(YHubService, "append_ydoc", side_effect=append):
+        call_command("create_legacy_documents")
+
+    assert models.DocumentAccess.objects.filter(
+        document_id=data["documents"][0]["id"], role=models.RoleChoices.EDITOR
+    ).exists()
