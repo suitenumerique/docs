@@ -300,13 +300,16 @@ docker compose exec yhub-valkey valkey-cli REPLICAOF NO ONE          # writable
 
 ## Tuning
 
-Three numbers this wrapper passes to yhub and one it keeps for itself, all of
+The numbers this wrapper passes to yhub and those it keeps for itself, all of
 them environment variables whose defaults are what Docs ran with before they
 were configurable:
 
 | Variable | Default | What it changes |
 | -------- | ------- | --------------- |
 | `YHUB_TASK_CONCURRENCY` | `5` | Tasks one worker process claims at once |
+| `YHUB_COMPUTE_THREADS` | node cpus − 1 | Threads of the compute pool (see below) |
+| `YHUB_COMPUTE_MAX_QUEUE` | unlimited | Compute tasks that may wait for a free thread |
+| `YHUB_COMPUTE_THREAD_MAX_HEAP_MB` | none | Old-generation heap of each compute thread, in MB |
 | `YHUB_TASK_DEBOUNCE_MS` | `10000` | How long an update waits on the stream before a worker persists it |
 | `YHUB_MIN_MESSAGE_LIFETIME_MS` | `60000` | How long persisted updates stay replayable from redis |
 | `YHUB_BACKEND_REQUEST_TIMEOUT_MS` | `5000` | How long a call to the Docs backend may take before it is given up on |
@@ -402,7 +405,7 @@ connection fails while the backend is merely slow, far above it a hanging
 backend holds the websocket upgrades open again. An upgrade chains up to three
 of these calls, so it may take three times this value before it fails.
 
-All four are refused at startup, like an unknown role, when they are not whole
+All of them are refused at startup, like an unknown role, when they are not whole
 numbers in range (`YHUB_TASK_CONCURRENCY must be an integer >= 1 (got "abc")`):
 `Number()` would otherwise read a typo as `NaN` and hand it to yhub, which
 takes it — a worker that claims nothing, or a stream that is never trimmed,
@@ -411,8 +414,59 @@ kubernetes variable left blank behaves as if it were absent. The effective
 values are logged at startup, next to the role:
 
 ```json
-{"role":"all","server":true,"worker":true,"taskConcurrency":5,"s3Bucket":null,"taskDebounceMs":10000,"minMessageLifetimeMs":60000,"backendRequestTimeoutMs":5000,"msg":"yhub configuration"}
+{"role":"all","server":true,"worker":true,"taskConcurrency":5,"computeThreads":7,"computeMaxQueue":null,"computeThreadMaxHeapMb":null,"s3Bucket":null,"taskDebounceMs":10000,"minMessageLifetimeMs":60000,"backendRequestTimeoutMs":5000,"msg":"yhub configuration"}
 ```
+
+### The compute pool
+
+yhub runs the heavy Yjs work in a pool of worker threads: the merge of a
+compaction, the initial sync of a large document, the history and the
+rollbacks. Updates of 5 kB or less are merged on the main thread. Every thread
+is a V8 isolate with a heap of its own. Without these three settings, yhub:
+
+- sizes the pool from `os.cpus()`, which counts the cores of the **node** and
+  not the pod's share: 7 threads on an 8-core node, 15 on a 16-core one,
+- spawns the threads as load comes and never stops them, so the memory of a
+  busy pod ratchets up and does not come back down,
+- caps neither their heap nor the tasks waiting for one. The pod is bounded by
+  its OOM killer alone, and one oversized document kills the whole process:
+  every websocket of a server, every compaction in progress on a worker.
+
+`YHUB_COMPUTE_THREADS` is how much compute runs in parallel, and how many heaps
+the memory limit of the container has to hold. A worker's compactions beyond
+it wait for a thread, so it also caps what `YHUB_TASK_CONCURRENCY` buys.
+
+`YHUB_COMPUTE_THREAD_MAX_HEAP_MB` turns a document whose merge outgrows the
+heap into the death of one thread: its task fails and the thread is replaced,
+while the process and the other threads carry on. A failed compaction is
+claimed again after `YHUB_TASK_DEBOUNCE_MS`, and fails again for as long as the
+document stays too big.
+
+It bounds the old generation of each thread, and nothing else. The updates a
+thread merges are ArrayBuffers, which live outside the heap: a thread limited
+to 256 MB holds 1.2 GB of them without being stopped. The documents waiting in
+the queue, the young generation of each heap and node itself come on top too.
+`YHUB_COMPUTE_THREADS` times this value is therefore only the old-generation
+subtotal of the threads. Size the memory limit of the container above it plus
+the main thread, with headroom for all of the above, and read the peak of
+`process_resident_memory_bytes` to check. A document big enough is still able
+to get the pod OOM-killed through its buffers: the limit makes that rarer, it
+does not rule it out.
+
+V8 applies `--max-old-space-size` and `--max-heap-size` to every thread, above a
+thread's own limit, so this setting would do nothing next to either flag.
+Setting it while the command line or `NODE_OPTIONS` carries one (quoted or not,
+with one dash or two) is refused at startup; drop the flag.
+
+`YHUB_COMPUTE_MAX_QUEUE` bounds the tasks waiting for a thread, each holding
+its documents in memory meanwhile. A task beyond it is refused: a REST call
+answers 503, the initial sync of a websocket closes with 1013, and a
+compaction is claimed again later. On a worker the queue is
+already bounded by `YHUB_TASK_CONCURRENCY`, so this one is for the servers.
+
+`yhub_compute_threads`, `yhub_compute_threads_busy` and
+`yhub_compute_queued_tasks` show how the pool is used: threads always busy with
+tasks queued means more threads, or more replicas.
 
 ## Document storage (`YHUB_S3_PERSISTENCE`)
 
@@ -546,6 +600,8 @@ the process, and **never** with a document or a user:
 | `yhub_worker_pending_tasks` | | Compactions waiting on the redis queue. One queue for the whole deployment: read it with `max`, never `sum` |
 | `yhub_worker_task_duration_seconds` | `result` (`ok`, `error`) | Duration of the compactions |
 | `yhub_worker_tasks_inflight` | | Compactions running, out of `YHUB_TASK_CONCURRENCY` |
+| `yhub_compute_threads`, `yhub_compute_threads_busy` | | Live threads of the compute pool, out of `YHUB_COMPUTE_THREADS`, and those computing a task |
+| `yhub_compute_queued_tasks` | | Compute tasks waiting for a free thread, out of `YHUB_COMPUTE_MAX_QUEUE` |
 | `yhub_doc_updates_total` | | Compactions that found new content, i.e. `content-updated` notifications |
 | `yhub_seed_duration_seconds` | `result` (`seeded`, `empty`, `failed`) | Soft migrations, from the S3 read to the stream write |
 | `yhub_seeds_inflight`, `yhub_seed_rejected_total` | | Soft migrations running, and refused because the replica was at its maximum |

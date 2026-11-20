@@ -261,6 +261,40 @@ const registerYhubGauges = (yhub: YHub): void => {
     },
   });
 
+  // The compute pool serves both halves: the server's syncs and history, the
+  // worker's merges. Read defensively, so that a scrape never fails on it.
+  const computeStats = () => {
+    try {
+      return yhub.computePool?.stats();
+    } catch {
+      return undefined;
+    }
+  };
+  new Gauge({
+    name: 'yhub_compute_threads',
+    help: 'Live threads of the compute pool, out of YHUB_COMPUTE_THREADS',
+    registers: [registry],
+    collect() {
+      this.set(computeStats()?.workers ?? 0);
+    },
+  });
+  new Gauge({
+    name: 'yhub_compute_threads_busy',
+    help: 'Threads of the compute pool computing a task',
+    registers: [registry],
+    collect() {
+      this.set(computeStats()?.busy ?? 0);
+    },
+  });
+  new Gauge({
+    name: 'yhub_compute_queued_tasks',
+    help: 'Compute tasks waiting for a free thread, out of YHUB_COMPUTE_MAX_QUEUE',
+    registers: [registry],
+    collect() {
+      this.set(computeStats()?.queued ?? 0);
+    },
+  });
+
   if (RUNS_SERVER) {
     // `stream.subs` is yhub's own bookkeeping of who listens to which room on
     // this replica — not a published API, and read defensively for that reason:

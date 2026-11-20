@@ -1192,6 +1192,9 @@ yhub:
   ## @extra yhub.envVars.COLLABORATION_SERVER_ORIGIN Comma separated list of the origins allowed to open a websocket
   ## @extra yhub.envVars.YHUB_JWT_PRIVATE_KEY_FILE Path to the RSA private key (PEM) yhub signs its calls to the backend with, mounted from a secret
   ## @extra yhub.envVars.YHUB_TASK_CONCURRENCY Tasks one worker process claims at once, times the replicas running a worker (default: 5)
+  ## @extra yhub.envVars.YHUB_COMPUTE_THREADS Threads of the compute pool that merges and syncs documents, each with a heap of its own (default: the node's cpus minus one)
+  ## @extra yhub.envVars.YHUB_COMPUTE_MAX_QUEUE Compute tasks that may wait for a free thread before new ones are refused (default: unlimited)
+  ## @extra yhub.envVars.YHUB_COMPUTE_THREAD_MAX_HEAP_MB Old-generation heap of each compute thread, in MB: a thread outgrowing it dies alone; its ArrayBuffers are not counted, keep headroom; refused with --max-old-space-size (default: none)
   ## @extra yhub.envVars.YHUB_TASK_DEBOUNCE_MS How long an update waits on the redis stream before a worker persists it, in ms (default: 10000)
   ## @extra yhub.envVars.YHUB_MIN_MESSAGE_LIFETIME_MS How long persisted updates stay replayable from redis, in ms (default: 60000)
   ## @extra yhub.envVars.YHUB_BACKEND_REQUEST_TIMEOUT_MS How long a call to the backend may take before yhub gives up on it and tells the caller to retry, in ms (default: 5000)
