@@ -297,6 +297,21 @@ describe('the authz cache TTLs', () => {
   });
 });
 
+describe('YHUB_APPEND_YDOC_ENABLED', () => {
+  it('is off unless set to true: it lets the backend forge authors', async () => {
+    vi.stubEnv('YHUB_APPEND_YDOC_ENABLED', '');
+    expect((await load()).APPEND_YDOC_ENABLED).toBe(false);
+    vi.resetModules();
+    vi.stubEnv('YHUB_APPEND_YDOC_ENABLED', '1');
+    expect((await load()).APPEND_YDOC_ENABLED).toBe(false);
+  });
+
+  it('is on when set to true', async () => {
+    vi.stubEnv('YHUB_APPEND_YDOC_ENABLED', 'true');
+    expect((await load()).APPEND_YDOC_ENABLED).toBe(true);
+  });
+});
+
 describe('PROMETHEUS_METRICS_*', () => {
   beforeEach(() => {
     for (const key of [
