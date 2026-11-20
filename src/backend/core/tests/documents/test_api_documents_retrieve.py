@@ -521,7 +521,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "media_check": True,
             "mention": access.role != "reader",
             "move": access.role in ["administrator", "owner"],
-            "move_to_another_tree": False,
+            "move_to_another_tree": access.role == "owner",
             "partial_update": access.role not in ["reader", "commenter"],
             "restore": False,
             "retrieve": True,
@@ -550,6 +550,22 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": access.role,
     }
+
+
+@pytest.mark.parametrize("role", models.RoleChoices.values)
+def test_api_documents_retrieve_authenticated_related_parent_roles(role):
+    """
+    Authenticated users should be allowed to retrieve a document if they are related
+    to one of its ancestors whatever the role, with role-dependent abilities
+    matching each role deterministically (including move_to_another_tree for owner).
+    """
+    orig_factory = factories.UserDocumentAccessFactory
+    with mock.patch.object(
+        factories,
+        "UserDocumentAccessFactory",
+        side_effect=lambda **kwargs: orig_factory(role=role, **kwargs),
+    ):
+        test_api_documents_retrieve_authenticated_related_parent()
 
 
 def test_api_documents_retrieve_authenticated_related_nb_accesses():
