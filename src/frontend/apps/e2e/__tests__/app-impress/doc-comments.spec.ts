@@ -6,6 +6,7 @@ import {
   tryFocusEditorContent,
   writeInEditor,
 } from './utils-editor';
+import { createDocFromUpdate } from './utils-export';
 import {
   addNewMember,
   connectOtherUserToDoc,
@@ -187,6 +188,30 @@ test.describe('Doc Comments', () => {
     ).toContainText(new RegExp(browserName, 'i'));
 
     await cleanup();
+  });
+
+  test('it opens a document with a commented mention without freezing', async ({
+    page,
+    browserName,
+  }) => {
+    // A comment on a user mention, as saved by a preview whose tab froze:
+    // writing its `commentMarks` attribute kept the Yjs binding and the
+    // comments extension rewriting each other forever, from the first load
+    await createDocFromUpdate({
+      page,
+      browserName,
+      name: 'doc-comment-mention',
+      asset: 'comment-on-mention-yjs.txt',
+    });
+
+    const editor = await getEditor({ page });
+    await expect(editor.getByText('Test with comment')).toBeVisible();
+    await expect(
+      editor.locator('.--docs--user-mention-inline-content'),
+    ).toContainText('John Doe');
+
+    await writeInEditor({ page, text: 'Still editable' });
+    await expect(editor.getByText('Still editable')).toBeVisible();
   });
 
   test('it checks the comments interactions', async ({ page, browserName }) => {

@@ -20,39 +20,35 @@ const collaborationApiUrl = () =>
     .replace(/\/ws\/v1\/docs\/?$/, '');
 
 /**
- * Give a document a body worth exporting: the fixture in
- * `assets/base-content-test-pdf.txt` holds one block of nearly every kind, which is
- * what makes the export regressions below able to catch anything.
- *
- * The fixture is a Yjs update, and it is pushed to the collaboration server rather
- * than stubbed into a response. It used to be the latter - `GET /documents/{id}/content/`
- * was intercepted and answered with this file - but that endpoint no longer exists, so
- * the interception silently matched nothing and the exported document was whatever the
- * two images below added to an empty page. The server is now the only thing that holds
- * document content, so seeding it there is also the only way to put content in a
- * document without typing it.
+ * Creates a document holding the Yjs state of an asset (a base64 update), and
+ * opens it. The server is the only thing that holds document content, so
+ * seeding it there is the only way to put given content in a document without
+ * typing it.
  *
  * The seed lands before the editor ever mounts. A `PATCH` merges, and BlockNote writes
  * an empty paragraph into any document it opens empty - seeding a document that has
  * already been opened would leave that stray paragraph in front of the fixture and
  * shift every page of the render.
- * @param page
  */
-export const overrideDocContent = async ({
+export const createDocFromUpdate = async ({
   page,
   browserName,
+  name,
+  asset,
 }: {
   page: Page;
   browserName: BrowserName;
+  name: string;
+  asset: string;
 }) => {
-  const [randomDoc] = randomName('doc-export-override-content', browserName, 1);
+  const [title] = randomName(name, browserName, 1);
 
   // created over the api rather than through the interface, which would open it
   const cookies = await page.context().cookies();
   const csrfToken = cookies.find((c) => c.name === 'csrftoken')?.value ?? '';
   const created = await page.request.post(
     `${process.env.BASE_API_URL}/documents/`,
-    { data: { title: randomDoc }, headers: { 'X-CSRFToken': csrfToken } },
+    { data: { title }, headers: { 'X-CSRFToken': csrfToken } },
   );
   expect(created.ok()).toBeTruthy();
   const { id: docId } = (await created.json()) as { id: string };
@@ -65,10 +61,7 @@ export const overrideDocContent = async ({
       headers: { Accept: 'application/json' },
       data: {
         update: fs
-          .readFileSync(
-            path.join(__dirname, 'assets/base-content-test-pdf.txt'),
-            'utf-8',
-          )
+          .readFileSync(path.join(__dirname, 'assets', asset), 'utf-8')
           .trim(),
       },
     },
@@ -76,6 +69,34 @@ export const overrideDocContent = async ({
   expect(seeded.ok()).toBeTruthy();
 
   await page.goto(`/docs/${docId}/`);
+  return title;
+};
+
+/**
+ * Give a document a body worth exporting: the fixture in
+ * `assets/base-content-test-pdf.txt` holds one block of nearly every kind, which is
+ * what makes the export regressions below able to catch anything.
+ *
+ * The fixture is a Yjs update, and it is pushed to the collaboration server rather
+ * than stubbed into a response. It used to be the latter - `GET /documents/{id}/content/`
+ * was intercepted and answered with this file - but that endpoint no longer exists, so
+ * the interception silently matched nothing and the exported document was whatever the
+ * two images below added to an empty page.
+ * @param page
+ */
+export const overrideDocContent = async ({
+  page,
+  browserName,
+}: {
+  page: Page;
+  browserName: BrowserName;
+}) => {
+  const randomDoc = await createDocFromUpdate({
+    page,
+    browserName,
+    name: 'doc-export-override-content',
+    asset: 'base-content-test-pdf.txt',
+  });
 
   // the seed has to be on screen before anything is added after it
   await expect(page.getByText('copy/pasting out of doc')).toBeVisible();
