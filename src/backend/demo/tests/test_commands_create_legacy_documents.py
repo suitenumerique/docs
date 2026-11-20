@@ -2,6 +2,7 @@
 
 import base64
 import json
+from unittest import mock
 from uuid import uuid4
 
 from django.core.files.storage import default_storage
@@ -10,6 +11,7 @@ from django.core.management import call_command
 import pytest
 
 from core import factories, models
+from core.services.yhub_services import APIError, YHubService
 from core.utils.yjs import base64_yjs_to_xml
 
 from demo.management.commands import create_legacy_documents as command
@@ -33,6 +35,20 @@ def data_fixture(tmp_path, monkeypatch):
     path.write_text(text, encoding="utf-8")
     monkeypatch.setattr(command, "FIXTURE", path)
     return json.loads(text)
+
+
+@pytest.fixture(name="append_ydoc", autouse=True)
+def append_ydoc_fixture():
+    """The collaboration server, taking the edits of the users."""
+    calls = []
+
+    def append(service, document, update):
+        calls.append((service.user_id, str(document.id), update))
+
+    with mock.patch.object(
+        YHubService, "append_ydoc", autospec=True, side_effect=append
+    ):
+        yield calls
 
 
 @pytest.fixture(name="s3")
@@ -144,3 +160,66 @@ def test_commands_create_legacy_documents_twice(data, s3):
         len(document_data["threads"]) for document_data in data["documents"]
     )
     assert read(s3, root.file_key).get("VersionId") == version
+
+
+def test_commands_create_legacy_documents_edits(data, append_ydoc):
+    """The edits are written in the name of their user, in order, once migrated."""
+    call_command("create_legacy_documents")
+
+    expected = [
+        (edit["user_id"], document_data["id"], base64.b64decode(edit["update"]))
+        for document_data in data["documents"]
+        for edit in document_data["edits"]
+    ]
+    assert expected
+    assert append_ydoc == expected
+
+    root = models.Document.objects.get(id=data["documents"][0]["id"])
+    for user_data in data["users"]:
+        user = models.User.objects.get(email=user_data["email"])
+        assert str(user.id) == user_data["id"]
+        assert models.DocumentAccess.objects.filter(
+            document=root, user=user, role=models.RoleChoices.EDITOR
+        ).exists()
+
+    # a thread started by a user is theirs
+    threads = [
+        thread
+        for document_data in data["documents"]
+        for thread in document_data["threads"]
+        if thread["creator_id"]
+    ]
+    assert threads
+    for thread in threads:
+        assert (
+            str(models.Thread.objects.get(id=thread["id"]).creator_id)
+            == (thread["creator_id"])
+        )
+
+
+def test_commands_create_legacy_documents_edits_not_enabled(data):
+    """Without the QA route, the documents are created without the edits."""
+    with mock.patch.object(
+        YHubService,
+        "append_ydoc",
+        side_effect=APIError("Not found", status_code=404),
+    ) as append_ydoc:
+        call_command("create_legacy_documents")
+
+    assert append_ydoc.call_count == 1
+    assert models.Document.objects.filter(id=data["documents"][0]["id"]).exists()
+
+
+def test_commands_create_legacy_documents_edits_failing(data):
+    """An edit the collaboration server refuses leaves nothing behind."""
+    with (
+        mock.patch.object(
+            YHubService,
+            "append_ydoc",
+            side_effect=APIError("Unavailable", status_code=503),
+        ),
+        pytest.raises(APIError),
+    ):
+        call_command("create_legacy_documents")
+
+    assert not models.Document.objects.filter(id=data["documents"][0]["id"]).exists()

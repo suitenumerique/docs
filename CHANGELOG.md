@@ -11,6 +11,7 @@ and this project adheres to
 - ✨(yhub) expose whether valkey accepts writes as a metric
 - ✅(backend) seed the preview environments with Yjs 13 documents #3038
 - ✨(yhub) write updates in the name of a user, for QA only #3038
+- ✅(backend) seed edits of dummy users in the preview environments #3038
 
 ### Changed
 
