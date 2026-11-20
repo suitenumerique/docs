@@ -212,6 +212,38 @@ def test_create_ydoc_already_exists(mock_request):
 
 
 @patch("requests.request")
+def test_append_ydoc(mock_request):
+    """Should post the raw update to append-ydoc, in the name of the bound user."""
+    mock_request.return_value.ok = True
+    user = UserFactory.build()
+    update = b"\x01\x02\x03\x04"
+
+    response = YHubService(user=user).append_ydoc(DOCUMENT, update)
+
+    assert response is mock_request.return_value
+    args, kwargs = mock_request.call_args
+    assert args == (
+        "post",
+        f"http://yhub:3002/collaboration/append-ydoc/v1/docs/{DOCUMENT.id!s}",
+    )
+    assert kwargs["data"] == update
+    assert kwargs["headers"]["X-User-Id"] == str(user.pk)
+
+
+@patch("requests.request")
+def test_append_ydoc_not_enabled(mock_request):
+    """Where the QA route is not mounted, the 404 surfaces as an APIError."""
+    mock_request.return_value.ok = False
+    mock_request.return_value.status_code = 404
+    mock_request.return_value.text = "Not found"
+
+    with pytest.raises(APIError) as excinfo:
+        YHubService(user=UserFactory.build()).append_ydoc(DOCUMENT, b"\x01\x02")
+
+    assert excinfo.value.status_code == 404
+
+
+@patch("requests.request")
 def test_migrate(mock_request):
     """Should ask yhub to replay the legacy history, and answer what it did."""
     mock_request.return_value.ok = True

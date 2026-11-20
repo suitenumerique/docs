@@ -55,6 +55,13 @@ It is not a fork of yhub — it is a thin wrapper, written in TypeScript under
   `accessPurpose`. Reading goes through the built-in `GET .../ydoc/`, which
   since 0.5.0 answers JSON (the update base64 encoded) to a request sending
   `Accept: application/json`,
+- with `YHUB_APPEND_YDOC_ENABLED=true` only — QA, **never in production** —
+  exposes `POST /collaboration/append-ydoc/v1/{org}/{docid}`: `create-ydoc`
+  without the strict create, writing a raw update into a document that may
+  have content, attributed to the required `X-User-Id`. Admin JWT only. The
+  preview environments seed documents written by several users with it
+  (`create_legacy_documents`); in production it would let whoever holds the
+  admin token forge who wrote what,
 - exposes `POST /collaboration/migrate/v1/{org}/{docid}`, which replays a
   document's **full** legacy version history out of the S3 media bucket (see
   "Full migration" below) — admin JWT only, like `reset-connections`,

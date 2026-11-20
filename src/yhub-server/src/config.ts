@@ -169,6 +169,12 @@ export const EMPTY_UPDATE_MAX_BYTES = 3;
 // freshly-converted snapshot (typically KBs); anything bigger belongs on the
 // websocket path.
 export const MAX_CREATE_BYTES = 10 * 1024 * 1024;
+// QA only: mounts `append-ydoc`, through which the backend writes an update
+// into an existing document in the name of any user — what the preview
+// environments seed documents written by several people with. Never in
+// production: whoever holds the admin token could forge who wrote what.
+export const APPEND_YDOC_ENABLED =
+  process.env.YHUB_APPEND_YDOC_ENABLED === 'true';
 
 export const BACKEND_NOTIFY_TIMEOUT_MS = 5000;
 // The calls `backendFetch` makes on the connection path (`users/me`,
