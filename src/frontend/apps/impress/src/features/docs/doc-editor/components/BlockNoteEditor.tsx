@@ -248,13 +248,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       return undefined;
     }
     const storage = createDocsVersionStorage({
-      baseUrl: collabTarget.serverUrl,
-      org: collabTarget.org,
+      target: collabTarget,
       docId: doc.id,
       fragment: provider.doc.get('document-store'),
-      beforeRestoreName:
-        localesBN[langLocalesBN as keyof typeof localesBN].versioning
-          .before_restore,
       // Read overrides for each request, without reinstalling the editor.
       get activityParams() {
         return {
@@ -269,7 +265,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
     });
     return YVersioningExtension({ storage });
-  }, [collabTarget, doc.id, langLocalesBN, provider.doc, versionGranularityMs]);
+  }, [collabTarget, doc.id, provider.doc, versionGranularityMs]);
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     withCollaboration({

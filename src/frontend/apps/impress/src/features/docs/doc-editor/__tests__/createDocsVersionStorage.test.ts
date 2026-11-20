@@ -1,13 +1,16 @@
 import * as Y from '@y/y';
-import { decodeAny, encodeAny } from 'lib0/buffer';
+import { fromBase64, toBase64 } from 'lib0/buffer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createDocsVersionStorage } from '../createDocsVersionStorage';
 
 type StorageOptions = Parameters<typeof createDocsVersionStorage>[0];
 
-const encodedResponse = (value: unknown) =>
-  new Response(encodeAny(value) as BodyInit);
+const jsonResponse = (value: unknown, status = 200) =>
+  new Response(JSON.stringify(value), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 
 describe('createDocsVersionStorage', () => {
   const fetchMock = vi.fn<typeof fetch>();
@@ -15,11 +18,12 @@ describe('createDocsVersionStorage', () => {
 
   const createStorage = (options: Partial<StorageOptions> = {}) =>
     createDocsVersionStorage({
-      baseUrl: 'https://example.test/collaboration',
-      org: 'org/name',
-      docId: 'doc/id',
+      target: {
+        serverUrl: 'https://example.test/collaboration',
+        org: 'org-name',
+      },
+      docId: 'doc-id',
       fragment: doc.get('document-store'),
-      beforeRestoreName: 'Before restore',
       ...options,
     });
 
@@ -35,26 +39,73 @@ describe('createDocsVersionStorage', () => {
     vi.unstubAllGlobals();
   });
 
-  it('restores the range and beginning IDs returned by the native list', async () => {
+  it('speaks json only, with the session cookie, on every request', async () => {
+    fetchMock.mockImplementation(async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname.includes('/activity/')) {
+        return jsonResponse({ activity: [{ from: 200, to: 250, by: [] }] });
+      }
+      if (url.pathname.includes('/changeset/')) {
+        return jsonResponse({
+          ydoc: toBase64(Y.encodeStateAsUpdate(doc)),
+          attributions: toBase64(Y.encodeContentMap(Y.createContentMap())),
+        });
+      }
+      if (url.pathname.includes('/rollback/')) {
+        return jsonResponse({ success: true });
+      }
+      return jsonResponse({ doc: toBase64(Y.encodeStateAsUpdate(doc)) });
+    });
+    const storage = createStorage();
+    const signal = new AbortController().signal;
+
+    expect((await storage.list(signal)).ok).toBe(true);
+    expect((await storage.getContent('200-250', signal)).ok).toBe(true);
+    expect(
+      (
+        await storage.getAttributions?.(
+          { type: 'current' },
+          '200-250',
+          0,
+          signal,
+        )
+      )?.ok,
+    ).toBe(true);
+    expect(await storage.restore?.('200-250')).toEqual({
+      ok: true,
+      value: undefined,
+    });
+
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(5);
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(init?.credentials).toBe('include');
+      expect(init?.headers).toMatchObject({ Accept: 'application/json' });
+      if (init?.body !== undefined) {
+        expect(typeof init.body).toBe('string');
+      }
+    }
+  });
+
+  it('restores the range and beginning IDs returned by the list', async () => {
     fetchMock.mockImplementation(async (input) => {
       const url = new URL(String(input));
       if (url.pathname.includes('/activity/')) {
         expect(url.searchParams.get('versions')).toBe('true');
-        return encodedResponse({
+        return jsonResponse({
           activity: [
             url.searchParams.get('order') === 'asc'
               ? { from: 100, to: 110, by: [] }
-              : { from: 200, to: 250, by: [] },
+              : { from: 200, to: 250, by: 'alice, bob' },
           ],
         });
       }
       if (url.pathname.includes('/changeset/')) {
-        return encodedResponse({ ydoc: Y.encodeStateAsUpdate(doc) });
+        return jsonResponse({ ydoc: toBase64(Y.encodeStateAsUpdate(doc)) });
       }
       if (url.pathname.includes('/rollback/')) {
-        return new Response();
+        return jsonResponse({ success: true });
       }
-      return encodedResponse({ doc: Y.encodeStateAsUpdate(doc) });
+      return jsonResponse({ doc: toBase64(Y.encodeStateAsUpdate(doc)) });
     });
     const storage = createStorage();
     const listed = await storage.list(new AbortController().signal);
@@ -62,13 +113,16 @@ describe('createDocsVersionStorage', () => {
     if (!listed.ok) {
       throw new Error('Expected history list');
     }
-    expect(listed.value.snapshots.map(({ id }) => id)).toEqual([
-      '200-250',
-      '99-99',
+    expect(listed.value.snapshots.map(({ id, by }) => [id, by])).toEqual([
+      ['200-250', ['alice', 'bob']],
+      ['99-99', []],
     ]);
 
     for (const { id } of listed.value.snapshots) {
-      expect(await storage.restore(id)).toEqual({ ok: true, value: undefined });
+      expect(await storage.restore?.(id)).toEqual({
+        ok: true,
+        value: undefined,
+      });
     }
 
     const changesets = fetchMock.mock.calls.filter(([url]) =>
@@ -77,6 +131,45 @@ describe('createDocsVersionStorage', () => {
     expect(
       changesets.map(([url]) => new URL(String(url)).searchParams.get('from')),
     ).toEqual(['251', '100']);
+  });
+
+  it('pages through the history with an opaque cursor', async () => {
+    fetchMock.mockImplementation(async (input) => {
+      const url = new URL(String(input));
+      if (url.searchParams.get('order') === 'asc') {
+        return jsonResponse({ activity: [{ from: 10, to: 20, by: [] }] });
+      }
+      return jsonResponse({
+        activity: url.searchParams.has('to')
+          ? [{ from: 10, to: 20, by: [] }]
+          : [
+              { from: 300, to: 350, by: [] },
+              { from: 200, to: 250, by: [] },
+            ],
+      });
+    });
+    const storage = createStorage({ activityParams: { limit: 1 } });
+    const signal = new AbortController().signal;
+
+    const first = await storage.list(signal);
+    if (!first.ok) {
+      throw new Error('Expected history list');
+    }
+    expect(first.value.snapshots.map(({ id }) => id)).toEqual([
+      '300-350',
+      '9-9',
+    ]);
+    expect(first.value.nextCursor).toBeDefined();
+
+    const second = await storage.list(signal, first.value.nextCursor);
+    if (!second.ok) {
+      throw new Error('Expected history list');
+    }
+    expect(second.value.snapshots.map(({ id }) => id)).toEqual(['10-20']);
+    expect(second.value.nextCursor).toBeUndefined();
+    const lastUrl = new URL(String(fetchMock.mock.calls.at(-1)?.[0]));
+    expect(lastUrl.searchParams.get('to')).toBe('299');
+    expect(lastUrl.searchParams.get('limit')).toBe('2');
   });
 
   it.each([
@@ -104,7 +197,7 @@ describe('createDocsVersionStorage', () => {
   ])(
     'rejects malformed or unsafe ID %j before requesting history',
     async (id) => {
-      await expect(createStorage().restore(id)).rejects.toThrow(
+      await expect(createStorage().restore?.(id)).rejects.toThrow(
         'Invalid version timestamp',
       );
       expect(fetchMock).not.toHaveBeenCalled();
@@ -114,8 +207,8 @@ describe('createDocsVersionStorage', () => {
   it.each(['0-0', '0-9007199254740990'])(
     'accepts the safe boundary ID %s',
     async (id) => {
-      fetchMock.mockResolvedValue(new Response(null, { status: 403 }));
-      expect(await createStorage().restore(id)).toEqual({
+      fetchMock.mockResolvedValue(jsonResponse({ error: 'forbidden' }, 403));
+      expect(await createStorage().restore?.(id)).toEqual({
         ok: false,
         error: { type: 'forbidden' },
       });
@@ -126,7 +219,7 @@ describe('createDocsVersionStorage', () => {
     },
   );
 
-  it('preserves bounded requests, deleted editor descendants and other roots', async () => {
+  it('preserves deleted editor descendants and other roots', async () => {
     const history = new Y.Doc();
     try {
       const fragment = history.get('document-store');
@@ -145,51 +238,42 @@ describe('createDocsVersionStorage', () => {
       doc.get('document-store').delete(0, 1);
       history.get('metadata').setAttr('synced', true);
       fetchMock
-        .mockResolvedValueOnce(encodedResponse({ ydoc: retained }))
-        .mockResolvedValueOnce(new Response())
+        .mockResolvedValueOnce(jsonResponse({ ydoc: toBase64(retained) }))
+        .mockResolvedValueOnce(jsonResponse({ success: true }))
         .mockResolvedValueOnce(
-          encodedResponse({ doc: Y.encodeStateAsUpdate(history) }),
+          jsonResponse({ doc: toBase64(Y.encodeStateAsUpdate(history)) }),
         );
 
-      const storage = createStorage({
-        headers: { Authorization: 'Bearer test-token' },
-        queryParams: { custom: 'value' },
-      });
-      expect(await storage.restore('100-250')).toEqual({
+      const storage = createStorage();
+      expect(await storage.restore?.('100-250')).toEqual({
         ok: true,
         value: undefined,
       });
       expect(fetchMock).toHaveBeenCalledTimes(3);
       const [changeset, rollback, current] = fetchMock.mock.calls;
       expect(String(changeset[0])).toBe(
-        'https://example.test/collaboration/changeset/v1/org%2Fname/doc%2Fid?from=251&ydoc=true&custom=value',
+        'https://example.test/collaboration/changeset/v1/org-name/doc-id?from=251&ydoc=true',
       );
       expect(String(rollback[0])).toBe(
-        'https://example.test/collaboration/rollback/v1/org%2Fname/doc%2Fid?custom=value',
+        'https://example.test/collaboration/rollback/v1/org-name/doc-id',
       );
       expect(rollback[1]).toMatchObject({
         method: 'POST',
-        headers: {
-          Authorization: 'Bearer test-token',
-          'Content-Type': 'application/x-lib0any',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
-      const body = decodeAny(rollback[1]?.body as Uint8Array) as {
+      const body = JSON.parse(String(rollback[1]?.body)) as {
         from: number;
-        contentIds: Uint8Array;
+        contentIds: string;
       };
       expect(body.from).toBe(251);
-      expect(Y.decodeContentIds(body.contentIds)).toEqual({
+      expect(Y.decodeContentIds(fromBase64(body.contentIds))).toEqual({
         inserts: editorIds,
         deletes: editorIds,
       });
       expect(String(current[0])).toBe(
-        'https://example.test/collaboration/ydoc/v1/org%2Fname/doc%2Fid?custom=value',
+        'https://example.test/collaboration/ydoc/v1/org-name/doc-id',
       );
       for (const [, init] of fetchMock.mock.calls) {
-        expect(init?.headers).toMatchObject({
-          Authorization: 'Bearer test-token',
-        });
         expect(init?.signal).toBeInstanceOf(AbortSignal);
       }
       expect(doc.get('comments').toArray()).toEqual(['keep comment']);
@@ -203,8 +287,8 @@ describe('createDocsVersionStorage', () => {
   });
 
   it('stops before rollback when the bounded changeset is forbidden', async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 403 }));
-    expect(await createStorage().restore('100-250')).toEqual({
+    fetchMock.mockResolvedValue(jsonResponse({ error: 'forbidden' }, 403));
+    expect(await createStorage().restore?.('100-250')).toEqual({
       ok: false,
       error: { type: 'forbidden' },
     });
@@ -214,14 +298,22 @@ describe('createDocsVersionStorage', () => {
   it('preserves rollback conflicts without fetching or updating the live document', async () => {
     fetchMock
       .mockResolvedValueOnce(
-        encodedResponse({ ydoc: Y.encodeStateAsUpdate(doc) }),
+        jsonResponse({ ydoc: toBase64(Y.encodeStateAsUpdate(doc)) }),
       )
-      .mockResolvedValueOnce(new Response(null, { status: 409 }));
-    expect(await createStorage().restore('100-250')).toEqual({
+      .mockResolvedValueOnce(jsonResponse({ error: 'conflict' }, 409));
+    expect(await createStorage().restore?.('100-250')).toEqual({
       ok: false,
       error: { type: 'conflict' },
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(doc.get('document-store').toArray()).toEqual(['current']);
+  });
+
+  it('reports an unreachable server as a network error', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    expect(await createStorage().list(new AbortController().signal)).toEqual({
+      ok: false,
+      error: { type: 'network' },
+    });
   });
 });
