@@ -121,6 +121,30 @@ backend:
         python manage.py createsuperuser --email admin@example.com --password admin
     restartPolicy: Never
 
+  # Documents saved by the Yjs 13 editor, for the `docs` user of the realm, to
+  # check that the legacy corpus survives its migration to Yjs 14. A PostSync
+  # hook, run by every sync: the command does nothing once they exist.
+  job:
+    name: create-legacy-documents
+    command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        attempt=0
+        until python manage.py migrate --check > /dev/null 2>&1
+        do
+          attempt=$((attempt + 1))
+          if [ "$attempt" -ge 150 ]; then
+            echo "The database is still not migrated, giving up"
+            exit 1
+          fi
+          echo "Waiting for the database migrations (attempt $attempt)"
+          sleep 2
+        done
+
+        python manage.py create_legacy_documents --owner-email docs@example.com
+    restartPolicy: Never
+
   # Extra volume mounts to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumeMounts: {}
 
@@ -195,6 +219,13 @@ yhub:
     YHUB_S3_ACCESS_KEY_ID: dinum
     YHUB_S3_SECRET_ACCESS_KEY: password
     YHUB_S3_BUCKET_NAME: docs-media-storage
+    # the documents Django stored in the media bucket, among which the legacy
+    # documents of the `create-legacy-documents` job, seeded on first opening
+    SOFT_MIGRATION: true
+    LEGACY_S3_ENDPOINT_URL: http://dev-backend-minio.{{ .Namespace }}.svc.cluster.local:9000
+    LEGACY_S3_ACCESS_KEY_ID: dinum
+    LEGACY_S3_SECRET_ACCESS_KEY: password
+    LEGACY_S3_BUCKET_NAME: docs-media-storage
 
 
 docSpec:
