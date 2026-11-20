@@ -73,7 +73,10 @@ DOCKER_USER=$(id -u):$(id -g) docker compose run --rm --no-deps \
   `modal/`, `dropdown-menu/`, `quick-search/`). Reuse them before adding a new
   one; a change there affects every caller.
 - `src/api/`: `fetchAPI` (base URL, CSRF token, credentials), `APIError` and
-  `errorCauses`, `fetchCollaborationApi` for yhub's REST routes.
+  `errorCauses`, `fetchCollaborationApi` for yhub's REST routes. Talk to yhub
+  in json only (binary fields in base64): administration firewalls refuse its
+  `application/x-lib0any` answers, so never use a library client that asks for
+  them (BlockNote's yhub storage, the http fallback without `withJsonTransport`).
 - `src/stores/`: global Zustand stores (`useBroadcastStore` for cross-tab
   sync, `useFocusStore`, `useResponsiveStore`).
 - `src/features/service-worker/`: offline support.
