@@ -119,17 +119,13 @@ backend:
 
         echo "Database is ready"
         python manage.py createsuperuser --email admin@example.com --password admin
-    restartPolicy: Never
 
-  # Documents saved by the Yjs 13 editor, for the `docs` user of the realm, to
-  # check that the legacy corpus survives its migration to Yjs 14. A PostSync
-  # hook, run by every sync: the command does nothing once they exist.
-  job:
-    name: create-legacy-documents
-    command:
-      - "/bin/sh"
-      - "-c"
-      - |
+        # Documents saved by the Yjs 13 editor, for the `docs` user of the
+        # realm, to check that the legacy corpus survives its migration to Yjs
+        # 14. Here rather than in a PostSync hook, which ArgoCD never ran on
+        # the previews: this job, deleted once finished, then shows as missing
+        # and the sync does not complete. This job runs on every sync instead:
+        # the command does what is left to do, nothing once done.
         attempt=0
         until python manage.py migrate --check > /dev/null 2>&1
         do
