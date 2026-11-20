@@ -572,17 +572,11 @@ def test_api_documents_duplicate_non_root_document_create_right_on_parent(via):
 
 
 @pytest.mark.parametrize("reach", ["authenticated", "public"])
-@pytest.mark.parametrize(
-    "link_role, is_sibling",
-    [("reader", False), ("commenter", False), ("editor", True)],
-)
-def test_api_documents_duplicate_non_root_document_parent_link_role(
-    reach, link_role, is_sibling
-):
+@pytest.mark.parametrize("link_role", ["reader", "commenter", "editor"])
+def test_api_documents_duplicate_non_root_document_parent_link_role(reach, link_role):
     """
-    The link of the parent counts in the right to create children in it: an
-    editor link puts the copy beside the sub-document, a lower one makes it a
-    new root owned by the user.
+    A link on the parent, whatever its role, does not give the right to create
+    children in it: the copy becomes a new root owned by the user.
     """
     user = factories.UserFactory()
     client = APIClient()
@@ -599,12 +593,10 @@ def test_api_documents_duplicate_non_root_document_parent_link_role(
 
     assert response.status_code == 201
     duplicated_document = models.Document.objects.get(id=response.json()["id"])
-    if is_sibling:
-        assert duplicated_document.is_sibling_of(child)
-        assert duplicated_document.accesses.count() == 0
-    else:
-        assert duplicated_document.is_root()
-        assert duplicated_document.accesses.get().role == "owner"
+    assert duplicated_document.is_root()
+    access = duplicated_document.accesses.get()
+    assert access.role == "owner"
+    assert access.user == user
 
 
 def test_api_documents_duplicate_with_descendants_no_create_right_on_parent():
