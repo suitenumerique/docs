@@ -15,9 +15,8 @@
  * Returns the ids it dropped, which is what the tests read.
  */
 
-import { openDB } from 'idb';
+import { deleteDB, openDB } from 'idb';
 import { validate as uuidValidate } from 'uuid';
-import { clearDocument } from 'y-indexeddb';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -41,7 +40,7 @@ const DELETE_TIMEOUT_MS = 4000;
 
 const drop = (docId: string) =>
   Promise.race([
-    clearDocument(docId),
+    deleteDB(docId),
     new Promise<never>((_, reject) =>
       setTimeout(
         () => reject(new Error(`deleting ${docId} timed out`)),

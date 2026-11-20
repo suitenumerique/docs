@@ -2,6 +2,8 @@
 // at import time. Tested directly: no yhub, no stores, no mocks — the env goes
 // in, and the exported constants (or the startup throw) come out.
 
+import { cpus } from 'node:os';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Only what `config.ts` looks at; REDIS/POSTGRES are passed straight through to
@@ -22,6 +24,7 @@ beforeEach(() => {
     'YHUB_ORG',
     'REDIS_PREFIX',
     'YHUB_TASK_CONCURRENCY',
+    'YHUB_COMPUTE_POOL_SIZE',
     'YHUB_TASK_DEBOUNCE_MS',
     'YHUB_MIN_MESSAGE_LIFETIME_MS',
     'YHUB_BACKEND_REQUEST_TIMEOUT_MS',
@@ -64,6 +67,32 @@ describe('YHUB_ROLE', () => {
 });
 
 describe('the numeric tuning knobs', () => {
+  it('keeps yhub’s CPU-based compute pool default when unset or blank', async () => {
+    expect((await load()).COMPUTE_POOL_SIZE).toBe(
+      Math.max(1, cpus().length - 1),
+    );
+    vi.resetModules();
+    vi.stubEnv('YHUB_COMPUTE_POOL_SIZE', undefined);
+    expect((await load()).COMPUTE_POOL_SIZE).toBe(
+      Math.max(1, cpus().length - 1),
+    );
+  });
+
+  it('accepts a single compute worker', async () => {
+    vi.stubEnv('YHUB_COMPUTE_POOL_SIZE', '1');
+    expect((await load()).COMPUTE_POOL_SIZE).toBe(1);
+  });
+
+  it.each(['0', '-1', '1.5', 'abc'])(
+    'refuses an invalid compute pool size: %s',
+    async (value) => {
+      vi.stubEnv('YHUB_COMPUTE_POOL_SIZE', value);
+      await expect(load()).rejects.toThrow(
+        /YHUB_COMPUTE_POOL_SIZE must be an integer >= 1/,
+      );
+    },
+  );
+
   it('refuses a non-integer concurrency', async () => {
     vi.stubEnv('YHUB_TASK_CONCURRENCY', 'abc');
     await expect(load()).rejects.toThrow(
@@ -203,6 +232,21 @@ describe('the authz cache TTLs', () => {
   it('refuse a non-integer TTL', async () => {
     vi.stubEnv('YHUB_IDENTITY_CACHE_TTL_MS', 'abc');
     await expect(load()).rejects.toThrow(/YHUB_IDENTITY_CACHE_TTL_MS/);
+  });
+});
+
+describe('YHUB_APPEND_YDOC_ENABLED', () => {
+  it('is off unless set to true: it lets the backend forge authors', async () => {
+    vi.stubEnv('YHUB_APPEND_YDOC_ENABLED', '');
+    expect((await load()).APPEND_YDOC_ENABLED).toBe(false);
+    vi.resetModules();
+    vi.stubEnv('YHUB_APPEND_YDOC_ENABLED', '1');
+    expect((await load()).APPEND_YDOC_ENABLED).toBe(false);
+  });
+
+  it('is on when set to true', async () => {
+    vi.stubEnv('YHUB_APPEND_YDOC_ENABLED', 'true');
+    expect((await load()).APPEND_YDOC_ENABLED).toBe(true);
   });
 });
 

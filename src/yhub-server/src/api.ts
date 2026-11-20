@@ -20,6 +20,7 @@ import * as Y from '@y/y';
 import { backendPublicJwk } from './backend.js';
 import { invalidateDocumentAuthz } from './authz-cache.js';
 import {
+  APPEND_YDOC_ENABLED,
   EMPTY_UPDATE_MAX_BYTES,
   MAX_CREATE_BYTES,
   ORG,
@@ -488,4 +489,71 @@ export const api = [
       },
     },
   }),
+  // POST /collaboration/append-ydoc/v1/{org}/{docid} — QA only, mounted with
+  // `YHUB_APPEND_YDOC_ENABLED`: write a RAW binary update into a document in
+  // the name of the user `X-User-Id` names, as if they had typed it.
+  //
+  // `create-ydoc` without its strict create: the preview environments seed
+  // documents with parts written by several users, to check the attribution
+  // and the history. Admin token only — the browser grants name no such route,
+  // and the handler refuses anything else anyway. Deletions are attributed
+  // too, so an update that only deletes is accepted.
+  ...(APPEND_YDOC_ENABLED
+    ? [
+        createApiEndpoint('append-ydoc', {
+          post: {
+            handler: async (req) => {
+              checkPermissions(
+                req.permissions,
+                createDocumentPermissions({ ydoc: '--u-' }),
+              );
+              const authInfo = req.authInfo as AppAuthInfo | null;
+              if (authInfo?.admin !== true) {
+                return jsonResponse(403, { error: 'Admin token required' });
+              }
+              const userid = req.headers['x-user-id'];
+              if (!userid) {
+                return jsonResponse(400, { error: 'X-User-Id is required' });
+              }
+              if (req.org !== ORG) {
+                return jsonResponse(400, { error: 'Unknown org' });
+              }
+              if (!UUID4.test(req.docid)) {
+                return jsonResponse(400, { error: 'Room name is invalid' });
+              }
+              if (req.branch !== 'main') {
+                return jsonResponse(400, { error: 'Unknown branch' });
+              }
+              const body = await req.bytes();
+              const update = new Uint8Array(
+                body.buffer,
+                body.byteOffset,
+                body.byteLength,
+              );
+              if (update.byteLength > MAX_CREATE_BYTES) {
+                return jsonResponse(413, { error: 'Update too large' });
+              }
+              let contentids: Y.ContentIds;
+              try {
+                contentids = Y.createContentIdsFromUpdate(update);
+              } catch {
+                return jsonResponse(400, { error: 'Invalid Yjs update' });
+              }
+              if (
+                contentids.inserts.clients.size === 0 &&
+                contentids.deletes.clients.size === 0
+              ) {
+                return jsonResponse(400, { error: 'Empty update' });
+              }
+              await req.yhub.stream.addMessage(req.docRef, {
+                type: 'ydoc:update:v1',
+                contentmap: attributeTo(contentids, userid),
+                update,
+              });
+              return jsonResponse(200, { message: 'Update appended' });
+            },
+          },
+        }),
+      ]
+    : []),
 ];

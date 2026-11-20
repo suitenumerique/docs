@@ -9,6 +9,15 @@ in [`impress/README.md`](impress/README.md).
 - `impress/`: the Helm chart, its templates and default values
 - `env.d/{env}/`: the values of each environment (`dev` = local, `feature` = CI)
 
+The `feature` environment (the preview of a pull request labelled `preview`)
+seeds documents saved by the Yjs 13 editor, every block included, for the
+`docs`/`docs` user: the `createsuperuser` job runs `create_legacy_documents`, and yhub
+migrates them on first opening (`SOFT_MIGRATION`). Three dummy editors (Alice,
+Bob, Chloé) then edit some of them, in their name (`YHUB_APPEND_YDOC_ENABLED`,
+QA only), so the attribution shows their parts apart from the legacy content. `python manage.py
+migrate_documents`, run in the backend pod, replays their S3 versions too (the
+full migration), such as the three revisions of "Edited many times".
+
 ## Local cluster
 
 ```bash

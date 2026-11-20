@@ -8,12 +8,12 @@ import {
   CommentsExtension,
   DefaultThreadStoreAuth,
 } from '@blocknote/core/comments';
-import { YjsThreadStore, withCollaboration } from '@blocknote/core/yjs';
+import { YjsThreadStore, withCollaboration } from '@blocknote/core/y';
 import { createReactInlineMathSpec } from '@blocknote/math-block';
 import { Node } from '@tiptap/pm/model';
+import { yUndoPluginKey } from '@y/prosemirror';
+import * as Y from '@y/y';
 import { afterEach, describe, expect, it } from 'vitest';
-import { yUndoPluginKey } from 'y-prosemirror';
-import * as Y from 'yjs';
 
 import {
   COMMENT_MARKS_PROP,
@@ -53,7 +53,7 @@ afterEach(() => {
 const createThreadStore = () =>
   new YjsThreadStore(
     'user',
-    new Y.Doc().getMap('threads'),
+    new Y.Doc().get('threads'),
     new DefaultThreadStoreAuth('user', 'editor'),
   );
 
@@ -65,7 +65,7 @@ const createEditor = (
     withCollaboration({
       schema,
       collaboration: {
-        fragment: ydoc.getXmlFragment(FRAGMENT),
+        fragment: ydoc.get(FRAGMENT),
         user: { name: 'user', color: '#000000' },
         provider: undefined,
       },
@@ -101,13 +101,21 @@ const findNode = (editor: BlockNoteEditor<any, any, any>, type: string) => {
   return found;
 };
 
+const findYNode = (parent: Y.Node, name: string): Y.Node | undefined => {
+  for (const child of parent.toArray()) {
+    if (child instanceof Y.Node) {
+      const found = child.name === name ? child : findYNode(child, name);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return undefined;
+};
+
 const findYElement = (ydoc: Y.Doc, nodeName: string) => {
-  const [element] = ydoc
-    .getXmlFragment(FRAGMENT)
-    .createTreeWalker(
-      (type) => type instanceof Y.XmlElement && type.nodeName === nodeName,
-    );
-  if (!(element instanceof Y.XmlElement)) {
+  const element = findYNode(ydoc.get(FRAGMENT), nodeName);
+  if (!element) {
     throw new Error(`No ${nodeName} element`);
   }
   return element;
@@ -174,9 +182,6 @@ describe('InlineNodeCommentsExtension', () => {
     expect(commentsOf(findNode(editor, ATOM))).toEqual([
       { threadId, orphan: false },
     ]);
-    expect(findYElement(ydoc, ATOM).getAttribute(COMMENT_MARKS_PROP)).toBe(
-      JSON.stringify([{ threadId, orphan: false }]),
-    );
 
     const reloaded = createEditor(reload(ydoc), threadStore);
 
@@ -224,9 +229,6 @@ describe('InlineNodeCommentsExtension', () => {
     expect(commentsOf(findNode(editor, ATOM))).toEqual([
       { threadId, orphan: true },
     ]);
-    expect(findYElement(ydoc, ATOM).getAttribute(COMMENT_MARKS_PROP)).toBe(
-      JSON.stringify([{ threadId, orphan: true }]),
-    );
 
     // Without the threads, so the orphan state can only come from Yjs.
     const reloaded = createEditor(reload(ydoc));
@@ -249,9 +251,7 @@ describe('InlineNodeCommentsExtension', () => {
       .unsetMark('comment')
       .run();
 
-    expect(
-      findYElement(ydoc, ATOM).getAttribute(COMMENT_MARKS_PROP),
-    ).toBeUndefined();
+    expect(findYElement(ydoc, ATOM).getAttr(COMMENT_MARKS_PROP)).toBeNull();
     expect(
       commentsOf(findNode(createEditor(reload(ydoc), threadStore), ATOM)),
     ).toEqual([]);
@@ -290,9 +290,7 @@ describe('InlineNodeCommentsExtension', () => {
 
     expect(commentsOf(findNode(editor, ATOM))).toEqual([]);
     expect(commentsOf(findNode(editor, 'text'))).toEqual([]);
-    expect(
-      findYElement(ydoc, ATOM).getAttribute(COMMENT_MARKS_PROP),
-    ).toBeUndefined();
+    expect(findYElement(ydoc, ATOM).getAttr(COMMENT_MARKS_PROP)).toBeNull();
 
     editor.redo();
 
@@ -301,24 +299,35 @@ describe('InlineNodeCommentsExtension', () => {
     ]);
   });
 
-  it('keeps the attribute out of Yjs without comment, the blocks and the DOM', async () => {
+  it('writes no attribute, keeps it out of the blocks and the DOM', async () => {
     const ydoc = new Y.Doc();
     const threadStore = createThreadStore();
     const editor = createEditor(ydoc, threadStore);
     writeContent(editor);
 
-    expect(
-      findYElement(ydoc, ATOM).getAttribute(COMMENT_MARKS_PROP),
-    ).toBeUndefined();
-
     const threadId = await createThread(threadStore);
     commentFirstParagraph(editor, threadId);
 
-    expect(findYElement(ydoc, ATOM).getAttribute(COMMENT_MARKS_PROP)).toContain(
-      threadId,
-    );
+    // @y/prosemirror stores the marks: the attribute is only read
+    expect(findYElement(ydoc, ATOM).getAttr(COMMENT_MARKS_PROP)).toBeNull();
     expect(JSON.stringify(editor.document)).not.toContain(COMMENT_MARKS_PROP);
     expect(editor.domElement?.innerHTML).not.toMatch(/comment-?marks/i);
+  });
+
+  it('restores a comment only kept in the attribute', () => {
+    const ydoc = new Y.Doc();
+    writeContent(createEditor(ydoc));
+    // As stored before @y/prosemirror kept the marks of the inline nodes.
+    findYElement(ydoc, ATOM).setAttr(
+      COMMENT_MARKS_PROP,
+      JSON.stringify([{ threadId: 'thread-1', orphan: false }]),
+    );
+
+    const editor = createEditor(reload(ydoc));
+
+    expect(commentsOf(findNode(editor, ATOM))).toEqual([
+      { threadId: 'thread-1', orphan: false },
+    ]);
   });
 
   it.each(['{x', '{}', '[{"threadId":5}]', '[{"orphan":true}]'])(
@@ -326,14 +335,14 @@ describe('InlineNodeCommentsExtension', () => {
     (value) => {
       const ydoc = new Y.Doc();
       writeContent(createEditor(ydoc));
-      findYElement(ydoc, ATOM).setAttribute(COMMENT_MARKS_PROP, value);
+      findYElement(ydoc, ATOM).setAttr(COMMENT_MARKS_PROP, value);
 
       const reloaded = reload(ydoc);
       const editor = createEditor(reloaded);
 
       expect(commentsOf(findNode(editor, ATOM))).toEqual([]);
-      // y-prosemirror deletes an element that it cannot build.
-      expect(findYElement(reloaded, ATOM)).toBeInstanceOf(Y.XmlElement);
+      // @y/prosemirror deletes an element that it cannot build.
+      expect(findYElement(reloaded, ATOM)).toBeInstanceOf(Y.Node);
     },
   );
 });

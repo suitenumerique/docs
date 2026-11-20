@@ -2,7 +2,6 @@ import { createExtension } from '@blocknote/core';
 import { Extension } from '@tiptap/core';
 import { Mark, MarkType, Node } from '@tiptap/pm/model';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
-import { ySyncPluginKey } from 'y-prosemirror';
 
 /**
  * A comment on an inline node without content (doc link, user mention) is a
@@ -11,8 +10,10 @@ import { ySyncPluginKey } from 'y-prosemirror';
  * (https://github.com/yjs/y-prosemirror/issues/47). The mark was then lost on
  * reload and never reached the collaborators.
  *
- * These nodes get a hidden attribute holding a copy of their comment marks,
- * which Yjs does store.
+ * These nodes got a hidden attribute holding a copy of their comment marks,
+ * which Yjs does store. @y/prosemirror stores the marks of these nodes now:
+ * the attribute is no longer written, it only restores the comments of the
+ * documents written before.
  *
  * TODO: drop this extension once BlockNote keeps the comments of inline
  * nodes itself (https://github.com/TypeCellOS/BlockNote/issues/3358, see
@@ -40,8 +41,6 @@ const InlineNodeCommentsAttribute = Extension.create({
       {
         types: COMMENTABLE_INLINE_NODES,
         attributes: {
-          // `null` is never written to Yjs, so the nodes without comment cost
-          // nothing.
           [COMMENT_MARKS_PROP]: {
             default: null,
             rendered: false,
@@ -57,29 +56,13 @@ const COMMENT_MARK = 'comment';
 
 const PLUGIN_KEY = new PluginKey('docs-inline-node-comments');
 
+// Meta that @y/prosemirror sets on the transactions it applies from Yjs.
+const Y_SYNC_TRANSACTION_META = 'y-sync-transaction';
+// Meta that @y/prosemirror's undo plugin takes as a change from Yjs.
+const Y_SYNC_APPEND_META = 'y-sync-append';
+
 const hasCommentMarksProp = (node: Node) =>
   !!node.type.spec.attrs && COMMENT_MARKS_PROP in node.type.spec.attrs;
-
-/**
- * Sorted, so that the same marks always give the same value and no update is
- * sent to Yjs when only their order changed.
- */
-export const serializeCommentMarks = (
-  marks: readonly Mark[],
-  markType: MarkType,
-) => {
-  const comments = marks
-    .filter((mark) => mark.type === markType)
-    .map((mark) => ({
-      threadId: String(mark.attrs.threadId),
-      orphan: mark.attrs.orphan === true,
-    }))
-    .sort((a, b) =>
-      a.threadId < b.threadId ? -1 : a.threadId > b.threadId ? 1 : 0,
-    );
-
-  return comments.length ? JSON.stringify(comments) : null;
-};
 
 /**
  * The value comes from Yjs, so anything unexpected is ignored rather than
@@ -125,12 +108,15 @@ export const parseCommentMarks = (
 };
 
 /**
- * Keeps the comment marks of the inline nodes and their `commentMarks` prop
- * in sync:
- * - a local change writes the marks into the prop, which y-prosemirror sends
- *   to Yjs;
- * - a change coming from Yjs (load, collaborator, undo) rebuilds the nodes
- *   without marks, so the marks are restored from the prop.
+ * Restores the comment marks of the inline nodes from their `commentMarks`
+ * prop, when a change coming from Yjs (load, collaborator, undo) brings a node
+ * without any: a document written before @y/prosemirror stored them.
+ *
+ * The prop is no longer written. @y/prosemirror stores the marks, and writing
+ * the prop in the same transaction as a mark kept its sync binding correcting
+ * the document forever: the tab froze as soon as a doc link or a mention was
+ * commented. A comment restored from a stale prop is harmless, its thread
+ * being resolved or deleted makes it orphan.
  */
 export const InlineNodeCommentsExtension = createExtension(() => ({
   key: 'inlineNodeComments',
@@ -156,13 +142,13 @@ export const InlineNodeCommentsExtension = createExtension(() => ({
           newState.doc.content.size,
         );
 
-        const isFromYjs = transactions.some(
-          (tr) =>
-            (
-              tr.getMeta(ySyncPluginKey) as
-                { isChangeOrigin?: boolean } | undefined
-            )?.isChangeOrigin,
-        );
+        if (
+          !transactions.some(
+            (tr) => tr.getMeta(Y_SYNC_TRANSACTION_META) != null,
+          )
+        ) {
+          return null;
+        }
 
         const tr = newState.tr;
         newState.doc.nodesBetween(from, to, (node, pos, parent) => {
@@ -170,25 +156,16 @@ export const InlineNodeCommentsExtension = createExtension(() => ({
             return true;
           }
 
-          const marksValue = serializeCommentMarks(node.marks, markType);
-
-          if (isFromYjs) {
-            const restoredMarks = parseCommentMarks(
-              node.attrs[COMMENT_MARKS_PROP],
-              markType,
+          // Only a node without comment marks gets them back: rewriting the
+          // marks a node holds, `orphan` flag included, fights the corrections
+          // of the sync binding just as well.
+          if (
+            !node.marks.some((mark) => mark.type === markType) &&
+            parent?.type.allowsMarkType(markType)
+          ) {
+            parseCommentMarks(node.attrs[COMMENT_MARKS_PROP], markType).forEach(
+              (mark) => tr.addNodeMark(pos, mark),
             );
-
-            if (
-              serializeCommentMarks(restoredMarks, markType) !== marksValue &&
-              parent?.type.allowsMarkType(markType)
-            ) {
-              node.marks
-                .filter((mark) => mark.type === markType)
-                .forEach((mark) => tr.removeNodeMark(pos, mark));
-              restoredMarks.forEach((mark) => tr.addNodeMark(pos, mark));
-            }
-          } else if (node.attrs[COMMENT_MARKS_PROP] !== marksValue) {
-            tr.setNodeAttribute(pos, COMMENT_MARKS_PROP, marksValue);
           }
 
           return false;
@@ -198,18 +175,10 @@ export const InlineNodeCommentsExtension = createExtension(() => ({
           return null;
         }
 
-        if (isFromYjs) {
-          // The marks come from Yjs: y-prosemirror and the other plugins
-          // must not take them as a local change.
-          tr.setMeta(ySyncPluginKey, { isChangeOrigin: true });
-        } else if (
-          transactions[transactions.length - 1].getMeta('addToHistory') ===
-          false
-        ) {
-          // y-prosemirror reads `addToHistory` from the last transaction only,
-          // this one must not change what the user's change asked for.
-          tr.setMeta('addToHistory', false);
-        }
+        // The marks come from Yjs: the undo history must not take them as a
+        // local change.
+        tr.setMeta(Y_SYNC_APPEND_META, true);
+        tr.setMeta('addToHistory', false);
 
         return tr;
       },

@@ -299,6 +299,25 @@ class YHubService:
             },
         )
 
+    def append_ydoc(self, document, update):
+        """
+        Write a raw binary update into a document, in the name of the user the
+        service is bound to, as if they had typed it.
+
+        QA only: the route is mounted by `YHUB_APPEND_YDOC_ENABLED`, which the
+        preview environments turn on to seed documents written by several
+        users. Elsewhere it answers 404, reported as an `APIError`.
+        """
+        return self.request(
+            "post",
+            self.build_url("append-ydoc", document),
+            data=update,
+            headers={
+                "Content-Type": "application/octet-stream",
+                **self.build_user_header(self.user_id),
+            },
+        )
+
     def delete_ydoc(self, document):
         """
         Delete a document on the collaboration server.

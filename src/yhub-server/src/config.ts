@@ -7,6 +7,8 @@
  * `backend.ts`, `api.ts` and `server.ts` import their settings from here; the
  * `*_FILE` secret indirection is `env.ts`.
  */
+import { cpus } from 'node:os';
+
 import { secret } from './env.js';
 
 // A numeric setting, read from the environment and refused rather than guessed
@@ -99,6 +101,12 @@ export const RUNS_WORKER = ROLE !== 'server';
 // point where a pod runs out of memory, each task holding the document it
 // merges.
 export const TASK_CONCURRENCY = intEnv('YHUB_TASK_CONCURRENCY', 5, 1);
+// The compute threads are created on demand. Keep yhub's default when unset,
+// but let small deployments cap the CPU and document-memory peaks explicitly.
+export const COMPUTE_POOL_SIZE = intEnv(
+  'YHUB_COMPUTE_POOL_SIZE',
+  Math.max(1, cpus().length - 1),
+);
 // Where the blobs of a compaction go — the garbage-collected document, the one
 // that keeps its history, the content map and the content ids. yhub writes the
 // four of them into its own postgres; a persistence plugin takes them out of
@@ -161,6 +169,12 @@ export const EMPTY_UPDATE_MAX_BYTES = 3;
 // freshly-converted snapshot (typically KBs); anything bigger belongs on the
 // websocket path.
 export const MAX_CREATE_BYTES = 10 * 1024 * 1024;
+// QA only: mounts `append-ydoc`, through which the backend writes an update
+// into an existing document in the name of any user — what the preview
+// environments seed documents written by several people with. Never in
+// production: whoever holds the admin token could forge who wrote what.
+export const APPEND_YDOC_ENABLED =
+  process.env.YHUB_APPEND_YDOC_ENABLED === 'true';
 
 export const BACKEND_NOTIFY_TIMEOUT_MS = 5000;
 // The calls `backendFetch` makes on the connection path (`users/me`,

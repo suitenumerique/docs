@@ -1,44 +1,24 @@
-import { HttpProvider, createWebsocketFallback } from '@y/yhub-http-fallback';
-import { IndexeddbPersistence } from 'y-indexeddb';
-import { WebsocketProvider } from 'y-websocket';
-import * as Y from 'yjs';
+import { Awareness } from '@y/protocols/awareness';
+import { WebsocketProvider } from '@y/websocket';
+import * as Y from '@y/y';
 import { create } from 'zustand';
 
 import { collaborationHttpTarget } from '@/core/config/hooks/useCollaborationUrl';
 import { Base64 } from '@/docs/doc-management';
 
 import { withJsonTransport } from '../api/httpFallbackJson';
+import { HttpFallback } from '../httpFallback';
 import { rememberLocalDoc } from '../localDocs';
+import { LocalPersistence } from '../localPersistence';
 
-/** Lowest polling interval of the http fallback, mirrored by the backend setting. */
-const HTTP_SYNC_INTERVAL_MIN_MS = 5000;
-
-/**
- * `readOnly` decides whether this client may publish presence. It has to be known
- * when the providers are built, not merely when the editor renders: the http
- * fallback either carries an awareness instance or does not, and there is no
- * middle setting (see `createProvider`).
- */
 export interface CreateProviderOptions {
   readOnly?: boolean;
-  /**
-   * Whether the http fallback talks json, with the binary fields in base64,
-   * or lib0-any (`COLLABORATION_HTTP_FALLBACK_JSON_ENABLED`)
-   */
   httpJson?: boolean;
-  /**
-   * How often the http fallback polls, in milliseconds (`COLLABORATION_HTTP_FALLBACK_SYNC_INTERVAL`).
-   * Left undefined, the provider's own default applies.
-   */
   httpSyncInterval?: number;
-  /**
-   * Whether an editor carries presence on the http fallback
-   * (`COLLABORATION_HTTP_FALLBACK_AWARENESS_ENABLED`). A reader never does. Defaults to true.
-   */
   httpAwareness?: boolean;
 }
 
-export interface UseCollaborationStore {
+interface UseCollaborationStore {
   createProvider: (
     providerUrl: string,
     storeId: string,
@@ -49,9 +29,8 @@ export interface UseCollaborationStore {
   setReady: (value: boolean) => void;
   pauseForInactivity: () => void;
   resumeFromInactivity: () => void;
-  provider: WebsocketProvider | undefined;
-  httpProvider: HttpProvider | undefined;
-  persistence: IndexeddbPersistence | undefined;
+  provider?: WebsocketProvider;
+  persistence?: LocalPersistence;
   isConnected: boolean;
   isReady: boolean;
   isSynced: boolean;
@@ -62,9 +41,24 @@ export interface UseCollaborationStore {
   reconnect: () => void;
 }
 
-const defaultValues = {
+const RECONNECT_JITTER_MAX_MS = 3000;
+const hasContent = (doc: Y.Doc) => doc.get('document-store').length > 0;
+
+let lostConnectionTimeout: ReturnType<typeof setTimeout>;
+let fallbackTimeout: ReturnType<typeof setTimeout>;
+let fallback: HttpFallback | undefined;
+
+const defaultValues: Omit<
+  UseCollaborationStore,
+  | 'createProvider'
+  | 'destroyProvider'
+  | 'setReady'
+  | 'pauseForInactivity'
+  | 'resumeFromInactivity'
+  | 'resetLostConnection'
+  | 'reconnect'
+> = {
   provider: undefined,
-  httpProvider: undefined,
   persistence: undefined,
   isConnected: false,
   isReady: false,
@@ -74,384 +68,210 @@ const defaultValues = {
   isPermanentlyClosed: false,
 };
 
-/**
- * When a massive simultaneous disconnection occurs (e.g. infra restart), all
- * clients would reconnect and invalidate their queries at exactly the same
- * time, causing a possible DB spike. Adding random jitter spreads these events over a
- * time window so the load is absorbed gradually.
- */
-const RECONNECT_JITTER_MAX_MS = 3000;
+export const useCollaborationStore = create<UseCollaborationStore>()(
+  (set, get) => ({
+    ...defaultValues,
+    createProvider: (
+      wsUrl,
+      storeId,
+      initialDoc,
+      {
+        readOnly = false,
+        httpJson = false,
+        httpSyncInterval,
+        httpAwareness = true,
+      } = {},
+    ) => {
+      const doc = new Y.Doc({ guid: storeId });
+      if (initialDoc) {
+        Y.applyUpdate(doc, Buffer.from(initialDoc, 'base64'));
+      }
 
-/**
- * The http statuses with which the collaboration server refuses a caller rather than fails:
- * signed out, not allowed (or no longer allowed to write), or a document that is gone.
- */
-const ACCESS_REFUSED_STATUSES = [401, 403, 404];
+      const awareness = new Awareness(doc);
+      if (readOnly) {
+        // Readers can receive remote presence, but must not publish their own.
+        awareness.setLocalState(null);
+      }
 
-let lostConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
-/**
- * Uninstalls the http fallback, or undefined while it is not installed. Held here rather than
- * in the store: nothing renders from it, and it must survive `set(defaultValues)`.
- */
-let stopFallback: (() => void) | undefined;
+      let persistence: LocalPersistence | undefined;
+      if (typeof indexedDB !== 'undefined') {
+        try {
+          persistence = new LocalPersistence(storeId, doc, () => {
+            if (hasContent(doc)) {
+              set({ isReady: true });
+            }
+          });
+          void rememberLocalDoc(storeId);
+        } catch (error) {
+          console.error('Failed to open the local copy of the document', error);
+        }
+      }
 
-/**
- * Run the http provider only while the socket is not working, and stop it as soon as the socket
- * is back. The helper follows `provider.shouldConnect`, so a connection closed from here —
- * `pauseForInactivity` — stops both transports and revives neither until `connect()`.
- */
-const installFallback = (
-  provider: WebsocketProvider,
-  httpProvider: HttpProvider | undefined,
-) => {
-  if (httpProvider && !stopFallback) {
-    stopFallback = createWebsocketFallback(provider, httpProvider);
-  }
-};
+      const provider = new WebsocketProvider(wsUrl, storeId, doc, {
+        disableBc: true,
+        maxBackoffTime: 30000,
+        resyncInterval: 20000,
+        awareness,
+      });
 
-/**
- * Stop polling and stay stopped. The helper retries a provider that gave up every 30s, which is
- * right for a network outage and wrong for a document that answered.
- */
-const suspendFallback = (httpProvider: HttpProvider | undefined) => {
-  stopFallback?.();
-  stopFallback = undefined;
-  httpProvider?.disconnect();
-};
+      const target = collaborationHttpTarget(wsUrl);
+      const carriesAwareness = !readOnly && httpAwareness;
+      const pollInterval = Math.max(5000, httpSyncInterval ?? 10000);
+      const send: typeof fetch = (input, init) => fetch(input, init);
+      fallback = target
+        ? new HttpFallback(
+            doc,
+            `${target.serverUrl}/ydoc/v1/${target.org}/${storeId}?branch=main&gc=true&awareness=${carriesAwareness}`,
+            carriesAwareness ? awareness : undefined,
+            () => set({ isSynced: true, isReady: true }),
+            () => {
+              provider.shouldConnect = false;
+              provider.disconnect();
+              clearTimeout(lostConnectionTimeout);
+              clearTimeout(fallbackTimeout);
+              set({
+                isConnected: false,
+                hasLostConnection: false,
+                isPermanentlyClosed: true,
+              });
+            },
+            readOnly,
+            carriesAwareness ? Math.min(pollInterval, 15000) : pollInterval,
+            httpJson ? withJsonTransport(send) : send,
+          )
+        : undefined;
+      const startFallback = () => {
+        clearTimeout(fallbackTimeout);
+        if (provider.shouldConnect && !get().isPausedForInactivity) {
+          fallback?.connect();
+        }
+      };
+      const waitForFallback = () => {
+        clearTimeout(fallbackTimeout);
+        fallbackTimeout = setTimeout(startFallback, 5000);
+      };
+      waitForFallback();
 
-/**
- * What a reader's `PATCH /ydoc` becomes: dropped here, and reported as accepted.
- * A reader may not write.
- */
-const readerWriteDropped = () =>
-  Promise.resolve(new Response(null, { status: 204 }));
+      const syncState = () => {
+        const isSynced = provider.synced || (fallback?.synced ?? false);
+        set({
+          isSynced,
+          isReady: get().isReady || isSynced || hasContent(doc),
+        });
+      };
 
-/**
- * Keep a local copy of the document, when the browser lets us.
- *
- * `indexedDB` is absent more often than it looks - a browser told to block site
- * data, some private windows, and every non-browser context this module is
- * imported into. Local persistence is a convenience, so a browser without it
- * gets an editor that works exactly as it did before rather than no editor:
- * `undefined` here, and every caller treats that as "no local copy".
- */
-const createPersistence = (storeId: string, doc: Y.Doc) => {
-  if (typeof indexedDB === 'undefined') {
-    return undefined;
-  }
-
-  try {
-    return new IndexeddbPersistence(storeId, doc);
-  } catch (error) {
-    console.error('Failed to open the local copy of the document', error);
-    return undefined;
-  }
-};
-
-/**
- * An empty document is not worth rendering yet: on a device that never opened the doc it would
- * show the empty-doc placeholder until the server's content lands, which reads as a deleted doc.
- */
-const hasContent = (doc: Y.Doc) =>
-  doc.getXmlFragment('document-store').length > 0;
-
-export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
-  ...defaultValues,
-  createProvider: (
-    wsUrl,
-    storeId,
-    initialDoc,
-    {
-      httpAwareness = true,
-      httpJson = false,
-      httpSyncInterval,
-      readOnly = false,
-    } = {},
-  ) => {
-    const doc = new Y.Doc({
-      guid: storeId,
-    });
-
-    if (initialDoc) {
-      Y.applyUpdate(doc, Buffer.from(initialDoc, 'base64'));
-    }
-
-    /**
-     * Used for the offline mode, it keeps a local copy of the document in IndexedDB so that
-     * the editor can display the last known state even when the network is unavailable.
-     */
-    const persistence = createPersistence(storeId, doc);
-
-    if (persistence) {
-      // Record the local copy immediately to prevent it from being swept as an orphan.
-      void rememberLocalDoc(storeId);
-
-      /**
-       * The editor waits on `isReady` (see `DocEditor`), and local content is enough to render:
-       * whatever the connection then brings merges into what is already on screen. An empty local
-       * copy is not (see `hasContent`): it waits for the sync.
-       */
-      persistence.on('synced', () => {
-        if (hasContent(doc)) {
-          set({ isReady: true });
+      provider.on('status', ({ status }) => {
+        if (status === 'connected') {
+          clearTimeout(lostConnectionTimeout);
+          clearTimeout(fallbackTimeout);
+          fallback?.disconnect();
+          set({ isConnected: true });
+        } else if (status === 'disconnected' && provider.shouldConnect) {
+          waitForFallback();
         }
       });
-    }
 
-    const provider = new WebsocketProvider(wsUrl, storeId, doc, {
-      // BroadcastChannel would bypass server auth
-      disableBc: true,
-      // The default 2.5s backoff would hammer the backend with auth fetches
-      // on permanently-failing sockets
-      maxBackoffTime: 30000,
-      // Guarantees inbound traffic for y-websocket's 30s no-traffic watchdog
-      resyncInterval: 20000,
-    });
+      provider.on('sync', syncState);
 
-    /**
-     * A second transport onto the same document, for the networks that refuse websocket
-     * upgrades — corporate proxies, captive portals — where the socket above never opens and
-     * the editor would otherwise render the last snapshot and sync nothing. It polls y/hub's
-     * REST api on the same room, with the same session cookie and the same authorization, so
-     * the only thing that changes is latency.
-     *
-     * It shares the document, so nothing has to be flushed when the transport changes: what
-     * one provider retrieved is part of the document, and the other publishes it on its next
-     * sync. It shares the `Awareness` instance for the same reason — awareness state is keyed
-     * by `doc.clientID`, so two instances would advertise the same client id with independent
-     * clocks and fight over the local state.
-     *
-     * A reader gets no awareness instance at all. It may not publish presence (the
-     * collaboration server refuses the `awareness` field of a `PATCH`, and the endpoint grant
-     * makes the whole route read-only for it), and the provider has no receive-only setting:
-     * one flag both publishes the local state and applies the remote one. Left enabled, the
-     * first round would `PATCH` presence, take a 403, and — a 4xx being permanent — close the
-     * provider for good *before* it ever issued its first `GET`, so a reader on a network that
-     * blocks websockets would sit in front of an empty document indefinitely. Disabled, the
-     * round carries no body at all and degrades to exactly the poll a reader needs. The cost is
-     * that a reader on the fallback sees no remote cursors; at a 10s poll they would be a
-     * postcard from the past anyway.
-     */
-    const target = collaborationHttpTarget(wsUrl);
-    const send: typeof fetch = (input, init) =>
-      fetch(input, { ...init, credentials: 'include' });
-    const transport = httpJson ? withJsonTransport(send) : send;
-    const httpProvider = target
-      ? new HttpProvider(
-          doc,
-          target.serverUrl,
-          { org: target.org, docid: storeId },
-          {
-            awareness: readOnly || !httpAwareness ? null : provider.awareness,
-            // createWebsocketFallback owns the connection state
-            connect: false,
-            // every poll is authorized against the backend: this is the knob on that load. The
-            // provider caps it at 15s while it carries awareness, that is for an editor.
-            // The floor guards against a misconfigured value, the backend refuses one too
-            // low; it is no protection against a tampered client
-            ...(httpSyncInterval
-              ? {
-                  syncInterval: Math.max(
-                    httpSyncInterval,
-                    HTTP_SYNC_INTERVAL_MIN_MS,
-                  ),
-                }
-              : null),
-            // Docs users are served the garbage-collected document; a full-history request is
-            // refused by the collaboration server, and this defaults to `false`
-            gc: true,
-            // the session cookie is the credential here too, exactly as on the ws upgrade
-            fetch: (input, init) =>
-              readOnly && init?.method === 'PATCH'
-                ? readerWriteDropped()
-                : transport(input, init),
-          },
-        )
-      : undefined;
-
-    provider.on('status', ({ status }) => {
-      // 'connecting' must be ignored: it fires on every backoff retry.
-      // 'disconnected' is handled via 'connection-close' (it never fires
-      // for sockets that failed to open).
-      if (status === 'connected') {
+      provider.on('connection-close', (event: CloseEvent | null) => {
+        if (get().isPausedForInactivity) {
+          return;
+        }
+        if (event?.code === 4401 || event?.code === 4404) {
+          // This callback runs before @y/websocket clears its socket. Calling
+          // disconnect() here would re-enter the same close handler.
+          provider.shouldConnect = false;
+          clearTimeout(lostConnectionTimeout);
+          clearTimeout(fallbackTimeout);
+          fallback?.disconnect();
+          set({
+            isConnected: false,
+            isReady: get().isReady || hasContent(doc),
+            hasLostConnection: false,
+            isPermanentlyClosed: true,
+          });
+          return;
+        }
+        if (
+          provider.shouldConnect &&
+          event?.code !== 1011 &&
+          event?.code !== 1013 &&
+          !(event?.code && event.code >= 4500 && event.code < 4600)
+        ) {
+          startFallback();
+        }
+        const { isConnected: wasConnected, isReady: wasReady } = get();
+        const isReady = wasReady || hasContent(doc);
+        if (wasConnected || isReady !== wasReady) {
+          set({ isConnected: false, isReady });
+        }
+        if (!wasConnected) {
+          return;
+        }
         clearTimeout(lostConnectionTimeout);
-        // An open socket means we are authenticated (auth happens at upgrade). Not ready yet:
-        // the content arrives with the `sync` that follows.
-        set({ isConnected: true });
-      }
-    });
-
-    // Either transport being synced is what `useUpdateDoc` asks about: it decides whether the
-    // backend is told that the content is held by the collaboration server.
-    const syncState = () =>
-      set({
-        isSynced: provider.synced || (httpProvider?.synced ?? false),
-        isReady: true,
+        lostConnectionTimeout = setTimeout(
+          () => set({ hasLostConnection: true }),
+          Math.random() * RECONNECT_JITTER_MAX_MS,
+        );
       });
 
-    provider.on('sync', syncState);
-    httpProvider?.on('sync', syncState);
-
-    // Fires on every close AND every failed connection attempt
-    // (an auth failure surfaces as an upgrade-level 401, close code 1006).
-    provider.on('connection-close', () => {
-      // Skip when the disconnect was triggered by inactivity:
-      // reconnection only happens once the user becomes active again.
+      set({ provider, persistence });
+      return provider;
+    },
+    destroyProvider: () => {
+      const { provider, persistence } = get();
+      clearTimeout(fallbackTimeout);
+      fallback?.destroy();
+      fallback = undefined;
+      void persistence?.destroy();
+      if (provider) {
+        provider.destroy();
+        provider.awareness.destroy();
+        provider.doc.destroy();
+      }
+      clearTimeout(lostConnectionTimeout);
+      set(defaultValues);
+    },
+    setReady: (value) => {
+      set({ isReady: value });
+    },
+    pauseForInactivity: () => {
       if (get().isPausedForInactivity) {
         return;
       }
-
-      const { isConnected: wasConnected, isReady: wasReady } = get();
-
-      // A closed socket is not the content arriving either: while the local copy is empty, the
-      // `sync` of the http fallback (started by this very close) is what makes the doc ready.
-      // Offline there is nothing to wait for, `useCollaboration` marks it ready.
-      const isReady = wasReady || hasContent(doc);
-
-      // This also fires on every failed reconnect attempt - forever, on a network that never
-      // lets the socket open. Skip the `set()` once these are already at this value, or a
-      // same-value write still hands every no-selector subscriber a new object to re-render on.
-      if (wasConnected || isReady !== wasReady) {
-        set({ isConnected: false, isReady });
-      }
-
-      // Only a connection that had actually opened can have been *lost* in a way that means
-      // our access changed. A socket that never opens retries forever; refetching the document
-      // on each attempt would only thrash the query while the http fallback carries it fine.
-      if (!wasConnected) {
+      clearTimeout(lostConnectionTimeout);
+      clearTimeout(fallbackTimeout);
+      fallback?.disconnect();
+      set({ isPausedForInactivity: true, hasLostConnection: false });
+      get().provider?.disconnect();
+    },
+    resumeFromInactivity: () => {
+      if (!get().isPausedForInactivity) {
         return;
       }
-
       clearTimeout(lostConnectionTimeout);
-      // Jitter spreading: Math.random() generates a random delay to avoid
-      // all clients invalidating their queries at the same time
-      lostConnectionTimeout = setTimeout(
-        () => set({ hasLostConnection: true }),
-        Math.random() * RECONNECT_JITTER_MAX_MS,
-      );
-    });
-
-    // Installed before the `closed` listener below, and that order is the point: lib0 hands an
-    // event to a snapshot of its listeners, so unsubscribing from inside one does not stop the
-    // ones registered after it. The helper reacts to `closed` by starting the http provider;
-    // ours has to run last to be the one that has the final word.
-    installFallback(provider, httpProvider);
-
-    /**
-     * The collaboration server refused this connection rather than losing it: its access
-     * changed (4401) or the document was deleted (4404). It has answered, and reconnecting on
-     * a timer only asks the same question again — for a document that may never come back, for
-     * as long as the tab stays open. y-websocket stops its retry loop on those codes by itself;
-     * this stops the http fallback with it, which would otherwise both poll a document we have
-     * just been refused and revive the socket every 30s.
-     *
-     * Refused is not the same as gone: an access upgraded from reader to editor is a refusal
-     * too, and the connection has to be made again to carry the new rights. Asking the backend
-     * is what settles it, in `useCollaboration`, which resumes through `reconnect` below.
-     */
-    const closePermanently = () => {
-      suspendFallback(httpProvider);
-
-      // beats the hasLostConnection timer the close above has just armed
-      clearTimeout(lostConnectionTimeout);
-      lostConnectionTimeout = setTimeout(
-        () => set({ isPermanentlyClosed: true }),
-        Math.random() * RECONNECT_JITTER_MAX_MS,
-      );
-    };
-
-    provider.on('closed', closePermanently);
-
-    /**
-     * The same refusal, heard on the http fallback. Where the socket never opens, no 4401
-     * arrives, and the helper revives a fallback that gave up every 30s: the tab would take a
-     * 403 again and again while its editor accepts changes that are never saved.
-     *
-     * Only access answers count: another client error is not settled by a refetch of the
-     * document, so it is left to the helper's slow retry.
-     */
-    httpProvider?.on('closed', ({ code }) => {
-      if (!ACCESS_REFUSED_STATUSES.includes(code)) {
+      set({ isPausedForInactivity: false });
+      if (get().isPermanentlyClosed) {
         return;
       }
+      get().provider?.connect();
+      clearTimeout(fallbackTimeout);
+      fallbackTimeout = setTimeout(() => fallback?.connect(), 5000);
+    },
+    resetLostConnection: () => {
+      set({ hasLostConnection: false });
+    },
+    reconnect: () => {
+      const { provider } = get();
+      set({ isPermanentlyClosed: false });
+      if (!provider) {
+        return;
+      }
+      provider.connect();
+      clearTimeout(fallbackTimeout);
+      fallbackTimeout = setTimeout(() => fallback?.connect(), 5000);
+    },
+  }),
+);
 
-      provider.disconnect();
-      closePermanently();
-    });
-
-    set({
-      provider,
-      httpProvider,
-      persistence,
-    });
-
-    return provider;
-  },
-  destroyProvider: () => {
-    const { provider, httpProvider, persistence } = get();
-
-    stopFallback?.();
-    stopFallback = undefined;
-
-    // publishes a farewell awareness state, best effort, so the others see us leave
-    httpProvider?.destroy();
-
-    // Destroy the persistence layer, which keeps the local copy of the document.
-    void persistence?.destroy();
-
-    if (provider) {
-      /**
-       * destroy() emits 'connection-close' synchronously before removing
-       * listeners, which re-arms lostConnectionTimeout: it must be cleared
-       * after, or a stale "connection lost" banner flashes on the next doc.
-       */
-      provider.destroy();
-      // y-websocket never destroys the awareness: its interval would leak
-      provider.awareness.destroy();
-      provider.doc.destroy();
-    }
-    clearTimeout(lostConnectionTimeout);
-
-    set(defaultValues);
-  },
-  setReady: (value: boolean) => set({ isReady: value }),
-  pauseForInactivity: () => {
-    if (get().isPausedForInactivity) {
-      return;
-    }
-    clearTimeout(lostConnectionTimeout);
-    set({ isPausedForInactivity: true, hasLostConnection: false });
-    // the fallback follows `shouldConnect`, so this stops the polling too
-    get().provider?.disconnect();
-  },
-  resumeFromInactivity: () => {
-    if (!get().isPausedForInactivity) {
-      return;
-    }
-    clearTimeout(lostConnectionTimeout);
-    set({ isPausedForInactivity: false });
-    // a connection that was refused for good is only reopened by `reconnect`,
-    // once the backend has been asked again — becoming active is not an answer
-    if (get().isPermanentlyClosed) {
-      return;
-    }
-    get().provider?.connect();
-  },
-  resetLostConnection: () => set({ hasLostConnection: false }),
-  /**
-   * Open the connection again after it was refused for good, once the backend
-   * has confirmed the document is still there to open.
-   */
-  reconnect: () => {
-    const { provider, httpProvider } = get();
-
-    set({ isPermanentlyClosed: false });
-
-    if (!provider) {
-      return;
-    }
-
-    provider.connect();
-    installFallback(provider, httpProvider);
-  },
-}));
+export const useProviderStore = useCollaborationStore;
