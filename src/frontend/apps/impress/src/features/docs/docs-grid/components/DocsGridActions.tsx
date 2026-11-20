@@ -2,6 +2,7 @@ import {
   ButtonProps,
   DropdownMenuItem,
   VariantType,
+  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 
@@ -13,7 +14,6 @@ import {
   useRestoreDoc,
 } from '@/docs/doc-management';
 import { DocToolBox } from '@/docs/doc-management/components/DocToolBox';
-import { useToast } from '@/hooks';
 import MoreIcon from '@/icons/more_horiz.svg';
 
 import { KEY_LIST_DOC_TRASHBIN } from '../api';
@@ -51,7 +51,7 @@ export const DocsGridTrashbinActions = ({
   doc,
 }: DocsGridTrashbinActionsProps) => {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { mutate: restoreDoc } = useRestoreDoc({
     listInvalidQueries: [
       KEY_LIST_DOC,

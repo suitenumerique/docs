@@ -1,4 +1,4 @@
-import { VariantType } from '@gouvfr-lasuite/ui-components';
+import { VariantType, useToastProvider } from '@gouvfr-lasuite/ui-components';
 import {
   type InfiniteData,
   type UseMutationOptions,
@@ -8,7 +8,6 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { useToast } from '@/hooks';
 
 import { Doc } from '../types';
 
@@ -54,7 +53,7 @@ type DuplicateDocOptions = UseMutationOptions<
 
 export function useDuplicateDoc(options?: DuplicateDocOptions) {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { t } = useTranslation();
 
   return useMutation<DuplicateDocResponse, APIError, DuplicateDocParams>({

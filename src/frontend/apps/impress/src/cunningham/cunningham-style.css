@@ -137,7 +137,3 @@
 .c__toast__container:has(.c__toast) {
   z-index: 10000;
 }
-
-.c__toast__content__children {
-  flex-shrink: 0;
-}

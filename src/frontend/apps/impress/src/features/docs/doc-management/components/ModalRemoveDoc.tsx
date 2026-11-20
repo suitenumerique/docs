@@ -4,6 +4,7 @@ import {
   Modal,
   ModalSize,
   VariantType,
+  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import { useEffect, useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
@@ -11,7 +12,6 @@ import { Trans, useTranslation } from 'react-i18next';
 import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
 import { useConfig } from '@/core';
 import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid';
-import { useToast } from '@/hooks';
 
 import { KEY_DOC, KEY_LIST_FAVORITE_DOC } from '../api';
 import { KEY_LIST_DOC } from '../api/useDocs';
@@ -30,7 +30,7 @@ export const ModalRemoveDoc = ({
   onClose,
   onSuccess,
 }: ModalRemoveDocProps) => {
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { t } = useTranslation();
   const { data: config } = useConfig();
   const trashBinCutoffDays = config?.TRASHBIN_CUTOFF_DAYS || 30;

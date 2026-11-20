@@ -843,7 +843,7 @@
   --c--components--alert--background-color: var(
     --c--contextuals--background--semantic--neutral--tertiary
   );
-  --c--components--alert--border-radius: 4px;
+  --c--components--alert--border-radius: 8px;
   --c--components--alert--border-color: var(
     --c--contextuals--border--semantic--neutral--primary
   );
@@ -854,7 +854,7 @@
   --c--components--alert--color: var(
     --c--contextuals--content--semantic--neutral--primary
   );
-  --c--components--alert--icon-size: 19px;
+  --c--components--alert--icon-size: 24px;
   --c--components--alert--additional-font-weight: var(
     --c--globals--font--weights--regular
   );
@@ -1272,6 +1272,8 @@
   --c--components--modal--content-color: var(
     --c--contextuals--content--semantic--neutral--primary
   );
+  --c--components--modal--padding: var(--c--globals--spacings--md);
+  --c--components--modal--close-button-size: 28px;
   --c--components--modal--width-small: 342px;
   --c--components--modal--width-medium: 600px;
   --c--components--modal--width-large: 800px;
@@ -1291,21 +1293,23 @@
   --c--components--modal--tab-item-font-weight--active: var(
     --c--globals--font--weights--bold
   );
-  --c--components--modal--tab-item-active-background-color: rgb(24 27 36 / 5%);
-  --c--components--modal--tab-item-hover-background-color: rgb(24 27 36 / 3%);
-  --c--components--toast--slide-in-duration: 1000ms;
-  --c--components--toast--slide-out-duration: 300ms;
-  --c--components--toast--background-color: var(
+  --c--components--modal--tab-item-active-background-color: var(
+    --c--contextuals--background--semantic--contextual--primary-hover
+  );
+  --c--components--modal--tab-item-hover-background-color: var(
+    --c--contextuals--background--semantic--contextual--primary
+  );
+  --c--components--progress-bar--height: 4px;
+  --c--components--progress-bar--border-radius: 50vw;
+  --c--components--progress-bar--color: var(
+    --c--contextuals--background--semantic--brand--primary
+  );
+  --c--components--progress-bar--track-color: var(
     --c--contextuals--background--semantic--neutral--tertiary
   );
-  --c--components--toast--color: var(
-    --c--contextuals--content--semantic--neutral--primary
-  );
-  --c--components--toast--font-weight: var(
-    --c--globals--font--weights--regular
-  );
-  --c--components--toast--icon-size: 19px;
-  --c--components--toast--progress-bar-height: 3px;
+  --c--components--toast--slide-in-duration: 1000ms;
+  --c--components--toast--slide-out-duration: 300ms;
+  --c--components--toast--icon-size: 24px;
   --c--components--tooltip--border-radius: 0.5rem;
   --c--components--tooltip--background-color: var(
     --c--contextuals--background--semantic--neutral--tertiary
@@ -3022,7 +3026,7 @@
   --c--components--alert--background-color: var(
     --c--contextuals--background--semantic--neutral--tertiary
   );
-  --c--components--alert--border-radius: 4px;
+  --c--components--alert--border-radius: 8px;
   --c--components--alert--border-color: var(
     --c--contextuals--border--semantic--neutral--primary
   );
@@ -3033,7 +3037,7 @@
   --c--components--alert--color: var(
     --c--contextuals--content--semantic--neutral--primary
   );
-  --c--components--alert--icon-size: 19px;
+  --c--components--alert--icon-size: 24px;
   --c--components--alert--additional-font-weight: var(
     --c--globals--font--weights--regular
   );
@@ -3451,6 +3455,8 @@
   --c--components--modal--content-color: var(
     --c--contextuals--content--semantic--neutral--primary
   );
+  --c--components--modal--padding: var(--c--globals--spacings--md);
+  --c--components--modal--close-button-size: 28px;
   --c--components--modal--width-small: 342px;
   --c--components--modal--width-medium: 600px;
   --c--components--modal--width-large: 800px;
@@ -3470,21 +3476,23 @@
   --c--components--modal--tab-item-font-weight--active: var(
     --c--globals--font--weights--bold
   );
-  --c--components--modal--tab-item-active-background-color: rgb(24 27 36 / 5%);
-  --c--components--modal--tab-item-hover-background-color: rgb(24 27 36 / 3%);
-  --c--components--toast--slide-in-duration: 1000ms;
-  --c--components--toast--slide-out-duration: 300ms;
-  --c--components--toast--background-color: var(
+  --c--components--modal--tab-item-active-background-color: var(
+    --c--contextuals--background--semantic--contextual--primary-hover
+  );
+  --c--components--modal--tab-item-hover-background-color: var(
+    --c--contextuals--background--semantic--contextual--primary
+  );
+  --c--components--progress-bar--height: 4px;
+  --c--components--progress-bar--border-radius: 50vw;
+  --c--components--progress-bar--color: var(
+    --c--contextuals--background--semantic--brand--primary
+  );
+  --c--components--progress-bar--track-color: var(
     --c--contextuals--background--semantic--neutral--tertiary
   );
-  --c--components--toast--color: var(
-    --c--contextuals--content--semantic--neutral--primary
-  );
-  --c--components--toast--font-weight: var(
-    --c--globals--font--weights--regular
-  );
-  --c--components--toast--icon-size: 19px;
-  --c--components--toast--progress-bar-height: 3px;
+  --c--components--toast--slide-in-duration: 1000ms;
+  --c--components--toast--slide-out-duration: 300ms;
+  --c--components--toast--icon-size: 24px;
   --c--components--tooltip--border-radius: 0.5rem;
   --c--components--tooltip--background-color: var(
     --c--contextuals--background--semantic--neutral--tertiary

@@ -5,6 +5,7 @@ import {
   ModalSize,
   Select,
   VariantType,
+  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import { useQueryClient } from '@tanstack/react-query';
 import i18next from 'i18next';
@@ -17,7 +18,6 @@ import { Box, ButtonCloseModal, Text } from '@/components';
 import { useMediaUrl } from '@/core';
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { type Doc, useTrans } from '@/docs/doc-management';
-import { useToast } from '@/hooks';
 import { fallbackLng } from '@/i18n/config';
 
 import ModulesExport from '../hooks/';
@@ -39,7 +39,7 @@ interface ModalExportProps {
 
 export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { editor } = useEditorStore();
   const queryClient = useQueryClient();
   const [isExporting, setIsExporting] = useState(false);
@@ -234,6 +234,9 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       closeOnClickOutside
       onClose={() => onClose()}
       hideCloseButton
+      aria-label={t('Export', {
+        description: 'Title of the dialog to export a document',
+      })}
       aria-labelledby="modal-export-title"
       aria-describedby="modal-export-description"
       rightActions={

@@ -258,7 +258,7 @@ test.describe('Doc Header', () => {
     await clickInEditorMenu(page, 'Delete');
 
     await expect(
-      page.getByRole('heading', { name: 'Delete a doc' }),
+      page.getByRole('heading', { name: 'Delete a doc', exact: true }),
     ).toBeVisible();
 
     await expect(page.getByText(`This document will be`)).toBeVisible();
@@ -549,10 +549,10 @@ test.describe('Doc Header', () => {
 
     await clickInEditorMenu(page, 'Duplicate');
 
-    const toast = page.getByRole('alert');
-    await expect(
-      toast.getByText('Document duplicated to My docs'),
-    ).toBeVisible();
+    const toast = page.getByRole('status').filter({
+      hasText: 'Document duplicated to My docs',
+    });
+    await expect(toast).toBeVisible();
     await toast.getByRole('link', { name: 'Open' }).click();
 
     const duplicateTitle = docTitle + ' (copy)';
@@ -566,8 +566,10 @@ test.describe('Doc Header', () => {
 
     await clickInDocOptionMenu(page, row, 'Duplicate');
 
-    const gridToast = page.getByRole('alert');
-    await expect(gridToast.getByText('Document duplicated')).toBeVisible();
+    const gridToast = page.getByRole('status').filter({
+      has: page.getByText('Document duplicated', { exact: true }),
+    });
+    await expect(gridToast).toBeVisible();
     await gridToast.getByRole('link', { name: 'Open' }).click();
 
     const duplicateDuplicateTitle = duplicateTitle + ' (copy)';
@@ -611,8 +613,10 @@ test.describe('Doc Header', () => {
     ).toBeVisible();
 
     // The toast lets the user undo the duplication and go back to the original document
-    const toast = page.getByRole('alert');
-    await expect(toast.getByText('Document duplicated')).toBeVisible();
+    const toast = page.getByRole('status').filter({
+      has: page.getByText('Document duplicated', { exact: true }),
+    });
+    await expect(toast).toBeVisible();
     await toast.getByRole('button', { name: 'Undo' }).click();
 
     await expect(page).toHaveURL(currentUrl);
@@ -644,7 +648,7 @@ test.describe('Doc Header', () => {
     // The document has a subdocument, so a confirmation modal is shown
     await clickInEditorMenu(page, 'Duplicate');
     const modal = page.getByRole('dialog', {
-      name: 'Confirmation to duplicate the document',
+      name: 'Duplicate',
     });
     await expect(modal).toBeVisible();
     const subdocsCheckbox = modal.getByRole('checkbox', {
@@ -658,10 +662,10 @@ test.describe('Doc Header', () => {
       .click();
     await expect(modal).toBeHidden();
 
-    const toast = page.getByRole('alert');
-    await expect(
-      toast.getByText('Document duplicated to My docs'),
-    ).toBeVisible();
+    const toast = page.getByRole('status').filter({
+      hasText: 'Document duplicated to My docs',
+    });
+    await expect(toast).toBeVisible();
     await toast.getByRole('link', { name: 'Open' }).click();
 
     const duplicateTitle = docTitle + ' (copy)';
