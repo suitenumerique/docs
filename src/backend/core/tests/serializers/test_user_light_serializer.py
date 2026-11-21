@@ -44,3 +44,15 @@ def test_user_light_serializer_no_short_name():
     serializer = UserLightSerializer(user)
     assert serializer.data["full_name"] == "test_foo"
     assert serializer.data["short_name"] == "test_foo"
+
+
+def test_user_light_serializer_no_name_nor_email():
+    """Test user light serializer without full name, short name or email."""
+    user = factories.UserFactory(
+        email=None,
+        full_name=None,
+        short_name=None,
+    )
+    serializer = UserLightSerializer(user)
+    assert serializer.data["full_name"] == ""
+    assert serializer.data["short_name"] == ""

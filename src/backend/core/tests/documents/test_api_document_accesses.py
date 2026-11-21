@@ -1479,3 +1479,31 @@ def test_api_document_accesses_throttling_y_provider_exempted(settings):
 
     # Restore original rate
     settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["document_access"] = current_rate
+
+
+def test_api_document_accesses_list_user_without_name_nor_email():
+    """
+    A user with neither a name nor an email should not break the list of accesses:
+    their names fall back to an empty string.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory()
+    factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
+    nameless_user = factories.UserFactory(email=None, full_name=None, short_name=None)
+    factories.UserDocumentAccessFactory(
+        document=document, user=nameless_user, role="reader"
+    )
+
+    response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
+
+    assert response.status_code == 200
+    [nameless_access] = [
+        access
+        for access in response.json()
+        if access["user"] and access["user"]["id"] == str(nameless_user.id)
+    ]
+    assert nameless_access["user"]["full_name"] == ""
+    assert nameless_access["user"]["short_name"] == ""

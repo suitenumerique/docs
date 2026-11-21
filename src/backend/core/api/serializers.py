@@ -53,7 +53,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_full_name(self, instance):
         """Return the full name of the user."""
         if not instance.full_name:
-            email = instance.email.split("@")[0]
+            email = (instance.email or "").split("@")[0]
             return slugify(email)
 
         return instance.full_name
@@ -61,7 +61,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_short_name(self, instance):
         """Return the short name of the user."""
         if not instance.short_name:
-            email = instance.email.split("@")[0]
+            email = (instance.email or "").split("@")[0]
             return slugify(email)
 
         return instance.short_name
