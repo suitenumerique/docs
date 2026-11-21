@@ -8,6 +8,7 @@
  * `*_FILE` secret indirection is `env.ts`.
  */
 import { secret } from './env.js';
+import { postgresUrl } from './postgres.js';
 
 // A numeric setting, read from the environment and refused rather than guessed
 // when it is not a whole number at or above `min`: `Number()` reads a typo as
@@ -44,7 +45,7 @@ const rateEnv = (name: string, dflt: number): number => {
 
 export const PORT = Number(process.env.PORT || 3002);
 export const REDIS = process.env.REDIS;
-export const POSTGRES = process.env.POSTGRES;
+export const POSTGRES = postgresUrl();
 export const REDIS_PREFIX = process.env.REDIS_PREFIX || 'yhub';
 // How long an update waits on the stream before a worker claims the compaction
 // task it belongs to. It is the delay between an edit and its row in postgres,

@@ -4,7 +4,7 @@
 import { existsSync } from 'node:fs';
 import { sep } from 'node:path';
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@y/hub', () => {
   const logger = {
@@ -17,8 +17,10 @@ vi.mock('@y/hub', () => {
   return { logger };
 });
 
-const { initDbScript, initDbWithRetries, parseOptions } =
+const { initDbScript, initDbWithRetries, parseOptions, runScript } =
   await import('../src/init-db.js');
+
+afterEach(() => vi.unstubAllEnvs());
 
 // attempts that fail `failures` times, then succeed
 const failing = (failures: number) => {
@@ -157,5 +159,16 @@ describe('initDbScript', () => {
       /node_modules\/@y\/hub\/bin\/init-db\.js$/,
     );
     expect(existsSync(script)).toBe(true);
+  });
+
+  it('does not silently skip PostgreSQL when configured through PG variables', async () => {
+    vi.stubEnv('POSTGRES', '');
+    vi.stubEnv('POSTGRES_TESTING', '');
+    vi.stubEnv('PGHOST', '/nonexistent-yhub-test-socket');
+    vi.stubEnv('PGDATABASE', 'yhub');
+    vi.stubEnv('REDIS', '');
+    vi.stubEnv('S3_YHUB_BUCKET', '');
+
+    expect(await runScript(initDbScript())()).toBe(false);
   });
 });

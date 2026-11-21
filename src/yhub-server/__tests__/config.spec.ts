@@ -4,8 +4,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Only what `config.ts` looks at; REDIS/POSTGRES are passed straight through to
-// yhub, which is what validates them, so they are not needed here.
+// Only what these tests require; store configuration is covered by server.spec.ts.
 const BASE_ENV = {
   COLLABORATION_SERVER_ORIGIN: 'http://localhost:3000',
 };
