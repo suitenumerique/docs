@@ -127,6 +127,8 @@ beforeEach(() => {
     'YHUB_S3_SECRET_ACCESS_KEY',
     'YHUB_S3_BUCKET_NAME',
     'YHUB_S3_REGION_NAME',
+    'PGHOST',
+    'PGDATABASE',
     'PORT',
   ]) {
     vi.stubEnv(key, '');
@@ -134,6 +136,16 @@ beforeEach(() => {
 });
 
 describe('a valid, minimal environment', () => {
+  it('lets postgres.js use PG environment variables when POSTGRES is unset', async () => {
+    vi.stubEnv('POSTGRES', '');
+    vi.stubEnv('PGHOST', '/run/postgresql');
+    vi.stubEnv('PGDATABASE', 'yhub');
+
+    await boot();
+
+    expect(createYHub.lastConfig.postgres).toBe('postgres:///');
+  });
+
   it('starts one yhub with both halves and the collaboration prefix', async () => {
     await boot();
 

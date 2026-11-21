@@ -1050,8 +1050,8 @@ jwtKeys:
 ## The collaboration server: it serves the whole /collaboration/ prefix, the
 ## websocket included, and replaces the y-provider on that role. It keeps the
 ## live state of a document in redis/valkey and persists it to its own
-## PostgreSQL database, so it needs both — set `yhub.envVars.REDIS` and
-## `yhub.envVars.POSTGRES`, there is nothing sensible to default them to.
+## PostgreSQL database, so it needs both — set `yhub.envVars.REDIS` and either
+## `yhub.envVars.POSTGRES` or the PostgreSQL driver's PG* variables.
 ## Disabling it drops its deployment, its service and its init-db job, and
 ## nothing takes that role over: the two /collaboration/ ingresses still name
 ## its service, and the y-provider does not serve the websocket anymore. Turn
@@ -1185,7 +1185,7 @@ yhub:
 
   ## @param yhub.envVars Configure yhub container environment variables
   ## @extra yhub.envVars.REDIS Required, redis/valkey url holding the live document state (e.g. redis://valkey:6379/0)
-  ## @extra yhub.envVars.POSTGRES Required, url of the yhub database, created by the init-db job (e.g. postgres://user:pass@postgres:5432/yhub)
+  ## @extra yhub.envVars.POSTGRES URL of the yhub database, or omit it and use PGHOST, PGPORT, PGDATABASE, PGUSER and PGPASSWORD (pre-create the database)
   ##   Append `?sslmode=require` (or `verify-full`) when the server only accepts TLS, which is the default of the Zalando/Spilo operator
   ## @extra yhub.envVars.REDIS_PREFIX Namespace of the redis keys, when the instance is shared (default: yhub)
   ## @extra yhub.envVars.COLLABORATION_BACKEND_BASE_URL Base url of the Docs backend, which yhub asks about users and document access rights

@@ -14,6 +14,12 @@ REDIS: redis://{redis-host}:6379/0
 POSTGRES: postgres://{user}:{password}@{postgres-host}:5432/yhub
 ```
 
+Alternatively, omit `POSTGRES` and configure `PGHOST`, `PGPORT`, `PGDATABASE`,
+`PGUSER` and `PGPASSWORD` for the PostgreSQL driver. `PGHOST` can be a Unix
+socket directory. Set them for both yhub and its init job; the database must
+already exist when using `PGDATABASE`. See the yhub server README's database
+schema section for details.
+
 Nothing creates that schema at startup: the server never runs DDL. Run the script yhub ships (`node dist/init-db.js` in its image, which the helm chart runs as a job) once before starting it, and again after every upgrade that adds a table. It creates the database when it is missing, it is idempotent, and until it has run every document read fails with `relation "..." does not exist`.
 
 The Django backend reads and writes document content there too, so point it at the service:

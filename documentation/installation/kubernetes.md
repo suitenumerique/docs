@@ -240,6 +240,10 @@ Being one url, the credentials are in it — put the whole url in a secret and
 reference it with `secretKeyRef` if you would rather not have it in your values
 file. The `init-db` job creates that database when the user is allowed to;
 otherwise create an empty `yhub` database beforehand and grant it on that one.
+Alternatively omit `POSTGRES` and provide `PGHOST`, `PGPORT`, `PGDATABASE`,
+`PGUSER` and `PGPASSWORD` in `yhub.envVars` (using a secret for `PGPASSWORD`).
+The init job creates the tables in the existing `PGDATABASE`, not the database
+itself. `PGHOST` may also be a Unix socket directory.
 
 ### Find s3 bucket connection values
 

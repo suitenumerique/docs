@@ -8,7 +8,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "node --import ./dist/sentry.js dist/server.js",
     "dev": "nodemon --config nodemon.json",
-    "init-db": "node node_modules/@y/hub/bin/init-db.js",
+    "init-db": "yarn build && node --import ./dist/init-db-env.js node_modules/@y/hub/bin/init-db.js",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest"

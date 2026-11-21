@@ -445,14 +445,13 @@ const persistencePlugins = () => {
 // callbacks only fire once the server is up, i.e. after this assignment
 const yhub: YHub = (await createYHub({
   redis: {
-    // yhub validates that both stores are configured and fails with a clear
-    // message when they are not
+    // yhub validates the redis configuration
     url: REDIS as string,
     prefix: REDIS_PREFIX,
     taskDebounce: TASK_DEBOUNCE_MS,
     minMessageLifetime: MIN_MESSAGE_LIFETIME_MS,
   },
-  postgres: POSTGRES as string,
+  postgres: POSTGRES,
   // where the blobs live: nothing here keeps them in yhub's postgres
   persistence: persistencePlugins(),
   // see COMPUTE_THREADS: a setting left unset is left out, yhub's own default

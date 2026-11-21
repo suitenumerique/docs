@@ -19,6 +19,8 @@ import { parseArgs } from 'node:util';
 
 import { logger } from '@y/hub';
 
+import { postgresUrl } from './postgres.js';
+
 const log = logger.child({ module: 'init-db-retry' });
 
 export interface RetryOptions {
@@ -79,11 +81,14 @@ export type RunOnce = () => Promise<boolean>;
 
 let running: ChildProcess | undefined;
 
-const runScript =
+export const runScript =
   (script: string): RunOnce =>
   () =>
     new Promise((resolve) => {
-      running = spawn(process.execPath, [script], { stdio: 'inherit' });
+      running = spawn(process.execPath, [script], {
+        stdio: 'inherit',
+        env: { ...process.env, POSTGRES: postgresUrl() },
+      });
       running.on('error', (err) => {
         log.error({ err }, 'cannot start init-db');
         resolve(false);

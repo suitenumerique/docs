@@ -747,9 +747,33 @@ docker compose up -d --force-recreate --renew-anon-volumes yhub
 
 yhub never runs DDL from the server or the worker, so the schema is created by
 the script it ships (`node_modules/@y/hub/bin/init-db.js`), wrapped here as
-`yarn init-db`. It reads `POSTGRES` from the environment, creates the
-database when it does not exist, then every table and index the **installed**
-yhub version needs. It is idempotent, so re-running it is always safe.
+`yarn init-db`. It reads the PostgreSQL settings from the environment, creates
+the database named in `POSTGRES` when it does not exist, then every table and
+index the **installed** yhub version needs. It is idempotent, so re-running it
+is always safe.
+
+Set `POSTGRES` to a connection URL, or leave it unset and use the `postgres.js`
+environment variables instead. For example, to connect via a Unix socket:
+
+```sh
+PGHOST=/run/postgresql
+PGPORT=5432
+PGDATABASE=yhub
+PGUSER=yhub
+PGPASSWORD=... # supply separately through a secret
+```
+
+Provide the same settings to the server, worker and `init-db`. With `PGDATABASE`
+instead of a database in `POSTGRES`, create the database beforehand: `init-db`
+creates its tables but does not create the database. The driver applies its
+own defaults to omitted `PG*` settings. URL components take precedence over
+the corresponding environment variables.
+
+Do not use `?host=/run/postgresql` in `POSTGRES`: `postgres.js` ignores that
+query parameter when choosing the host. A URL with credentials but no host is
+invalid.
+Use `PGHOST` for a socket, either with `POSTGRES` unset or with a URL that has
+no hostname, such as `postgresql:///yhub`.
 
 Run it whenever `@y/hub` is upgraded — releases that add a table or a column
 say so in their changelog, and the server fails on every document read until
@@ -764,7 +788,7 @@ encryption`: append `?sslmode=require` to `POSTGRES`
 (`postgres://user:pass@host:5432/yhub?sslmode=require`), or
 `?sslmode=verify-full` when the certificate of the server is signed by an
 authority Node trusts (`NODE_EXTRA_CA_CERTS`). The server, the worker and
-`init-db` all read the same url, so the parameter is set once.
+`init-db` all read the same settings, so the parameter is set once.
 
 The helm chart runs it as a job, through `node dist/init-db.js
 --attempts=60 --delay-seconds=5` (`src/init-db.ts`): that reruns it until it
