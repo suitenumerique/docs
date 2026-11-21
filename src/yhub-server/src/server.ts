@@ -25,6 +25,9 @@ import {
   API_PREFIX,
   AUTH_TIMEOUT_MS,
   BACKEND_REQUEST_TIMEOUT_MS,
+  COMPUTE_MAX_QUEUE,
+  COMPUTE_THREADS,
+  COMPUTE_THREAD_MAX_HEAP_MB,
   MIN_MESSAGE_LIFETIME_MS,
   ORG,
   PORT,
@@ -452,6 +455,18 @@ const yhub: YHub = (await createYHub({
   postgres: POSTGRES as string,
   // where the blobs live: nothing here keeps them in yhub's postgres
   persistence: persistencePlugins(),
+  // see COMPUTE_THREADS: a setting left unset is left out, yhub's own default
+  computePool: {
+    ...(COMPUTE_THREADS != null ? { maxThreads: COMPUTE_THREADS } : {}),
+    ...(COMPUTE_MAX_QUEUE != null ? { maxQueue: COMPUTE_MAX_QUEUE } : {}),
+    ...(COMPUTE_THREAD_MAX_HEAP_MB != null
+      ? {
+          resourceLimits: {
+            maxOldGenerationSizeMb: COMPUTE_THREAD_MAX_HEAP_MB,
+          },
+        }
+      : {}),
+  },
   // Both halves are declared, and YHUB_ROLE decides which are built: a null
   // server binds no port at all (a `worker` pod has no http surface, hence no
   // probes and no service in front of it), a null worker claims no task.
@@ -499,6 +514,13 @@ logger.info(
     server: RUNS_SERVER,
     worker: RUNS_WORKER,
     taskConcurrency: RUNS_WORKER ? TASK_CONCURRENCY : null,
+    // read back off the pool too: its defaults depend on the node it runs on
+    computeThreads: yhub.computePool.maxThreads,
+    // an unlimited queue is Infinity, which a JSON log line cannot carry
+    computeMaxQueue: Number.isFinite(yhub.computePool.maxQueue)
+      ? yhub.computePool.maxQueue
+      : null,
+    computeThreadMaxHeapMb: COMPUTE_THREAD_MAX_HEAP_MB ?? null,
     // the bucket the plugin is attached to, null when there is no plugin at
     // all, and whether the compaction blobs are written to it or to yhub's own
     // postgres — a bucket with `s3Writes` false is one that is only read

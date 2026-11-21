@@ -24,6 +24,13 @@ const intEnv = (name: string, dflt: number, min = 1): number => {
   return value;
 };
 
+// The same, for a setting whose default is yhub's own: unset or blank is
+// `undefined`, which leaves the key out of the yhub config altogether.
+const optionalIntEnv = (name: string, min: number): number | undefined => {
+  const raw = process.env[name];
+  return raw == null || raw === '' ? undefined : intEnv(name, 0, min);
+};
+
 // A sampling rate, refused rather than guessed when it is not a number between
 // 0 and 1: Sentry reads anything else as "drop everything" and says so nowhere.
 const rateEnv = (name: string, dflt: number): number => {
@@ -99,6 +106,81 @@ export const RUNS_WORKER = ROLE !== 'server';
 // point where a pod runs out of memory, each task holding the document it
 // merges.
 export const TASK_CONCURRENCY = intEnv('YHUB_TASK_CONCURRENCY', 5, 1);
+// yhub runs the heavy Yjs work (the merge of a compaction, the initial sync of
+// a large document, the history) in a pool of worker threads, each a V8
+// isolate with a heap of its own. Left alone, it sizes the pool from
+// `os.cpus()`, which counts the node's cores and not the pod's share, spawns
+// the threads as load comes and never stops them, and caps neither their heap
+// nor the tasks waiting for one: a pod is then bounded by its OOM killer
+// alone, and one oversized document takes the whole process down. Each of the
+// three is optional: unset keeps yhub's own default.
+//
+// The number of threads: the compute that runs in parallel, and the number of
+// heaps the container's memory limit has to hold. Compactions beyond it wait
+// in the queue below, so it is also a ceiling on what YHUB_TASK_CONCURRENCY
+// buys.
+export const COMPUTE_THREADS = optionalIntEnv('YHUB_COMPUTE_THREADS', 1);
+// How many tasks may wait for a free thread, each holding its documents in
+// memory until one takes it. A task beyond it is refused: a REST call answers
+// 503, a websocket's initial sync closes with 1013, a compaction fails and is
+// claimed again after YHUB_TASK_DEBOUNCE_MS. On a worker the queue is already
+// bounded by YHUB_TASK_CONCURRENCY; this bounds what a server's syncs pile up.
+export const COMPUTE_MAX_QUEUE = optionalIntEnv('YHUB_COMPUTE_MAX_QUEUE', 0);
+// The old-generation heap of each thread, in MB. A thread that outgrows it dies
+// on its own and is replaced: its task fails and is retried, and the process
+// and its other threads carry on. It bounds the old generation only, not the
+// ArrayBuffers a thread holds (the updates it merges): the container still
+// needs room above it, or it is OOM-killed all the same.
+export const COMPUTE_THREAD_MAX_HEAP_MB = optionalIntEnv(
+  'YHUB_COMPUTE_THREAD_MAX_HEAP_MB',
+  1,
+);
+// NODE_OPTIONS split into arguments the way node splits it
+// (`ParseNodeOptionsEnvVar`): a space separates them, double quotes group and
+// are dropped, a backslash inside quotes escapes the next character. Read raw,
+// a quoted `"--max-old-space-size=2048"` would hide a flag node still applies.
+const nodeOptionsArgs = (value: string): string[] => {
+  const args: string[] = [];
+  let quoted = false;
+  let startsNew = true;
+  for (let i = 0; i < value.length; i++) {
+    let c = value[i];
+    if (c === '\\' && quoted) {
+      c = value[++i] ?? '';
+    } else if (c === ' ' && !quoted) {
+      startsNew = true;
+      continue;
+    } else if (c === '"') {
+      quoted = !quoted;
+      continue;
+    }
+    if (startsNew) {
+      args.push(c);
+      startsNew = false;
+    } else {
+      args[args.length - 1] += c;
+    }
+  }
+  return args;
+};
+// V8 applies `--max-old-space-size` and `--max-heap-size` to every thread of
+// the process, over a thread's own limit: with either flag, the limit above
+// would silently do nothing (yhub only logs a warning). Node takes them with a
+// single dash too, which yhub's own check misses.
+const HEAP_FLAG = /^--?max[-_](?:old[-_]space|heap)[-_]size(?:=|$)/;
+if (
+  COMPUTE_THREAD_MAX_HEAP_MB != null &&
+  [
+    ...process.execArgv,
+    ...nodeOptionsArgs(process.env.NODE_OPTIONS ?? ''),
+  ].some((arg) => HEAP_FLAG.test(arg))
+) {
+  throw new Error(
+    'YHUB_COMPUTE_THREAD_MAX_HEAP_MB has no effect while node runs with ' +
+      '--max-old-space-size or --max-heap-size (NODE_OPTIONS): drop the flag ' +
+      'or the variable',
+  );
+}
 // Where the blobs of a compaction go — the garbage-collected document, the one
 // that keeps its history, the content map and the content ids. yhub writes the
 // four of them into its own postgres; a persistence plugin takes them out of
