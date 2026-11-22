@@ -977,7 +977,14 @@
   dependencies:
     lib0 "^1.0.0-rc.1"
 
-"@y/y@14.0.0-rc.29", "@y/y@^14.0.0-rc.29":
+"@y/y@14.0.0-rc.30":
+  version "14.0.0-rc.30"
+  resolved "https://registry.yarnpkg.com/@y/y/-/y-14.0.0-rc.30.tgz#5a657c7f9f89c59fd2f70044b5157f9a618ad386"
+  integrity sha512-KavV8KBenTIbQb2SRs/BmEZwnQVsMJTOskXkS/+I4t0SllFcQbzuCrW4KMVX5nBoxxVpjgXjAKy/FfTFYmrLKg==
+  dependencies:
+    lib0 "^1.0.0-rc.36"
+
+"@y/y@^14.0.0-rc.29":
   version "14.0.0-rc.29"
   resolved "https://registry.yarnpkg.com/@y/y/-/y-14.0.0-rc.29.tgz#0a0a4edea1e8f64308ab5e0ee62dd4bde8bf3dd0"
   integrity sha512-A4W9Bnrfj7N7IgampoaMSygJlzShLkWZ2uqKjx92tsEqGnbjpfr7jFP1i3zQ37h3L1cXIeipr9QDneUrZHuDjA==

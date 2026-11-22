@@ -18,7 +18,7 @@
     "@sentry/node": "11.11.0",
     "@sentry/profiling-node": "11.11.0",
     "@y/hub": "0.10.1",
-    "@y/y": "14.0.0-rc.29",
+    "@y/y": "14.0.0-rc.30",
     "jose": "6.2.16",
     "lru-cache": "11.5.3",
     "prom-client": "15.1.3"
