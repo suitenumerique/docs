@@ -469,7 +469,8 @@ def test_api_documents_retrieve_authenticated_related_direct():
     }
 
 
-def test_api_documents_retrieve_authenticated_related_parent():
+@pytest.mark.parametrize("role", models.RoleChoices.values)
+def test_api_documents_retrieve_authenticated_related_parent(role):
     """
     Authenticated users should be allowed to retrieve a document if they are related
     to one of its ancestors whatever the role.
@@ -483,7 +484,9 @@ def test_api_documents_retrieve_authenticated_related_parent():
     parent = factories.DocumentFactory(parent=grand_parent, link_reach="restricted")
     document = factories.DocumentFactory(parent=parent, link_reach="restricted")
 
-    access = factories.UserDocumentAccessFactory(document=grand_parent, user=user)
+    access = factories.UserDocumentAccessFactory(
+        document=grand_parent, user=user, role=role
+    )
     factories.UserDocumentAccessFactory(document=grand_parent)
 
     response = client.get(
@@ -550,22 +553,6 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": access.role,
     }
-
-
-@pytest.mark.parametrize("role", models.RoleChoices.values)
-def test_api_documents_retrieve_authenticated_related_parent_roles(role):
-    """
-    Authenticated users should be allowed to retrieve a document if they are related
-    to one of its ancestors whatever the role, with role-dependent abilities
-    matching each role deterministically (including move_to_another_tree for owner).
-    """
-    orig_factory = factories.UserDocumentAccessFactory
-    with mock.patch.object(
-        factories,
-        "UserDocumentAccessFactory",
-        side_effect=lambda **kwargs: orig_factory(role=role, **kwargs),
-    ):
-        test_api_documents_retrieve_authenticated_related_parent()
 
 
 def test_api_documents_retrieve_authenticated_related_nb_accesses():
