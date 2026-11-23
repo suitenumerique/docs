@@ -145,6 +145,43 @@ describe('LinkSelected', () => {
     expect(openSpy).not.toHaveBeenCalled();
   });
 
+  it('opens the comment on the link on a first click, follows it on the next', () => {
+    mockDocQuery = { data: { title: 'My document' }, isLoading: false };
+    const comments = {
+      store: { state: { selectedThreadId: undefined as string | undefined } },
+      selectThread: vi.fn((threadId: string) => {
+        comments.store.state.selectedThreadId = threadId;
+      }),
+    };
+    const editor = {
+      getExtension: () => comments,
+    } as unknown as DocsBlockNoteEditor;
+
+    render(
+      <LinkSelected
+        docId={DOC_ID}
+        commentThreadId="thread-1"
+        editor={editor}
+        isEditable={true}
+      />,
+      { wrapper: AppWrapper },
+    );
+    const link = screen.getByRole('link');
+
+    fireEvent.mouseDown(link);
+    // The editor selects the thread on mouseup, before the click
+    comments.store.state.selectedThreadId = 'thread-1';
+    fireEvent.click(link);
+
+    expect(comments.selectThread).toHaveBeenCalledWith('thread-1', false);
+    expect(push).not.toHaveBeenCalled();
+
+    fireEvent.mouseDown(link);
+    fireEvent.click(link);
+
+    expect(push).toHaveBeenCalledWith(`/docs/${DOC_ID}/`);
+  });
+
   it.each([{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }])(
     'opens a new tab/window when %o click',
     (modifier) => {

@@ -1,6 +1,7 @@
+import { CommentsExtension } from '@blocknote/core/comments';
 import { Loader } from '@gouvfr-lasuite/ui-components';
 import { useRouter } from 'next/compat/router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
@@ -27,6 +28,8 @@ interface LinkSelectedProps {
   blockId?: string;
   /** Shown instead of the title of the doc or the text of the block */
   label?: string;
+  /** The thread of the comment on the link, opened by a first click */
+  commentThreadId?: string;
   isEditable: boolean;
   /** Skips fetching the doc when the caller already has it */
   doc?: Doc;
@@ -90,6 +93,7 @@ export const LinkSelected = ({
   docId,
   blockId,
   label: customLabel,
+  commentThreadId,
   doc: preloadedDoc,
   editor,
 }: LinkSelectedProps) => {
@@ -158,11 +162,29 @@ export const LinkSelected = ({
   // The compat router is null outside of the Next.js router context, e.g. in
   // the slides print root, where nothing can be clicked.
   const router = useRouter();
+  // Read on the press: the editor may select the thread before the click
+  const wasThreadSelected = useRef(false);
+
+  const handleMouseDown = () => {
+    wasThreadSelected.current =
+      !!commentThreadId &&
+      editor?.getExtension(CommentsExtension)?.store.state.selectedThreadId ===
+        commentThreadId;
+  };
 
   const handleClick = (e: React.MouseEvent<HTMLSpanElement>) => {
     e.preventDefault();
 
     if (isDeletedDoc) {
+      return;
+    }
+
+    // As on a commented text link: the first click opens the comment, the
+    // next one follows the link.
+    const comments = editor?.getExtension(CommentsExtension);
+    if (commentThreadId && comments && !wasThreadSelected.current) {
+      wasThreadSelected.current = true;
+      comments.selectThread(commentThreadId, false);
       return;
     }
 
@@ -204,6 +226,7 @@ export const LinkSelected = ({
       aria-disabled={isDeletedDoc || undefined}
       className="--docs--interlinking-link-inline-content"
       data-href={href}
+      onMouseDown={handleMouseDown}
       onClick={handleClick}
       onAuxClick={handleAuxClick}
       onKeyDown={handleKeyDown}

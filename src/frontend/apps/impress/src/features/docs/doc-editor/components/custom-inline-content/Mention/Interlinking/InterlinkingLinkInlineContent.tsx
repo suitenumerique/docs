@@ -2,6 +2,7 @@ import { StyleSchema } from '@blocknote/core';
 import { createReactInlineContentSpec } from '@blocknote/react';
 import * as Sentry from '@sentry/nextjs';
 import { useQueryClient } from '@tanstack/react-query';
+import { type Node as PMNode } from '@tiptap/pm/model';
 import { TFunction } from 'i18next';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -89,6 +90,7 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
         blockId={props.inlineContent.props.blockId}
         label={props.inlineContent.props.label}
         disabled={props.inlineContent.props.disabled}
+        commentThreadId={getCommentThreadId(props.node)}
         isEditable={props.editor.isEditable}
         editor={props.editor as unknown as DocsBlockNoteEditor}
         onDisable={() => {
@@ -151,11 +153,21 @@ export const InterlinkingLinkExternal = ({
   return <a href={`${window.location.origin}${path}`}>{text}</a>;
 };
 
+/**
+ * The thread of the comment on the link, the one the editor opens on a click
+ * on a commented text (an orphan comment has no thread to open).
+ */
+const getCommentThreadId = (node: PMNode): string | undefined =>
+  node.marks.find(
+    (mark) => mark.type.name === 'comment' && mark.attrs.orphan !== true,
+  )?.attrs.threadId as string | undefined;
+
 interface InterlinkingLinkProps {
   docId?: string;
   blockId?: string;
   label?: string;
   disabled?: boolean;
+  commentThreadId?: string;
   isEditable: boolean;
   editor?: DocsBlockNoteEditor;
   onDisable: () => void;
@@ -173,6 +185,7 @@ export const InterlinkingLink = ({
   blockId,
   label,
   disabled,
+  commentThreadId,
   isEditable,
   editor,
   onDisable,
@@ -193,6 +206,7 @@ export const InterlinkingLink = ({
       docId={docId}
       blockId={blockId}
       label={label}
+      commentThreadId={commentThreadId}
       isEditable={isEditable}
       editor={editor}
     />
