@@ -26,6 +26,7 @@ and this project adheres to
 - 🛂(frontend) allow asking for access from a sub-document page #2994
 - 🔒️(backend) require an editor access on the tree to create a child document,
   a link definition alone is not enough anymore #3031
+- ⚡️(ci) skip the checks that a change does not concern
 
 ### Fixed
 

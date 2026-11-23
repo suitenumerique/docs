@@ -116,7 +116,7 @@ Make sure you follow the following best practices:
 * make sure you add a brief purpose, screenshots, or a short video to help reviewers understand the changes
 
 **Before asking for a human review make sure that:**
-* all tests have passed in the CI
+* all tests have passed in the CI (a pull request that only changes markdown files or the documentation skips the tests and builds: a skipped check counts as passed)
 * you ticked all the checkboxes of the [PR checklist](.github/PULL_REQUEST_TEMPLATE.md)
 
 *Skip if you see no Code Rabbit review on your PR*

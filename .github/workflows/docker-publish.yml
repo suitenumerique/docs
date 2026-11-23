@@ -41,12 +41,21 @@ description: Build and push a container image based on the input arguments provi
         required: false
         default: ""
         description: "Build arg name to pass first amd64 tag to arm64 build (skips arch-independent build steps)"
+      # The jobs skip themselves rather than the caller skipping this
+      # workflow: the checks of the jobs of a skipped called workflow are
+      # never reported, and the build-amd64 ones are required.
+      skip:
+        type: boolean
+        required: false
+        default: false
+        description: Skip the build, reported as skipped, when nothing the image depends on changed. Ignored when the image is pushed or scanned.
 
 permissions:
   contents: read
 
 jobs:
   meta:
+    if: ${{ !inputs.skip || inputs.should_push || inputs.trivy_scan }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

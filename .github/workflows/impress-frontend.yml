@@ -20,14 +20,25 @@ concurrency:
 
 jobs:
 
+  changes:
+    uses: ./.github/workflows/changes.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
   install-dependencies:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     uses: ./.github/workflows/dependencies.yml
     with:
       node_version: '22.x'
       with-front-dependencies-installation: true
 
   test-front:
-    needs: install-dependencies
+    needs:
+      - changes
+      - install-dependencies
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -52,7 +63,10 @@ jobs:
 
   lint-front:
     runs-on: ubuntu-latest
-    needs: install-dependencies
+    needs:
+      - changes
+      - install-dependencies
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     permissions:
       contents: read
     steps:
@@ -74,16 +88,21 @@ jobs:
         run: cd src/frontend/ && yarn lint
 
   test-e2e-chromium:
+    needs: changes
+    if: ${{ !cancelled() }}
     uses: ./.github/workflows/e2e-tests.yml
     with:
       browser-name: chromium
       projects: --project=chromium
       timeout-minutes: 25
+      skip: ${{ needs.changes.outputs.e2e == 'false' }}
 
   bundle-size-check:
     runs-on: ubuntu-latest
-    needs: install-dependencies
-    if: github.event_name == 'pull_request'
+    needs:
+      - changes
+      - install-dependencies
+    if: ${{ !cancelled() && github.event_name == 'pull_request' && needs.changes.outputs.code != 'false' }}
     permissions:
       contents: read
       pull-requests: write
@@ -133,7 +152,10 @@ jobs:
 
   uikit-theme-checker:
     runs-on: ubuntu-latest
-    needs: install-dependencies
+    needs:
+      - changes
+      - install-dependencies
+    if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     permissions:
       contents: read
     steps:

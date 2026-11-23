@@ -33,6 +33,14 @@ on:
         required: false
         type: number
         default: 30
+      # The jobs skip themselves rather than the caller skipping this
+      # workflow: the checks of the jobs of a skipped called workflow are
+      # never reported, and "test-e2e-chromium / test-e2e" is required.
+      skip:
+        description: "Skip the tests, reported as skipped (nothing they depend on changed)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -42,11 +50,12 @@ jobs:
     uses: ./.github/workflows/dependencies.yml
     with:
       node_version: "22.x"
-      with-front-dependencies-installation: true
+      with-front-dependencies-installation: ${{ !inputs.skip }}
 
   prepare-e2e:
     runs-on: ubuntu-latest
     needs: install-dependencies
+    if: ${{ !inputs.skip }}
     timeout-minutes: 10
     permissions:
       contents: read

@@ -7,6 +7,10 @@ on:
   pull_request:
     branches:
       - "*"
+    # Not a required check, so a plain filter is enough: nothing waits for it.
+    paths-ignore:
+      - '**/*.md'
+      - 'documentation/**'
 
 permissions:
   contents: read

@@ -1,0 +1,74 @@
+name: Changes reusable workflow
+
+# Tells the calling workflow which checks the change concerns. The callers skip
+# their jobs with an `if` (or an input of a called workflow) rather than with a
+# `paths` filter on the workflow: a skipped job still reports its check, so the
+# required checks never wait for a status that will not come. A job only skips
+# when its output is a positive 'false': a failed detection runs everything,
+# and so do pushes to main and tags, since it only runs on pull requests (from
+# the API, without a checkout).
+on:
+  workflow_call:
+    outputs:
+      e2e:
+        description: "'false' when the change does not concern the e2e tests"
+        value: ${{ jobs.detect.outputs.e2e }}
+      code:
+        description: "'false' when the change only touches markdown files and the documentation"
+        value: ${{ jobs.detect.outputs.code }}
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      # Anything but two positive 'false' (a failed detection) runs the tests.
+      e2e: ${{ (steps.filter-e2e.outputs.e2e == 'false' && steps.filter-e2e.outputs.e2e-assets == 'false') && 'false' || 'true' }}
+      code: ${{ steps.filter-code.outputs.code }}
+    steps:
+      # The e2e tests run the whole stack: they follow every file but the
+      # ones listed here (`every`: a file counts when it matches all the
+      # patterns). No markdown file reaches the images (.dockerignore), but the
+      # e2e tests import some of their own: `e2e-assets` brings them back.
+      - name: Detect the changes the e2e tests depend on
+        id: filter-e2e
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        with:
+          predicate-quantifier: every
+          filters: |
+            e2e:
+              - '**'
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!publiccode.yml'
+              - '!renovate.json'
+              - '!documentation/**'
+              - '!.agents/**'
+              - '!.github/ISSUE_TEMPLATE/**'
+              - '!.github/workflows/helmfile-linter.yaml'
+              - '!.github/workflows/release-helm-chart.yaml'
+              - '!.github/workflows/loadtest.yml'
+              - '!src/helm/**'
+              - '!src/loadtest/**'
+            e2e-assets:
+              - 'src/frontend/apps/e2e/**/*.md'
+      # On pull requests only: pushes to main and tags run everything.
+      - name: Detect the changes beyond the markdown files and the documentation
+        id: filter-code
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        with:
+          predicate-quantifier: every
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
+              - '!documentation/**'
