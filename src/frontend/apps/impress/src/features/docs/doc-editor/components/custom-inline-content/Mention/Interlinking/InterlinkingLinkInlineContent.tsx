@@ -1,16 +1,24 @@
 import { StyleSchema } from '@blocknote/core';
 import { createReactInlineContentSpec } from '@blocknote/react';
 import * as Sentry from '@sentry/nextjs';
+import { useQueryClient } from '@tanstack/react-query';
 import { TFunction } from 'i18next';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { validate as uuidValidate } from 'uuid';
 
 import LinkPageIcon from '@/docs/doc-editor/assets/doc-link.svg';
 import AddPageIcon from '@/docs/doc-editor/assets/doc-plus.svg';
 import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
-import { useCreateChildDocTree, useDocStore } from '@/docs/doc-management';
+import {
+  Doc,
+  KEY_DOC,
+  useCreateChildDocTree,
+  useDocStore,
+} from '@/docs/doc-management';
 
 import { LinkSelected } from './LinkSelected';
+import { getBlockAnchorLabel } from './getBlockAnchorLabel';
 
 export type InterlinkingLinkInlineContentType = {
   type: 'interlinkingLinkInline';
@@ -93,8 +101,55 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec<
         }}
       />
     ),
+    toExternalHTML: (props) => (
+      <InterlinkingLinkExternal
+        docId={props.inlineContent.props.docId}
+        blockId={props.inlineContent.props.blockId}
+        label={props.inlineContent.props.label}
+        disabled={props.inlineContent.props.disabled}
+        editor={props.editor as unknown as DocsBlockNoteEditor}
+      />
+    ),
   },
 );
+
+/**
+ * The external HTML is what other apps get from the clipboard (office
+ * suites, mails) and the source of the Markdown export: a plain link to the
+ * doc, the rendered one being a span. Its text is the one the editor shows,
+ * read from the docs already loaded: it is rendered synchronously.
+ */
+export const InterlinkingLinkExternal = ({
+  docId,
+  blockId,
+  label,
+  disabled,
+  editor,
+}: Pick<
+  InterlinkingLinkProps,
+  'docId' | 'blockId' | 'label' | 'disabled' | 'editor'
+>) => {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const { currentDoc } = useDocStore();
+
+  if (disabled || !docId || !uuidValidate(docId)) {
+    return null;
+  }
+
+  const path = `/docs/${docId}/${blockId ? `#${blockId}` : ''}`;
+  const blockLabel =
+    editor && blockId && currentDoc?.id === docId
+      ? getBlockAnchorLabel(editor, blockId, t)?.text
+      : undefined;
+  const text =
+    label ||
+    blockLabel ||
+    queryClient.getQueryData<Doc>([KEY_DOC, { id: docId }])?.title ||
+    path;
+
+  return <a href={`${window.location.origin}${path}`}>{text}</a>;
+};
 
 interface InterlinkingLinkProps {
   docId?: string;

@@ -1,7 +1,13 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { InterlinkingLink } from '../InterlinkingLinkInlineContent';
+import { KEY_DOC } from '@/docs/doc-management';
+
+import {
+  InterlinkingLink,
+  InterlinkingLinkExternal,
+} from '../InterlinkingLinkInlineContent';
 
 vi.mock('../LinkSelected', () => ({
   LinkSelected: ({ docId, blockId }: { docId: string; blockId?: string }) => (
@@ -56,5 +62,55 @@ describe('InterlinkingLink', () => {
 
     expect(container).toBeEmptyDOMElement();
     await waitFor(() => expect(onDisable).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe('InterlinkingLinkExternal', () => {
+  const renderExternal = (
+    props: Parameters<typeof InterlinkingLinkExternal>[0],
+    title?: string,
+  ) => {
+    const queryClient = new QueryClient();
+    if (title) {
+      queryClient.setQueryData([KEY_DOC, { id: DOC_ID }], {
+        id: DOC_ID,
+        title,
+      });
+    }
+
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <InterlinkingLinkExternal {...props} />
+      </QueryClientProvider>,
+    );
+  };
+
+  it('is a link to the doc, with its label', () => {
+    renderExternal({ docId: DOC_ID, blockId: 'block-1', label: 'see there' });
+
+    expect(screen.getByRole('link', { name: 'see there' })).toHaveAttribute(
+      'href',
+      `${window.location.origin}/docs/${DOC_ID}/#block-1`,
+    );
+  });
+
+  it('shows the title of the loaded doc, else its path', () => {
+    const { unmount } = renderExternal({ docId: DOC_ID }, 'My doc');
+
+    expect(screen.getByRole('link', { name: 'My doc' })).toBeInTheDocument();
+    unmount();
+
+    renderExternal({ docId: DOC_ID });
+
+    expect(
+      screen.getByRole('link', { name: `/docs/${DOC_ID}/` }),
+    ).toHaveAttribute('href', `${window.location.origin}/docs/${DOC_ID}/`);
+  });
+
+  it('renders nothing without a valid doc', () => {
+    expect(renderExternal({ docId: '' }).container).toBeEmptyDOMElement();
+    expect(
+      renderExternal({ docId: DOC_ID, disabled: true }).container,
+    ).toBeEmptyDOMElement();
   });
 });
