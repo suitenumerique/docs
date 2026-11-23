@@ -177,13 +177,17 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
       return;
     }
 
-    const imagesBlocks = editor.document.filter(
-      (block) =>
-        block.type === 'image' && block.props.url.includes(ANALYZE_URL),
-    );
+    // Depth-first: an image can be nested in a column or another block
+    const imagesBlocks: Block[] = [];
+    editor.forEachBlock((block) => {
+      if (block.type === 'image' && block.props.url.includes(ANALYZE_URL)) {
+        imagesBlocks.push(block as Block);
+      }
+      return true;
+    });
 
     imagesBlocks.forEach((block) => {
-      replaceBlockWithUploadLoader(block as Block);
+      replaceBlockWithUploadLoader(block);
     });
   }, [editor, replaceBlockWithUploadLoader]);
 

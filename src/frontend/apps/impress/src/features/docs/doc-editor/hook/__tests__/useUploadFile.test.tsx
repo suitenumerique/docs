@@ -96,10 +96,30 @@ describe('useUploadFile', () => {
 });
 
 describe('useUploadStatus', () => {
+  // Mimics BlockNote: a depth-first traversal of the blocks and their children
+  const mockEditor = (
+    document: Record<string, unknown>[],
+    methods: Record<string, unknown>,
+  ) =>
+    ({
+      forEachBlock: (callback: (block: unknown) => boolean) => {
+        const walk = (blocks: Record<string, unknown>[]): boolean =>
+          blocks.every(
+            (block) =>
+              callback(block) &&
+              walk((block.children as Record<string, unknown>[]) ?? []),
+          );
+        walk(document);
+      },
+      document,
+      onUploadEnd: vi.fn(),
+      ...methods,
+    }) as unknown as DocsBlockNoteEditor;
+
   it('keeps the caption and alignment while the new file is analyzed', () => {
     const updateBlock = vi.fn();
-    const editor = {
-      document: [
+    const editor = mockEditor(
+      [
         {
           id: 'img',
           type: 'image',
@@ -112,9 +132,8 @@ describe('useUploadStatus', () => {
           },
         },
       ],
-      updateBlock,
-      onUploadEnd: vi.fn(),
-    } as unknown as DocsBlockNoteEditor;
+      { updateBlock },
+    );
 
     renderHook(() => useUploadStatus(editor), { wrapper: AppWrapper });
 
@@ -133,8 +152,8 @@ describe('useUploadStatus', () => {
   it('preserves the column layout when replacing a block with the upload loader', () => {
     const updateBlock = vi.fn();
     const replaceBlocks = vi.fn();
-    const editor = {
-      document: [
+    const editor = mockEditor(
+      [
         {
           id: 'img',
           type: 'image',
@@ -147,15 +166,55 @@ describe('useUploadStatus', () => {
           },
         },
       ],
-      updateBlock,
-      replaceBlocks,
-      onUploadEnd: vi.fn(),
-    } as unknown as DocsBlockNoteEditor;
+      { updateBlock, replaceBlocks },
+    );
 
     renderHook(() => useUploadStatus(editor), { wrapper: AppWrapper });
 
     // updateBlock is used (not replaceBlocks) to avoid destroying column layouts
     expect(updateBlock).toHaveBeenCalled();
     expect(replaceBlocks).not.toHaveBeenCalled();
+  });
+
+  it('resumes the analysis of an image nested in a column', () => {
+    const updateBlock = vi.fn();
+    const editor = mockEditor(
+      [
+        {
+          id: 'columns',
+          type: 'columnList',
+          props: {},
+          children: [
+            {
+              id: 'column',
+              type: 'column',
+              props: {},
+              children: [
+                {
+                  id: 'nested-img',
+                  type: 'image',
+                  props: {
+                    url: 'https://docs.example/media-check/abc',
+                    name: 'photo.png',
+                    showPreview: true,
+                    caption: '',
+                    textAlignment: 'left',
+                  },
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      { updateBlock },
+    );
+
+    renderHook(() => useUploadStatus(editor), { wrapper: AppWrapper });
+
+    expect(updateBlock).toHaveBeenCalledWith(
+      'nested-img',
+      expect.objectContaining({ type: 'uploadLoader' }),
+    );
   });
 });
