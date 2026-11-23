@@ -33,7 +33,7 @@ const Page: NextPageWithLayout = () => {
 
   const redirectToDoc = useCallback(
     (docId: string) => {
-      void router.push(`/docs/${docId}`);
+      void router.replace(`/docs/${docId}`);
     },
     [router],
   );

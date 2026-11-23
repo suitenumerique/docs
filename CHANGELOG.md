@@ -25,6 +25,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) stop browser back from reopening /docs/new and creating a doc
 - 🐛(frontend) keep the column layout when uploading a file in a column #3010
 - 🐛(frontend) resume the analysis of an image nested in a column #3010
 - 🐛(frontend) stop the right panel from covering the doc header actions
