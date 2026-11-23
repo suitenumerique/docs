@@ -26,6 +26,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) keep a linked block in place while the media above it load #2930
 - 🐛(ci) scan on the trivy label in a workflow of its own, adding a label
   hid the required docker checks
 - 🐛(frontend) keep the column layout when uploading a file in a column #3010

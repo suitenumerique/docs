@@ -5,17 +5,21 @@ import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { getMainContentElement } from '@/layouts/utils';
 
 const SCROLL_MARGIN_TOP = 50;
-const OBSERVER_TIMEOUT = 5000;
+// How long after the page opened the block is awaited, then kept in place
+const ANCHOR_TIMEOUT = 15000;
 // The highlight lasts 1 second: held half of it, then faded out
 const HIGHLIGHT_HOLD = 500;
 const HIGHLIGHT_FADE = 500;
 const HIGHLIGHT_DURATION = HIGHLIGHT_HOLD + HIGHLIGHT_FADE;
 
+// The user takes over the scroll position
+const USER_EVENTS = ['wheel', 'touchstart', 'keydown', 'mousedown'] as const;
+
 /**
  * Hook that scrolls to a block element based on the URL hash.
- * If the block element doesn't exist yet, it observes the DOM for a limited time
- * to see if it appears, and scrolls to it when it does.
- * If it doesn't appear within that time, it stops observing to avoid memory leaks.
+ * The editor can render the block a bit later, and the media above it load
+ * after the first scroll and push it down: for a limited time, it waits for
+ * the block, then keeps it in place until the user scrolls.
  * With the editor, a link activated with the keyboard also moves the focus to
  * the block, so the keyboard user continues from there.
  */
@@ -28,39 +32,73 @@ export const useScrollToBlockAnchor = (editor?: DocsBlockNoteEditor) => {
       return;
     }
 
-    const existingBlockEl = document.getElementById(blockId);
-    if (existingBlockEl) {
-      scrollToBlock(existingBlockEl);
-      return;
+    // Stops everything: timeout, unmount, or the user takes over
+    const controller = new AbortController();
+    const { signal } = controller;
+    const stop = () => controller.abort();
+
+    const scrollAndKeepInPlace = (blockEl: HTMLElement) => {
+      scrollToBlock(blockEl);
+
+      const container = getMainContentElement();
+      if (!container) {
+        return;
+      }
+
+      // Re-align only when the content above moved the block: neither the
+      // first callback nor a change below it cuts the smooth scroll short
+      let offset = getBlockOffset(container, blockEl);
+      const resizeObserver = new ResizeObserver(() => {
+        const currentBlockEl = document.getElementById(blockId);
+        if (!currentBlockEl) {
+          return;
+        }
+
+        const newOffset = getBlockOffset(container, currentBlockEl);
+        if (Math.abs(newOffset - offset) >= 1) {
+          offset = newOffset;
+          scrollBlockIntoView(currentBlockEl, 'auto');
+        }
+      });
+
+      // One of the wrappers of the block grows when media above it load
+      for (
+        let el = blockEl.parentElement;
+        el && el !== container;
+        el = el.parentElement
+      ) {
+        resizeObserver.observe(el);
+      }
+      signal.addEventListener('abort', () => resizeObserver.disconnect());
+
+      USER_EVENTS.forEach((event) =>
+        window.addEventListener(event, stop, { passive: true, signal }),
+      );
+    };
+
+    const blockEl = document.getElementById(blockId);
+    if (blockEl) {
+      scrollAndKeepInPlace(blockEl);
+    } else {
+      const mutationObserver = new MutationObserver(() => {
+        const renderedBlockEl = document.getElementById(blockId);
+        if (renderedBlockEl) {
+          mutationObserver.disconnect();
+          scrollAndKeepInPlace(renderedBlockEl);
+        }
+      });
+      mutationObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+      signal.addEventListener('abort', () => mutationObserver.disconnect());
     }
 
-    /**
-     * Document editor can be a bit slow to render the block elements.
-     * If the block element doesn't exist yet, we observe the DOM
-     * during the next OBSERVER_TIMEOUT milliseconds to see if it appears,
-     * and scroll to it when it does.
-     * If it doesn't appear within that time, we stop observing to avoid memory leaks.
-     */
-    const observer = new MutationObserver(() => {
-      const blockEl = document.getElementById(blockId);
-
-      if (blockEl) {
-        clearTimeout(timeoutId);
-        observer.disconnect();
-        scrollToBlock(blockEl);
-      }
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    // Disconnect the observer after a timeout to avoid memory leaks if the block never appears
-    const timeoutId = setTimeout(() => {
-      observer.disconnect();
-    }, OBSERVER_TIMEOUT);
+    const timeoutId = setTimeout(stop, ANCHOR_TIMEOUT);
 
     return () => {
       clearTimeout(timeoutId);
-      observer.disconnect();
+      stop();
     };
   }, []);
 
@@ -186,20 +224,25 @@ const highlightBlock = (blockEl: HTMLElement) => {
   );
 };
 
+/** Where the block is in the scrolled content: scrolling does not change it */
+const getBlockOffset = (container: HTMLElement, blockEl: HTMLElement) =>
+  blockEl.getBoundingClientRect().top -
+  container.getBoundingClientRect().top +
+  container.scrollTop;
+
 // Try to scroll the main content container instead of the block itself
 // to avoid the block being hidden behind the header
-export const scrollBlockIntoView = (blockEl: HTMLElement) => {
+export const scrollBlockIntoView = (
+  blockEl: HTMLElement,
+  behavior: ScrollBehavior = prefersReducedMotion() ? 'auto' : 'smooth',
+) => {
   const container = getMainContentElement();
-  const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
 
   if (container) {
-    const top =
-      blockEl.getBoundingClientRect().top -
-      container.getBoundingClientRect().top +
-      container.scrollTop -
-      SCROLL_MARGIN_TOP;
-
-    container.scrollTo({ top, behavior });
+    container.scrollTo({
+      top: getBlockOffset(container, blockEl) - SCROLL_MARGIN_TOP,
+      behavior,
+    });
   } else {
     blockEl.scrollIntoView({
       behavior,

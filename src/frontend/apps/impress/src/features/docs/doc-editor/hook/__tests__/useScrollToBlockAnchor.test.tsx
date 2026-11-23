@@ -173,6 +173,128 @@ describe('useScrollToBlockAnchor', () => {
     expect(container.style.scrollBehavior).toBe('');
   });
 
+  describe('on a page opened on a block link', () => {
+    let resize: () => void;
+    let isObserving: boolean;
+    // The media above the block load and push it down
+    const pushBlockDown = () => {
+      block.getBoundingClientRect = () => ({ top: 800 }) as DOMRect;
+      resize();
+    };
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+
+    beforeEach(() => {
+      isObserving = false;
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          constructor(callback: ResizeObserverCallback) {
+            // Like the real one: no callback once disconnected
+            resize = () =>
+              isObserving && callback([], this as unknown as ResizeObserver);
+          }
+          observe = (el: Element) => {
+            isObserving = true;
+            observe(el);
+          };
+          disconnect = () => {
+            isObserving = false;
+            disconnect();
+          };
+        },
+      );
+
+      // The block sits in a wrapper that grows when media above it load
+      const wrapper = document.createElement('div');
+      wrapper.appendChild(block);
+      container.appendChild(wrapper);
+      window.location.hash = 'block-1';
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      window.location.hash = '';
+    });
+
+    it('scrolls to the block and keeps it aligned while the content above resizes', () => {
+      renderHook(() => useScrollToBlockAnchor());
+
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(scrollTo).toHaveBeenLastCalledWith(
+        expect.objectContaining({ behavior: 'smooth' }),
+      );
+      expect(animate).toHaveBeenCalled();
+      expect(observe).toHaveBeenCalledWith(block.parentElement);
+      expect(observe).not.toHaveBeenCalledWith(container);
+
+      // The first callback, or a change below the block, does not move it:
+      // the smooth scroll goes on
+      resize();
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+
+      pushBlockDown();
+      expect(scrollTo).toHaveBeenCalledTimes(2);
+      expect(scrollTo).toHaveBeenLastCalledWith({
+        top: 750,
+        behavior: 'auto',
+      });
+    });
+
+    it('waits for the block to be rendered before scrolling to it', async () => {
+      const wrapper = block.parentElement!;
+      block.remove();
+      renderHook(() => useScrollToBlockAnchor());
+
+      expect(scrollTo).not.toHaveBeenCalled();
+
+      await act(async () => {
+        wrapper.appendChild(block);
+        await Promise.resolve();
+      });
+
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(observe).toHaveBeenCalledWith(wrapper);
+    });
+
+    it('stops keeping the block aligned once the user scrolls', () => {
+      renderHook(() => useScrollToBlockAnchor());
+
+      fireEvent.wheel(window);
+      pushBlockDown();
+
+      expect(disconnect).toHaveBeenCalled();
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops keeping the block aligned 15 seconds after the page opened', () => {
+      renderHook(() => useScrollToBlockAnchor());
+
+      act(() => {
+        vi.advanceTimersByTime(14999);
+      });
+      expect(disconnect).not.toHaveBeenCalled();
+
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+      pushBlockDown();
+
+      expect(disconnect).toHaveBeenCalled();
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops keeping the block aligned once unmounted', () => {
+      const { unmount } = renderHook(() => useScrollToBlockAnchor());
+
+      unmount();
+      pushBlockDown();
+
+      expect(disconnect).toHaveBeenCalled();
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('focus after the activation of a link', () => {
     const setTextCursorPosition = vi.fn();
     const focus = vi.fn();
