@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Command } from 'cmdk';
 import fetchMock from 'fetch-mock';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AccessRequest, Doc, Role } from '@/docs/doc-management';
@@ -65,6 +66,7 @@ const ACCESS_REQUEST: AccessRequest = {
 
 const LIST_URL =
   'http://test.jest/api/v1.0/documents/doc-id/ask-for-access/?page=1';
+const CREATE_URL = 'http://test.jest/api/v1.0/documents/doc-id/ask-for-access/';
 const ACCEPT_URL =
   'http://test.jest/api/v1.0/documents/doc-id/ask-for-access/request-id/accept/';
 const DELETE_URL =
@@ -211,9 +213,61 @@ describe('ButtonAccessRequest', () => {
     mockList([]);
   });
 
+  it('shows an error when the request is refused', async () => {
+    fetchMock.post(CREATE_URL, {
+      status: 400,
+      body: { detail: 'You already have this role or a higher one.' },
+    });
+
+    render(<ButtonAccessRequest docId="doc-id" role={Role.ADMIN} />, {
+      wrapper: AppWrapper,
+    });
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Request access' }),
+    );
+
+    await waitFor(() => {
+      expect(mocks.toast).toHaveBeenCalledWith(
+        'Error while requesting access.',
+        VariantType.ERROR,
+        { duration: 4000 },
+      );
+    });
+  });
+
+  it('shows the error after the dialog holding the button closed', async () => {
+    fetchMock.post(CREATE_URL, { status: 400, body: {} });
+
+    const ClosingDialog = () => {
+      const [isOpen, setIsOpen] = useState(true);
+
+      return isOpen ? (
+        <ButtonAccessRequest
+          docId="doc-id"
+          role={Role.ADMIN}
+          onClick={() => setIsOpen(false)}
+        />
+      ) : null;
+    };
+
+    render(<ClosingDialog />, { wrapper: AppWrapper });
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Request access' }),
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Request access' }),
+    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(mocks.toast).toHaveBeenCalledWith(
+        'Error while requesting access.',
+        VariantType.ERROR,
+        { duration: 4000 },
+      );
+    });
+  });
+
   it('requests the admin role', async () => {
-    const CREATE_URL =
-      'http://test.jest/api/v1.0/documents/doc-id/ask-for-access/';
     fetchMock.post(CREATE_URL, { status: 201 });
 
     render(<ButtonAccessRequest docId="doc-id" role={Role.ADMIN} />, {
