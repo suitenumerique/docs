@@ -2,13 +2,14 @@ name: Label Preview
 
 on:
   pull_request:
-    types: [labeled, opened]
+    # synchronize and reopened: no workflow runs while the pull request has a
+    # conflict, so the comment is posted by the push that fixes it.
+    types: [labeled, opened, synchronize, reopened]
 
 permissions: 
   pull-requests: write
 
-# One run per pull request: a new event (opened, labeled) cancels the run of
-# the previous one.
+# One run per pull request: a new event cancels the run of the previous one.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
