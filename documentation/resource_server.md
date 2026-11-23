@@ -54,7 +54,7 @@ EXTERNAL_API = {
 
 **Endpoints:**
 
-- `documents`: Controls `/external_api/v1.0/documents/`. Available actions: `list`, `retrieve`, `create`, `update`, `destroy`, `trashbin`, `children`, `restore`, `move`, `favorite_list`, `favorite`, `duplicate`, `link_configuration`, `attachment_upload`, `media_auth`, `ai_transform`, `ai_translate`, `ai_proxy`.
+- `documents`: Controls `/external_api/v1.0/documents/`. Available actions: `list`, `all`, `retrieve`, `create`, `update`, `destroy`, `trashbin`, `children`, `restore`, `move`, `favorite_list`, `favorite`, `duplicate`, `link_configuration`, `attachment_upload`, `media_auth`, `formatted_content`, `ai_transform`, `ai_translate`, `ai_proxy`. `all` lists every document the user can access, sub-pages included; `formatted_content` returns a document's content as JSON, Markdown or HTML (`?content_format=`). `all` also needs `DOCUMENT_ALL_ENDPOINT_ENABLED` to be enabled (the default).
 - `document_access`: `/external_api/v1.0/documents/{id}/accesses/`. Available actions: `list`, `retrieve`, `create`, `update`, `partial_update`, `destroy`
 - `document_invitation`: Controls `/external_api/v1.0/documents/{id}/invitations/`. Available actions: `list`, `retrieve`, `create`, `partial_update`, `destroy`
 - `users`: Controls `/external_api/v1.0/users/`. Available actions: `get_me`, `onboarding_done`.
