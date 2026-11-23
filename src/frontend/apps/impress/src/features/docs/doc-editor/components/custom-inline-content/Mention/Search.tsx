@@ -355,6 +355,9 @@ export const Search = ({
         <Popover.Dropdown>
           <Box
             ref={setModalRef}
+            // Keeps the focus in the input: a comment thread of the sidebar
+            // closes its composer when the focus leaves it, before the click
+            onMouseDown={(e) => e.preventDefault()}
             $minWidth={isDesktop ? '330px' : '220px'}
             $width="fit-content"
             $zIndex="10"

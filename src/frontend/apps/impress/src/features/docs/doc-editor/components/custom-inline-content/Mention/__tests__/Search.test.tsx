@@ -229,6 +229,16 @@ describe('Search', () => {
     expect(focus).toHaveBeenCalled();
   });
 
+  it('keeps the focus in the input when a result is pressed', async () => {
+    await renderSearch();
+
+    // fireEvent returns false when the default action is prevented
+    expect(fireEvent.mouseDown(await screen.findByText('First result'))).toBe(
+      false,
+    );
+    expect(screen.getByRole('combobox')).toHaveFocus();
+  });
+
   it('ignores a selection when the editor is not editable', async () => {
     const { updateInlineContent } = await renderSearch({
       isEditable: false,
