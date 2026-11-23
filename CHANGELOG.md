@@ -44,6 +44,7 @@ and this project adheres to
 - 🔒️(backend) require the owner role to move a document out of its tree #2978
 - 🐛(backend) speed up the reconciliation admin with user autocompletes #3013
 - 🐛(frontend) show right-to-left text from the right in the editor #2919
+- 🐛(frontend) show the role given by an inherited link in the doc header #3054
 - 🐛(yhub) report unready when valkey only accepts reads
 - 🐛(yhub) restart when valkey turns read-only after a failover
 - 🐛(frontend) hide the sub-doc creation entries without children_create #3031

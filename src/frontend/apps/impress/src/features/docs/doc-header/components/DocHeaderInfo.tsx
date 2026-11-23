@@ -8,6 +8,7 @@ import {
   LinkReach,
   Role,
   getDocLinkReach,
+  getDocRole,
   useTrans,
 } from '@/docs/doc-management';
 import { useDate } from '@/hooks';
@@ -93,9 +94,7 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
       >
         <VisibilityDoc doc={doc} />
         {transRole(
-          doc.abilities.partial_update
-            ? doc.user_role || doc.link_role
-            : Role.READER,
+          doc.abilities.partial_update ? getDocRole(doc) : Role.READER,
         )}
         &nbsp;&nbsp;·&nbsp;
       </Text>
