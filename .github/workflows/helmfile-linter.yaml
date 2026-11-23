@@ -24,6 +24,7 @@ concurrency:
 jobs:
   helmfile-lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     container:
       image: ghcr.io/helmfile/helmfile:v0.171.0
     steps:

@@ -21,6 +21,7 @@ jobs:
   front-dependencies-installation:
     if: ${{ inputs.with-front-dependencies-installation == true }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -48,6 +49,7 @@ jobs:
   build-mails:
     if: ${{ inputs.with-build_mails == true }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: src/mail

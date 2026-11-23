@@ -17,6 +17,7 @@ concurrency:
 jobs:
   comment:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: contains(github.event.pull_request.labels.*.name, 'preview')
     steps:
       - uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3

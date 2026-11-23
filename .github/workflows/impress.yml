@@ -34,6 +34,7 @@ jobs:
 
   lint-git:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request' # Makes sense only for pull requests
     steps:
       - name: Checkout repository
@@ -55,6 +56,7 @@ jobs:
 
   check-changelog:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: |
       contains(github.event.pull_request.labels.*.name, 'noChangeLog') == false &&
       github.event_name == 'pull_request'
@@ -68,6 +70,7 @@ jobs:
 
   lint-changelog:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -81,6 +84,7 @@ jobs:
 
   lint-spell-mistakes:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
@@ -102,6 +106,7 @@ jobs:
 
   lint-back:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: changes
     if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
     defaults:
@@ -127,6 +132,7 @@ jobs:
 
   test-back:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs:
       - changes
       - install-dependencies
