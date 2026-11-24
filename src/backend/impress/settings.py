@@ -579,6 +579,9 @@ class Base(Configuration):
     FRONTEND_SILENT_LOGIN_ENABLED = values.BooleanValue(
         default=False, environ_name="FRONTEND_SILENT_LOGIN_ENABLED", environ_prefix=None
     )
+    FRONTEND_FEEDBACK_FORM_URL = values.Value(
+        None, environ_name="FRONTEND_FEEDBACK_FORM_URL", environ_prefix=None
+    )
 
     ENCRYPTION_FEATURE_ENABLED = values.BooleanValue(
         default=False,

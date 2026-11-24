@@ -60,6 +60,7 @@ export interface ConfigResponse {
   ENCRYPTION_VAULT_URL?: string | null;
   ENVIRONMENT: string;
   FRONTEND_CSS_URL?: string;
+  FRONTEND_FEEDBACK_FORM_URL?: string | null;
   FRONTEND_HOMEPAGE_FEATURE_ENABLED?: boolean;
   FRONTEND_JS_URL?: string;
   FRONTEND_SILENT_LOGIN_ENABLED?: boolean;

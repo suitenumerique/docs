@@ -3641,6 +3641,7 @@ class ConfigView(drf.views.APIView):
             "ENCRYPTION_VAULT_URL",
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
+            "FRONTEND_FEEDBACK_FORM_URL",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
             "FRONTEND_JS_URL",
             "FRONTEND_SILENT_LOGIN_ENABLED",

@@ -1,5 +1,5 @@
 import type { UserMenuProps } from '@gouvfr-lasuite/ui-components';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { AppWrapper } from '@/tests/utils';
@@ -32,7 +32,12 @@ vi.mock('@/features/auth', () => ({
 }));
 
 vi.mock('@/components/Waffle', () => ({ Waffle: () => null }));
-vi.mock('@/features/help', () => ({ HelpMenu: () => null }));
+vi.mock('@/features/help', async () => ({
+  ...(await vi.importActual<object>(
+    '@/features/help/components/FeedbackButton',
+  )),
+  HelpMenu: () => <div data-testid="help-menu" />,
+}));
 vi.mock('@/features/language/components/LanguagePicker', () => ({
   LanguagePicker: () => null,
 }));
@@ -65,5 +70,25 @@ describe('FooterActions', () => {
     render(<FooterActions />, { wrapper: AppWrapper });
 
     expect(mocks.userMenuProps?.settingsCTA).toBeUndefined();
+  });
+
+  test('shows the help menu without FRONTEND_FEEDBACK_FORM_URL', () => {
+    render(<FooterActions />, { wrapper: AppWrapper });
+
+    expect(screen.getByTestId('help-menu')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Give feedback' }),
+    ).not.toBeInTheDocument();
+  });
+
+  test('replaces the help menu with a link to FRONTEND_FEEDBACK_FORM_URL', () => {
+    mocks.config = { FRONTEND_FEEDBACK_FORM_URL: 'https://forms.test/f' };
+
+    render(<FooterActions />, { wrapper: AppWrapper });
+
+    const link = screen.getByRole('link', { name: 'Give feedback' });
+    expect(link).toHaveAttribute('href', 'https://forms.test/f');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(screen.queryByTestId('help-menu')).not.toBeInTheDocument();
   });
 });

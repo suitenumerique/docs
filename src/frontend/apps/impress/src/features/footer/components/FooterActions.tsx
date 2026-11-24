@@ -11,7 +11,7 @@ import {
   gotoLogout,
   useAuth,
 } from '@/features/auth';
-import { HelpMenu } from '@/features/help';
+import { FeedbackButton, HelpMenu } from '@/features/help';
 import { LanguagePicker } from '@/features/language/components/LanguagePicker';
 
 const FooterActionsGlobalStyle = createGlobalStyle`
@@ -53,7 +53,11 @@ export const FooterActions = () => {
           <EncryptionMenuButton />
           <ButtonLogin />
         </Box>
-        <HelpMenu />
+        {config?.FRONTEND_FEEDBACK_FORM_URL ? (
+          <FeedbackButton url={config.FRONTEND_FEEDBACK_FORM_URL} />
+        ) : (
+          <HelpMenu />
+        )}
       </Box>
     </>
   );
