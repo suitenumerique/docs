@@ -2,3 +2,8 @@
 # (docker-publish.yml). Add an entry only for a vulnerability without a fix
 # that the image cannot avoid, with a comment naming the package and the image,
 # and remove it as soon as the scan passes without it.
+# openssl (libssl3t64, yhub image, distroless nodejs22-debian13): QUIC denial
+# of service, no fix in trivy yet. Node bundles its own OpenSSL, nothing in the
+# image loads the system libssl, and yhub does not use QUIC.
+CVE-2026-107494
+CVE-2026-124709
