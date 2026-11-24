@@ -25,6 +25,8 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(ci) scan on the trivy label in a workflow of its own, adding a label
+  hid the required docker checks
 - 🐛(frontend) keep the column layout when uploading a file in a column #3010
 - 🐛(frontend) resume the analysis of an image nested in a column #3010
 - 🐛(frontend) stop the right panel from covering the doc header actions

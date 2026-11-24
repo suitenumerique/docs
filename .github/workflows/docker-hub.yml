@@ -8,10 +8,10 @@ on:
       - "main"
     tags:
       - "v*"
+  # No `labeled` type: a run on a label skips the builds, and GitHub would read
+  # the required `build-amd64` checks from it, never reported. A newly added
+  # `trivy` label starts trivy.yml instead.
   pull_request:
-    # `labeled` starts the trivy scan as soon as the `trivy` label is added;
-    # the other labels skip every job (see the `if` of the build jobs).
-    types: [opened, synchronize, reopened, labeled]
     branches:
       - "main"
 
@@ -26,18 +26,12 @@ permissions:
 # Branches and tags get a group of their own, queued instead of cancelled (only
 # the latest pending run is kept): an image push or the Argo CD notification is
 # never stopped halfway, and two runs never race to push the same tag.
-# Adding a label other than `trivy` gets a group of its own: its run does
-# nothing and must not cancel the build of the pull request.
 concurrency:
-  group: >-
-    ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{
-    github.event.action == 'labeled' && github.event.label.name != 'trivy'
-    && format('-{0}', github.run_id) || '' }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build-and-push-backend:
-    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
@@ -52,7 +46,6 @@ jobs:
       docker_user: 1001:127
 
   build-and-push-frontend:
-    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
@@ -68,7 +61,6 @@ jobs:
       docker_user: 1001:127
 
   build-and-push-y-provider:
-    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read
@@ -83,7 +75,6 @@ jobs:
       docker_user: 1001:127
 
   build-and-push-yhub:
-    if: github.event.action != 'labeled' || github.event.label.name == 'trivy'
     uses: ./.github/workflows/docker-publish.yml
     permissions:
       contents: read

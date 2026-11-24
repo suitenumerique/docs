@@ -1,0 +1,52 @@
+name: Trivy Scan
+run-name: Trivy Scan
+
+# Scans the images as soon as the `trivy` label is added to a pull request.
+# The later pushes are scanned by docker-hub.yml, which reads the label too.
+# This lives apart from docker-hub.yml because GitHub reads the required checks
+# from the latest run of a workflow: a run on any other label skips every job
+# here, and would leave the `build-amd64` checks there unreported.
+on:
+  pull_request:
+    types: [labeled]
+    branches:
+      - "main"
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    if: github.event.label.name == 'trivy'
+    name: trivy-${{ matrix.service }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: backend
+            file: Dockerfile
+            target: backend-production
+            docker_user: 1001:127
+          - service: frontend
+            file: src/frontend/Dockerfile
+            target: frontend-production
+            docker_user: 1001:127
+          - service: y-provider
+            file: src/frontend/servers/y-provider/Dockerfile
+            target: y-provider
+            docker_user: 1001:127
+          - service: yhub
+            file: src/yhub-server/Dockerfile
+            target: yhub
+            docker_user: 1000:1000
+    uses: ./.github/workflows/docker-publish.yml
+    permissions:
+      contents: read
+    with:
+      image_name: lasuite/impress-${{ matrix.service }}
+      context: .
+      file: ${{ matrix.file }}
+      target: ${{ matrix.target }}
+      should_push: false
+      trivy_scan: true
+      docker_user: ${{ matrix.docker_user }}
