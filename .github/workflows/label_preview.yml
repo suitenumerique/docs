@@ -2,7 +2,7 @@ name: Label Preview
 
 on:
   pull_request:
-    types: [labeled, opened]
+    types: [labeled, opened, reopened, synchronize]
 
 permissions: 
   pull-requests: write
