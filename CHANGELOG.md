@@ -52,6 +52,7 @@ and this project adheres to
   there #2979
 - 🐛(backend) name users without an email instead of returning a 500 #2943
 - 🐛(frontend) show an error page when the current user cannot be loaded #2943
+- 🐛(frontend) swap /docs/new out of the history so Back creates no doc #3014
 
 ## [v6.1.0] - 2026-11-12
 
