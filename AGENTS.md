@@ -199,6 +199,9 @@ Clients connect via WebSocket to the collaboration server (`src/yhub-server`, bu
 ### Helm
 - Never commit secrets; document every value with an `@param` annotation and regenerate the chart README (`src/helm/impress/README.md`)
 
+### GitHub Actions
+- Third-party actions (not `actions/*` nor `suitenumerique/*`): only the references listed by `gh api repos/suitenumerique/docs/actions/permissions/selected-actions` may be used (exact tag or SHA; the call needs admin read access to the repository, otherwise ask a maintainer): any other one fails the workflow at startup, so check it before pinning or bumping an action
+
 ## Git Conventions
 
 ### Commit Format
