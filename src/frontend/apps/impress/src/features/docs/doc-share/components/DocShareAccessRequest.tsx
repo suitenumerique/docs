@@ -250,6 +250,17 @@ export const ButtonAccessRequest = ({
         },
       );
     },
+    onError: () => {
+      toast(
+        t('Error while requesting access.', {
+          description: 'Toast shown when requesting access failed',
+        }),
+        VariantType.ERROR,
+        {
+          duration: 4000,
+        },
+      );
+    },
   });
 
   if (!authenticated) {
