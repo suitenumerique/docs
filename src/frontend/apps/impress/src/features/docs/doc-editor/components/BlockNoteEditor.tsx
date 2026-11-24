@@ -174,7 +174,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   );
   const aiExtension = useAI?.(doc.id, aiBlockNoteAllowed);
 
-  const collabName = user?.full_name || user?.email;
+  const collabName = user?.full_name || user?.email || undefined;
   const cursorName =
     collabName ||
     t('Anonymous', {

@@ -36,7 +36,7 @@ export const SearchUserRow = ({
           className="--docs--search-user-row"
         >
           <UserAvatar
-            fullName={user.full_name || user.email}
+            fullName={user.full_name || user.email || undefined}
             background={isInvitation ? colorsTokens['gray-400'] : undefined}
           />
           <Box $direction="column">
