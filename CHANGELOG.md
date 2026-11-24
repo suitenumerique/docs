@@ -58,6 +58,7 @@ and this project adheres to
 - 🐛(frontend) pick a mention with a click in the comments sidebar #3055
 - 🐛(backend) stop throttling the config endpoint #3005
 - 🐛(backend) throttle anonymous users per browser, not per IP address #3005
+- 🐛(frontend) hide the block menu separator on blocks without colors #3021
 
 ## [v6.1.0] - 2026-11-12
 
