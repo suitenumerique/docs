@@ -355,6 +355,9 @@ export const Search = ({
         <Popover.Dropdown>
           <Box
             ref={setModalRef}
+            // Keep focus in the editor thread: a blur would unselect the
+            // comment thread and unmount the composer before click fires.
+            onMouseDown={(e) => e.preventDefault()}
             $minWidth={isDesktop ? '330px' : '220px'}
             $width="fit-content"
             $zIndex="10"
