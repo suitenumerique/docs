@@ -16,6 +16,8 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+## [6.1.1] - 2026-11-24
+
 - The Celery worker container is no longer probed with `celery inspect ping`.
   The worker touches a heartbeat file from its event loop and creates a ready
   file once it consumes from the broker: the helm chart checks the first with

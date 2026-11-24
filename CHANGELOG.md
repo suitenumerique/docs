@@ -6,11 +6,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v6.1.1] - 2026-11-24
+
 ### Added
 
-- ✨(yhub) expose whether valkey accepts writes as a metric
+- ✨(yhub) expose whether valkey accepts writes as a metric #3035
 - ✨(yhub) size and bound the compute pool: threads, queue, heap per thread
-- ✨(frontend) paste a link to a doc on a text to make it an interlink #2869
+  #3040
+- ✨(frontend) paste a link to a doc on a text to make it an interlink #3004
 - 🔧(backend) make NUM_PROXIES configurable for the throttles #3005
 
 ### Changed
@@ -27,10 +30,10 @@ and this project adheres to
 ### Fixed
 
 - 🐛(ci) scan on the trivy label in a workflow of its own, adding a label
-  hid the required docker checks
+  hid the required docker checks #3064
 - 🐛(frontend) keep the column layout when uploading a file in a column #3010
 - 🐛(frontend) resume the analysis of an image nested in a column #3010
-- 🐛(frontend) stop the right panel from covering the doc header actions
+- 🐛(frontend) stop the right panel from covering the doc header actions #3037
 - ✅(frontend) fix act warnings in the tests and fail on them #2983
 - 🔒️(backend) never lower an existing role when accepting a request #2982
 - 🐛(backend) delete the access requests a role given another way covers #2982
@@ -47,8 +50,8 @@ and this project adheres to
 - 🔒️(backend) require the owner role to move a document out of its tree #2978
 - 🐛(backend) speed up the reconciliation admin with user autocompletes #3013
 - 🐛(frontend) show right-to-left text from the right in the editor #2919
-- 🐛(yhub) report unready when valkey only accepts reads
-- 🐛(yhub) restart when valkey turns read-only after a failover
+- 🐛(yhub) report unready when valkey only accepts reads #3035
+- 🐛(yhub) restart when valkey turns read-only after a failover #3035
 - 🐛(frontend) hide the sub-doc creation entries without children_create #3031
 - 🔒️(backend) duplicate a sub doc in its parent only with rights on it #2979
 - 🐛(frontend) add the copy of a sub doc to the tree only if it lands 
@@ -1840,7 +1843,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v6.1.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v6.1.1...main
+[v6.1.1]: https://github.com/suitenumerique/docs/releases/v6.1.1
 [v6.1.0]: https://github.com/suitenumerique/docs/releases/v6.1.0
 [v6.0.4]: https://github.com/suitenumerique/docs/releases/v6.0.4
 [v6.0.3]: https://github.com/suitenumerique/docs/releases/v6.0.3
