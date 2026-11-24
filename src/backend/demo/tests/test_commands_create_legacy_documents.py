@@ -55,6 +55,25 @@ def append_ydoc_fixture():
         yield calls
 
 
+@pytest.fixture(name="migrate", autouse=True)
+def migrate_fixture(append_ydoc):
+    """
+    The collaboration server, migrating the documents: each call records the
+    document and how many edits were written before it.
+    """
+    calls = []
+    migrated = set()
+
+    def migrate(_service, document):
+        calls.append((str(document.id), len(append_ydoc)))
+        status = "already" if document.id in migrated else "ok"
+        migrated.add(document.id)
+        return {"status": status}
+
+    with mock.patch.object(YHubService, "migrate", autospec=True, side_effect=migrate):
+        yield calls
+
+
 @pytest.fixture(name="s3")
 def s3_fixture():
     """The media bucket, cleared after the session by the conftest."""
@@ -115,6 +134,56 @@ def test_commands_create_legacy_documents(data, s3):
         }
         for thread in document.threads.all():
             assert thread.comments.get().body[0]["type"] == "paragraph"
+
+
+def test_commands_create_legacy_documents_access_before_revisions(data, s3):
+    """
+    The owner is given access before the revisions are written: their history
+    starts there, it would leave out the legacy versions.
+    """
+    root_id = data["documents"][0]["id"]
+    put_object = s3.put_object
+    accesses = []
+
+    def put(**kwargs):
+        if kwargs["Key"].endswith("/file"):
+            accesses.append(
+                models.DocumentAccess.objects.filter(
+                    document_id=root_id, role=models.RoleChoices.OWNER
+                ).exists()
+            )
+        return put_object(**kwargs)
+
+    with mock.patch.object(s3, "put_object", side_effect=put):
+        call_command("create_legacy_documents")
+
+    assert len(accesses) == sum(len(d["revisions"]) for d in data["documents"])
+    assert all(accesses)
+
+
+def test_commands_create_legacy_documents_migrated(data, migrate, append_ydoc):
+    """
+    Every document is migrated with its history before the edits, and asked
+    again by the next run, which the collaboration server answers `already`.
+    """
+    ids = [document_data["id"] for document_data in data["documents"]]
+
+    call_command("create_legacy_documents")
+
+    assert migrate == [(document_id, 0) for document_id in ids]
+    assert append_ydoc
+
+    call_command("create_legacy_documents")
+
+    assert [document_id for document_id, _edits in migrate] == ids + ids
+
+
+def test_commands_create_legacy_documents_migration_refused(data, capsys):
+    """A document the collaboration server does not migrate is reported."""
+    with mock.patch.object(YHubService, "migrate", return_value={"status": "empty"}):
+        call_command("create_legacy_documents")
+
+    assert capsys.readouterr().err.count("not migrated") == len(data["documents"])
 
 
 def test_commands_create_legacy_documents_attachments_are_valid(data, s3):
@@ -220,8 +289,8 @@ def test_commands_create_legacy_documents_edits_not_enabled(data):
 @pytest.fixture(name="no_retry_delay")
 def no_retry_delay_fixture(monkeypatch):
     """Retries without waiting."""
-    monkeypatch.setattr(command, "EDIT_RETRY_DELAY", 0)
-    monkeypatch.setattr(command, "EDIT_ATTEMPTS", 3)
+    monkeypatch.setattr(command, "YHUB_RETRY_DELAY", 0)
+    monkeypatch.setattr(command, "YHUB_ATTEMPTS", 3)
 
 
 @pytest.mark.usefixtures("no_retry_delay")
