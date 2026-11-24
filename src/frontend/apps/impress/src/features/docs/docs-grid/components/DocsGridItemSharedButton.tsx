@@ -80,6 +80,7 @@ export const DocsGridItemSharedButton = ({ doc, disabled }: Props) => {
       {shareModal.isOpen && (
         <DocShareModal
           doc={doc}
+          isRootDoc={doc.depth === 1}
           onClose={() => {
             shareModal.close();
             restoreFocus();
