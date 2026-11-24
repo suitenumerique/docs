@@ -22,12 +22,14 @@ export const FooterActions = ({ withLogin }: FooterActionsProps) => {
   const { t } = useTranslation();
   const { user } = useAuth();
 
-  const userMenu = user || {
-    full_name: t('Guest', {
-      description: 'Name displayed for a user not logged in',
-    }),
-    email: '',
-  };
+  const userMenu = user
+    ? { full_name: user.full_name, email: user.email ?? '' }
+    : {
+        full_name: t('Guest', {
+          description: 'Name displayed for a user not logged in',
+        }),
+        email: '',
+      };
 
   return (
     <>

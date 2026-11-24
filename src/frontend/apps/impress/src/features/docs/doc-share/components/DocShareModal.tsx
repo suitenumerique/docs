@@ -393,7 +393,7 @@ const QuickSearchInviteInputSection = ({
     };
 
     const hasEmailInUsers = users.some(
-      (user) => user.email.toLowerCase() === userQuery.toLowerCase(),
+      (user) => user.email?.toLowerCase() === userQuery.toLowerCase(),
     );
 
     return {

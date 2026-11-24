@@ -9,7 +9,7 @@
 export interface User {
   id: string;
   is_first_connection: boolean;
-  email: string;
+  email: string | null;
   full_name: string;
   short_name: string;
   language?: string;
