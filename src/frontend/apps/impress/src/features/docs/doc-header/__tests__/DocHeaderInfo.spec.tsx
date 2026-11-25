@@ -4,7 +4,7 @@ import i18next from 'i18next';
 import { DateTime } from 'luxon';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Doc, LinkReach, Role } from '@/docs/doc-management';
+import { Doc, LinkReach, LinkRole, Role } from '@/docs/doc-management';
 import { AppWrapper } from '@/tests/utils';
 
 import { DocHeaderInfo } from '../components/DocHeaderInfo';
@@ -85,5 +85,59 @@ describe('<DocHeaderInfo />', () => {
     expect(await screen.findByRole('tooltip')).toHaveTextContent(
       '08/14/2026, 02:23 PM',
     );
+  });
+
+  it.each([
+    {
+      name: 'the inherited link role to a user without access',
+      docRoles: {
+        user_role: null,
+        link_role: LinkRole.READER,
+        computed_link_role: LinkRole.EDITOR,
+      },
+      expected: 'Editor',
+    },
+    {
+      name: 'the link role when it is higher than the access of the user',
+      docRoles: {
+        user_role: Role.READER,
+        link_role: LinkRole.READER,
+        computed_link_role: LinkRole.EDITOR,
+      },
+      expected: 'Editor',
+    },
+    {
+      name: 'the access of the user when it is higher than the link role',
+      docRoles: {
+        user_role: Role.OWNER,
+        link_role: LinkRole.READER,
+        computed_link_role: LinkRole.EDITOR,
+      },
+      expected: 'Owner',
+    },
+  ])('shows $name', ({ docRoles, expected }) => {
+    render(<DocHeaderInfo doc={{ ...doc, ...docRoles } as unknown as Doc} />, {
+      wrapper: AppWrapper,
+    });
+
+    expect(screen.getByText(new RegExp(`^${expected}`))).toBeVisible();
+  });
+
+  it('shows reader when the user cannot edit the doc', () => {
+    render(
+      <DocHeaderInfo
+        doc={
+          {
+            ...doc,
+            abilities: { partial_update: false },
+            user_role: Role.READER,
+            computed_link_role: LinkRole.EDITOR,
+          } as Doc
+        }
+      />,
+      { wrapper: AppWrapper },
+    );
+
+    expect(screen.getByText(/^Reader/)).toBeVisible();
   });
 });
