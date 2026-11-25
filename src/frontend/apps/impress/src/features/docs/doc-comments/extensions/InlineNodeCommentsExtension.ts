@@ -1,4 +1,5 @@
 import { createExtension } from '@blocknote/core';
+import { ForkYDocExtension } from '@blocknote/core/y';
 import { Extension } from '@tiptap/core';
 import { Mark, MarkType, Node } from '@tiptap/pm/model';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
@@ -117,8 +118,13 @@ export const parseCommentMarks = (
  * the document forever: the tab froze as soon as a doc link or a mention was
  * commented. A comment restored from a stale prop is harmless, its thread
  * being resolved or deleted makes it orphan.
+ *
+ * Nothing is restored while the editor is forked, as the version history
+ * does to show a version: the version it shows is bound to a document the
+ * mark can never be written to, so the binding took it off again and again,
+ * freezing the tab. The live document gets its marks back once bound again.
  */
-export const InlineNodeCommentsExtension = createExtension(() => ({
+export const InlineNodeCommentsExtension = createExtension(({ editor }) => ({
   key: 'inlineNodeComments',
   tiptapExtensions: [InlineNodeCommentsAttribute],
   prosemirrorPlugins: [
@@ -126,7 +132,11 @@ export const InlineNodeCommentsExtension = createExtension(() => ({
       key: PLUGIN_KEY,
       appendTransaction(transactions, oldState, newState) {
         const markType = newState.schema.marks[COMMENT_MARK];
-        if (!markType || !transactions.some((tr) => tr.docChanged)) {
+        if (
+          !markType ||
+          !transactions.some((tr) => tr.docChanged) ||
+          editor.getExtension(ForkYDocExtension)?.store.state.isForked
+        ) {
           return null;
         }
 

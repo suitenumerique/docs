@@ -14,10 +14,15 @@ import {
   CommentsExtension,
   DefaultThreadStoreAuth,
 } from '@blocknote/core/comments';
-import { YjsThreadStore, withCollaboration } from '@blocknote/core/y';
+import {
+  YjsThreadStore,
+  createYVersionView,
+  withCollaboration,
+} from '@blocknote/core/y';
 import { Plugin } from '@tiptap/pm/state';
 import { Awareness } from '@y/protocols/awareness';
 import * as Y from '@y/y';
+import { fromBase64 } from 'lib0/buffer';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { blockNoteSchema } from '@/docs/doc-editor/components/BlockNoteEditor';
@@ -26,6 +31,8 @@ import {
   COMMENT_MARKS_PROP,
   InlineNodeCommentsExtension,
 } from '../InlineNodeCommentsExtension';
+
+import versionPreview from './fixtures/versionPreview.json';
 
 const FRAGMENT = 'document-store';
 // Far above what a burst of real changes dispatches.
@@ -185,5 +192,31 @@ describe('InlineNodeCommentsExtension with the sync binding', () => {
     expect(mentionComments(editor)).toEqual([
       { threadId: 'thread-1', orphan: false },
     ]);
+  });
+});
+
+/**
+ * The version history shows a version on a fork bound to a document the
+ * restored marks can never be written to: the binding took them off again and
+ * again, freezing the tab. The states come from a preview environment, where
+ * the first version still has the doc link and the mention commented by the
+ * legacy attribute alone.
+ */
+describe('version preview', () => {
+  it('shows a version whose inline nodes are commented by the attribute', () => {
+    const { current, firstVersion } = versionPreview;
+    const ydoc = new Y.Doc();
+    Y.applyUpdate(ydoc, fromBase64(current));
+    const editor = createEditor(ydoc);
+
+    const view = createYVersionView(editor, ydoc.get(FRAGMENT)).open();
+    syncTransactions = 0;
+    view.show({
+      content: Y.convertUpdateFormatV1ToV2(fromBase64(firstVersion)),
+      target: { type: 'snapshot', id: 'first' },
+    });
+
+    expect(syncTransactions).toBeLessThan(SYNC_TRANSACTIONS_LIMIT);
+    view.close();
   });
 });
