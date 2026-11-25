@@ -60,9 +60,13 @@ class SearchType(str, Enum):
     FULL_TEXT = "full-text"
 
 
-class FeatureFlag(str, Enum):
+class FeatureFlag(StrEnum):
     """
     Defines the possible feature flags for the application.
+
+    A StrEnum so that str(member) is the flag name: django-waffle keys its
+    cache and its Flag rows on str(name), and a (str, Enum) member stringifies
+    to "FeatureFlag.X", which no Flag row or cache flush ever matches.
     """
 
     FLAG_FIND_HYBRID_SEARCH = "flag_find_hybrid_search"

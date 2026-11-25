@@ -4,11 +4,15 @@ Tests for Find search feature flags
 
 from unittest import mock
 
+from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
+from django.test import RequestFactory
 
 import pytest
 import responses
 from rest_framework.test import APIClient
+from waffle import flag_is_active
+from waffle.models import Flag
 from waffle.testutils import override_flag
 
 from core.enums import FeatureFlag, SearchType
@@ -88,3 +92,30 @@ def test_api_documents_search_success(  # noqa : PLR0913, PLR0917
         mock_search_using_database.assert_called_once()
     else:
         assert not mock_search_using_database.called
+
+
+def test_feature_flag_update_flushes_the_cached_read(
+    django_capture_on_commit_callbacks,
+):
+    """
+    Updating a flag must be visible on the next request: a stale cached
+    value keyed differently from the flag name would never be flushed.
+    """
+    request = RequestFactory().get("/")
+    request.user = AnonymousUser()
+
+    # Read once before the flag exists: the answer is cached.
+    assert flag_is_active(request, FeatureFlag.FLAG_FIND_HYBRID_SEARCH) is False
+
+    with django_capture_on_commit_callbacks(execute=True):
+        Flag.objects.create(
+            name=FeatureFlag.FLAG_FIND_HYBRID_SEARCH.value,
+            everyone=True,
+        )
+
+    # The cache flush of a Flag save applies to the shared cache: a new
+    # request must see the update.
+    request = RequestFactory().get("/")
+    request.user = AnonymousUser()
+
+    assert flag_is_active(request, FeatureFlag.FLAG_FIND_HYBRID_SEARCH) is True

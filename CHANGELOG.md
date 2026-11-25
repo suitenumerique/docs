@@ -59,6 +59,7 @@ and this project adheres to
 - 🐛(backend) stop throttling the config endpoint #3005
 - 🐛(backend) throttle anonymous users per browser, not per IP address #3005
 - 🐛(ci) post the preview comment once a conflicting PR is fixed #3039
+- 🐛(backend) read waffle flags by their name so the cache is flushed #2975
 
 ## [v6.1.0] - 2026-11-12
 
