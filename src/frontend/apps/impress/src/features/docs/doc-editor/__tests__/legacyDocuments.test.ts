@@ -35,6 +35,7 @@ import { blockNoteSchema } from '../components/BlockNoteEditor';
 import {
   LEGACY_AUTHORS_ID,
   LEGACY_DOCUMENTS,
+  LEGACY_HISTORY_ID,
   LEGACY_OWNER,
   LEGACY_USERS,
   LegacyBlock,
@@ -203,6 +204,7 @@ const editActions = (editor: Yjs14Editor): LegacyEditActions => ({
   get document() {
     return editor.document;
   },
+  replaceBlocks: (ids, blocks) => editor.replaceBlocks(ids, blocks),
   insertBlocks: (blocks, reference, placement) =>
     editor.insertBlocks(blocks, reference, placement),
   updateBlock: (id, update) => editor.updateBlock(id, update),
@@ -238,29 +240,38 @@ const editActions = (editor: Yjs14Editor): LegacyEditActions => ({
  * against a state vector would carry every deletion ever made, which the
  * collaboration server would then attribute to them.
  */
-const writeEdits = (legacyDocument: LegacyDocument, legacy: Uint8Array) => {
+const writeEdits = (
+  legacyDocument: LegacyDocument,
+  legacy: Uint8Array | undefined,
+) => {
   const shared = new Y.Doc();
-  Y.applyUpdate(shared, legacy);
-  const edits = (legacyDocument.edits ?? []).map(({ user, apply }) => {
-    const ydoc = new Y.Doc();
-    Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(shared));
-    const updates: Uint8Array<ArrayBuffer>[] = [];
-    ydoc.on('update', (update: Uint8Array<ArrayBuffer>) =>
-      updates.push(update),
-    );
-    apply(editActions(openWithYjs14(ydoc)));
-    const update = Y.mergeUpdates(updates);
-    Y.applyUpdate(shared, update);
-    return { user, update };
-  });
+  if (legacy) {
+    Y.applyUpdate(shared, legacy);
+  }
+  const edits = (legacyDocument.edits ?? []).map(
+    ({ user, minutesAgo, apply }) => {
+      const ydoc = new Y.Doc();
+      Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(shared));
+      const updates: Uint8Array<ArrayBuffer>[] = [];
+      ydoc.on('update', (update: Uint8Array<ArrayBuffer>) =>
+        updates.push(update),
+      );
+      apply(editActions(openWithYjs14(ydoc)));
+      const update = Y.mergeUpdates(updates);
+      Y.applyUpdate(shared, update);
+      return { user, minutesAgo, update };
+    },
+  );
 
   return { edits, result: Y.encodeStateAsUpdate(shared) };
 };
 
 /** The document as the users left it: the legacy state, then their edits. */
-const applyEdits = (legacy: Uint8Array, updates: Uint8Array[]) => {
+const applyEdits = (legacy: Uint8Array | undefined, updates: Uint8Array[]) => {
   const ydoc = new Y.Doc();
-  Y.applyUpdate(ydoc, legacy);
+  if (legacy) {
+    Y.applyUpdate(ydoc, legacy);
+  }
   updates.forEach((update) => Y.applyUpdate(ydoc, update));
   return openWithYjs14(ydoc);
 };
@@ -279,7 +290,11 @@ const commentedThreads = (editor: LegacyEditor) => {
 };
 
 describe('legacy documents', () => {
-  it.each(LEGACY_DOCUMENTS.map((doc) => [doc.title, doc] as const))(
+  it.each(
+    LEGACY_DOCUMENTS.filter(({ revisions }) => revisions.length).map(
+      (doc) => [doc.title, doc] as const,
+    ),
+  )(
     'opens "%s", written with Yjs 13, unchanged with Yjs 14',
     (_title, legacyDocument) => {
       const legacyEditor = createLegacyEditor();
@@ -368,10 +383,7 @@ describe('legacy documents', () => {
     ),
   )('lets the users edit "%s" once migrated', (_title, legacyDocument) => {
     const { revisions } = writeWithYjs13(createLegacyEditor(), legacyDocument);
-    const { edits } = writeEdits(
-      legacyDocument,
-      revisions.at(-1) as Uint8Array,
-    );
+    const { edits } = writeEdits(legacyDocument, revisions.at(-1));
 
     // each edit changes something, and inserts only from its user's client:
     // a deletion is keyed by whoever inserted what it deletes
@@ -383,10 +395,14 @@ describe('legacy documents', () => {
       ).toBeGreaterThan(0);
     });
     const editor = applyEdits(
-      revisions.at(-1) as Uint8Array,
+      revisions.at(-1),
       edits.map(({ update }) => update),
     );
     expect(editor.document.length).toBeGreaterThan(0);
+
+    // dated in the past, the edits keep their order
+    const ages = edits.map(({ minutesAgo }) => minutesAgo ?? 0);
+    expect(ages).toEqual([...ages].sort((a, b) => b - a));
   });
 
   it('applies the edits of each user to "Written by several users"', () => {
@@ -394,10 +410,7 @@ describe('legacy documents', () => {
       ({ id }) => id === LEGACY_AUTHORS_ID,
     ) as LegacyDocument;
     const { revisions } = writeWithYjs13(createLegacyEditor(), legacyDocument);
-    const { result } = writeEdits(
-      legacyDocument,
-      revisions.at(-1) as Uint8Array,
-    );
+    const { result } = writeEdits(legacyDocument, revisions.at(-1));
 
     const editor = openWithYjs14(result);
     const byId = new Map(editor.document.map((block) => [block.id, block]));
@@ -421,6 +434,29 @@ describe('legacy documents', () => {
     expect(byId.get('legacy-authors-chloe-table')?.type).toBe('table');
     expect([...commentedThreads(editor).keys()]).toEqual([
       '6c0d1d6e-7a3e-4c5e-9a51-0000000000c3',
+    ]);
+  });
+
+  it('writes "Version history" from its edits alone', () => {
+    const legacyDocument = LEGACY_DOCUMENTS.find(
+      ({ id }) => id === LEGACY_HISTORY_ID,
+    ) as LegacyDocument;
+    const { result } = writeEdits(legacyDocument, undefined);
+
+    const ids = openWithYjs14(result).document.map(({ id }) => id);
+
+    expect(ids).toEqual([
+      'legacy-history-title',
+      'legacy-history-intro',
+      'legacy-history-goals',
+      'legacy-history-goal-2',
+      'legacy-history-goal-3',
+      'legacy-history-task-1',
+      'legacy-history-task-2',
+      'legacy-history-next',
+      'legacy-history-next-1',
+      'legacy-history-next-2',
+      'legacy-history-conclusion',
     ]);
   });
 
@@ -454,14 +490,15 @@ describe('legacy documents', () => {
         );
 
         // the committed edits apply to the committed legacy state
-        const legacy = generated.revisions.at(-1) as Uint8Array;
+        const legacy = generated.revisions.at(-1);
+        const committed = revisions.at(-1);
         const { edits: generatedEdits } = writeEdits(
           LEGACY_DOCUMENTS[index],
           legacy,
         );
         expect(
           applyEdits(
-            fromBase64(revisions.at(-1) as string),
+            committed ? fromBase64(committed) : undefined,
             edits.map(({ update }) => fromBase64(update)),
           ).document,
           'Regenerate it with `yarn legacy-documents`',
@@ -482,10 +519,7 @@ describe('legacy documents', () => {
       const userId = (user: LegacyUser) => LEGACY_USERS[user].id;
       const documents = LEGACY_DOCUMENTS.map((legacyDocument) => {
         const { revisions } = writeWithYjs13(editor, legacyDocument);
-        const { edits } = writeEdits(
-          legacyDocument,
-          revisions.at(-1) as Uint8Array,
-        );
+        const { edits } = writeEdits(legacyDocument, revisions.at(-1));
         return {
           id: legacyDocument.id,
           title: legacyDocument.title,
@@ -510,8 +544,9 @@ describe('legacy documents', () => {
                 : [],
             ),
           ],
-          edits: edits.map(({ user, update }) => ({
+          edits: edits.map(({ user, minutesAgo, update }) => ({
             user_id: userId(user),
+            minutes_ago: minutesAgo ?? null,
             update: toBase64(update),
           })),
         };

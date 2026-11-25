@@ -16,7 +16,9 @@ has yhub migrate them with their S3 versions (the full migration of
 `migrate_documents`), so the history lists them, such as the three revisions of
 "Edited many times". Three dummy editors (Alice, Bob, Chloé) then edit some of
 them, in their name (`YHUB_APPEND_YDOC_ENABLED`, QA only), so the attribution
-shows their parts apart from the legacy content.
+shows their parts apart from the legacy content; "Version history" is written by
+them over ten days. Every sync seeds a new tree, dated in its title, with fresh
+ids: the older trees are left as they are.
 
 ## Local cluster
 

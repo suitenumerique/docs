@@ -58,7 +58,8 @@ It is not a fork of yhub — it is a thin wrapper, written in TypeScript under
 - with `YHUB_APPEND_YDOC_ENABLED=true` only — QA, **never in production** —
   exposes `POST /collaboration/append-ydoc/v1/{org}/{docid}`: `create-ydoc`
   without the strict create, writing a raw update into a document that may
-  have content, attributed to the required `X-User-Id`. Admin JWT only. The
+  have content, attributed to the required `X-User-Id`, at `X-Timestamp`
+  (unix ms, never in the future) when given. Admin JWT only. The
   preview environments seed documents written by several users with it
   (`create_legacy_documents`); in production it would let whoever holds the
   admin token forge who wrote what,

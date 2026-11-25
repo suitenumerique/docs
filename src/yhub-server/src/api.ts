@@ -80,8 +80,8 @@ const eraseContent = async (
 const attributeTo = (
   contentids: Y.ContentIds,
   userid: string,
+  now: number = Date.now(),
 ): Uint8Array<ArrayBuffer> => {
-  const now = Date.now();
   return Y.encodeContentMap(
     Y.createContentMapFromContentIds(
       contentids,
@@ -497,7 +497,9 @@ export const api = [
   // documents with parts written by several users, to check the attribution
   // and the history. Admin token only — the browser grants name no such route,
   // and the handler refuses anything else anyway. Deletions are attributed
-  // too, so an update that only deletes is accepted.
+  // too, so an update that only deletes is accepted. `X-Timestamp` (unix ms,
+  // never in the future) dates the update in the past, so that the seeded
+  // history spreads over days rather than over the seconds the seed takes.
   ...(APPEND_YDOC_ENABLED
     ? [
         createApiEndpoint('append-ydoc', {
@@ -514,6 +516,11 @@ export const api = [
               const userid = req.headers['x-user-id'];
               if (!userid) {
                 return jsonResponse(400, { error: 'X-User-Id is required' });
+              }
+              const timestamp = req.headers['x-timestamp'];
+              const at = timestamp ? Number(timestamp) : Date.now();
+              if (!Number.isSafeInteger(at) || at <= 0 || at > Date.now()) {
+                return jsonResponse(400, { error: 'Invalid X-Timestamp' });
               }
               if (req.org !== ORG) {
                 return jsonResponse(400, { error: 'Unknown org' });
@@ -547,7 +554,7 @@ export const api = [
               }
               await req.yhub.stream.addMessage(req.docRef, {
                 type: 'ydoc:update:v1',
-                contentmap: attributeTo(contentids, userid),
+                contentmap: attributeTo(contentids, userid, at),
                 update,
               });
               return jsonResponse(200, { message: 'Update appended' });

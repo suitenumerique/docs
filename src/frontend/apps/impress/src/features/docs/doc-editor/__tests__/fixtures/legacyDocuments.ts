@@ -10,6 +10,10 @@
  * children) and to their attachments, uploaded by the seed under
  * `{docId}/attachments/`. The media urls are relative: the editor stores them
  * absolute, but the host of a preview environment is only known there.
+ *
+ * The seed gives every run fresh ids: these ones, documents, threads, owner
+ * and users, are swapped in the content for the ids of the run, which only
+ * works with uuids of the same length.
  */
 
 export const LEGACY_ROOT_ID = '6c0d1d6e-7a3e-4c5e-9a51-000000000000';
@@ -19,6 +23,7 @@ export const LEGACY_REVISIONS_ID = '6c0d1d6e-7a3e-4c5e-9a51-000000000003';
 export const LEGACY_LONG_ID = '6c0d1d6e-7a3e-4c5e-9a51-000000000004';
 
 export const LEGACY_AUTHORS_ID = '6c0d1d6e-7a3e-4c5e-9a51-000000000005';
+export const LEGACY_HISTORY_ID = '6c0d1d6e-7a3e-4c5e-9a51-000000000006';
 
 /** The user the seed creates, mentioned in the documents. */
 export const LEGACY_OWNER = {
@@ -56,6 +61,7 @@ export type LegacyUser = keyof typeof LEGACY_USERS;
  */
 export interface LegacyEditActions {
   document: { id: string; content?: unknown }[];
+  replaceBlocks: (ids: string[], blocks: LegacyBlock[]) => unknown;
   insertBlocks: (
     blocks: LegacyBlock[],
     reference: string,
@@ -69,6 +75,11 @@ export interface LegacyEditActions {
 
 export interface LegacyEdit {
   user: LegacyUser;
+  /**
+   * How long before the seed the edit was made, so that the history spreads
+   * over days. Without it, the edit is made when the seed runs.
+   */
+  minutesAgo?: number;
   /** What the user does in the editor. */
   apply: (editor: LegacyEditActions) => void;
   /** A thread this user starts on a block, created by the seed. */
@@ -79,6 +90,7 @@ export interface LegacyEdit {
 export type LegacyAttachmentKind = 'png' | 'pdf' | 'wav' | 'txt';
 
 export interface LegacyAttachment {
+  /** The name of the file in the bucket: a uuid, as the media urls require. */
   name: string;
   kind: LegacyAttachmentKind;
 }
@@ -100,7 +112,8 @@ export interface LegacyDocument {
   /**
    * Successive states of the document, each saved as an S3 version of
    * `{id}/file` like Django did: the soft migration seeds the last one, the
-   * full migration replays them all.
+   * full migration replays them all. None for a document born after the
+   * migration, written by its edits alone.
    */
   revisions: LegacyBlock[][];
   attachments?: LegacyAttachment[];
@@ -123,6 +136,14 @@ const text = (value: string, styles: Record<string, unknown> = {}) => ({
 });
 
 const COLORS = { textColor: 'red', backgroundColor: 'yellow' };
+
+/** The files of the attachments: the media urls only take uuids. */
+const FILES = {
+  png: '6c0d1d6e-7a3e-4c5e-9a51-0000000000f1.png',
+  pdf: '6c0d1d6e-7a3e-4c5e-9a51-0000000000f2.pdf',
+  wav: '6c0d1d6e-7a3e-4c5e-9a51-0000000000f3.wav',
+  txt: '6c0d1d6e-7a3e-4c5e-9a51-0000000000f4.txt',
+};
 
 const rootDocument: LegacyDocument = {
   id: LEGACY_ROOT_ID,
@@ -149,10 +170,10 @@ const blocksDocument: LegacyDocument = {
   parentId: LEGACY_ROOT_ID,
   title: 'Every block',
   attachments: [
-    { name: 'legacy-image.png', kind: 'png' },
-    { name: 'legacy.pdf', kind: 'pdf' },
-    { name: 'legacy-audio.wav', kind: 'wav' },
-    { name: 'legacy-file.txt', kind: 'txt' },
+    { name: FILES.png, kind: 'png' },
+    { name: FILES.pdf, kind: 'pdf' },
+    { name: FILES.wav, kind: 'wav' },
+    { name: FILES.txt, kind: 'txt' },
   ],
   revisions: [
     [
@@ -299,7 +320,7 @@ const blocksDocument: LegacyDocument = {
       {
         type: 'image',
         props: {
-          url: media(LEGACY_BLOCKS_ID, 'legacy-image.png'),
+          url: media(LEGACY_BLOCKS_ID, FILES.png),
           name: 'legacy-image.png',
           caption: 'An uploaded image',
           previewWidth: 320,
@@ -309,7 +330,7 @@ const blocksDocument: LegacyDocument = {
       {
         type: 'pdf',
         props: {
-          url: media(LEGACY_BLOCKS_ID, 'legacy.pdf'),
+          url: media(LEGACY_BLOCKS_ID, FILES.pdf),
           name: 'legacy.pdf',
           caption: 'An uploaded PDF',
         },
@@ -317,7 +338,7 @@ const blocksDocument: LegacyDocument = {
       {
         type: 'audio',
         props: {
-          url: media(LEGACY_BLOCKS_ID, 'legacy-audio.wav'),
+          url: media(LEGACY_BLOCKS_ID, FILES.wav),
           name: 'legacy-audio.wav',
           caption: 'An uploaded audio file',
         },
@@ -326,7 +347,7 @@ const blocksDocument: LegacyDocument = {
         type: 'video',
         props: {
           // the seed has no video encoder: a video element plays the sound
-          url: media(LEGACY_BLOCKS_ID, 'legacy-audio.wav'),
+          url: media(LEGACY_BLOCKS_ID, FILES.wav),
           name: 'legacy-video.wav',
           caption: 'A video block',
         },
@@ -334,7 +355,7 @@ const blocksDocument: LegacyDocument = {
       {
         type: 'file',
         props: {
-          url: media(LEGACY_BLOCKS_ID, 'legacy-file.txt'),
+          url: media(LEGACY_BLOCKS_ID, FILES.txt),
           name: 'legacy-file.txt',
           caption: 'An uploaded file',
         },
@@ -348,7 +369,7 @@ const blocksDocument: LegacyDocument = {
           type: 'loading',
           blockUploadName: 'legacy-image.png',
           blockUploadType: 'image',
-          blockUploadUrl: `/api/v1.0/documents/${LEGACY_BLOCKS_ID}/media-check/?key=${LEGACY_BLOCKS_ID}/attachments/legacy-image.png`,
+          blockUploadUrl: `/api/v1.0/documents/${LEGACY_BLOCKS_ID}/media-check/?key=${LEGACY_BLOCKS_ID}/attachments/${FILES.png}`,
           blockUploadShowPreview: true,
           blockUploadCaption: '',
           blockUploadTextAlignment: 'left',
@@ -778,6 +799,284 @@ const authorsDocument: LegacyDocument = {
   ],
 };
 
+/** One block per id, so that the edits change the blocks of the others. */
+const historyBlock = (id: string, block: LegacyBlock) => ({
+  id: `legacy-history-${id}`,
+  ...block,
+});
+
+const HOUR = 60;
+const DAY = 24 * HOUR;
+
+const goal = (id: string, content: LegacyBlock['content']) =>
+  historyBlock(`goal-${id}`, { type: 'bulletListItem', content });
+
+/**
+ * Born after the migration and written over ten days by the three users, to
+ * check the version history: a session grouped into one version, versions by
+ * two users at once, rewrites, formatting, moves, deletions and a comment.
+ */
+const historyDocument: LegacyDocument = {
+  id: LEGACY_HISTORY_ID,
+  parentId: LEGACY_ROOT_ID,
+  title: 'Version history',
+  revisions: [],
+  edits: [
+    {
+      user: 'alice',
+      minutesAgo: 10 * DAY,
+      apply: (editor) => {
+        editor.replaceBlocks(
+          editor.document.map(({ id }) => id),
+          [
+            historyBlock('title', {
+              type: 'heading',
+              props: { level: 1 },
+              content: 'Project plan',
+            }),
+            historyBlock('intro', {
+              type: 'paragraph',
+              content: 'A first draft of the plan, writen by Alice.',
+            }),
+            historyBlock('goals', {
+              type: 'heading',
+              props: { level: 2 },
+              content: 'Goals',
+            }),
+            goal('1', 'Migrate every document'),
+            goal('2', 'Keep the history of the documents'),
+            goal('3', 'Show who wrote what'),
+            historyBlock('timeline', {
+              type: 'heading',
+              props: { level: 2 },
+              content: 'Timeline',
+            }),
+            historyBlock('timeline-text', {
+              type: 'paragraph',
+              content: 'To be decided.',
+            }),
+          ],
+        );
+      },
+    },
+    {
+      // the same session: grouped with the previous edit into one version
+      user: 'alice',
+      minutesAgo: 10 * DAY - 3,
+      apply: (editor) => {
+        editor.insertBlocks(
+          [
+            historyBlock('task-1', {
+              type: 'checkListItem',
+              content: 'Write the migration',
+            }),
+            historyBlock('task-2', {
+              type: 'checkListItem',
+              content: 'Test it on the legacy documents',
+            }),
+          ],
+          'legacy-history-goal-3',
+          'after',
+        );
+      },
+    },
+    {
+      user: 'bob',
+      minutesAgo: 9 * DAY,
+      apply: (editor) => {
+        editor.updateBlock('legacy-history-intro', {
+          content: 'A first draft of the plan, written by Alice.',
+        });
+        editor.replaceBlocks(
+          ['legacy-history-timeline-text'],
+          [
+            historyBlock('timeline-table', {
+              type: 'table',
+              content: {
+                type: 'tableContent',
+                headerRows: 1,
+                rows: [
+                  { cells: ['Phase', 'When'] },
+                  { cells: ['Migration', 'January'] },
+                  { cells: ['Version history', 'March'] },
+                ],
+              },
+            }),
+          ],
+        );
+      },
+    },
+    {
+      user: 'chloe',
+      minutesAgo: 8 * DAY,
+      apply: (editor) => {
+        editor.insertBlocks(
+          [
+            historyBlock('budget', {
+              type: 'callout',
+              props: { emoji: '💶' },
+              content: 'The budget is approved.',
+            }),
+            historyBlock('quote', {
+              type: 'quote',
+              content: 'Nothing is lost, everything is versioned.',
+            }),
+          ],
+          'legacy-history-intro',
+          'after',
+        );
+      },
+    },
+    {
+      user: 'alice',
+      minutesAgo: 7 * DAY,
+      apply: (editor) => {
+        // a rewrite of the whole paragraph
+        editor.updateBlock('legacy-history-intro', {
+          content: [
+            text('This plan describes how the documents move to the new '),
+            text('collaboration server', { bold: true }),
+            text(', and what the users will see of their history.'),
+          ],
+        });
+        editor.updateBlock('legacy-history-timeline', {
+          props: { level: 3 },
+        });
+      },
+    },
+    {
+      // two minutes later, by another user: one version by both of them
+      user: 'bob',
+      minutesAgo: 7 * DAY - 2,
+      apply: (editor) => {
+        editor.updateBlock('legacy-history-goal-2', {
+          content: [
+            text('Keep the '),
+            text('whole', { italic: true }),
+            text(' history of the documents'),
+          ],
+        });
+        editor.updateBlock('legacy-history-goal-3', {
+          content: [text('Show who wrote what', { bold: true })],
+        });
+      },
+    },
+    {
+      user: 'bob',
+      minutesAgo: 5 * DAY,
+      apply: (editor) => {
+        editor.removeBlocks(['legacy-history-quote', 'legacy-history-goal-1']);
+        // the timeline moves above the goals
+        editor.removeBlocks([
+          'legacy-history-timeline',
+          'legacy-history-timeline-table',
+        ]);
+        editor.insertBlocks(
+          [
+            historyBlock('timeline-moved', {
+              type: 'heading',
+              props: { level: 2 },
+              content: 'Timeline',
+            }),
+            historyBlock('timeline-table-moved', {
+              type: 'table',
+              content: {
+                type: 'tableContent',
+                headerRows: 1,
+                rows: [
+                  { cells: ['Phase', 'When'] },
+                  { cells: ['Migration', 'January'] },
+                  { cells: ['Version history', 'March'] },
+                ],
+              },
+            }),
+          ],
+          'legacy-history-goals',
+          'before',
+        );
+      },
+    },
+    {
+      user: 'chloe',
+      minutesAgo: 3 * DAY,
+      thread: {
+        id: '6c0d1d6e-7a3e-4c5e-9a51-0000000000c4',
+        blockId: 'legacy-history-intro',
+        comment: 'Chloé asks for the date of the migration',
+      },
+      apply: (editor) => {
+        editor.updateBlock('legacy-history-task-1', {
+          props: { checked: true },
+        });
+        editor.comment(
+          'legacy-history-intro',
+          '6c0d1d6e-7a3e-4c5e-9a51-0000000000c4',
+        );
+        editor.insertBlocks(
+          [
+            historyBlock('next', {
+              type: 'heading',
+              props: { level: 2 },
+              content: 'Next steps',
+            }),
+            historyBlock('next-1', {
+              type: 'numberedListItem',
+              content: 'Announce the migration',
+            }),
+            historyBlock('next-2', {
+              type: 'numberedListItem',
+              content: 'Train the users',
+            }),
+          ],
+          'legacy-history-task-2',
+          'after',
+        );
+      },
+    },
+    {
+      // a large deletion
+      user: 'alice',
+      minutesAgo: DAY,
+      apply: (editor) => {
+        editor.removeBlocks([
+          'legacy-history-timeline-moved',
+          'legacy-history-timeline-table-moved',
+          'legacy-history-budget',
+        ]);
+      },
+    },
+    {
+      user: 'bob',
+      minutesAgo: 2 * HOUR,
+      apply: (editor) => {
+        editor.updateBlock('legacy-history-task-2', {
+          props: { checked: true },
+        });
+        editor.insertBlocks(
+          [
+            historyBlock('conclusion', {
+              type: 'paragraph',
+              content: 'Every step is done, the plan is complette.',
+            }),
+          ],
+          'legacy-history-next-2',
+          'after',
+        );
+      },
+    },
+    {
+      // a typo, fixed a few minutes ago
+      user: 'chloe',
+      minutesAgo: 20,
+      apply: (editor) => {
+        editor.updateBlock('legacy-history-conclusion', {
+          content: 'Every step is done, the plan is complete.',
+        });
+      },
+    },
+  ],
+};
+
 export const LEGACY_DOCUMENTS: LegacyDocument[] = [
   rootDocument,
   blocksDocument,
@@ -785,4 +1084,5 @@ export const LEGACY_DOCUMENTS: LegacyDocument[] = [
   revisionsDocument,
   longDocument,
   authorsDocument,
+  historyDocument,
 ];

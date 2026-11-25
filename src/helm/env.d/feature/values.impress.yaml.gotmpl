@@ -124,8 +124,9 @@ backend:
         # realm, to check that the legacy corpus survives its migration to Yjs
         # 14. Here rather than in a PostSync hook, which ArgoCD never ran on
         # the previews: this job, deleted once finished, then shows as missing
-        # and the sync does not complete. This job runs on every sync instead:
-        # the command does what is left to do, nothing once done.
+        # and the sync does not complete. This job runs on every sync instead,
+        # like the migrate job (deleted once finished, so missing, so synced
+        # again): each run seeds a new tree, with the content of the fixture.
         attempt=0
         until python manage.py migrate --check > /dev/null 2>&1
         do

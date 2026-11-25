@@ -311,6 +311,42 @@ describe('append-ydoc', () => {
     expect(attrs.get('insertAt')).toEqual(expect.any(Number));
   });
 
+  it('dates the update at X-Timestamp', async () => {
+    const handler = await enabledAppendYdoc();
+    const yhub = makeYhub();
+    const at = Date.now() - 3 * 24 * 3600 * 1000;
+
+    const res = await handler(
+      makeReq(makeUpdate(), {
+        yhub,
+        headers: { 'x-user-id': 'user-1', 'x-timestamp': String(at) },
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    const [, { contentmap }] = yhub.stream.addMessage.mock
+      .calls[0] as unknown as [unknown, { contentmap: Uint8Array }];
+    expect(insertAttributes(contentmap).get('insertAt')).toBe(at);
+  });
+
+  it.each(['soon', '0', String(Date.now() + 3600 * 1000)])(
+    'refuses the X-Timestamp %s',
+    async (timestamp) => {
+      const handler = await enabledAppendYdoc();
+      const yhub = makeYhub();
+
+      const res = await handler(
+        makeReq(makeUpdate(), {
+          yhub,
+          headers: { 'x-user-id': 'user-1', 'x-timestamp': timestamp },
+        }),
+      );
+
+      expect(res.status).toBe(400);
+      expect(yhub.stream.addMessage).not.toHaveBeenCalled();
+    },
+  );
+
   it('attributes an update that only deletes', async () => {
     const doc = new Y.Doc();
     doc.get('t', 'text').insert(0, 'abc');

@@ -1,6 +1,7 @@
 """Test yhub services."""
 
 from base64 import b64encode
+from datetime import UTC, datetime
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -228,6 +229,19 @@ def test_append_ydoc(mock_request):
     )
     assert kwargs["data"] == update
     assert kwargs["headers"]["X-User-Id"] == str(user.pk)
+    assert "X-Timestamp" not in kwargs["headers"]
+
+
+@patch("requests.request")
+def test_append_ydoc_at(mock_request):
+    """Should date the update, in unix milliseconds, when asked to."""
+    mock_request.return_value.ok = True
+    at = datetime(2026, 11, 20, 14, 16, tzinfo=UTC)
+
+    YHubService(user=UserFactory.build()).append_ydoc(DOCUMENT, b"\x01", at=at)
+
+    _args, kwargs = mock_request.call_args
+    assert kwargs["headers"]["X-Timestamp"] == str(int(at.timestamp() * 1000))
 
 
 @patch("requests.request")
