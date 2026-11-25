@@ -209,10 +209,11 @@ test.describe('Document grid item options', () => {
     await page.getByRole('button', { name: 'Search docs' }).click();
     await page.getByPlaceholder('Type the name of a document').fill(docTitle);
     await page.getByRole('option').getByText(docTitle).click();
+    await verifyDocName(page, docTitle);
 
     // We share the doc with another user with owner role
     const otherBrowserName = getOtherBrowserName(browserName);
-    await page.getByRole('button', { name: 'Share' }).click();
+    await page.getByRole('button', { name: 'Share', exact: true }).click();
     await addNewMember(page, 0, 'Owner', otherBrowserName);
     await expect(
       page
