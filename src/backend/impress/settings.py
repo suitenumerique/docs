@@ -802,6 +802,9 @@ class Base(Configuration):
         eviron_prefix=None,
         choices=[e.name for e in OIDCUserEndpointFormat],
     )
+    OIDC_OP_USERS_IMPORT_ENDPOINT = values.Value(
+        None, environ_name="OIDC_OP_USERS_IMPORT_ENDPOINT", environ_prefix=None
+    )
     OIDC_OP_LOGOUT_ENDPOINT = values.Value(
         None, environ_name="OIDC_OP_LOGOUT_ENDPOINT", environ_prefix=None
     )
