@@ -92,7 +92,10 @@ export default function HomeBanner() {
           ) : (
             <Button onClick={() => gotoLogin()}>
               {ctaLabel
-                ? t(ctaLabel, { defaultValue: ctaLabel })
+                ? t(ctaLabel, {
+                    defaultValue: ctaLabel,
+                    description: 'Call-to-action button of the home page',
+                  })
                 : t('Login', {
                     description: 'Call-to-action button of the home page',
                   })}
