@@ -83,7 +83,7 @@ jobs:
         run: |
           codespell \
             --check-filenames \
-            --ignore-words-list "Dokument,afterAll,excpt,statics" \
+            --ignore-words-list "Dokument,afterAll,excpt,statics,abd" \
             --skip "./git/" \
             --skip "**/*.pdf" \
             --skip "**/*.po" \
