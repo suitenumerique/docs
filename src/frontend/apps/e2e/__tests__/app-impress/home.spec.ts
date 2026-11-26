@@ -166,6 +166,19 @@ test.describe('Home page', () => {
     await expect(footer).toBeVisible();
   });
 
+  test('it shows a login call to action on the home page', async ({
+    page,
+  }) => {
+    await page.goto('/docs/');
+
+    const callToAction = page.getByRole('button', { name: 'Login' });
+    await expect(callToAction).toBeVisible();
+
+    // The call to action reads as a plain login action: it carries no icon,
+    // so the button text is the label alone.
+    await expect(callToAction).toHaveText('Login');
+  });
+
   test('it checks the homepage feature flag', async ({ page }) => {
     await overrideConfig(page, {
       FRONTEND_HOMEPAGE_FEATURE_ENABLED: false,

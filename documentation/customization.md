@@ -130,6 +130,38 @@ Below is a visual example of a configured footer ⬇️:
 
 ----
 
+## **Home page call to action** 📝
+
+The call to action of the home page is configurable from the theme customization file. It is the
+button that sends the visitor to the login page.
+
+### Settings 🔧
+
+```shellscript
+THEME_CUSTOMIZATION_FILE_PATH=<path>
+```
+
+### Configuration
+
+The label is set with the `home.cta-label` key. It is used as a translation key, so an instance
+can also translate it with the `translations` key of the theme customization file.
+
+### Example of JSON
+
+```json
+{
+  "theme_customization": {
+    "home": {
+      "cta-label": "Access"
+    }
+  }
+}
+```
+
+This configuration is optional. If not set, the button reads "Login".
+
+----
+
 ## **Custom Translations** 📝
 
 The translations can be partially overridden from the theme customization file.

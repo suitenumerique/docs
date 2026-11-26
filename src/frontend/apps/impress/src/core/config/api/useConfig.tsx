@@ -32,6 +32,7 @@ interface ThemeCustomization {
   home: {
     'with-proconnect'?: boolean;
     'icon-banner'?: Imagetype;
+    'cta-label'?: string;
   };
   onboarding?: {
     enabled: true;

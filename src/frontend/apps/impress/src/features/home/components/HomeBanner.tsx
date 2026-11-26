@@ -20,6 +20,7 @@ export default function HomeBanner() {
   const { data: config } = useConfig();
   const withProConnect = config?.theme_customization?.home?.['with-proconnect'];
   const icon = config?.theme_customization?.home?.['icon-banner'];
+  const ctaLabel = config?.theme_customization?.home?.['cta-label'];
 
   return (
     <Box
@@ -89,13 +90,12 @@ export default function HomeBanner() {
           {withProConnect ? (
             <ProConnectButton />
           ) : (
-            <Button
-              onClick={() => gotoLogin()}
-              icon={<Icon iconName="bolt" $color="white" />}
-            >
-              {t('Start Writing', {
-                description: 'Call-to-action button of the home page',
-              })}
+            <Button onClick={() => gotoLogin()}>
+              {ctaLabel
+                ? t(ctaLabel, { defaultValue: ctaLabel })
+                : t('Login', {
+                    description: 'Call-to-action button of the home page',
+                  })}
             </Button>
           )}
         </Box>
