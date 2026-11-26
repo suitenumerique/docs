@@ -15,7 +15,7 @@ and this project adheres to
 
 ### Changed
 
-- 💄(frontend) make the home page call to action a login action #2143
+- 💄(frontend) make the home page call to action a login action #3070
 - 📦️(docker) keep the yarn cache out of the node images #2992
 - 🔧(yhub) SENTRY_PROFILES_SAMPLE_RATE samples processes since sentry 11 #2872
 - ⚡️(backend) probe the celery worker with heartbeat files, 
