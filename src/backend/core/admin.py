@@ -82,6 +82,7 @@ class UserAdmin(auth_admin.UserAdmin):
             {
                 "fields": (
                     "sub",
+                    "issuer",
                     "email",
                     "full_name",
                     "short_name",
@@ -120,6 +121,7 @@ class UserAdmin(auth_admin.UserAdmin):
     list_display = (
         "id",
         "sub",
+        "issuer",
         "full_name",
         "admin_email",
         "email",
@@ -149,6 +151,7 @@ class UserAdmin(auth_admin.UserAdmin):
     readonly_fields = (
         "id",
         "sub",
+        "issuer",
         "email",
         "full_name",
         "short_name",

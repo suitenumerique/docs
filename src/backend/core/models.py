@@ -179,6 +179,14 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         blank=True,
         null=True,
     )
+    # A sub is only unique for its issuer. Null for the users created before this field.
+    issuer = models.URLField(
+        _("issuer"),
+        help_text=_("The OIDC provider which issued the sub."),
+        max_length=255,
+        null=True,
+        blank=True,
+    )
 
     full_name = models.CharField(_("full name"), max_length=100, null=True, blank=True)
     short_name = models.CharField(

@@ -894,6 +894,7 @@ class Base(Configuration):
         environ_name="OIDC_USERINFO_SHORTNAME_FIELD",
         environ_prefix=None,
     )
+    OIDC_USER_ISSUER_FIELD = "issuer"
 
     # OIDC Resource Server
 
