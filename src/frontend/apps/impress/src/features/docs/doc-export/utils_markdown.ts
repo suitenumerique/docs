@@ -15,6 +15,16 @@ interface MediaReference {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+/**
+ * BlockNote serializes bullet lists and dividers with asterisks. Use the
+ * Markdown forms accepted by the importer so that an exported document keeps
+ * the list-marker and divider style used by Docs.
+ */
+export const normalizeMarkdownExportFormatting = (markdown: string) =>
+  markdown
+    .replace(/^(\s*)\* (?=\S)/gm, '$1- ')
+    .replace(/^(\s*)\*{3}[ \t]*$/gm, '$1---');
+
 /** Collects media URL properties from a nested editor block tree. */
 const collectMediaReferences = (
   blocks: unknown[],

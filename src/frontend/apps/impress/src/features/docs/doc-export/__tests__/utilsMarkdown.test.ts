@@ -1,7 +1,10 @@
 import JSZip from 'jszip';
 import { describe, expect, test, vi } from 'vitest';
 
-import { addMediaFilesToMarkdownZip } from '../utils_markdown';
+import {
+  addMediaFilesToMarkdownZip,
+  normalizeMarkdownExportFormatting,
+} from '../utils_markdown';
 
 describe('addMediaFilesToMarkdownZip', () => {
   test('localizes same-origin media without mutating unrelated URLs', async () => {
@@ -69,5 +72,23 @@ describe('addMediaFilesToMarkdownZip', () => {
     );
     expect(blocks[0].children[0].props.url).toBe('/media/nested.svg');
     expect(Object.keys(zip.files)).toHaveLength(0);
+  });
+});
+
+describe('normalizeMarkdownExportFormatting', () => {
+  test('uses hyphens for bullet list markers and dividers', () => {
+    expect(
+      normalizeMarkdownExportFormatting(
+        '* First item\n  * Nested item\n\n***\n\nParagraph with *emphasis*.',
+      ),
+    ).toBe(
+      '- First item\n  - Nested item\n\n---\n\nParagraph with *emphasis*.',
+    );
+  });
+
+  test('does not alter asterisk content that is not an exported marker', () => {
+    expect(
+      normalizeMarkdownExportFormatting('**bold**\n*italic*\n2 * 3 = 6'),
+    ).toBe('**bold**\n*italic*\n2 * 3 = 6');
   });
 });

@@ -28,7 +28,10 @@ import {
   generateHtmlDocument,
   improveHtmlAccessibility,
 } from '../utils_html';
-import { addMediaFilesToMarkdownZip } from '../utils_markdown';
+import {
+  addMediaFilesToMarkdownZip,
+  normalizeMarkdownExportFormatting,
+} from '../utils_markdown';
 
 const useExportXL = ModulesExport?.useExportXL;
 
@@ -135,7 +138,9 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           mediaUrl,
         );
 
-        const markdown = await editor.blocksToMarkdownLossy(blocks);
+        const markdown = normalizeMarkdownExportFormatting(
+          await editor.blocksToMarkdownLossy(blocks),
+        );
 
         if (mediaFileCount === 0) {
           blobExport = new Blob([markdown], {
