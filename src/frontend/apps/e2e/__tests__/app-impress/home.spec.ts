@@ -31,6 +31,15 @@ test.describe('Home page', () => {
     ).toHaveAttribute('href', 'https://www.django-rest-framework.org/');
     await expect(page.getByText('You can easily self-host Docs')).toBeVisible();
     await expect(
+      page.getByRole('link', {
+        name: 'documentation',
+        exact: true,
+      }),
+    ).toHaveAttribute(
+      'href',
+      'https://github.com/suitenumerique/docs/tree/main/documentation/installation',
+    );
+    await expect(
       page
         .getByRole('link', {
           name: 'licence',
