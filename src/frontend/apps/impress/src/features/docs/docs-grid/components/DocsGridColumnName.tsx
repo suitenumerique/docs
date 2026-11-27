@@ -20,8 +20,7 @@ export const DocsGridColumnName = ({
   ordering,
   setOrdering,
 }: DocsGridColumnNameProps) => {
-  const canSort =
-    target !== DocDefaultFilter.TRASHBIN && target !== DocDefaultFilter.STARRED;
+  const canSort = target !== DocDefaultFilter.TRASHBIN;
 
   return (
     <Box
@@ -35,7 +34,7 @@ export const DocsGridColumnName = ({
       {canSort ? (
         <DocGridColumnWithSort ordering={ordering} setOrdering={setOrdering} />
       ) : (
-        <DocGridColumnWithoutSort target={target} />
+        <DocGridColumnWithoutSort />
       )}
     </Box>
   );
@@ -116,7 +115,8 @@ const DocGridColumnWithSort = ({
   );
 };
 
-const DocGridColumnWithoutSort = ({ target }: { target: DocDefaultFilter }) => {
+// Only the trashbin, ordered by deletion date
+const DocGridColumnWithoutSort = () => {
   const { t } = useTranslation();
   const { isSmallMobile } = useResponsiveStore();
 
@@ -140,15 +140,10 @@ const DocGridColumnWithoutSort = ({ target }: { target: DocDefaultFilter }) => {
             $gap="2xs"
           >
             <ClockIcon width={16} height={16} aria-hidden="true" />{' '}
-            {target === DocDefaultFilter.STARRED
-              ? t('Last modified', {
-                  description:
-                    'Column header and sort button: date of last modification',
-                })
-              : t('Days remaining', {
-                  description:
-                    'Column header of the trashbin: days before permanent deletion',
-                })}
+            {t('Days remaining', {
+              description:
+                'Column header of the trashbin: days before permanent deletion',
+            })}
           </Text>
         </Box>
       )}

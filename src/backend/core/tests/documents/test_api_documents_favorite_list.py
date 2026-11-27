@@ -1,5 +1,6 @@
 """Test for the document favorite_list endpoint."""
 
+import operator
 from datetime import timedelta
 
 from django.utils import timezone
@@ -159,6 +160,72 @@ def test_api_document_favorite_list_sorted_by_updated_at():
     assert content[0]["id"] == str(children[1].id)
     assert content[1]["id"] == str(children[0].id)
     assert content[2]["id"] == str(access.document.id)
+
+
+@pytest.mark.parametrize(
+    "parameter",
+    [
+        "created_at",
+        "-created_at",
+        "title",
+        "-title",
+        "updated_at",
+        "-updated_at",
+    ],
+)
+def test_api_documents_favorite_list_ordering_by_fields(parameter):
+    """It should be possible to order by several fields"""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    factories.DocumentFactory.create_batch(5, users=[user], favorited_by=[user])
+
+    is_descending = parameter.startswith("-")
+    field = parameter.lstrip("-")
+    querystring = f"?ordering={parameter}"
+
+    response = client.get(f"/api/v1.0/documents/favorites/{querystring:s}")
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert len(results) == 5
+
+    # Check that results are sorted by the field in querystring as expected
+    compare = operator.ge if is_descending else operator.le
+    for i in range(4):
+        assert compare(results[i][field], results[i + 1][field])
+
+
+def test_api_documents_favorite_list_invalid_ordering_should_do_nothing():
+    """Using an invalid ordering value should keep the default -updated_at ordering."""
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    documents = factories.DocumentFactory.create_batch(
+        3, users=[user], favorited_by=[user]
+    )
+
+    now = timezone.now()
+
+    models.Document.objects.filter(pk=documents[0].pk).update(
+        updated_at=now + timedelta(seconds=2)
+    )
+    models.Document.objects.filter(pk=documents[1].pk).update(
+        updated_at=now + timedelta(seconds=3)
+    )
+
+    response = client.get("/api/v1.0/documents/favorites/?ordering=foo")
+
+    assert response.status_code == 200
+    assert response.json()["count"] == 3
+
+    content = response.json()["results"]
+
+    assert content[0]["id"] == str(documents[1].id)
+    assert content[1]["id"] == str(documents[0].id)
+    assert content[2]["id"] == str(documents[2].id)
 
 
 def test_api_document_favorite_list_with_deleted_child():
