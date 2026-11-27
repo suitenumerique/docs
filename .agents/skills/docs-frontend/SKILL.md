@@ -28,6 +28,10 @@ From `src/frontend/apps/impress`:
 `yarn dev` serves the app on :3000 against the backend on :8071 (see the
 `docs-start` skill). `yarn build` also runs `prettier --check` and stylelint.
 
+On the host with Node 24, `yarn install` stops on the `engines` field of
+`i18next-parser`: run `yarn install --frozen-lockfile --ignore-engines` from
+`src/frontend`.
+
 ### Without yarn on the host
 
 When `command -v yarn` fails, run the same commands from the repository root
@@ -136,6 +140,10 @@ DOCKER_USER=$(id -u):$(id -g) docker compose run --rm --no-deps \
   reset it in `beforeEach` (see
   `features/docs/doc-management/api/__tests__/useCreateChildDoc.test.tsx`).
 - Query elements by role and accessible name (`getByRole`, `getByLabelText`).
+- Vitest loads the server build of `@sentry/nextjs`, whose `ErrorBoundary`
+  only renders its children: to test a boundary, mock it with the one of
+  `@sentry/react`, which the browser build re-exports (see
+  `features/docs/doc-editor/__tests__/DocEditor.spec.tsx`).
 - A Vitest test is the default for a component or hook; an E2E test only for a
   user workflow across the backend, and only when asked (see the
   `docs-e2e-test` skill).
