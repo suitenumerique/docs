@@ -6,6 +6,7 @@ import * as Y from 'yjs';
 import { Box, Text, TextErrors } from '@/components';
 import { BlockNoteReader } from '@/docs/doc-editor/components/BlockNoteEditor';
 import { DocEditorContainer } from '@/docs/doc-editor/components/DocEditor';
+import { DocEditorErrorBoundary } from '@/docs/doc-editor/components/DocEditorErrorBoundary';
 import { Doc, base64ToBlocknoteXmlFragment } from '@/docs/doc-management';
 
 import { useDocVersion } from '../api/useDocVersion';
@@ -88,16 +89,18 @@ export const DocVersionEditor = ({
       isDeletedDoc={false}
       readOnly={true}
     >
-      <BlockNoteReader
-        initialContent={initialContent}
-        /**
-         * The version, not the document: this identifies the thread store the
-         * preview reads, and a read-only view of an older state has no business
-         * sharing the live one.
-         */
-        docId={versionId}
-        isMainEditor={false}
-      />
+      <DocEditorErrorBoundary key={versionId}>
+        <BlockNoteReader
+          initialContent={initialContent}
+          /**
+           * The version, not the document: this identifies the thread store the
+           * preview reads, and a read-only view of an older state has no business
+           * sharing the live one.
+           */
+          docId={versionId}
+          isMainEditor={false}
+        />
+      </DocEditorErrorBoundary>
     </DocEditorContainer>
   );
 };
