@@ -10,6 +10,10 @@ and this project adheres to
 
 - ✨(backend) allow OIDC back-channel logout configuration #2953
 
+### Fixed
+
+- 🐛(frontend) point the home page to the installation documentation #3078
+
 ## [v6.1.1] - 2026-11-24
 
 ### Added

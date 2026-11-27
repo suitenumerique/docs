@@ -124,7 +124,7 @@ export function HomeContent() {
                         <Trans t={t} i18nKey="home-content-open-source-part2">
                           You can easily self-host Docs (check our installation{' '}
                           <a
-                            href="https://github.com/suitenumerique/docs/tree/main/docs"
+                            href="https://github.com/suitenumerique/docs/tree/main/documentation/installation"
                             target="_blank"
                           >
                             documentation
