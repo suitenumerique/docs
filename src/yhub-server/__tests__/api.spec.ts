@@ -268,6 +268,138 @@ describe('create-ydoc', () => {
   });
 });
 
+describe('append-ydoc', () => {
+  const appendYdoc = async (): Promise<Handler | undefined> => {
+    const { api } = await import('../src/api.js');
+    return (
+      api as unknown as Array<{
+        name: string;
+        opts: { post: { handler: Handler } };
+      }>
+    ).find((e) => e.name === 'append-ydoc')?.opts.post.handler;
+  };
+
+  const enabledAppendYdoc = async (): Promise<Handler> => {
+    vi.stubEnv('YHUB_APPEND_YDOC_ENABLED', 'true');
+    const handler = await appendYdoc();
+    vi.unstubAllEnvs();
+    if (handler == null) throw new Error('append-ydoc is not mounted');
+    return handler;
+  };
+
+  it('is not mounted unless the QA flag asks for it', async () => {
+    vi.stubEnv('YHUB_APPEND_YDOC_ENABLED', '');
+    expect(await appendYdoc()).toBeUndefined();
+    vi.unstubAllEnvs();
+  });
+
+  it('appends to a document that has content, in the name of X-User-Id', async () => {
+    const handler = await enabledAppendYdoc();
+    const yhub = makeYhub(makeUpdate('already here'));
+    const update = makeUpdate('hello world');
+
+    const res = await handler(makeReq(update, { yhub }));
+
+    expect(res.status).toBe(200);
+    const [, message] = yhub.stream.addMessage.mock.calls[0] as unknown as [
+      unknown,
+      { update: Uint8Array; contentmap: Uint8Array },
+    ];
+    expect(Array.from(message.update)).toEqual(Array.from(update));
+    const attrs = insertAttributes(message.contentmap);
+    expect(attrs.get('insert')).toBe('user-1');
+    expect(attrs.get('insertAt')).toEqual(expect.any(Number));
+  });
+
+  it('dates the update at X-Timestamp', async () => {
+    const handler = await enabledAppendYdoc();
+    const yhub = makeYhub();
+    const at = Date.now() - 3 * 24 * 3600 * 1000;
+
+    const res = await handler(
+      makeReq(makeUpdate(), {
+        yhub,
+        headers: { 'x-user-id': 'user-1', 'x-timestamp': String(at) },
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    const [, { contentmap }] = yhub.stream.addMessage.mock
+      .calls[0] as unknown as [unknown, { contentmap: Uint8Array }];
+    expect(insertAttributes(contentmap).get('insertAt')).toBe(at);
+  });
+
+  it.each(['soon', '0', String(Date.now() + 3600 * 1000)])(
+    'refuses the X-Timestamp %s',
+    async (timestamp) => {
+      const handler = await enabledAppendYdoc();
+      const yhub = makeYhub();
+
+      const res = await handler(
+        makeReq(makeUpdate(), {
+          yhub,
+          headers: { 'x-user-id': 'user-1', 'x-timestamp': timestamp },
+        }),
+      );
+
+      expect(res.status).toBe(400);
+      expect(yhub.stream.addMessage).not.toHaveBeenCalled();
+    },
+  );
+
+  it('attributes an update that only deletes', async () => {
+    const doc = new Y.Doc();
+    doc.get('t', 'text').insert(0, 'abc');
+    const stateVector = Y.encodeStateVector(doc);
+    doc.get('t', 'text').delete(0, 3);
+    const deleteOnly = Y.encodeStateAsUpdate(doc, stateVector);
+    const handler = await enabledAppendYdoc();
+    const yhub = makeYhub();
+
+    const res = await handler(makeReq(deleteOnly, { yhub }));
+
+    expect(res.status).toBe(200);
+    const [, { contentmap }] = yhub.stream.addMessage.mock
+      .calls[0] as unknown as [unknown, { contentmap: Uint8Array }];
+    const deletes = Y.decodeContentMap(contentmap).deletes;
+    expect(deletes.clients.size).toBe(1);
+  });
+
+  it('refuses any caller but the admin token', async () => {
+    const handler = await enabledAppendYdoc();
+    const yhub = makeYhub();
+
+    const res = await handler(
+      makeReq(makeUpdate(), { yhub, authInfo: { userid: 'user-2' } }),
+    );
+
+    expect(res.status).toBe(403);
+    expect(yhub.stream.addMessage).not.toHaveBeenCalled();
+  });
+
+  it('refuses an update without the user to attribute it to', async () => {
+    const handler = await enabledAppendYdoc();
+    const yhub = makeYhub();
+
+    const res = await handler(makeReq(makeUpdate(), { yhub, headers: {} }));
+
+    expect(res.status).toBe(400);
+    expect(yhub.stream.addMessage).not.toHaveBeenCalled();
+  });
+
+  it('refuses an invalid update', async () => {
+    const handler = await enabledAppendYdoc();
+    const yhub = makeYhub();
+
+    const res = await handler(
+      makeReq(new Uint8Array([7, 7, 7, 7, 7, 7, 7, 7]), { yhub }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(yhub.stream.addMessage).not.toHaveBeenCalled();
+  });
+});
+
 // `ready` probes redis with a write: a replica left behind by a failover
 // answers PING, so only a write tells that the updates can no longer land.
 describe('ready', () => {

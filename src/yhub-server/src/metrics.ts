@@ -141,6 +141,7 @@ const KNOWN_ENDPOINTS = new Set([
   'create-ydoc',
   'restore-ydoc',
   'reset-ydoc',
+  'append-ydoc',
 ]);
 export const endpointLabel = (endpoint: string | undefined): string =>
   endpoint != null && KNOWN_ENDPOINTS.has(endpoint) ? endpoint : 'other';

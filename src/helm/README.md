@@ -9,6 +9,17 @@ in [`impress/README.md`](impress/README.md).
 - `impress/`: the Helm chart, its templates and default values
 - `env.d/{env}/`: the values of each environment (`dev` = local, `feature` = CI)
 
+The `feature` environment (the preview of a pull request labelled `preview`)
+seeds documents saved by the Yjs 13 editor, every block included, for the
+`docs`/`docs` user: the `createsuperuser` job runs `create_legacy_documents`, which
+has yhub migrate them with their S3 versions (the full migration of
+`migrate_documents`), so the history lists them, such as the three revisions of
+"Edited many times". Three dummy editors (Alice, Bob, Chloé) then edit some of
+them, in their name (`YHUB_APPEND_YDOC_ENABLED`, QA only), so the attribution
+shows their parts apart from the legacy content; "Version history" is written by
+them over ten days. Every sync seeds a new tree, dated in its title, with fresh
+ids: the older trees are left as they are.
+
 ## Local cluster
 
 ```bash

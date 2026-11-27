@@ -1,6 +1,7 @@
 """Test yhub services."""
 
 from base64 import b64encode
+from datetime import UTC, datetime
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -209,6 +210,51 @@ def test_create_ydoc_already_exists(mock_request):
         YHubService().create_ydoc(DOCUMENT, b"\x01\x02\x03\x04")
 
     assert excinfo.value.status_code == 409
+
+
+@patch("requests.request")
+def test_append_ydoc(mock_request):
+    """Should post the raw update to append-ydoc, in the name of the bound user."""
+    mock_request.return_value.ok = True
+    user = UserFactory.build()
+    update = b"\x01\x02\x03\x04"
+
+    response = YHubService(user=user).append_ydoc(DOCUMENT, update)
+
+    assert response is mock_request.return_value
+    args, kwargs = mock_request.call_args
+    assert args == (
+        "post",
+        f"http://yhub:3002/collaboration/append-ydoc/v1/docs/{DOCUMENT.id!s}",
+    )
+    assert kwargs["data"] == update
+    assert kwargs["headers"]["X-User-Id"] == str(user.pk)
+    assert "X-Timestamp" not in kwargs["headers"]
+
+
+@patch("requests.request")
+def test_append_ydoc_at(mock_request):
+    """Should date the update, in unix milliseconds, when asked to."""
+    mock_request.return_value.ok = True
+    at = datetime(2026, 11, 20, 14, 16, tzinfo=UTC)
+
+    YHubService(user=UserFactory.build()).append_ydoc(DOCUMENT, b"\x01", at=at)
+
+    _args, kwargs = mock_request.call_args
+    assert kwargs["headers"]["X-Timestamp"] == str(int(at.timestamp() * 1000))
+
+
+@patch("requests.request")
+def test_append_ydoc_not_enabled(mock_request):
+    """Where the QA route is not mounted, the 404 surfaces as an APIError."""
+    mock_request.return_value.ok = False
+    mock_request.return_value.status_code = 404
+    mock_request.return_value.text = "Not found"
+
+    with pytest.raises(APIError) as excinfo:
+        YHubService(user=UserFactory.build()).append_ydoc(DOCUMENT, b"\x01\x02")
+
+    assert excinfo.value.status_code == 404
 
 
 @patch("requests.request")

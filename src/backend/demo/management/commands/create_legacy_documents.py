@@ -1,0 +1,395 @@
+"""create_legacy_documents management command"""
+
+import base64
+import io
+import json
+import math
+import struct
+import time
+import uuid
+import wave
+import zlib
+from datetime import timedelta
+from pathlib import Path
+
+from django.core.files.storage import default_storage
+from django.core.management.base import BaseCommand
+from django.db import transaction
+from django.utils import timezone
+
+from core import enums, models
+from core.services.yhub_services import (
+    APIError,
+    ServiceUnavailableError,
+    YHubService,
+)
+
+FIXTURE = Path(__file__).resolve().parents[2] / "data" / "legacy_documents.json"
+
+# The collaboration server may still be starting when a deployment runs this
+YHUB_ATTEMPTS = 30
+YHUB_RETRY_DELAY = 5
+
+# How far back the owner's access goes: the history a user reads starts at
+# their access, and the edits of the fixture go back ten days
+OWNER_ACCESS_AGE = timedelta(days=30)
+
+
+def make_png(width=96, height=64):
+    """A gradient, so that a broken image is told apart from a blank one."""
+    rows = b"".join(
+        b"\x00"
+        + bytes(
+            value
+            for x in range(width)
+            for value in (x * 255 // width, y * 255 // height, 160)
+        )
+        for y in range(height)
+    )
+
+    def chunk(kind, data):
+        payload = kind + data
+        return (
+            struct.pack(">I", len(data))
+            + payload
+            + struct.pack(">I", zlib.crc32(payload))
+        )
+
+    header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", header)
+        + chunk(b"IDAT", zlib.compress(rows))
+        + chunk(b"IEND", b"")
+    )
+
+
+def make_pdf(text="Legacy PDF attachment"):
+    """A one-page PDF, its cross-reference table computed from the objects."""
+    stream = f"BT /F1 24 Tf 72 720 Td ({text}) Tj ET".encode()
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+        b"<< /Length %d >>\nstream\n%s\nendstream" % (len(stream), stream),
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    pdf = b"%PDF-1.4\n"
+    offsets = []
+    for number, body in enumerate(objects, start=1):
+        offsets.append(len(pdf))
+        pdf += b"%d 0 obj\n%s\nendobj\n" % (number, body)
+    xref = len(pdf)
+    pdf += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    pdf += b"".join(b"%010d 00000 n \n" % offset for offset in offsets)
+    pdf += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (
+        len(objects) + 1,
+        xref,
+    )
+    return pdf
+
+
+def make_wav(seconds=2, rate=8000, frequency=440):
+    """A sine wave."""
+    buffer = io.BytesIO()
+    with wave.Wave_write(buffer) as audio:
+        audio.setnchannels(1)
+        audio.setsampwidth(2)
+        audio.setframerate(rate)
+        audio.writeframes(
+            b"".join(
+                struct.pack(
+                    "<h", int(12000 * math.sin(2 * math.pi * frequency * i / rate))
+                )
+                for i in range(seconds * rate)
+            )
+        )
+    return buffer.getvalue()
+
+
+def comment_body(text):
+    """A comment is the content of BlockNote's comment editor."""
+    return [
+        {
+            "type": "paragraph",
+            "content": [{"type": "text", "text": text, "styles": {}}],
+            "children": [],
+        }
+    ]
+
+
+ATTACHMENTS = {
+    "png": ("image/png", make_png),
+    "pdf": ("application/pdf", make_pdf),
+    "wav": ("audio/wav", make_wav),
+    "txt": ("text/plain", lambda: b"A legacy text attachment.\n"),
+}
+
+
+class Command(BaseCommand):
+    """
+    Seed documents saved by the Yjs 13 editor, to check the legacy corpus once
+    the collaboration server has migrated it to Yjs 14, and the version history
+    and attribution of the documents edited since.
+
+    The documents are written where Django stored the content before the
+    collaboration server: `{document-id}/file` in the media bucket, as the
+    base64 of a Yjs update, one S3 version per revision. The collaboration
+    server migrates them with their full history, as `migrate_documents` does:
+    the seed of a first opening (`SOFT_MIGRATION`) only brings the latest
+    revision, without any timestamp, so it shows nothing in the history.
+
+    Once migrated, some documents are edited by dummy users, given editor
+    access: their edits are written into the collaboration server in their
+    name, through `append-ydoc` (`YHUB_APPEND_YDOC_ENABLED`, QA only), so that
+    the attribution tells them apart from the legacy content, `system`'s. An
+    edit may be dated days back, so that the history spreads over time.
+
+    Every run seeds a new tree, with fresh ids: a deployment shows the content
+    the fixture has now, and nobody's copy of a former tree can come back into
+    it. The ids of the fixture are swapped in the content for the ones of the
+    run, all uuids of the same length.
+
+    The content is generated by the frontend, with the editor's own schema:
+    see `generated_by` in the fixture.
+    """
+
+    help = __doc__
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # what a run seeds with, set by `handle`
+        self.now = None
+        self.owner = None
+        self.users = {}
+        self.ids = {}
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--owner-email",
+            default="docs@example.com",
+            help="Email of the user owning the documents, created if missing.",
+        )
+
+    def handle(self, *args, **options):
+        fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        documents = fixture["documents"]
+        self.now = timezone.now()
+        self.owner = self.get_user(options["owner_email"], fixture["owner"])
+        self.users = {
+            data["id"]: self.get_user(data["email"], data) for data in fixture["users"]
+        }
+        self.ids = self.fresh_ids(fixture, self.owner, self.users)
+
+        # the documents only show once their objects are written: opened
+        # before, one would be seeded empty, never looking at S3 again
+        with transaction.atomic():
+            created = {}
+            for data in documents:
+                created[data["id"]] = self.create_document(
+                    data, created.get(data["parent_id"])
+                )
+        root = created[documents[0]["id"]]
+
+        self.migrate_documents(documents, created)
+        # after the migration, so the edits apply on top of the legacy content
+        if self.append_edits(documents, created):
+            # the attribution names an author from the accesses of the document
+            for user in self.users.values():
+                models.DocumentAccess.objects.create(
+                    document=root, user=user, role=models.RoleChoices.EDITOR
+                )
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"{root.title} ({root.id}): {len(documents)} legacy documents "
+                f"ready for {self.owner.email}."
+            )
+        )
+
+    @staticmethod
+    def fresh_ids(fixture, owner, users):
+        """
+        The ids of the run for the ids of the fixture: new ones for the
+        documents and the threads, the actual ones for the users.
+        """
+        ids = {fixture["owner"]["id"]: str(owner.id)}
+        ids.update({fixture_id: str(user.id) for fixture_id, user in users.items()})
+        for data in fixture["documents"]:
+            ids[data["id"]] = str(uuid.uuid4())
+            for thread in data["threads"]:
+                ids[thread["id"]] = str(uuid.uuid4())
+        return ids
+
+    @staticmethod
+    def swap_ids(update, ids):
+        """
+        The content with the ids of the run. The ids are stored whole, as
+        attributes, and of the same length, so the update stays valid.
+        """
+        for fixture_id, run_id in ids.items():
+            if len(fixture_id) != len(run_id):
+                raise ValueError(f"{run_id} does not have the length of a uuid")
+            update = update.replace(fixture_id.encode(), run_id.encode())
+        return update
+
+    def create_document(self, data, parent):
+        """A document, its legacy content and attachments in S3, its threads."""
+        owner, ids = self.owner, self.ids
+        client = default_storage.connection.meta.client
+        bucket = default_storage.bucket_name
+        fields = {"id": ids[data["id"]], "title": data["title"], "creator": owner}
+        if parent:
+            document = parent.add_child(**fields)
+        else:
+            fields["title"] += f" · {timezone.localtime(self.now):%Y-%m-%d %H:%M}"
+            document = models.Document.add_root(
+                link_reach=models.LinkReachChoices.RESTRICTED, **fields
+            )
+            # the history of a user starts when they were given access: older,
+            # it covers the legacy versions and the edits dated days back
+            access = models.DocumentAccess.objects.create(
+                document=document, user=owner, role=models.RoleChoices.OWNER
+            )
+            models.DocumentAccess.objects.filter(pk=access.pk).update(
+                created_at=self.now - OWNER_ACCESS_AGE
+            )
+
+        for revision in data["revisions"]:
+            update = self.swap_ids(base64.b64decode(revision), ids)
+            client.put_object(
+                Bucket=bucket,
+                Key=document.file_key,
+                Body=base64.b64encode(update),
+                ContentType="text/plain",
+            )
+
+        for attachment in data["attachments"]:
+            content_type, make = ATTACHMENTS[attachment["kind"]]
+            key = (
+                f"{document.key_base}/{enums.ATTACHMENTS_FOLDER:s}/"
+                f"{attachment['name']:s}"
+            )
+            client.put_object(
+                Bucket=bucket,
+                Key=key,
+                Body=make(),
+                ContentType=content_type,
+                Metadata={
+                    "owner": str(owner.id),
+                    "status": enums.DocumentAttachmentStatus.READY.value,
+                },
+            )
+            document.attachments.append(key)
+        if data["attachments"]:
+            document.save(update_fields=["attachments"])
+
+        for thread in data["threads"]:
+            creator = self.users.get(thread["creator_id"], owner)
+            models.Comment.objects.create(
+                thread=models.Thread.objects.create(
+                    id=ids[thread["id"]], document=document, creator=creator
+                ),
+                user=creator,
+                body=comment_body(thread["comment"]),
+            )
+
+        self.stdout.write(
+            f"{document.title}: {len(data['revisions'])} revision(s), "
+            f"{len(data['attachments'])} attachment(s), "
+            f"{len(data['threads'])} thread(s)"
+        )
+        return document
+
+    def migrate_documents(self, documents, created):
+        """
+        Hand the documents to the collaboration server with their legacy
+        history, every S3 version an entry attributed to `system`. A document
+        born after the migration has nothing to hand over.
+        """
+        service = YHubService()
+        for data in documents:
+            if not data["revisions"]:
+                continue
+            document = created[data["id"]]
+            result = self.call_yhub(service.migrate, document)
+            status = (result or {}).get("status")
+            if status != "ok":
+                self.stderr.write(
+                    f"{document.title}: not migrated by the collaboration "
+                    f"server ({status})"
+                )
+
+    def append_edits(self, documents, created):
+        """
+        Write the edits of the users into the collaboration server, in order,
+        each at its date. Answers whether it could.
+
+        Where the QA route is not mounted, the documents are kept without the
+        edits.
+        """
+        for data in documents:
+            document = created[data["id"]]
+            for edit in data["edits"]:
+                minutes_ago = edit.get("minutes_ago")
+                at = self.now - timedelta(minutes=minutes_ago) if minutes_ago else None
+                try:
+                    self.call_yhub(
+                        YHubService(user=self.users[edit["user_id"]]).append_ydoc,
+                        document,
+                        self.swap_ids(base64.b64decode(edit["update"]), self.ids),
+                        at,
+                    )
+                except APIError as error:
+                    if error.status_code != 404:
+                        raise
+                    self.stderr.write(
+                        "The collaboration server does not take edits in the "
+                        "name of a user (YHUB_APPEND_YDOC_ENABLED): the "
+                        "documents are left without the edits of the users."
+                    )
+                    return False
+            if data["edits"]:
+                self.stdout.write(
+                    f"{data['title']}: {len(data['edits'])} edit(s) by "
+                    f"{len({edit['user_id'] for edit in data['edits']})} user(s)"
+                )
+        return True
+
+    def call_yhub(self, call, *args):
+        """A call, retried while the collaboration server is unavailable."""
+        for attempt in range(1, YHUB_ATTEMPTS + 1):
+            try:
+                return call(*args)
+            except (ServiceUnavailableError, APIError) as error:
+                status = getattr(error, "status_code", None)
+                if (status is not None and status < 500) or attempt == YHUB_ATTEMPTS:
+                    raise
+                self.stderr.write(
+                    f"The collaboration server is unavailable ({error}), "
+                    f"retrying in {YHUB_RETRY_DELAY}s"
+                )
+                time.sleep(YHUB_RETRY_DELAY)
+        return None
+
+    def get_user(self, email, data):
+        """
+        The user signing in with this email: found by it on their first login
+        (`OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION`), since its OIDC `sub` is
+        not known yet. Created with the id the documents mention.
+        """
+        user = models.User.objects.filter(email=email).order_by("-is_active").first()
+        if user:
+            return user
+
+        user = models.User(
+            id=data["id"],
+            email=email,
+            full_name=data["full_name"],
+            short_name=data["full_name"].split(" ")[0],
+            is_first_connection=False,
+        )
+        user.set_unusable_password()
+        user.save()
+        return user
