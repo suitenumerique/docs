@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import { PropsWithChildren, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
@@ -19,6 +20,7 @@ import { useResponsiveStore } from '@/stores';
 import { useCollaboration } from '../hook/useCollaboration';
 
 import { BlockNoteEditor, BlockNoteReader } from './BlockNoteEditor';
+import { DocEditorErrorBoundary } from './DocEditorErrorBoundary';
 
 const DOCS_EDITOR_CLASS = '--docs--doc-editor';
 
@@ -139,6 +141,7 @@ interface DocCoreEditorProps {
 }
 
 export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
+  const { t } = useTranslation();
   const { provider, isReady } = useProviderStore();
   const isProviderReady = isReady && provider;
   const showContent = !!(isProviderReady && provider?.roomname === doc.id);
@@ -155,14 +158,26 @@ export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
     );
   }
 
-  if (readOnly) {
-    return (
-      <BlockNoteReader
-        initialContent={provider.doc.getXmlFragment('document-store')}
-        docId={doc.id}
-      />
-    );
-  }
+  // Without the history, only the owner can bring the document back.
+  const errorDescription = doc.abilities.versions_list
+    ? undefined
+    : t('Please contact the document owner to restore a previous version.', {
+        description:
+          'Shown in place of a document that cannot be displayed, to a user who cannot see its versions',
+      });
 
-  return <BlockNoteEditor doc={doc} provider={provider} />;
+  // Keyed by document: this component stays mounted when navigating from one
+  // document to another, and the next one deserves a new try.
+  return (
+    <DocEditorErrorBoundary key={doc.id} description={errorDescription}>
+      {readOnly ? (
+        <BlockNoteReader
+          initialContent={provider.doc.getXmlFragment('document-store')}
+          docId={doc.id}
+        />
+      ) : (
+        <BlockNoteEditor doc={doc} provider={provider} />
+      )}
+    </DocEditorErrorBoundary>
+  );
 };

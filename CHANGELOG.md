@@ -10,6 +10,10 @@ and this project adheres to
 
 - ✨(backend) allow OIDC back-channel logout configuration #2953
 
+### Fixed
+
+- 🐛(frontend) keep the doc header and history when the editor fails #3080
+
 ## [v6.1.1] - 2026-11-24
 
 ### Added
