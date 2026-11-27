@@ -216,7 +216,7 @@ AI_MODEL=<model used> e.g. llama
 
 ### Frontend theme
 
-You can [customize your Docs instance](../theming.md) with your own theme and custom css.
+You can [customize your Docs instance](../customization.md) with your own theme and custom css.
 
 The following environment variables must be set in `env.d/backend`:
 

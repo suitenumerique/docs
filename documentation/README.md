@@ -36,7 +36,7 @@ Use the section below to quickly find what you are looking for.
   - [Troubleshooting](troubleshoot.md)
 
 - Project & product
-  - [Roadmap](roadmap.md)
+  - [Roadmap](https://docs.numerique.gouv.fr/docs/d1d3788e-c619-41ff-abe8-2d079da2f084/)
 
 - Assets
   - [Branding & visuals](assets/)
