@@ -914,10 +914,13 @@ class DocumentViewSet(
         queryset = self.queryset.filter(path_list)
         queryset = queryset.filter(id__in=favorite_documents_ids)
         queryset = queryset.filter(ancestors_deleted_at__isnull=True)
-        queryset = queryset.order_by("-updated_at")
         queryset = queryset.annotate_user_roles(user).annotate_user_has_link_trace(user)
         queryset = queryset.annotate(
             is_favorite=db.Value(True, output_field=db.BooleanField())
+        )
+        # Apply ordering only now that everything is filtered and annotated
+        queryset = filters.OrderingFilter().filter_queryset(
+            self.request, queryset, self
         )
         return self.get_response_for_queryset(queryset)
 

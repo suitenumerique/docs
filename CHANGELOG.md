@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) allow OIDC back-channel logout configuration #2953
+- ✨(backend) allow ordering favorites endpoint
 
 ## [v6.1.1] - 2026-11-24
 
