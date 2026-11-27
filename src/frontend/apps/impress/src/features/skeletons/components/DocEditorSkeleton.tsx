@@ -1,5 +1,3 @@
-import { css, keyframes } from 'styled-components';
-
 import { Box, BoxType } from '@/components';
 import { useResponsiveStore } from '@/stores';
 
@@ -84,21 +82,9 @@ const SkeletonEditorHeader = () => {
   );
 };
 
-export const SKELETON_FADE_DURATION_MS = 150;
-const skeletonFadeOut = keyframes`
-  from { opacity: 1; }
-  to { opacity: 0; }
-`;
+type SkeletonEditorCoreProps = Partial<BoxType>;
 
-type SkeletonEditorCoreProps = Partial<BoxType> & {
-  isFadingOut?: boolean;
-};
-
-export const SkeletonEditorCore = ({
-  isFadingOut,
-  $css,
-  ...props
-}: SkeletonEditorCoreProps) => {
+export const SkeletonEditorCore = (props: SkeletonEditorCoreProps) => {
   return (
     <Box
       $direction="row"
@@ -112,16 +98,6 @@ export const SkeletonEditorCore = ({
         $width="100%"
         $padding={{ horizontal: '54px', top: '45px' }}
         $flex="1"
-        $css={css`
-          ${$css}
-          ${
-            isFadingOut &&
-            css`
-              animation: ${skeletonFadeOut} ${SKELETON_FADE_DURATION_MS}ms
-                ease-in-out forwards;
-            `
-          }
-        `}
         {...props}
       >
         <Box $gap="1.5rem">

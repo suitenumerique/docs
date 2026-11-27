@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) keep the skeleton until a big doc is rendered #2858
+
 ## [v6.1.1] - 2026-11-24
 
 ### Added

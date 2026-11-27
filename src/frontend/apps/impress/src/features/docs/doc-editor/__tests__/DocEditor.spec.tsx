@@ -1,11 +1,13 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, test, vi } from 'vitest';
 
 import { AppWrapper } from '@/tests/utils';
 
 import { LinkReach } from '../../doc-management';
-import { DocEditor } from '../components/DocEditor';
+import { DocCoreEditor, DocEditor } from '../components/DocEditor';
+
+const mockProvider = vi.hoisted(() => ({ roomname: 'test-doc-id' }));
 
 vi.mock('@/stores', () => ({
   useResponsiveStore: () => ({ isDesktop: false }),
@@ -27,7 +29,7 @@ vi.mock('../../doc-management', async () => {
     ...actual,
     useProviderStore: () => ({
       provider: {
-        roomname: 'test-doc-id',
+        roomname: mockProvider.roomname,
         doc: {
           getXmlFragment: () => null,
         },
@@ -47,8 +49,8 @@ vi.mock('../../doc-header', () => ({
 }));
 
 vi.mock('../components/BlockNoteEditor', () => ({
-  BlockNoteEditor: () => null,
-  BlockNoteReader: () => null,
+  BlockNoteEditor: () => <div data-testid="block-note-editor" />,
+  BlockNoteReader: () => <div data-testid="block-note-reader" />,
 }));
 
 vi.mock('../../../auth', async () => {
@@ -119,4 +121,35 @@ describe('DocEditor', () => {
       authenticated: true,
     });
   });
+});
+
+describe('DocCoreEditor', () => {
+  const skeletonSelector = '.--docs--doc-editor-content-skeleton';
+
+  test.each([
+    [false, 'block-note-editor'],
+    [true, 'block-note-reader'],
+  ])(
+    'it swaps the skeleton for the editor as soon as the provider is ready (readOnly: %s)',
+    (readOnly, editorTestId) => {
+      const doc = { id: 'test-doc-id' } as any;
+      mockProvider.roomname = 'previous-doc-id';
+
+      const { container, rerender } = render(
+        <DocCoreEditor doc={doc} readOnly={readOnly} />,
+        { wrapper: AppWrapper },
+      );
+
+      expect(container.querySelector(skeletonSelector)).toBeInTheDocument();
+      expect(screen.queryByTestId(editorTestId)).not.toBeInTheDocument();
+
+      // The editor mounts in the very render the provider gets ready: the
+      // skeleton must not fade out before, it would leave the doc empty.
+      mockProvider.roomname = 'test-doc-id';
+      rerender(<DocCoreEditor doc={doc} readOnly={readOnly} />);
+
+      expect(screen.getByTestId(editorTestId)).toBeInTheDocument();
+      expect(container.querySelector(skeletonSelector)).not.toBeInTheDocument();
+    },
+  );
 });
