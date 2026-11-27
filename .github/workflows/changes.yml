@@ -40,7 +40,7 @@ jobs:
         id: filter-e2e
         if: github.event_name == 'pull_request'
         continue-on-error: true
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         with:
           predicate-quantifier: every
           filters: |
@@ -65,7 +65,7 @@ jobs:
         id: filter-code
         if: github.event_name == 'pull_request'
         continue-on-error: true
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         with:
           predicate-quantifier: every
           filters: |
