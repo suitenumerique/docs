@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { PropsWithChildren, useEffect, useState } from 'react';
-import { css } from 'styled-components';
+import { css, keyframes } from 'styled-components';
 
 import { Box } from '@/components';
 import { DocHeader } from '@/docs/doc-header/';
@@ -12,7 +12,6 @@ import {
 } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth/';
 import { SkeletonEditorCore, useSkeletonStore } from '@/features/skeletons';
-import { useSkeletonFadeOut } from '@/features/skeletons/hooks/useFadeOut';
 import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
 
@@ -138,16 +137,17 @@ interface DocCoreEditorProps {
   readOnly: boolean;
 }
 
+const editorFadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
 export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
   const { provider, isReady } = useProviderStore();
-  const isProviderReady = isReady && provider;
-  const showContent = !!(isProviderReady && provider?.roomname === doc.id);
-  const { skeletonVisible, isFadingOut } = useSkeletonFadeOut(showContent);
 
-  if (skeletonVisible || !isProviderReady || provider?.roomname !== doc.id) {
+  if (!isReady || !provider || provider.roomname !== doc.id) {
     return (
       <SkeletonEditorCore
-        isFadingOut={isFadingOut}
         $css={css`
           padding-top: 0px;
         `}
@@ -155,14 +155,22 @@ export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
     );
   }
 
-  if (readOnly) {
-    return (
-      <BlockNoteReader
-        initialContent={provider.doc.getXmlFragment('document-store')}
-        docId={doc.id}
-      />
-    );
-  }
-
-  return <BlockNoteEditor doc={doc} provider={provider} />;
+  // Fade In the editor content when it becomes ready
+  return (
+    <Box
+      $height="100%"
+      $css={css`
+        animation: ${editorFadeIn} 150ms ease-in-out;
+      `}
+    >
+      {readOnly ? (
+        <BlockNoteReader
+          initialContent={provider.doc.getXmlFragment('document-store')}
+          docId={doc.id}
+        />
+      ) : (
+        <BlockNoteEditor doc={doc} provider={provider} />
+      )}
+    </Box>
+  );
 };
