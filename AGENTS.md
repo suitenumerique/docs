@@ -212,6 +212,7 @@ Mandatory description explaining why.
 - **No space** between emoji and `(type)`, **one space** after closing parenthesis
 - Types: `backend`, `frontend`, `ci`, `docker`, `dependencies`, `e2e`, `export`, `auth`, etc.
 - Gitmoji examples: `✨` feature, `🐛` fix, `♻️` refactor, `⬆️` dependency upgrade, `🔒️` security
+- The description is short: 1 to 6 lines of at most 72 characters giving the reason for the change, not the list of changes (the diff shows what, the PR description holds the details)
 - Commits must be signed (`-S`) and signed-off (`--signoff`)
 - One commit = one concern, and the tests and docs of a change go in the same commit, never in a follow-up one (see `CONTRIBUTING.md`)
 
