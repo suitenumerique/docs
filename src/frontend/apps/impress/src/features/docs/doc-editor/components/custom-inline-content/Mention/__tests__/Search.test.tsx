@@ -17,6 +17,15 @@ import { Doc, useDocStore } from '@/docs/doc-management';
 import { useDocSearchFilterStore } from '@/docs/doc-search/stores/useDocSearchFilterStore';
 import { AppWrapper } from '@/tests/utils';
 
+vi.mock('@/features/auth', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/auth')>();
+
+  return {
+    ...actual,
+    useAuth: () => ({ user: { id: 'current-user' } }),
+  };
+});
+
 const Wrapper = ({ children }: PropsWithChildren) => (
   <AppWrapper>
     <MantineProvider>{children}</MantineProvider>
