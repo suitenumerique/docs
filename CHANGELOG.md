@@ -10,6 +10,10 @@ and this project adheres to
 
 - ✨(backend) allow OIDC back-channel logout configuration #2953
 
+### Changed
+
+- 🚸(frontend) tell the user a file cannot be added while offline #3077
+
 ## [v6.1.1] - 2026-11-24
 
 ### Added

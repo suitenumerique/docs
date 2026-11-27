@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { APIError, backendUrl } from '@/api';
 import { useConfig } from '@/core';
+import { useIsOffline } from '@/features/service-worker/hooks/useOffline';
 import { useToast } from '@/hooks';
 import { formatFileSize } from '@/utils';
 import { isSafeUrl } from '@/utils/url';
@@ -44,6 +45,8 @@ const fileTextAlignment = (props: object): TextAlignment => {
   return 'left';
 };
 
+const isOffline = () => useIsOffline.getState().isOffline || !navigator.onLine;
+
 export const useUploadFile = (docId: string) => {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -51,6 +54,16 @@ export const useUploadFile = (docId: string) => {
   const { mutateAsync: createDocAttachment } = useCreateDocAttachment();
 
   const maxFileSize = config?.DOCUMENT_IMAGE_MAX_SIZE ?? DEFAULT_MAX_FILE_SIZE;
+
+  const toastOffline = useCallback(() => {
+    toast(
+      t("You're offline. Files can be added once you're back online.", {
+        description: 'Toast shown when a file is added to a doc while offline',
+      }),
+      VariantType.ERROR,
+      { duration: UPLOAD_ERROR_TOAST_DURATION },
+    );
+  }, [t, toast]);
 
   const uploadFile = useCallback(
     async (file: File) => {
@@ -75,6 +88,12 @@ export const useUploadFile = (docId: string) => {
         throw new Error('File is too large');
       }
 
+      if (isOffline()) {
+        toastOffline();
+
+        throw new Error('Offline');
+      }
+
       const body = new FormData();
       body.append('file', file);
 
@@ -86,6 +105,12 @@ export const useUploadFile = (docId: string) => {
 
         return `${backendUrl()}${ret.file}`;
       } catch (error) {
+        if (isOffline()) {
+          toastOffline();
+
+          throw error;
+        }
+
         const causes = error instanceof APIError ? error.cause : undefined;
 
         toast(
@@ -101,7 +126,7 @@ export const useUploadFile = (docId: string) => {
         throw error;
       }
     },
-    [createDocAttachment, docId, maxFileSize, t, toast],
+    [createDocAttachment, docId, maxFileSize, t, toast, toastOffline],
   );
 
   return { uploadFile };

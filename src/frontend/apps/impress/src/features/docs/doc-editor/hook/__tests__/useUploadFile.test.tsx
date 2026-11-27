@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useIsOffline } from '@/features/service-worker/hooks/useOffline';
 import { AppWrapper } from '@/tests/utils';
 
 import { DocsBlockNoteEditor } from '../../types';
@@ -33,9 +34,14 @@ const uploadUrl = `http://test.jest/api/v1.0/documents/${docId}/attachment-uploa
 const createFile = (size: number) =>
   new File(['a'.repeat(size)], 'video.mp4', { type: 'video/mp4' });
 
+const OFFLINE_MESSAGE =
+  "You're offline. Files can be added once you're back online.";
+
 describe('useUploadFile', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.restoreAllMocks();
+    useIsOffline.setState({ isOffline: false });
     fetchMock.hardReset();
     fetchMock.mockGlobal();
 
@@ -92,6 +98,45 @@ describe('useUploadFile', () => {
       'error',
       { duration: 10000 },
     );
+  });
+
+  it('tells the user they are offline without calling the API', async () => {
+    useIsOffline.setState({ isOffline: true });
+
+    const result = renderUseUploadFile();
+
+    await expect(
+      result.current.uploadFile(createFile(MAX_FILE_SIZE)),
+    ).rejects.toThrow('Offline');
+
+    expect(fetchMock.callHistory.calls(uploadUrl).length).toBe(0);
+    expect(mockToast).toHaveBeenCalledWith(OFFLINE_MESSAGE, 'error', {
+      duration: 10000,
+    });
+  });
+
+  it('tells the user they are offline when the connection drops during the upload', async () => {
+    let onLine = true;
+    vi.spyOn(navigator, 'onLine', 'get').mockImplementation(() => onLine);
+
+    fetchMock.hardReset();
+    fetchMock.mockGlobal();
+    fetchMock.post(uploadUrl, () => {
+      onLine = false;
+
+      return { status: 502, body: { error: 'Network is unavailable.' } };
+    });
+
+    const result = renderUseUploadFile();
+
+    await expect(
+      result.current.uploadFile(createFile(MAX_FILE_SIZE)),
+    ).rejects.toThrow('Failed to upload on the doc');
+
+    expect(mockToast).toHaveBeenCalledTimes(1);
+    expect(mockToast).toHaveBeenCalledWith(OFFLINE_MESSAGE, 'error', {
+      duration: 10000,
+    });
   });
 });
 
