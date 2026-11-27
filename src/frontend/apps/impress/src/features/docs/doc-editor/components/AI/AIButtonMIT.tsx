@@ -6,14 +6,17 @@ import {
   usePortalElement,
   useSelectedBlocks,
 } from '@blocknote/react';
-import { Loader, VariantType } from '@gouvfr-lasuite/ui-components';
+import {
+  Loader,
+  VariantType,
+  useToastProvider,
+} from '@gouvfr-lasuite/ui-components';
 import { PropsWithChildren, ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { isAPIError } from '@/api';
 import { Box, Icon } from '@/components';
 import { useDocOptions, useDocStore } from '@/docs/doc-management/';
-import { useToast } from '@/hooks';
 
 import {
   AITransformActions,
@@ -338,7 +341,7 @@ const AIMenuItem = ({
   icon,
 }: PropsWithChildren<AIMenuItemProps>) => {
   const Components = useComponentsContext();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { t } = useTranslation();
 
   const editor = useBlockNoteEditor();
@@ -389,7 +392,7 @@ const AIMenuItem = ({
 };
 
 const useHandleAIError = () => {
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
   const { t } = useTranslation();
 
   return (error: unknown) => {

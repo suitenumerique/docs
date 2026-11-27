@@ -95,6 +95,17 @@ describe('ModalExport', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  test('is named after its visible title', () => {
+    render(
+      <ModalExport doc={{ title: 'Roadmap' } as Doc} onClose={vi.fn()} />,
+      {
+        wrapper: AppWrapper,
+      },
+    );
+
+    expect(screen.getByRole('dialog', { name: 'Export' })).toBeInTheDocument();
+  });
+
   test('downloads a ZIP when Markdown contains archived media', async () => {
     mocks.addMediaFilesToMarkdownZip.mockResolvedValue(1);
     const onClose = vi.fn();

@@ -212,7 +212,7 @@ test.describe('Doc grid move', () => {
     await expect(
       page
         .getByRole('dialog')
-        .getByRole('heading', { name: 'Choose a new parent doc' }),
+        .getByRole('heading', { name: 'Choose a new parent doc', exact: true }),
     ).toBeVisible();
 
     const input = page.getByRole('combobox', { name: 'Search for a doc...' });
@@ -300,7 +300,7 @@ test.describe('Doc grid move', () => {
     await expect(
       page
         .getByRole('dialog')
-        .getByRole('heading', { name: 'Choose a new parent doc' }),
+        .getByRole('heading', { name: 'Choose a new parent doc', exact: true }),
     ).toBeVisible();
 
     const input = page.getByRole('combobox', { name: 'Search for a doc...' });
@@ -366,7 +366,7 @@ test.describe('Doc grid move', () => {
     await expect(
       page
         .getByRole('dialog')
-        .getByRole('heading', { name: 'Choose a new parent doc' }),
+        .getByRole('heading', { name: 'Choose a new parent doc', exact: true }),
     ).toBeVisible();
 
     await input.click();
@@ -455,7 +455,10 @@ test.describe('Doc grid move', () => {
       .click();
     expect((await moveResponse).ok()).toBeTruthy();
     await expect(
-      page.getByRole('heading', { name: 'Choose a new parent doc' }),
+      page.getByRole('heading', {
+        name: 'Choose a new parent doc',
+        exact: true,
+      }),
     ).toBeHidden();
 
     await cleanup();
@@ -493,7 +496,7 @@ test.describe('Doc grid move', () => {
     await expect(
       page
         .getByRole('dialog')
-        .getByRole('heading', { name: 'Choose a new parent doc' }),
+        .getByRole('heading', { name: 'Choose a new parent doc', exact: true }),
     ).toBeVisible();
 
     const input = page.getByRole('combobox', { name: 'Search for a doc...' });

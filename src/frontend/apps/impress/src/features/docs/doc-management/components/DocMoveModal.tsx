@@ -5,6 +5,7 @@ import {
   TreeViewMoveModeEnum,
   VariantType,
   useModal,
+  useToastProvider,
 } from '@gouvfr-lasuite/ui-components';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
@@ -22,7 +23,6 @@ import {
   DocsGridItemDate,
   DocsGridItemTitle,
 } from '@/docs/docs-grid/components/DocsGridItem';
-import { useToast } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 const AlertModalRequestAccess = dynamic(
@@ -108,7 +108,7 @@ export const DocMoveModal = ({
   const { isDesktop, isTablet, isMobile } = useResponsiveStore();
   const isModal = (isDesktop || isTablet) && !isMobile;
   const handleInputSearch = useDebouncedCallback(setSearch, 700);
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
 
   const searchInTree = !doc.abilities.move_to_another_tree;
   // Only a document page has a tree, elsewhere (e.g. the grid) we fetch it.

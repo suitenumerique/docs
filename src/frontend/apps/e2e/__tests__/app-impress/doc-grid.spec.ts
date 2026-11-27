@@ -151,7 +151,7 @@ test.describe('Document grid item options', () => {
     await clickInDocOptionMenu(page, row, 'Delete');
 
     await expect(
-      page.getByRole('heading', { name: 'Delete a doc' }),
+      page.getByRole('heading', { name: 'Delete a doc', exact: true }),
     ).toBeVisible();
 
     await page
@@ -183,11 +183,11 @@ test.describe('Document grid item options', () => {
     await clickInDocOptionMenu(page, row, 'Leave');
 
     const modal = page.getByRole('dialog', {
-      name: 'Confirmation to leave the document',
+      name: 'Leave a doc',
     });
 
     await expect(
-      modal.getByRole('heading', { name: 'Leave a doc' }),
+      modal.getByRole('heading', { name: 'Leave a doc', exact: true }),
     ).toBeVisible();
 
     // Check the message when the user is the unique owner

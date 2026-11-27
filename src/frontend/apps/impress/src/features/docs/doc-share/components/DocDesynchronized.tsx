@@ -1,10 +1,13 @@
-import { Button, VariantType } from '@gouvfr-lasuite/ui-components';
+import {
+  Button,
+  VariantType,
+  useToastProvider,
+} from '@gouvfr-lasuite/ui-components';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Card, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, KEY_DOC, KEY_LIST_DOC } from '@/docs/doc-management';
-import { useToast } from '@/hooks';
 
 import { useUpdateDocLink } from '../api/useUpdateDocLink';
 
@@ -18,7 +21,7 @@ interface DocDesynchronizedProps {
 export const DocDesynchronized = ({ doc }: DocDesynchronizedProps) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
-  const { toast } = useToast();
+  const { toast } = useToastProvider();
 
   const { mutate: updateDocLink } = useUpdateDocLink({
     listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
