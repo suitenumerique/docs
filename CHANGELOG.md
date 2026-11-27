@@ -10,6 +10,10 @@ and this project adheres to
 
 - ✨(backend) allow OIDC back-channel logout configuration #2953
 
+### Fixed
+
+- 📝(documentation) fix links to moved or missing documentation pages #3079
+
 ## [v6.1.1] - 2026-11-24
 
 ### Added
